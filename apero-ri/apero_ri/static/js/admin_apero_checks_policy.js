@@ -6,15 +6,38 @@
     var checkInfoBaseUrl = String(cfg.checkInfoBaseUrl || '');
     var rerunNightUrl = String(cfg.rerunNightUrl || '');
     var rerunCheckUrl = String(cfg.rerunCheckUrl || '');
+    var advancedRunUrl = String(cfg.advancedRunUrl || '');
     var cleanResetUrl = String(cfg.cleanResetUrl || '');
-    var profilePageUrlTemplate = String(cfg.profilePageUrlTemplate || '');
+    var queuePageUrlTemplate = String(cfg.queuePageUrlTemplate || '');
+    var obsdirsListUrlTemplate = String(cfg.obsdirsListUrlTemplate || '');
+    var excludedObsdirsListUrl = String(cfg.excludedObsdirsListUrl || '');
+    var excludedObsdirsRemoveUrl = String(cfg.excludedObsdirsRemoveUrl || '');
+
+    var excludedFilter = document.getElementById('acp-excluded-filter');
+    var excludedLoading = document.getElementById('acp-excluded-loading');
+    var excludedList = document.getElementById('acp-excluded-list');
+    var excludedObsdirsCache = {};
 
     var healthWrap = document.getElementById('acp-health-wrap');
     var catalogFilter = document.getElementById('acp-catalog-filter');
     var catalogLoading = document.getElementById('acp-catalog-loading');
     var catalogWrap = document.getElementById('acp-check-catalog');
+    var catalogRawWrap = document.getElementById('acp-check-catalog-raw');
+    var catalogRedWrap = document.getElementById('acp-check-catalog-red');
     var summaryLoading = document.getElementById('acp-summary-loading');
     var summaryWrap = document.getElementById('acp-profile-summaries');
+    /* Event delegation: clicks on profile-summary state chips open the overlay */
+    if (summaryWrap) {
+        summaryWrap.addEventListener('click', function (e) {
+            var chip = e.target.closest('[data-state][data-profile-id]');
+            if (!chip) return;
+            var state     = chip.getAttribute('data-state');
+            var profileId = chip.getAttribute('data-profile-id');
+            if (state && profileId && window.ACI_RESULTS_OVERLAY) {
+                ACI_RESULTS_OVERLAY.open(state, '', profileId);
+            }
+        });
+    }
     var updatedEl = document.getElementById('acp-last-updated');
     var runProfile = document.getElementById('acp-run-profile');
     var runAllChecks = document.getElementById('acp-run-all-checks');
@@ -22,6 +45,12 @@
     var runCheckAvailable = document.getElementById('acp-run-check-available');
     var runCheckAdd = document.getElementById('acp-run-check-add');
     var runCheckAddAll = document.getElementById('acp-run-check-add-all');
+    var runCheckAddAllRaw = document.getElementById(
+        'acp-run-check-add-all-raw'
+    );
+    var runCheckAddAllRed = document.getElementById(
+        'acp-run-check-add-all-red'
+    );
     var runCheckRemove = document.getElementById('acp-run-check-remove');
     var runCheckClear = document.getElementById('acp-run-check-clear');
     var runCheckSelected = document.getElementById('acp-run-check-selected');
@@ -31,11 +60,16 @@
     var runObsdirRefresh = document.getElementById('acp-run-obsdir-refresh');
     var runObsdirAdd = document.getElementById('acp-run-obsdir-add');
     var runObsdirAddAll = document.getElementById('acp-run-obsdir-add-all');
+    var runObsdirAddAllNights = document.getElementById(
+        'acp-run-obsdir-add-all-nights'
+    );
     var runObsdirRemove = document.getElementById('acp-run-obsdir-remove');
     var runObsdirClear = document.getElementById('acp-run-obsdir-clear');
     var runObsdirSelected = document.getElementById('acp-run-obsdir-selected');
     var runSubmit = document.getElementById('acp-run-submit');
+    var runQueueLink = document.getElementById('acp-run-queue-link');
     var runCleanReset = document.getElementById('acp-run-clean-reset');
+    var runNcores = document.getElementById('acp-run-ncores');
     var runStatus = document.getElementById('acp-run-status');
     var profileRowsCache = [];
     var checksCatalogCache = [];
@@ -91,10 +125,11 @@
     }
 
     function renderCatalog(cards) {
-        if (!catalogWrap) return;
-        catalogWrap.innerHTML = '';
+        if (!catalogWrap || !catalogRawWrap || !catalogRedWrap) return;
+        catalogRawWrap.innerHTML = '';
+        catalogRedWrap.innerHTML = '';
         if (!Array.isArray(cards) || !cards.length) {
-            catalogWrap.innerHTML = '<span class="acp-note">'
+            catalogRawWrap.innerHTML = '<span class="acp-note">'
                 + 'No checks found.'
                 + '</span>';
             return;
@@ -125,7 +160,8 @@
             catalogFilter.disabled = false;
         }
 
-        var html = '';
+        var rawHtml = '';
+        var redHtml = '';
         cards.forEach(function (item) {
             var classes = [
                 'acp-card',
@@ -136,6 +172,8 @@
             if (item.is_ignored) {
                 classes.push('acp-check-card--ignored');
             }
+            var isRed = String(item.check_type || '') === 'red';
+            var html = '';
             html += '<a class="' + classes.join(' ') + '"';
             html += ' href="' + escHtml(checkInfoUrl(item.check_key)) + '"';
             html += ' data-acp-check="' + escHtml(item.check_key) + '"';
@@ -172,8 +210,14 @@
             html += '<span class="acp-chip">Total: ' + escHtml(total) + '</span>';
             html += '</div>';
             html += '</a>';
+            if (isRed) {
+                redHtml += html;
+            } else {
+                rawHtml += html;
+            }
         });
-        catalogWrap.innerHTML = html;
+        catalogRawWrap.innerHTML = rawHtml || '<span class="acp-note">No checks found.</span>';
+        catalogRedWrap.innerHTML = redHtml || '<span class="acp-note">No checks found.</span>';
     }
 
     function renderProfileSummaries(rows) {
@@ -197,18 +241,26 @@
             html += '<span class="acp-note">'
                 + escHtml(counts.total || 0) + ' nights</span>';
             html += '</summary>';
+            var pid = escHtml(row.profile_id);
             html += '<div class="acp-summary__counts">';
-            html += '<span class="acp-chip acp-chip--passed">Passed: '
-                + escHtml(counts.passed || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--overridden">'
-                + 'Overridden: ' + escHtml(counts.overridden || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--monitored">'
-                + 'Monitored: ' + escHtml(counts.monitored || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--mixed">'
-                + 'Overridden and monitored: '
-                + escHtml(counts.mixed || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--failed">'
-                + 'Failed: ' + escHtml(counts.failed || 0) + '</span>';
+            function chip(state, cls, label, count) {
+                if (!count) {
+                    return '<span class="acp-chip ' + cls + '">'
+                        + label + ': 0</span>';
+                }
+                return '<button class="acp-chip ' + cls
+                    + ' acp-chip--clickable" type="button"'
+                    + ' data-state="' + state + '"'
+                    + ' data-profile-id="' + pid + '"'
+                    + ' title="Click to see ' + label.toLowerCase()
+                    + ' nights for ' + pid + '">'
+                    + label + ': ' + escHtml(count) + '</button>';
+            }
+            html += chip('passed',    'acp-chip--passed',    'Passed',    counts.passed    || 0);
+            html += chip('overridden','acp-chip--overridden','Overridden', counts.overridden|| 0);
+            html += chip('monitored', 'acp-chip--monitored', 'Monitored', counts.monitored || 0);
+            html += chip('mixed',     'acp-chip--mixed',     'Overridden and monitored', counts.mixed || 0);
+            html += chip('failed',    'acp-chip--failed',    'Failed',    counts.failed    || 0);
             html += '</div>';
             html += '<div class="acp-summary__body">Checks root: '
                 + escHtml(row.checks_root || '') + '</div>';
@@ -304,6 +356,11 @@
 
     function renderRunProfiles(rows) {
         if (!runProfile || !runSubmit) return;
+        // Preserve the in-progress run form across periodic catalog
+        // refreshes (loadSections() re-runs on tab-visibility changes and
+        // bfcache restores) — only reset selections if the previously
+        // chosen profile no longer exists.
+        var previousSelection = String(runProfile.value || '').trim();
         profileRowsCache = Array.isArray(rows) ? rows.slice() : [];
         runProfile.innerHTML = '<option value="">Select profile</option>';
         profileRowsCache.forEach(function (row) {
@@ -322,7 +379,20 @@
         if (runCleanReset) {
             runCleanReset.disabled = profileRowsCache.length === 0;
         }
+        var stillExists = previousSelection && profileRowsCache.some(
+            function (row) {
+                return String((row || {}).profile_id || '').trim()
+                    === previousSelection;
+            }
+        );
+        if (stillExists) {
+            runProfile.value = previousSelection;
+        } else {
+            runCheckKeysSelected = [];
+            runObsdirsSelected = [];
+        }
         renderRunCheckOptions();
+        renderRunObsdirOptions();
     }
 
     function setRunButtonsDisabled(disabled) {
@@ -377,15 +447,25 @@
     }
 
     function checkKeysForInstrument(instrument) {
+        return checkKeysForInstrumentAndType(instrument, '');
+    }
+
+    function checkKeysForInstrumentAndType(instrument, checkType) {
         var keys = [];
         var seen = Object.create(null);
         var wanted = String(instrument || '').trim();
+        var wantedType = String(checkType || '').trim().toLowerCase();
         checksCatalogCache.forEach(function (item) {
             var checkKey = String((item || {}).check_key || '').trim();
             var insts = Array.isArray((item || {}).instruments)
                 ? item.instruments
                 : [];
+            var itemType = String((item || {}).check_type || '')
+                .trim().toLowerCase();
             if (!checkKey || seen[checkKey]) {
+                return;
+            }
+            if (wantedType && itemType !== wantedType) {
                 return;
             }
             if (wanted && !insts.some(function (inst) {
@@ -453,6 +533,8 @@
         if (runCheckAvailable) runCheckAvailable.disabled = disableChecks;
         if (runCheckAdd) runCheckAdd.disabled = disableChecks;
         if (runCheckAddAll) runCheckAddAll.disabled = disableChecks;
+        if (runCheckAddAllRaw) runCheckAddAllRaw.disabled = disableChecks;
+        if (runCheckAddAllRed) runCheckAddAllRed.disabled = disableChecks;
         if (runCheckRemove) runCheckRemove.disabled = disableChecks;
         if (runCheckClear) runCheckClear.disabled = disableChecks;
 
@@ -461,49 +543,57 @@
         if (runObsdirRefresh) runObsdirRefresh.disabled = !hasProfile;
         if (runObsdirAdd) runObsdirAdd.disabled = disableObsdirs;
         if (runObsdirAddAll) runObsdirAddAll.disabled = disableObsdirs;
+        if (runObsdirAddAllNights) {
+            runObsdirAddAllNights.disabled = !hasProfile || allObsdirs;
+        }
         if (runObsdirRemove) runObsdirRemove.disabled = disableObsdirs;
         if (runObsdirClear) runObsdirClear.disabled = disableObsdirs;
 
         if (runSubmit) runSubmit.disabled = !hasProfile;
         if (runCleanReset) runCleanReset.disabled = !hasProfile;
+        
+        updateQueueLink(hasProfile ? String(runProfile.value || '').trim() : '');
     }
 
-    function getProfilePageUrl(profileId) {
+    function updateQueueLink(profileId) {
+        if (!runQueueLink) return;
+        if (!profileId || !queuePageUrlTemplate) {
+            runQueueLink.style.display = 'none';
+            return;
+        }
+        var url = queuePageUrlTemplate.replace(
+            '__PROFILE_ID__',
+            encodeURIComponent(profileId)
+        );
+        runQueueLink.href = url;
+        runQueueLink.style.display = '';
+    }
+
+    function getObsdirsListUrl(profileId) {
         var token = '__PROFILE_ID__';
-        if (!profilePageUrlTemplate || !profileId) return '';
-        return profilePageUrlTemplate.replace(token, encodeURIComponent(
+        if (!obsdirsListUrlTemplate || !profileId) return '';
+        return obsdirsListUrlTemplate.replace(token, encodeURIComponent(
             String(profileId)
         ));
     }
 
     function fetchProfileObsdirs(profileId) {
-        var base = getProfilePageUrl(profileId);
-        var url;
-        if (!base) {
+        // Use the dedicated obsdirs-list endpoint, which returns every
+        // obs-dir name directly from the YAML directory listing — not
+        // paged/capped like the card endpoint (which tops out at 100
+        // cards per page).
+        var url = getObsdirsListUrl(profileId);
+        if (!url) {
             return Promise.resolve([]);
         }
-        url = base + '?page=1&per_page=10000&pages=1&result_filter=all';
         return fetch(url)
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                var out = [];
-                var seen = Object.create(null);
-                var pages;
-                var firstPage;
-                if (!data || !data.success) {
-                    return out;
+                if (!data || !data.success
+                    || !Array.isArray(data.obsdirs)) {
+                    return [];
                 }
-                pages = data.pages || {};
-                firstPage = pages['1'] || pages[1] || [];
-                (Array.isArray(firstPage) ? firstPage : []).forEach(function (
-                    card
-                ) {
-                    var obs = String((card || {}).obsdir || '').trim();
-                    if (!obs || seen[obs]) return;
-                    seen[obs] = true;
-                    out.push(obs);
-                });
-                return out;
+                return data.obsdirs.slice();
             });
     }
 
@@ -545,11 +635,7 @@
         var profileId;
         var checks;
         var obsdirs = [];
-        var ok = 0;
-        var failed = 0;
-        var i;
-        var j;
-        var total;
+        var ncores;
         var payload;
         var res;
         if (!runProfile || !runSubmit) return;
@@ -580,52 +666,60 @@
                 }
             }
 
-            total = obsdirs.length * (checks.length || 1);
-            setRunStatus('Queueing ' + total + ' run(s)...');
-
-            for (i = 0; i < obsdirs.length; i += 1) {
-                if (!checks.length) {
-                    payload = {
-                        profile_id: profileId,
-                        obsdir: obsdirs[i],
-                    };
-                    try {
-                        res = await queueRun(payload, '');
-                        if (res && res.success) {
-                            ok += 1;
-                        } else {
-                            failed += 1;
-                        }
-                    } catch (err) {
-                        failed += 1;
-                    }
-                    continue;
-                }
-
-                for (j = 0; j < checks.length; j += 1) {
-                    payload = {
-                        profile_id: profileId,
-                        obsdir: obsdirs[i],
-                        check_key: checks[j],
-                    };
-                    try {
-                        res = await queueRun(payload, checks[j]);
-                        if (res && res.success) {
-                            ok += 1;
-                        } else {
-                            failed += 1;
-                        }
-                    } catch (err2) {
-                        failed += 1;
-                    }
+            ncores = 0;
+            if (runNcores) {
+                var raw = parseInt(runNcores.value || '', 10);
+                if (!isNaN(raw) && raw > 0) {
+                    ncores = raw;
                 }
             }
+
             setRunStatus(
-                'Queued: ' + ok + ' | Failed: ' + failed
-                    + (checks.length
-                        ? ' | Mode: selected checks x obs-dirs'
-                        : ' | Mode: all checks per obs-dir')
+                'Queueing 1 batch run ('
+                    + obsdirs.length + ' obs-dir(s), '
+                    + (checks.length ? checks.length + ' check(s)' : 'all checks')
+                    + (ncores ? ', cores=' + ncores : ', cores=auto')
+                    + ')...'
             );
+
+            payload = {
+                profile_id: profileId,
+                obs_dirs: obsdirs,
+                checks: checks,
+            };
+            if (ncores > 0) {
+                payload.ncores = ncores;
+            }
+
+            try {
+                res = await fetch(advancedRunUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                }).then(function (r) { return r.json(); });
+
+                if (res && res.success) {
+                    setRunStatus(
+                        'Queued 1 batch task (task_id='
+                            + String(res.task_id || '').slice(0, 24)
+                            + '...) — '
+                            + obsdirs.length + ' obs-dir(s), '
+                            + (checks.length
+                                ? checks.length + ' check(s)'
+                                : 'all checks')
+                            + (ncores
+                                ? ', cores=' + ncores
+                                : ', cores=auto')
+                    );
+                } else {
+                    setRunStatus(
+                        'Failed: '
+                            + String((res && res.error) || 'Unknown error')
+                    );
+                }
+            } catch (err) {
+                setRunStatus('Request failed: ' + String(err));
+            }
         } finally {
             setRunButtonsDisabled(false);
             syncRunControlState();
@@ -736,6 +830,199 @@
         }
     }
 
+    var buildStatusUrl  = String(cfg.buildStatusUrl || '');
+    var _buildPollTimer = null;
+    var _buildBannerEl  = null;
+
+    function _getOrCreateBuildBanner() {
+        if (_buildBannerEl) return _buildBannerEl;
+        _buildBannerEl = document.createElement('div');
+        _buildBannerEl.id = 'acp-build-banner';
+        _buildBannerEl.className = 'acp-build-banner';
+        _buildBannerEl.hidden = true;
+        var header = document.querySelector('.ari-page-header') ||
+                     document.body.firstElementChild;
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(_buildBannerEl, header.nextSibling);
+        } else {
+            document.body.insertBefore(_buildBannerEl, document.body.firstChild);
+        }
+        return _buildBannerEl;
+    }
+
+    function _showBuildBanner(step, pct) {
+        var el = _getOrCreateBuildBanner();
+        var barWidth = Math.round(Math.max(4, Math.min(100, pct || 0)));
+        el.innerHTML =
+            '<span class="acp-build-banner__icon">' +
+            '<i class="fa-solid fa-spinner fa-spin"></i></span>' +
+            '<span class="acp-build-banner__text">' +
+            (step || 'Building index…') + '</span>' +
+            '<span class="acp-build-banner__bar-wrap">' +
+            '<span class="acp-build-banner__bar" style="width:' +
+            barWidth + '%"></span></span>';
+        el.hidden = false;
+    }
+
+    function _hideBuildBanner() {
+        var el = _getOrCreateBuildBanner();
+        el.hidden = true;
+        if (_buildPollTimer) {
+            clearTimeout(_buildPollTimer);
+            _buildPollTimer = null;
+        }
+    }
+
+    function _pollBuildStatus() {
+        if (!buildStatusUrl) return;
+        fetch(buildStatusUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (st) {
+                if (!st.success) return;
+                if (st.is_building) {
+                    _showBuildBanner(st.step, st.pct);
+                    _buildPollTimer = setTimeout(_pollBuildStatus, 3000);
+                } else {
+                    // Build finished — refresh the catalog data.
+                    _hideBuildBanner();
+                    loadSections();
+                }
+            })
+            .catch(function () {
+                _buildPollTimer = setTimeout(_pollBuildStatus, 5000);
+            });
+    }
+
+    function renderExcludedFilterOptions() {
+        if (!excludedFilter) return;
+        var instruments = Object.keys(excludedObsdirsCache).sort();
+        var current = excludedFilter.value || 'all';
+        var html = '<option value="all">All instruments</option>';
+        instruments.forEach(function (inst) {
+            html += '<option value="' + escHtml(inst) + '">'
+                + escHtml(inst) + '</option>';
+        });
+        excludedFilter.innerHTML = html;
+        excludedFilter.disabled = instruments.length === 0;
+        if (instruments.indexOf(current) >= 0 || current === 'all') {
+            excludedFilter.value = current;
+        }
+    }
+
+    function removeExcludedObsdir(instrument, obsdir) {
+        if (!excludedObsdirsRemoveUrl) return;
+        if (!window.confirm(
+            'Remove “' + obsdir + '” from the excluded list for '
+            + instrument + '?\n\nIt will be checked again the next time '
+            + 'the APERO Check task runs.'
+        )) {
+            return;
+        }
+        fetch(excludedObsdirsRemoveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instrument: instrument, obsdir: obsdir }),
+        }).then(function (resp) {
+            return resp.json().then(function (data) {
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.error || 'Request failed');
+                }
+                return data;
+            });
+        }).then(function (data) {
+            excludedObsdirsCache = data.excluded_obsdirs || {};
+            renderExcludedFilterOptions();
+            renderExcludedList();
+        }).catch(function (err) {
+            window.alert(String(err || 'Could not remove exclusion.'));
+        });
+    }
+
+    function renderExcludedList() {
+        if (!excludedList) return;
+        var selected = excludedFilter
+            ? String(excludedFilter.value || 'all')
+            : 'all';
+        var instruments = Object.keys(excludedObsdirsCache).sort();
+        if (selected !== 'all') {
+            instruments = instruments.filter(function (inst) {
+                return inst === selected;
+            });
+        }
+        if (instruments.length === 0) {
+            excludedList.innerHTML = '<div class="acp-note">'
+                + 'No excluded directories.</div>';
+            return;
+        }
+        var html = '';
+        instruments.forEach(function (inst) {
+            var obsdirs = (excludedObsdirsCache[inst] || []).slice().sort();
+            html += '<h4 style="margin:0.65rem 0 0.4rem;">'
+                + escHtml(inst) + '</h4><div class="acp-grid">';
+            obsdirs.forEach(function (obsdir) {
+                html += '<div class="acp-card">'
+                    + '<div class="acp-card__title acp-card__title--singleline" '
+                    + 'title="' + escHtml(obsdir) + '">'
+                    + escHtml(obsdir) + '</div>'
+                    + '<div class="acp-card__meta">'
+                    + '<button type="button" class="ari-btn ari-btn--sm '
+                    + 'ari-btn--secondary acp-excluded-remove-btn" '
+                    + 'data-instrument="' + escHtml(inst) + '" '
+                    + 'data-obsdir="' + escHtml(obsdir) + '">'
+                    + '<i class="fa-solid fa-rotate-left"></i> Restore'
+                    + '</button>'
+                    + '</div></div>';
+            });
+            html += '</div>';
+        });
+        excludedList.innerHTML = html;
+    }
+
+    if (excludedList) {
+        excludedList.addEventListener('click', function (e) {
+            var btn = e.target.closest('.acp-excluded-remove-btn');
+            if (!btn) return;
+            removeExcludedObsdir(
+                btn.getAttribute('data-instrument'),
+                btn.getAttribute('data-obsdir')
+            );
+        });
+    }
+    if (excludedFilter) {
+        excludedFilter.addEventListener('change', renderExcludedList);
+    }
+
+    function loadExcludedObsdirs() {
+        if (!excludedObsdirsListUrl) {
+            if (excludedLoading) {
+                excludedLoading.textContent = 'Failed to load section.';
+            }
+            return;
+        }
+        fetch(excludedObsdirsListUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    if (excludedLoading) {
+                        excludedLoading.textContent =
+                            data.error || 'Failed to load section.';
+                    }
+                    return;
+                }
+                excludedObsdirsCache = data.excluded_obsdirs || {};
+                renderExcludedFilterOptions();
+                renderExcludedList();
+                if (excludedLoading) {
+                    excludedLoading.style.display = 'none';
+                }
+            })
+            .catch(function () {
+                if (excludedLoading) {
+                    excludedLoading.textContent = 'Failed to load section.';
+                }
+            });
+    }
+
     function loadSections() {
         if (!sectionsApiUrl) {
             setLoading('Failed to load section.');
@@ -765,6 +1052,14 @@
                 hideLoading();
                 applyCatalogFilter();
                 syncRunControlState();
+
+                // If the server returned stale / still-building data,
+                // start polling so the UI refreshes when the build finishes.
+                if (data.is_building) {
+                    _pollBuildStatus();
+                } else {
+                    _hideBuildBanner();
+                }
             })
             .catch(function () {
                 setLoading('Failed to load section.');
@@ -836,6 +1131,30 @@
             renderRunCheckOptions();
         });
     }
+    if (runCheckAddAllRaw) {
+        runCheckAddAllRaw.addEventListener('click', function () {
+            var instrument = profileInstrument(
+                String((runProfile && runProfile.value) || '').trim()
+            );
+            runCheckKeysSelected = addValuesTo(
+                runCheckKeysSelected,
+                checkKeysForInstrumentAndType(instrument, 'raw')
+            );
+            renderRunCheckOptions();
+        });
+    }
+    if (runCheckAddAllRed) {
+        runCheckAddAllRed.addEventListener('click', function () {
+            var instrument = profileInstrument(
+                String((runProfile && runProfile.value) || '').trim()
+            );
+            runCheckKeysSelected = addValuesTo(
+                runCheckKeysSelected,
+                checkKeysForInstrumentAndType(instrument, 'red')
+            );
+            renderRunCheckOptions();
+        });
+    }
     if (runCheckRemove) {
         runCheckRemove.addEventListener('click', function () {
             runCheckKeysSelected = removeValuesFrom(
@@ -878,6 +1197,19 @@
                 }
             );
             runObsdirsSelected = addValuesTo(runObsdirsSelected, visible);
+            renderRunObsdirOptions();
+        });
+    }
+    if (runObsdirAddAllNights) {
+        runObsdirAddAllNights.addEventListener('click', function () {
+            // Reuse the "Run all obs-dirs" checkbox semantics: at submit
+            // time this queries every available obs-dir rather than just
+            // the individually-selected list, so it always reflects the
+            // full current set (including any added after this click).
+            if (runAllNights) {
+                runAllNights.checked = true;
+            }
+            syncRunControlState();
             renderRunObsdirOptions();
         });
     }
@@ -929,6 +1261,7 @@
     renderRunObsdirOptions();
     syncRunControlState();
     loadSections();
+    loadExcludedObsdirs();
 
     // Re-fetch catalog when navigating back from a check-info page.
     // `pageshow` with persisted=true fires when the browser restores from

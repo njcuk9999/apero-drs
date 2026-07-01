@@ -5,7 +5,7 @@ Download basket: per-user file collection and compilation helpers.
 
 Each user has a basket stored in ~/.ari/users/{username}/basket.json.
 Compiled downloads are stored in ~/.ari/download/{username}/{job_id}/.
-Downloads are automatically expired after 24 hours.
+Downloads are automatically expired after a configurable number of hours.
 
 Security:
 - add_to_basket always checks that entry.kw_run_id is in accessible_run_ids.
@@ -39,7 +39,10 @@ USERS_DIR = ARI_DIR / "users"
 DOWNLOADS_DIR = ARI_DIR / "download"
 
 _DOWNLOAD_EXPIRY_HOURS = 24
+_DOWNLOAD_EXPIRY_OPTIONS = {24, 48, 168}
 _DOWNLOAD_STORAGE_LIMIT_BYTES = 5 * 1024**3
+_DOWNLOAD_STORAGE_LIMIT_ELEVATED_BYTES = 50 * 1024**3
+_ELEVATED_DOWNLOAD_GROUPS = {"moderator", "developer", "admin", "super_admin"}
 
 
 # =============================================================================
@@ -396,6 +399,34 @@ def _safe_job_id(job_id: str) -> Optional[str]:
     return safe
 
 
+def _normalize_expiry_hours(expiry_hours: Any) -> int:
+    """Return a supported expiry duration in hours."""
+    try:
+        value = int(float(expiry_hours))
+    except (TypeError, ValueError):
+        return _DOWNLOAD_EXPIRY_HOURS
+    if value in _DOWNLOAD_EXPIRY_OPTIONS:
+        return value
+    return _DOWNLOAD_EXPIRY_HOURS
+
+
+def _job_expiry_hours(meta: Dict[str, Any]) -> int:
+    """Return the per-job expiry hours, falling back to the default."""
+    return _normalize_expiry_hours(meta.get("expiry_hours", _DOWNLOAD_EXPIRY_HOURS))
+
+
+def _job_expires_at(meta: Dict[str, Any]) -> datetime:
+    """Return the expiry datetime for a job meta record."""
+    created_str = meta.get("created_at", "")
+    try:
+        created_at = datetime.fromisoformat(str(created_str))
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+    except Exception:
+        created_at = datetime.now(timezone.utc)
+    return created_at + timedelta(hours=_job_expiry_hours(meta))
+
+
 def create_download_job(
     username: str,
     entries: List[Dict[str, Any]],
@@ -406,6 +437,7 @@ def create_download_job(
     email_on_done: bool = False,
     user_email: str = "",
     profile_id: str = "",
+    expiry_hours: Any = _DOWNLOAD_EXPIRY_HOURS,
 ) -> str:
     """
     Start a background download compilation job. Returns job_id.
@@ -415,12 +447,14 @@ def create_download_job(
     profile_id: used to generate a descriptive archive filename.
     """
     fmt = fmt if fmt in ("zip", "tar.gz", "native") else "zip"
+    expiry_hours = _normalize_expiry_hours(expiry_hours)
     job_id = str(uuid.uuid4())
     meta: Dict[str, Any] = {
         "job_id": job_id,
         "status": "pending",
         "fmt": fmt,
         "profile_id": profile_id,
+        "expiry_hours": expiry_hours,
         "chunk_size_gb": chunk_size_gb,
         "email_on_done": email_on_done,
         "user_email": user_email,
@@ -503,8 +537,10 @@ def list_recent_jobs(username: str, limit: int = 10) -> List[Dict[str, Any]]:
     return metas[:limit]
 
 
-def get_downloads_storage_limit_bytes() -> int:
+def get_downloads_storage_limit_bytes(groups=None) -> int:
     """Return max allowed compiled-download storage per user."""
+    if groups and set(groups) & _ELEVATED_DOWNLOAD_GROUPS:
+        return _DOWNLOAD_STORAGE_LIMIT_ELEVATED_BYTES
     return _DOWNLOAD_STORAGE_LIMIT_BYTES
 
 
@@ -538,6 +574,42 @@ def get_downloads_usage(username: str) -> Dict[str, int]:
         "job_count": int(job_count),
         "file_count": int(file_count),
     }
+
+
+def extend_download_job(username: str, job_id: str) -> Dict[str, Any]:
+    """Extend the expiry of a completed job by _DOWNLOAD_EXPIRY_HOURS hours."""
+    safe_id = _safe_job_id(job_id)
+    if safe_id is None:
+        return {"success": False, "error": "Invalid job id"}
+
+    meta = _load_job_meta(username, safe_id)
+    if meta is None:
+        return {"success": False, "error": "Job not found"}
+
+    current_hours = _job_expiry_hours(meta)
+    meta["expiry_hours"] = current_hours + _DOWNLOAD_EXPIRY_HOURS
+    _save_job_meta(username, safe_id, meta)
+    return {"success": True, "expires_at": _job_expires_at(meta).isoformat()}
+
+
+def set_download_job_expiry(
+    username: str,
+    job_id: str,
+    expiry_hours: Any,
+) -> Dict[str, Any]:
+    """Set a completed job's expiry duration in hours."""
+    safe_id = _safe_job_id(job_id)
+    if safe_id is None:
+        return {"success": False, "error": "Invalid job id"}
+
+    meta = _load_job_meta(username, safe_id)
+    if meta is None:
+        return {"success": False, "error": "Job not found"}
+
+    new_expiry_hours = _normalize_expiry_hours(expiry_hours)
+    meta["expiry_hours"] = new_expiry_hours
+    _save_job_meta(username, safe_id, meta)
+    return {"success": True, "expires_at": _job_expires_at(meta).isoformat()}
 
 
 def remove_download_job(username: str, job_id: str) -> Dict[str, Any]:
@@ -1059,9 +1131,6 @@ def cleanup_expired_downloads(username: str) -> int:
     jobs_dir = _jobs_dir(username)
     if not jobs_dir.exists():
         return 0
-    cutoff = datetime.now(timezone.utc) - timedelta(
-        hours=_DOWNLOAD_EXPIRY_HOURS
-    )
     removed = 0
     removed_job_ids: List[str] = []
     for job_dir in jobs_dir.iterdir():
@@ -1074,10 +1143,8 @@ def cleanup_expired_downloads(username: str) -> int:
         if not created_str:
             continue
         try:
-            created_at = datetime.fromisoformat(str(created_str))
-            if created_at.tzinfo is None:
-                created_at = created_at.replace(tzinfo=timezone.utc)
-            if created_at < cutoff:
+            expires_at = _job_expires_at(meta)
+            if expires_at < datetime.now(timezone.utc):
                 shutil.rmtree(str(job_dir), ignore_errors=True)
                 removed_job_ids.append(job_dir.name)
                 removed += 1

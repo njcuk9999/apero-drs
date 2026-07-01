@@ -351,6 +351,24 @@ MULTI_PROCESS['LEGACY_CHECK_GSHEET'] = _entry['multi_process']
 LOCAL_TASK['LEGACY_CHECK_GSHEET'] = _entry['local_task']
 FILTERS['LEGACY_CHECK_GSHEET'] = _entry['filters']
 
+# LEGACY_KNOWN_ERRORS_GSHEET
+_entry = _register_task(
+    'LEGACY_KNOWN_ERRORS_GSHEET',
+    'legacy_known_errors_gsheet',
+    'LegacyKnownErrorsGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_KNOWN_ERRORS_GSHEET'] = _entry['filters']
+
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -16,9 +16,14 @@ from __future__ import annotations
 from flask import (flash, redirect, render_template,
                    session, url_for)
 
+from pathlib import Path
+
 from apero_ri.core.auth import get_effective_user
 from apero_ri.core.auth import load_users
 from apero_ri.core.permissions import resolve_user_permissions
+from apero_ri.core import permissions as perms_mod
+from apero_ri.core import awards as awards_core
+from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
 
 
 __NAME__ = 'apero_ri.application.user_portal_view_helpers'
@@ -159,6 +164,32 @@ def user_portal_user_card_view(app, username):
         'viewer_can_view_contact': viewer_can_view_contact,
     }
 
+    monitor_stats = None
+    try:
+        target_perms = resolve_user_permissions(
+            record.get('groups', []), app.ari_groups)
+    except Exception:
+        target_perms = set()
+    if _has_any_monitor_perm(target_perms):
+        try:
+            data_dir = Path(
+                app.args.data_dir or str(Path.home() / '.ari'))
+            instruments = perms_mod.load_parameters().get(
+                'instruments', {}).get('value', [])
+            all_awards = awards_core.compute_awards(data_dir, instruments)
+            monitor_stats = all_awards.get(username, {
+                'username': username,
+                'who': target_user['full_name'] or username,
+                'total_hours': 0.0,
+                'instruments': {},
+                'instrument_medals': {},
+                'service_medal': None,
+                'issues_resolved': 0,
+                'issues_medal': None,
+            })
+        except Exception:
+            monitor_stats = None
+
     context = {
         'page_id': 'home.user_portal.users',
         'page_label': 'User Card',
@@ -169,6 +200,7 @@ def user_portal_user_card_view(app, username):
         'sidebar_url': '/user_portal',
         'username': user_info.get('username'),
         'target_user': target_user,
+        'monitor_stats': monitor_stats,
     }
     try:
         context.update(

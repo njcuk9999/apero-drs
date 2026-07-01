@@ -145,6 +145,65 @@ def _add_objnames_from_json(jf: Path, names: set) -> None:
             names.add(n)
 
 
+def scan_pending_verification(
+        data_dir: Path,
+        astrom_root: Path,
+        created_by: str = 'astrometric-scanner',
+        visibility: str = 'monitor',
+) -> int:
+    """Create ``astrometric-verify`` issues for all ``pending/`` YAMLs.
+
+    Lightweight alternative to :func:`scan` that only performs the
+    pending-verification check - it does not import ``apero`` and
+    does not cross-check object tables, so it is cheap enough to run
+    on-demand (e.g. whenever the issues list is fetched).
+
+    Idempotent: relies on :func:`create_issue`'s ``dedupe_key`` so
+    re-running it does not create duplicates while the underlying
+    issue is still open.
+
+    :param data_dir: Path, the ARI data dir (``~/.ari``)
+    :param astrom_root: Path, the parent of ``verified/``/``pending/``
+    :param created_by: str, username to attribute auto-issues to
+    :param visibility: str, visibility tier (default ``'monitor'``)
+    :return: int, number of pending entries with an open issue
+    """
+    count = 0
+    sub = Path(astrom_root) / 'pending'
+    for fname in _safe_listdir(sub):
+        if not fname.endswith('.yaml'):
+            continue
+        fpath = sub / fname
+        if not fpath.is_file():
+            continue
+        entry = _load_yaml(fpath)
+        if entry is None:
+            continue
+        apero_name = str(
+            entry.get('APERO_NAME') or entry.get('OBJNAME')
+            or fpath.stem
+        )
+        reason = (
+            'Astrometric entry "{0}" is pending verification.'
+        ).format(apero_name)
+        action = (
+            'Open the resolver page (or the object page) and '
+            'click "Verify" once you have checked every field.'
+        )
+        it = _issues.create_issue(
+            data_dir=data_dir, kind='astrometric',
+            reason=reason, created_by=created_by,
+            apero_name=apero_name, field=None, value=None,
+            instrument=None, visibility=visibility,
+            title='Verify astrometric entry: {0}'.format(apero_name),
+            type_='verify', label=LABEL_VERIFY, action=action,
+            dedupe_key='verify:{0}'.format(apero_name),
+        )
+        if it.get('id'):
+            count += 1
+    return count
+
+
 def scan(data_dir: Path,
          astrom_root: Path,
          tasks_dir: Optional[Path] = None,

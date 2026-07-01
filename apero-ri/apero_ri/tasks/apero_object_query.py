@@ -111,12 +111,35 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             ctx["tlog"]("No APERO profiles configured. Nothing to do.")
             return
 
+        profile_errors = []
         for a_it, profile_name in enumerate(ctx["profile_names"]):
+            if ctx.get("stop_event") is not None and ctx["stop_event"].is_set():
+                ctx["tlog"](
+                    "Cancellation requested. Exiting before next profile.")
+                break
             self.progress = (a_it + 1) / len(ctx["profile_names"])
             self.subprogress = 0.0
-            self._run_profile(ctx, a_it, profile_name)
+            try:
+                self._run_profile(ctx, a_it, profile_name)
+            except Exception as exc:
+                err_msg = (
+                    f"Profile {profile_name}: failed — {exc}"
+                )
+                ctx["tlog"](f"ERROR: {err_msg}")
+                self.info += (
+                    f"\n## Object Query for APERO Profile: {profile_name}\n\n"
+                    f"- **ERROR**: {err_msg}\n"
+                )
+                profile_errors.append(err_msg)
 
-        ctx["tlog"]("APERO_OBJECT_QUERY completed.")
+        if profile_errors:
+            ctx["tlog"](
+                "APERO_OBJECT_QUERY completed with errors in "
+                f"{len(profile_errors)} profile(s): "
+                + "; ".join(profile_errors)
+            )
+        else:
+            ctx["tlog"]("APERO_OBJECT_QUERY completed.")
 
     # -----------------------------------------------------------------
     # Per-profile processing

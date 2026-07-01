@@ -827,7 +827,11 @@
             var p = String(perms[i] || '').toLowerCase();
             if (p === 'monitor') return true;
             for (var k = 0; k < prefixes.length; k++) {
-                if (p.indexOf(prefixes[k]) === 0) return true;
+                var pre = prefixes[k];
+                if (p.indexOf(pre) === 0
+                    && p.substring(pre.length) === 'all') {
+                    return true;
+                }
             }
         }
         return false;

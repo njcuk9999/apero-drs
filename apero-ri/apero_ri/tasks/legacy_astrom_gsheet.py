@@ -188,22 +188,28 @@ def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
 def _open_spreadsheet(payload: Dict[str, Any],
                       sheet_id: str):
     import gspread
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
 
     scopes = payload.get('scopes')
     if not isinstance(scopes, list) or len(scopes) == 0:
         scopes = list(_SCOPES)
-    creds = Credentials(
-        token=None,
-        refresh_token=str(payload.get('refresh_token') or ''),
-        token_uri=str(payload.get('token_uri')
-                      or 'https://oauth2.googleapis.com/token'),
-        client_id=str(payload.get('client_id') or ''),
-        client_secret=str(payload.get('client_secret') or ''),
-        scopes=scopes,
-    )
-    creds.refresh(Request())
+
+    if payload.get('type') == 'service_account':
+        from google.oauth2.service_account import Credentials as SACredentials
+        creds = SACredentials.from_service_account_info(payload, scopes=scopes)
+    else:
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
+        creds = Credentials(
+            token=None,
+            refresh_token=str(payload.get('refresh_token') or ''),
+            token_uri=str(payload.get('token_uri')
+                          or 'https://oauth2.googleapis.com/token'),
+            client_id=str(payload.get('client_id') or ''),
+            client_secret=str(payload.get('client_secret') or ''),
+            scopes=scopes,
+        )
+        creds.refresh(Request())
+
     client = gspread.authorize(creds)
     return client.open_by_key(sheet_id)
 

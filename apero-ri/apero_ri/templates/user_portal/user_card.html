@@ -156,6 +156,69 @@
                 <div class="upu-kv__val">{{ target_user.last_login or 'Never' }}</div>
             </div>
         </section>
+
+        {% if monitor_stats %}
+        {% macro medal(medal_name, label) %}
+        {% if medal_name %}
+        <i class="fa-solid fa-medal upu-medal upu-medal--{{ medal_name }}"
+           title="{{ label }} ({{ medal_name }})"></i>
+        {% endif %}
+        {% endmacro %}
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-chart-line"></i>
+                Monitoring statistics
+            </h3>
+
+            {% if monitor_stats.instruments %}
+            <table class="upu-monitor-stats">
+                <thead>
+                    <tr>
+                        <th>Instrument</th>
+                        <th>Days completed</th>
+                        <th>Days proposed</th>
+                        <th>Total days</th>
+                        <th>Hours estimated</th>
+                        <th>Award</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inst, row in monitor_stats.instruments.items() %}
+                    <tr>
+                        <td>{{ inst }}</td>
+                        <td>{{ '%.2f' | format(row.days_completed or 0) }}</td>
+                        <td>{{ '%.2f' | format(row.days_proposed or 0) }}</td>
+                        <td>{{ '%.2f' | format(row.total_days or 0) }}</td>
+                        <td>{{ '%.2f' | format(row.hours_estimated or 0) }}</td>
+                        <td>
+                            {{ medal(monitor_stats.instrument_medals.get(inst),
+                                     inst ~ ' top monitor') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="upu-monitor-stats__empty">
+                No scheduled monitoring hours recorded yet.
+            </p>
+            {% endif %}
+
+            <div class="upu-kv" style="margin-top:1rem;">
+                <div class="upu-kv__key">Service (all instruments)</div>
+                <div class="upu-kv__val">
+                    {{ '%.2f' | format(monitor_stats.total_hours or 0) }} hours
+                    {{ medal(monitor_stats.service_medal, 'Service award') }}
+                </div>
+
+                <div class="upu-kv__key">Issues resolved</div>
+                <div class="upu-kv__val">
+                    {{ monitor_stats.issues_resolved or 0 }}
+                    {{ medal(monitor_stats.issues_medal, 'Issue resolution award') }}
+                </div>
+            </div>
+        </section>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

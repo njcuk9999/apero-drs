@@ -18,6 +18,7 @@ def build_safe_select_query(
     allowed_ops = frozenset(
         {"=", "!=", "<", ">", "<=", ">=", "LIKE", "NOT LIKE"}
     )
+    allowed_in_ops = frozenset({"IN", "NOT IN"})
     allowed_null_ops = frozenset({"IS NULL", "IS NOT NULL"})
     allowed_join_types = frozenset({"INNER", "LEFT", "RIGHT"})
     allowed_sort_dirs = frozenset({"ASC", "DESC"})
@@ -32,7 +33,9 @@ def build_safe_select_query(
     filters_spec = query_spec.get("filters", [])
     order_by_spec = query_spec.get("order_by")
     limit = int(query_spec.get("limit", 500))
-    limit = min(max(1, limit), 2000)
+    # limit=0 means "no limit" (return all rows)
+    if limit != 0:
+        limit = min(max(1, limit), 2000)
 
     if not tables_spec:
         raise ValueError("No tables specified.")
@@ -136,6 +139,19 @@ def build_safe_select_query(
 
         if op_raw in allowed_null_ops:
             where_parts.append(f"{col_ref} {op_raw}")
+        elif op_raw in allowed_in_ops:
+            raw_values = fspec.get("values") or []
+            if not isinstance(raw_values, list):
+                raw_values = [raw_values]
+            values = [str(v) for v in raw_values if str(v).strip()]
+            if not values:
+                raise ValueError(
+                    f"IN filter on {col!r} requires at least one value."
+                )
+            pname = f"p{param_idx}"
+            param_idx += 1
+            where_parts.append(f"{col_ref} {op_raw} :{pname}")
+            params[pname] = values
         elif op_raw in allowed_ops:
             pname = f"p{param_idx}"
             param_idx += 1
@@ -165,9 +181,138 @@ def build_safe_select_query(
         sql += f'\nWHERE {" AND ".join(where_parts)}'
     if order_clause:
         sql += f"\n{order_clause}"
-    sql += f"\nLIMIT {limit}"
+    if limit != 0:
+        sql += f"\nLIMIT {limit}"
 
     return sql, params, col_labels
+
+
+def build_safe_count_query(
+    table_access: Dict[str, Dict[str, Any]],
+    query_spec: Dict[str, Any],
+    run_ids: Iterable[str],
+) -> Tuple[str, Dict[str, Any]]:
+    """Build a SELECT COUNT(*) version of the query (no ORDER BY, no LIMIT)."""
+    allowed_ops = frozenset(
+        {"=", "!=", "<", ">", "<=", ">=", "LIKE", "NOT LIKE"}
+    )
+    allowed_in_ops = frozenset({"IN", "NOT IN"})
+    allowed_null_ops = frozenset({"IS NULL", "IS NOT NULL"})
+    allowed_join_types = frozenset({"INNER", "LEFT", "RIGHT"})
+
+    def q_id(name: str) -> str:
+        if not re.match(r"^[A-Za-z0-9_]+$", name):
+            raise ValueError(f"Invalid identifier: {name!r}")
+        return f"`{name}`"
+
+    tables_spec = query_spec.get("tables", [])
+    joins_spec = query_spec.get("joins", [])
+    filters_spec = query_spec.get("filters", [])
+
+    if not tables_spec:
+        raise ValueError("No tables specified.")
+
+    table_names: Dict[str, str] = {}
+    table_cols: Dict[str, set] = {}
+
+    for tspec in tables_spec:
+        label = str(tspec.get("label", "")).strip().upper()
+        if label not in table_access:
+            raise ValueError(f"Table {label!r} is not accessible.")
+        allowed = table_access[label]["columns"]
+        tname = table_access[label]["table_name"]
+        if not re.match(r"^[A-Za-z0-9_.]+$", tname):
+            raise ValueError(f"Invalid table name: {tname!r}")
+        table_names[label] = tname
+        table_cols[label] = set(allowed)
+
+    first_label = str(tables_spec[0].get("label", "")).strip().upper()
+    first_tname = table_names[first_label]
+    from_clause = f"`{first_tname}` AS `_t_{first_label}`"
+
+    join_clauses: List[str] = []
+    for jspec in joins_spec:
+        left = str(jspec.get("left_label", "")).strip().upper()
+        right = str(jspec.get("right_label", "")).strip().upper()
+        left_col = str(jspec.get("left_col", "")).strip()
+        right_col = str(jspec.get("right_col", "")).strip()
+        jtype = str(jspec.get("type", "LEFT")).strip().upper()
+
+        if left not in table_names or right not in table_names:
+            raise ValueError("Join references an inaccessible table.")
+        if jtype not in allowed_join_types:
+            raise ValueError(f"Invalid join type: {jtype!r}")
+        if left_col not in table_cols[left]:
+            raise ValueError(
+                f"Join column {left_col!r} not accessible for {left}."
+            )
+        if right_col not in table_cols[right]:
+            raise ValueError(
+                f"Join column {right_col!r} not accessible for {right}."
+            )
+        right_tname = table_names[right]
+        join_clauses.append(
+            f"{jtype} JOIN `{right_tname}` AS `_t_{right}` "
+            f"ON `_t_{left}`.{q_id(left_col)} = `_t_{right}`.{q_id(right_col)}"
+        )
+
+    where_parts: List[str] = []
+    params: Dict[str, Any] = {}
+    param_idx = 0
+
+    if "FINDEX" in table_names:
+        run_ids_sorted = sorted(run_ids)
+        if not run_ids_sorted:
+            return "SELECT 0 AS cnt", {}
+        params["_run_ids"] = run_ids_sorted
+        where_parts.append("`_t_FINDEX`.`KW_RUN_ID` IN :_run_ids")
+
+    for fspec in filters_spec:
+        tlabel = str(fspec.get("table_label", "")).strip().upper()
+        col = str(fspec.get("column", "")).strip()
+        op_raw = str(fspec.get("op", "")).strip().upper()
+
+        if tlabel not in table_names:
+            raise ValueError(
+                f"Filter references an inaccessible table: {tlabel!r}"
+            )
+        if col not in table_cols[tlabel]:
+            raise ValueError(
+                f"Filter column {col!r} not accessible for {tlabel}."
+            )
+
+        col_ref = f"`_t_{tlabel}`.{q_id(col)}"
+
+        if op_raw in allowed_null_ops:
+            where_parts.append(f"{col_ref} {op_raw}")
+        elif op_raw in allowed_in_ops:
+            raw_values = fspec.get("values") or []
+            if not isinstance(raw_values, list):
+                raw_values = [raw_values]
+            values = [str(v) for v in raw_values if str(v).strip()]
+            if not values:
+                raise ValueError(
+                    f"IN filter on {col!r} requires at least one value."
+                )
+            pname = f"p{param_idx}"
+            param_idx += 1
+            where_parts.append(f"{col_ref} {op_raw} :{pname}")
+            params[pname] = values
+        elif op_raw in allowed_ops:
+            pname = f"p{param_idx}"
+            param_idx += 1
+            where_parts.append(f"{col_ref} {op_raw} :{pname}")
+            params[pname] = fspec.get("value", "")
+        else:
+            raise ValueError(f"Invalid filter operator: {op_raw!r}")
+
+    sql = f"SELECT COUNT(*) AS cnt\nFROM {from_clause}"
+    for jc in join_clauses:
+        sql += f"\n{jc}"
+    if where_parts:
+        sql += f'\nWHERE {" AND ".join(where_parts)}'
+
+    return sql, params
 
 
 def parse_text_presets(

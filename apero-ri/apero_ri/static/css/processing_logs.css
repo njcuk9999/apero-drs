@@ -227,3 +227,365 @@
 .pl-rs-bool    { color: #f78c6c; font-weight: 600; }
 .pl-rs-number  { color: #f78c6c; }
 .pl-rs-string  { color: #c792ea; }
+
+/* ============================================================
+   Group summary cards (pid page)
+   ============================================================ */
+.pl-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.6rem;
+    margin: 0.25rem 0 0.85rem;
+}
+.pl-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.7rem;
+    background: var(--ari-card-bg);
+    padding: 0.6rem 0.75rem;
+    min-width: 0;
+}
+.pl-card--wide {
+    grid-column: 1 / -1;
+}
+.pl-card--fail {
+    border-left: 4px solid #cc4b37;
+}
+.pl-card--pass {
+    border-left: 4px solid #2e9f5f;
+}
+.pl-card__label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ari-text-muted);
+    margin-bottom: 0.2rem;
+}
+.pl-card__value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ari-text);
+    word-break: break-word;
+}
+.pl-card__value--mono {
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* ============================================================
+   Log viewer maximize state
+   ============================================================ */
+.pl-log-overlay--max .pl-log-panel {
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+}
+
+/* ============================================================
+   Generate Fail Report overlay
+   ============================================================ */
+.pl-report-panel {
+    width: min(96vw, 880px);
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+}
+.pl-report-panel .pl-log-toolbar {
+    background: var(--ari-surface-muted, #f3f4f6);
+    border-bottom-color: var(--ari-border);
+}
+.pl-report-panel .pl-log-filename {
+    color: var(--ari-text);
+}
+.pl-report-body {
+    padding: 1rem 1.1rem 1.2rem;
+    overflow: auto;
+    color: var(--ari-text);
+}
+.pl-report-intro {
+    margin: 0 0 0.9rem;
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+.pl-report-spinner {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 1.5rem 0.5rem;
+    font-size: 1rem;
+    color: var(--ari-text-muted);
+}
+.pl-report-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+.pl-report-expiry {
+    color: var(--ari-text-muted);
+    font-size: 0.82rem;
+}
+.pl-report-analyser__title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 1rem;
+    margin: 0.5rem 0 0.6rem;
+    color: var(--ari-text);
+}
+.pl-report-table-wrap {
+    overflow: auto;
+    max-height: 46vh;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.6rem;
+}
+.pl-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+.pl-report-table th,
+.pl-report-table td {
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--ari-border);
+    vertical-align: top;
+}
+.pl-report-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--ari-surface-muted, #f3f4f6);
+    color: var(--ari-text-muted);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.pl-report-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.pl-report-msg code {
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.8rem;
+    color: var(--ari-text);
+    word-break: break-word;
+}
+.pl-report-empty {
+    color: var(--ari-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+.pl-report-error {
+    color: #cc4b37;
+    background: #fff2f1;
+    border: 1px solid #f3b1a7;
+    border-radius: 0.55rem;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.9rem;
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] .pl-report-panel .pl-log-toolbar,
+[data-theme="dark"] .pl-report-table thead th {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .pl-report-error {
+    background: #2a0d09;
+    border-color: #7c1d13;
+    color: #f85149;
+}
+
+/* ── "Check Known Errors" column link (proc_logs tables) ── */
+.pl-known-err-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    color: var(--ari-primary, #1d4ed8);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.pl-known-err-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Actions column buttons (proc_logs tables) ── */
+.pl-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.pl-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--ari-border, #cfd8e3);
+    border-radius: 6px;
+    background: var(--ari-surface, #fff);
+    color: var(--ari-primary, #1d4ed8);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease,
+        color 0.15s ease, transform 0.15s ease;
+}
+
+.pl-action-btn:hover {
+    background: var(--ari-surface-muted, #f3f6fb);
+    border-color: var(--ari-primary, #1d4ed8);
+    transform: translateY(-1px);
+}
+
+.pl-action-btn--github {
+    color: #24292f;
+}
+
+.pl-action-btn--github:hover {
+    color: #000;
+}
+
+.pl-action-btn--known {
+    color: var(--ari-warning, #b45309);
+}
+
+.pl-action-btn--known:hover {
+    color: #92400e;
+}
+
+/* ── Clickable summary cards (filter toggles) ── */
+.pl-card--clickable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s, box-shadow 0.12s;
+}
+.pl-card--clickable:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Active states: tinted background + stronger border */
+.pl-card--active-fail {
+    background: #fde8e8;
+    border-left-color: #cc4b37;
+    box-shadow: 0 0 0 2px #f3b1a7;
+}
+.pl-card--active-pass {
+    background: #e6f7ee;
+    border-left-color: #2e9f5f;
+    box-shadow: 0 0 0 2px #a7dfbc;
+}
+
+[data-theme="dark"] .pl-card--active-fail {
+    background: #2a0d09;
+    border-left-color: #cc4b37;
+    box-shadow: 0 0 0 2px #7c2718;
+}
+[data-theme="dark"] .pl-card--active-pass {
+    background: #0d2818;
+    border-left-color: #2e9f5f;
+    box-shadow: 0 0 0 2px #1a5c35;
+}
+
+/* ── Error analyser expandable block rows ── */
+.pl-blk-toggle {
+    margin-left: 0.4rem;
+    font-size: 0.72rem;
+    padding: 0.1rem 0.4rem;
+    min-height: unset;
+    min-width: unset;
+}
+.pl-blk-detail td {
+    background: var(--ari-surface-muted, #f8fafc);
+    font-size: 0.82rem;
+}
+[data-theme="dark"] .pl-blk-detail td {
+    background: var(--ari-surface-muted, #1c2128);
+}
+
+/* ── Error analyser template + variable display ── */
+.pl-report-template {
+    font-size: 0.82rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: transparent;
+}
+.pl-report-var {
+    margin: 0.2rem 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+.pl-report-var__key {
+    font-family: var(--ari-font-mono, monospace);
+    font-weight: 700;
+    color: var(--ari-accent, #e65100);
+    font-size: 0.82rem;
+}
+
+/* ── Report cache status banner ── */
+.pl-report-cache-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.55rem;
+    background: var(--ari-surface-muted, #f3f4f6);
+    border: 1px solid var(--ari-border);
+    font-size: 0.88rem;
+    color: var(--ari-text-muted);
+    margin-bottom: 0.5rem;
+}
+.pl-report-cache-banner--stale {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+[data-theme="dark"] .pl-report-cache-banner {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .pl-report-cache-banner--stale {
+    background: #2a0d09;
+    border-color: #7c1d13;
+    color: #f85149;
+}
+
+/* ── Log line-range picker ── */
+.pl-log-range-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.pl-log-range-label {
+    color: #aaa;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+.pl-log-range-input {
+    width: 5.5rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    font-family: var(--ari-font-mono, monospace);
+}
+.pl-log-range-input:focus {
+    outline: none;
+    border-color: #666;
+}

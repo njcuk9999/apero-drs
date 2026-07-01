@@ -435,9 +435,9 @@
         var saBox = document.createElement('input');
         saBox.type = 'checkbox';
         saBox.id = 'fb-select-all';
-        saBox.title = 'Select / deselect all visible';
+        saBox.title = 'Select / deselect all rows (all pages)';
         saBox.addEventListener('change', function () {
-            fbPageRows().forEach(function (r) {
+            fbFilteredRows.forEach(function (r) {
                 if (fbGroupByCol) {
                     (r.rows || []).forEach(function (gr) {
                         var k = rowKey(gr);

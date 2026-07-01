@@ -15,6 +15,44 @@
 </p>
 {% endif %}
 
+{% if not is_monitor %}
+<div id="ari-bm-banner" class="ari-card ari-bm-banner" style="margin-bottom:1.5rem;">
+    <button type="button" class="ari-bm-banner__dismiss" id="ari-bm-banner-dismiss"
+            title="Dismiss" aria-label="Dismiss">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="ari-card__body">
+        <h2 style="margin-top:0;">
+            <i class="fa-solid fa-user-plus"></i> Become an APERO Monitor
+        </h2>
+        <p>
+            APERO Monitors help keep the instrument data reduction
+            pipelines running smoothly — a great, flexible way to gain
+            hands-on experience with real telescope data.
+        </p>
+        <a class="ari-btn ari-btn--primary"
+           href="/monitor_portal/become_monitor">
+            <i class="fa-solid fa-user-plus"></i> Become a Monitor
+        </a>
+    </div>
+</div>
+<script>
+(function () {
+    var key = 'ari_dismiss_become_monitor_banner';
+    var banner = document.getElementById('ari-bm-banner');
+    var dismiss = document.getElementById('ari-bm-banner-dismiss');
+    if (!banner || !dismiss) return;
+    if (localStorage.getItem(key) === '1') {
+        banner.style.display = 'none';
+    }
+    dismiss.addEventListener('click', function () {
+        localStorage.setItem(key, '1');
+        banner.style.display = 'none';
+    });
+})();
+</script>
+{% endif %}
+
 <div class="ari-home-hero">
     <div class="ari-home-hero__body">
         <p class="ari-home-hero__text">APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs). This is the APERO data portal where you can view documentation, install and with permission access some of our reductions.</p>
@@ -33,6 +71,16 @@
                         {% endif %}
                     </li>
                     {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if not is_monitor %}
+            <div class="ari-home-hero__col">
+                <h4><i class="fa-solid fa-user-plus"></i> Get Involved</h4>
+                <ul>
+                    <li><a href="/monitor_portal/become_monitor">Become an APERO Monitor</a></li>
+                    <li><a href="/docs/monitor/being_a_monitor">What does a Monitor do?</a></li>
                 </ul>
             </div>
             {% endif %}
@@ -58,7 +106,7 @@
     <p class="ari-home-hero__updated">Last updated March 2026</p>
 </div>
 
-{% if cards %}
+{% if cards or not is_monitor %}
 <h3 class="ari-home-section-heading"><i class="fa-solid fa-compass"></i> Site Content</h3>
 <div class="ari-cards">
     {% for card in cards %}
@@ -67,8 +115,29 @@
             <i class="{{ card.icon }}"></i>
         </div>
         <span class="ari-card__label">{{ card.label }}</span>
+        {% if card_health_badges and card_health_badges.get(card.id) %}
+        {% set _hb_status = card_health_badges.get(card.id) %}
+        <span class="ari-card__health-badge ari-card__health-badge--{{ _hb_status }}"
+              title="Admin health: {{ _hb_status }}"></span>
+        {% endif %}
     </a>
+    {% if card.id == 'home.github' and not is_monitor %}
+    <a href="/monitor_portal/become_monitor" class="ari-card">
+        <div class="ari-card__icon">
+            <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <span class="ari-card__label">Become a Monitor</span>
+    </a>
+    {% endif %}
     {% endfor %}
+    {% if not is_monitor and not (cards|selectattr('id', 'equalto', 'home.github')|list) %}
+    <a href="/monitor_portal/become_monitor" class="ari-card">
+        <div class="ari-card__icon">
+            <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <span class="ari-card__label">Become a Monitor</span>
+    </a>
+    {% endif %}
 </div>
 {% else %}
 <p style="color: var(--ari-text-muted);">No sections available with your

@@ -15,12 +15,15 @@ from apero_ri.core.auth import (
     load_science_groups,
     load_users,
 )
+from apero_ri.core.log import get_logger
 from apero_ri.core.permissions import (
     get_children,
     load_parameters,
     page_id_to_url,
     resolve_user_permissions,
 )
+
+log = get_logger(__name__)
 
 
 def get_admin_health(
@@ -127,7 +130,8 @@ def refresh_admin_health_after_change(
             force=True,
             allow_async_refresh=True,
         )
-    except Exception:
+    except Exception as exc:
+        log.warning("Failed to trigger background health refresh: %s", exc)
         return
 
 
@@ -157,8 +161,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     "status": "ok",
                     "message": "",
                 }
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: users check failed: %s", exc)
     if "home.admin_portal.users" in health:
         health["home.admin_portal.users"]["duration_s"] = round(
             time.monotonic() - _t0, 2
@@ -187,8 +191,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                         "status": "error",
                         "message": f'SMTP connection failed: {test["error"]}',
                     }
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: email check failed: %s", exc)
     if "home.admin_portal.email" in health:
         health["home.admin_portal.email"]["duration_s"] = round(
             time.monotonic() - _t0, 2
@@ -254,8 +258,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                                 "error",
                                 "unknown error")}',
                     }
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: backup check failed: %s", exc)
     if "home.admin_portal.backup_settings" in health:
         health["home.admin_portal.backup_settings"]["duration_s"] = round(
             time.monotonic() - _t0, 2
@@ -266,8 +270,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
         try:
             health_check = sb.health_check()
             health["home.admin_portal.sshfs_management"] = health_check
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: sshfs check failed: %s", exc)
     if "home.admin_portal.sshfs_management" in health:
         health["home.admin_portal.sshfs_management"]["duration_s"] = round(
             time.monotonic() - _t0, 2
@@ -292,8 +296,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     "status": "ok",
                     "message": "",
                 }
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: apero profiles check failed: %s", exc)
     if "home.admin_portal.apero_profiles" in health:
         health["home.admin_portal.apero_profiles"]["duration_s"] = round(
             time.monotonic() - _t0, 2
@@ -355,8 +359,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     "status": "ok",
                     "message": "",
                 }
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: async tasks check failed: %s", exc)
     if "home.admin_portal.async_tasks" in health:
         health["home.admin_portal.async_tasks"]["duration_s"] = round(
             time.monotonic() - _t0, 2
@@ -381,6 +385,7 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
             assigned_run_ids = set()
             groups_without_users = []
             groups_without_run_ids = []
+            run_id_pi_map = {}
             for inst in instruments:
                 inst_users = set(get_users_for_instrument(inst))
                 total_users |= inst_users
@@ -390,6 +395,9 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     if str(rid).strip()
                 }
                 total_run_ids |= inst_run_ids
+                run_id_pi_map.update(
+                    app._get_instrument_run_id_pi_names(inst)
+                )
 
                 groups = load_science_groups(inst)
                 groups, _ = app._sync_all_science_group(
@@ -466,7 +474,12 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     f"{len(unassigned_run_ids)} run ID(s) not "
                     "assigned to any science group"
                 )
-                details.extend([f"run_id: {rid}" for rid in unassigned_run_ids])
+                for rid in unassigned_run_ids:
+                    pi = run_id_pi_map.get(rid, '')
+                    if pi:
+                        details.append(f"run_id: {rid} [{pi}]")
+                    else:
+                        details.append(f"run_id: {rid}")
 
             if issue_parts:
                 health["home.admin_portal.science_groups"] = {
@@ -543,8 +556,8 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                 "message": chk_health["message"],
                 "details": chk_health.get("details", []),
             }
-        except Exception:
-            pass
+        except Exception as exc:
+            log.warning("admin health: apero checks policy check failed: %s", exc)
     if "home.admin_portal.apero_checks_policy" in health:
         health["home.admin_portal.apero_checks_policy"]["duration_s"] = round(
             time.monotonic() - _t0, 2

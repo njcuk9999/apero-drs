@@ -116,18 +116,30 @@ class ARIApp(Flask):
         _impls.ariapp_init(self, **kwargs)
 
     # -----------------------------------------------------------------
-    # Live-reloading group definitions
-    # Always read groups.yaml from disk so permission changes take
-    # effect immediately without restarting the server.
+    # Group definitions with TTL cache
+    # Groups are re-read from disk at most every _GROUPS_TTL seconds so
+    # permission changes propagate quickly without a per-request disk read.
     # -----------------------------------------------------------------
+    _groups_cache: dict = {}    # {'data': ..., 'expires': float}
+    _groups_lock: threading.Lock = threading.Lock()
+    _GROUPS_TTL: float = 30.0   # seconds
+
     @property
     def ari_groups(self):
-        return perms.load_groups()
+        now = time.monotonic()
+        with ARIApp._groups_lock:
+            cached = ARIApp._groups_cache
+            if cached and cached.get("expires", 0) > now:
+                return cached["data"]
+            data = perms.load_groups()
+            ARIApp._groups_cache = {"data": data, "expires": now + ARIApp._GROUPS_TTL}
+            return data
 
     @ari_groups.setter
     def ari_groups(self, _value):
-        # Ignore any cached assignment; the property always reads live.
-        pass
+        # Invalidate the cache so the next read fetches fresh data.
+        with ARIApp._groups_lock:
+            ARIApp._groups_cache = {}
 
     # -----------------------------------------------------------------
     # Argument parsing
@@ -146,6 +158,12 @@ class ARIApp(Flask):
     @staticmethod
     def _load_or_create_secret() -> str:
         return _impls.ariapp_load_or_create_secret()
+
+    # -----------------------------------------------------------------
+    # Production hardening (security headers, proxy support, limits)
+    # -----------------------------------------------------------------
+    def _configure_production_hardening(self):
+        return _impls.ariapp_configure_production_hardening(self)
 
     # -----------------------------------------------------------------
     # Context processors (available in every template)
@@ -536,6 +554,9 @@ class ARIApp(Flask):
     def _admin_health_refresher_loop(self) -> None:
         return _impls.ariapp_admin_health_refresher_loop(self)
 
+    def _admin_health_digest_loop(self) -> None:
+        return _impls.ariapp_admin_health_digest_loop(self)
+
     def _refresh_admin_health_entry(
         self, cache_key: str, user_info, perms
     ) -> None:
@@ -575,6 +596,12 @@ class ARIApp(Flask):
 
     def _api_admin_health_update(self):
         return _impls.ariapp_api_admin_health_update(self)
+
+    def _api_admin_audit_log(self):
+        return _impls.ariapp_api_admin_audit_log(self)
+
+    def _api_admin_health_history(self):
+        return _impls.ariapp_api_admin_health_history(self)
 
     def _api_admin_health_patch(self):
         return _impls.ariapp_api_admin_health_patch(self)
@@ -1388,6 +1415,10 @@ class ARIApp(Flask):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_notifications_view(self)
 
+    def _become_monitor_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.become_monitor_view(self)
+
     def _monitor_portal_index_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_portal_index_view(self)
@@ -1415,6 +1446,10 @@ class ARIApp(Flask):
     def _monitor_schedule_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_schedule_view(self)
+
+    def _monitor_awards_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_awards_view(self)
 
     def _monitor_processing_logs_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
@@ -1496,6 +1531,48 @@ class ARIApp(Flask):
         )
         return plh.api_processing_log_file(self)
 
+    def _api_processing_logs_fail_report(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_fail_report(self)
+
+    def _api_processing_logs_fail_report_info(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_fail_report_info(self)
+
+    def _api_processing_logs_report_download(self, token):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_report_download(self, token)
+
+    def _api_processing_logs_filters_list(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_filters_list(self)
+
+    def _api_processing_logs_filters_save(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_filters_save(self)
+
+    def _api_processing_logs_filters_delete(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_filters_delete(self)
+
+    def _api_processing_logs_pid_export(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_pid_export(self)
+
     def _api_apero_checks_update_failure(self):
         from apero_ri.application import (
             apero_checks_api_helpers as ach,
@@ -1526,6 +1603,12 @@ class ARIApp(Flask):
         )
         return ach.api_apero_checks_profile_page(self, profile_id)
 
+    def _api_apero_checks_list_obsdirs(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_list_obsdirs(self, profile_id)
+
     def _api_apero_checks_policy_sections(self):
         from apero_ri.application import (
             apero_checks_api_helpers as ach,
@@ -1537,6 +1620,12 @@ class ARIApp(Flask):
             apero_checks_api_helpers as ach,
         )
         return ach.api_apero_checks_view_yaml(self)
+
+    def _api_apero_checks_validate_obsdir(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_validate_obsdir(self)
 
     def _api_apero_checks_rerun_night(self):
         from apero_ri.application import (
@@ -1550,6 +1639,12 @@ class ARIApp(Flask):
         )
         return ach.api_apero_checks_rerun_single_check(self)
 
+    def _api_apero_checks_advanced_run(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_advanced_run(self)
+
     def _api_apero_checks_clean_reset_profile(self):
         from apero_ri.application import (
             apero_checks_api_helpers as ach,
@@ -1561,6 +1656,24 @@ class ARIApp(Flask):
             apero_checks_api_helpers as ach,
         )
         return ach.api_apero_checks_delete_obsdir(self)
+
+    def _api_apero_checks_exclude_obsdir(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_exclude_obsdir(self)
+
+    def _api_apero_checks_list_excluded_obsdirs(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_list_excluded_obsdirs(self)
+
+    def _api_apero_checks_remove_excluded_obsdir(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_remove_excluded_obsdir(self)
 
     def _api_apero_checks_delete_test_from_yamls(self):
         from apero_ri.application import (
@@ -1591,6 +1704,24 @@ class ARIApp(Flask):
             apero_checks_api_helpers as ach,
         )
         return ach.api_apero_checks_queue_clear_history(self, profile_id)
+
+    def _api_apero_checks_check_results(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_check_results(self)
+
+    def _api_apero_checks_check_info_async(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_check_info_async(self)
+
+    def _api_apero_checks_policy_build_status(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_policy_build_status(self)
 
 
         kwargs = dict(profile_id=profile_id)
@@ -1772,6 +1903,12 @@ class ARIApp(Flask):
     def _api_basket_jobs(self):
         return _impls.ariapp_api_basket_jobs(self)
 
+    def _api_basket_jobs_extend(self):
+        return _impls.ariapp_api_basket_jobs_extend(self)
+
+    def _api_basket_jobs_expiry(self):
+        return _impls.ariapp_api_basket_jobs_expiry(self)
+
     def _api_basket_jobs_remove(self):
         return _impls.ariapp_api_basket_jobs_remove(self)
 
@@ -1844,6 +1981,14 @@ class ARIApp(Flask):
     def _build_safe_select_query(table_access, query_spec, run_ids):
         args = [table_access, query_spec, run_ids]
         return _impls.ariapp_build_safe_select_query(*args)
+
+    @staticmethod
+    def _build_safe_count_query(table_access, query_spec, run_ids):
+        args = [table_access, query_spec, run_ids]
+        return _impls.ariapp_build_safe_count_query(*args)
+
+    def _api_query_db_count(self):
+        return query_db_api_helpers.api_query_db_count(self)
 
     def _ri_query_db_view(self, profile_id):
         kwargs = dict(profile_id=profile_id)
@@ -2253,6 +2398,14 @@ class ARIApp(Flask):
 
     def _api_async_tasks_download_file(self):
         return _impls.ariapp_api_async_tasks_download_file(self)
+
+    def _api_async_tasks_gsheet_oauth_start(self):
+        from apero_ri.application import async_tasks_api_helpers as _ath
+        return _ath.api_async_tasks_gsheet_oauth_start(self)
+
+    def _api_async_tasks_gsheet_oauth_callback(self):
+        from apero_ri.application import async_tasks_api_helpers as _ath
+        return _ath.api_async_tasks_gsheet_oauth_callback(self)
 
     # -----------------------------------------------------------------
     # User links API

@@ -15,6 +15,7 @@
     var profileId = cfg.profileId || '';
     var schemaApiUrl = cfg.schemaApiUrl || '/api/data-portal/query-db/schema';
     var runApiUrl = cfg.runApiUrl || '/api/data-portal/query-db/run';
+    var countApiUrl = cfg.countApiUrl || '/api/data-portal/query-db/count';
     var basketAddApiUrl = cfg.basketAddApiUrl || '/api/data-portal/basket/add';
     var basketSummaryApiUrl = cfg.basketSummaryApiUrl || '/api/data-portal/basket/summary';
     var presets = Array.isArray(cfg.presets) ? cfg.presets : [];
@@ -38,9 +39,13 @@
     var selectedRowIdxs = new Set();
     /** Addable row indices currently visible on page */
     var visibleAddableIdxs = [];
+    /** All addable row indices across all pages */
+    var allAddableIdxs = [];
 
     /** Top horizontal scroll mirror state */
     var _scrollSync = false;
+    /** AbortController for the current running query (null when idle) */
+    var _runAbortController = null;
 
     /* ------------------------------------------------------------------ */
     /* DOM helpers                                                          */
@@ -435,9 +440,128 @@
         { value: '>=', label: '>=' },
         { value: 'LIKE', label: 'LIKE' },
         { value: 'NOT LIKE', label: 'NOT LIKE' },
+        { value: 'IN', label: 'IN' },
+        { value: 'NOT IN', label: 'NOT IN' },
         { value: 'IS NULL', label: 'IS NULL' },
         { value: 'IS NOT NULL', label: 'IS NOT NULL' },
     ];
+
+    function isInOp(op) {
+        return op === 'IN' || op === 'NOT IN';
+    }
+
+    function isNullOp(op) {
+        return op === 'IS NULL' || op === 'IS NOT NULL';
+    }
+
+    /** Resolve one name against astrometrics; calls cb(aperoName) or cb(null) on failure/cancel. */
+    function resolveObjname(query, btn, originalHtml, cb) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        fetch('/api/astrometrics/find-object?search_type=name&query=' +
+            encodeURIComponent(query))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                if (!data.success) { alert('Resolve failed: ' + (data.error || 'Unknown error')); cb(null); return; }
+                var results = data.results || {};
+                var allNames = [];
+                Object.keys(results).forEach(function (pid) {
+                    (results[pid] || []).forEach(function (obj) {
+                        if (obj.name && allNames.indexOf(obj.name) === -1) allNames.push(obj.name);
+                    });
+                });
+                if (!allNames.length) { alert('No APERO object found matching "' + query + '".'); cb(null); return; }
+                var aperoName = allNames[0];
+                if (allNames.length > 1) {
+                    var chosen = prompt(
+                        'Multiple matches found. Choose one:\n' + allNames.join('\n'),
+                        aperoName
+                    );
+                    if (!chosen) { cb(null); return; }
+                    aperoName = chosen.trim();
+                }
+                cb(aperoName);
+            })
+            .catch(function () {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                alert('Network error during resolve.');
+                cb(null);
+            });
+    }
+
+    /** Build one value entry for the IN multi-value widget */
+    function makeInValueEntry(valuesArr, entryIdx, isObjname, onUpdate) {
+        var wrap = makeEl('div', 'qdb-in-entry');
+
+        var inp = makeEl('input', 'qdb-filter-val qdb-input qdb-in-val');
+        inp.type = 'text';
+        inp.value = valuesArr[entryIdx] || '';
+        inp.placeholder = 'value ' + (entryIdx + 1);
+        inp.addEventListener('input', function () {
+            valuesArr[entryIdx] = this.value;
+            onUpdate();
+        });
+        wrap.appendChild(inp);
+
+        if (isObjname) {
+            var resolveHtml = '<i class="fa-solid fa-magnifying-glass"></i>';
+            var rBtn = makeEl('button', 'qdb-resolve-btn ari-btn ari-btn--sm ari-btn--secondary', resolveHtml);
+            rBtn.type = 'button';
+            rBtn.title = 'Resolve to APERO name';
+            rBtn.addEventListener('click', function () {
+                var q = inp.value.trim();
+                if (!q) return;
+                resolveObjname(q, rBtn, resolveHtml, function (name) {
+                    if (!name) return;
+                    inp.value = name;
+                    valuesArr[entryIdx] = name;
+                    onUpdate();
+                });
+            });
+            wrap.appendChild(rBtn);
+        }
+
+        var delBtn = makeEl('button', 'qdb-remove-btn', '<i class="fa-solid fa-minus"></i>');
+        delBtn.type = 'button';
+        delBtn.title = 'Remove this value';
+        delBtn.addEventListener('click', function () {
+            valuesArr.splice(entryIdx, 1);
+            onUpdate();
+            renderFilters();
+        });
+        wrap.appendChild(delBtn);
+
+        return wrap;
+    }
+
+    /** Build the multi-value IN widget container */
+    function makeInValuesWidget(f, idx) {
+        var colIsObjname = String(f.column || '').toUpperCase().indexOf('KW_OBJNAME') !== -1;
+        if (!Array.isArray(f.values) || f.values.length === 0) f.values = [''];
+
+        var container = makeEl('div', 'qdb-in-widget');
+
+        function rebuild() {
+            container.innerHTML = '';
+            f.values.forEach(function (_, i) {
+                container.appendChild(makeInValueEntry(f.values, i, colIsObjname, function () {}));
+            });
+            var addBtn = makeEl('button', 'ari-btn ari-btn--sm ari-btn--secondary qdb-in-add-btn',
+                '<i class="fa-solid fa-plus"></i> Add value');
+            addBtn.type = 'button';
+            addBtn.addEventListener('click', function () {
+                f.values.push('');
+                rebuild();
+            });
+            container.appendChild(addBtn);
+        }
+
+        rebuild();
+        return container;
+    }
 
     function makeFilterRow(f, idx) {
         var row = makeEl('div', 'qdb-filter-row');
@@ -449,28 +573,25 @@
             var parts = this.value.split('.', 2);
             filters[idx].table_label = parts[0] || '';
             filters[idx].column = parts[1] || '';
+            // Re-render so IN widget updates objname awareness
+            renderFilters();
         });
 
         var opSel = makeSelect(FILTER_OPS, f.op || '=', 'qdb-select');
         opSel.addEventListener('change', function () {
-            filters[idx].op = this.value;
-            // Toggle value input visibility
-            var valInput = row.querySelector('.qdb-filter-val');
-            if (valInput) {
-                valInput.style.display =
-                    (this.value === 'IS NULL' || this.value === 'IS NOT NULL')
-                        ? 'none' : '';
+            var newOp = this.value;
+            var wasIn = isInOp(filters[idx].op);
+            var nowIn = isInOp(newOp);
+            filters[idx].op = newOp;
+            // When switching between IN and non-IN, reset values/value
+            if (nowIn && !wasIn) {
+                filters[idx].values = filters[idx].value ? [filters[idx].value] : [''];
+                delete filters[idx].value;
+            } else if (!nowIn && wasIn) {
+                filters[idx].value = (filters[idx].values || [])[0] || '';
+                delete filters[idx].values;
             }
-        });
-
-        var isNull = (f.op === 'IS NULL' || f.op === 'IS NOT NULL');
-        var valInput = makeEl('input', 'qdb-filter-val qdb-input');
-        valInput.type = 'text';
-        valInput.value = f.value || '';
-        valInput.placeholder = 'value';
-        if (isNull) valInput.style.display = 'none';
-        valInput.addEventListener('input', function () {
-            filters[idx].value = this.value;
+            renderFilters();
         });
 
         var removeBtn = makeEl('button', 'qdb-remove-btn',
@@ -484,7 +605,43 @@
 
         row.appendChild(colSel);
         row.appendChild(opSel);
-        row.appendChild(valInput);
+
+        var currentOp = f.op || '=';
+
+        if (isNullOp(currentOp)) {
+            // No value widget needed
+        } else if (isInOp(currentOp)) {
+            row.appendChild(makeInValuesWidget(f, idx));
+        } else {
+            // Single-value input + optional resolve button
+            var valInput = makeEl('input', 'qdb-filter-val qdb-input');
+            valInput.type = 'text';
+            valInput.value = f.value || '';
+            valInput.placeholder = 'value';
+            valInput.addEventListener('input', function () {
+                filters[idx].value = this.value;
+            });
+            row.appendChild(valInput);
+
+            var colIsObjname = String(f.column || '').toUpperCase().indexOf('KW_OBJNAME') !== -1;
+            if (colIsObjname) {
+                var resolveHtml = '<i class="fa-solid fa-magnifying-glass"></i> Resolve';
+                var resolveBtn = makeEl('button', 'qdb-resolve-btn ari-btn ari-btn--sm ari-btn--secondary', resolveHtml);
+                resolveBtn.type = 'button';
+                resolveBtn.title = 'Resolve object name to APERO name via astrometrics';
+                resolveBtn.addEventListener('click', function () {
+                    var query = (valInput.value || '').trim();
+                    if (!query) return;
+                    resolveObjname(query, resolveBtn, resolveHtml, function (name) {
+                        if (!name) return;
+                        valInput.value = name;
+                        filters[idx].value = name;
+                    });
+                });
+                row.appendChild(resolveBtn);
+            }
+        }
+
         row.appendChild(removeBtn);
         return row;
     }
@@ -807,6 +964,14 @@
                 return f.table_label && f.column && f.op;
             })
             .map(function (f) {
+                if (isInOp(f.op)) {
+                    return {
+                        table_label: f.table_label,
+                        column: f.column,
+                        op: f.op,
+                        values: (f.values || []).filter(function (v) { return String(v).trim(); }),
+                    };
+                }
                 return {
                     table_label: f.table_label,
                     column: f.column,
@@ -839,6 +1004,32 @@
         };
     }
 
+    function _setRunBusy(busy) {
+        var btn = el('qdb-run-btn');
+        var cancelBtn = el('qdb-cancel-btn');
+        var countBtn = el('qdb-count-btn');
+        if (busy) {
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running…'; }
+            if (cancelBtn) cancelBtn.style.display = '';
+            if (countBtn) countBtn.disabled = true;
+        } else {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-play"></i> Run Query'; }
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (countBtn) countBtn.disabled = false;
+            _runAbortController = null;
+        }
+    }
+
+    function cancelQuery() {
+        if (_runAbortController) {
+            _runAbortController.abort();
+            _runAbortController = null;
+        }
+        _setRunBusy(false);
+        hide('qdb-idle');
+        showError('Query cancelled.');
+    }
+
     function runQuery() {
         var labels = availableTableLabels();
         if (!labels.length) {
@@ -854,11 +1045,7 @@
             }
         }
 
-        var btn = el('qdb-run-btn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running…';
-        }
+        _setRunBusy(true);
         hide('qdb-error');
         hide('qdb-table-wrap');
         hide('qdb-pagination');
@@ -872,25 +1059,25 @@
         var spec = buildQuerySpec();
         var t0 = Date.now();
 
+        _runAbortController = new AbortController();
+        var signal = _runAbortController.signal;
+
         fetch(runApiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(spec),
+            signal: signal,
         })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var elapsed = ((Date.now() - t0) / 1000).toFixed(2);
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML =
-                        '<i class="fa-solid fa-play"></i> Run Query';
-                }
+                _setRunBusy(false);
 
                 // Update SQL preview
                 var pre = el('qdb-sql-pre');
                 if (pre) pre.textContent = data.sql_preview || '—';
                 var badge = el('qdb-sql-badge');
-                if (badge) badge.textContent = data.success ? '' : 'error';
+                if (badge) badge.textContent = data.success ? 'run' : 'error';
 
                 if (!data.success) {
                     showError(data.error || 'Unknown error.');
@@ -902,12 +1089,67 @@
                 refreshBasketSummary();
             })
             .catch(function (err) {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML =
-                        '<i class="fa-solid fa-play"></i> Run Query';
-                }
+                if (err && err.name === 'AbortError') return; // user cancelled
+                _setRunBusy(false);
                 showError('Network error: ' + err);
+            });
+    }
+
+    function countQuery() {
+        var labels = availableTableLabels();
+        if (!labels.length) {
+            showError('Select at least one table before counting.');
+            return;
+        }
+        for (var i = 0; i < labels.length; i++) {
+            if (!(selectedTables[labels[i]].columns || []).length) {
+                showError('Table ' + labels[i] + ' has no columns selected.');
+                return;
+            }
+        }
+
+        var countBtn = el('qdb-count-btn');
+        var popup = el('qdb-count-popup');
+        if (countBtn) { countBtn.disabled = true; countBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Counting…'; }
+        if (popup) { popup.style.display = 'none'; }
+
+        var spec = buildQuerySpec();
+
+        fetch(countApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(spec),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (countBtn) { countBtn.disabled = false; countBtn.innerHTML = '<i class="fa-solid fa-hashtag"></i> Count'; }
+
+                // Update SQL preview
+                var pre = el('qdb-sql-pre');
+                if (pre && data.sql_preview) pre.textContent = data.sql_preview;
+                var badge = el('qdb-sql-badge');
+                if (badge) badge.textContent = data.success ? 'count' : 'error';
+
+                if (!data.success) {
+                    if (popup) { popup.textContent = 'Error: ' + (data.error || 'unknown'); popup.style.display = ''; }
+                    return;
+                }
+                if (popup) {
+                    var limit = data.limit || 0;
+                    var count = data.count || 0;
+                    var msg = count.toLocaleString() + ' matching row' + (count !== 1 ? 's' : '');
+                    if (limit > 0 && count > limit) {
+                        msg += ' (limited to ' + limit.toLocaleString() + ')';
+                    }
+                    popup.textContent = msg;
+                    popup.style.display = '';
+                    // Auto-dismiss after 6 seconds
+                    setTimeout(function () { if (popup) popup.style.display = 'none'; }, 6000);
+                }
+            })
+            .catch(function (err) {
+                if (countBtn) { countBtn.disabled = false; countBtn.innerHTML = '<i class="fa-solid fa-hashtag"></i> Count'; }
+                if (popup) { popup.textContent = 'Count failed: ' + err; popup.style.display = ''; }
             });
     }
 
@@ -936,6 +1178,7 @@
         resultColumns = Array.isArray(columns) ? columns.slice() : [];
         selectedRowIdxs.clear();
         visibleAddableIdxs = [];
+        allAddableIdxs = [];
 
         if (!rows.length) {
             el('qdb-idle').innerHTML =
@@ -961,10 +1204,10 @@
         var cbAll = document.createElement('input');
         cbAll.type = 'checkbox';
         cbAll.id = 'qdb-select-all';
-        cbAll.title = 'Select all visible rows';
+        cbAll.title = 'Select / deselect all rows (all pages)';
         cbAll.addEventListener('change', function () {
             var checked = !!this.checked;
-            visibleAddableIdxs.forEach(function (idx) {
+            allAddableIdxs.forEach(function (idx) {
                 if (checked) selectedRowIdxs.add(idx);
                 else selectedRowIdxs.delete(idx);
             });
@@ -980,6 +1223,12 @@
             th.title = col;
             th.dataset.colKey = col;
             hdr.appendChild(th);
+        });
+
+        // Pre-compute all addable indices across all pages for select-all
+        allAddableIdxs = [];
+        rows.forEach(function (row, idx) {
+            if (canAddRowToBasket(row)) allAddableIdxs.push(idx);
         });
 
         // Pagination
@@ -1118,18 +1367,18 @@
     function updateSelectAllCheckbox() {
         var cbAll = el('qdb-select-all');
         if (!cbAll) return;
-        if (!visibleAddableIdxs.length) {
+        if (!allAddableIdxs.length) {
             cbAll.checked = false;
             cbAll.indeterminate = false;
             cbAll.disabled = true;
             return;
         }
         cbAll.disabled = false;
-        var selectedVisible = visibleAddableIdxs.filter(function (idx) {
+        var selectedAll = allAddableIdxs.filter(function (idx) {
             return selectedRowIdxs.has(idx);
         }).length;
-        cbAll.checked = selectedVisible === visibleAddableIdxs.length;
-        cbAll.indeterminate = selectedVisible > 0 && selectedVisible < visibleAddableIdxs.length;
+        cbAll.checked = selectedAll === allAddableIdxs.length;
+        cbAll.indeterminate = selectedAll > 0 && selectedAll < allAddableIdxs.length;
     }
 
     function updateBasketActionState() {
@@ -1305,9 +1554,13 @@
             });
         }
 
-        // Run query
+        // Run / Count / Cancel query
         var runBtn = el('qdb-run-btn');
         if (runBtn) runBtn.addEventListener('click', runQuery);
+        var countBtn = el('qdb-count-btn');
+        if (countBtn) countBtn.addEventListener('click', countQuery);
+        var cancelBtn = el('qdb-cancel-btn');
+        if (cancelBtn) cancelBtn.addEventListener('click', cancelQuery);
 
         var addSelectedBtn = el('qdb-btn-add-selected');
         if (addSelectedBtn) {

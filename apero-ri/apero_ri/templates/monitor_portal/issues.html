@@ -49,6 +49,7 @@
             <option value="message">Message</option>
             <option value="flag">Flag</option>
             <option value="target_request">Target request</option>
+            <option value="monitor_application">Monitor application</option>
             <option value="Data access">Data access</option>
             <option value="other">Other</option>
         </select>
@@ -59,29 +60,6 @@
         </label>
         <select id="issues-filter-type" class="mi-select">
             <option value="">All</option>
-            <option value="reported message">Reported message</option>
-            <option value="variable flag">Variable flag</option>
-            <option value="new object">New object</option>
-            <option value="Request">Request</option>
-            <option value="page">Page</option>
-        </select>
-    </div>
-    <div class="mi-toolbar__group">
-        <label for="issues-filter-label"
-               class="mi-toolbar__label">
-            Label
-        </label>
-        <select id="issues-filter-label" class="mi-select">
-            <option value="">All</option>
-            <option value="astrometric-verify">
-                astrometric-verify
-            </option>
-            <option value="astrometric-missing">
-                astrometric-missing
-            </option>
-            <option value="astrometrics-missing-required">
-                astrometrics-missing-required
-            </option>
         </select>
     </div>
     <div class="mi-toolbar__group">
@@ -199,6 +177,8 @@
     const statusEl = document.getElementById('issues-status');
     const fStatus   = document.getElementById('issues-filter-status');
     const fKind     = document.getElementById('issues-filter-kind');
+    const fType     = document.getElementById('issues-filter-type');
+    const fLabel    = document.getElementById('issues-filter-label');
     const fInst     = document.getElementById('issues-filter-instrument');
     const fUser     = document.getElementById('issues-filter-user');
     const fUserRole = document.getElementById('issues-filter-user-role');
@@ -233,7 +213,7 @@
     function kindClass(kind) {
         const k = String(kind || '').toLowerCase();
         const known = ['flag', 'target_request', 'other',
-                       'astrometric', 'ari'];
+                       'astrometric', 'ari', 'monitor_application'];
         if (known.indexOf(k) !== -1) {
             return 'mi-kind--' + k.replace(/[^a-z0-9_-]/g, '');
         }
@@ -268,6 +248,46 @@
             : (it.reason ? String(it.reason).slice(0, 80) : '');
     }
 
+    function rebuildTypeFilter(issues) {
+        const current = fType.value;
+        const types = [];
+        issues.forEach(it => {
+            const t = String(it.type || '').trim();
+            if (t && types.indexOf(t) === -1) types.push(t);
+        });
+        types.sort();
+        fType.innerHTML = '<option value="">All</option>';
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+            if (t === current) opt.selected = true;
+            fType.appendChild(opt);
+        });
+        if (current && !types.includes(current)) {
+            const opt = document.createElement('option');
+            opt.value = current;
+            opt.textContent = current.charAt(0).toUpperCase()
+                + current.slice(1);
+            opt.selected = true;
+            fType.appendChild(opt);
+        }
+    }
+
+    function goToUrl(it) {
+        if (String(it.kind || '') === 'astrometric'
+                && String(it.type || '') === 'verify'
+                && it.apero_name) {
+            const name = encodeURIComponent(String(it.apero_name));
+            return '/astrometrics?fo_tab=advanced'
+                + '&fo_source=target_info'
+                + '&fo_property=APERO_NAME'
+                + '&fo_value=' + name
+                + '&fo_search=1';
+        }
+        return it.origin_url || null;
+    }
+
     function renderRow(it) {
         const tr = document.createElement('tr');
         tr.dataset.issueId = String(it.id);
@@ -287,9 +307,14 @@
             ? escapeHtml(it.reason)
             : '<span style="color:var(--ari-text-muted);">—</span>';
         const isMessageIssue = String(it.kind || '') === 'message';
+        const isAstromVerify = String(it.kind || '') === 'astrometric'
+            && String(it.type || '') === 'verify';
         const goTitle = isMessageIssue
             ? 'Go to flagged message'
-            : 'Open the page where this was flagged';
+            : isAstromVerify
+                ? 'Open astrometrics page for ' + escapeHtml(it.apero_name || '')
+                : 'Open the page where this was flagged';
+        const gotoHref = goToUrl(it);
         let goBtn = '';
         if (isMessageIssue) {
             goBtn = '<button class="mi-btn mi-btn--xs mi-btn--ghost"'
@@ -298,12 +323,14 @@
                 + ' title="' + escapeHtml(goTitle) + '">'
                 + '<i class="fa-solid fa-envelope-open-text"></i>'
                 + '</button>';
-        } else if (it.origin_url) {
+        } else if (gotoHref) {
             goBtn = '<a class="mi-btn mi-btn--xs mi-btn--ghost"'
-                + ' href="' + escapeHtml(it.origin_url) + '"'
+                + ' href="' + escapeHtml(gotoHref) + '"'
                 + ' target="_blank" rel="noopener"'
                 + ' title="' + escapeHtml(goTitle) + '">'
-                + '<i class="fa-solid fa-up-right-from-square"></i>'
+                + '<i class="fa-solid fa-'
+                + (isAstromVerify ? 'star-half-stroke' : 'up-right-from-square')
+                + '"></i>'
                 + '</a>';
         }
         tr.innerHTML = `
@@ -410,6 +437,8 @@
         const params = new URLSearchParams();
         if (fStatus.value) params.set('status', fStatus.value);
         if (fKind.value) params.set('kind', fKind.value);
+        if (fType.value) params.set('type', fType.value);
+        if (fLabel.value) params.set('label', fLabel.value);
         if (fInst.value.trim()) {
             params.set('instrument', fInst.value.trim());
         }
@@ -453,6 +482,7 @@
                             === userVal);
                 }
             }
+            rebuildTypeFilter(data.issues || []);
             tbody.innerHTML = '';
             toRender.forEach(it => {
                 tbody.appendChild(renderRow(it));
@@ -613,6 +643,8 @@
     refreshBtn.addEventListener('click', load);
     fStatus.addEventListener('change', load);
     fKind.addEventListener('change', load);
+    fType.addEventListener('change', load);
+    fLabel.addEventListener('change', load);
     let instTimer = null;
     fInst.addEventListener('input', () => {
         if (instTimer) clearTimeout(instTimer);

@@ -47,6 +47,70 @@
             .replace(/'/g, '&#39;');
     }
 
+    const USER_AWARDS = window.ARI_USER_AWARDS || {};
+
+    function medalsHtml(username) {
+        const award = USER_AWARDS[username];
+        if (!award) {
+            return '';
+        }
+        const icons = [];
+        Object.keys(award.instrument_medals || {}).forEach((inst) => {
+            const m = award.instrument_medals[inst];
+            icons.push(
+                '<i class="fa-solid fa-medal upu-medal upu-medal--' + m +
+                '" title="' + esc(inst + ' top monitor (' + m + ')') +
+                '"></i>'
+            );
+        });
+        if (award.service_medal) {
+            icons.push(
+                '<i class="fa-solid fa-medal upu-medal upu-medal--' +
+                award.service_medal + '" title="' +
+                esc('Service award (' + award.service_medal + ') – ' +
+                    award.total_hours + 'h total') +
+                '"></i>'
+            );
+        }
+        if (award.issues_medal) {
+            icons.push(
+                '<i class="fa-solid fa-medal upu-medal upu-medal--' +
+                award.issues_medal + '" title="' +
+                esc('Issue resolution award (' + award.issues_medal + ') – ' +
+                    award.issues_resolved + ' resolved') +
+                '"></i>'
+            );
+        }
+        return icons.length
+            ? ' <span class="ms-medals">' + icons.join(' ') + '</span>'
+            : '';
+    }
+
+    function medalSuffix(username) {
+        const award = USER_AWARDS[username];
+        if (!award) {
+            return '';
+        }
+        const order = {gold: 3, silver: 2, bronze: 1};
+        let best = null;
+        Object.values(award.instrument_medals || {}).forEach((m) => {
+            if (!best || order[m] > order[best]) {
+                best = m;
+            }
+        });
+        if (award.service_medal &&
+                (!best || order[award.service_medal] > order[best])) {
+            best = award.service_medal;
+        }
+        if (award.issues_medal &&
+                (!best || order[award.issues_medal] > order[best])) {
+            best = award.issues_medal;
+        }
+        const emoji = {gold: ' 🥇', silver: ' 🥈',
+            bronze: ' 🥉'};
+        return best ? emoji[best] : '';
+    }
+
     async function apiGet(path, params) {
         const usp = new URLSearchParams(params || {});
         const url = path + (usp.toString() ? ('?' + usp.toString()) : '');
@@ -538,7 +602,7 @@
                 '<tr class="' + classes + '">' +
                 '<td>' + esc(row.task || '') + '</td>' +
                 '<td>' + usernameCell + '</td>' +
-                '<td>' + esc(rowWho) + '</td>' +
+                '<td>' + esc(rowWho) + medalsHtml(rowUsername) + '</td>' +
                 '<td>' + dateLinkCell(row.date_start) + '</td>' +
                 '<td>' + dateLinkCell(row.date_end) + '</td>' +
                 '<td>' + esc(row.hours || 0) + '</td>' +
@@ -882,6 +946,7 @@
                     const person = (
                         entry.who || entry.username || ''
                     );
+                    const personMedals = medalsHtml(entry.username || '');
                     chips += (
                         '<span class="ms-entry-chip ' + cc +
                         '" title="' + label2 +
@@ -889,6 +954,7 @@
                         label2 +
                         (person ? '<br><small>' + person +
                         '</small>' : '') +
+                        personMedals +
                         '</span>'
                     );
                 }
@@ -927,7 +993,8 @@
         const html = rows.map((row) => (
             '<tr>' +
             '<td>' + (row.username || '') + '</td>' +
-            '<td>' + (row.who || '') + '</td>' +
+            '<td>' + (row.who || '') + medalsHtml(row.username || '') +
+            '</td>' +
             '<td>' + Number(row.days_completed || 0).toFixed(2) + '</td>' +
             '<td>' + Number(row.days_proposed || 0).toFixed(2) + '</td>' +
             '<td>' + Number(row.total_days || 0).toFixed(2) + '</td>' +
@@ -938,7 +1005,9 @@
     }
 
     function renderGraphs(rows) {
-        const names = rows.map((r) => r.who || r.username || '');
+        const names = rows.map((r) => (
+            (r.who || r.username || '') + medalSuffix(r.username || '')
+        ));
         const days = rows.map((r) => Number(r.total_days || 0));
         const hours = rows.map((r) => Number(r.hours_estimated || 0));
 

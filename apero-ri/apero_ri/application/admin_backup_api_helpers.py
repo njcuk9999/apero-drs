@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 
+from apero_ri.core import audit_log
 from apero_ri.core import backup_backend as bb
 from apero_ri.core import secret_store as ss
 from flask import jsonify, request, session, url_for
@@ -248,5 +249,11 @@ def api_admin_backups_save(app):
         )
 
     bb.save_backup_config(cfg)
+    audit_log.record(
+        actor=user_info.get("username", ""),
+        action="backup_config.update",
+        target=str(cfg.get("active_method_id", "")),
+        detail={"provider": cfg.get("provider"), "enabled": cfg.get("enabled")},
+    )
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(success=True)

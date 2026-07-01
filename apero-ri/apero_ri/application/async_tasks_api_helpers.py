@@ -12,7 +12,7 @@ from apero_ri.core.auth import (
     save_async_tasks,
 )
 from apero_ri.application import async_task_helpers
-from flask import jsonify, request
+from flask import jsonify, redirect, request, session, url_for
 
 
 def _coerce_bool(value):
@@ -131,6 +131,7 @@ LEGACY_GSHEET_TASK_KEYS = [
     'LEGACY_ASTROM_GSHEET',
     'LEGACY_REJECT_GSHEET',
     'LEGACY_CHECK_GSHEET',
+    'LEGACY_KNOWN_ERRORS_GSHEET',
 ]
 DEFAULT_GOOGLE_SECRET_NAME = 'legacy_gsheet_oauth.json'
 REQUIRED_GOOGLE_OAUTH_KEYS = [
@@ -152,8 +153,25 @@ def _validate_google_secret_name(value):
     return secret_name
 
 
+_SERVICE_ACCOUNT_REQUIRED_KEYS = [
+    'type', 'project_id', 'private_key_id', 'private_key',
+    'client_email', 'token_uri',
+]
+
+
 def _normalize_google_oauth_payload(raw_payload):
-    """Validate oauth payload shape and fill defaults."""
+    """Validate and normalise a Google credentials JSON upload.
+
+    Accepts two formats:
+    - **Service account key** (``"type": "service_account"``) — the
+      recommended format; keys never expire and require no user
+      interaction.  Share the Google Sheet with the service account's
+      ``client_email`` address.
+    - **OAuth2 user credentials** — legacy format with
+      ``client_id`` / ``client_secret`` / ``refresh_token``.  These
+      expire after ~7 days when the OAuth app is in testing mode or
+      after 6 months of inactivity.
+    """
     payload = raw_payload
     if isinstance(payload, str):
         try:
@@ -163,6 +181,21 @@ def _normalize_google_oauth_payload(raw_payload):
     if not isinstance(payload, dict):
         raise ValueError('google_oauth_upload must be a JSON object')
 
+    # ---- Service account path ------------------------------------------------
+    if payload.get('type') == 'service_account':
+        for key in _SERVICE_ACCOUNT_REQUIRED_KEYS:
+            if not str(payload.get(key) or '').strip():
+                raise ValueError(
+                    f'Service account JSON is missing required key: {key}')
+        scopes = payload.get('scopes')
+        if not isinstance(scopes, list) or not scopes:
+            payload['scopes'] = [
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/drive',
+            ]
+        return payload
+
+    # ---- OAuth2 user-credential path (legacy) --------------------------------
     native_client = payload.get('installed') or payload.get('web')
     if isinstance(native_client, dict):
         for key in ['client_id', 'client_secret', 'token_uri']:
@@ -175,9 +208,10 @@ def _normalize_google_oauth_payload(raw_payload):
     if not refresh_token:
         raise ValueError(
             'google_oauth_upload missing refresh_token. '
-            'Run the one-time OAuth auth flow and upload JSON '
-            'with client_id, client_secret, refresh_token, '
-            'and token_uri.'
+            'Consider using a Service Account JSON key instead — '
+            'it never expires and requires no OAuth flow. '
+            'Or run the one-time OAuth auth flow and upload JSON '
+            'with client_id, client_secret, refresh_token, and token_uri.'
         )
     payload['refresh_token'] = refresh_token
 
@@ -355,6 +389,11 @@ def api_async_tasks_save(app):
             data.get("assets_local_source_path") or ""
         ).strip()
 
+    has_assets_drs_uconfig = "assets_drs_uconfig" in data
+    assets_drs_uconfig = None
+    if has_assets_drs_uconfig:
+        assets_drs_uconfig = str(data.get("assets_drs_uconfig") or "").strip()
+
     all_tasks = load_async_tasks()
     inst_tasks, _ = app._merge_async_task_catalog(instrument, all_tasks)
     from apero_ri import tasks as task_module
@@ -421,6 +460,11 @@ def api_async_tasks_save(app):
                     t["local_source_path"] = assets_local_source
                 else:
                     t.pop("local_source_path", None)
+            if has_assets_drs_uconfig:
+                if assets_drs_uconfig:
+                    t["drs_uconfig"] = assets_drs_uconfig
+                else:
+                    t.pop("drs_uconfig", None)
             if t.get("mode") == "local" and not t.get(
                     "local_source_path"):
                 return jsonify(
@@ -430,6 +474,26 @@ def api_async_tasks_save(app):
                         "directory path."
                     ),
                 ), 400
+            if t.get("mode") == "remote":
+                _uconfig = str(t.get("drs_uconfig") or "").strip()
+                if not _uconfig:
+                    return jsonify(
+                        success=False,
+                        error=(
+                            "remote mode requires DRS_UCONFIG to be set. "
+                            "Please browse to the APERO user config directory."
+                        ),
+                    ), 400
+                from pathlib import Path as _Path
+                _uconfig_path = _Path(_uconfig).expanduser()
+                if not _uconfig_path.is_dir():
+                    return jsonify(
+                        success=False,
+                        error=(
+                            f"DRS_UCONFIG path does not exist or is not a "
+                            f"directory: {_uconfig}"
+                        ),
+                    ), 400
 
         if task_key in LEGACY_GSHEET_TASK_KEYS:
             if has_dry_run:
@@ -455,16 +519,23 @@ def api_async_tasks_save(app):
                 resolved_secret_name,
             )
             if google_oauth_upload is not None:
-                secret_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(secret_path, "w", encoding="utf-8") as outfile:
-                    json.dump(
-                        google_oauth_upload,
-                        outfile,
-                        indent=2,
-                        sort_keys=False,
-                    )
-                    outfile.write("\n")
-                os.chmod(secret_path, 0o600)
+                try:
+                    secret_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(secret_path, "w", encoding="utf-8") as outfile:
+                        json.dump(
+                            google_oauth_upload,
+                            outfile,
+                            indent=2,
+                            sort_keys=False,
+                        )
+                        outfile.write("\n")
+                    os.chmod(secret_path, 0o600)
+                except OSError as exc:
+                    return jsonify(
+                        success=False,
+                        error="Could not save OAuth JSON file: {0}".format(
+                            exc),
+                    ), 500
 
             if t.get("active", False) and not secret_path.exists():
                 return (
@@ -517,6 +588,17 @@ def api_async_tasks_save(app):
                 # Drop global legacy key to avoid URL bleed into
                 # instruments that should remain unset.
                 t.pop("override_sheet_url", None)
+
+        if task_key == "LEGACY_KNOWN_ERRORS_GSHEET":
+            if "sheet_url" in data:
+                sheet_url = str(data.get("sheet_url") or "").strip()
+                if sheet_url:
+                    # Extract sheet ID from URL if a full URL was pasted
+                    import re as _re
+                    m = _re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', sheet_url)
+                    t["sheet_id"] = m.group(1) if m else sheet_url
+                else:
+                    t.pop("sheet_id", None)
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
@@ -1228,3 +1310,175 @@ def build_json_preview_table(data, max_rows: int = 200) -> dict:
         "row_count": 1,
         "truncated": False,
     }
+
+
+_GSHEET_OAUTH_SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive',
+]
+
+
+def api_async_tasks_gsheet_oauth_start(app):
+    """Begin the Google OAuth flow for a legacy gsheet task.
+
+    Expects a JSON body:
+        client_secret   dict   The downloaded client_secret JSON from Google
+                               Cloud Console (with 'installed' or 'web' key).
+        secret_name     str    Target filename, e.g. 'legacy_gsheet_oauth.json'
+    """
+    user_info, perms = app._require_async_tasks_perm()
+    if not user_info:
+        return jsonify(ok=False, error='Unauthorized'), 401
+
+    body = request.get_json(silent=True) or {}
+    client_secret = body.get('client_secret')
+    secret_name = str(body.get('secret_name') or DEFAULT_GOOGLE_SECRET_NAME)
+    try:
+        secret_name = _validate_google_secret_name(secret_name)
+    except ValueError as exc:
+        return jsonify(ok=False, error=str(exc)), 400
+
+    if not isinstance(client_secret, dict):
+        return jsonify(ok=False, error='client_secret must be a JSON object'), 400
+    if 'installed' not in client_secret and 'web' not in client_secret:
+        return jsonify(
+            ok=False,
+            error='client_secret must have an "installed" or "web" key. '
+                  'Download it from Google Cloud Console → Credentials → '
+                  'OAuth client ID → Download JSON.'
+        ), 400
+
+    try:
+        from google_auth_oauthlib.flow import Flow
+    except Exception:
+        return jsonify(
+            ok=False,
+            error='google-auth-oauthlib is not installed on the server.'
+        ), 500
+
+    redirect_uri = url_for('api_async_tasks_gsheet_oauth_callback',
+                           _external=True)
+    flow = Flow.from_client_config(
+        client_secret,
+        scopes=_GSHEET_OAUTH_SCOPES,
+        redirect_uri=redirect_uri,
+    )
+    auth_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true',
+        prompt='consent',
+    )
+    session['at_gsheet_oauth_state'] = state
+    session['at_gsheet_oauth_secret'] = client_secret
+    session['at_gsheet_oauth_secret_name'] = secret_name
+    session['at_gsheet_oauth_code_verifier'] = str(flow.code_verifier or '')
+    return jsonify(ok=True, auth_url=auth_url)
+
+
+def api_async_tasks_gsheet_oauth_callback(app):
+    """Handle Google OAuth callback and save the credential file."""
+    if request.args.get('error'):
+        err = str(request.args.get('error', '')).strip()
+        return (
+            '<html><body><h3>Google OAuth failed</h3>'
+            f'<p>{err}</p>'
+            '<script>setTimeout(function(){window.close();},2000);</script>'
+            '</body></html>'
+        ), 400
+
+    expected_state = str(
+        session.get('at_gsheet_oauth_state', '') or '').strip()
+    got_state = str(request.args.get('state', '') or '').strip()
+    if not expected_state or expected_state != got_state:
+        return 'Google OAuth state mismatch. Please retry.', 400
+
+    client_secret = session.get('at_gsheet_oauth_secret')
+    secret_name = str(
+        session.get('at_gsheet_oauth_secret_name')
+        or DEFAULT_GOOGLE_SECRET_NAME
+    )
+    code_verifier = str(
+        session.get('at_gsheet_oauth_code_verifier', '') or '')
+
+    if not client_secret:
+        return 'OAuth session expired. Please retry.', 400
+
+    try:
+        from google_auth_oauthlib.flow import Flow
+    except Exception:
+        return 'google-auth-oauthlib is not installed.', 500
+
+    redirect_uri = url_for('api_async_tasks_gsheet_oauth_callback',
+                           _external=True)
+    flow = Flow.from_client_config(
+        client_secret,
+        scopes=_GSHEET_OAUTH_SCOPES,
+        state=expected_state,
+        redirect_uri=redirect_uri,
+        code_verifier=code_verifier or None,
+    )
+
+    host_name = str(request.host or '').split(':', 1)[0].strip().lower()
+    is_local = host_name in {'localhost', '127.0.0.1', '::1'}
+    allow_insecure = str(
+        os.environ.get('ARI_ALLOW_INSECURE_OAUTH', '')
+    ).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+    old_insecure = os.environ.get('OAUTHLIB_INSECURE_TRANSPORT')
+    try:
+        if (not request.is_secure) and (is_local or allow_insecure):
+            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+        flow.fetch_token(authorization_response=request.url)
+    except Exception as exc:
+        msg = str(exc) or 'Token exchange failed.'
+        return (
+            '<html><body><h3>Google OAuth failed</h3>'
+            f'<p>{msg}</p>'
+            '<script>setTimeout(function(){window.close();},3000);</script>'
+            '</body></html>'
+        ), 400
+    finally:
+        if old_insecure is None:
+            os.environ.pop('OAUTHLIB_INSECURE_TRANSPORT', None)
+        else:
+            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = old_insecure
+
+    # Build the credential dict and save it
+    cred_data = json.loads(flow.credentials.to_json())
+    cred_data['scopes'] = _GSHEET_OAUTH_SCOPES
+    # Flatten nested client keys if present
+    for nested_key in ('installed', 'web'):
+        nested = client_secret.get(nested_key)
+        if isinstance(nested, dict):
+            for k in ('client_id', 'client_secret', 'token_uri'):
+                if not cred_data.get(k) and nested.get(k):
+                    cred_data[k] = nested[k]
+
+    data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    secret_path = data_dir / 'admin' / secret_name
+    try:
+        secret_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(secret_path, 'w', encoding='utf-8') as fh:
+            json.dump(cred_data, fh, indent=2)
+            fh.write('\n')
+        os.chmod(secret_path, 0o600)
+    except OSError as exc:
+        return (
+            '<html><body><h3>Failed to save credentials</h3>'
+            f'<p>{exc}</p>'
+            '<script>setTimeout(function(){window.close();},4000);</script>'
+            '</body></html>'
+        ), 500
+
+    for k in ('at_gsheet_oauth_state', 'at_gsheet_oauth_secret',
+              'at_gsheet_oauth_secret_name', 'at_gsheet_oauth_code_verifier'):
+        session.pop(k, None)
+
+    return (
+        '<html><body>'
+        '<h3 style="color:#2a7a2a;">✓ Google account authorised</h3>'
+        f'<p>Credentials saved as <code>{secret_name}</code>. '
+        'You can close this window and save the task.</p>'
+        '<script>setTimeout(function(){window.close();},2000);</script>'
+        '</body></html>'
+    )

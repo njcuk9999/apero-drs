@@ -18,6 +18,8 @@ Version applies globally to all doc pages (like ReadTheDocs).
 # =============================================================================
 import os
 import re
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -56,6 +58,45 @@ MD_EXTENSION_CONFIGS = {
         "permalink": True,
     },
 }
+
+_DOC_CACHE_LOCK = threading.Lock()
+_DOC_CACHE_TTL_S = 30.0
+_DOC_VERSIONS_CACHE: dict = dict()
+_DOC_CHILDREN_CACHE: dict = dict()
+_DOC_SIDEBAR_CACHE: dict = dict()
+
+
+def _cache_get(cache: dict, key):
+    """Return cached value for key if not expired."""
+    now = time.monotonic()
+    with _DOC_CACHE_LOCK:
+        entry = cache.get(key)
+        if entry is None:
+            return None
+        if float(entry.get('expires', 0.0) or 0.0) <= now:
+            cache.pop(key, None)
+            return None
+        return entry.get('value')
+
+
+def _cache_set(cache: dict, key, value):
+    """Set cached value for key with shared TTL."""
+    now = time.monotonic()
+    with _DOC_CACHE_LOCK:
+        if len(cache) > 512:
+            cache.clear()
+        cache[key] = {
+            'expires': now + _DOC_CACHE_TTL_S,
+            'value': value,
+        }
+
+
+def _clone_list_of_dict(rows: List[dict]) -> List[dict]:
+    """Return shallow-cloned list of dict rows."""
+    out = []
+    for row in list(rows or []):
+        out.append(dict(row))
+    return out
 
 
 def _slug_to_label(name: str) -> str:
@@ -141,6 +182,11 @@ def _get_doc_children(
         return []
 
     rel_dir = normalize_doc_ref(rel_doc_dir)
+    cache_key = (str(version or ''), rel_dir)
+    cached = _cache_get(_DOC_CHILDREN_CACHE, cache_key)
+    if isinstance(cached, list):
+        return _clone_list_of_dict(cached)
+
     items_map: Dict[str, dict] = dict()
     scan_dirs = [
         (DOC_ROOT / 'all' / rel_dir, True),
@@ -216,6 +262,7 @@ def _get_doc_children(
     children = []
     for key in sorted(items_map.keys()):
         children.append(items_map[key])
+    _cache_set(_DOC_CHILDREN_CACHE, cache_key, _clone_list_of_dict(children))
     return children
 
 
@@ -230,6 +277,11 @@ def get_doc_sidebar_tree(
         return []
 
     current_ref = normalize_doc_ref(doc_ref)
+    cache_key = (str(version or ''), current_ref)
+    cached = _cache_get(_DOC_SIDEBAR_CACHE, cache_key)
+    if isinstance(cached, list):
+        return _clone_list_of_dict(cached)
+
     tree: List[dict] = []
 
     def walk(rel_doc_dir: str, depth: int) -> None:
@@ -279,6 +331,7 @@ def get_doc_sidebar_tree(
             continue
         if tree[next_idx].get('depth', 0) > item.get('depth', 0):
             tree[idx]['has_children'] = True
+    _cache_set(_DOC_SIDEBAR_CACHE, cache_key, _clone_list_of_dict(tree))
     return tree
 
 
@@ -372,11 +425,21 @@ def get_versions() -> List[dict]:
 
     Returns list of dicts: {id, name}  (first is default/latest).
     """
+    cache_key = str(VERSIONS_FILE)
+    cached = _cache_get(_DOC_VERSIONS_CACHE, cache_key)
+    if isinstance(cached, list):
+        return [dict(item) for item in cached if isinstance(item, dict)]
+
     if not VERSIONS_FILE.exists():
         return []
-    with open(VERSIONS_FILE, "r") as f:
+    with open(VERSIONS_FILE, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f) or {}
-    return data.get("versions", [])
+    versions = data.get('versions', [])
+    if not isinstance(versions, list):
+        versions = []
+    clean = [dict(item) for item in versions if isinstance(item, dict)]
+    _cache_set(_DOC_VERSIONS_CACHE, cache_key, clean)
+    return [dict(item) for item in clean]
 
 
 def get_default_version() -> Optional[str]:

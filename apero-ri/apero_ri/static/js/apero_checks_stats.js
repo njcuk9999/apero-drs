@@ -126,8 +126,42 @@
     // UI population
     // -----------------------------------------------------------------------
 
+    function setObsdirEmptyState(visible, message) {
+        const summaryEl = document.getElementById('acs-obsdir-summary');
+        const chartWrapEl = document.querySelector(
+            '#acs-panel-obsdir .acs-chart-wrap',
+        );
+        let emptyEl = document.getElementById('acs-obsdir-empty');
+        if (visible) {
+            if (!emptyEl) {
+                emptyEl = document.createElement('div');
+                emptyEl.id = 'acs-obsdir-empty';
+                emptyEl.className = 'acs-note';
+                emptyEl.style.cssText = (
+                    'padding:0.9rem;color:var(--ari-text-muted);'
+                    + 'text-align:center;'
+                );
+                if (summaryEl && summaryEl.parentNode) {
+                    summaryEl.parentNode.insertBefore(emptyEl, summaryEl);
+                }
+            }
+            emptyEl.textContent = message
+                || 'No observation directories found for this profile.';
+            emptyEl.style.display = '';
+            if (summaryEl) summaryEl.style.display = 'none';
+            if (chartWrapEl) chartWrapEl.style.display = 'none';
+        } else {
+            if (emptyEl) emptyEl.style.display = 'none';
+            if (summaryEl) summaryEl.style.display = '';
+            if (chartWrapEl) chartWrapEl.style.display = '';
+        }
+    }
+
     function populateObsdirSummary(obsdirData) {
-        const counts = obsdirData.counts || {};
+        const data = obsdirData || {};
+        const counts = data.counts || {};
+        const total = Number(counts.total || 0);
+        setObsdirEmptyState(total === 0);
         const set = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.textContent = val != null ? String(val) : '–';
@@ -321,13 +355,60 @@
             errEl.style.display = msg ? '' : 'none';
             errEl.textContent = msg || '';
         }
+        // Duplicate the error inline in the obs-dir panel too — the meta
+        // bar indicator is easy to miss, especially on narrow screens.
+        let panelErrEl = document.getElementById('acs-obsdir-panel-error');
+        const panel = document.getElementById('acs-panel-obsdir');
+        if (msg) {
+            if (!panelErrEl && panel) {
+                panelErrEl = document.createElement('div');
+                panelErrEl.id = 'acs-obsdir-panel-error';
+                panelErrEl.className = 'acs-error-msg';
+                panelErrEl.style.cssText = (
+                    'border:1px solid #fca5a5;background:#fef2f2;'
+                    + 'border-radius:0.6rem;padding:0.6rem 0.85rem;'
+                    + 'margin-bottom:0.9rem;'
+                );
+                panel.insertBefore(panelErrEl, panel.firstChild);
+            }
+            if (panelErrEl) panelErrEl.textContent = msg;
+        } else if (panelErrEl) {
+            panelErrEl.remove();
+        }
+    }
+
+    // Reassure the user on slow profiles (large YAML directory, slow
+    // network mount) that the request is still in flight rather than stuck.
+    let slowLoadTimerId = null;
+    function startSlowLoadHint() {
+        clearSlowLoadHint();
+        slowLoadTimerId = window.setTimeout(() => {
+            const row = document.querySelector(
+                '#acs-obsdir-loading .acs-tab-loading__row span:last-child',
+            );
+            if (row) {
+                row.textContent = (
+                    'Still loading observation directory stats… this can '
+                    + 'take longer on profiles with many obs-dirs or a '
+                    + 'slow network mount.'
+                );
+            }
+        }, 5000);
+    }
+    function clearSlowLoadHint() {
+        if (slowLoadTimerId) {
+            window.clearTimeout(slowLoadTimerId);
+            slowLoadTimerId = null;
+        }
     }
 
     function fetchStats(binBy) {
         showLoading(true);
         showError('');
+        startSlowLoadHint();
         const url = buildApiUrl(binBy);
         if (!url || url.startsWith('?bin_by=')) {
+            clearSlowLoadHint();
             showError('Failed to build stats API URL for this page.');
             return;
         }
@@ -341,14 +422,30 @@
                     throw new Error(payload.error || 'API error');
                 }
                 state.data = payload;
+                clearSlowLoadHint();
                 showLoading(false);
-                populateObsdirSummary(payload.obsdir);
-                try { renderObsdirChart(); } catch (_e) { /* Chart.js absent */ }
-                populateChecksTable(payload.checks);
-                populateCheckDropdown(payload.checks);
-                try { renderChecksChart(); } catch (_e) { /* Chart.js absent */ }
+                // Isolate each population step so one bad section can't
+                // wipe out the rest of the page or hide what did load.
+                const steps = [
+                    () => populateObsdirSummary(payload.obsdir),
+                    () => renderObsdirChart(),
+                    () => populateChecksTable(payload.checks),
+                    () => populateCheckDropdown(payload.checks),
+                    () => renderChecksChart(),
+                ];
+                const failures = [];
+                steps.forEach((step) => {
+                    try { step(); } catch (e) { failures.push(e); }
+                });
+                if (failures.length) {
+                    showError(
+                        'Some stats sections failed to render: '
+                        + failures.map((e) => e.message).join('; '),
+                    );
+                }
             })
             .catch((err) => {
+                clearSlowLoadHint();
                 showError(
                     `Failed to load stats: ${err.message} (URL: ${url})`,
                 );

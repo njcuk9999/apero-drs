@@ -155,3 +155,55 @@ def delete_known_error(error_id: str) -> bool:
         return False
     path.unlink()
     return True
+
+
+# =============================================================================
+# Raw access (preserves stored updated_at) - used by the GSheet sync task
+# =============================================================================
+def _read_raw(path: Path) -> Optional[Dict[str, Any]]:
+    """Load a known-error YAML without re-stamping updated_at."""
+    try:
+        data = yaml.safe_load(path.read_text(encoding='utf-8')) or {}
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def list_known_errors_raw() -> List[Dict[str, Any]]:
+    """Return the on-disk known-error rows with their stored timestamps.
+
+    Unlike :func:`list_known_errors`, this preserves each record's stored
+    ``updated_at`` so callers can do timestamp-based conflict resolution.
+    """
+    rows: List[Dict[str, Any]] = []
+    for path in sorted(known_errors_dir().glob('*.yaml')):
+        data = _read_raw(path)
+        if data is None:
+            continue
+        if _safe(data.get('id')):
+            rows.append(data)
+    return rows
+
+
+def write_known_error_raw(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Write a known-error row, preserving a supplied id and updated_at.
+
+    Fields are normalised as usual (slug regenerated, dates cleaned), but a
+    non-empty incoming ``id`` and ``updated_at`` are kept verbatim so the
+    sync task can replicate the winning side exactly.
+    """
+    norm = _normalize_row(row)
+    incoming_id = _safe(row.get('id'))
+    if incoming_id:
+        norm['id'] = incoming_id
+    incoming_ts = _safe(row.get('updated_at'))
+    if incoming_ts:
+        norm['updated_at'] = incoming_ts
+    path = _yaml_path(norm['id'])
+    text = yaml.safe_dump(norm, sort_keys=False, allow_unicode=True)
+    tmp = path.with_suffix('.tmp')
+    tmp.write_text(text, encoding='utf-8')
+    tmp.replace(path)
+    return norm

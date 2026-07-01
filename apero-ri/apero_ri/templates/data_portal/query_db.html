@@ -124,6 +124,7 @@
                         <option value="500" selected>500</option>
                         <option value="1000">1000</option>
                         <option value="2000">2000</option>
+                        <option value="0">All</option>
                     </select>
                 </div>
             </div>
@@ -160,9 +161,23 @@
              style="display:none;">
             <div class="qdb-run-grid">
                 <div class="qdb-run-grid__left">
-                    <button id="qdb-run-btn" class="ari-btn ari-btn--primary qdb-run-btn">
-                        <i class="fa-solid fa-play"></i> Run Query
-                    </button>
+                    <div class="qdb-run-row">
+                        <button id="qdb-run-btn" class="ari-btn ari-btn--primary qdb-run-btn">
+                            <i class="fa-solid fa-play"></i> Run Query
+                        </button>
+                        <button id="qdb-cancel-btn" class="ari-btn ari-btn--danger qdb-run-btn"
+                                style="display:none;"
+                                title="Cancel the running query">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                    </div>
+                    <div class="qdb-run-row" style="position:relative;">
+                        <button id="qdb-count-btn" class="ari-btn ari-btn--secondary qdb-run-btn"
+                                title="Count matching rows without fetching results">
+                            <i class="fa-solid fa-hashtag"></i> Count
+                        </button>
+                        <div id="qdb-count-popup" class="qdb-count-popup" style="display:none;"></div>
+                    </div>
                 </div>
                 <div class="qdb-run-grid__spacer" aria-hidden="true"></div>
                 <div class="qdb-run-grid__right qdb-basket-panel">
@@ -289,6 +304,7 @@ window.QDB_CONFIG = {
     profileId:    {{ profile.profile_id | tojson }},
     schemaApiUrl: {{ schema_api_url | tojson }},
     runApiUrl:    {{ run_api_url | tojson }},
+    countApiUrl:  '/api/data-portal/query-db/count',
     basketAddApiUrl: '/api/data-portal/basket/add',
     basketSummaryApiUrl: '/api/data-portal/basket/summary',
     presets:      {{ query_presets | tojson }},

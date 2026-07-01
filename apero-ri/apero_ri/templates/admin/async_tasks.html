@@ -173,6 +173,124 @@
     background: #0d1117;
     color: #e6edf3;
 }
+
+/* ── Full-screen log viewer overlay (mirrors processing_logs / apero_checks queue) ── */
+.acq-log-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.acq-log-overlay.acq-log-overlay--open {
+    display: flex;
+}
+.acq-log-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.70);
+}
+.acq-log-panel {
+    position: relative;
+    z-index: 1;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #0a0a0a;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+}
+.acq-log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+.acq-log-filename {
+    flex: 1;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.82rem;
+    color: #aaa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.acq-log-findbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: #111;
+    border-bottom: 1px solid #2a2a2a;
+    flex-shrink: 0;
+}
+.acq-log-find-icon {
+    color: #666;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+.acq-log-find-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.18rem 0.5rem;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 3px;
+    color: #eee;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.80rem;
+    outline: none;
+}
+.acq-log-find-input:focus {
+    border-color: #888;
+}
+.acq-log-find-count {
+    font-size: 0.75rem;
+    color: #888;
+    min-width: 5rem;
+    text-align: right;
+    font-family: var(--ari-font-mono, monospace);
+    flex-shrink: 0;
+}
+.acq-log-content {
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: #0a0a0a;
+    color: #00ff00;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.80rem;
+    line-height: 1.55;
+    white-space: pre;
+    word-break: normal;
+    user-select: text;
+    cursor: text;
+}
+.acq-log-line {
+    display: block;
+}
+.acq-log-line.acq-log-match-line {
+    background: rgba(255, 153, 0, 0.18);
+}
+.acq-log-line.acq-log-match-current {
+    background: rgba(255, 204, 0, 0.35);
+    outline: 1px solid rgba(255, 204, 0, 0.6);
+}
+.acq-log-content .acq-log-error {
+    color: #ff4444;
+}
+.acq-log-content .acq-log-warn {
+    color: #ff9900;
+}
 </style>
 {% endblock %}
 
@@ -595,24 +713,35 @@
                     </div>
                     <div class="ari-ap-form__field">
                         <label for="edit-google-oauth-file">
-                            Upload OAuth JSON
+                            Upload Google credentials JSON
                             <button type="button"
                                     id="at-oauth-info-btn"
                                     class="at-info-icon-btn"
-                                    title="How to obtain this OAuth JSON file"
-                                    aria-label="How to obtain this OAuth JSON file">
+                                    title="How to obtain the credentials JSON"
+                                    aria-label="How to obtain the credentials JSON">
                                 <i class="fa-solid fa-circle-info"></i>
                             </button>
                         </label>
                         <input type="file" id="edit-google-oauth-file"
                                class="ari-ap-input" accept=".json">
+                        <button type="button"
+                                id="at-gsheet-oauth-authorize-btn"
+                                class="ari-btn ari-btn--secondary"
+                                style="display:none; margin-top:0.4rem;">
+                            <i class="fa-brands fa-google"></i>
+                            Authorize with Google
+                        </button>
+                        <div id="edit-google-oauth-hint" class="at-muted-hint"
+                             style="margin-top:0.3rem;"></div>
                         <div class="at-muted-hint">
-                            Quick setup:
-                            1) In Google Cloud, create OAuth client credentials
-                            with Sheets/Drive access.
-                            2) Generate a refresh token.
-                            3) Export JSON with client_id, client_secret,
-                            refresh_token, token_uri.
+                            <strong>Recommended:</strong> use a
+                            <em>Service Account</em> key JSON — it never
+                            expires. Share the sheet with the service
+                            account's <code>client_email</code>.<br>
+                            Or upload a Google Cloud <em>OAuth client
+                            secret</em> JSON and click
+                            <em>Authorize with Google</em> to complete
+                            the one-time flow in a pop-up.
                         </div>
                     </div>
                     <div class="ari-ap-form__field" id="edit-check-gsheet-url-fields" style="display:none;">
@@ -626,6 +755,12 @@
                         <input type="url" id="edit-override-sheet-url" class="ari-ap-input"
                                placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
                         <div class="at-muted-hint">Shared overrides tab URL (optional — overrides YAML preset).</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-known-errors-sheet-url-field" style="display:none;">
+                        <label for="edit-known-errors-sheet-url">Known Errors sheet URL</label>
+                        <input type="url" id="edit-known-errors-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                        <div class="at-muted-hint">Known Errors Google Sheet URL (optional — overrides built-in default).</div>
                     </div>
                 </div>
                 <div id="edit-backup-fields" style="display:none;">
@@ -705,6 +840,14 @@
                             <button type="button" id="edit-assets-local-browse" class="ari-ap-btn ari-ap-btn--secondary">Browse&hellip;</button>
                         </div>
                         <div class="at-muted-hint">Files are mirrored newest-wins between this directory and {LOCAL_DATA_DIR}/apero-assets/.</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-assets-drs-uconfig-row" style="display:none;">
+                        <label for="edit-assets-drs-uconfig">DRS_UCONFIG directory <span style="color:#c0392b;">*</span></label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" id="edit-assets-drs-uconfig" class="ari-ap-input" style="flex:1 1 auto;" placeholder="/absolute/path/to/apero/user/config">
+                            <button type="button" id="edit-assets-drs-uconfig-browse" class="ari-ap-btn ari-ap-btn--secondary">Browse&hellip;</button>
+                        </div>
+                        <div class="at-muted-hint">Required for remote mode. Must be the directory set by <code>apero_profile.sh</code>. The task will fail if this is not set or does not exist.</div>
                     </div>
                 </div>
                 <div id="edit-local-sync-fields" style="display:none;">
@@ -885,7 +1028,7 @@
                     margin-bottom:0.6rem;">
             <h3 style="margin:0; font-size:1.05rem;">
                 <i class="fa-solid fa-circle-info"></i>
-                How to get the OAuth JSON file
+                How to get the Google credentials JSON
             </h3>
             <button type="button"
                     class="ari-modal__close"
@@ -894,61 +1037,66 @@
                     style="background:none; border:none; cursor:pointer;
                            font-size:1.1rem;">&times;</button>
         </div>
-        <div class="ari-modal__body" style="font-size:0.92rem; line-height:1.55;">
-            <p>
-                APERO uses an <strong>OAuth2 user-authorized refresh
-                token</strong> to read and write the legacy Google
-                Sheets. Generate the JSON once and place it in
-                <code>{LOCAL_DATA_DIR}/admin/&lt;filename&gt;</code>
-                (the filename above must match).
-            </p>
-            <ol style="margin:0.4rem 0 0.8rem 1.1rem; padding:0;">
+        <div class=”ari-modal__body” style=”font-size:0.92rem; line-height:1.55;”>
+
+            <h4 style=”margin:0 0 0.3rem;”>
+                ✅ Recommended: Service Account key (never expires)
+            </h4>
+            <ol style=”margin:0.2rem 0 0.9rem 1.1rem; padding:0;”>
                 <li>
                     Open the
-                    <a href="https://console.cloud.google.com/"
-                       target="_blank" rel="noopener">Google Cloud
-                    Console</a> and select (or create) a project.
+                    <a href=”https://console.cloud.google.com/”
+                       target=”_blank” rel=”noopener”>Google Cloud Console</a>
+                    and select (or create) a project.
                 </li>
                 <li>
-                    Enable the
-                    <strong>Google Sheets API</strong> and
+                    Enable the <strong>Google Sheets API</strong> and
                     <strong>Google Drive API</strong> under
                     “APIs &amp; Services → Library”.
                 </li>
                 <li>
-                    Under “APIs &amp; Services → Credentials”,
-                    create an <strong>OAuth client ID</strong>
-                    of type <em>Desktop app</em>. Download the
-                    client secret JSON.
+                    Under “APIs &amp; Services → Credentials”, click
+                    <strong>Create credentials → Service account</strong>.
+                    Give it a name, skip the optional steps, and click Done.
                 </li>
                 <li>
-                    Add the Google account you want APERO to act as
-                    to the OAuth consent screen test users
-                    (or publish the app).
+                    Click on the new service account, go to the
+                    <strong>Keys</strong> tab, then
+                    <strong>Add Key → Create new key → JSON</strong>.
+                    A file like <code>project-abc123.json</code> downloads.
                 </li>
                 <li>
-                    Run a one-time auth flow to obtain a
-                    <strong>refresh_token</strong> with these scopes.
-                    This step opens a browser consent link once:
-<pre class="at-pre-code">https://www.googleapis.com/auth/spreadsheets
-https://www.googleapis.com/auth/drive</pre>
+                    <strong>Share your Google Sheet</strong> with the
+                    service account's <code>client_email</code>
+                    (e.g. <code>apero@project.iam.gserviceaccount.com</code>)
+                    as an <em>Editor</em>.
                 </li>
                 <li>
-                    Save a JSON file shaped like this and upload it via
-                    the field above:
-<pre class="at-pre-code">{
-  "client_id": "...apps.googleusercontent.com",
-  "client_secret": "...",
-  "refresh_token": "...",
-  "token_uri": "https://oauth2.googleapis.com/token"
-}</pre>
+                    Upload that downloaded JSON via the field above.
+                    It is automatically detected as a service account key.
                 </li>
             </ol>
-            <p style="margin:0.4rem 0 0;">
-                APERO stores the file with permissions
-                <code>0600</code> so only the service user can read
-                it. Test the task after upload to confirm the
-                credentials work.
+
+            <h4 style=”margin:0 0 0.3rem;”>
+                ⚠️ Legacy: OAuth2 user credentials (expires periodically)
+            </h4>
+            <p style=”margin:0 0 0.4rem;”>
+                Refresh tokens from OAuth apps in <em>testing mode</em>
+                expire after <strong>7 days</strong> and must be
+                re-generated. Prefer the service account approach above.
+            </p>
+            <p style=”margin:0 0 0.3rem;”>
+                If you must use OAuth, upload a JSON with:
+            </p>
+<pre class=”at-pre-code”>{
+  “client_id”: “...apps.googleusercontent.com”,
+  “client_secret”: “...”,
+  “refresh_token”: “...”,
+  “token_uri”: “https://oauth2.googleapis.com/token”
+}</pre>
+            <p style=”margin:0.5rem 0 0;”>
+                APERO stores the file with permissions <code>0600</code>.
+                Test the task after upload to confirm the credentials work.
             </p>
         </div>
         <div class="ari-modal__footer"
@@ -964,28 +1112,42 @@ https://www.googleapis.com/auth/drive</pre>
 <!-- ====================================================================== -->
 <!-- Live task log modal                                                     -->
 <!-- ====================================================================== -->
-<div id="at-task-log-modal" class="ari-modal-backdrop" style="display:none;">
-    <div class="ari-modal ari-modal--wide ari-modal--task-log">
-        <div class="ari-modal__header">
-            <i class="fa-solid fa-file-lines"></i>&nbsp;<span id="task-log-modal-title">Task Log</span>
-            <button class="ari-modal__close" id="btn-task-log-close-x">
+<div id="at-task-log-modal" class="acq-log-overlay acq-log-overlay--open" style="display:none;"
+     role="dialog" aria-modal="true" aria-label="Task log viewer">
+    <div class="acq-log-backdrop" id="at-task-log-backdrop"></div>
+    <div class="acq-log-panel">
+        <div class="acq-log-toolbar">
+            <span id="task-log-modal-title" class="acq-log-filename">Task Log</span>
+            <button id="btn-task-log-refresh" class="ari-btn ari-btn--sm ari-btn--secondary">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+            <button id="btn-task-log-copy" class="ari-btn ari-btn--sm ari-btn--secondary">
+                <i class="fa-solid fa-copy"></i> Copy
+            </button>
+            <button id="btn-task-log-close-x" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--alt" title="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <div class="ari-modal__body">
-            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-bottom:0.5rem;">
-                <button id="btn-task-log-refresh" class="ari-btn ari-btn--sm ari-btn--secondary">
-                    <i class="fa-solid fa-rotate"></i> Refresh
-                </button>
-                <button id="btn-task-log-copy" class="ari-btn ari-btn--sm ari-btn--secondary">
-                    <i class="fa-solid fa-copy"></i> Copy
-                </button>
-            </div>
-            <pre id="task-log-modal-content" class="at-error-pre" style="max-height:65vh;overflow:auto;white-space:pre-wrap;"></pre>
+        <div class="acq-log-findbar">
+            <i class="fa-solid fa-magnifying-glass acq-log-find-icon"></i>
+            <input type="search" id="task-log-find"
+                   class="acq-log-find-input"
+                   placeholder="Find in log..."
+                   autocomplete="off" spellcheck="false">
+            <button id="task-log-find-prev"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Previous match">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+            <button id="task-log-find-next"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Next match">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <span id="task-log-find-count" class="acq-log-find-count"></span>
         </div>
-        <div class="ari-modal__footer">
-            <button id="btn-task-log-close" class="ari-btn ari-btn--secondary">Close</button>
-        </div>
+        <pre id="task-log-modal-content" class="acq-log-content"></pre>
     </div>
 </div>
 
@@ -1040,5 +1202,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260525a') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260610a') }}"></script>
 {% endblock %}

@@ -275,8 +275,18 @@ def add_check_entry(payload: dict,
 def write_obsdir_yaml(root_dir: Path,
                       obs_dir: str,
                       payload: dict,
-                      history_entry: Optional[dict] = None) -> Path:
-    """Write one APERO-check YAML file atomically."""
+                      history_entry: Optional[dict] = None,
+                      profile_id: Optional[str] = None) -> Path:
+    """Write one APERO-check YAML file atomically.
+
+    :param root_dir: Root directory for check YAML files.
+    :param obs_dir: Observation directory identifier (becomes filename stem).
+    :param payload: Check payload dict to serialise.
+    :param history_entry: Optional history record to append before writing.
+    :param profile_id: When supplied, the checks index is updated for this
+                       profile after the write so the next policy scan can
+                       skip the re-read.
+    """
     # Create the root directory before writing the file.
     root_dir = Path(root_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
@@ -294,6 +304,17 @@ def write_obsdir_yaml(root_dir: Path,
                        allow_unicode=False)
     # Promote the temporary file to the final YAML path.
     tmpname.replace(filename)
+    # Update the checks index so the next policy scan skips this file.
+    if profile_id:
+        try:
+            from apero_ri.core import checks_index as _ci
+            from apero_ri.core import apero_checks as _ac
+            from apero_ri.apero_monitoring.checks import CHECKS as _MC
+            loaded = _ac.load_check_file(filename)
+            _ac.propagate_dependency_states(loaded, _MC)
+            _ci.update_obsdir(str(profile_id), str(obs_dir), filename, loaded)
+        except Exception:
+            pass  # index update is best-effort
     return filename
 
 

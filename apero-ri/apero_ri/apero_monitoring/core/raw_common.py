@@ -157,6 +157,19 @@ def get_raw_dir(aparams: dict) -> Optional[Path]:
     return None
 
 
+def get_critical_check_dir(aparams: dict) -> Optional[Path]:
+    """Resolve the critical-check directory (PATH.CRITICAL_CHECK).
+
+    Optional: returns None when not configured, which causes critical checks
+    to pass automatically.
+    """
+    for key in ('PATH.CRITICAL_CHECK', 'PATH_CRITICAL_CHECK', 'critical_check'):
+        value = profile_utils.profile_get_path(aparams, key, '')
+        if str(value or '').strip():
+            return Path(str(value)).expanduser()
+    return None
+
+
 def get_header_key(aparams: dict, logical_name: str) -> str:
     """Resolve one raw-header key name from apero-checks.common.
 
@@ -396,7 +409,7 @@ def load_example_aparams(instrument: str = 'NIRPS_HA') -> dict:
     )
     filename = mapping.get(str(instrument).upper(), 'nirps_ha_v7.yaml')
     profile_file = (
-        Path(__file__).resolve().parents[1]
+        Path(__file__).resolve().parents[2]
         / 'resources'
         / 'aprofile_instruments'
         / filename

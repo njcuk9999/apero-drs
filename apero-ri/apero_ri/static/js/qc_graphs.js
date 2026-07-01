@@ -75,6 +75,10 @@
     function setSectionCollapsed(card, collapsed) {
         if (!card) return;
         card.classList.toggle('op-section--collapsed', !!collapsed);
+        var body = card.querySelector('.at-section-card__body');
+        if (body) {
+            body.style.display = collapsed ? 'none' : '';
+        }
         var btn = card.querySelector('.qc-section-toggle');
         if (!btn) return;
         btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');

@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260602b">
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260620b">
 <style>
 .ac-page-stack {
     display: grid;
@@ -27,7 +27,8 @@
     border-left-color: #7c3aed;
     background: #f5f3ff;
 }
-.ac-card--overridden {
+.ac-card--overridden,
+.ac-card--overridden_monitored {
     border-left-color: #d97706;
     background: #fffbeb;
 }
@@ -35,6 +36,80 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+}
+.ac-card__type-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: nowrap;
+    margin-left: 0.25rem;
+}
+.ac-card__type-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted);
+    white-space: nowrap;
+}
+.ac-card__type-chip strong {
+    font-weight: 700;
+    color: var(--ari-text);
+}
+body:not(.ac-view-grid) .ac-card__row {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 0.9rem;
+}
+body:not(.ac-view-grid) .ac-card__date {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.4rem;
+}
+.ac-card__date {
+    font-weight: 500;
+}
+.ac-card__obsdir {
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--ari-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body:not(.ac-view-grid) .ac-card__lastrun {
+    margin-top: 0;
+    white-space: nowrap;
+}
+body.ac-view-grid .ac-card__type-summary {
+    gap: 0.4rem;
+}
+body.ac-view-grid .ac-card__date {
+    display: block;
+}
+body.ac-view-grid .ac-card__obsdir,
+body.ac-view-grid .ac-card__lastrun {
+    display: block;
+}
+body.ac-view-grid .ac-card__lastrun {
+    margin-top: 0.2rem;
+}
+[data-theme="dark"] .ac-card__obsdir {
+    color: var(--ari-text);
+}
+[data-theme="dark"] .ac-ui-panel--soft {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .ac-card--monitored {
+    background: #1a1040;
+    border-left-color: #7c3aed;
+}
+[data-theme="dark"] .ac-card--overridden,
+[data-theme="dark"] .ac-card--overridden_monitored {
+    background: #2a1f05;
+    border-left-color: #d97706;
 }
 </style>
 {% endblock %}
@@ -82,6 +157,20 @@
         <i class="fa-solid fa-sliders"></i> Advanced options
     </button>
     {% endif %}
+    <span class="ac-view-toggle" role="group" aria-label="Card view">
+        <button id="ac-view-list-btn"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button"
+                title="List view">
+            <i class="fa-solid fa-list"></i> List
+        </button>
+        <button id="ac-view-grid-btn"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button"
+                title="Grid view (5 per row, compact)">
+            <i class="fa-solid fa-table-cells"></i> Grid
+        </button>
+    </span>
 </div>
 
 <form class="ot-toolbar ac-ui-panel ac-ui-panel--soft" method="get"
@@ -140,6 +229,16 @@
                     {% if per_page == 100 %}selected{% endif %}>100</option>
             </select>
         </label>
+        <label class="ot-perpage-label" id="ac-grid-cols-label">
+            Cards / row
+            <select id="ac-grid-cols" class="ot-perpage-select">
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+            </select>
+        </label>
         <label class="ot-perpage-label">
             Page
             <select name="page" class="ot-perpage-select">
@@ -157,37 +256,38 @@
 <div class="ac-card-list ac-ui-panel" id="ac-card-list">
     {% for card in profile_cards %}
     <div class="ac-card-wrap">
-    <a class="ac-card ac-card--{{ card.status if card.status else 'failed' }}"
+    <a class="ac-card ac-card--{{ card.card_color or card.status or 'failed' }}"
     href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=card.obsdir) }}"
        title="Open APERO Check information for {{ card.obsdir }}">
         <div class="ac-card__row">
             <span class="ac-card__row-status" title="Card status">
-                {% if card.status == 'overridden' %}
-                <i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>
-                {% elif card.status == 'monitored' %}
-                <i class="fa-solid fa-bell ac-i-mon"></i>
-                {% elif card.status == 'ok' %}
+                {% set _has_fail = (card.active_failure_count or 0) > 0 %}
+                {% set _has_ovr  = (card.override_count or 0) > 0 %}
+                {% set _has_mon  = (card.monitor_count or 0) > 0 %}
+                {% if not _has_fail and not _has_ovr and not _has_mon %}
                 <i class="fa-solid fa-check ac-i-ok"></i>
                 {% else %}
-                <i class="fa-solid fa-xmark ac-i-bad"></i>
+                  {% if _has_fail %}<i class="fa-solid fa-xmark ac-i-bad"></i>{% endif %}
+                  {% if _has_ovr %}<i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>{% endif %}
+                  {% if _has_mon %}<i class="fa-solid fa-bell ac-i-mon"></i>{% endif %}
                 {% endif %}
+            </span>
+            <span class="ac-card__type-summary" title="Passed tests by type">
+                <span class="ac-card__type-chip">
+                    <strong>raw:</strong>
+                    {{ card.type_counts.raw.passed if card.type_counts is defined and card.type_counts.raw is defined else 0 }}/{{ card.type_counts.raw.total if card.type_counts is defined and card.type_counts.raw is defined else 0 }}
+                </span>
+                <span class="ac-card__type-chip">
+                    <strong>red:</strong>
+                    {{ card.type_counts.red.passed if card.type_counts is defined and card.type_counts.red is defined else 0 }}/{{ card.type_counts.red.total if card.type_counts is defined and card.type_counts.red is defined else 0 }}
+                </span>
             </span>
             <div class="ac-card__date" title="Obsdir: {{ card.obsdir }}">
-                <div>{{ card.obsdir }}</div>
-                <div class="ac-card__lastrun">
+                <span class="ac-card__obsdir">{{ card.obsdir }}</span>
+                <span class="ac-card__lastrun">
                     Last run: {{ card.last_run or 'n/a' }}
-                </div>
+                </span>
             </div>
-            <span class="ac-card__row-markers" title="Obsdir markers">
-                {% if card.has_monitored %}
-                <i class="fa-solid fa-bell ac-i-mon"
-                   title="One or more checks are monitored"></i>
-                {% endif %}
-                {% if card.has_overridden %}
-                <i class="fa-solid fa-triangle-exclamation ac-i-ovr"
-                   title="One or more checks are overridden"></i>
-                {% endif %}
-            </span>
         </div>
     </a>
     {% if can_manage_apero_profiles %}
@@ -196,6 +296,12 @@
             type="button"
             title="Delete YAML for {{ card.obsdir }}">
         <i class="fa-solid fa-trash"></i>
+    </button>
+    <button class="ac-night-exclude-btn ac-delete-only"
+            data-obsdir="{{ card.obsdir }}"
+            type="button"
+            title="Permanently exclude {{ card.obsdir }} from this instrument">
+        <i class="fa-solid fa-ban"></i>
     </button>
     {% endif %}
     </div>
@@ -232,7 +338,7 @@
 
 <div class="ac-ui-panel ac-ui-panel--soft" style="margin-top:0;">
     <a href="{{ monitor_doc_url }}" target="_blank" rel="noopener"
-       class="ari-btn ari-btn--sm ari-btn--secondary"
+       class="ari-btn ari-btn--sm ari-btn--primary"
        style="font-weight:700;">
         <i class="fa-solid fa-book-open"></i>
         Open monitoring documentation
@@ -249,7 +355,8 @@
 
 <script>
 (function () {
-    if (window.location.search) {
+    var initialSearch = window.location.search;
+    if (initialSearch) {
         window.history.replaceState({}, '', window.location.pathname);
     }
 
@@ -293,11 +400,44 @@
         submitNow(true);
     });
     perPageSelect.addEventListener('change', function () {
+        try {
+            window.localStorage.setItem(
+                'ac_per_page', perPageSelect.value
+            );
+        } catch (e) { /* localStorage unavailable */ }
         submitNow(true);
     });
     pageInput.addEventListener('change', function () {
         submitNow(false);
     });
+
+    // Remember the last "Cards / page" choice locally and re-apply it on
+    // visits where the user did not explicitly choose a per_page value
+    // (i.e. arrived via a plain link rather than the selector itself or a
+    // pagination link, both of which already carry per_page explicitly).
+    var hadExplicitPerPage = false;
+    try {
+        hadExplicitPerPage = new URLSearchParams(initialSearch).has(
+            'per_page'
+        );
+    } catch (e) { /* URLSearchParams unavailable */ }
+    if (!hadExplicitPerPage) {
+        var savedPerPage = null;
+        try {
+            savedPerPage = window.localStorage.getItem('ac_per_page');
+        } catch (e) { /* localStorage unavailable */ }
+        if (savedPerPage && savedPerPage !== perPageSelect.value) {
+            var hasOption = Array.prototype.some.call(
+                perPageSelect.options,
+                function (opt) { return opt.value === savedPerPage; }
+            );
+            if (hasOption) {
+                perPageSelect.value = savedPerPage;
+                submitNow(true);
+                return;
+            }
+        }
+    }
 }());
 
 (function () {
@@ -306,6 +446,67 @@
         advancedBtn.addEventListener('click', function () {
             document.body.classList.toggle('ac-delete-mode');
             advancedBtn.classList.toggle('ac-btn-danger');
+        });
+    }
+
+    var VIEW_KEY = 'ac_card_view';
+    var COLS_KEY = 'ac_grid_cols';
+    var listBtn = document.getElementById('ac-view-list-btn');
+    var gridBtn = document.getElementById('ac-view-grid-btn');
+    var colsLabel = document.getElementById('ac-grid-cols-label');
+    var colsSelect = document.getElementById('ac-grid-cols');
+    var cardList = document.getElementById('ac-card-list');
+
+    function applyCols(cols) {
+        if (cardList) {
+            cardList.style.setProperty('--ac-grid-cols', String(cols));
+        }
+        if (colsSelect) {
+            colsSelect.value = String(cols);
+        }
+    }
+    function applyCardView(view) {
+        document.body.classList.toggle('ac-view-grid', view === 'grid');
+        if (listBtn) {
+            listBtn.classList.toggle('ari-btn--primary', view !== 'grid');
+        }
+        if (gridBtn) {
+            gridBtn.classList.toggle('ari-btn--primary', view === 'grid');
+        }
+        if (colsLabel) {
+            colsLabel.style.display = view === 'grid' ? '' : 'none';
+        }
+    }
+    var savedView = 'grid';
+    try {
+        savedView = window.localStorage.getItem(VIEW_KEY) || 'grid';
+    } catch (e) { /* localStorage unavailable */ }
+    applyCardView(savedView);
+
+    var savedCols = '5';
+    try {
+        savedCols = window.localStorage.getItem(COLS_KEY) || '5';
+    } catch (e) { /* localStorage unavailable */ }
+    applyCols(savedCols);
+
+    if (listBtn) {
+        listBtn.addEventListener('click', function () {
+            applyCardView('list');
+            try { window.localStorage.setItem(VIEW_KEY, 'list'); } catch (e) {}
+        });
+    }
+    if (gridBtn) {
+        gridBtn.addEventListener('click', function () {
+            applyCardView('grid');
+            try { window.localStorage.setItem(VIEW_KEY, 'grid'); } catch (e) {}
+        });
+    }
+    if (colsSelect) {
+        colsSelect.addEventListener('change', function () {
+            applyCols(colsSelect.value);
+            try {
+                window.localStorage.setItem(COLS_KEY, colsSelect.value);
+            } catch (e) {}
         });
     }
 
@@ -342,6 +543,47 @@
                 }
             }).catch(function (err) {
                 window.alert(String(err || 'Could not delete YAML file.'));
+                btn.disabled = false;
+            });
+        });
+    });
+
+    document.querySelectorAll('.ac-night-exclude-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var obsdir = btn.getAttribute('data-obsdir');
+            if (!window.confirm(
+                'Permanently exclude night “' + obsdir
+                + '” for this instrument?\n\nThis directory will always be '
+                + 'excluded from this point forward and will never be shown '
+                + 'or checked again, even if new data appears in it.\n\n'
+                + 'You can undo this later from Admin → APERO Checks Policy.'
+            )) {
+                return;
+            }
+            btn.disabled = true;
+            fetch({{ url_for('api_apero_checks_exclude_obsdir')|tojson }}, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profile_id: {{ profile_id|tojson }},
+                    obsdir: obsdir,
+                }),
+            }).then(function (resp) {
+                return resp.json().then(function (data) {
+                    if (!resp.ok || data.success === false) {
+                        throw new Error(data.error || 'Request failed');
+                    }
+                    return data;
+                });
+            }).then(function () {
+                var wrap = btn.closest('.ac-card-wrap');
+                if (wrap) {
+                    wrap.remove();
+                }
+            }).catch(function (err) {
+                window.alert(String(err || 'Could not exclude obs-dir.'));
                 btn.disabled = false;
             });
         });

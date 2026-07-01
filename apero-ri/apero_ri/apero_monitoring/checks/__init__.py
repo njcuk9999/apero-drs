@@ -74,6 +74,49 @@ QUAL_CHECK = _module('apero_ri.apero_monitoring.checks.check_qual_test').CHECK
 ASTROM_CHECK = _module(
     'apero_ri.apero_monitoring.checks.check_astrometrics'
 ).CHECK
+CRITICAL_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_critical_test'
+).CHECK
+CRITICAL_SCI_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_critical_sci_test'
+).CHECK
+
+# =============================================================================
+# Red checks
+# =============================================================================
+MANUAL_START_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_manual_start'
+).CHECK
+MANUAL_END_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_manual_end'
+).CHECK
+APERO_START_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_apero_start'
+).CHECK
+APERO_END_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_apero_end'
+).CHECK
+ARI_START_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_ari_start'
+).CHECK
+ARI_END_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_ari_end'
+).CHECK
+PIXEL_SHIFTS_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_pixel_shifts'
+).CHECK
+LOW_SNR_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_low_snr'
+).CHECK
+EXCESS_MODAL_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_excess_modal'
+).CHECK
+PREV_REDUC_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_prev_reduc'
+).CHECK
+BAD_CCF_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_bad_ccf'
+).CHECK
 
 
 # =============================================================================
@@ -108,3 +151,20 @@ CHECKS['ENG_BACKEND_ERROR_STATE'] = ENG_BACKEND_ERROR_STATE_CHECK
 CHECKS['NO_SCI'] = NO_SCI_CHECK
 CHECKS['QUAL_TEST'] = QUAL_CHECK
 CHECKS['ASTROM'] = ASTROM_CHECK
+CHECKS['CRITICAL_TEST'] = CRITICAL_CHECK
+CHECKS['CRITICAL_SCI_TEST'] = CRITICAL_SCI_CHECK
+
+# =============================================================================
+# Red checks
+# =============================================================================
+CHECKS['MANUAL_START'] = MANUAL_START_CHECK
+CHECKS['MANUAL_END'] = MANUAL_END_CHECK
+CHECKS['APERO_START'] = APERO_START_CHECK
+CHECKS['APERO_END'] = APERO_END_CHECK
+CHECKS['ARI_START'] = ARI_START_CHECK
+CHECKS['ARI_END'] = ARI_END_CHECK
+CHECKS['PIXEL_SHIFTS'] = PIXEL_SHIFTS_CHECK
+CHECKS['LOW_SNR'] = LOW_SNR_CHECK
+CHECKS['EXCESS_MODAL'] = EXCESS_MODAL_CHECK
+CHECKS['PREV_REDUC'] = PREV_REDUC_CHECK
+CHECKS['BAD_CCF'] = BAD_CCF_CHECK

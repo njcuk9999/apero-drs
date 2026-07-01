@@ -42,11 +42,12 @@
 }
 
 .ac-card__row-status {
-    width: 1rem;
     min-width: 1rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.2rem;
+    flex-wrap: nowrap;
 }
 
 .ac-card__date {
@@ -89,6 +90,65 @@ body.ac-delete-mode .ac-delete-only {
     display: inline-flex !important;
 }
 
+/* ── Advanced panel (shown below toolbar when advanced mode is on) ───── */
+.ac-advanced-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    margin: 0.4rem 0 0.25rem;
+}
+
+/* ── New obs dir overlay body ────────────────────────────────────────── */
+.ac-new-obsdir-body {
+    padding: 0.25rem 0.25rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ac-new-obsdir-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.ac-new-obsdir-input {
+    flex: 1;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--ari-border, #d8dcee);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-family: monospace;
+}
+
+.ac-new-obsdir-status {
+    font-size: 0.88rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.ac-new-obsdir-status--ok {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #2e7d32;
+}
+
+.ac-new-obsdir-status--error {
+    background: #ffebee;
+    border-color: #ef9a9a;
+    color: #c62828;
+}
+
+.ac-new-obsdir-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
 /* ── Night card wrapper (profile list page) ─────────────────────────── */
 .ac-card-wrap {
     position: relative;
@@ -118,6 +178,100 @@ a.ac-card {
 
 .ac-night-delete-btn:hover {
     background: #7f1d1d;
+}
+
+.ac-night-exclude-btn {
+    position: absolute;
+    right: 3.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    background: #4b5563;
+    border: 1px solid #374151;
+    border-radius: 0.4rem;
+    color: #fff;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.ac-night-exclude-btn:hover {
+    background: #374151;
+}
+
+/* ── Compact grid view (5 cards per row, name + status icons only) ──── */
+.ac-view-toggle {
+    display: inline-flex;
+    gap: 0.3rem;
+}
+
+body.ac-view-grid #ac-card-list {
+    display: grid;
+    grid-template-columns: repeat(var(--ac-grid-cols, 5), minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+    body.ac-view-grid #ac-card-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    body.ac-view-grid #ac-card-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+body.ac-view-grid .ac-card {
+    padding: 0.55rem 0.4rem;
+    border-left-width: 0.35rem;
+}
+
+body.ac-view-grid .ac-card__row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 0.25rem;
+}
+
+body.ac-view-grid .ac-card__row-status {
+    min-width: 0;
+}
+
+body.ac-view-grid .ac-card__date {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.ac-view-grid .ac-card__lastrun {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+body.ac-view-grid .ac-night-delete-btn,
+body.ac-view-grid .ac-night-exclude-btn {
+    top: 0.3rem;
+    transform: none;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.72rem;
+}
+
+body.ac-view-grid .ac-night-delete-btn {
+    right: 0.3rem;
+}
+
+body.ac-view-grid .ac-night-exclude-btn {
+    right: 1.85rem;
 }
 
 .ac-check-pill {
@@ -607,7 +761,8 @@ a.ac-card {
     background: #f5f3ff;
 }
 
-.ac-card--overridden {
+.ac-card--overridden,
+.ac-card--overridden_monitored {
     border-left-color: #d97706;
     background: #fffbeb;
 }
@@ -797,7 +952,8 @@ a.ac-card:hover {
     border-left-color: #7c3aed;
 }
 
-[data-theme="dark"] .ac-card--overridden {
+[data-theme="dark"] .ac-card--overridden,
+[data-theme="dark"] .ac-card--overridden_monitored {
     background: #2a1f05;
     border-left-color: #d97706;
 }
@@ -858,4 +1014,78 @@ a.ac-card:hover {
 [data-theme="dark"] .ac-issue-chip--selected {
     border-color: #2e9f5f;
     background: rgba(46, 159, 95, 0.15);
+}
+
+/* ── Shared check-results overlay (aci_results_overlay.js) ─────────────── */
+.aci-results-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    /* display controlled via style.display in JS */
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5vh;
+}
+.aci-results-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+}
+.aci-results-panel {
+    position: relative;
+    z-index: 1;
+    width: min(96vw, 900px);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.aci-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--ari-border);
+    flex-shrink: 0;
+}
+.aci-results-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ari-text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.aci-results-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0.75rem 0.9rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.aci-results-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 52vh;
+    border: 1px solid var(--ari-border);
+    border-radius: 4px;
+}
+
+/* Clickable summary chips on the policy page */
+.acp-chip--clickable {
+    cursor: pointer;
+    transition: box-shadow 0.12s, transform 0.1s;
+    background: unset; /* keep the color variant's bg */
+}
+.acp-chip--clickable:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
 }

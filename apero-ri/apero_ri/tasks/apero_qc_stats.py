@@ -132,10 +132,11 @@ class AperoQCStats(apero_async.AperoAsyncTask):
             tlog("No APERO profiles configured. Nothing to do.")
             return
 
+        profile_errors = []
         for a_it, apero_profile in enumerate(apero_profile_names):
             if stop_event is not None and stop_event.is_set():
                 tlog("Cancellation requested. Exiting before next profile.")
-                return
+                break
             # update the progress
             self.progress = (a_it + 1) / len(apero_profile_names)
             tlog(
@@ -193,119 +194,112 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                     f"- **Skipped** (path check failed): {msg}\n"
                 )
                 continue
-            # -----------------------------------------------------------------
-            # step 1: get calibration files from database
-            # -----------------------------------------------------------------
-            # log message
-            tlog(
-                f"Profile {apero_profile}: querying calibration file "
-                "inventory..."
-            )
-            # get the calib files
-            cfiles, qtime, qnum = get_calib_file(
-                aparams, task_logger=tlog, stop_event=stop_event
-            )
-            if stop_event is not None and stop_event.is_set():
-                tlog(
-                    f"Profile {apero_profile}: cancellation requested "
-                    "after DB query step. Exiting."
-                )
-                return
-            # -----------------------------------------------------------------
-            # step 2: read headers and get variables required
-            # -----------------------------------------------------------------
-            # log message
-            tlog(f"Profile {apero_profile}: reading calibration headers...")
-            self.subprogress = 0.0
-
-            def _update_subprogress(
-                done_items: int, total_items: int, _item_name: str
-            ) -> None:
-                total = max(int(total_items or 0), 1)
-                self.subprogress = min(1.0, float(done_items) / float(total))
-
-            # read the headers
-            cresults, htime, hnum = read_calib_headers(
-                aparams,
-                cfiles,
-                task_logger=tlog,
-                stop_event=stop_event,
-                ncores=mp_cfg["ncores"],
-                mp_backend=mp_cfg["backend"],
-                mp_start_method=mp_cfg["start_method"],
-                progress_callback=_update_subprogress,
-            )
-            self.subprogress = 1.0
-            # deal with stop event
-            if stop_event is not None and stop_event.is_set():
-                tlog(
-                    f"Profile {apero_profile}: cancellation requested during "
-                    "header read. Exiting."
-                )
-                return
-            # -----------------------------------------------------------------
-            # time now
-            time_now = datetime.now(timezone.utc).isoformat()
-            metadata = dict()
-            metadata["GENERATED_AT"] = time_now
-            metadata["QUERY_TIME"] = qtime
-            metadata["N_QUERIES"] = qnum
-            metadata["HEADER_READ_TIME"] = htime
-            metadata["N_HEADERS"] = hnum
-            metadata["APERO_PROFILE"] = apero_profile
-            tlog(
-                f"Profile {apero_profile}: step timings query={qtime:.2f}s "
-                f"({qnum} queries), headers={htime:.2f}s ({hnum} "
-                "header groups)."
-            )
-            # construct filename
-            for output in cresults:
-                instrument = aparams.get("general", {}).get(
-                    "INSTRUMENT", "unknown"
-                )
-                local_dir = (
-                    Path(params.get("LOCAL_DATA_DIR", str(ARI_DIR)))
-                    / "tasks"
-                    / instrument
-                    / apero_profile
-                )
-                basename = f"qc_stats_{output}.json"
-                filename = local_dir / basename
-                # get result
-                result = cresults[output]
-                # save results to JSON file for use in the UI
-                apero_async.save_results(filename, result, metadata)
-                tlog(
-                    f"Profile {apero_profile}: saved qc stats "
-                    f"for output={output} "
-                    f"to {filename}."
-                )
+            try:
                 # -------------------------------------------------------------
-                # add to the output files for this task
-                self.output_files.append(str(filename))
-            # -----------------------------------------------------------------
-            if db_updates:
-                try:
+                # step 1: get calibration files from database
+                # -------------------------------------------------------------
+                tlog(
+                    f"Profile {apero_profile}: querying calibration file "
+                    "inventory..."
+                )
+                cfiles, qtime, qnum = get_calib_file(
+                    aparams, task_logger=tlog, stop_event=stop_event
+                )
+                if stop_event is not None and stop_event.is_set():
                     tlog(
-                        f"Profile {apero_profile}: persisting DB "
-                        "update fingerprint."
+                        f"Profile {apero_profile}: cancellation requested "
+                        "after DB query step. Exiting."
                     )
-                    apero_async.save_profile_db_table_updates(
-                        instrument, apero_profile, db_updates
-                    )
-                except Exception as exc:
+                    break
+                # -------------------------------------------------------------
+                # step 2: read headers and get variables required
+                # -------------------------------------------------------------
+                tlog(
+                    f"Profile {apero_profile}: reading calibration headers..."
+                )
+                self.subprogress = 0.0
+
+                def _update_subprogress(
+                    done_items: int, total_items: int, _item_name: str
+                ) -> None:
+                    total = max(int(total_items or 0), 1)
+                    self.subprogress = min(
+                        1.0, float(done_items) / float(total))
+
+                cresults, htime, hnum = read_calib_headers(
+                    aparams,
+                    cfiles,
+                    task_logger=tlog,
+                    stop_event=stop_event,
+                    ncores=mp_cfg["ncores"],
+                    mp_backend=mp_cfg["backend"],
+                    mp_start_method=mp_cfg["start_method"],
+                    progress_callback=_update_subprogress,
+                )
+                self.subprogress = 1.0
+                if stop_event is not None and stop_event.is_set():
                     tlog(
-                        f"Profile {apero_profile}: warning, failed to persist "
-                        f"database-update fingerprint: {exc}"
+                        f"Profile {apero_profile}: cancellation requested "
+                        "during header read. Exiting."
                     )
-                    self.info += (
-                        f"\n- Warning: failed to persist database-update "
-                        f"fingerprint for {apero_profile}: {exc}\n"
+                    break
+                # -------------------------------------------------------------
+                # time now
+                time_now = datetime.now(timezone.utc).isoformat()
+                metadata = dict()
+                metadata["GENERATED_AT"] = time_now
+                metadata["QUERY_TIME"] = qtime
+                metadata["N_QUERIES"] = qnum
+                metadata["HEADER_READ_TIME"] = htime
+                metadata["N_HEADERS"] = hnum
+                metadata["APERO_PROFILE"] = apero_profile
+                tlog(
+                    f"Profile {apero_profile}: step timings "
+                    f"query={qtime:.2f}s ({qnum} queries), "
+                    f"headers={htime:.2f}s ({hnum} header groups)."
+                )
+                # construct filename
+                for output in cresults:
+                    instrument = aparams.get("general", {}).get(
+                        "INSTRUMENT", "unknown"
                     )
-            # -----------------------------------------------------------------
-            # update the info markdown with meta data
-            self.info += f"""
-            ## Object Table for APERO Profile: {apero_profile}
+                    local_dir = (
+                        Path(params.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+                        / "tasks"
+                        / instrument
+                        / apero_profile
+                    )
+                    basename = f"qc_stats_{output}.json"
+                    filename = local_dir / basename
+                    result = cresults[output]
+                    apero_async.save_results(filename, result, metadata)
+                    tlog(
+                        f"Profile {apero_profile}: saved qc stats "
+                        f"for output={output} to {filename}."
+                    )
+                    self.output_files.append(str(filename))
+                # -------------------------------------------------------------
+                if db_updates:
+                    try:
+                        tlog(
+                            f"Profile {apero_profile}: persisting DB "
+                            "update fingerprint."
+                        )
+                        apero_async.save_profile_db_table_updates(
+                            instrument, apero_profile, db_updates
+                        )
+                    except Exception as exc:
+                        tlog(
+                            f"Profile {apero_profile}: warning, failed to "
+                            f"persist database-update fingerprint: {exc}"
+                        )
+                        self.info += (
+                            f"\n- Warning: failed to persist database-update "
+                            f"fingerprint for {apero_profile}: {exc}\n"
+                        )
+                # -------------------------------------------------------------
+                self.info += f"""
+            ## QC Stats for APERO Profile: {apero_profile}
 
             **Generated at**: {metadata['GENERATED_AT']}
             **Query time**: {metadata['QUERY_TIME']:.2f} seconds
@@ -316,11 +310,27 @@ class AperoQCStats(apero_async.AperoAsyncTask):
 
             **APERO Profile**: {metadata['APERO_PROFILE']}
             """
+                self.last_run = time_now
 
-            # update the last run time
-            self.last_run = time_now
+            except Exception as exc:
+                err_msg = (
+                    f"Profile {apero_profile}: failed — {exc}"
+                )
+                tlog(f"ERROR: {err_msg}")
+                self.info += (
+                    f"\n## QC Stats for APERO Profile: {apero_profile}\n\n"
+                    f"- **ERROR**: {err_msg}\n"
+                )
+                profile_errors.append(err_msg)
 
-        tlog("APERO_QC_STATS completed.")
+        if profile_errors:
+            tlog(
+                "APERO_QC_STATS completed with errors in "
+                f"{len(profile_errors)} profile(s): "
+                + "; ".join(profile_errors)
+            )
+        else:
+            tlog("APERO_QC_STATS completed.")
 
     def test_query(self, params: Dict[str, Any]):
         """

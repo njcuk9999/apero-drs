@@ -7,12 +7,38 @@ Each function takes ``app`` as the first argument so it can re-use
 the existing permission helpers (``_require_user`` etc).
 """
 
+import threading
+import time
+from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import quote
 
 from flask import jsonify, request
 
 from apero_ri.core import auth, notifications as notif
+from apero_ri.core import awards as awards_core
+from apero_ri.core import permissions as perms_mod
+
+# Cache for the expensive awards computation (~5 min TTL).
+_AWARDS_CACHE: Dict[str, Any] = {}
+_AWARDS_CACHE_LOCK = threading.Lock()
+_AWARDS_CACHE_TTL = 300  # seconds
+
+
+def _get_awards_cached(data_dir: Path, instruments: list) -> dict:
+    cache_key = str(data_dir)
+    now = time.monotonic()
+    with _AWARDS_CACHE_LOCK:
+        entry = _AWARDS_CACHE.get(cache_key)
+        if entry and now - entry['ts'] < _AWARDS_CACHE_TTL:
+            return entry['data']
+    try:
+        data = awards_core.compute_awards(data_dir, instruments)
+    except Exception:
+        data = {}
+    with _AWARDS_CACHE_LOCK:
+        _AWARDS_CACHE[cache_key] = {'data': data, 'ts': now}
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -308,6 +334,12 @@ def api_users_directory(app):
         users = auth.load_users() or {}
     except Exception:  # noqa: BLE001
         users = {}
+
+    instruments = perms_mod.load_parameters().get(
+        'instruments', {}).get('value', [])
+    data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    awards = _get_awards_cached(data_dir, instruments)
+
     out: List[Dict[str, Any]] = []
     for uname, urec in sorted(users.items()):
         if not isinstance(urec, dict):
@@ -349,5 +381,31 @@ def api_users_directory(app):
             + quote(uname, safe=""),
             "is_self": (uname == me),
             "can_view_contact": can_view_contact,
+            "awards": _user_award_summary(awards, uname),
         })
-    return jsonify(success=True, users=out, me=me)
+    return jsonify(
+        success=True, users=out, me=me,
+        all_groups=list(app.ari_groups.keys()),
+        instruments=instruments,
+    )
+
+
+def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
+    entry = awards.get(uname)
+    if not entry:
+        return {
+            'total_hours': 0.0,
+            'instruments': [],
+            'instrument_medals': {},
+            'service_medal': None,
+            'issues_resolved': 0,
+            'issues_medal': None,
+        }
+    return {
+        'total_hours': round(entry.get('total_hours', 0.0), 2),
+        'instruments': list(entry.get('instruments', {}).keys()),
+        'instrument_medals': entry.get('instrument_medals', {}),
+        'service_medal': entry.get('service_medal'),
+        'issues_resolved': entry.get('issues_resolved', 0),
+        'issues_medal': entry.get('issues_medal'),
+    }
