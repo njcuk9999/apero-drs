@@ -50,6 +50,9 @@ dependencies = [
 Homepage = 'http://apero.exoplanets.ca'
 Repository = 'https://github.com/njcuk9999/apero-drs'
 
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
 [tool.setuptools_scm]
 root = ".."
 write_to = "apero-core/aperocore/_version.py"
@@ -62,3 +65,9 @@ __version_tuple__ = version_tuple = {version_tuple}
 __date__ = "{scm_version.node_date:%Y-%m-%d}"
 """
 local_scheme = "node-and-date"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

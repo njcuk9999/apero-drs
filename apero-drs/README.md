@@ -6,6 +6,18 @@
 import apero
 ```
 
+## Testing
+
+Unit tests live in `apero-drs/tests`.
+
+```bash
+cd /scratch2/spirou/drs-bin/apero-drs-spirou-08XXX
+PYTHONPATH="/scratch2/spirou/drs-bin/apero-drs-spirou-08XXX/apero-core:/scratch2/spirou/drs-bin/apero-drs-spirou-08XXX/apero-drs" \
+python -m pytest -q apero-drs/tests
+```
+
+See `apero-drs/tests/README.md` for coverage scope and conventions.
+
 ## import rules
 
 apero.base				- no apero modules

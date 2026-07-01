@@ -71,7 +71,8 @@ Repository = 'https://github.com/njcuk9999/apero-drs'
 full = ["aperocore @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.running#subdirectory=apero-core",
         "lbl @ git+https://github.com/njcuk9999/lbl.git"]
 dev = ["aperocore",
-       "lbl"]
+       "lbl",
+       "pytest>=8,<9"]
 
 [tool.setuptools_scm]
 root = ".."
@@ -85,3 +86,9 @@ __version_tuple__ = version_tuple = {version_tuple}
 __date__ = "{scm_version.node_date:%Y-%m-%d}"
 """
 local_scheme = "node-and-date"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

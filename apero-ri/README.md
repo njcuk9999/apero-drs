@@ -82,6 +82,18 @@ that opts out of search-engine indexing.
 
 ## Python use
 
+## Testing
+
+Unit tests live in `apero-ri/tests`.
+
+```bash
+cd /scratch2/spirou/drs-bin/apero-drs-spirou-08XXX
+PYTHONPATH="/scratch2/spirou/drs-bin/apero-drs-spirou-08XXX/apero-ri" \
+python -m pytest -q apero-ri/tests
+```
+
+See `apero-ri/tests/README.md` for test scope and conventions.
+
 ### Use:
 
 ```python
