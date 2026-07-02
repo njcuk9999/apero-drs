@@ -12,6 +12,7 @@ Created on 2019-07-05 at 16:46
 import itertools
 import os
 
+import apero as apero_pkg
 from aperocore.base import base
 from aperocore.constants import param_functions
 from apero.core import drs_file
@@ -20,18 +21,17 @@ from apero.utils import drs_startup
 from apero.utils import drs_utils
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_uberv_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # Get Logging function

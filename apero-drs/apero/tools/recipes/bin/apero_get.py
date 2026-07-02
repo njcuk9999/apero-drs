@@ -8,6 +8,7 @@ Created on 2021-06-11
 @author: cook
 """
 import os
+import apero as apero_pkg
 from typing import Any, Dict
 
 from aperocore.base import base
@@ -18,18 +19,17 @@ from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.tools.module.listing import drs_get
 from apero.tools.module.setup import drs_assets
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_get.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions

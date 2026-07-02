@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from aperocore.constants import param_functions
+import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore import math as mp
 from apero.core import drs_database
@@ -24,18 +25,17 @@ from apero.utils import drs_startup
 from apero.io import drs_image
 from apero.science.calib import background
 from apero.science.calib import badpix
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_badpix_nirps_he.py'
 __INSTRUMENT__ = 'NIRPS_HE'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions

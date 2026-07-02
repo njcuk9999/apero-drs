@@ -11,28 +11,30 @@ Created on 2020-02-27 at 10:56
 """
 import argparse
 import os
+import sys
 from typing import Any, Dict
 
-from aperocore.base import base
-from aperocore.constants import param_functions
-from aperocore.constants import load_functions
-from apero.constants import path_definitions
-from apero.instruments.default import recipe_definitions as rd
-from apero.instruments import select
-from apero.base import base as apero_base
+import apero as apero_pkg
+
+# Defer heavy APERO imports to runtime to reduce command startup delay.
+base = None
+load_functions = None
+param_functions = None
+path_definitions = None
+rd = None
+select = None
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_go.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
-# Get parameter class
-ParamDict = param_functions.ParamDict
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
+ParamDict = Dict[str, Any]
 
 
 # =============================================================================
@@ -74,11 +76,71 @@ def get_args() -> Dict[str, Any]:
     return dict(vars(args))
 
 
+def _quick_parse_args() -> Dict[str, bool]:
+    """
+    Parse fast-path options before loading full APERO runtime.
+
+    :return: dictionary with quick option states
+    """
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--setup', action='store_true')
+    parser.add_argument('--mysql', action='store_true')
+    args, _ = parser.parse_known_args()
+    return dict(vars(args))
+
+
+def _load_runtime_imports() -> None:
+    """Load runtime APERO modules only when required."""
+    global base, load_functions, param_functions, path_definitions
+    global rd, select, ParamDict
+
+    from aperocore.base import base as apero_core_base
+    from aperocore.constants import load_functions as apero_load_functions
+    from aperocore.constants import param_functions as apero_param_functions
+    from apero.constants import path_definitions as apero_path_definitions
+    from apero.instruments import select as apero_select
+    from apero.instruments.default import recipe_definitions as apero_rd
+
+    base = apero_core_base
+    load_functions = apero_load_functions
+    param_functions = apero_param_functions
+    path_definitions = apero_path_definitions
+    rd = apero_rd
+    select = apero_select
+
+    ParamDict = param_functions.ParamDict
+
+
 def main():
     """
     Main function for apero_go.py
 
     """
+    quick_args = _quick_parse_args()
+
+    # Fast-path --setup output without loading full APERO config.
+    if quick_args.get('setup', False):
+        value = os.environ['DRS_UCONFIG']
+        print('SETUP: {0}'.format(value))
+        return locals()
+
+    # Fast-path --mysql output without loading instrument constants.
+    if quick_args.get('mysql', False):
+        from aperocore.base import base as apero_core_base
+
+        dparams = apero_core_base.DPARAMS
+        host = dparams['HOST']
+        user = dparams['USER']
+        passwd = dparams['PASSWD']
+        cmd = '>> mysql -h {0} -u {1} -p'
+        cmd += 'Pass = {2}'
+        print('MYSQL:\n\t' + cmd.format(host, user, passwd))
+        return locals()
+
+    # Show immediate feedback before APERO performs heavy module loading.
+    print('Loading APERO go runtime...', file=sys.stderr, flush=True)
+    _load_runtime_imports()
+
     # get parameters for this instrument
     params = load_functions.load_config(select.INSTRUMENTS)
     # add arguments as inputs (via argparse)

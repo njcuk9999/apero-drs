@@ -9,6 +9,7 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
+import apero as apero_pkg
 from typing import Any, Dict, Tuple, Union
 
 from aperocore.base import base
@@ -17,18 +18,17 @@ from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.tools.module.testing import drs_dev
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'blank.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # Get Logging function

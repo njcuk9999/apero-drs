@@ -17,6 +17,7 @@ import numpy as np
 
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
+import apero as apero_pkg
 from aperocore import drs_lang
 from apero.core import drs_astrometrics
 from apero.core import drs_file
@@ -27,18 +28,17 @@ from apero.utils import drs_startup
 from apero.io import drs_image
 from apero.science import preprocessing as prep
 from apero.instruments import select
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_preprocess_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions

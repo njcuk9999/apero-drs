@@ -14,6 +14,7 @@ from typing import Any, Dict
 
 from aperocore.base import base
 from aperocore.constants import param_functions
+import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from aperocore.core import drs_text
@@ -22,7 +23,6 @@ from apero.utils import drs_startup
 from apero.tools.module.database import database_update
 from apero.tools.module.database import manage_databases
 from apero.tools.module.database import manage_db_gui
-from apero.base import base as apero_base
 from apero.core import drs_database
 
 # =============================================================================
@@ -30,11 +30,11 @@ from apero.core import drs_database
 # =============================================================================
 __NAME__ = 'apero_database.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions

@@ -18,18 +18,17 @@ from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from apero.utils import drs_startup
 from apero.tools.module.documentation import drs_changelog
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_changelog.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero.__NAME__
+__version__ = apero.__version__
+__authors__ = apero.__authors__
+__date__ = apero.__date__
+__release__ = apero.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
