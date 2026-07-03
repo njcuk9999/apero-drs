@@ -2016,7 +2016,7 @@ data:
   nirps_he/engineering/amplifier_bias_model_nirps.fits: f4e79fca6e565ae7e7adb168cfb66e07
   nirps_he/engineering/hotpix_pp.csv: 53ec24b52b6e60bacce3447bb94492f4
   nirps_he/reject/.locks/reject.lock: d41d8cd98f00b204e9800998ecf8427e
-  nirps_he/reject/reject.csv: b2d0cb382f17550751518b259ac27e0a
+  nirps_he/reject/reject.csv: f5d0c33b076332542ef6cfd80ab689b6
   nirps_he/reset/calibdb/REF/REF_WAVE_NIRPS_HE_CUT_75.fits: fce13f9fbd3af343372a4f2e75dc0faa
   nirps_he/reset/calibdb/REF_WAVE_NIRPS_HE_CUT_75.fits: fce13f9fbd3af343372a4f2e75dc0faa
   nirps_he/reset/calibdb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
@@ -2180,10 +2180,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2026-06-20 14:33:24.966'
+  humantime: '2026-07-03 14:24:24.560'
   servers:
   - http://206.12.93.77/ari/data/apero/assets/
-  tarfile: 1781966004_965792_assets.tar.gz
-  unixtime: 1781966004.965792
+  tarfile: 1783088664_560195_assets.tar.gz
+  unixtime: 1783088664.560195
   vdate: '2026-04-22'
   version: 0.8.199.dev107+g2bab4f80a.d20260422
