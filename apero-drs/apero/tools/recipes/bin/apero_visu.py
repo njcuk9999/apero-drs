@@ -9,9 +9,9 @@ Created on 2022-02-08
 
 @author: cook
 """
+import apero as apero_pkg
 from typing import Any, Dict
 
-from apero.base import base as apero_base
 from apero.tools.module.visulisation import visu_core
 from apero.tools.module.visulisation import visu_info
 from apero.utils import drs_recipe
@@ -25,11 +25,11 @@ from aperocore.core import drs_text
 # =============================================================================
 __NAME__ = 'apero_visu.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get Recipe class

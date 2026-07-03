@@ -13,6 +13,7 @@ import os
 import shutil
 
 import numpy as np
+import apero as apero_pkg
 from astropy import units as uu
 from astropy.io import fits
 from astropy.table import Table
@@ -20,18 +21,17 @@ from astropy.table import Table
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'get_grid_models.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # alias to parameter check class

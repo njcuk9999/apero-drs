@@ -9,6 +9,7 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
+import apero as apero_pkg
 from typing import Any, Dict
 
 from aperocore.constants import param_functions
@@ -17,20 +18,20 @@ from aperocore.core import drs_text
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.utils import drs_utils
+from apero.base import recipe_defaults
 from apero.tools.module.database import database_gui
 from apero.tools.module.database import manage_databases
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_explorer.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get Recipe class
@@ -42,8 +43,9 @@ ParamDict = param_functions.ParamDict
 PROGRAM_NAME = 'APERO File Explorer'
 # define the default path
 ALLOWED_PATHS = ['PATH.PP', 'PATH.RED']
-# define database names
-NAMES = dict(zip(apero_base.DATABASE_NAMES, apero_base.DATABASE_FULLNAMES))
+# define database names (lightweight shared defaults, no heavy base import)
+NAMES = dict(zip(recipe_defaults.DATABASE_NAMES,
+                 recipe_defaults.DATABASE_FULLNAMES))
 
 
 # -----------------------------------------------------------------------------
@@ -125,7 +127,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         name = NAMES[key]
         # load database holder
         databases[name] = database_gui.DatabaseHolder(params, name=name,
-                                                      tablename=database.dbtable,
+                                                      tablename=(
+                                                          database.dbtable),
                                                       kind=database.kind,
                                                       url=database.dburl,
                                                       hash_col=hash_col)

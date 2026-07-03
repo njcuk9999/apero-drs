@@ -9,23 +9,23 @@ Created on 2021-01-2021-01-13 14:42
 """
 from aperocore.base import base
 from aperocore.constants import param_functions
+import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 from apero.tools.module.utils import constants_tools
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_constants.py'
 __INSTRUMENT__ = base.IPARAMS['OBS.INSTRUMENT']
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # get param dict
 ParamDict = param_functions.ParamDict
 # Get Logging function

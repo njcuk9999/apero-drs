@@ -9,22 +9,34 @@ Created on 2019-11-26 at 18:10
 
 @author: cook
 """
-from aperocore.core import drs_log
-from apero.utils import drs_startup
-from apero.base import base as apero_base
+import sys
+import os
+
+import apero as apero_pkg
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_validate.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
-# Get Logging function
-WLOG = drs_log.wlog
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
+# Runtime logger is populated after lazy imports in main().
+WLOG = None
+
+
+def _load_runtime_imports():
+    """Load heavy APERO modules only when validation execution starts."""
+    global WLOG
+
+    from aperocore.core import drs_log
+    from apero.utils import drs_startup
+
+    WLOG = drs_log.wlog
+    return drs_startup
 
 
 # =============================================================================
@@ -47,6 +59,10 @@ def main(**kwargs):
     :returns: dictionary of the local space
     :rtype: dict
     """
+    # Tell users immediately that APERO is still loading dependencies.
+    print('Loading APERO validation runtime...', file=sys.stderr, flush=True)
+    drs_startup = _load_runtime_imports()
+
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
@@ -75,7 +91,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-    WLOG(params, '', 'Validation complete')
+    if WLOG is None:
+        print('Validation complete')
+    else:
+        WLOG(params, '', 'Validation complete')
 
     # ----------------------------------------------------------------------
     # End of main code

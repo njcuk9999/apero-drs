@@ -10,6 +10,7 @@ Created on 2019-07-26 at 09:47
 @author: cook
 """
 from aperocore.base import base
+import apero as apero_pkg
 from aperocore import drs_lang
 from apero.core import drs_database
 from apero.core import drs_astrometrics
@@ -17,18 +18,17 @@ from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.processing import drs_precheck
 from apero.tools.module.processing import drs_processing
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_precheck.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get index database

@@ -19,23 +19,23 @@ import numpy as np
 
 from aperocore.base import base
 from aperocore.constants import param_functions
+import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.science.velocity import gen_lbl
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_lbl_compile_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions

@@ -11,23 +11,23 @@ Created on 2024-03-11
 from typing import Optional
 
 from aperocore.base import base
+import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.database import drs_astrometrics
 from apero.core import drs_rejection
-from apero.base import base as apero_base
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_reject.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
+__PACKAGE__ = apero_pkg.__NAME__
+__version__ = apero_pkg.__version__
+__authors__ = apero_pkg.__authors__
+__date__ = apero_pkg.__date__
+__release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions
