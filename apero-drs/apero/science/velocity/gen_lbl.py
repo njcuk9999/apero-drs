@@ -94,9 +94,8 @@ def run_mkdirs(params: ParamDict):
     for directory in LBL_DIRS:
         # construct path
         path = os.path.join(lbl_in_path, directory)
-        # check if path exists and make directory if not
-        if not os.path.exists(path):
-            os.makedirs(path)
+        # ensure path exists in concurrent runs
+        os.makedirs(path, exist_ok=True)
 
 
 def run_apero_get(params: ParamDict):
@@ -143,8 +142,7 @@ def run_apero_get(params: ParamDict):
     # ----------------------------------------------------------
     directories = [outpath_templates, outpath_calib, outpath_objects]
     for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        os.makedirs(directory, exist_ok=True)
     # --------------------------------------------------------------
     # Copy to LBL directory
     # --------------------------------------------------------------

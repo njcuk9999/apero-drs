@@ -1105,14 +1105,14 @@ def make_obs_dir(obs_dir: Union[str, None], path: str) -> str:
             cwd = os.getcwd()
             # change to path
             os.chdir(path)
-            # attempt to make folders
-            os.makedirs(rel_path)
+            # attempt to make folders (exist_ok=True handles race)
+            os.makedirs(rel_path, exist_ok=True)
             # change back to current path
             os.chdir(cwd)
         except Exception as e:
             eargs = [rel_path, path, type(e), e, func_name]
             raise AperoCodedException(None, '09-003-00002', targs=eargs)
-    # try to see if path exists one last time
+    # verify path exists after creation
     if os.path.exists(full_path):
         return full_path
     else:

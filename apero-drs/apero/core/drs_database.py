@@ -3069,9 +3069,20 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
         # wait for lock to disappear
         time.sleep(1)
     # -------------------------------------------------------------------------
-    # create lock file
-    with open(lockfilename, 'w') as lockfile:
-        lockfile.write(str(Time.now().iso))
+    # create lock file (db_pend can be deleted by another process)
+    locked = False
+    for _ in range(5):
+        try:
+            os.makedirs(db_pend, exist_ok=True)
+            with open(lockfilename, 'w') as lockfile:
+                lockfile.write(str(Time.now().iso))
+            locked = True
+            break
+        except FileNotFoundError:
+            time.sleep(0.1)
+    if not locked:
+        with open(lockfilename, 'w') as lockfile:
+            lockfile.write(str(Time.now().iso))
     # -------------------------------------------------------------------------
     try:
         # ----------------------------------------------------------------------
@@ -3232,9 +3243,13 @@ def db_send(params: ParamDict, tablename: str,
     elif params.get('DRS.GROUP', None) is not None:
         db_pend = os.path.join(db_pend, params['DRS.GROUP'])
     # -------------------------------------------------------------------------
-    # make sure path exists
-    if not os.path.exists(db_pend):
-        os.makedirs(db_pend, exist_ok=True)
+    # make sure path exists (retry to handle concurrent deletion)
+    for _ in range(5):
+        try:
+            os.makedirs(db_pend, exist_ok=True)
+            break
+        except FileNotFoundError:
+            time.sleep(0.1)
     # -------------------------------------------------------------------------
     # get the table kind (look up table name)
     tablekind = drs_db.get_table_kind(tablename)
@@ -3251,8 +3266,14 @@ def db_send(params: ParamDict, tablename: str,
     if mode == 'SET':
         if condition is not None:
             pending_dict['ENTRY']['condition'] = condition
-    # push into yaml file
-    base.write_yaml(pending_dict, db_filename, width=float('inf'))
+    # push into yaml file (retry to handle concurrent deletion)
+    for _ in range(5):
+        try:
+            base.write_yaml(pending_dict, db_filename, width=float('inf'))
+            break
+        except FileNotFoundError:
+            os.makedirs(db_pend, exist_ok=True)
+            time.sleep(0.1)
 
 
 def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,

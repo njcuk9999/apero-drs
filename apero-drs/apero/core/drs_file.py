@@ -7944,8 +7944,7 @@ class DrsOutFile(DrsInputFile):
         # deal with dtypes
         dtypelist = [None] * len(names)
         # must make sure dirname exists
-        if not os.path.exists(self.out_dirname):
-            os.makedirs(self.out_dirname)
+        os.makedirs(self.out_dirname, exist_ok=True)
         # writefits to file
         drs_fits.writefits(self.params, self.out_filename, data_list,
                            header_list, names, datatype_list, dtypelist,

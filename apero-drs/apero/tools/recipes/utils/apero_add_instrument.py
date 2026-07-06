@@ -71,8 +71,7 @@ class AperoElement:
         # print progress
         print(f'\nCreating directory {path}')
         # if path doesn't exist create this directory
-        if not os.path.exists(path):
-            os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
 
     def process_file_copy(self, kwargdict: dict[str, str]):
         # get the relative path for this os
@@ -110,8 +109,7 @@ class AperoElement:
         # ---------------------------------------------------------------------
         # make sure directory exists
         outdir = os.path.dirname(outpath)
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
         # print progress
         print(f'\tWriting {outpath}')
         # write the file
@@ -178,8 +176,7 @@ class AperoElement:
             os.remove(outpath)
         # make sure directory exists
         outdir = os.path.dirname(outpath)
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
         # print progress
         print(f'Writing {outpath}')
         # write the file

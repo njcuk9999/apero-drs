@@ -2718,7 +2718,7 @@ def _make_dirs(params: ParamDict, path: str):
         WLOG(params, '', textentry('40-001-00023', args=[path]))
         # make directory
         try:
-            os.makedirs(path)
+            os.makedirs(path, exist_ok=True)
         except Exception as e_:
             # log error
             string_trackback = traceback.format_exc()

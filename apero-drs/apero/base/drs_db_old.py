@@ -1761,8 +1761,7 @@ class MySQLDatabase(Database):
                                            '__init__()')
         # set path
         aperohome = os.path.join(os.path.expanduser('~'), '.apero')
-        if not os.path.exists(aperohome):
-            os.makedirs(aperohome)
+        os.makedirs(aperohome, exist_ok=True)
         # path is in the home directory (for backups)
         self.path = os.path.join(aperohome, '{0}_at_{1}'.format(user, host))
         # deal with mysql not being imported

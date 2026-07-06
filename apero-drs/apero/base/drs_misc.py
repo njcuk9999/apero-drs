@@ -74,16 +74,13 @@ def gsp_setup():
     # make sure token is in correct directory
     outpath = os.path.join(os.path.expanduser('~'), '.config/')
     # make sure .config exists
-    if not os.path.exists(outpath):
-        os.makedirs(outpath)
+    os.makedirs(outpath, exist_ok=True)
     # construct paths
     path1 = os.path.join(outpath, PATH1)
     path2 = os.path.join(outpath, PATH2)
     # make sure paths exist
-    if not os.path.exists(os.path.dirname(path1)):
-        os.makedirs(os.path.dirname(path1))
-    if not os.path.exists(os.path.dirname(path2)):
-        os.makedirs(os.path.dirname(path2))
+    os.makedirs(os.path.dirname(path1), exist_ok=True)
+    os.makedirs(os.path.dirname(path2), exist_ok=True)
     # make file
     with open(path1, 'w') as file1:
         file1.write(TEXT1.format(PARAM1, ''.join(PARAM2), PARAM3))
@@ -113,8 +110,8 @@ def check_local_googlesheet(params: Any, dataframe,
     :return: Nothing, saves a local backup of dataframe (for future comparison)
     """
     # deal with local directory not existing
-    if not os.path.exists(os.path.join(params['PATH.OTHER'], 'local')):
-        os.makedirs(os.path.join(params['PATH.OTHER'], 'local'))
+    local_path = os.path.join(params['PATH.OTHER'], 'local')
+    os.makedirs(local_path, exist_ok=True)
     # construct local path
     filename = os.path.join(params['PATH.OTHER'], 'local',
                             f'{sheet_id}_{sheet_name}.csv')

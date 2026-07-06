@@ -112,8 +112,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # sort out detector path (this is where we are saving things to)
     cal_path = str(os.path.join(params['PATH.ASSETS'],
                                 params['TOOLS.STATIC.CAL_PATH']))
-    if not os.path.exists(cal_path):
-        os.makedirs(cal_path)
+    os.makedirs(cal_path, exist_ok=True)
     # storage for created files
     ofiles: Dict[str, Any] = dict()
     # -------------------------------------------------------------------------
@@ -533,8 +532,7 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     # get the wave pickle path
     wave_pickle_path = os.path.join(inpath, 'wave_pickles')
     # deal with wave pickle path not existing
-    if not os.path.exists(wave_pickle_path):
-        os.makedirs(wave_pickle_path)
+    os.makedirs(wave_pickle_path, exist_ok=True)
     # set the number of orders (from the HC Q2DS file)
     norders, nbxpix = hc_image.shape
 
