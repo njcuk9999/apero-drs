@@ -2180,10 +2180,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2026-07-06 14:44:11.943'
+  humantime: '2026-07-07 14:50:16.230'
   servers:
   - http://206.12.93.77/ari/data/apero/assets/
-  tarfile: 1783349051_942982_assets.tar.gz
-  unixtime: 1783349051.942982
+  tarfile: 1783435816_229762_assets.tar.gz
+  unixtime: 1783435816.229762
   vdate: '2026-04-22'
   version: 0.8.199.dev107+g2bab4f80a.d20260422
