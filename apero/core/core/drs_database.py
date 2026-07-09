@@ -2522,6 +2522,22 @@ class FileIndexDatabase(DatabaseManager):
             hash_df = hash_df.fillna('NULL')
             hash_df = drs_db._hash_df(hash_df, ucols)
             dataframe[drs_db.UHASH_COL] = hash_df[drs_db.UHASH_COL].values
+            # Safety deduplication on UHASH: if two rows somehow got the same
+            # UHASH (e.g. same ABSPATH via different obs_dir paths) keep the last.
+            dataframe = dataframe.drop_duplicates(subset=[drs_db.UHASH_COL],
+                                                  keep='last')
+            # Purge any stale DB rows whose UHASH matches a row we are about
+            # to insert.  The scope-based DELETE above removes rows that belong
+            # to a known scope; this step catches rows whose OBS_DIR in the DB
+            # has drifted from the current scope (e.g. due to path changes or
+            # symlinks) and would otherwise violate the UNIQUE UHASH constraint.
+            uhashes = list(dataframe[drs_db.UHASH_COL].dropna().unique())
+            _uhash_chunk = 500
+            for _ui in range(0, len(uhashes), _uhash_chunk):
+                _batch = uhashes[_ui:_ui + _uhash_chunk]
+                _quoted = ', '.join('"{0}"'.format(h) for h in _batch)
+                _condition = '{0} IN ({1})'.format(drs_db.UHASH_COL, _quoted)
+                self.remove_entries(condition=_condition)
             # convert sentinel strings to real nulls so numeric columns do not
             # receive the literal string 'NULL' in MySQL/SQLite bulk inserts.
             for col in dataframe.columns:
