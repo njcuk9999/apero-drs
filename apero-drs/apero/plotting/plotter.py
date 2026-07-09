@@ -321,7 +321,8 @@ class Plotter:
 
     def plotend(self, graph: Graph):
         """
-        Perform the final plotting tasks before properly closing all plots
+        Perform the final plotting tasks before properly closing all
+        plots
 
         :param graph: Graph instance
 
@@ -341,9 +342,10 @@ class Plotter:
                 self.plots_active = True
             # if plot = 2 we need to show the plot
             elif self.plotoption == 3:
-                self.plt.show(block=True)
-                if not self.plt.isinteractive():
-                    self.plt.close()
+                # only show if backend is interactive
+                if self._backend_can_show():
+                    self.plt.show(block=True)
+                self.plt.close()
         # deal with summary plots
         elif graph.kind == 'summary':
             # 1. save to file
@@ -357,11 +359,28 @@ class Plotter:
             self.summary_graphs[graph.filename] = graph.copy()
         # deal with show plots
         elif graph.kind == 'show':
-            self.plt.show(block=True)
-            if not self.plt.isinteractive():
-                self.plt.close()
+            # only show if backend is interactive
+            if self._backend_can_show():
+                self.plt.show(block=True)
+            self.plt.close()
         else:
             pass
+
+    def _backend_can_show(self) -> bool:
+        """Return True when the current matplotlib backend supports GUI."""
+        if self.matplotlib is None:
+            return False
+        if self.backend is None:
+            self.backend = str(self.matplotlib.get_backend())
+        try:
+            interactive_bk = self.matplotlib.rcsetup.interactive_bk
+        except Exception:
+            interactive_bk = ['Qt5Agg', 'GTKAgg', 'TKAgg', 'WXAgg',
+                              'MacOSX', 'QtAgg', 'TkAgg', 'nbAgg',
+                              'WebAgg']
+        backend = str(self.backend).lower()
+        interactive = list(map(lambda x: str(x).lower(), interactive_bk))
+        return backend in interactive
 
     def plotloop(self, 
                  looplist: Union[list, np.ndarray, Iterable]) -> Generator:
@@ -544,7 +563,9 @@ class Plotter:
                 self.plt.ioff()
             except Exception as _:
                 if show:
-                    self.plt.show()
+                    # only show if backend is interactive
+                    if self.plt.isinteractive():
+                        self.plt.show()
                     self.plt.close()
                 else:
                     pass
@@ -1249,10 +1270,14 @@ class Plotter:
             self.plt = PLT_MOD
             self.axes_grid1 = MPL_MOD
         # ------------------------------------------------------------------
-        # if we do not have debug plots or we are in plotoption = 0
-        #    then we do not need any fancy backend and can just use Agg
+        # if we do not have debug plots or we are in plotoption = 1
+        #    (save plots only), then we do not need interactive backend
+        #    and can just use Agg. However if plotoption >= 2 (show
+        #    plots), we need an interactive backend regardless of
+        #    has_debugs
         cond0 = self.plotoption == 0
-        cond1 = not self.has_debugs or (self.plotoption == 1)
+        cond1 = (not self.has_debugs or self.plotoption == 1) and (
+                 self.plotoption < 2)
         cond2 = not force
         # mode 0 is now no plotting whatsoever
         if cond0:
@@ -1306,12 +1331,18 @@ def import_matplotlib() -> Union[Tuple[Any, Any, Any], None]:
     global MPL_MOD
     # fix for MacOSX plots freezing
 
+    current_backend = str(matplotlib.get_backend())
+    # Try interactive backends first. Keep Agg as a final fallback only.
+    gui_env = ['Qt5Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
+    # If a non-Agg backend is already set, prefer trying it first.
+    current_lower = current_backend.lower()
+    if current_lower not in ['agg', 'macosx']:
+        if current_backend not in gui_env:
+            gui_env = [current_backend] + gui_env
+    # Avoid MacOSX backend because it can freeze in this code path.
     if platform.system().lower() == 'darwin':
-        gui_env = [matplotlib.get_backend(), 'MacOSX', 'Qt5Agg', 'GTKAgg',
-                   'TKAgg', 'WXAgg', 'Agg']
-    else:
-        gui_env = [matplotlib.get_backend(), 'Qt5Agg', 'GTKAgg', 'TKAgg',
-                   'WXAgg', 'Agg']
+        gui_env = [gui for gui in gui_env if gui != 'MacOSX']
+    gui_env.append('Agg')
 
     for gui in gui_env:
         # noinspection PyBroadException

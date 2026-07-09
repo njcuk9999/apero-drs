@@ -3056,33 +3056,53 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
     # ----------------------------------------------------------------------
     # lock file in db_pend
     lockfilename = os.path.join(db_pend, 'db_push.lock')
+    # lock handling controls (keep conservative defaults for safety)
+    lock_timeout = 3600
+    lock_stale_time = 7200
     # start counter
     lcounter = 0
-    # wait for lock to disappear
-    while os.path.exists(lockfilename):
-        # every 30 seconds print a message
-        if lcounter % 30 == 0:
-            msg = 'Waiting for database push lock to clear... [{0}]'
-            WLOG(params, '', msg.format(lockfilename))
-        # increment counter
-        lcounter += 1
-        # wait for lock to disappear
-        time.sleep(1)
-    # -------------------------------------------------------------------------
-    # create lock file (db_pend can be deleted by another process)
-    locked = False
-    for _ in range(5):
+    lock_start = time.time()
+    # acquire lock atomically (prevents TOCTOU race on create)
+    while True:
         try:
             os.makedirs(db_pend, exist_ok=True)
-            with open(lockfilename, 'w') as lockfile:
-                lockfile.write(str(Time.now().iso))
-            locked = True
+            lockfd = os.open(lockfilename,
+                             os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(lockfd, 'w') as lockfile:
+                lock_pid = params.get('PID', 'UNKNOWN')
+                lockfile.write('{0}\n'.format(str(Time.now().iso)))
+                lockfile.write('{0}\n'.format(lock_pid))
             break
+        except FileExistsError:
+            # every 30 seconds print a message
+            if lcounter % 30 == 0:
+                msg = 'Waiting for database push lock to clear... [{0}]'
+                WLOG(params, '', msg.format(lockfilename))
+            # remove stale locks that outlive expected run duration
+            try:
+                lock_age = time.time() - os.path.getmtime(lockfilename)
+                if lock_age > lock_stale_time:
+                    msg = 'Removing stale database push lock: {0}'
+                    WLOG(params, 'warning', msg.format(lockfilename))
+                    db_remove(params, lockfilename, max_tries=3, wait=1,
+                              file_kind='lock')
+                    continue
+            except FileNotFoundError:
+                continue
+            # avoid waiting forever on broken locks
+            if (time.time() - lock_start) > lock_timeout:
+                emsg = 'Timeout waiting for database push lock: {0}'
+                eargs = [lockfilename]
+                raise AperoCodedException(params, None,
+                                          message=emsg.format(*eargs),
+                                          targs=eargs)
+            # increment counter
+            lcounter += 1
+            # wait for lock to disappear
+            time.sleep(1)
         except FileNotFoundError:
+            # parent may be recreated by another process
             time.sleep(0.1)
-    if not locked:
-        with open(lockfilename, 'w') as lockfile:
-            lockfile.write(str(Time.now().iso))
     # -------------------------------------------------------------------------
     try:
         # ----------------------------------------------------------------------
@@ -3090,6 +3110,7 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
         pend_basefile = '{0}_{1}_UID*.yaml'.format(pid, db_shortname)
         pend_files = []
         pend_directories = [db_pend]
+        newest_log_rows = dict()
         # loop around directories recursively to find pending files
         for _root, _dirs, _files in os.walk(db_pend):
             # keep track of directories
@@ -3124,6 +3145,15 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
             tablename = pdict['TABLE_NAME']
             entry = pdict['ENTRY']
             mode = pdict['MODE']
+            # keep only the newest snapshot for log rows with the same key
+            if all(key in entry for key in ['PID', 'LEVEL', 'SUBLEVEL']):
+                dkey = (tablename, mode, str(entry['PID']),
+                        str(entry['LEVEL']), str(entry['SUBLEVEL']))
+                mtime = os.path.getmtime(pend_file)
+                current = newest_log_rows.get(dkey)
+                if current is None or mtime >= current[0]:
+                    newest_log_rows[dkey] = (mtime, pdict)
+                continue
             # deal with add mode
             if mode == 'ADD':
                 # deal with table not in pend dict
@@ -3137,6 +3167,20 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
                 if tablename not in pend_set_dict:
                     pend_set_dict[tablename] = []
                 # add entry to pend dict
+                pend_set_dict[tablename].append(entry)
+        # ---------------------------------------------------------------------
+        # append deduplicated log rows collected above
+        for _mtime, pdict in newest_log_rows.values():
+            tablename = pdict['TABLE_NAME']
+            entry = pdict['ENTRY']
+            mode = pdict['MODE']
+            if mode == 'ADD':
+                if tablename not in pend_add_dict:
+                    pend_add_dict[tablename] = []
+                pend_add_dict[tablename].append(entry)
+            else:
+                if tablename not in pend_set_dict:
+                    pend_set_dict[tablename] = []
                 pend_set_dict[tablename].append(entry)
         # ---------------------------------------------------------------------
         # loop around add /set
@@ -3205,7 +3249,7 @@ def db_remove(params: ParamDict, filename: str, max_tries: int = 10,
             time.sleep(wait)
             continue
     # log an error if we have one
-    if counter >= max_tries:
+    if counter >= max_tries and os.path.exists(filename):
         # log error: Could not remove file
         emsg = 'Error: Could not remove {0} file: {1}\n\t{2}: {3}'
         eargs = [file_kind, filename, type(error), str(error)]

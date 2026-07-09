@@ -165,21 +165,43 @@ class LogEntry:
             return
         # get timing criteria
         if mode == 'timing':
-            # get raw start and end time from data table
-            rawstart = self.data.iloc[0]['START_TIME']
-            rawend = self.data.iloc[0]['END_TIME']
+            # Filter to rows with both START_TIME and END_TIME valid
+            valid_rows = []
+            for row_idx in range(len(self.data)):
+                row_data = self.data.iloc[row_idx]
+                start = row_data['START_TIME']
+                end = row_data['END_TIME']
+                # Check for null/empty text values
+                start_null = drs_text.null_text(start,
+                                                ['None', 'Null', ''])
+                end_null = drs_text.null_text(end, ['None', 'Null', ''])
+                # Check for nan/NaT values
+                try:
+                    start_nan = pd.isna(start) or np.isnan(start)
+                except (TypeError, ValueError):
+                    start_nan = False
+                try:
+                    end_nan = pd.isna(end) or np.isnan(end)
+                except (TypeError, ValueError):
+                    end_nan = False
+                # Keep rows where both times are valid
+                if not (start_null or start_nan or end_null or end_nan):
+                    valid_rows.append(row_idx)
+            # If no valid rows found, mark as invalid
+            if len(valid_rows) == 0:
+                self.is_valid = False
+                self.is_valid_for_timing = False
+                return
+            # get raw start and end time from first valid row
+            row_idx = valid_rows[0]
+            rawstart = self.data.iloc[row_idx]['START_TIME']
+            rawend = self.data.iloc[row_idx]['END_TIME']
             # try to get duration
             try:
                 # convert start time to a time
-                if not drs_text.null_text(rawstart, ['None', 'Null', '']):
-                    self.start_time = Time(rawstart).unix
-                else:
-                    self.start_time = np.nan
+                self.start_time = Time(rawstart).unix
                 # convert end time to a time
-                if not drs_text.null_text(rawend, ['None', 'Null', '']):
-                    self.end_time = Time(rawend).unix
-                else:
-                    self.end_time = np.nan
+                self.end_time = Time(rawend).unix
                 # work out duration
                 self.duration = self.end_time - self.start_time
                 # only keep values which are finite
@@ -189,7 +211,8 @@ class LogEntry:
             except Exception as e:
                 emsg = ('TIMING ERROR PID {0}\n\tstart_time={1}'
                         '\n\tend_time={2}\n\t{3}: {4}')
-                eargs = [self.pid, rawstart, rawend, type(e), str(e)[:84]]
+                eargs = [self.pid, rawstart, rawend, type(e),
+                         str(e)[:84]]
                 WLOG(params, 'warning', emsg.format(*eargs))
                 # make sure this target is not valid
                 self.is_valid = False
@@ -1385,8 +1408,10 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # get log database
     WLOG(params, '', 'Loading log database')
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
-    # set up condition
-    condition = 'RECIPE_TYPE LIKE "%recipe%" AND ENDED=1'
+    # set up condition - filter to entries with both START_TIME and
+    # END_TIME values (not NULL)
+    condition = ('RECIPE_TYPE LIKE "%recipe%" AND ENDED=1 AND '
+                 'START_TIME IS NOT NULL AND END_TIME IS NOT NULL')
     columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
                'START_TIME, END_TIME, RECIPE, RECIPE_TYPE, ENDED')
     # -------------------------------------------------------------------------
@@ -1403,6 +1428,9 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # get columns from log dbm
     ltable = logdbm.get_entries(columns, condition=condition,
                                 groupby='PID')
+    # Filter out rows with NaN or NULL in START_TIME or END_TIME
+    valid_mask = ~ltable['START_TIME'].isna() & ~ltable['END_TIME'].isna()
+    ltable = ltable[valid_mask]
     # find start and end points for each recipe
     shortnames = logdbm.database.unique('SHORTNAME', condition=condition)
     # -------------------------------------------------------------------------
