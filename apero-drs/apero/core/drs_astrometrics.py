@@ -2039,6 +2039,12 @@ class AstrometricDatabase:
             1. directory mtime - if unchanged we trust the in-memory cache
             2. per-file mtime  - only re-read yaml files that changed
 
+        Scans subdirectories in precedence order:
+            1. ``verified/`` (highest precedence)
+            2. ``pending/``
+            3. root directory (backward compatibility)
+        Does NOT scan the ``rejected/`` subdirectory.
+
         :param force: bool, if True ignore caches and re-scan from disk
         """
         # if the directory does not exist yet, init empty caches and return
@@ -2063,58 +2069,89 @@ class AstrometricDatabase:
         name_index = _NAME_INDEX.setdefault(self.path, dict())
         entries = _ENTRY_CACHE.setdefault(self.path, dict())
         mtimes = _MTIME_CACHE.setdefault(self.path, dict())
-        # set of yaml files currently on disk
+        # set of yaml files currently on disk (track with relative paths)
         disk_files = set()
         # track if anything changed (so we can decide whether to invalidate)
         any_changes = False
-        # iterate over directory entries (no recursion - flat layout)
-        for fname in os.listdir(self.path):
-            # only consider .yaml files (skip .locks, hidden, etc.)
-            if not fname.endswith(YAML_EXT):
+        # list of directories to scan in precedence order; skip rejected
+        dirs_to_scan = [
+            ('', None),  # root (backward compat, lowest precedence)
+            (STATUS_PENDING, False),  # pending dir
+            (STATUS_VERIFIED, True),  # verified (highest precedence)
+        ]
+        # scan all directories in reverse precedence order so that when we
+        # iterate forward, entries from higher precedence directories are
+        # added to the cache last and thus take precedence
+        for subdir, is_verified in reversed(dirs_to_scan):
+            # build the scan directory path
+            if subdir:
+                scan_dir = os.path.join(self.path, subdir)
+            else:
+                scan_dir = self.path
+            # skip if directory doesn't exist
+            if not os.path.isdir(scan_dir):
                 continue
-            # skip dotfiles (tmp files etc.)
-            if fname.startswith('.'):
-                continue
-            # full path
-            fpath = os.path.join(self.path, fname)
-            # skip directories that happen to end in .yaml
-            if not os.path.isfile(fpath):
-                continue
-            # remember we saw this file
-            disk_files.add(fname)
-            # fetch current mtime
-            try:
-                fmtime = os.path.getmtime(fpath)
-            except OSError:
-                continue
-            # skip files that have not changed since last load
-            if (not force
-                    and fname in mtimes
-                    and mtimes[fname] == fmtime):
-                continue
-            # (re)load this yaml file
-            try:
-                entry = self._read_yaml(fpath)
-            except Exception as exc:
-                # log a warning but do not crash - one bad file should not
-                # break the whole catalogue
-                wmsg = 'Skipping unreadable astrometric yaml: {0} ({1})'
-                warnings.warn(wmsg.format(fpath, exc))
-                continue
-            # the canonical APERO name is required
-            apero_name = entry.get(APERO_NAME_KEY)
-            if _is_null(apero_name):
-                wmsg = ('Astrometric yaml {0} has no APERO_NAME - '
-                        'skipping').format(fpath)
-                warnings.warn(wmsg)
-                continue
-            # store the entry keyed by the canonical name
-            entries[str(apero_name)] = entry
-            # remember mtime so we don't reload next time
-            mtimes[fname] = fmtime
-            # add every searchable key into the name index
-            self._index_entry(name_index, str(apero_name), entry)
-            any_changes = True
+            # iterate over directory entries
+            for fname in os.listdir(scan_dir):
+                # only consider .yaml files (skip .locks, hidden, etc)
+                if not fname.endswith(YAML_EXT):
+                    continue
+                # skip dotfiles (tmp files etc.)
+                if fname.startswith('.'):
+                    continue
+                # full path
+                fpath = os.path.join(scan_dir, fname)
+                # skip directories that happen to end in .yaml
+                if not os.path.isfile(fpath):
+                    continue
+                # track file with relative path
+                # (subdir/fname or just fname for root)
+                if subdir:
+                    rel_path = os.path.join(subdir, fname)
+                else:
+                    rel_path = fname
+                # remember we saw this file
+                disk_files.add(rel_path)
+                # fetch current mtime
+                try:
+                    fmtime = os.path.getmtime(fpath)
+                except OSError:
+                    continue
+                # skip files that have not changed since last load
+                if (not force
+                        and rel_path in mtimes
+                        and mtimes[rel_path] == fmtime):
+                    continue
+                # (re)load this yaml file
+                try:
+                    entry = self._read_yaml(fpath)
+                except Exception as exc:
+                    # log a warning but do not crash - one bad file
+                    # should not break the whole catalogue
+                    wmsg = ('Skipping unreadable astrometric yaml: '
+                            '{0} ({1})')
+                    warnings.warn(wmsg.format(fpath, exc))
+                    continue
+                # the canonical APERO name is required
+                apero_name = entry.get(APERO_NAME_KEY)
+                if _is_null(apero_name):
+                    wmsg = ('Astrometric yaml {0} has no APERO_NAME - '
+                            'skipping').format(fpath)
+                    warnings.warn(wmsg)
+                    continue
+                # store the entry keyed by the canonical name; only update
+                # if this is the first time we see this entry (we process
+                # in reverse precedence order, so later entries have higher
+                # precedence)
+                apero_name_str = str(apero_name)
+                if apero_name_str not in entries:
+                    entries[apero_name_str] = entry
+                    # remember mtime so we don't reload next time
+                    mtimes[rel_path] = fmtime
+                    # add every searchable key into the name index
+                    # (setdefault ensures first indexed name takes precedence)
+                    self._index_entry(name_index, apero_name_str, entry)
+                    any_changes = True
         # detect deletions on disk (files we cached but no longer exist)
         deleted = [f for f in mtimes if f not in disk_files]
         if deleted:
