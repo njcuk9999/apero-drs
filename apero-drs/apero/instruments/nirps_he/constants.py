@@ -113,11 +113,11 @@ CDict.set('PIXEL_SIZE', value=1.00, source=__NAME__, group=cgroup)
 
 # Define whether we apply an upper bound when calibrating pp images
 # This sets values above saturate / frmtime
-CDict.add('APPLY_UPPER_BOUND', value=True, source=__NAME__, group=cgroup)
+CDict.set('APPLY_UPPER_BOUND', value=True, source=__NAME__, group=cgroup)
 
 # Define whether we apply a lower bound when calibrating pp images
 # This sets values below  -10 * (sigdet * gain) / frmtime to nans
-CDict.add('APPLY_LOWER_BOUND', value=True, source=__NAME__, group=cgroup)
+CDict.set('APPLY_LOWER_BOUND', value=True, source=__NAME__, group=cgroup)
 
 # Define mean line width expressed in pix
 CDict.set('FWHM_PIXEL_LSF', value=3.0, source=__NAME__, group=cgroup)
@@ -141,13 +141,13 @@ CDict.set('FIND_TIMECOL', value='KW_MID_OBS_TIME',
 # Define the start date for reference calibrations (date format must match
 # that in REF.FIND_TIMECOL). This is used as the first date allowed for
 # reference files (i.e. any file before this date will be ignored)
-CDict.add('FIND_STARTDATE', value=59890, # 2022-11-07
+CDict.set('FIND_STARTDATE', value=59890, # 2022-11-07
           source=__NAME__, group=cgroup, author=base.AUTHORS['NJC'])
 
 # Define the end date for reference calibrations (date format must match that in
 # REF_FIND_TIME_COL). This is used as the last date allowed for reference files
 # (i.e. any file after this date will be ignored)
-CDict.add('FIND_ENDDATE', value='None',
+CDict.set('FIND_ENDDATE', value='None',
           source=__NAME__, group=cgroup, author=base.AUTHORS['NJC'])
 
 # =============================================================================
@@ -396,7 +396,7 @@ CDict.set('ALLOWED_TYPES', value=['DARK_DARK'],
           source=__NAME__, group=cgroup)
 
 # Define the file type to use by default in the dark reference code
-CDict.add('REF_FILETYPE', value=['DARK_DARK'], source=__NAME__, group=cgroup)
+CDict.set('REF_FILETYPE', value=['DARK_DARK'], source=__NAME__, group=cgroup)
 
 # Define the maximum time span to combine dark files over (in hours)
 CDict.set('REF_MTIME', value=2, source=__NAME__, group=cgroup)
@@ -995,7 +995,7 @@ PHOT_BANDS['J'] = apero_base.PHOT_BANDS['J']
 PHOT_BANDS['H'] = apero_base.PHOT_BANDS['H']
 
 # Photometric bands to use in peak-2-peak calculation (and their definitions)
-CDict.add('MEAS_SNR_PHOT_BANDS', value=PHOT_BANDS,
+CDict.set('MEAS_SNR_PHOT_BANDS', value=PHOT_BANDS,
           dtype=dict, source=__NAME__, group=cgroup,
           description='Photometric bands to use in peak-2-peak calculation '
                        '(and their definitions)')
@@ -2420,7 +2420,7 @@ CDict.set('CCF_SWAVE_REF', value=False, source=__NAME__, group=cgroup)
 CDict.set('CCF_PHOTON_UNCERT', value=True, source=__NAME__, group=cgroup)
 
 # turn on the static detector debug plot
-CDict.add('STATIC_DET', value=True, source=__NAME__, group=cgroup)
+CDict.set('STATIC_DET', value=True, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # TOOLS SETTINGS
