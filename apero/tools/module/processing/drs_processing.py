@@ -1079,6 +1079,28 @@ def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None,
     return payload
 
 
+def _multi_headerfix_process_worker(params: ParamDict, obs_dirs: List[str],
+                                    job: int, total_jobs: int,
+                                    return_entries: bool, return_list) -> None:
+    """
+    Worker wrapper for multiprocessing.Process in spawn mode.
+
+    Keeping a dedicated top-level worker name avoids pickling/import issues
+    when child processes deserialize the Process target.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param obs_dirs: list[str], grouped observation directories for this worker
+    :param job: int, current worker index (1-based)
+    :param total_jobs: int, total number of workers
+    :param return_entries: bool, whether to return staged DB entries
+    :param return_list: multiprocessing.Manager.list shared payload storage
+
+    :return: None
+    """
+    _multi_headerfix(params, obs_dirs, job, total_jobs,
+                     return_entries, return_list)
+
+
 def _multi_process_headerfix_pathos(params: ParamDict,
                                     raw_obs_dirs: List[str], cores: int):
     """
@@ -1152,7 +1174,7 @@ def _multi_process_headerfix_process(params: ParamDict,
     :param cores: int, the number of cores to use
     """
     # import multiprocessing
-    from multiprocessing import Manager, Process
+    from multiprocessing import get_context
 
     if len(raw_obs_dirs) == 0:
         return
@@ -1163,7 +1185,8 @@ def _multi_process_headerfix_process(params: ParamDict,
 
     grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
                             for i in range(0, len(raw_obs_dirs), chunk_size)]
-    with Manager() as manager:
+    mp_ctx = get_context('spawn')
+    with mp_ctx.Manager() as manager:
         payloads = manager.list()
         # process storage
         jobs = []
@@ -1173,7 +1196,8 @@ def _multi_process_headerfix_process(params: ParamDict,
             args = [params, grouped_raw_obs_dir, g_it + 1,
                     len(grouped_raw_obs_dirs), True, payloads]
             # get parallel process
-            process = Process(target=_multi_headerfix, args=args)
+            process = mp_ctx.Process(target=_multi_headerfix_process_worker,
+                                     args=args)
             process.start()
             jobs.append(process)
         # do not continue until finished
