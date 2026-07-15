@@ -2035,9 +2035,13 @@ class AstrometricDatabase:
         """
         Make sure the in-memory index for ``self.path`` is up to date.
 
-        Uses two cheap freshness checks before doing any I/O:
+        Uses one cheap freshness check before doing any I/O:
             1. directory mtime - if unchanged we trust the in-memory cache
-            2. per-file mtime  - only re-read yaml files that changed
+
+        When a refresh is required, we rebuild the in-memory entry cache
+        for this path from disk in deterministic precedence order. This
+        guarantees that changed yaml content is applied immediately and
+        keeps the name index consistent with the selected entries.
 
         Scans subdirectories in precedence order:
             1. ``verified/`` (highest precedence)
@@ -2065,24 +2069,13 @@ class AstrometricDatabase:
                 and _DIR_MTIME[self.path] == dir_mtime
                 and self.path in _NAME_INDEX):
             return
-        # ensure cache slots exist for this path
-        name_index = _NAME_INDEX.setdefault(self.path, dict())
-        entries = _ENTRY_CACHE.setdefault(self.path, dict())
-        mtimes = _MTIME_CACHE.setdefault(self.path, dict())
-        # set of yaml files currently on disk (track with relative paths)
-        disk_files = set()
-        # track if anything changed (so we can decide whether to invalidate)
-        any_changes = False
-        # list of directories to scan in precedence order; skip rejected
-        dirs_to_scan = [
-            ('', None),  # root (backward compat, lowest precedence)
-            (STATUS_PENDING, False),  # pending dir
-            (STATUS_VERIFIED, True),  # verified (highest precedence)
-        ]
-        # scan all directories in reverse precedence order so that when we
-        # iterate forward, entries from higher precedence directories are
-        # added to the cache last and thus take precedence
-        for subdir, is_verified in reversed(dirs_to_scan):
+        # list of directories to scan in precedence order; skip rejected.
+        # Later directories override earlier ones for the same APERO_NAME.
+        dirs_to_scan = ['', STATUS_PENDING, STATUS_VERIFIED]
+        # rebuild fresh caches for this path
+        new_entries: Dict[str, Dict[str, Any]] = dict()
+        new_mtimes: Dict[str, float] = dict()
+        for subdir in dirs_to_scan:
             # build the scan directory path
             if subdir:
                 scan_dir = os.path.join(self.path, subdir)
@@ -2092,7 +2085,7 @@ class AstrometricDatabase:
             if not os.path.isdir(scan_dir):
                 continue
             # iterate over directory entries
-            for fname in os.listdir(scan_dir):
+            for fname in sorted(os.listdir(scan_dir)):
                 # only consider .yaml files (skip .locks, hidden, etc)
                 if not fname.endswith(YAML_EXT):
                     continue
@@ -2110,19 +2103,12 @@ class AstrometricDatabase:
                     rel_path = os.path.join(subdir, fname)
                 else:
                     rel_path = fname
-                # remember we saw this file
-                disk_files.add(rel_path)
                 # fetch current mtime
                 try:
                     fmtime = os.path.getmtime(fpath)
                 except OSError:
                     continue
-                # skip files that have not changed since last load
-                if (not force
-                        and rel_path in mtimes
-                        and mtimes[rel_path] == fmtime):
-                    continue
-                # (re)load this yaml file
+                # load this yaml file
                 try:
                     entry = self._read_yaml(fpath)
                 except Exception as exc:
@@ -2139,36 +2125,24 @@ class AstrometricDatabase:
                             'skipping').format(fpath)
                     warnings.warn(wmsg)
                     continue
-                # store the entry keyed by the canonical name; only update
-                # if this is the first time we see this entry (we process
-                # in reverse precedence order, so later entries have higher
-                # precedence)
+                # later precedence tiers overwrite earlier ones
                 apero_name_str = str(apero_name)
-                if apero_name_str not in entries:
-                    entries[apero_name_str] = entry
-                    # remember mtime so we don't reload next time
-                    mtimes[rel_path] = fmtime
-                    # add every searchable key into the name index
-                    # (setdefault ensures first indexed name takes precedence)
-                    self._index_entry(name_index, apero_name_str, entry)
-                    any_changes = True
-        # detect deletions on disk (files we cached but no longer exist)
-        deleted = [f for f in mtimes if f not in disk_files]
-        if deleted:
-            # cheapest correct option: nuke caches for this path and rebuild
-            _NAME_INDEX[self.path] = dict()
-            _ENTRY_CACHE[self.path] = dict()
-            _MTIME_CACHE[self.path] = dict()
-            _DIR_MTIME[self.path] = -1.0
-            self._invalidate_resolve_cache()
-            self._ensure_loaded(force=True)
-            return
+                new_entries[apero_name_str] = entry
+                # keep track of source-file mtime by relative path
+                new_mtimes[rel_path] = fmtime
+        # rebuild name index from the selected entries so renamed aliases
+        # and APERO_NAME changes are reflected immediately
+        new_name_index: Dict[str, str] = dict()
+        for apero_name in sorted(new_entries):
+            self._index_entry(new_name_index, apero_name,
+                              new_entries[apero_name])
+        _NAME_INDEX[self.path] = new_name_index
+        _ENTRY_CACHE[self.path] = new_entries
+        _MTIME_CACHE[self.path] = new_mtimes
         # remember the directory mtime for the cheap freshness check
         _DIR_MTIME[self.path] = dir_mtime
-        # only invalidate the per-name resolution cache if we actually
-        # picked up new/changed entries
-        if any_changes:
-            self._invalidate_resolve_cache()
+        # cache changed entries/indexes, so invalidate name-resolution cache
+        self._invalidate_resolve_cache()
 
     def _index_entry(self, name_index: Dict[str, str],
                      apero_name: str, entry: Dict[str, Any]) -> None:
@@ -2554,7 +2528,7 @@ class AstrometricDatabase:
         # refuse to write objects that exist in the rejected/ sub-dir
         # (unless explicitly allowed by the caller)
         if not allow_rejected:
-            astrom_root = os.path.dirname(os.path.abspath(self.path))
+            astrom_root = os.path.abspath(self.path)
             existing = find_yaml_in_status_dirs(astrom_root,
                                                 str(apero_name))
             if existing is not None and existing[1] == STATUS_REJECTED:
@@ -2835,16 +2809,17 @@ class AstrometricDatabase:
 # Results are mtime-cached per-process for speed.
 
 # per-process cache: astrom_dir -> (mtime_signature, list[(apero_name, entry)])
-_DIR_CACHE: Dict[str, Tuple[float, List[Tuple[str, Dict[str, Any]]]]] = {}
+_DIR_CACHE: Dict[str, Tuple[int, List[Tuple[str, Dict[str, Any]]]]] = {}
 # per-process cache: astrom_dir -> (mtime_signature, name_index)
-_DIR_NAME_INDEX: Dict[str, Tuple[float, Dict[str, str]]] = {}
+_DIR_NAME_INDEX: Dict[str, Tuple[int, Dict[str, str]]] = {}
 
 
-def _dir_mtime_signature(astrom_dir: str) -> float:
-    """Return a signature that changes when any *.yaml in the dir changes.
+def _dir_mtime_signature(astrom_dir: str) -> int:
+    """Return an integer signature that changes when yaml files change.
 
-    Computed as ``max(yaml mtime) + n_yaml * 1e-6``. We deliberately
-    avoid using the directory's own mtime so that our cache files
+    Built from ``st_mtime_ns`` values (plus file paths and file count),
+    so JSON float round-trips cannot perturb equality checks.
+    We deliberately avoid the directory's own mtime so cache files
     written into the same directory do not invalidate the signature.
 
     Includes yamls in the canonical status sub-directories
@@ -2854,12 +2829,15 @@ def _dir_mtime_signature(astrom_dir: str) -> float:
 
     :param astrom_dir: str, directory containing ``*.yaml`` astrometric
                        entries
-    :return: float, a signature value (not interpretable as a real time)
+    :return: int, a signature value (not interpretable as a real time)
     """
     if not os.path.isdir(astrom_dir):
-        return -1.0
-    max_mtime = 0.0
+        return -1
+    max_mtime = 0
     n_yaml = 0
+    # 64-bit FNV-1a hash over (relative_path, st_mtime_ns) pairs.
+    hval = 1469598103934665603
+    fnv_prime = 1099511628211
     scan_dirs = [astrom_dir]
     for sub in STATUS_SUBDIRS:
         sub_path = os.path.join(astrom_dir, sub)
@@ -2875,12 +2853,18 @@ def _dir_mtime_signature(astrom_dir: str) -> float:
                         st = ent.stat()
                     except OSError:
                         continue
-                    if st.st_mtime > max_mtime:
-                        max_mtime = st.st_mtime
+                    mtime_ns = int(st.st_mtime_ns)
+                    if mtime_ns > max_mtime:
+                        max_mtime = mtime_ns
+                    rel = os.path.relpath(ent.path, astrom_dir)
+                    token = '{0}:{1}'.format(rel, mtime_ns)
+                    for bval in token.encode('utf-8'):
+                        hval ^= bval
+                        hval = (hval * fnv_prime) & 0xFFFFFFFFFFFFFFFF
                     n_yaml += 1
         except OSError:
             continue
-    return max_mtime + n_yaml * 1e-6
+    return (max_mtime << 16) ^ ((n_yaml & 0xFFFF) << 1) ^ hval
 
 
 def iter_yaml_files(astrom_dir: str) -> List[str]:
@@ -3091,8 +3075,8 @@ def _build_name_index(
 
 _NAME_INDEX_FILE = '.name_index.json'
 # Bump when the indexing strategy changes so old on-disk caches are
-# invalidated automatically (current: variant-based fuzzy index).
-_NAME_INDEX_VERSION = 2
+# invalidated automatically (current: ns-signature fuzzy index).
+_NAME_INDEX_VERSION = 3
 
 # Optional override: when the environment variable
 # ``APERO_ASTROMETRICS_INDEX_DIR`` is set, the persisted
@@ -3121,12 +3105,12 @@ def _name_index_path(astrom_dir: str) -> str:
 
 def _load_persisted_name_index(
         astrom_dir: str,
-        signature: float,
+        signature: int,
 ) -> Optional[Dict[str, str]]:
     """Return on-disk cleaned-name -> APERO_NAME map if signature matches.
 
     :param astrom_dir: str, directory containing astrometric yaml files
-    :param signature: float, the current dir-mtime signature
+    :param signature: int, the current dir-mtime signature
     :return: dict if cache is fresh, otherwise ``None``
     """
     fpath = _name_index_path(astrom_dir)
@@ -3139,7 +3123,10 @@ def _load_persisted_name_index(
         return None
     if data.get('version') != _NAME_INDEX_VERSION:
         return None
-    if data.get('signature') != signature:
+    data_sig = data.get('signature')
+    if not isinstance(data_sig, int):
+        return None
+    if data_sig != signature:
         return None
     idx = data.get('index')
     if not isinstance(idx, dict):
@@ -3149,7 +3136,7 @@ def _load_persisted_name_index(
 
 def _persist_name_index(
         astrom_dir: str,
-        signature: float,
+        signature: int,
         index: Dict[str, str],
 ) -> None:
     """Write the cleaned-name index to disk atomically.
@@ -3429,9 +3416,10 @@ def update_entry_field(
     Honours the ``{value, source, units}`` schema: if the existing field
     is such a mapping, only the ``value`` sub-key is replaced.
 
-    A change to ``APERO_NAME`` triggers a rename of the underlying yaml
-    file (atomic ``os.replace`` after writing the new file). The five
-    provenance keys are refreshed automatically.
+    A change to ``APERO_NAME`` triggers a robust two-step rename flow:
+    first write the updated entry atomically to the current path, then
+    atomically rename that file with ``os.replace``. The five provenance
+    keys are refreshed automatically.
 
     The lookup supports both layouts:
     - status sub-directories (``verified``/``pending``/``rejected``)
@@ -3479,7 +3467,7 @@ def update_entry_field(
         entry[APERO_NAME_KEY] = rename_to
     # refresh provenance
     _stamp_metadata(entry, author=author)
-    # write to (possibly new) target then remove old file on rename
+    # write in place first, then atomically rename on APERO_NAME change
     if rename_to is not None:
         new_fpath = os.path.join(
             os.path.dirname(fpath), rename_to + YAML_EXT)
@@ -3488,11 +3476,8 @@ def update_entry_field(
                     '(target already exists)')
             raise AperoCodedException(
                 None, message=emsg.format(apero_name, rename_to))
-        AstrometricDatabase._write_yaml(new_fpath, entry)
-        try:
-            os.remove(fpath)
-        except OSError:
-            pass
+        AstrometricDatabase._write_yaml(fpath, entry)
+        os.replace(fpath, new_fpath)
     else:
         AstrometricDatabase._write_yaml(fpath, entry)
     _invalidate_dir_caches(astrom_dir)
