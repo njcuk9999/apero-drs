@@ -100,7 +100,7 @@ def api_db_ssh_tunnel_test(app):
     except Exception as exc:
         return jsonify(success=True, valid=False, error=str(exc)), 200
 
-    if not status.get("active"):
+    if not (status.get("active") or status.get("local_port_open")):
         return jsonify(
             success=True,
             valid=False,
@@ -108,6 +108,7 @@ def api_db_ssh_tunnel_test(app):
                 "No active DB SSH tunnel for this definition. "
                 "Use Ensure Active or Interactive Auth first."
             ),
+            status=status,
         )
 
     result = validate_database_connection(
@@ -123,7 +124,7 @@ def api_db_ssh_tunnel_test(app):
         ssh_remote_port="",
         local_data_dir=str(app._resolve_local_data_dir()),
     )
-    return jsonify(success=True, **result)
+    return jsonify(success=True, status=status, **result)
 
 
 def api_db_ssh_tunnel_close(app):

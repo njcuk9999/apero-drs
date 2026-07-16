@@ -278,6 +278,36 @@
     </div>
 </div>
 
+<div id="dbTunnelLogOverlay" style="display:none; position:fixed; inset:0; z-index:9002; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+    <div style="position:relative; background:#1e1e2e; border-radius:10px; width:min(860px,94vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
+            <span style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
+                <i class="fa-solid fa-file-lines"></i> DB SSH Tunnel Verbose Log
+            </span>
+            <button id="dbTunnelLogCloseBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Close overlay">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:12px 14px; color:#d4d4d4; font-size:0.86em; line-height:1.5;">
+            This log combines the saved tunnel definition, live status flags,
+            and the recent actions recorded in this page session.
+        </div>
+        <div style="padding:0 14px 12px 14px;">
+            <textarea id="dbTunnelLogText" readonly
+                      style="width:100%; min-height:300px; resize:vertical; background:#161625; border:1px solid #3a3a4d; border-radius:6px; color:#e0e0e0; padding:10px 12px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.84em; line-height:1.5;"></textarea>
+        </div>
+        <div style="display:flex; gap:8px; padding:0 14px 14px 14px; flex-wrap:wrap;">
+            <button id="dbTunnelLogCopyBtn" type="button" class="ari-btn ari-btn--sm ari-btn--primary">
+                <i class="fa-solid fa-copy"></i> Copy Log
+            </button>
+            <button id="dbTunnelLogSelectBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary">
+                <i class="fa-solid fa-i-cursor"></i> Select All
+            </button>
+            <span id="dbTunnelLogStatus" style="display:inline-flex; align-items:center; color:#9aa0b8; font-size:0.82em;"></span>
+        </div>
+    </div>
+</div>
+
 <script>
 const DB_SETUP_CFG = {
     localListUrl: {{ url_for('api_database_setup_local_db_list')|tojson }},
@@ -705,6 +735,7 @@ function renderDbTunnelRows() {
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelTestSaved(${index})"><i class="fa-solid fa-plug"></i> Test</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelShowCommand(${index})"><i class="fa-solid fa-copy"></i> Copy Command</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelShowVerboseLog(${index})"><i class="fa-solid fa-file-lines"></i> Verbose Log</button>
                 <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${(row.valid_config && enabled) ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Start / Verify Tunnel</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelInteractive(${index})" ${(row.valid_config && enabled) ? '' : 'disabled'}><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelCloseOne(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-power-off"></i> Close</button>
@@ -742,6 +773,128 @@ function dbTunnelBuildCommandText(row) {
     notes.push('# Verify local port:');
     notes.push('ss -ltn | grep :' + localPort);
     return notes.join('\n');
+}
+
+const dbTunnelActionLog = {};
+
+function dbTunnelLogKey(row) {
+    return String((row && row.name) || '').trim() || '__unsaved__';
+}
+
+function dbTunnelRecordAction(rowName, message) {
+    const key = String(rowName || '').trim() || '__unsaved__';
+    const when = new Date().toISOString();
+    if (!dbTunnelActionLog[key]) {
+        dbTunnelActionLog[key] = [];
+    }
+    dbTunnelActionLog[key].push('[' + when + '] ' + message);
+    if (dbTunnelActionLog[key].length > 40) {
+        dbTunnelActionLog[key] = dbTunnelActionLog[key].slice(-40);
+    }
+}
+
+function dbTunnelBuildVerboseLogText(row) {
+    const status = row && row.status ? row.status : {};
+    const key = dbTunnelLogKey(row);
+    const history = dbTunnelActionLog[key] || [];
+    const lines = [];
+    lines.push('DB SSH tunnel verbose log');
+    lines.push('');
+    lines.push('Saved definition:');
+    lines.push('  Name: ' + String((row && row.name) || '').trim());
+    lines.push('  SSH config host: ' + String(status.ssh_host || '').trim());
+    lines.push('  Remote host: ' + String(status.remote_host || '').trim());
+    lines.push('  Remote port: ' + String(status.remote_port || '').trim());
+    lines.push('  Local port: ' + String(status.local_port || '').trim());
+    lines.push('  Created at: ' + String(status.created_at || '').trim());
+    lines.push('');
+    lines.push('Live status flags:');
+    lines.push('  active: ' + String(!!status.active));
+    lines.push('  is_ari_managed: ' + String(!!status.is_ari_managed));
+    lines.push('  control_alive: ' + String(!!status.control_alive));
+    lines.push('  local_port_open: ' + String(!!status.local_port_open));
+    lines.push('  control_path: ' + String(status.control_path || '').trim());
+    lines.push('  meta_path: ' + String(status.meta_path || '').trim());
+    lines.push('');
+    lines.push('Interpretation:');
+    if (status.active && !status.is_ari_managed && status.local_port_open) {
+        lines.push(
+            '  Tunnel is usable but appears externally managed '
+            + '(open local port, no ARI control socket).'
+        );
+    } else if (status.active && status.is_ari_managed) {
+        lines.push('  Tunnel is active and ARI-managed.');
+    } else if (status.local_port_open) {
+        lines.push('  Local port is open, but ARI did not mark it active.');
+    } else {
+        lines.push('  Local port is not open.');
+    }
+    lines.push('');
+    lines.push('Recent actions:');
+    if (history.length) {
+        history.forEach((entry) => {
+            lines.push('  ' + entry);
+        });
+    } else {
+        lines.push('  No recorded actions yet.');
+    }
+    lines.push('');
+    lines.push('Useful manual commands:');
+    lines.push(dbTunnelBuildCommandText(row).replace(/\n/g, '\n  '));
+    return lines.join('\n');
+}
+
+function dbTunnelHideLogOverlay() {
+    const overlay = document.getElementById('dbTunnelLogOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function dbTunnelShowVerboseLog(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    const overlay = document.getElementById('dbTunnelLogOverlay');
+    const textEl = document.getElementById('dbTunnelLogText');
+    const statusEl = document.getElementById('dbTunnelLogStatus');
+    if (textEl) {
+        textEl.value = dbTunnelBuildVerboseLogText(row);
+        textEl.focus();
+        textEl.select();
+    }
+    if (statusEl) statusEl.textContent = '';
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function dbTunnelSelectLogText() {
+    const textEl = document.getElementById('dbTunnelLogText');
+    if (!textEl) return;
+    textEl.focus();
+    textEl.select();
+}
+
+async function dbTunnelCopyLogText() {
+    const textEl = document.getElementById('dbTunnelLogText');
+    const statusEl = document.getElementById('dbTunnelLogStatus');
+    if (!textEl) return;
+    const text = String(textEl.value || '');
+    if (!text.trim()) return;
+    try {
+        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            textEl.focus();
+            textEl.select();
+            document.execCommand('copy');
+        }
+        if (statusEl) {
+            statusEl.textContent = 'Log copied to clipboard.';
+        }
+    } catch (_) {
+        textEl.focus();
+        textEl.select();
+        if (statusEl) {
+            statusEl.textContent = 'Select text manually and copy.';
+        }
+    }
 }
 
 function dbTunnelHideCommandOverlay() {
@@ -846,6 +999,7 @@ async function dbTunnelSaveDefinition() {
 
 async function dbTunnelTestDefinition() {
     const payload = dbTunnelPayload();
+    dbTunnelRecordAction(payload.name, 'Test requested from edit form.');
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
             method: 'POST',
@@ -855,17 +1009,27 @@ async function dbTunnelTestDefinition() {
         const data = await res.json();
         if (!data.success) {
             dbSetValidation('dbTunnelTestResult', false, data.error || 'Connection failed.');
+            dbTunnelRecordAction(
+                payload.name,
+                'Test failed: ' + String(data.error || 'Connection failed.')
+            );
             return;
         }
         dbSetValidation('dbTunnelTestResult', !!data.valid, data.valid ? 'Connection successful.' : (data.error || 'Connection failed.'));
+        dbTunnelRecordAction(
+            payload.name,
+            data.valid ? 'Test succeeded.' : 'Test failed: ' + String(data.error || 'Connection failed.')
+        );
     } catch (err) {
         dbSetValidation('dbTunnelTestResult', false, 'Connection test failed: ' + err.message);
+        dbTunnelRecordAction(payload.name, 'Test error: ' + err.message);
     }
 }
 
 async function dbTunnelTestSaved(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
+    dbTunnelRecordAction(row.name, 'Saved tunnel test requested.');
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
             method: 'POST',
@@ -880,11 +1044,20 @@ async function dbTunnelTestSaved(index) {
         const data = await res.json();
         if (!data.success) {
             dbSetMsg(data.error || 'Saved tunnel test failed.', false);
+            dbTunnelRecordAction(
+                row.name,
+                'Saved tunnel test failed: ' + String(data.error || 'Unknown error')
+            );
             return;
         }
         dbSetMsg(data.valid ? ('Test passed for ' + row.name + '.') : (data.error || ('Test failed for ' + row.name + '.')), !!data.valid);
+        dbTunnelRecordAction(
+            row.name,
+            data.valid ? 'Saved tunnel test succeeded.' : 'Saved tunnel test failed: ' + String(data.error || 'Connection failed.')
+        );
     } catch (err) {
         dbSetMsg('Saved tunnel test failed: ' + err.message, false);
+        dbTunnelRecordAction(row.name, 'Saved tunnel test error: ' + err.message);
     }
 }
 
@@ -914,6 +1087,7 @@ async function dbTunnelDelete(index) {
 async function dbTunnelEnsure(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
+    dbTunnelRecordAction(row.name, 'Start / Verify requested.');
     dbSetMsg('Starting or verifying DB tunnel...', true);
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelEnsureUrl, {
@@ -924,18 +1098,28 @@ async function dbTunnelEnsure(index) {
         const data = await res.json();
         if (!data.success) {
             dbSetMsg(data.error || 'Failed to ensure tunnel.', false);
+            dbTunnelRecordAction(
+                row.name,
+                'Start / Verify failed: ' + String(data.error || 'Unknown error')
+            );
             return;
         }
         dbSetMsg(data.message || 'Tunnel is active.', true);
+        dbTunnelRecordAction(
+            row.name,
+            'Start / Verify succeeded: ' + String(data.message || 'Tunnel is active.')
+        );
         await dbTunnelRefresh();
     } catch (err) {
         dbSetMsg('Failed to ensure tunnel: ' + err.message, false);
+        dbTunnelRecordAction(row.name, 'Start / Verify error: ' + err.message);
     }
 }
 
 async function dbTunnelCloseOne(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
+    dbTunnelRecordAction(row.name, 'Close requested.');
     dbSetMsg('Closing selected DB tunnel...', true);
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelCloseUrl, {
@@ -946,12 +1130,21 @@ async function dbTunnelCloseOne(index) {
         const data = await res.json();
         if (!data.success) {
             dbSetMsg(data.error || 'Failed to close tunnel.', false);
+            dbTunnelRecordAction(
+                row.name,
+                'Close failed: ' + String(data.error || 'Unknown error')
+            );
             return;
         }
         dbSetMsg(data.message || 'Tunnel closed.', true);
+        dbTunnelRecordAction(
+            row.name,
+            'Close succeeded: ' + String(data.message || 'Tunnel closed.')
+        );
         await dbTunnelRefresh();
     } catch (err) {
         dbSetMsg('Failed to close tunnel: ' + err.message, false);
+        dbTunnelRecordAction(row.name, 'Close error: ' + err.message);
     }
 }
 
@@ -1060,6 +1253,7 @@ async function dbTunnelInteractive(index) {
     if (overlay) overlay.style.display = 'flex';
     if (out) out.textContent = '';
     if (statusEl) statusEl.textContent = 'Connecting...';
+    dbTunnelRecordAction(row.name, 'Interactive Auth started.');
     try {
         const res = await fetch(DB_SETUP_CFG.sshStartUrl, {
             method: 'POST',
@@ -1075,13 +1269,19 @@ async function dbTunnelInteractive(index) {
         const data = await res.json();
         if (!data.ok) {
             dbSshTermAppend('[Error] ' + (data.error || 'Failed to start interactive session.') + '\n');
+            dbTunnelRecordAction(
+                row.name,
+                'Interactive Auth failed to start: ' + String(data.error || 'Unknown error')
+            );
             return;
         }
         dbSshToken = data.token;
         if (statusEl) statusEl.textContent = 'Session active. Respond to prompts below.';
+        dbTunnelRecordAction(row.name, 'Interactive Auth session active.');
         dbSshTermStartPolling();
     } catch (err) {
         dbSetMsg('Failed to start interactive session: ' + err.message, false);
+        dbTunnelRecordAction(row.name, 'Interactive Auth error: ' + err.message);
     }
 }
 
@@ -1093,6 +1293,10 @@ async function dbTunnelInteractive(index) {
     const cmdCloseBtn = document.getElementById('dbTunnelCmdCloseBtn');
     const cmdCopyBtn = document.getElementById('dbTunnelCmdCopyBtn');
     const cmdSelectBtn = document.getElementById('dbTunnelCmdSelectBtn');
+    const logOverlay = document.getElementById('dbTunnelLogOverlay');
+    const logCloseBtn = document.getElementById('dbTunnelLogCloseBtn');
+    const logCopyBtn = document.getElementById('dbTunnelLogCopyBtn');
+    const logSelectBtn = document.getElementById('dbTunnelLogSelectBtn');
     const localTogglePass = document.getElementById('dbLocalTogglePass');
     const tunnelTogglePass = document.getElementById('dbTunnelTogglePass');
     if (closeBtn) closeBtn.addEventListener('click', dbSshTermClose);
@@ -1110,6 +1314,22 @@ async function dbTunnelInteractive(index) {
         cmdOverlay.addEventListener('click', function (event) {
             if (event.target === cmdOverlay) {
                 dbTunnelHideCommandOverlay();
+            }
+        });
+    }
+    if (logCloseBtn) {
+        logCloseBtn.addEventListener('click', dbTunnelHideLogOverlay);
+    }
+    if (logCopyBtn) {
+        logCopyBtn.addEventListener('click', dbTunnelCopyLogText);
+    }
+    if (logSelectBtn) {
+        logSelectBtn.addEventListener('click', dbTunnelSelectLogText);
+    }
+    if (logOverlay) {
+        logOverlay.addEventListener('click', function (event) {
+            if (event.target === logOverlay) {
+                dbTunnelHideLogOverlay();
             }
         });
     }

@@ -541,8 +541,13 @@ def get_db_tunnel_status(params: Dict[str, Any]) -> Dict[str, Any]:
         control_path, ssh_host
     )
     local_port_open = _is_local_port_open(local_port)
+    # A tunnel may be active even when it was started outside ARI and does
+    # not have an ARI SSH control socket. In that case local_port_open is
+    # the best runtime indicator for usability.
+    is_ari_managed = bool(control_alive)
     return {
-        "active": bool(control_alive and local_port_open),
+        "active": bool(local_port_open),
+        "is_ari_managed": is_ari_managed,
         "control_alive": control_alive,
         "local_port_open": local_port_open,
         "local_host": "127.0.0.1",
