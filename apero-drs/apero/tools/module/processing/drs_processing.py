@@ -1029,7 +1029,7 @@ def update_header_fix(params, shortname):
     elif mp_mode == 'process' and cores > 1:
         _multi_process_headerfix_process(params, shortname, raw_obs_dirs, cores)
     else:
-        _linear_headerfix(params, shortname, raw_obs_dirs)
+        _linear_headerfix(params, raw_obs_dirs, shortname)
 
 
 def generate_run_list(params: ParamDict, recipe: DrsRecipe,
@@ -3309,6 +3309,20 @@ def _linear_headerfix(params, obs_dirs, shortname,
                                 job_msg=job_msg)
 
 
+def _multi_headerfix_process_worker(*args: Any, **kwargs: Any) -> None:
+    """Backward-compatible header-fix worker for spawn pickling.
+
+    Keep this symbol at module top-level so older references to
+    ``_multi_headerfix_process_worker`` remain importable in child
+    processes created via ``multiprocessing`` spawn.
+    """
+    # Older call sites may pass one tuple/list payload argument.
+    if len(args) == 1 and isinstance(args[0], (list, tuple)) and not kwargs:
+        _linear_headerfix(*args[0])
+        return
+    _linear_headerfix(*args, **kwargs)
+
+
 def _multi_process_headerfix_pathos(params: ParamDict, shortname: str,
                                     raw_obs_dirs: List[str], cores: int):
     """
@@ -3404,10 +3418,10 @@ def _multi_process_headerfix_process(params: ParamDict, shortname: str,
     # loop around each run
     for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
         # get the arguments for this group
-        args = [params, grouped_raw_obs_dir, g_it + 1,
+        args = [params, grouped_raw_obs_dir, shortname, g_it + 1,
                 len(grouped_raw_obs_dirs)]
         # get parallel process
-        process = Process(target=_linear_headerfix, args=args)
+        process = Process(target=_multi_headerfix_process_worker, args=args)
         process.start()
         jobs.append(process)
     # do not continue until finished
