@@ -1,0 +1,81 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - First Time Guide{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p style="margin:0.45rem 0 0 0; color:var(--ari-text-muted);">
+        Use this checklist after running apero_ri_setup. Each step opens in a
+        new tab, and completed steps are marked with a tick.
+    </p>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-route"></i> Setup Checklist</h3>
+    </div>
+
+    {% if first_time_steps is defined and first_time_steps %}
+    <div style="display:grid; gap:0.6rem;">
+        {% for item in first_time_steps %}
+        <div style="border:1px solid var(--ari-border); border-radius:0.7rem; padding:0.7rem 0.8rem; background:var(--ari-card-bg);">
+            <div style="display:flex; align-items:flex-start; gap:0.7rem; justify-content:space-between; flex-wrap:wrap;">
+                <div style="display:flex; align-items:flex-start; gap:0.6rem; min-width:0;">
+                    <span style="margin-top:0.05rem;">
+                        {% if item.complete %}
+                        <i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>
+                        {% else %}
+                        <i class="fa-regular fa-circle" style="color:var(--ari-text-muted);"></i>
+                        {% endif %}
+                    </span>
+                    <div>
+                        <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
+                            <span style="font-weight:700; color:var(--ari-primary);">
+                                Step {{ item.step_number }}
+                            </span>
+                            <a href="{{ url_for(item.endpoint) }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style="font-weight:700; color:inherit; text-decoration:none;">
+                                {{ item.title }}
+                                <i class="fa-solid fa-arrow-up-right-from-square"
+                                   style="font-size:0.78rem;"></i>
+                            </a>
+                            {% if item.optional %}
+                            <span style="font-size:0.75rem; color:var(--ari-text-muted); border:1px solid var(--ari-border); border-radius:999px; padding:0.05rem 0.45rem;">
+                                Optional
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div style="font-size:0.9rem; color:var(--ari-text-muted); margin-top:0.2rem;">
+                            {{ item.purpose }}
+                        </div>
+                        {% if item.message %}
+                        <div style="font-size:0.84rem; color:var(--ari-text-muted); margin-top:0.2rem;">
+                            {{ item.message }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    {% if item.complete %}
+                    <span style="font-size:0.8rem; font-weight:700; color:#1f8a44;">
+                        Complete
+                    </span>
+                    {% else %}
+                    <span style="font-size:0.8rem; font-weight:700; color:#b36b00;">
+                        Pending
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="ari-sg-empty-small">
+        No checklist steps are available for your account.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

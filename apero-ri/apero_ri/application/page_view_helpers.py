@@ -71,6 +71,113 @@ _POLICY_BUILD_STATUS: dict = {
 }
 
 
+def _build_first_time_guide_steps(app, user_info, perms):
+    """Build admin first-time guide steps with completion status."""
+    health, _, _ = app._get_admin_health(
+        user_info=user_info,
+        perms=perms,
+        force=False,
+        allow_async_refresh=True,
+    )
+
+    db_ctx = app._build_admin_db_tunnel_context(user_info, perms)
+    db_tunnels = db_ctx.get('db_tunnels', [])
+    db_locals = db_ctx.get('db_local_databases', [])
+    db_complete = bool(db_tunnels) or bool(db_locals)
+
+    steps = [
+        {
+            'page_id': 'home.admin_portal.database_setup',
+            'title': 'Database Setup',
+            'purpose': (
+                'Configure local or SSH-tunnel database access for '
+                'APERO profile(s).'
+            ),
+            'optional': False,
+        },
+        {
+            'page_id': 'home.admin_portal.sshfs_management',
+            'title': 'SSHFS Mounts',
+            'purpose': (
+                'Optional: mount remote data directories over SSH before '
+                'using remote profile paths.'
+            ),
+            'optional': True,
+        },
+        {
+            'page_id': 'home.admin_portal.apero_profiles',
+            'title': 'APERO Profiles',
+            'purpose': (
+                'Create and configure APERO profile(s), including data '
+                'paths and profile settings.'
+            ),
+            'optional': False,
+        },
+        {
+            'page_id': 'home.admin_portal.science_groups',
+            'title': 'Science Groups',
+            'purpose': (
+                'Create run-ID groupings and assign users for each '
+                'instrument.'
+            ),
+            'optional': False,
+        },
+        {
+            'page_id': 'home.admin_portal.user_db_access',
+            'title': 'User DB Access',
+            'purpose': 'Set per-group permissions for database queries.',
+            'optional': False,
+        },
+        {
+            'page_id': 'home.admin_portal.backup_settings',
+            'title': 'Backup Settings',
+            'purpose': (
+                'Optional: configure Google Drive, S3, or rsync '
+                'backups.'
+            ),
+            'optional': True,
+        },
+        {
+            'page_id': 'home.admin_portal.async_tasks',
+            'title': 'Async Tasks',
+            'purpose': (
+                'Optional: configure recurring background reductions '
+                'and processing jobs.'
+            ),
+            'optional': True,
+        },
+    ]
+
+    out = []
+    for index, step in enumerate(steps, start=1):
+        page_id = step['page_id']
+        status_data = health.get(page_id, {})
+        status = str(status_data.get('status', '')).strip().lower()
+        message = str(status_data.get('message', '')).strip()
+
+        if page_id == 'home.admin_portal.database_setup':
+            is_complete = db_complete
+            if is_complete:
+                message = 'At least one local DB or DB tunnel is configured.'
+            else:
+                message = (
+                    'No local DB definition or DB tunnel definition '
+                    'found yet.'
+                )
+        else:
+            is_complete = status == 'ok'
+
+        row = dict(step)
+        row['step_number'] = index
+        row['status'] = status or 'pending'
+        row['complete'] = is_complete
+        row['message'] = message
+        row['endpoint'] = page_id_to_endpoint(page_id)
+        out.append(row)
+
+    return out
+
+
 def _policy_now_utc() -> str:
     """Return UTC timestamp text for policy-page last-updated label."""
     now = datetime.now(timezone.utc)
@@ -1253,6 +1360,11 @@ def make_page_view(app, page_id: str, package_dir: Path):
 
         if page_id == "home.admin_portal.backup_settings":
             context.update(app._build_admin_backup_context(perms))
+
+        if page_id == 'home.admin_portal.first_time_guide' and user_info:
+            context['first_time_steps'] = _build_first_time_guide_steps(
+                app, user_info, perms
+            )
 
         if page_id == "home.astrometrics":
             try:

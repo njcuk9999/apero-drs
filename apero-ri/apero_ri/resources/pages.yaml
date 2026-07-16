@@ -411,6 +411,17 @@ home.user_portal.uploads:
 # ==============================================================================
 # APERO RI: Admin Portal Pages
 # ==============================================================================
+home.admin_portal.first_time_guide:
+  label: First Time Guide
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-list-check
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.users:
   label: User Management
   parent: home.admin_portal

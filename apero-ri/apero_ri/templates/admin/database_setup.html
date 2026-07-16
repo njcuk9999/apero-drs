@@ -83,14 +83,10 @@
                 <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="dbLocalSaveDefinition()">
                     <i class="fa-solid fa-floppy-disk"></i> Save Local Database
                 </button>
-                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbLocalTestDefinition()">
-                    <i class="fa-solid fa-plug"></i> Test Connection
-                </button>
                 <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbLocalResetForm()">
                     <i class="fa-solid fa-eraser"></i> Clear Form
                 </button>
             </div>
-            <div id="dbLocalTestResult" class="ari-ap-validation" style="display:none;"></div>
         </div>
     </div>
 
@@ -124,10 +120,9 @@
                         <strong>Quick setup checklist:</strong>
                         1) Fill tunnel name, SSH config host, remote DB host, remote DB port, local forward port.
                         2) Enter test username/password/database name.
-                        3) Click <strong>Test Connection</strong> before saving whenever possible.
-                        4) Save tunnel definition.
-                        5) Click <strong>Start / Verify Tunnel</strong> (or <strong>Interactive Auth</strong> if prompted).
-                        6) Re-run <strong>Test Connection</strong> to confirm.
+                        3) Save tunnel definition.
+                        4) Click <strong>Start / Verify Tunnel</strong> (or <strong>Interactive Auth</strong> if prompted).
+                        5) Use <strong>Test</strong> in the saved tunnel card to confirm.
                     </div>
                     <div>
                         <strong>Tip:</strong>
@@ -200,14 +195,13 @@
                 <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="dbTunnelSaveDefinition()">
                     <i class="fa-solid fa-floppy-disk"></i> Save Tunnel
                 </button>
-                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelTestDefinition()">
-                    <i class="fa-solid fa-plug"></i> Test Connection
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelShowCommandFromForm()">
+                    <i class="fa-solid fa-copy"></i> Copy Command
                 </button>
                 <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelResetForm()">
                     <i class="fa-solid fa-eraser"></i> Clear Form
                 </button>
             </div>
-            <div id="dbTunnelTestResult" class="ari-ap-validation" style="display:none;"></div>
         </div>
 
         {% if can_manage_db_tunnel %}
@@ -243,6 +237,36 @@
             </button>
         </div>
         <div id="dbSshTermStatus" style="padding:6px 14px; font-size:0.8em; color:#888; border-top:1px solid #292929; flex-shrink:0;"></div>
+    </div>
+</div>
+
+<div id="dbTunnelCmdOverlay" style="display:none; position:fixed; inset:0; z-index:9001; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+    <div style="position:relative; background:#1e1e2e; border-radius:10px; width:min(780px,94vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
+            <span style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
+                <i class="fa-solid fa-terminal"></i> DB SSH Tunnel Command
+            </span>
+            <button id="dbTunnelCmdCloseBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Close overlay">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:12px 14px; color:#d4d4d4; font-size:0.86em; line-height:1.5;">
+            Use this command to manually activate the tunnel. You can select and
+            copy the full command block below.
+        </div>
+        <div style="padding:0 14px 12px 14px;">
+            <textarea id="dbTunnelCmdText" readonly
+                      style="width:100%; min-height:260px; resize:vertical; background:#161625; border:1px solid #3a3a4d; border-radius:6px; color:#e0e0e0; padding:10px 12px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.84em; line-height:1.5;"></textarea>
+        </div>
+        <div style="display:flex; gap:8px; padding:0 14px 14px 14px; flex-wrap:wrap;">
+            <button id="dbTunnelCmdCopyBtn" type="button" class="ari-btn ari-btn--sm ari-btn--primary">
+                <i class="fa-solid fa-copy"></i> Copy Command
+            </button>
+            <button id="dbTunnelCmdSelectBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary">
+                <i class="fa-solid fa-i-cursor"></i> Select All
+            </button>
+            <span id="dbTunnelCmdStatus" style="display:inline-flex; align-items:center; color:#9aa0b8; font-size:0.82em;"></span>
+        </div>
     </div>
 </div>
 
@@ -547,8 +571,6 @@ function dbTunnelResetForm() {
     if (remotePort) remotePort.value = '3306';
     const enabled = document.getElementById('dbTunnelEnabled');
     if (enabled) enabled.checked = true;
-    const result = document.getElementById('dbTunnelTestResult');
-    if (result) result.style.display = 'none';
 }
 
 function dbTunnelEdit(index) {
@@ -674,6 +696,7 @@ function renderDbTunnelRows() {
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelTestSaved(${index})"><i class="fa-solid fa-plug"></i> Test</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelShowCommand(${index})"><i class="fa-solid fa-copy"></i> Copy Command</button>
                 <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${(row.valid_config && enabled) ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Start / Verify Tunnel</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelInteractive(${index})" ${(row.valid_config && enabled) ? '' : 'disabled'}><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelCloseOne(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-power-off"></i> Close</button>
@@ -682,6 +705,111 @@ function renderDbTunnelRows() {
         `;
         list.appendChild(card);
     });
+}
+
+function dbTunnelBuildCommandText(row) {
+    const status = row && row.status ? row.status : {};
+    const name = String((row && row.name) || '').trim();
+    const sshHost = String(status.ssh_host || '').trim();
+    const remoteHost = String(status.remote_host || '').trim();
+    const remotePort = String(status.remote_port || '3306').trim() || '3306';
+    const localPort = String(status.local_port || '').trim();
+    const notes = [];
+    if (!sshHost || !remoteHost || !localPort) {
+        notes.push('# Incomplete tunnel definition - missing required fields.');
+    }
+    notes.push('# DB SSH tunnel: ' + (name || '<unnamed>'));
+    notes.push('# Start (foreground):');
+    notes.push(
+        'ssh -N -L ' + localPort + ':' + remoteHost + ':' + remotePort
+        + ' ' + sshHost
+    );
+    notes.push('');
+    notes.push('# Start (background):');
+    notes.push(
+        'ssh -fN -L ' + localPort + ':' + remoteHost + ':' + remotePort
+        + ' ' + sshHost
+    );
+    notes.push('');
+    notes.push('# Verify local port:');
+    notes.push('ss -ltn | grep :' + localPort);
+    return notes.join('\n');
+}
+
+function dbTunnelHideCommandOverlay() {
+    const overlay = document.getElementById('dbTunnelCmdOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function dbTunnelShowCommand(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    const overlay = document.getElementById('dbTunnelCmdOverlay');
+    const textEl = document.getElementById('dbTunnelCmdText');
+    const statusEl = document.getElementById('dbTunnelCmdStatus');
+    if (textEl) {
+        textEl.value = dbTunnelBuildCommandText(row);
+        textEl.focus();
+        textEl.select();
+    }
+    if (statusEl) statusEl.textContent = '';
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function dbTunnelShowCommandFromForm() {
+    const payload = dbTunnelPayload();
+    const syntheticRow = {
+        name: payload.name || '__unsaved_tunnel__',
+        status: {
+            ssh_host: payload.ssh_config_host || '',
+            remote_host: payload.remote_host || '',
+            remote_port: payload.remote_port || '3306',
+            local_port: payload.local_port || '',
+        },
+    };
+    const overlay = document.getElementById('dbTunnelCmdOverlay');
+    const textEl = document.getElementById('dbTunnelCmdText');
+    const statusEl = document.getElementById('dbTunnelCmdStatus');
+    if (textEl) {
+        textEl.value = dbTunnelBuildCommandText(syntheticRow);
+        textEl.focus();
+        textEl.select();
+    }
+    if (statusEl) statusEl.textContent = 'Using current form values.';
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function dbTunnelSelectCommandText() {
+    const textEl = document.getElementById('dbTunnelCmdText');
+    if (!textEl) return;
+    textEl.focus();
+    textEl.select();
+}
+
+async function dbTunnelCopyCommandText() {
+    const textEl = document.getElementById('dbTunnelCmdText');
+    const statusEl = document.getElementById('dbTunnelCmdStatus');
+    if (!textEl) return;
+    const text = String(textEl.value || '');
+    if (!text.trim()) return;
+    try {
+        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            textEl.focus();
+            textEl.select();
+            document.execCommand('copy');
+        }
+        if (statusEl) {
+            statusEl.textContent = 'Command copied to clipboard.';
+        }
+    } catch (_) {
+        textEl.focus();
+        textEl.select();
+        if (statusEl) {
+            statusEl.textContent = 'Select text manually and copy.';
+        }
+    }
 }
 
 async function dbTunnelSaveDefinition() {
@@ -953,10 +1081,30 @@ async function dbTunnelInteractive(index) {
     const closeBtn = document.getElementById('dbSshTermCloseBtn');
     const sendBtn = document.getElementById('dbSshTermSendBtn');
     const input = document.getElementById('dbSshTermInput');
+    const cmdOverlay = document.getElementById('dbTunnelCmdOverlay');
+    const cmdCloseBtn = document.getElementById('dbTunnelCmdCloseBtn');
+    const cmdCopyBtn = document.getElementById('dbTunnelCmdCopyBtn');
+    const cmdSelectBtn = document.getElementById('dbTunnelCmdSelectBtn');
     const localTogglePass = document.getElementById('dbLocalTogglePass');
     const tunnelTogglePass = document.getElementById('dbTunnelTogglePass');
     if (closeBtn) closeBtn.addEventListener('click', dbSshTermClose);
     if (sendBtn) sendBtn.addEventListener('click', dbSshTermSend);
+    if (cmdCloseBtn) {
+        cmdCloseBtn.addEventListener('click', dbTunnelHideCommandOverlay);
+    }
+    if (cmdCopyBtn) {
+        cmdCopyBtn.addEventListener('click', dbTunnelCopyCommandText);
+    }
+    if (cmdSelectBtn) {
+        cmdSelectBtn.addEventListener('click', dbTunnelSelectCommandText);
+    }
+    if (cmdOverlay) {
+        cmdOverlay.addEventListener('click', function (event) {
+            if (event.target === cmdOverlay) {
+                dbTunnelHideCommandOverlay();
+            }
+        });
+    }
     if (localTogglePass) {
         localTogglePass.addEventListener('click', function () {
             dbTogglePassword('dbLocalTestPass', 'dbLocalTogglePass');
