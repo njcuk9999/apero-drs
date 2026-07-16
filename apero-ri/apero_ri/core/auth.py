@@ -1034,6 +1034,8 @@ def validate_database_connection(
 
     Returns dict with 'valid' bool and 'error' string.
     """
+    sql_error = None
+    direct_error = None
     try:
         from apero_ri.tasks import apero_async
 
@@ -1055,7 +1057,56 @@ def validate_database_connection(
         apero_async.database_query(db_params, "SELECT 1 AS ok")
         return {"valid": True, "error": ""}
     except Exception as e:
-        return {"valid": False, "error": str(e)}
+        sql_error = str(e)
+
+    # Some DB servers accept the tunnel and connection but then terminate the
+    # first SQLAlchemy-executed query. Try a direct PyMySQL round-trip so we
+    # can distinguish a driver-layer issue from a real tunnel/auth problem.
+    try:
+        import pymysql
+
+        tunnel_mode = str(mode or "").strip().lower()
+        conn_kwargs = dict(
+            host=str(host or "").strip(),
+            user=str(username or "").strip(),
+            password=str(password or ""),
+            database=str(db_name or "").strip(),
+            connect_timeout=10,
+            read_timeout=10,
+            write_timeout=10,
+            autocommit=True,
+            charset="utf8mb4",
+        )
+        if port:
+            try:
+                conn_kwargs["port"] = int(str(port).strip())
+            except Exception:
+                conn_kwargs["port"] = port
+
+        if tunnel_mode.startswith("mysql"):
+            with pymysql.connect(**conn_kwargs) as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT 1 AS ok")
+                    cursor.fetchone()
+            return {
+                "valid": True,
+                "error": "",
+                "warning": (
+                    "SQLAlchemy query path failed, but a direct MySQL "
+                    "round-trip succeeded."
+                ),
+            }
+    except Exception as exc:
+        direct_error = str(exc)
+
+    if direct_error:
+        return {
+            "valid": False,
+            "error": (
+                f"{sql_error} | Direct MySQL check: {direct_error}"
+            ),
+        }
+    return {"valid": False, "error": sql_error or "Database test failed."}
 
 
 # =============================================================================

@@ -1015,10 +1015,19 @@ async function dbTunnelTestDefinition() {
             );
             return;
         }
-        dbSetValidation('dbTunnelTestResult', !!data.valid, data.valid ? 'Connection successful.' : (data.error || 'Connection failed.'));
+        const testMsg = data.valid
+            ? (data.warning
+                ? 'Connection successful. ' + String(data.warning)
+                : 'Connection successful.')
+            : (data.error || 'Connection failed.');
+        dbSetValidation('dbTunnelTestResult', !!data.valid, testMsg);
         dbTunnelRecordAction(
             payload.name,
-            data.valid ? 'Test succeeded.' : 'Test failed: ' + String(data.error || 'Connection failed.')
+            data.valid
+                ? (data.warning
+                    ? 'Test succeeded with warning: ' + String(data.warning)
+                    : 'Test succeeded.')
+                : 'Test failed: ' + String(data.error || 'Connection failed.')
         );
     } catch (err) {
         dbSetValidation('dbTunnelTestResult', false, 'Connection test failed: ' + err.message);
@@ -1050,10 +1059,19 @@ async function dbTunnelTestSaved(index) {
             );
             return;
         }
-        dbSetMsg(data.valid ? ('Test passed for ' + row.name + '.') : (data.error || ('Test failed for ' + row.name + '.')), !!data.valid);
+        const savedMsg = data.valid
+            ? (data.warning
+                ? 'Test passed for ' + row.name + '. ' + String(data.warning)
+                : 'Test passed for ' + row.name + '.')
+            : (data.error || ('Test failed for ' + row.name + '.'));
+        dbSetMsg(savedMsg, !!data.valid);
         dbTunnelRecordAction(
             row.name,
-            data.valid ? 'Saved tunnel test succeeded.' : 'Saved tunnel test failed: ' + String(data.error || 'Connection failed.')
+            data.valid
+                ? (data.warning
+                    ? 'Saved tunnel test succeeded with warning: ' + String(data.warning)
+                    : 'Saved tunnel test succeeded.')
+                : 'Saved tunnel test failed: ' + String(data.error || 'Connection failed.')
         );
     } catch (err) {
         dbSetMsg('Saved tunnel test failed: ' + err.message, false);
