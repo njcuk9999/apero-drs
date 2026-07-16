@@ -318,7 +318,7 @@ FILTERS['LEGACY_ASTROM_GSHEET'] = _entry['filters']
 # LEGACY_REJECT_GSHEET
 _entry = _register_task(
     'LEGACY_REJECT_GSHEET',
-    'lecacy_reject_gsheet',
+    'legacy_reject_gsheet',
     'LegacyRejectGSheetTask',
     'GLOBAL',
 )

@@ -474,7 +474,30 @@ def load_async_tasks() -> dict:
             data = yaml.safe_load(cleaned)
         except Exception:
             data = None
-    return data if data else {}
+    if not data:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+
+    # Canonicalize global scope key so old variants do not split state
+    # across multiple buckets (GLOBAL/global/__global__/__GLOBAL__).
+    out = {}
+    global_rows = []
+    for raw_key, raw_tasks in data.items():
+        key = str(raw_key or '').strip()
+        norm = key.lower().replace('_', '')
+        is_global = norm == 'global'
+        if is_global:
+            if isinstance(raw_tasks, list):
+                global_rows.extend(raw_tasks)
+            continue
+        out[key] = raw_tasks
+    if len(global_rows) > 0:
+        existing = out.get('__GLOBAL__', [])
+        if not isinstance(existing, list):
+            existing = []
+        out['__GLOBAL__'] = existing + global_rows
+    return out
 
 
 def save_async_tasks(tasks: dict) -> None:

@@ -1437,7 +1437,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
                 if not isinstance(task_cfg, dict):
                     continue
                 key = str(task_cfg.get("task_key", "")).strip()
-                if key and key not in by_key:
+                if key:
                     by_key[key] = task_cfg
 
             merged = []

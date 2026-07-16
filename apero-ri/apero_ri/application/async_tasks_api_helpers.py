@@ -252,7 +252,9 @@ def api_async_tasks_save(app):
     if not data:
         return jsonify(success=False, error="Missing data"), 400
 
-    instrument = data.get("instrument", "").strip()
+    instrument = async_task_helpers.normalize_task_scope(
+        data.get('instrument', '')
+    )
     task_key = data.get("task_key", "").strip()
     frequency = float(data.get("frequency", 24))
     task_id = str(data.get("id", "")).strip()
@@ -721,7 +723,9 @@ def api_async_tasks_list(app):
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
 
-    instrument = request.args.get("instrument", "").strip()
+    instrument = async_task_helpers.normalize_task_scope(
+        request.args.get('instrument', '')
+    )
     if not instrument:
         return jsonify(success=False, error="No instrument"), 400
 
