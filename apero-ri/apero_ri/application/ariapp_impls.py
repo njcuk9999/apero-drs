@@ -2588,7 +2588,9 @@ def ariapp_api_async_tasks_reorder(self):
     if not data:
         return jsonify(success=False, error="Missing data"), 400
 
-    instrument = data.get("instrument", "").strip()
+    instrument = async_task_helpers.normalize_task_scope(
+        data.get('instrument', '')
+    )
     order_list = data.get("order", [])
     if not instrument:
         return jsonify(success=False, error="Missing instrument"), 400
@@ -3209,7 +3211,9 @@ def ariapp_api_async_tasks_delete(self):
     if not data:
         return jsonify(success=False, error="Missing data"), 400
 
-    instrument = data.get("instrument", "").strip()
+    instrument = async_task_helpers.normalize_task_scope(
+        data.get('instrument', '')
+    )
     task_id = data.get("id", "").strip()
     if not instrument or not task_id:
         return jsonify(success=False, error="Missing fields"), 400
@@ -3237,7 +3241,9 @@ def ariapp_api_async_tasks_toggle(self):
     if not data:
         return jsonify(success=False, error="Missing data"), 400
 
-    instrument = data.get("instrument", "").strip()
+    instrument = async_task_helpers.normalize_task_scope(
+        data.get('instrument', '')
+    )
     task_id = data.get("id", "").strip()
     if not instrument or not task_id:
         return jsonify(success=False, error="Missing fields"), 400

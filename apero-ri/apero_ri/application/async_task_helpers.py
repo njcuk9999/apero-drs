@@ -34,7 +34,22 @@ def coerce_task_enabled(value: Any, default: bool = False) -> bool:
 
 def is_global_scope(instrument: str) -> bool:
     """Return True if this task scope is the shared global scope."""
-    return str(instrument).strip() == "__GLOBAL__"
+    return normalize_task_scope(instrument) == '__GLOBAL__'
+
+
+def normalize_task_scope(instrument: Any) -> str:
+    """Normalize task scope key to canonical storage form.
+
+    Canonical global scope key is ``'__GLOBAL__'``. Older payloads may
+    send variants like ``'GLOBAL'`` or ``'global'``.
+    """
+    text = str(instrument or '').strip()
+    if text == '':
+        return text
+    norm = text.lower().replace('_', '')
+    if norm == 'global':
+        return '__GLOBAL__'
+    return text
 
 
 def task_keys_for_scope(instrument: str) -> List[str]:
@@ -91,7 +106,7 @@ def merge_async_task_catalog(
         if not isinstance(task_cfg, dict):
             continue
         key = str(task_cfg.get('task_key', '')).strip()
-        if key and key not in by_key:
+        if key:
             by_key[key] = task_cfg
 
     merged: List[Dict[str, Any]] = []
