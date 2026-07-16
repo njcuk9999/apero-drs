@@ -487,11 +487,11 @@ langlist.add(item)
 # PLOT_HELP 
 # =============================================================================
 item = langlist.create('PLOT_HELP', kind='HELP')
-item.value['ENG'] = '[INTEGER] Plot level. 0 = off, 1 = interactively, 2 = save to file'
-item.value['FR'] = '[BOOLEAN] Niveau de graphique. 0 = désactivé, 1 = interactivement, 2 = enregistrer dans un fichier'
+item.value['ENG'] = '[INTEGER] Plot level. 0 = off, 1=save plots only, 2=interactive plots, 3=interactive with loop, 4=advanced mode'
 item.arguments = 'None'
 item.comment = ''
 langlist.add(item)
+
 
 # =============================================================================
 # POS_ARG_TEXT 

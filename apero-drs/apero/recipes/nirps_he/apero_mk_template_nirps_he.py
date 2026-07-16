@@ -168,8 +168,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         params.set(key='OBS_DIR', value='other', source=mainname)
         # make obs directory (if it doesn't exist)
         abspath = os.path.join(params['OUTPATH'], obs_dir)
-        if not os.path.exists(abspath):
-            os.makedirs(abspath)
+        os.makedirs(abspath, exist_ok=True)
     # ----------------------------------------------------------------------
     # flag whether object is a hot star
     flag_hotstar = telluric.id_hot_star(params, objname)

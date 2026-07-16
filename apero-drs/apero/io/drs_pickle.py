@@ -49,13 +49,8 @@ def make_pickle(params: ParamDict, instance: Any, prefix: str, suffix: int,
     """
     # get the output directory
     outdir = os.path.join(params['PATH.OTHER'], 'pickles', prefix)
-    # make directory if it doesn't exist - might happen at same time
-    while not os.path.exists(outdir):
-        try:
-            os.makedirs(outdir)
-            break
-        except Exception as _:
-            time.sleep(5)
+    # make directory if it doesn't exist - safe in concurrent runs
+    os.makedirs(outdir, exist_ok=True)
     # construct the filename
     filename = os.path.join(outdir, f'{str(suffix)}.apero_pickle')
 

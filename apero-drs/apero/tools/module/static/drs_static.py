@@ -195,8 +195,7 @@ def update_repo(params: ParamDict, recipe, save_path: str,
     # add outdir if set to abs_asset_path
     abs_asset_path = os.path.join(abs_asset_path, instrument, outdir)
     # make sure abs_asset_path exists
-    if not os.path.exists(abs_asset_path):
-        os.makedirs(abs_asset_path)
+    os.makedirs(abs_asset_path, exist_ok=True)
     # ------------------------------------------------------------------------
     # get the keys of the output files
     output_keys = list(recipe.output_files.keys())
@@ -296,7 +295,7 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     # delete night directory if it exists
     if os.path.exists(raw_night_dir):
         shutil.rmtree(raw_night_dir)
-    os.makedirs(raw_night_dir)
+    os.makedirs(raw_night_dir, exist_ok=True)
     # ------------------------------------------------------------------------
     # copy raw files to night directory (as symbolic links)
     for key in raw_files:

@@ -1142,6 +1142,8 @@ class Instrument:
         log_columns.add(name='LOG_END', datatype=sqlalchemy.String(25),
                         comment='Log sub-level end time '
                                 'YYYY-mm-dd HH:MM:SS.SSS')
+        # one recipe run should have one row per PID/LEVEL/SUBLEVEL
+        log_columns.uniques += ['PID', 'LEVEL', 'SUBLEVEL']
 
         # return columns and ctypes
         self.logdb_cols = log_columns

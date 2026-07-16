@@ -654,8 +654,7 @@ def fix_config_path(params: ParamDict) -> ParamDict:
             # update parmaeters
             params.set('CONFIG_PATH', config_path, source='command_line')
             # need to make sure this exists
-            if not os.path.exists(config_path):
-                os.makedirs(config_path)
+            os.makedirs(config_path, exist_ok=True)
     # return parameters (updated or not)
     return params
 

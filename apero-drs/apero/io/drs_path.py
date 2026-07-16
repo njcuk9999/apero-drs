@@ -211,15 +211,13 @@ def makedirs(path: str):
     """
     # set function name
     func_name = display_func('makedirs', __NAME__)
-    # test if path does not already exist
-    if not os.path.exists(path):
-        # try to make directories
-        try:
-            os.makedirs(path)
-        # catch all exceptions and pipe to drs error
-        except Exception as e:
-            eargs = [path, type(e), e, func_name]
-            raise AperoCodedException(None, '01-010-00002', targs=eargs)
+    # try to make directories (exist_ok=True handles concurrent creation)
+    try:
+        os.makedirs(path, exist_ok=True)
+    # catch all exceptions and pipe to drs error
+    except Exception as e:
+        eargs = [path, type(e), e, func_name]
+        raise AperoCodedException(None, '01-010-00002', targs=eargs)
 
 
 def copytree(src: Union[str, Path], dst: Union[str, Path]):

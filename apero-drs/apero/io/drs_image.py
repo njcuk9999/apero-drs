@@ -507,8 +507,7 @@ def npy_filelist(name: str, index: int, array: np.ndarray,
     if not os.path.exists(filepath):
         msg = 'Creating directory: {0}'.format(filepath)
         drs_base.base_printer('None', message=msg, level='')
-
-        os.makedirs(filepath)
+    os.makedirs(filepath, exist_ok=True)
     # construct absolute path to file
     abspath = os.path.join(filepath, filename)
     # save to disk
@@ -635,8 +634,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     # construct file dir
     subfilepath = os.path.join(outdir, subdir)
     # create subdir
-    if not os.path.exists(subfilepath):
-        os.makedirs(subfilepath)
+    os.makedirs(subfilepath, exist_ok=True)
     # -------------------------------------------------------------------------
     # remove any duplicate base filenames - we assume any files with exactly the
     # same name have been duplicated (on purpose or by accident) we don't want
