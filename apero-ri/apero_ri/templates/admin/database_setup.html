@@ -880,6 +880,9 @@ function dbTunnelBuildCommandText(row) {
     notes.push('');
     notes.push('# Verify local port:');
     notes.push('ss -ltn | grep :' + localPort);
+    notes.push('');
+    notes.push('# Find process using the local port:');
+    notes.push("ss -lptn 'sport=:" + localPort + "' || true");
     return notes.join('\n');
 }
 
