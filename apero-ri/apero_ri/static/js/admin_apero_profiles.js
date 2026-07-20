@@ -2000,6 +2000,9 @@
             }
         }
         for (var k = 0; k < PATH_FIELDS.length; k++) {
+            if (PATH_FIELDS[k].optional && isOptionalPathDisabled(PATH_FIELDS[k].id)) {
+                continue;
+            }
             if (!payload[PATH_FIELDS[k].key]) {
                 showToast(PATH_FIELDS[k].key + ' is required', 'error');
                 return null;
@@ -2555,6 +2558,7 @@
         if (!guardUnsaved()) return;
         resetForm();
         formSection.style.display = '';
+        setTemporaryMode(true);
         renderDraftGroups();
         profileNameInput.focus();
     });
