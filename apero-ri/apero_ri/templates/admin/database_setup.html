@@ -350,6 +350,9 @@ let dbTunnelRows = [];
 let dbSshHostOptions = [];
 let dbSshToken = null;
 let dbSshPoll = null;
+let dbSshActiveRowName = '';
+let dbPendingEnsureTunnelName = '';
+const dbSimpleAuthReady = {};
 
 function dbSetSshHostInputValue(value) {
     const input = document.getElementById('dbTunnelSshHost');
@@ -892,6 +895,32 @@ function dbTunnelRecordAction(rowName, message) {
     }
 }
 
+function dbTunnelNameKey(name) {
+    return String(name || '').trim();
+}
+
+function dbFindTunnelIndexByName(name) {
+    const key = dbTunnelNameKey(name);
+    if (!key) return -1;
+    return dbTunnelRows.findIndex((row) => dbTunnelNameKey(row.name) === key);
+}
+
+function dbSimpleModeNeedsAuth(row) {
+    if (!row) return false;
+    const modeValue = String(row.ssh_mode || 'apero');
+    if (modeValue !== 'simple') return false;
+    const status = row.status || {};
+    const isActive = !!status.active || !!status.local_port_open;
+    if (isActive) return false;
+    return !dbSimpleAuthReady[dbTunnelNameKey(row.name)];
+}
+
+async function dbTunnelEnsureByName(name, options) {
+    const index = dbFindTunnelIndexByName(name);
+    if (index < 0) return;
+    await dbTunnelEnsure(index, options || {});
+}
+
 function dbTunnelBuildVerboseLogText(row) {
     const status = row && row.status ? row.status : {};
     const key = dbTunnelLogKey(row);
@@ -1249,9 +1278,43 @@ async function dbTunnelDelete(index) {
     }
 }
 
-async function dbTunnelEnsure(index) {
+async function dbTunnelEnsure(index, options = {}) {
     const row = dbTunnelRows[index];
     if (!row) return;
+    const skipSimpleAuthGate = !!(options && options.skipSimpleAuthGate);
+    if (!skipSimpleAuthGate && dbSimpleModeNeedsAuth(row)) {
+        const rowName = String(row.name || 'this tunnel');
+        const shouldStart = confirm(
+            'Simple / docs-style mode requires Interactive Auth first.\n\n'
+            + 'Start Interactive Auth now for "' + rowName + '"?\n\n'
+            + 'After successful auth, Start / Verify will run '
+            + 'automatically.'
+        );
+        if (shouldStart) {
+            dbPendingEnsureTunnelName = dbTunnelNameKey(row.name);
+            dbSetMsg(
+                'Interactive Auth is required before Start / Verify in '
+                + 'Simple / docs-style mode.',
+                false
+            );
+            dbTunnelRecordAction(
+                row.name,
+                'Start / Verify blocked: interactive auth required first.'
+            );
+            await dbTunnelInteractive(index);
+            return;
+        }
+        dbSetMsg(
+            'Start / Verify cancelled. Run Interactive Auth first for '
+            + 'Simple / docs-style mode.',
+            false
+        );
+        dbTunnelRecordAction(
+            row.name,
+            'Start / Verify cancelled: interactive auth prompt dismissed.'
+        );
+        return;
+    }
     const modeValue = row.ssh_mode || 'apero';
     dbTunnelRecordAction(
         row.name,
@@ -1373,6 +1436,7 @@ function dbSshTermClose() {
         }).catch(() => {});
         dbSshToken = null;
     }
+    dbSshActiveRowName = '';
 }
 
 function dbSshTermStartPolling() {
@@ -1394,11 +1458,25 @@ function dbSshTermStartPolling() {
             if (data.output) dbSshTermAppend(data.output);
             if (data.finished) {
                 if (data.exit_code === 0) {
+                    const activeKey = dbTunnelNameKey(dbSshActiveRowName);
+                    if (activeKey) {
+                        dbSimpleAuthReady[activeKey] = Date.now();
+                    }
                     dbSetMsg('Interactive tunnel authentication succeeded.', true);
                     dbSshTermClose();
-                    dbTunnelRefresh();
+                    await dbTunnelRefresh();
+                    const pendingKey = dbTunnelNameKey(
+                        dbPendingEnsureTunnelName
+                    );
+                    if (activeKey && pendingKey && pendingKey === activeKey) {
+                        dbPendingEnsureTunnelName = '';
+                        await dbTunnelEnsureByName(activeKey, {
+                            skipSimpleAuthGate: true,
+                        });
+                    }
                 } else {
                     dbSetMsg('Interactive tunnel authentication failed (exit code ' + data.exit_code + ').', false);
+                    dbPendingEnsureTunnelName = '';
                 }
             }
         } catch (_) {
@@ -1440,6 +1518,7 @@ async function dbTunnelInteractive(index) {
     if (overlay) overlay.style.display = 'flex';
     if (out) out.textContent = '';
     if (statusEl) statusEl.textContent = 'Connecting...';
+    dbSshActiveRowName = dbTunnelNameKey(row.name);
     dbTunnelRecordAction(row.name, 'Interactive Auth started.');
     try {
         const res = await fetch(DB_SETUP_CFG.sshStartUrl, {

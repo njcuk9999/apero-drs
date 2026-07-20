@@ -679,6 +679,8 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         cmd.extend(
             [
                 "-o",
+                "BatchMode=yes",
+                "-o",
                 "ExitOnForwardFailure=yes",
                 "-o",
                 "StrictHostKeyChecking=accept-new",
