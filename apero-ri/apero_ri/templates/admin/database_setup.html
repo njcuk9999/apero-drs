@@ -195,11 +195,11 @@
 
             <div style="display:grid; gap:10px; grid-template-columns:1fr; margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelTestUser">DATABASE_USERNAME</label>
+                    <label class="ari-ae-label" for="dbTunnelTestUser">DB_USERNAME_TEST</label>
                     <input id="dbTunnelTestUser" class="ari-ap-input" placeholder="For connection testing only">
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelTestPass">DATABASE_PASSWORD</label>
+                    <label class="ari-ae-label" for="dbTunnelTestPass">DB_PASSWORD_TEST</label>
                     <div style="position:relative;">
                         <input id="dbTunnelTestPass" class="ari-ap-input" type="password" placeholder="For connection testing only" style="padding-right:2.4em;">
                         <button type="button" id="dbTunnelTogglePass" class="ari-ap-eye-toggle"
@@ -210,7 +210,7 @@
                     </div>
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelTestDbName">DATABASE_NAME</label>
+                    <label class="ari-ae-label" for="dbTunnelTestDbName">DB_NAME_TEST</label>
                     <input id="dbTunnelTestDbName" class="ari-ap-input" placeholder="For connection testing only">
                 </div>
             </div>
@@ -700,9 +700,15 @@ function dbTunnelEdit(index) {
     document.getElementById('dbTunnelRemotePort').value = String(def.remote_port || '3306');
     document.getElementById('dbTunnelLocalPort').value = String(def.local_port || '');
     document.getElementById('dbTunnelSshMode').value = String(def.ssh_mode || 'apero');
-    document.getElementById('dbTunnelTestUser').value = String(row.DATABASE_USERNAME || '');
-    document.getElementById('dbTunnelTestPass').value = String(row.DATABASE_PASSWORD || '');
-    document.getElementById('dbTunnelTestDbName').value = String(row.DATABASE_NAME || '');
+    document.getElementById('dbTunnelTestUser').value = String(
+        row.DB_USERNAME_TEST || row.DATABASE_USERNAME || ''
+    );
+    document.getElementById('dbTunnelTestPass').value = String(
+        row.DB_PASSWORD_TEST || row.DATABASE_PASSWORD || ''
+    );
+    document.getElementById('dbTunnelTestDbName').value = String(
+        row.DB_NAME_TEST || row.DATABASE_NAME || ''
+    );
     document.getElementById('dbTunnelEnabled').checked = row.enabled !== false;
     document.getElementById('dbTunnelNotes').value = String(def.notes || '');
 }
@@ -715,9 +721,9 @@ function dbTunnelPayload() {
         remote_port: String(document.getElementById('dbTunnelRemotePort').value || '').trim(),
         local_port: String(document.getElementById('dbTunnelLocalPort').value || '').trim(),
         ssh_mode: String(document.getElementById('dbTunnelSshMode').value || 'apero').trim(),
-        DATABASE_USERNAME: String(document.getElementById('dbTunnelTestUser').value || '').trim(),
-        DATABASE_PASSWORD: String(document.getElementById('dbTunnelTestPass').value || ''),
-        DATABASE_NAME: String(document.getElementById('dbTunnelTestDbName').value || '').trim(),
+        DB_USERNAME_TEST: String(document.getElementById('dbTunnelTestUser').value || '').trim(),
+        DB_PASSWORD_TEST: String(document.getElementById('dbTunnelTestPass').value || ''),
+        DB_NAME_TEST: String(document.getElementById('dbTunnelTestDbName').value || '').trim(),
         enabled: !!document.getElementById('dbTunnelEnabled').checked,
         notes: String(document.getElementById('dbTunnelNotes').value || '').trim(),
     };
@@ -808,8 +814,8 @@ function renderDbTunnelRows() {
                 <div><strong>DATABASE_SSH_REMOTE_PORT:</strong> ${dbEsc(status.remote_port || '')}</div>
                 <div><strong>DATABASE_SSH_LOCAL_PORT:</strong> ${dbEsc(status.local_port || '')}</div>
                 <div><strong>SSH mode:</strong> ${dbEsc(sshMode)}</div>
-                ${row.DATABASE_USERNAME ? `<div><strong>Test user:</strong> ${dbEsc(row.DATABASE_USERNAME)}</div>` : ''}
-                ${row.DATABASE_NAME ? `<div><strong>Test database:</strong> ${dbEsc(row.DATABASE_NAME)}</div>` : ''}
+                ${(row.DB_USERNAME_TEST || row.DATABASE_USERNAME) ? `<div><strong>Test user:</strong> ${dbEsc(row.DB_USERNAME_TEST || row.DATABASE_USERNAME)}</div>` : ''}
+                ${(row.DB_NAME_TEST || row.DATABASE_NAME) ? `<div><strong>Test database:</strong> ${dbEsc(row.DB_NAME_TEST || row.DATABASE_NAME)}</div>` : ''}
                 <div><strong>Control socket:</strong> ${controlAlive ? 'alive' : 'not alive'}; <strong>Local port:</strong> ${localOpen ? 'open' : 'closed'}</div>
                 ${status.created_at ? `<div><strong>Created:</strong> ${dbEsc(status.created_at)}</div>` : ''}
                 ${row.error ? `<div style="color:#b33939;"><i class="fa-solid fa-triangle-exclamation"></i> ${dbEsc(row.error)}</div>` : ''}
@@ -1190,12 +1196,15 @@ async function dbTunnelTestSaved(index) {
     const rowName = String(row.name || '').trim();
     const formName = String(formPayload.name || '').trim();
     const sameDefinition = rowName && formName && rowName === formName;
-    const testUser = row.DATABASE_USERNAME
-        || (sameDefinition ? formPayload.DATABASE_USERNAME : '');
-    const testPass = row.DATABASE_PASSWORD
-        || (sameDefinition ? formPayload.DATABASE_PASSWORD : '');
-    const testDbName = row.DATABASE_NAME
-        || (sameDefinition ? formPayload.DATABASE_NAME : '');
+    const testUser = row.DB_USERNAME_TEST
+        || row.DATABASE_USERNAME
+        || (sameDefinition ? formPayload.DB_USERNAME_TEST : '');
+    const testPass = row.DB_PASSWORD_TEST
+        || row.DATABASE_PASSWORD
+        || (sameDefinition ? formPayload.DB_PASSWORD_TEST : '');
+    const testDbName = row.DB_NAME_TEST
+        || row.DATABASE_NAME
+        || (sameDefinition ? formPayload.DB_NAME_TEST : '');
     dbTunnelRecordAction(row.name, 'Saved tunnel test requested.');
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
@@ -1203,9 +1212,9 @@ async function dbTunnelTestSaved(index) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: rowName,
-                DATABASE_USERNAME: testUser,
-                DATABASE_PASSWORD: testPass,
-                DATABASE_NAME: testDbName,
+                DB_USERNAME_TEST: testUser,
+                DB_PASSWORD_TEST: testPass,
+                DB_NAME_TEST: testDbName,
                 persist_test_details: true,
             }),
         });

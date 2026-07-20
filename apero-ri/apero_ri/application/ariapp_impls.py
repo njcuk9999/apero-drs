@@ -952,9 +952,18 @@ def ariapp_api_db_ssh_tunnel_save(self):
     remote_port = str(body.get("remote_port", "") or "").strip()
     local_port = str(body.get("local_port", "") or "").strip()
     ssh_mode = str(body.get("ssh_mode", "apero") or "apero").strip()
-    username = str(body.get("DATABASE_USERNAME", "") or "").strip()
-    password = str(body.get("DATABASE_PASSWORD", "") or "")
-    db_name = str(body.get("DATABASE_NAME", "") or "").strip()
+    username = str(
+        body.get("DB_USERNAME_TEST", body.get("DATABASE_USERNAME", ""))
+        or ""
+    ).strip()
+    password = str(
+        body.get("DB_PASSWORD_TEST", body.get("DATABASE_PASSWORD", ""))
+        or ""
+    )
+    db_name = str(
+        body.get("DB_NAME_TEST", body.get("DATABASE_NAME", ""))
+        or ""
+    ).strip()
     notes = str(body.get("notes", "") or "").strip()
 
     if not name:
@@ -997,9 +1006,9 @@ def ariapp_api_db_ssh_tunnel_save(self):
         "remote_port": remote_port,
         "local_port": local_port,
         "ssh_mode": ssh_mode,
-        "DATABASE_USERNAME": username,
-        "DATABASE_PASSWORD": password,
-        "DATABASE_NAME": db_name,
+        "DB_USERNAME_TEST": username,
+        "DB_PASSWORD_TEST": password,
+        "DB_NAME_TEST": db_name,
         "notes": notes,
     }
     self._save_db_tunnel_definitions(tunnels)
@@ -1095,6 +1104,24 @@ def ariapp_list_db_tunnel_rows(self):
     rows = []
     for name in sorted(tunnels.keys()):
         tunnel_def = tunnels.get(name, {})
+        test_user = str(
+            tunnel_def.get(
+                "DB_USERNAME_TEST", tunnel_def.get("DATABASE_USERNAME", "")
+            )
+            or ""
+        ).strip()
+        test_pass = str(
+            tunnel_def.get(
+                "DB_PASSWORD_TEST", tunnel_def.get("DATABASE_PASSWORD", "")
+            )
+            or ""
+        )
+        test_db_name = str(
+            tunnel_def.get(
+                "DB_NAME_TEST", tunnel_def.get("DATABASE_NAME", "")
+            )
+            or ""
+        ).strip()
         params = self._build_db_tunnel_runtime_params(name, tunnel_def)
         ssh_host = str(params.get("DATABASE_SSH_CONFIG_HOST", "") or "")
         remote_host = str(params.get("DATABASE_HOST", "") or "")
@@ -1130,6 +1157,13 @@ def ariapp_list_db_tunnel_rows(self):
             {
                 "name": name,
                 "definition": tunnel_def,
+                "DB_USERNAME_TEST": test_user,
+                "DB_PASSWORD_TEST": test_pass,
+                "DB_NAME_TEST": test_db_name,
+                # Legacy aliases kept for existing UI/API consumers.
+                "DATABASE_USERNAME": test_user,
+                "DATABASE_PASSWORD": test_pass,
+                "DATABASE_NAME": test_db_name,
                 "ssh_mode": str(
                     tunnel_def.get("ssh_mode", "apero") or "apero"
                 ),
@@ -3580,6 +3614,21 @@ def ariapp_api_db_ssh_tunnel_list(self):
         tdef = tunnels.get(name, {})
         if not isinstance(tdef, dict):
             continue
+        test_user = str(
+            tdef.get(
+                "DB_USERNAME_TEST", tdef.get("DATABASE_USERNAME", "")
+            )
+            or ""
+        ).strip()
+        test_pass = str(
+            tdef.get(
+                "DB_PASSWORD_TEST", tdef.get("DATABASE_PASSWORD", "")
+            )
+            or ""
+        )
+        test_db_name = str(
+            tdef.get("DB_NAME_TEST", tdef.get("DATABASE_NAME", "")) or ""
+        ).strip()
         rows.append(
             {
                 "name": name,
@@ -3590,15 +3639,13 @@ def ariapp_api_db_ssh_tunnel_list(self):
                 "remote_port": str(tdef.get("remote_port", "") or "").strip()
                 or "3306",
                 "local_port": str(tdef.get("local_port", "") or "").strip(),
-                "DATABASE_USERNAME": str(
-                    tdef.get("DATABASE_USERNAME", "") or ""
-                ).strip(),
-                "DATABASE_PASSWORD": str(
-                    tdef.get("DATABASE_PASSWORD", "") or ""
-                ),
-                "DATABASE_NAME": str(
-                    tdef.get("DATABASE_NAME", "") or ""
-                ).strip(),
+                "DB_USERNAME_TEST": test_user,
+                "DB_PASSWORD_TEST": test_pass,
+                "DB_NAME_TEST": test_db_name,
+                # Legacy aliases kept for existing UI/API consumers.
+                "DATABASE_USERNAME": test_user,
+                "DATABASE_PASSWORD": test_pass,
+                "DATABASE_NAME": test_db_name,
                 "notes": str(tdef.get("notes", "") or "").strip(),
             }
         )

@@ -20,9 +20,15 @@ def api_db_ssh_tunnel_test(app):
     remote_host = str(body.get("remote_host", "") or "").strip()
     remote_port = str(body.get("remote_port", "") or "").strip() or "3306"
     local_port = str(body.get("local_port", "") or "").strip()
-    req_username = str(body.get('DATABASE_USERNAME', '') or '').strip()
-    req_password = str(body.get('DATABASE_PASSWORD', '') or '')
-    req_db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+    req_username = str(
+        body.get('DB_USERNAME_TEST', body.get('DATABASE_USERNAME', '')) or ''
+    ).strip()
+    req_password = str(
+        body.get('DB_PASSWORD_TEST', body.get('DATABASE_PASSWORD', '')) or ''
+    )
+    req_db_name = str(
+        body.get('DB_NAME_TEST', body.get('DATABASE_NAME', '')) or ''
+    ).strip()
     username = req_username
     password = req_password
     db_name = req_db_name
@@ -58,15 +64,33 @@ def api_db_ssh_tunnel_test(app):
         local_port = local_port or str(tdef.get("local_port", "") or "").strip()
         username = (
             username
-            or str(tdef.get('DATABASE_USERNAME', '') or '').strip()
+            or str(
+                tdef.get(
+                    'DB_USERNAME_TEST', tdef.get('DATABASE_USERNAME', '')
+                )
+                or ''
+            ).strip()
         )
-        password = password or str(tdef.get('DATABASE_PASSWORD', '') or '')
-        db_name = db_name or str(tdef.get('DATABASE_NAME', '') or '').strip()
+        password = password or str(
+            tdef.get('DB_PASSWORD_TEST', tdef.get('DATABASE_PASSWORD', ''))
+            or ''
+        )
+        db_name = db_name or str(
+            tdef.get('DB_NAME_TEST', tdef.get('DATABASE_NAME', '')) or ''
+        ).strip()
 
     if name and persist_test_details and isinstance(tdef, dict):
-        old_user = str(tdef.get('DATABASE_USERNAME', '') or '').strip()
-        old_pass = str(tdef.get('DATABASE_PASSWORD', '') or '')
-        old_db_name = str(tdef.get('DATABASE_NAME', '') or '').strip()
+        old_user = str(
+            tdef.get('DB_USERNAME_TEST', tdef.get('DATABASE_USERNAME', ''))
+            or ''
+        ).strip()
+        old_pass = str(
+            tdef.get('DB_PASSWORD_TEST', tdef.get('DATABASE_PASSWORD', ''))
+            or ''
+        )
+        old_db_name = str(
+            tdef.get('DB_NAME_TEST', tdef.get('DATABASE_NAME', '')) or ''
+        ).strip()
         if req_username and not old_user:
             pending_user = req_username
         if req_password and not old_pass:
@@ -105,7 +129,7 @@ def api_db_ssh_tunnel_test(app):
         return (
             jsonify(
                 success=False,
-                error="DATABASE_USERNAME and DATABASE_NAME are required",
+                error="DB_USERNAME_TEST and DB_NAME_TEST are required",
             ),
             400,
         )
@@ -152,13 +176,13 @@ def api_db_ssh_tunnel_test(app):
     if result.get('valid') and name and isinstance(tdef, dict):
         updated = False
         if pending_user:
-            tdef['DATABASE_USERNAME'] = pending_user
+            tdef['DB_USERNAME_TEST'] = pending_user
             updated = True
         if pending_pass:
-            tdef['DATABASE_PASSWORD'] = pending_pass
+            tdef['DB_PASSWORD_TEST'] = pending_pass
             updated = True
         if pending_db_name:
-            tdef['DATABASE_NAME'] = pending_db_name
+            tdef['DB_NAME_TEST'] = pending_db_name
             updated = True
         if updated:
             tunnels[name] = tdef
