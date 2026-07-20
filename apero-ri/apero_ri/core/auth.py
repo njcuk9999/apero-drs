@@ -10,6 +10,7 @@ password hashing via the cryptography package, and Flask session login.
 import base64
 import binascii
 import os
+import socket
 import threading
 import time
 from copy import deepcopy
@@ -1077,6 +1078,47 @@ def validate_database_connection(
                 port_value = 3306
 
         if tunnel_mode.startswith('mysql'):
+            stage_bits = []
+            try:
+                with socket.create_connection(
+                    (host_text, port_value), timeout=5
+                ):
+                    stage_bits.append('tcp=ok')
+            except Exception as tcp_exc:
+                stage_bits.append('tcp=fail')
+                return {
+                    'valid': False,
+                    'error': (
+                        f'{sql_error} | Direct TCP probe failed: {tcp_exc} '
+                        f'| Stages: {", ".join(stage_bits)}'
+                    ),
+                }
+
+            try:
+                with pymysql.connect(
+                    host=host_text,
+                    user=user_text,
+                    password=password_text,
+                    database=None,
+                    port=port_value,
+                    connect_timeout=10,
+                    read_timeout=10,
+                    write_timeout=10,
+                    autocommit=True,
+                    charset='utf8mb4',
+                ) as conn:
+                    conn.ping(reconnect=False)
+                stage_bits.append('auth=ok')
+            except Exception as auth_exc:
+                stage_bits.append('auth=fail')
+                return {
+                    'valid': False,
+                    'error': (
+                        f'{sql_error} | Direct MySQL connect/auth failed: '
+                        f'{auth_exc} | Stages: {", ".join(stage_bits)}'
+                    ),
+                }
+
             try:
                 with pymysql.connect(
                     host=host_text,
@@ -1091,26 +1133,24 @@ def validate_database_connection(
                     charset='utf8mb4',
                 ) as conn:
                     conn.ping(reconnect=False)
-                    with conn.cursor() as cursor:
-                        cursor.execute('SELECT 1 AS ok')
-                        cursor.fetchone()
+                stage_bits.append('db_select=ok')
+            except Exception as db_exc:
+                stage_bits.append('db_select=fail')
                 return {
-                    'valid': True,
-                    'error': '',
-                    'warning': (
-                        'SQLAlchemy query failed, but a direct PyMySQL '
-                        'query succeeded.'
+                    'valid': False,
+                    'error': (
+                        f'{sql_error} | Direct MySQL auth succeeded, but '
+                        f'database selection failed: {db_exc} '
+                        f'| Stages: {", ".join(stage_bits)}'
                     ),
                 }
-            except Exception as direct_query_exc:
-                # If a bare auth handshake works, report a more specific
-                # database/query-stage failure instead of a generic tunnel
-                # failure.
+
+            try:
                 with pymysql.connect(
                     host=host_text,
                     user=user_text,
                     password=password_text,
-                    database=None,
+                    database=db_name_text,
                     port=port_value,
                     connect_timeout=10,
                     read_timeout=10,
@@ -1118,13 +1158,28 @@ def validate_database_connection(
                     autocommit=True,
                     charset='utf8mb4',
                 ) as conn:
-                    conn.ping(reconnect=False)
+                    with conn.cursor() as cursor:
+                        cursor.execute('SELECT 1 AS ok')
+                        cursor.fetchone()
+                stage_bits.append('query=ok')
+                return {
+                    'valid': True,
+                    'error': '',
+                    'warning': (
+                        'SQLAlchemy query failed, but a direct PyMySQL '
+                        'query succeeded. '
+                        f'Stages: {", ".join(stage_bits)}'
+                    ),
+                }
+            except Exception as direct_query_exc:
+                stage_bits.append('query=fail')
                 return {
                     'valid': False,
                     'error': (
                         f'{sql_error} | Direct MySQL auth succeeded, but '
-                        'database selection/query failed. '
-                        f'Direct query error: {direct_query_exc}'
+                        'query failed after DB selection. '
+                        f'Direct query error: {direct_query_exc} '
+                        f'| Stages: {", ".join(stage_bits)}'
                     ),
                 }
     except Exception as direct_exc:
