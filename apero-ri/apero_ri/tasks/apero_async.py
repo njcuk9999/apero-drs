@@ -628,6 +628,7 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
     """Ensure a reusable SSH local-forward exists and return local endpoint."""
     ssh_host = str(params.get("DATABASE_SSH_CONFIG_HOST") or "").strip()
     remote_host = str(params.get("DATABASE_HOST") or "").strip()
+    simple_mode = bool(params.get("DATABASE_SSH_SIMPLE_MODE", False))
     if not ssh_host:
         raise ValueError(
             "DATABASE_SSH_CONFIG_HOST is required when SSH tunneling "
