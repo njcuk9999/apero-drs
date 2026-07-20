@@ -7,6 +7,7 @@ from pathlib import Path
 from apero_ri.core import audit_log
 from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 from apero_ri.core.permissions import load_parameters
+from apero_ri.application import profile_utils
 from apero_ri.tasks import apero_async
 from flask import jsonify, request, url_for
 
@@ -553,7 +554,6 @@ def api_apero_profiles_list(app):
         if not db_ok:
             reasons.append(f'db: {db_error or "connection failed"}')
         if not all_paths_ok:
-        if not all_paths_ok:
             reasons.append("paths: missing or invalid directory")
         if not _optional_path_is_enabled(cfg, 'PATH_TRIGGER_LOG'):
             reasons = [r for r in reasons if 'PATH_TRIGGER_LOG' not in r]
@@ -961,9 +961,13 @@ def api_apero_profiles_save(app, package_dir: Path):
         path_values[k] = val
     # Optional paths: only validated (as absolute) when a value is provided.
     for k in _PATH_OPTIONAL_KEYS:
-        val = data.get(k, "").strip()
+        raw_val = data.get(k, None)
+        if raw_val is None:
+            path_values[k] = None
+            continue
+        val = str(raw_val).strip()
         if not val:
-            path_values[k] = ""
+            path_values[k] = None
             continue
         if not os.path.isabs(val):
             return (
