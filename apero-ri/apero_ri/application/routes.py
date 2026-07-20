@@ -754,6 +754,12 @@ def register_static_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/admin/apero-profiles/save-temporary",
+        "api_apero_profiles_save_temporary",
+        app._api_apero_profiles_save_temporary,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/admin/apero-profiles/delete",
         "api_apero_profiles_delete",
         app._api_apero_profiles_delete,

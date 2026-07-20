@@ -524,8 +524,19 @@ def _profile_is_disabled(profile_data: dict) -> bool:
     return text in {'1', 'true', 'yes', 'on', 'y'}
 
 
+def _profile_is_temporary(profile_data: dict) -> bool:
+    """Return True when a profile config is marked temporary."""
+    if not isinstance(profile_data, dict):
+        return False
+    raw = profile_data.get('temporary', profile_data.get('TEMPORARY', False))
+    if isinstance(raw, bool):
+        return raw
+    text = str(raw or '').strip().lower()
+    return text in {'1', 'true', 'yes', 'on', 'y'}
+
+
 def _filter_enabled_profiles(profiles: Any) -> dict:
-    """Return a copy of profiles with disabled profiles removed."""
+    """Return a copy of profiles with disabled and temporary removed."""
     if not isinstance(profiles, dict):
         return {}
 
@@ -537,14 +548,35 @@ def _filter_enabled_profiles(profiles: Any) -> dict:
         for profile_id, profile_data in instr_profiles.items():
             if _profile_is_disabled(profile_data):
                 continue
+            if _profile_is_temporary(profile_data):
+                continue
             enabled[profile_id] = profile_data
         out[instrument] = enabled
+    return out
+
+
+def _filter_temporary_profiles(profiles: Any) -> dict:
+    """Return a copy of profiles with temporary profiles removed."""
+    if not isinstance(profiles, dict):
+        return {}
+
+    out: Dict[str, dict] = {}
+    for instrument, instr_profiles in profiles.items():
+        if not isinstance(instr_profiles, dict):
+            continue
+        visible: Dict[str, dict] = {}
+        for profile_id, profile_data in instr_profiles.items():
+            if _profile_is_temporary(profile_data):
+                continue
+            visible[profile_id] = profile_data
+        out[instrument] = visible
     return out
 
 
 def load_apero_profiles(
     hydrate: bool = True,
     enabled_only: bool = False,
+    include_temporary: bool = False,
 ) -> dict:
     """Load APERO profiles from apero_profiles.yaml.
 
@@ -553,6 +585,8 @@ def load_apero_profiles(
             profile payload for runtime use. When False, return raw file
             content (useful before mutating/saving profiles).
         enabled_only: When True, skip profiles marked as disabled.
+        include_temporary: When True, keep temporary draft profiles in the
+            returned structure. Temporary profiles are hidden by default.
 
     The loaded profiles are cached in-process for _PROFILES_TTL seconds so
     that repeated calls within the same server process (e.g. multiple
@@ -610,6 +644,8 @@ def load_apero_profiles(
 
     if enabled_only:
         result = _filter_enabled_profiles(result)
+    elif not include_temporary:
+        result = _filter_temporary_profiles(result)
     with _profiles_lock:
         _profiles_cache[cache_key] = {
             "mtime": current_mtime,

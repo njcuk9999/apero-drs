@@ -67,6 +67,7 @@
     var profileDbDefinitionName = document.getElementById('profile-db-definition-name');
 
     var btnSaveProfile = document.getElementById('btn-save-profile');
+    var btnSaveTemporaryProfile = document.getElementById('btn-save-temporary-profile');
     var btnCancelEdit = document.getElementById('btn-cancel-edit');
     var btnAddProfile = document.getElementById('btn-add-profile');
     var formSection = document.getElementById('form-section');
@@ -240,6 +241,12 @@
     function isOptionalPathDisabled(fieldId) {
         var toggle = pathDisableInputs[fieldId];
         return !!(toggle && toggle.checked);
+    }
+
+    function setTemporaryMode(enabled) {
+        if (!btnSaveTemporaryProfile) return;
+        btnSaveTemporaryProfile.style.display = enabled ? '' : 'none';
+        btnSaveTemporaryProfile.disabled = !enabled;
     }
 
     function saveAperoChecksConfig() {
@@ -880,6 +887,7 @@
         groupsSection.style.display = 'none';
         groupsContainer.innerHTML = '';
         groupsNoPerm.style.display = 'none';
+        setTemporaryMode(false);
         loadDbDefinitionOptions('local', '');
         syncTunnelVisibility();
         updateWorkflowState();
@@ -943,6 +951,7 @@
                 : (profile.DATABASE_LOCAL_NAME || '')
         );
         syncTunnelVisibility();
+        setTemporaryMode(true);
         updateWorkflowState();
     }
 
@@ -1053,6 +1062,7 @@
                 : (profile.DATABASE_LOCAL_NAME || '')
         );
         syncTunnelVisibility();
+        setTemporaryMode(true);
         updateWorkflowState();
         profileNameInput.focus();
         profileNameInput.select();
@@ -1716,6 +1726,7 @@
 
         var allPathsFilled = true;
         PATH_FIELDS.forEach(function (f) {
+            if (f.optional && isOptionalPathDisabled(f.id)) return;
             if (!pathInputs[f.id].value.trim()) allPathsFilled = false;
         });
         if (btnTestPaths) {
@@ -1769,6 +1780,9 @@
         btnSaveProfile.disabled = !(dbTestPassed && tablesTestPassed
             && pathsTestPassed
             && scienceComplete && allPathsFilled && groupsOk);
+        if (btnSaveTemporaryProfile) {
+            btnSaveTemporaryProfile.disabled = !(scienceComplete && groupsOk);
+        }
     }
 
     /* -- Test database connection ---------------------------------------- */
@@ -1994,6 +2008,27 @@
         return payload;
     }
 
+    function validateTemporary() {
+        var payload = collectFormData();
+        if (!payload.name) {
+            showToast('Profile name is required', 'error');
+            return null;
+        }
+        if (!payload.apero_version) {
+            showToast('APERO version is required', 'error');
+            return null;
+        }
+        if (!payload.reduction_server) {
+            showToast('Reduction server is required', 'error');
+            return null;
+        }
+        if (!payload.APERO_INSTRUMENT_PROFILE) {
+            showToast('Instrument profile selection is required', 'error');
+            return null;
+        }
+        return payload;
+    }
+
     /* -- Save profile ---------------------------------------------------- */
     function saveProfile() {
         var payload = validateRequired();
@@ -2040,6 +2075,39 @@
         .catch(function () {
             btnSaveProfile.disabled = false;
             showToast('Save failed', 'error');
+        });
+    }
+
+    function saveTemporaryProfile() {
+        if (!cfg.saveTemporaryUrl) return;
+        var payload = validateTemporary();
+        if (!payload) return;
+        payload.temporary = true;
+        payload.disabled = true;
+
+        if (btnSaveTemporaryProfile) {
+            btnSaveTemporaryProfile.disabled = true;
+        }
+        fetchWithBusy(cfg.saveTemporaryUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }, 'Saving temporary profile...')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data && data.success) {
+                formDirty = false;
+                showToast('Temporary profile saved', 'success');
+                loadProfiles();
+            } else {
+                showToast((data && data.error) || 'Temporary save failed', 'error');
+            }
+        })
+        .catch(function () {
+            showToast('Temporary save failed', 'error');
+        })
+        .finally(function () {
+            updateWorkflowState();
         });
     }
 
@@ -2476,6 +2544,9 @@
     });
 
     btnSaveProfile.addEventListener('click', saveProfile);
+    if (btnSaveTemporaryProfile) {
+        btnSaveTemporaryProfile.addEventListener('click', saveTemporaryProfile);
+    }
     btnCancelEdit.addEventListener('click', function () {
         if (!guardUnsaved()) return;
         resetForm();

@@ -309,6 +309,9 @@
     </div>
 
     <div class="ari-ap-form__actions">
+        <button id="btn-save-temporary-profile" class="ari-btn ari-btn--secondary" disabled>
+            <i class="fa-solid fa-floppy-disk"></i> Save Temporary
+        </button>
         <button id="btn-save-profile" class="ari-btn ari-btn--primary" disabled>
             <i class="fa-solid fa-floppy-disk"></i> Save &amp; Close
         </button>
@@ -427,6 +430,7 @@ window.ARI_APERO_PROFILES = {
     browseUrl: {{ url_for('api_apero_profiles_browse')|tojson }},
     updateGroupsUrl: {{ url_for('api_apero_profiles_update_groups')|tojson }},
     toggleDisabledUrl: {{ url_for('api_apero_profiles_toggle_disabled')|tojson }},
+    saveTemporaryUrl: {{ url_for('api_apero_profiles_save_temporary')|tojson }},
     testDbUrl: {{ url_for('api_apero_profiles_test_db')|tojson }},
     listTablesUrl: {{ url_for('api_apero_profiles_list_tables')|tojson }},
     testTablesUrl: {{ url_for('api_apero_profiles_test_tables')|tojson }},

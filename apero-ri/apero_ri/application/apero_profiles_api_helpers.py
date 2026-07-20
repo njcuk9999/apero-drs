@@ -28,7 +28,10 @@ def _profile_disabled(cfg: dict) -> bool:
 
 def _optional_path_is_enabled(cfg: dict, key: str) -> bool:
     """Return True when one optional path is configured and enabled."""
-    value = str(profile_utils.profile_get_path(cfg, key, '') or '').strip()
+    value = profile_utils.profile_get_path(cfg, key, None)
+    if value is None:
+        return False
+    value = str(value).strip()
     return bool(value)
 
 
@@ -454,7 +457,7 @@ def api_apero_profiles_list(app):
     if instrument not in valid:
         return jsonify(success=False, error="Invalid instrument"), 400
 
-    all_profiles = load_apero_profiles(hydrate=False)
+    all_profiles = load_apero_profiles(hydrate=False, include_temporary=True)
     inst_profiles = all_profiles.get(instrument, {})
 
     db_keys = [
@@ -490,6 +493,7 @@ def api_apero_profiles_list(app):
     profile_errors = []
     for name, cfg in inst_profiles.items():
         disabled = _profile_disabled(cfg)
+        temporary = bool(cfg.get('temporary', cfg.get('TEMPORARY', False)))
         entry = {
             "name": name,
             "DISPLAY_ORDER": cfg.get("DISPLAY_ORDER", 999),
@@ -497,6 +501,7 @@ def api_apero_profiles_list(app):
             "apero_version": cfg.get("apero_version", ""),
             "reduction_server": cfg.get("reduction_server", ""),
             "disabled": disabled,
+            "temporary": temporary,
         }
 
         for key in db_keys:
@@ -541,6 +546,9 @@ def api_apero_profiles_list(app):
         if disabled:
             db_ok = True
             db_error = ''
+        elif temporary:
+            db_ok = False
+            db_error = 'temporary profile needs validation before use'
         else:
             db_check = app._validate_profile_database(cfg)
             db_ok = bool(db_check.get("valid", False))
@@ -551,6 +559,8 @@ def api_apero_profiles_list(app):
         reasons = []
         if disabled:
             reasons.append('disabled')
+        if temporary:
+            reasons.append('temporary')
         if not db_ok:
             reasons.append(f'db: {db_error or "connection failed"}')
         if not all_paths_ok:
@@ -710,7 +720,7 @@ def api_apero_profiles_test_tables(app):
 
 def build_apero_profiles_overview_status(app) -> dict:
     """Build all-instruments APERO profile readiness and issue details."""
-    profiles_by_instrument = load_apero_profiles()
+    profiles_by_instrument = load_apero_profiles(enabled_only=True)
     path_keys = [
         "PATH_RAW",
         "PATH_PP",
@@ -843,6 +853,7 @@ def api_apero_profiles_save(app, package_dir: Path):
         "DATABASE_LOCAL_NAME",
         "DATABASE_TUNNEL_NAME",
     ]
+    _OPTIONAL_BOOL_KEYS = ["temporary", "disabled"]
     _apero_instrument_profile = str(
         data.get("APERO_INSTRUMENT_PROFILE", "") or ""
     ).strip()
@@ -988,7 +999,7 @@ def api_apero_profiles_save(app, package_dir: Path):
     if not science_types:
         return jsonify(success=False, error="SCIENCE_TYPES is required"), 400
 
-    all_profiles = load_apero_profiles(hydrate=False)
+    all_profiles = load_apero_profiles(hydrate=False, include_temporary=True)
     inst_profiles = all_profiles.setdefault(instrument, {})
 
     if name in inst_profiles:
@@ -1020,6 +1031,7 @@ def api_apero_profiles_save(app, package_dir: Path):
     profile_data['disabled'] = _to_bool(
         data.get('disabled', existing_disabled)
     )
+    profile_data['temporary'] = _to_bool(data.get('temporary', False))
     profile_data.update(values)
     profile_data["database"] = dict(db_values)
     profile_data["paths"] = dict(path_values)
@@ -1059,6 +1071,39 @@ def api_apero_profiles_save(app, package_dir: Path):
     return jsonify(success=True)
 
 
+def api_apero_profiles_save_temporary(app, package_dir: Path):
+    """Save a single temporary APERO profile draft."""
+    user_info, perms = app._require_apero_profile_perm()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+
+    data = request.get_json() or {}
+    instrument = str(data.get('instrument', '')).strip()
+    if not instrument:
+        return jsonify(success=False, error='Missing instrument'), 400
+
+    all_profiles = load_apero_profiles(hydrate=False, include_temporary=True)
+    inst_profiles = all_profiles.setdefault(instrument, {})
+    temp_name = '__temporary__'
+
+    payload = dict(data)
+    payload['temporary'] = True
+    payload['disabled'] = True
+    payload['DISPLAY_ORDER'] = 9999
+    payload['groups'] = []
+
+    inst_profiles[temp_name] = payload
+    all_profiles[instrument] = inst_profiles
+    save_apero_profiles(all_profiles)
+    audit_log.record(
+        actor=user_info.get('username', ''),
+        action='apero_profile.save_temporary',
+        target=f'{instrument}/{temp_name}',
+    )
+    app._refresh_admin_health_after_change(user_info, perms)
+    return jsonify(success=True)
+
+
 def api_apero_profiles_toggle_disabled(app):
     """Toggle a profile's disabled flag."""
     user_info, perms = app._require_apero_profile_perm()
@@ -1071,7 +1116,7 @@ def api_apero_profiles_toggle_disabled(app):
     if not instrument or not name:
         return jsonify(success=False, error='Missing fields'), 400
 
-    all_profiles = load_apero_profiles(hydrate=False)
+    all_profiles = load_apero_profiles(hydrate=False, include_temporary=True)
     inst_profiles = all_profiles.get(instrument, {})
     if name not in inst_profiles or not isinstance(inst_profiles[name], dict):
         return jsonify(success=False, error='Profile not found'), 404

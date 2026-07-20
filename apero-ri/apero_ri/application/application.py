@@ -2209,6 +2209,12 @@ class ARIApp(Flask):
             package_dir=PACKAGE_DIR,
         )
 
+    def _api_apero_profiles_save_temporary(self):
+        return apero_profiles_api_helpers.api_apero_profiles_save_temporary(
+            self,
+            package_dir=PACKAGE_DIR,
+        )
+
     def _api_apero_profiles_delete(self):
         return _impls.ariapp_api_apero_profiles_delete(self)
 
