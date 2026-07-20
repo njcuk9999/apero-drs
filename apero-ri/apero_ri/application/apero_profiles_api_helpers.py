@@ -25,6 +25,12 @@ def _profile_disabled(cfg: dict) -> bool:
     return _to_bool(raw)
 
 
+def _optional_path_is_enabled(cfg: dict, key: str) -> bool:
+    """Return True when one optional path is configured and enabled."""
+    value = str(profile_utils.profile_get_path(cfg, key, '') or '').strip()
+    return bool(value)
+
+
 def resolve_db_payload_for_test(app, data: dict) -> dict:
     """Resolve request DB payload into concrete test connection params."""
     mode = str(data.get("DATABASE_MODE", "") or "").strip()
@@ -517,10 +523,10 @@ def api_apero_profiles_list(app):
             if key in ("PATH_TRIGGER_LOG", "PATH_CRITICAL_CHECK"):
                 # Optional paths: only check existence when set, never affect
                 # all_paths_ok.  TRIGGER_LOG is a file; CRITICAL_CHECK is a dir.
-                if key == "PATH_TRIGGER_LOG":
-                    entry[key + "_exists"] = bool(val) and Path(val).is_file()
-                else:
-                    entry[key + "_exists"] = bool(val) and Path(val).is_dir()
+                if not val:
+                    entry[key + "_exists"] = False
+                    continue
+                entry[key + "_exists"] = Path(val).is_file() if key == "PATH_TRIGGER_LOG" else Path(val).is_dir()
                 continue
             if val:
                 entry[key + "_exists"] = Path(val).is_dir()
@@ -531,6 +537,7 @@ def api_apero_profiles_list(app):
                 all_paths_ok = False
         entry["all_paths_ok"] = all_paths_ok
 
+        if disabled:
         if disabled:
             db_ok = True
             db_error = ''
@@ -547,7 +554,12 @@ def api_apero_profiles_list(app):
         if not db_ok:
             reasons.append(f'db: {db_error or "connection failed"}')
         if not all_paths_ok:
+        if not all_paths_ok:
             reasons.append("paths: missing or invalid directory")
+        if not _optional_path_is_enabled(cfg, 'PATH_TRIGGER_LOG'):
+            reasons = [r for r in reasons if 'PATH_TRIGGER_LOG' not in r]
+        if not _optional_path_is_enabled(cfg, 'PATH_CRITICAL_CHECK'):
+            reasons = [r for r in reasons if 'PATH_CRITICAL_CHECK' not in r]
         entry["status_reasons"] = reasons
         if reasons and not disabled:
             profile_errors.append(

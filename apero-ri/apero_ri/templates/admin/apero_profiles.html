@@ -272,6 +272,12 @@
                         <i class="fa-solid fa-folder-open"></i>
                     </button>
                 </div>
+                {% if optional %}
+                <label class="ari-ap-form__hint" style="display:inline-flex; gap:0.45rem; align-items:center; margin-top:0.35rem;">
+                    <input type="checkbox" class="ari-ap-path-disable" data-target="{{ field_id }}">
+                    Disabled (store as <code>None</code> and skip checks)
+                </label>
+                {% endif %}
                 <div id="{{ field_id }}-validation" class="ari-ap-validation" style="display:none;"></div>
             </div>
             {% endfor %}

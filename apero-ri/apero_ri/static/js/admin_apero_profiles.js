@@ -118,8 +118,12 @@
 
     // Build lookup for path input elements
     var pathInputs = {};
+    var pathDisableInputs = {};
     PATH_FIELDS.forEach(function (f) {
         pathInputs[f.id] = document.getElementById(f.id);
+        pathDisableInputs[f.id] = document.querySelector(
+            '.ari-ap-path-disable[data-target="' + f.id + '"]'
+        );
     });
 
     // Build lookup for DB text input elements
@@ -212,6 +216,30 @@
             .split(',')
             .map(function (part) { return part.trim(); })
             .filter(function (part) { return !!part; });
+    }
+
+    function isOptionalPathField(fieldId) {
+        return PATH_FIELDS.some(function (field) {
+            return field.id === fieldId && !!field.optional;
+        });
+    }
+
+    function setOptionalPathDisabled(fieldId, disabled) {
+        var input = pathInputs[fieldId];
+        var toggle = pathDisableInputs[fieldId];
+        if (!input || !toggle) return;
+        toggle.checked = !!disabled;
+        input.disabled = !!disabled;
+        if (disabled) {
+            input.value = '';
+            var vdiv = document.getElementById(fieldId + '-validation');
+            if (vdiv) vdiv.style.display = 'none';
+        }
+    }
+
+    function isOptionalPathDisabled(fieldId) {
+        var toggle = pathDisableInputs[fieldId];
+        return !!(toggle && toggle.checked);
     }
 
     function saveAperoChecksConfig() {
@@ -832,6 +860,10 @@
         clearTableOptions(false);
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = '';
+            if (pathDisableInputs[f.id]) {
+                pathDisableInputs[f.id].checked = false;
+                pathInputs[f.id].disabled = false;
+            }
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
         });
@@ -890,6 +922,9 @@
         pathsTestPassed = true;
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
+            if (f.optional) {
+                setOptionalPathDisabled(f.id, profile[f.key] === null || profile[f.key] === undefined || String(profile[f.key]).trim() === '');
+            }
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
         });
@@ -982,6 +1017,9 @@
 
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
+            if (f.optional) {
+                setOptionalPathDisabled(f.id, profile[f.key] === null || profile[f.key] === undefined || String(profile[f.key]).trim() === '');
+            }
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
         });
@@ -1025,6 +1063,10 @@
     function validatePathField(fieldId, path) {
         var vdiv = document.getElementById(fieldId + '-validation');
         if (!vdiv) return;
+        if (isOptionalPathField(fieldId) && isOptionalPathDisabled(fieldId)) {
+            vdiv.style.display = 'none';
+            return;
+        }
         if (!path) { vdiv.style.display = 'none'; return; }
         var isFile = BROWSE_FILE_FIELDS.indexOf(fieldId) !== -1;
         var label = isFile ? 'File' : 'Directory';
@@ -1053,6 +1095,10 @@
     function validatePathNow(fieldId, path) {
         var vdiv = document.getElementById(fieldId + '-validation');
         if (!vdiv) return Promise.resolve(false);
+        if (isOptionalPathField(fieldId) && isOptionalPathDisabled(fieldId)) {
+            showFieldValidation(vdiv, true, 'Disabled');
+            return Promise.resolve(true);
+        }
         var isFile = BROWSE_FILE_FIELDS.indexOf(fieldId) !== -1;
         var label = isFile ? 'File' : 'Directory';
         if (!path) {
@@ -1085,6 +1131,13 @@
 
         PATH_FIELDS.forEach(function (f) {
             var value = pathInputs[f.id].value.trim();
+            if (f.optional && isOptionalPathDisabled(f.id)) {
+                var ovdiv = document.getElementById(f.id + '-validation');
+                if (ovdiv) {
+                    showFieldValidation(ovdiv, true, 'Disabled');
+                }
+                return;
+            }
             // Optional paths (e.g. PATH_TRIGGER) may be left blank.
             if (f.optional && !value) {
                 var ovdiv = document.getElementById(f.id + '-validation');
@@ -1208,6 +1261,18 @@
             DATABASE_PASSWORD: dbInputs['profile-db-pass'].value,
             DATABASE_NAME: dbInputs['profile-db-name'].value.trim(),
         };
+    }
+
+    function buildPathPayload() {
+        var payload = {};
+        PATH_FIELDS.forEach(function (field) {
+            if (field.optional && isOptionalPathDisabled(field.id)) {
+                payload[field.key] = null;
+                return;
+            }
+            payload[field.key] = String(pathInputs[field.id].value || '').trim();
+        });
+        return payload;
     }
 
     function isTableFieldsComplete() {
