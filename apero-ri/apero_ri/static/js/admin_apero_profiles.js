@@ -1946,7 +1946,13 @@
         } else {
             payload.groups = draftGroups.slice();
         }
+        // Disabled optional paths are sent as null so the backend stores
+        // None and skips the absolute-path check.
         PATH_FIELDS.forEach(function (f) {
+            if (f.optional && isOptionalPathDisabled(f.id)) {
+                payload[f.key] = null;
+                return;
+            }
             payload[f.key] = pathInputs[f.id].value.trim();
         });
         return payload;
@@ -2530,6 +2536,20 @@
             pathsTestPassed = false;
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
+            if (pathsTestResult) pathsTestResult.style.display = 'none';
+            updateWorkflowState();
+        });
+    });
+
+    // Disable checkboxes for optional paths: clear the field, reset the
+    // paths test and refresh the workflow gating when toggled.
+    PATH_FIELDS.forEach(function (f) {
+        var toggle = pathDisableInputs[f.id];
+        if (!toggle) return;
+        toggle.addEventListener('change', function () {
+            markDirty();
+            setOptionalPathDisabled(f.id, toggle.checked);
+            pathsTestPassed = false;
             if (pathsTestResult) pathsTestResult.style.display = 'none';
             updateWorkflowState();
         });
