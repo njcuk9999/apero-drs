@@ -538,7 +538,6 @@ def api_apero_profiles_list(app):
         entry["all_paths_ok"] = all_paths_ok
 
         if disabled:
-        if disabled:
             db_ok = True
             db_error = ''
         else:
