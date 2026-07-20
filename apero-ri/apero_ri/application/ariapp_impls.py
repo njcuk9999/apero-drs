@@ -951,6 +951,7 @@ def ariapp_api_db_ssh_tunnel_save(self):
     remote_host = str(body.get("remote_host", "") or "").strip()
     remote_port = str(body.get("remote_port", "") or "").strip()
     local_port = str(body.get("local_port", "") or "").strip()
+    ssh_mode = str(body.get("ssh_mode", "apero") or "apero").strip()
     username = str(body.get("DATABASE_USERNAME", "") or "").strip()
     password = str(body.get("DATABASE_PASSWORD", "") or "")
     db_name = str(body.get("DATABASE_NAME", "") or "").strip()
@@ -980,6 +981,14 @@ def ariapp_api_db_ssh_tunnel_save(self):
             ),
             400,
         )
+    if ssh_mode not in ["apero", "simple"]:
+        return (
+            jsonify(
+                success=False,
+                error='ssh_mode must be either "apero" or "simple"',
+            ),
+            400,
+        )
 
     tunnels = self._load_db_tunnel_definitions()
     tunnels[name] = {
@@ -987,6 +996,7 @@ def ariapp_api_db_ssh_tunnel_save(self):
         "remote_host": remote_host,
         "remote_port": remote_port,
         "local_port": local_port,
+        "ssh_mode": ssh_mode,
         "DATABASE_USERNAME": username,
         "DATABASE_PASSWORD": password,
         "DATABASE_NAME": db_name,
@@ -1120,6 +1130,9 @@ def ariapp_list_db_tunnel_rows(self):
             {
                 "name": name,
                 "definition": tunnel_def,
+                "ssh_mode": str(
+                    tunnel_def.get("ssh_mode", "apero") or "apero"
+                ),
                 "valid_config": valid,
                 "config_error": err if not valid else "",
                 "status": status,
@@ -1429,6 +1442,7 @@ def ariapp_api_apero_profiles_ssh_tunnel_start(self):
     remote_host = str(body.get("remote_host", "")).strip()
     remote_port = body.get("remote_port", 3306)
     allow_multiple = bool(body.get("allow_multiple", False))
+    simple_ssh = bool(body.get("simple_ssh", False))
 
     try:
         local_port = int(local_port)
@@ -1464,6 +1478,7 @@ def ariapp_api_apero_profiles_ssh_tunnel_start(self):
         remote_host=remote_host,
         remote_port=remote_port,
         local_data_dir=str(self._resolve_local_data_dir()),
+        simple_ssh=simple_ssh,
     )
     return jsonify(**result)
 
@@ -1710,12 +1725,54 @@ def ariapp_api_database_setup_local_db_test(self):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json(silent=True) or {}
+    persist_test_details = bool(body.get('persist_test_details', False))
+    name = str(body.get('name', '') or '').strip()
     mode = str(body.get("DATABASE_MODE", "") or "").strip() or "mysql+pymysql"
     host = str(body.get("DATABASE_HOST", "") or "").strip()
     port = str(body.get("DATABASE_PORT", "") or "").strip() or "3306"
-    username = str(body.get("DATABASE_USERNAME", "") or "").strip()
-    password = str(body.get("DATABASE_PASSWORD", "") or "")
-    db_name = str(body.get("DATABASE_NAME", "") or "").strip()
+    req_username = str(body.get('DATABASE_USERNAME', '') or '').strip()
+    req_password = str(body.get('DATABASE_PASSWORD', '') or '')
+    req_db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+    username = req_username
+    password = req_password
+    db_name = req_db_name
+
+    defs = None
+    entry = None
+    saved_test_details = False
+    pending_user = ''
+    pending_pass = ''
+    pending_db_name = ''
+    if name:
+        defs = self._load_local_db_definitions()
+        entry = defs.get(name, {})
+        if not isinstance(entry, dict) or not entry:
+            return jsonify(success=False, error='Local database not found'), 404
+
+        mode = mode or str(entry.get('DATABASE_MODE', '') or '').strip()
+        host = host or str(entry.get('DATABASE_HOST', '') or '').strip()
+        port = (
+            port
+            or str(entry.get('DATABASE_PORT', '') or '').strip()
+            or '3306'
+        )
+        username = (
+            username
+            or str(entry.get('DATABASE_USERNAME', '') or '').strip()
+        )
+        password = password or str(entry.get('DATABASE_PASSWORD', '') or '')
+        db_name = db_name or str(entry.get('DATABASE_NAME', '') or '').strip()
+
+        if persist_test_details:
+            old_user = str(entry.get('DATABASE_USERNAME', '') or '').strip()
+            old_pass = str(entry.get('DATABASE_PASSWORD', '') or '')
+            old_db_name = str(entry.get('DATABASE_NAME', '') or '').strip()
+            if req_username and not old_user:
+                pending_user = req_username
+            if req_password and not old_pass:
+                pending_pass = req_password
+            if req_db_name and not old_db_name:
+                pending_db_name = req_db_name
 
     if mode not in ("mysql+pymysql",):
         return jsonify(success=False, error="Unsupported DATABASE_MODE"), 400
@@ -1748,7 +1805,27 @@ def ariapp_api_database_setup_local_db_test(self):
         ssh_remote_port="",
         local_data_dir=str(self._resolve_local_data_dir()),
     )
-    return jsonify(success=True, **result)
+    if result.get('valid') and name and isinstance(entry, dict):
+        updated = False
+        if pending_user:
+            entry['DATABASE_USERNAME'] = pending_user
+            updated = True
+        if pending_pass:
+            entry['DATABASE_PASSWORD'] = pending_pass
+            updated = True
+        if pending_db_name:
+            entry['DATABASE_NAME'] = pending_db_name
+            updated = True
+        if updated:
+            defs[name] = entry
+            self._save_local_db_definitions(defs)
+            self._refresh_admin_health_after_change(user_info, perms)
+            saved_test_details = True
+    return jsonify(
+        success=True,
+        saved_test_details=saved_test_details,
+        **result,
+    )
 
 
 def ariapp_api_admin_backups_oauth_start(self):
@@ -2960,6 +3037,7 @@ def ariapp_build_db_tunnel_runtime_params(self, tunnel_name, tunnel_def, mode):
     remote_port = str(tdef.get("remote_port", "") or "").strip() or "3306"
     local_port = str(tdef.get("local_port", "") or "").strip()
     ssh_host = str(tdef.get("ssh_config_host", "") or "").strip()
+    ssh_mode = str(tdef.get("ssh_mode", "apero") or "apero").strip()
     return {
         "DATABASE_MODE": str(mode or "mysql+pymysql").strip()
         or "mysql+pymysql",
@@ -2973,6 +3051,7 @@ def ariapp_build_db_tunnel_runtime_params(self, tunnel_name, tunnel_def, mode):
         "DATABASE_SSH_CONFIG_HOST": ssh_host,
         "DATABASE_SSH_LOCAL_PORT": local_port,
         "DATABASE_SSH_REMOTE_PORT": remote_port,
+        "DATABASE_SSH_SIMPLE_MODE": ssh_mode == "simple",
         # DB setup management supports multiple simultaneously active
         # tunnels; do not force-close other definitions for this path.
         "DATABASE_SSH_ALLOW_MULTIPLE": True,

@@ -536,6 +536,7 @@ def get_db_tunnel_status(params: Dict[str, Any]) -> Dict[str, Any]:
     control_path, meta_path = _tunnel_control_paths(
         params, ssh_host, remote_host, local_port, remote_port
     )
+    simple_mode = bool(params.get("DATABASE_SSH_SIMPLE_MODE", False))
     meta = _load_tunnel_meta(meta_path)
     control_alive = bool(ssh_host) and _check_existing_tunnel(
         control_path, ssh_host
@@ -672,27 +673,42 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
 
     _cleanup_tunnel_state(control_path, meta_path)
 
-    cmd = [
-        "ssh",
-        "-f",
-        "-N",
-        "-M",
-        "-S",
-        str(control_path),
-        "-o",
-        "BatchMode=yes",
-        "-o",
-        "ExitOnForwardFailure=yes",
-        "-o",
-        "StrictHostKeyChecking=accept-new",
-        "-o",
-        "ControlPersist=yes",
-        "-o",
-        "ConnectTimeout=10",
-        "-L",
-        f"{local_port}:{remote_host}:{remote_port}",
-        ssh_host,
-    ]
+    cmd = ["ssh", "-f", "-N"]
+    if simple_mode:
+        cmd.extend(
+            [
+                "-o",
+                "ExitOnForwardFailure=yes",
+                "-o",
+                "StrictHostKeyChecking=accept-new",
+                "-o",
+                "ConnectTimeout=10",
+                "-L",
+                f"{local_port}:{remote_host}:{remote_port}",
+                ssh_host,
+            ]
+        )
+    else:
+        cmd.extend(
+            [
+                "-M",
+                "-S",
+                str(control_path),
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ExitOnForwardFailure=yes",
+                "-o",
+                "StrictHostKeyChecking=accept-new",
+                "-o",
+                "ControlPersist=yes",
+                "-o",
+                "ConnectTimeout=10",
+                "-L",
+                f"{local_port}:{remote_host}:{remote_port}",
+                ssh_host,
+            ]
+        )
     # Allow startup timeout to be tuned per profile; keep a conservative
     # default that is longer than SSH's own ConnectTimeout.
     startup_timeout = _coerce_int(
@@ -733,6 +749,7 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
                         "remote_host": remote_host,
                         "local_port": local_port,
                         "remote_port": remote_port,
+                        "simple_mode": simple_mode,
                         "created_at": datetime.now(timezone.utc).isoformat(),
                         "startup_timeout_s": startup_timeout,
                     },
@@ -747,6 +764,19 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         err = (
             result.stderr or result.stdout or "Unknown SSH tunnel error"
         ).strip()
+        lowered = err.lower()
+        needs_interactive = (
+            "keyboard-interactive" in lowered
+            or "permission denied" in lowered
+            or "batchmode" in lowered
+        )
+        if needs_interactive:
+            raise RuntimeError(
+                "Non-interactive DB SSH tunnel startup failed because "
+                "interactive authentication is required. Use Interactive "
+                "Auth first, then retry Test Connection. "
+                f"SSH error: {err}"
+            )
         raise RuntimeError(f"Failed to start SSH tunnel via {ssh_host}: {err}")
     if timeout_error:
         raise RuntimeError(timeout_error)

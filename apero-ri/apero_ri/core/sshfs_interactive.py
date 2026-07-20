@@ -554,6 +554,7 @@ def start_interactive_ssh_tunnel(
     remote_host: str,
     remote_port: int = 3306,
     local_data_dir: str = "",
+    simple_ssh: bool = False,
 ) -> Dict[str, Any]:
     """
     Start an interactive SSH tunnel session (PTY-backed).
@@ -563,12 +564,12 @@ def start_interactive_ssh_tunnel(
     PTY so the admin can respond to password, Duo 2FA, or other
     keyboard-interactive authentication prompts in the browser.
 
-    Uses the *same* control socket path as ``_ensure_ssh_tunnel()`` so
-    that once the user authenticates, the tunnel is discoverable by all
-    subsequent non-interactive database operations.  The ``-f`` flag
-    causes SSH to fork to the background after successful authentication,
-    which exits the PTY process (exit code 0) while the tunnel keeps
-    running via the control socket with ``ControlPersist=yes``.
+    In the default mode it uses the same control socket path as
+    ``_ensure_ssh_tunnel()`` so that once the user authenticates, the
+    tunnel is discoverable by all subsequent non-interactive database
+    operations. The ``-f`` flag causes SSH to fork to the background
+    after successful authentication, which exits the PTY process while
+    the tunnel keeps running.
     """
     from hashlib import sha1
 
@@ -601,55 +602,62 @@ def start_interactive_ssh_tunnel(
     ).hexdigest()[:16]
     control_path = state_root / f"{signature}.sock"
 
-    # Remove stale socket so SSH can create a fresh one
-    if control_path.exists():
-        try:
-            import subprocess as _sp
+    cmd = ["ssh", "-f", "-N"]
 
-            chk = _sp.run(
-                [
-                    "ssh",
-                    "-S",
-                    str(control_path),
-                    "-O",
-                    "check",
-                    ssh_config_host,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=6,
-            )
-            if chk.returncode == 0:
-                return {
-                    "ok": False,
-                    "error": "An SSH tunnel is already running for this "
-                    'configuration.  Use "Test Connection" directly.',
-                }
-        except Exception:
-            pass
-        control_path.unlink(missing_ok=True)
+    if not simple_ssh:
+        # Remove stale socket so SSH can create a fresh one.
+        if control_path.exists():
+            try:
+                import subprocess as _sp
 
-    cmd = [
-        "ssh",
-        "-f",  # background after auth succeeds
-        "-N",  # no remote command — tunnel only
-        "-M",  # control-master mode
-        "-S",
-        str(control_path),  # control socket (matches _ensure_ssh_tunnel)
-        "-o",
-        "ExitOnForwardFailure=yes",
-        "-o",
-        "StrictHostKeyChecking=accept-new",
-        "-o",
-        "ControlPersist=yes",
-        "-o",
-        "ConnectTimeout=15",
-        "-t",
-        "-t",  # force PTY for interactive auth
-        "-L",
-        f"{local_port}:{remote_host}:{remote_port}",
-        ssh_config_host,
-    ]
+                chk = _sp.run(
+                    [
+                        "ssh",
+                        "-S",
+                        str(control_path),
+                        "-O",
+                        "check",
+                        ssh_config_host,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=6,
+                )
+                if chk.returncode == 0:
+                    return {
+                        "ok": False,
+                        "error": "An SSH tunnel is already running for "
+                        'this configuration. Use "Test Connection" directly.',
+                    }
+            except Exception:
+                pass
+            control_path.unlink(missing_ok=True)
+
+        cmd.extend(
+            [
+                "-M",
+                "-S",
+                str(control_path),
+                "-o",
+                "ControlPersist=yes",
+            ]
+        )
+
+    cmd.extend(
+        [
+            "-o",
+            "ExitOnForwardFailure=yes",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            "-o",
+            "ConnectTimeout=15",
+            "-t",
+            "-t",  # force PTY for interactive auth
+            "-L",
+            f"{local_port}:{remote_host}:{remote_port}",
+            ssh_config_host,
+        ]
+    )
 
     return start_session(kind="ssh_tunnel", cmd=cmd)
 

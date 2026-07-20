@@ -14,24 +14,37 @@ def api_db_ssh_tunnel_test(app):
         return jsonify(success=False, error="Unauthorized"), 401
 
     body = request.get_json(silent=True) or {}
+    persist_test_details = bool(body.get('persist_test_details', False))
     name = str(body.get("name", "") or "").strip()
     ssh_config_host = str(body.get("ssh_config_host", "") or "").strip()
     remote_host = str(body.get("remote_host", "") or "").strip()
     remote_port = str(body.get("remote_port", "") or "").strip() or "3306"
     local_port = str(body.get("local_port", "") or "").strip()
-    username = str(body.get("DATABASE_USERNAME", "") or "").strip()
-    password = str(body.get("DATABASE_PASSWORD", "") or "")
-    db_name = str(body.get("DATABASE_NAME", "") or "").strip()
+    req_username = str(body.get('DATABASE_USERNAME', '') or '').strip()
+    req_password = str(body.get('DATABASE_PASSWORD', '') or '')
+    req_db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+    username = req_username
+    password = req_password
+    db_name = req_db_name
 
     has_direct_tunnel_fields = bool(
         ssh_config_host or remote_host or local_port
     )
 
-    if name and not has_direct_tunnel_fields:
+    tunnels = None
+    tdef = None
+    saved_test_details = False
+    pending_user = ''
+    pending_pass = ''
+    pending_db_name = ''
+
+    if name:
         tunnels = app._load_db_tunnel_definitions()
         tdef = tunnels.get(name, {})
         if not isinstance(tdef, dict) or not tdef:
             return jsonify(success=False, error="Tunnel not found"), 404
+
+    if name and not has_direct_tunnel_fields:
         ssh_config_host = (
             ssh_config_host
             or str(tdef.get("ssh_config_host", "") or "").strip()
@@ -44,10 +57,22 @@ def api_db_ssh_tunnel_test(app):
         )
         local_port = local_port or str(tdef.get("local_port", "") or "").strip()
         username = (
-            username or str(tdef.get("DATABASE_USERNAME", "") or "").strip()
+            username
+            or str(tdef.get('DATABASE_USERNAME', '') or '').strip()
         )
-        password = password or str(tdef.get("DATABASE_PASSWORD", "") or "")
-        db_name = db_name or str(tdef.get("DATABASE_NAME", "") or "").strip()
+        password = password or str(tdef.get('DATABASE_PASSWORD', '') or '')
+        db_name = db_name or str(tdef.get('DATABASE_NAME', '') or '').strip()
+
+    if name and persist_test_details and isinstance(tdef, dict):
+        old_user = str(tdef.get('DATABASE_USERNAME', '') or '').strip()
+        old_pass = str(tdef.get('DATABASE_PASSWORD', '') or '')
+        old_db_name = str(tdef.get('DATABASE_NAME', '') or '').strip()
+        if req_username and not old_user:
+            pending_user = req_username
+        if req_password and not old_pass:
+            pending_pass = req_password
+        if req_db_name and not old_db_name:
+            pending_db_name = req_db_name
 
     remote_port = remote_port or "3306"
 
@@ -124,7 +149,28 @@ def api_db_ssh_tunnel_test(app):
         ssh_remote_port="",
         local_data_dir=str(app._resolve_local_data_dir()),
     )
-    return jsonify(success=True, status=status, **result)
+    if result.get('valid') and name and isinstance(tdef, dict):
+        updated = False
+        if pending_user:
+            tdef['DATABASE_USERNAME'] = pending_user
+            updated = True
+        if pending_pass:
+            tdef['DATABASE_PASSWORD'] = pending_pass
+            updated = True
+        if pending_db_name:
+            tdef['DATABASE_NAME'] = pending_db_name
+            updated = True
+        if updated:
+            tunnels[name] = tdef
+            app._save_db_tunnel_definitions(tunnels)
+            app._refresh_admin_health_after_change(user_info, perms)
+            saved_test_details = True
+    return jsonify(
+        success=True,
+        status=status,
+        saved_test_details=saved_test_details,
+        **result,
+    )
 
 
 def api_db_ssh_tunnel_close(app):

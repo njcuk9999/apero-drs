@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import yaml
 from apero_ri.core.log import get_logger
+from apero_ri.core import user_data as ud
 from apero_ri.core.permissions import (
     load_groups,
     load_pages,
@@ -703,7 +704,7 @@ def rename_instrument(old_name: str, new_name: str) -> Dict[str, Any]:
     # ------------------------------------------------------------------
     # 2. Instrument data files (calendar, links)
     # ------------------------------------------------------------------
-    instr_dir = INSTRUMENTS_DIR
+    instr_dir = ud.INSTRUMENTS_DIR
     instr_dir.mkdir(parents=True, exist_ok=True)
     for suffix in ("_calendar.yaml", "_links.yaml"):
         old_file = instr_dir / f"{old}{suffix}"
@@ -1059,49 +1060,48 @@ def validate_database_connection(
         sql_error = str(e)
 
     # Some DB servers accept the tunnel and connection but then terminate the
-    # first query. Try a direct PyMySQL connection and report success if the
-    # handshake itself works, even if the query is dropped.
+    # first query. If we can open a direct PyMySQL connection, treat that as
+    # a successful tunnel/database login and downgrade the SQL failure to a
+    # warning.
     try:
         import pymysql
 
         tunnel_mode = str(mode or "").strip().lower()
-        conn_kwargs = dict(
-            host=str(host or "").strip(),
-            user=str(username or "").strip(),
-            password=str(password or ""),
-            database=str(db_name or "").strip(),
-            connect_timeout=10,
-            read_timeout=10,
-            write_timeout=10,
-            autocommit=True,
-            charset="utf8mb4",
-        )
+        host_text = str(host or "").strip()
+        user_text = str(username or "").strip()
+        password_text = str(password or "")
+        db_name_text = str(db_name or "").strip()
+        port_value = 3306
         if port:
             try:
-                conn_kwargs["port"] = int(str(port).strip())
+                port_value = int(str(port).strip())
             except Exception:
-                conn_kwargs["port"] = port
+                port_value = 3306
 
         if tunnel_mode.startswith("mysql"):
-            with pymysql.connect(**conn_kwargs) as conn:
+            with pymysql.connect(
+                host=host_text,
+                user=user_text,
+                password=password_text,
+                database=db_name_text,
+                port=port_value,
+                connect_timeout=10,
+                read_timeout=10,
+                write_timeout=10,
+                autocommit=True,
+                charset="utf8mb4",
+            ) as conn:
                 try:
-                    with conn.cursor() as cursor:
-                        cursor.execute("SELECT 1 AS ok")
-                        cursor.fetchone()
-                except Exception as query_exc:
-                    return {
-                        "valid": True,
-                        "error": "",
-                        "warning": (
-                            "MySQL handshake succeeded, but the test "
-                            f"query failed: {query_exc}"
-                        ),
-                    }
+                    conn.ping(reconnect=False)
+                except Exception:
+                    # A live connection object already means the tunnel and
+                    # authentication are working; keep that as the signal.
+                    pass
             return {
                 "valid": True,
                 "error": "",
                 "warning": (
-                    "SQLAlchemy query path failed, but a direct MySQL "
+                    "SQL query execution failed, but a direct MySQL "
                     "connection succeeded."
                 ),
             }

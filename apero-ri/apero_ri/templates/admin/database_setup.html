@@ -123,6 +123,7 @@
                     <div>
                         <strong>Quick setup checklist:</strong>
                         1) Fill tunnel name, SSH config host, remote DB host, remote DB port, local forward port.
+                        1b) Choose an SSH mode.
                         2) Enter test username/password/database name.
                         3) Save tunnel definition.
                         4) Click <strong>Start / Verify Tunnel</strong> (or <strong>Interactive Auth</strong> if prompted).
@@ -131,6 +132,11 @@
                     <div>
                         <strong>Tip:</strong>
                         Keep local forward ports unique per definition (for example 3307, 3308, ...).
+                    </div>
+                    <div>
+                        <strong>SSH modes:</strong>
+                        <strong>APERO-managed</strong> uses a reusable control socket and is the default choice.
+                        <strong>Simple / docs-style</strong> matches the Alliance SSH tunnel command more closely and is the fallback to use when APERO-managed mode has trouble with Duo or other interactive authentication.
                     </div>
                     <div>
                         <strong>Note:</strong>
@@ -164,6 +170,16 @@
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbTunnelLocalPort">DATABASE_SSH_LOCAL_PORT</label>
                     <input id="dbTunnelLocalPort" class="ari-ap-input" placeholder="Local forward port">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelSshMode">SSH tunnel mode</label>
+                    <select id="dbTunnelSshMode" class="ari-ap-input">
+                        <option value="apero">APERO-managed</option>
+                        <option value="simple">Simple / docs-style</option>
+                    </select>
+                    <div style="margin-top:4px; font-size:0.82em; color:var(--ari-text-muted);">
+                        Use APERO-managed first. Switch to Simple / docs-style if Interactive Auth works better with the plain Alliance command style or if the managed tunnel path fails.
+                    </div>
                 </div>
                 <div class="ari-ae-field" style="display:flex; align-items:end;">
                     <label class="ari-ae-label" style="display:flex; gap:8px; align-items:center; margin:0;">
@@ -408,6 +424,35 @@ function dbSetValidation(id, valid, text) {
     el.innerHTML = '<i class="fa-solid ' + (valid ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i> ' + dbEsc(text);
 }
 
+function dbTunnelModeLabel(modeValue) {
+    return String(modeValue || 'apero') === 'simple'
+        ? 'Simple / docs-style'
+        : 'APERO-managed';
+}
+
+function dbTunnelSwitchHint(modeValue) {
+    const mode = String(modeValue || 'apero');
+    if (mode === 'simple') {
+        return (
+            'If this keeps failing, switch to APERO-managed mode and retry. '
+            + 'If authentication prompts appear, use Interactive Auth.'
+        );
+    }
+    return (
+        'If this keeps failing, switch to Simple / docs-style mode and retry. '
+        + 'If authentication prompts appear, use Interactive Auth.'
+    );
+}
+
+function dbTunnelBuildModeMessage(modeValue, baseText, includeSwitch) {
+    const parts = [String(baseText || '').trim()];
+    parts.push('Mode used: ' + dbTunnelModeLabel(modeValue) + '.');
+    if (includeSwitch) {
+        parts.push(dbTunnelSwitchHint(modeValue));
+    }
+    return parts.filter(Boolean).join(' ');
+}
+
 function dbShowTab(tab) {
     const isLocal = tab === 'local';
     const localEl = document.getElementById('db-setup-tab-local');
@@ -516,18 +561,46 @@ function dbLocalEdit(index) {
 async function dbLocalTestSaved(index) {
     const row = dbLocalRows[index];
     if (!row) return;
+    const formPayload = dbLocalPayload();
+    const rowName = String(row.name || '').trim();
+    const formName = String(formPayload.name || '').trim();
+    const sameDefinition = rowName && formName && rowName === formName;
+    const testUser = row.DATABASE_USERNAME
+        || (sameDefinition ? formPayload.DATABASE_USERNAME : '');
+    const testPass = row.DATABASE_PASSWORD
+        || (sameDefinition ? formPayload.DATABASE_PASSWORD : '');
+    const testDbName = row.DATABASE_NAME
+        || (sameDefinition ? formPayload.DATABASE_NAME : '');
     try {
         const res = await fetch(DB_SETUP_CFG.localTestUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(row),
+            body: JSON.stringify({
+                name: rowName,
+                DATABASE_MODE: row.DATABASE_MODE || '',
+                DATABASE_HOST: row.DATABASE_HOST || '',
+                DATABASE_PORT: row.DATABASE_PORT || '',
+                DATABASE_USERNAME: testUser,
+                DATABASE_PASSWORD: testPass,
+                DATABASE_NAME: testDbName,
+                persist_test_details: true,
+            }),
         });
         const data = await res.json();
         if (!data.success) {
             dbSetMsg(data.error || 'Saved local database test failed.', false);
             return;
         }
-        dbSetMsg(data.valid ? ('Test passed for ' + row.name + '.') : (data.error || ('Test failed for ' + row.name + '.')), !!data.valid);
+        let msg = data.valid
+            ? ('Test passed for ' + rowName + '.')
+            : (data.error || ('Test failed for ' + rowName + '.'));
+        if (data.saved_test_details) {
+            msg += ' Test details were saved on first entry.';
+        }
+        dbSetMsg(msg, !!data.valid);
+        if (data.saved_test_details) {
+            await dbLocalRefresh();
+        }
     } catch (err) {
         dbSetMsg('Saved local database test failed: ' + err.message, false);
     }
@@ -607,6 +680,8 @@ function dbTunnelResetForm() {
         });
     const remotePort = document.getElementById('dbTunnelRemotePort');
     if (remotePort) remotePort.value = '3306';
+    const sshMode = document.getElementById('dbTunnelSshMode');
+    if (sshMode) sshMode.value = 'apero';
     const enabled = document.getElementById('dbTunnelEnabled');
     if (enabled) enabled.checked = true;
 }
@@ -621,6 +696,7 @@ function dbTunnelEdit(index) {
     document.getElementById('dbTunnelRemoteHost').value = String(def.remote_host || '');
     document.getElementById('dbTunnelRemotePort').value = String(def.remote_port || '3306');
     document.getElementById('dbTunnelLocalPort').value = String(def.local_port || '');
+    document.getElementById('dbTunnelSshMode').value = String(def.ssh_mode || 'apero');
     document.getElementById('dbTunnelTestUser').value = String(row.DATABASE_USERNAME || '');
     document.getElementById('dbTunnelTestPass').value = String(row.DATABASE_PASSWORD || '');
     document.getElementById('dbTunnelTestDbName').value = String(row.DATABASE_NAME || '');
@@ -635,6 +711,7 @@ function dbTunnelPayload() {
         remote_host: String(document.getElementById('dbTunnelRemoteHost').value || '').trim(),
         remote_port: String(document.getElementById('dbTunnelRemotePort').value || '').trim(),
         local_port: String(document.getElementById('dbTunnelLocalPort').value || '').trim(),
+        ssh_mode: String(document.getElementById('dbTunnelSshMode').value || 'apero').trim(),
         DATABASE_USERNAME: String(document.getElementById('dbTunnelTestUser').value || '').trim(),
         DATABASE_PASSWORD: String(document.getElementById('dbTunnelTestPass').value || ''),
         DATABASE_NAME: String(document.getElementById('dbTunnelTestDbName').value || '').trim(),
@@ -711,6 +788,9 @@ function renderDbTunnelRows() {
         const detail = enabled
             ? (active ? 'Active' : 'Inactive')
             : 'Disabled';
+        const sshMode = String(row.ssh_mode || 'apero') === 'simple'
+            ? 'Simple / docs-style'
+            : 'APERO-managed';
         const card = document.createElement('div');
         card.style.cssText = 'border:1px solid #ddd; border-radius:8px; padding:10px; display:grid; gap:8px;';
         card.innerHTML = `
@@ -724,6 +804,7 @@ function renderDbTunnelRows() {
                 <div><strong>DATABASE_HOST:</strong> ${dbEsc(status.remote_host || '')}</div>
                 <div><strong>DATABASE_SSH_REMOTE_PORT:</strong> ${dbEsc(status.remote_port || '')}</div>
                 <div><strong>DATABASE_SSH_LOCAL_PORT:</strong> ${dbEsc(status.local_port || '')}</div>
+                <div><strong>SSH mode:</strong> ${dbEsc(sshMode)}</div>
                 ${row.DATABASE_USERNAME ? `<div><strong>Test user:</strong> ${dbEsc(row.DATABASE_USERNAME)}</div>` : ''}
                 ${row.DATABASE_NAME ? `<div><strong>Test database:</strong> ${dbEsc(row.DATABASE_NAME)}</div>` : ''}
                 <div><strong>Control socket:</strong> ${controlAlive ? 'alive' : 'not alive'}; <strong>Local port:</strong> ${localOpen ? 'open' : 'closed'}</div>
@@ -748,27 +829,45 @@ function renderDbTunnelRows() {
 
 function dbTunnelBuildCommandText(row) {
     const status = row && row.status ? row.status : {};
+    const def = row && row.definition ? row.definition : {};
     const name = String((row && row.name) || '').trim();
     const sshHost = String(status.ssh_host || '').trim();
     const remoteHost = String(status.remote_host || '').trim();
     const remotePort = String(status.remote_port || '3306').trim() || '3306';
     const localPort = String(status.local_port || '').trim();
+    const simpleMode = String(def.ssh_mode || row.ssh_mode || 'apero') === 'simple';
     const notes = [];
     if (!sshHost || !remoteHost || !localPort) {
         notes.push('# Incomplete tunnel definition - missing required fields.');
     }
     notes.push('# DB SSH tunnel: ' + (name || '<unnamed>'));
-    notes.push('# Start (foreground):');
-    notes.push(
-        'ssh -N -L ' + localPort + ':' + remoteHost + ':' + remotePort
-        + ' ' + sshHost
-    );
-    notes.push('');
-    notes.push('# Start (background):');
-    notes.push(
-        'ssh -fN -L ' + localPort + ':' + remoteHost + ':' + remotePort
-        + ' ' + sshHost
-    );
+    notes.push('# SSH mode: ' + (simpleMode ? 'Simple / docs-style' : 'APERO-managed'));
+    if (simpleMode) {
+        notes.push('# Start (foreground / docs-style):');
+        notes.push(
+            'ssh -L ' + localPort + ':' + remoteHost + ':' + remotePort
+            + ' ' + sshHost
+        );
+        notes.push('');
+        notes.push('# Start (background / simple mode):');
+        notes.push(
+            'ssh -f -N -o ExitOnForwardFailure=yes -L '
+            + localPort + ':' + remoteHost + ':' + remotePort
+            + ' ' + sshHost
+        );
+    } else {
+        notes.push('# Start (foreground):');
+        notes.push(
+            'ssh -N -L ' + localPort + ':' + remoteHost + ':' + remotePort
+            + ' ' + sshHost
+        );
+        notes.push('');
+        notes.push('# Start (background):');
+        notes.push(
+            'ssh -fN -L ' + localPort + ':' + remoteHost + ':' + remotePort
+            + ' ' + sshHost
+        );
+    }
     notes.push('');
     notes.push('# Verify local port:');
     notes.push('ss -ltn | grep :' + localPort);
@@ -806,6 +905,7 @@ function dbTunnelBuildVerboseLogText(row) {
     lines.push('  Remote host: ' + String(status.remote_host || '').trim());
     lines.push('  Remote port: ' + String(status.remote_port || '').trim());
     lines.push('  Local port: ' + String(status.local_port || '').trim());
+    lines.push('  SSH mode: ' + String(row.ssh_mode || 'apero').trim());
     lines.push('  Created at: ' + String(status.created_at || '').trim());
     lines.push('');
     lines.push('Live status flags:');
@@ -999,6 +1099,7 @@ async function dbTunnelSaveDefinition() {
 
 async function dbTunnelTestDefinition() {
     const payload = dbTunnelPayload();
+    const modeValue = payload.ssh_mode || 'apero';
     dbTunnelRecordAction(payload.name, 'Test requested from edit form.');
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
@@ -1008,18 +1109,27 @@ async function dbTunnelTestDefinition() {
         });
         const data = await res.json();
         if (!data.success) {
-            dbSetValidation('dbTunnelTestResult', false, data.error || 'Connection failed.');
+            const failMsg = dbTunnelBuildModeMessage(
+                modeValue,
+                data.error || 'Connection failed.',
+                true
+            );
+            dbSetValidation('dbTunnelTestResult', false, failMsg);
             dbTunnelRecordAction(
                 payload.name,
-                'Test failed: ' + String(data.error || 'Connection failed.')
+                'Test failed: ' + String(failMsg)
             );
             return;
         }
-        const testMsg = data.valid
+        let testMsg = data.valid
             ? (data.warning
                 ? 'Connection successful. ' + String(data.warning)
                 : 'Connection successful.')
             : (data.error || 'Connection failed.');
+        if (data.saved_test_details) {
+            testMsg += ' Test details were saved on first entry.';
+        }
+        testMsg = dbTunnelBuildModeMessage(modeValue, testMsg, !data.valid);
         dbSetValidation('dbTunnelTestResult', !!data.valid, testMsg);
         dbTunnelRecordAction(
             payload.name,
@@ -1027,10 +1137,18 @@ async function dbTunnelTestDefinition() {
                 ? (data.warning
                     ? 'Test succeeded with warning: ' + String(data.warning)
                     : 'Test succeeded.')
-                : 'Test failed: ' + String(data.error || 'Connection failed.')
+                : 'Test failed: ' + String(testMsg)
         );
+        if (data.saved_test_details) {
+            await dbTunnelRefresh();
+        }
     } catch (err) {
-        dbSetValidation('dbTunnelTestResult', false, 'Connection test failed: ' + err.message);
+        const errMsg = dbTunnelBuildModeMessage(
+            modeValue,
+            'Connection test failed: ' + err.message,
+            true
+        );
+        dbSetValidation('dbTunnelTestResult', false, errMsg);
         dbTunnelRecordAction(payload.name, 'Test error: ' + err.message);
     }
 }
@@ -1038,32 +1156,53 @@ async function dbTunnelTestDefinition() {
 async function dbTunnelTestSaved(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
+    const modeValue = row.ssh_mode || 'apero';
+    const formPayload = dbTunnelPayload();
+    const rowName = String(row.name || '').trim();
+    const formName = String(formPayload.name || '').trim();
+    const sameDefinition = rowName && formName && rowName === formName;
+    const testUser = row.DATABASE_USERNAME
+        || (sameDefinition ? formPayload.DATABASE_USERNAME : '');
+    const testPass = row.DATABASE_PASSWORD
+        || (sameDefinition ? formPayload.DATABASE_PASSWORD : '');
+    const testDbName = row.DATABASE_NAME
+        || (sameDefinition ? formPayload.DATABASE_NAME : '');
     dbTunnelRecordAction(row.name, 'Saved tunnel test requested.');
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name: row.name,
-                DATABASE_USERNAME: row.DATABASE_USERNAME || '',
-                DATABASE_PASSWORD: row.DATABASE_PASSWORD || '',
-                DATABASE_NAME: row.DATABASE_NAME || '',
+                name: rowName,
+                DATABASE_USERNAME: testUser,
+                DATABASE_PASSWORD: testPass,
+                DATABASE_NAME: testDbName,
+                persist_test_details: true,
             }),
         });
         const data = await res.json();
         if (!data.success) {
-            dbSetMsg(data.error || 'Saved tunnel test failed.', false);
+            const failMsg = dbTunnelBuildModeMessage(
+                modeValue,
+                data.error || 'Saved tunnel test failed.',
+                true
+            );
+            dbSetMsg(failMsg, false);
             dbTunnelRecordAction(
                 row.name,
-                'Saved tunnel test failed: ' + String(data.error || 'Unknown error')
+                'Saved tunnel test failed: ' + String(failMsg)
             );
             return;
         }
-        const savedMsg = data.valid
+        let savedMsg = data.valid
             ? (data.warning
-                ? 'Test passed for ' + row.name + '. ' + String(data.warning)
-                : 'Test passed for ' + row.name + '.')
-            : (data.error || ('Test failed for ' + row.name + '.'));
+                ? 'Test passed for ' + rowName + '. ' + String(data.warning)
+                : 'Test passed for ' + rowName + '.')
+            : (data.error || ('Test failed for ' + rowName + '.'));
+        if (data.saved_test_details) {
+            savedMsg += ' Test details were saved on first entry.';
+        }
+        savedMsg = dbTunnelBuildModeMessage(modeValue, savedMsg, !data.valid);
         dbSetMsg(savedMsg, !!data.valid);
         dbTunnelRecordAction(
             row.name,
@@ -1071,10 +1210,18 @@ async function dbTunnelTestSaved(index) {
                 ? (data.warning
                     ? 'Saved tunnel test succeeded with warning: ' + String(data.warning)
                     : 'Saved tunnel test succeeded.')
-                : 'Saved tunnel test failed: ' + String(data.error || 'Connection failed.')
+                : 'Saved tunnel test failed: ' + String(savedMsg)
         );
+        if (data.saved_test_details) {
+            await dbTunnelRefresh();
+        }
     } catch (err) {
-        dbSetMsg('Saved tunnel test failed: ' + err.message, false);
+        const errMsg = dbTunnelBuildModeMessage(
+            modeValue,
+            'Saved tunnel test failed: ' + err.message,
+            true
+        );
+        dbSetMsg(errMsg, false);
         dbTunnelRecordAction(row.name, 'Saved tunnel test error: ' + err.message);
     }
 }
@@ -1105,7 +1252,12 @@ async function dbTunnelDelete(index) {
 async function dbTunnelEnsure(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
-    dbTunnelRecordAction(row.name, 'Start / Verify requested.');
+    const modeValue = row.ssh_mode || 'apero';
+    dbTunnelRecordAction(
+        row.name,
+        'Start / Verify requested in mode: '
+        + String(row.ssh_mode || 'apero')
+    );
     dbSetMsg('Starting or verifying DB tunnel...', true);
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelEnsureUrl, {
@@ -1115,21 +1267,36 @@ async function dbTunnelEnsure(index) {
         });
         const data = await res.json();
         if (!data.success) {
-            dbSetMsg(data.error || 'Failed to ensure tunnel.', false);
+            const failMsg = dbTunnelBuildModeMessage(
+                modeValue,
+                data.error || 'Failed to ensure tunnel.',
+                true
+            );
+            dbSetMsg(failMsg, false);
             dbTunnelRecordAction(
                 row.name,
-                'Start / Verify failed: ' + String(data.error || 'Unknown error')
+                'Start / Verify failed: ' + String(failMsg)
             );
             return;
         }
-        dbSetMsg(data.message || 'Tunnel is active.', true);
+        const okMsg = dbTunnelBuildModeMessage(
+            modeValue,
+            data.message || 'Tunnel is active.',
+            false
+        );
+        dbSetMsg(okMsg, true);
         dbTunnelRecordAction(
             row.name,
-            'Start / Verify succeeded: ' + String(data.message || 'Tunnel is active.')
+            'Start / Verify succeeded: ' + String(okMsg)
         );
         await dbTunnelRefresh();
     } catch (err) {
-        dbSetMsg('Failed to ensure tunnel: ' + err.message, false);
+        const errMsg = dbTunnelBuildModeMessage(
+            modeValue,
+            'Failed to ensure tunnel: ' + err.message,
+            true
+        );
+        dbSetMsg(errMsg, false);
         dbTunnelRecordAction(row.name, 'Start / Verify error: ' + err.message);
     }
 }
@@ -1256,11 +1423,13 @@ function dbSshTermSend() {
 async function dbTunnelInteractive(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
+    const def = row.definition || {};
     const status = row.status || {};
     const sshHost = String(status.ssh_host || '').trim();
     const remoteHost = String(status.remote_host || '').trim();
     const localPort = parseInt(String(status.local_port || '').trim(), 10);
     const remotePort = parseInt(String(status.remote_port || '').trim() || '3306', 10);
+    const simpleSsh = String(def.ssh_mode || row.ssh_mode || 'apero') === 'simple';
     if (!sshHost || !remoteHost || !localPort) {
         dbSetMsg('Missing SSH host, remote host, or local port for interactive auth.', false);
         return;
@@ -1282,6 +1451,7 @@ async function dbTunnelInteractive(index) {
                 remote_host: remoteHost,
                 remote_port: remotePort,
                 allow_multiple: true,
+                simple_ssh: simpleSsh,
             })
         });
         const data = await res.json();
