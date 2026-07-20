@@ -1059,10 +1059,8 @@ def validate_database_connection(
     except Exception as e:
         sql_error = str(e)
 
-    # Some DB servers accept the tunnel and connection but then terminate the
-    # first query. If we can open a direct PyMySQL connection, treat that as
-    # a successful tunnel/database login and downgrade the SQL failure to a
-    # warning.
+    # Some DB servers accept a tunnel/auth handshake but drop later stages.
+    # Run staged direct probes so the UI can show exactly where it fails.
     try:
         import pymysql
 
@@ -1078,42 +1076,67 @@ def validate_database_connection(
             except Exception:
                 port_value = 3306
 
-        if tunnel_mode.startswith("mysql"):
-            with pymysql.connect(
-                host=host_text,
-                user=user_text,
-                password=password_text,
-                database=db_name_text,
-                port=port_value,
-                connect_timeout=10,
-                read_timeout=10,
-                write_timeout=10,
-                autocommit=True,
-                charset="utf8mb4",
-            ) as conn:
-                try:
+        if tunnel_mode.startswith('mysql'):
+            try:
+                with pymysql.connect(
+                    host=host_text,
+                    user=user_text,
+                    password=password_text,
+                    database=db_name_text,
+                    port=port_value,
+                    connect_timeout=10,
+                    read_timeout=10,
+                    write_timeout=10,
+                    autocommit=True,
+                    charset='utf8mb4',
+                ) as conn:
                     conn.ping(reconnect=False)
-                except Exception:
-                    # A live connection object already means the tunnel and
-                    # authentication are working; keep that as the signal.
-                    pass
-            return {
-                "valid": True,
-                "error": "",
-                "warning": (
-                    "SQL query execution failed, but a direct MySQL "
-                    "connection succeeded."
-                ),
-            }
+                    with conn.cursor() as cursor:
+                        cursor.execute('SELECT 1 AS ok')
+                        cursor.fetchone()
+                return {
+                    'valid': True,
+                    'error': '',
+                    'warning': (
+                        'SQLAlchemy query failed, but a direct PyMySQL '
+                        'query succeeded.'
+                    ),
+                }
+            except Exception as direct_query_exc:
+                # If a bare auth handshake works, report a more specific
+                # database/query-stage failure instead of a generic tunnel
+                # failure.
+                with pymysql.connect(
+                    host=host_text,
+                    user=user_text,
+                    password=password_text,
+                    database=None,
+                    port=port_value,
+                    connect_timeout=10,
+                    read_timeout=10,
+                    write_timeout=10,
+                    autocommit=True,
+                    charset='utf8mb4',
+                ) as conn:
+                    conn.ping(reconnect=False)
+                return {
+                    'valid': False,
+                    'error': (
+                        f'{sql_error} | Direct MySQL auth succeeded, but '
+                        'database selection/query failed. '
+                        f'Direct query error: {direct_query_exc}'
+                    ),
+                }
     except Exception as direct_exc:
         return {
-            "valid": False,
-            "error": (
-                f"{sql_error} | Direct MySQL check: {direct_exc}"
+            'valid': False,
+            'error': (
+                f'{sql_error} | Direct MySQL connect/auth failed: '
+                f'{direct_exc}'
             ),
         }
 
-    return {"valid": False, "error": sql_error or "Database test failed."}
+    return {'valid': False, 'error': sql_error or 'Database test failed.'}
 
 
 # =============================================================================
