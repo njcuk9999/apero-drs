@@ -288,6 +288,19 @@ def get_user_table_access(app, user_info, profile):
             allowed_cols = []
         allowed_cols = [str(c).strip() for c in allowed_cols if str(c).strip()]
 
+        # Backward-compatible fallback: if no explicit column rules are
+        # saved yet, allow current table columns from the live schema.
+        if not allowed_cols:
+            try:
+                allowed_cols = app._fetch_table_columns(cfg, table_name)
+            except Exception:
+                allowed_cols = []
+            if not isinstance(allowed_cols, list):
+                allowed_cols = []
+            allowed_cols = [
+                str(c).strip() for c in allowed_cols if str(c).strip()
+            ]
+
         if not allowed_cols:
             continue
 
