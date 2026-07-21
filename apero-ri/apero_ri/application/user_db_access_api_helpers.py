@@ -259,10 +259,12 @@ def build_user_db_access_health_report(app, user_info):
             if not isinstance(glist, list) or not glist:
                 missing_groups.append(table)
             clist = columns_map.get(table, [])
-            if not isinstance(clist, list) or not clist:
-                missing_columns.append(table)
+            if not isinstance(clist, list):
+                clist = []
 
-        is_warning = bool(missing_groups or missing_columns)
+        # Columns can fall back to live schema at runtime; groups remain
+        # mandatory because they enforce who can access each table.
+        is_warning = bool(missing_groups)
         if is_warning:
             warnings += 1
             parts = []

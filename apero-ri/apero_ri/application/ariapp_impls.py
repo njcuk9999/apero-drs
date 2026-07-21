@@ -5088,15 +5088,11 @@ def ariapp_validate_profile_database(self, profile_cfg):
 def ariapp_profile_db_access_health(self, entry, table_names):
     """Return health status for one profile DB-access config."""
     groups_map = entry.get("groups", {}) if isinstance(entry, dict) else {}
-    columns_map = entry.get("columns", {}) if isinstance(entry, dict) else {}
     if not table_names:
         return "warning"
     for table in table_names:
         glist = groups_map.get(table, [])
         if not isinstance(glist, list) or not glist:
-            return "warning"
-        clist = columns_map.get(table, [])
-        if not isinstance(clist, list) or not clist:
             return "warning"
     return "ok"
 
