@@ -1082,12 +1082,20 @@ def display_flag(params: ParamDict):
 def get_cores(params):
     # get number of cores on machine
     cpus = os.cpu_count()
+    # set cores initially to zero
+    cores = None
     # get cores from inputs
     if 'CORES' in params.get('INPUTS', []):
         # get value from inputs
         cores = params['INPUTS']['CORES']
+        # deal with strings
+        if isinstance('cores', str):
+            if cores.upper() == 'ALL':
+                cores = 0
+            if cores.upper() == 'SINGLE':
+                cores = 1
         # only update params if cores is not None
-        if not drs_text.null_text(cores, ['None', '']):
+        if not drs_text.null_text(cores, ['None', '', None]):
             try:
                 cores = int(cores)
             except ValueError as e:
@@ -1100,9 +1108,13 @@ def get_cores(params):
                 cores = 1
             # update the value in params
             params.set('CORES', value=cores, source='USER INPUT')
-
-    # get number of cores
-    if 'CORES' in params:
+        else:
+            cores = None
+    # -------------------------------------------------------------------------
+    # get number of cores (if not set from params['INPUTS']['CORES'])
+    #   for example this is used to get cores from yaml file in processing
+    # -------------------------------------------------------------------------
+    if 'CORES' in params and cores is None:
         try:
             cores = int(params['CORES'])
         except ValueError as e:
