@@ -480,6 +480,33 @@ def _copy_newer(src: Path, dst: Path) -> None:
         raise
 
 
+def validate_local_assets_source(source_dir: Path) -> Optional[str]:
+    """Return an error message when a local assets source is invalid.
+
+    The local-mode APERO assets sync expects the source directory to be the
+    APERO assets root, not the APERO user-config directory. Require an
+    ``astrometrics/`` child as a cheap structural guard.
+
+    :param source_dir: Path, candidate local assets root
+    :return: None when valid, otherwise a user-facing error string
+    """
+    if not source_dir.is_dir():
+        return (
+            'local_source_path does not exist or is not a directory: '
+            + str(source_dir)
+        )
+
+    astrom_dir = source_dir / 'astrometrics'
+    if not astrom_dir.is_dir():
+        return (
+            'local_source_path must point to the APERO assets root and '
+            'contain an astrometrics/ subdirectory. Got: '
+            + str(source_dir)
+        )
+
+    return None
+
+
 def _run_local_sync(source_dir: Path, assets_dir: Path,
                     tlog, stop_event,
                     progress_cb=None) -> Dict[str, int]:
@@ -489,11 +516,9 @@ def _run_local_sync(source_dir: Path, assets_dir: Path,
         float in ``[0.1, 0.95]`` as files are processed, so the UI
         progress bar can advance.
     """
-    if not source_dir.is_dir():
-        raise FileNotFoundError(
-            'local_source_path does not exist or is not a directory: '
-            + str(source_dir)
-        )
+    validation_error = validate_local_assets_source(source_dir)
+    if validation_error is not None:
+        raise FileNotFoundError(validation_error)
     assets_dir.mkdir(parents=True, exist_ok=True)
 
     tlog(f'Scanning local source tree: {source_dir}')

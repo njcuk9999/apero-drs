@@ -476,6 +476,21 @@ def api_async_tasks_save(app):
                         "directory path."
                     ),
                 ), 400
+            if t.get("mode") == "local":
+                from pathlib import Path as _Path
+                from apero_ri.tasks.apero_assets_sync import (
+                    validate_local_assets_source as _validate_assets_src,
+                )
+
+                _source_path = _Path(
+                    str(t.get("local_source_path") or "")
+                ).expanduser()
+                _validation_error = _validate_assets_src(_source_path)
+                if _validation_error is not None:
+                    return jsonify(
+                        success=False,
+                        error=_validation_error,
+                    ), 400
             if t.get("mode") == "remote":
                 _uconfig = str(t.get("drs_uconfig") or "").strip()
                 if not _uconfig:

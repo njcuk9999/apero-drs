@@ -145,6 +145,26 @@ def _build_first_time_guide_steps(app, user_info, perms):
                 'and processing jobs.'
             ),
             'optional': True,
+            'sub_steps': [
+                (
+                    'Set APERO_SYNC_ASSETS first so local assets are '
+                    'synced before downstream processing tasks run.'
+                ),
+                (
+                    'Run APERO_OBJECT_QUERY, then APERO_OBJECT_TABLE, '
+                    'then APERO_OBSERVATION_TABLE to build the core '
+                    'portal products in dependency order.'
+                ),
+                (
+                    'Run APERO_QC_STATS after object products are '
+                    'available so qc_stats_*.json files are generated.'
+                ),
+                (
+                    'Set frequencies last (and use Force Run once on '
+                    'new installs) after confirming each task works '
+                    'manually.'
+                ),
+            ],
         },
     ]
 
