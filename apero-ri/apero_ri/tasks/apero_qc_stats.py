@@ -161,6 +161,35 @@ class AperoQCStats(apero_async.AperoAsyncTask):
             except Exception as exc:
                 should_skip = False
                 skip_reason = f"Database update-time check unavailable: {exc}"
+
+            # Fresh-install guard: if DB fingerprints are unchanged but the
+            # profile has no qc_stats_*.json outputs yet, bypass skip so the
+            # first run materializes the files required by the QC graphs page.
+            if should_skip:
+                expected_outputs = list(
+                    (aparams.get('calib-headers') or {}).keys()
+                )
+                local_dir = (
+                    Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                    / 'tasks'
+                    / instrument
+                    / apero_profile
+                )
+                missing_outputs = []
+                for output_name in expected_outputs:
+                    out_file = local_dir / f'qc_stats_{output_name}.json'
+                    if not out_file.exists():
+                        missing_outputs.append(str(output_name))
+                if missing_outputs:
+                    should_skip = False
+                    skip_reason = (
+                        'Bypassing DB update-time skip because one or '
+                        'more QC output files are missing: '
+                        + ', '.join(sorted(missing_outputs))
+                    )
+                    tlog(
+                        f'Profile {apero_profile}: {skip_reason}'
+                    )
             if should_skip:
                 tlog(f"Profile {apero_profile}: skipped. {skip_reason}")
                 self.info += (

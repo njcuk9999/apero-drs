@@ -426,7 +426,9 @@ def _run_remote_sync(assets_dir: Path, tlog,
     base_cmd = [sys.executable, str(script)]
     indir = str(assets_dir)
     cmd_map = dict()
-    cmd_map['update-local'] = base_cmd + ['update-local']
+    cmd_map['update-local'] = (
+        base_cmd + ['update-local', '--indir', indir]
+    )
     cmd_map['update-remote'] = (
         base_cmd + ['update-remote', '--indir', indir]
     )
