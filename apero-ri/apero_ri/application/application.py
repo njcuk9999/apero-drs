@@ -363,6 +363,11 @@ class ARIApp(Flask):
             self, perms
         )
 
+    def _build_admin_server_information_context(self, perms):
+        return _impls.ariapp_build_admin_server_information_context(
+            self, perms
+        )
+
     def _api_admin_vault_list(self):
         return _impls.ariapp_api_vault_list(self)
 

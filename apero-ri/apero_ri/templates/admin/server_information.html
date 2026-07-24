@@ -1,0 +1,379 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Server Information{% endblock %}
+
+{% block doc_content %}
+<style>
+    .ari-usage-badge {
+        display:inline-block;
+        margin-left:0.4rem;
+        padding:0.1rem 0.4rem;
+        border-radius:999px;
+        font-size:0.72rem;
+        font-weight:700;
+        letter-spacing:0.02em;
+    }
+    .ari-usage-badge--ok {
+        background:#e9f7ef;
+        color:#186a3b;
+    }
+    .ari-usage-badge--warning {
+        background:#fff4e5;
+        color:#8a5300;
+    }
+    .ari-usage-badge--critical {
+        background:#fdecec;
+        color:#8b1e24;
+    }
+    .ari-usage-badge--unknown {
+        background:#eef1f6;
+        color:#4c5563;
+    }
+</style>
+
+<div class="ari-page-header"
+     style="display:flex; align-items:flex-start;
+            justify-content:space-between;
+            gap:0.8rem; flex-wrap:wrap;">
+    <div>
+        <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+        <p style="margin:0.45rem 0 0 0;
+                  color:var(--ari-text-muted);">
+            Snapshot captured at
+            {{ server_info_snapshot_at }} UTC.
+            Use Update Snapshot to refresh this page.
+        </p>
+    </div>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm"
+            type="button"
+            onclick="window.location.reload();">
+        <i class="fa-solid fa-rotate"></i>
+        Update Snapshot
+    </button>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-code-branch"></i>
+            Version Information</h3>
+    </div>
+    <div style="display:grid; gap:0.55rem;">
+        {% for row in server_info_versions %}
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.65rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-weight:700;">{{ row.label }}</div>
+            <div style="font-size:0.9rem;
+                        color:var(--ari-text-muted);">
+                Version: {{ row.version }}
+                {% if row.date and row.date != 'n/a' %}
+                · Date: {{ row.date }}
+                {% endif %}
+            </div>
+            <div style="font-size:0.82rem;
+                        color:var(--ari-text-muted);
+                        margin-top:0.2rem;
+                        word-break:break-all;">
+                Install path: {{ row.install_path }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-folder-tree"></i>
+            Local Install</h3>
+    </div>
+    <div style="display:grid; gap:0.55rem;">
+        {% for row in server_info_install_rows %}
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-weight:700;">{{ row.label }}</div>
+            <div style="font-size:0.86rem;
+                        color:var(--ari-text-muted);
+                        word-break:break-all;">
+                {{ row.path }}
+            </div>
+            <div style="font-size:0.82rem;
+                        color:var(--ari-text-muted);
+                        margin-top:0.15rem;">
+                Exists: {{ 'yes' if row.exists else 'no' }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-hard-drive"></i>
+            Storage Snapshot</h3>
+    </div>
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;
+                      min-width:660px;">
+            <thead>
+                <tr style="background:var(--ari-table-head,
+                                          #f3f4f7);">
+                    <th style="text-align:left; padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);">Path</th>
+                    <th style="text-align:left; padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);">Mounted Probe</th>
+                    <th style="text-align:right; padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);">Total</th>
+                    <th style="text-align:right; padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);">Used</th>
+                    <th style="text-align:right; padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);">Free</th>
+                    <th style="text-align:right; padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);">Used %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in server_info_storage_rows %}
+                <tr>
+                    <td style="padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);
+                              word-break:break-all;">
+                        {{ row.path }}
+                        {% if not row.exists %}
+                        <div style="font-size:0.78rem;
+                                    color:var(--ari-text-muted);">
+                            (target path missing)
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td style="padding:0.45rem;
+                              border-bottom:1px solid
+                              var(--ari-border);
+                              word-break:break-all;">
+                        {{ row.probe_path }}
+                    </td>
+                    <td style="padding:0.45rem;
+                              text-align:right;
+                              border-bottom:1px solid
+                              var(--ari-border);">
+                        {{ server_info_bytes_to_text(
+                            row.total_bytes) }}
+                    </td>
+                    <td style="padding:0.45rem;
+                              text-align:right;
+                              border-bottom:1px solid
+                              var(--ari-border);">
+                        {{ server_info_bytes_to_text(
+                            row.used_bytes) }}
+                    </td>
+                    <td style="padding:0.45rem;
+                              text-align:right;
+                              border-bottom:1px solid
+                              var(--ari-border);">
+                        {{ server_info_bytes_to_text(
+                            row.free_bytes) }}
+                    </td>
+                    <td style="padding:0.45rem;
+                              text-align:right;
+                              border-bottom:1px solid
+                              var(--ari-border);">
+                        {{ row.used_pct }}
+                        <span class="ari-usage-badge
+                                    ari-usage-badge--{{ row.usage_level }}">
+                            {{ row.usage_level|upper }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-microchip"></i>
+            Machine Snapshot</h3>
+    </div>
+    <div style="display:grid;
+                grid-template-columns:repeat(
+                    auto-fit, minmax(260px, 1fr));
+                gap:0.55rem;">
+        {% for row in server_info_machine_rows %}
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-size:0.84rem;
+                        color:var(--ari-text-muted);">
+                {{ row.label }}
+            </div>
+            <div style="font-weight:700;
+                        margin-top:0.15rem;
+                        word-break:break-all;">
+                {{ row.value }}
+                {% if row.usage_level %}
+                <span class="ari-usage-badge
+                            ari-usage-badge--{{ row.usage_level }}">
+                    {{ row.usage_level|upper }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-brands fa-python"></i>
+            Python Environment</h3>
+    </div>
+    <div style="display:grid;
+                grid-template-columns:repeat(
+                    auto-fit, minmax(260px, 1fr));
+                gap:0.55rem;">
+        {% for row in server_info_python_rows %}
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-size:0.84rem;
+                        color:var(--ari-text-muted);">
+                {{ row.label }}
+            </div>
+            <div style="font-weight:700;
+                        margin-top:0.15rem;
+                        word-break:break-all;">
+                {{ row.value }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-gears"></i>
+            APERO RI Operational Snapshot</h3>
+    </div>
+    <div style="display:grid;
+                grid-template-columns:repeat(
+                    auto-fit, minmax(220px, 1fr));
+                gap:0.55rem;">
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-size:0.84rem;
+                        color:var(--ari-text-muted);">
+                Instruments configured
+            </div>
+            <div style="font-weight:700; margin-top:0.15rem;">
+                {{ server_info_profile_summary.instrument_count }}
+            </div>
+        </div>
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-size:0.84rem;
+                        color:var(--ari-text-muted);">
+                APERO profiles configured
+            </div>
+            <div style="font-weight:700; margin-top:0.15rem;">
+                {{ server_info_profile_summary.profile_count }}
+            </div>
+        </div>
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-size:0.84rem;
+                        color:var(--ari-text-muted);">
+                Async tasks (total)
+            </div>
+            <div style="font-weight:700; margin-top:0.15rem;">
+                {{ server_info_async_summary.task_count }}
+            </div>
+        </div>
+        <div style="border:1px solid var(--ari-border);
+                    border-radius:0.65rem;
+                    padding:0.6rem 0.75rem;
+                    background:var(--ari-card-bg);">
+            <div style="font-size:0.84rem;
+                        color:var(--ari-text-muted);">
+                Async tasks (active)
+            </div>
+            <div style="font-weight:700; margin-top:0.15rem;">
+                {{ server_info_async_summary.active_task_count }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-cubes"></i>
+            Installed Python Modules
+            ({{ server_info_packages|length }})
+        </h3>
+    </div>
+    <details>
+        <summary style="cursor:pointer;
+                        color:var(--ari-text-muted);">
+            Show package list snapshot
+        </summary>
+        <div style="margin-top:0.55rem;
+                    max-height:420px;
+                    overflow:auto;
+                    border:1px solid var(--ari-border);
+                    border-radius:0.65rem;">
+            <table style="width:100%; border-collapse:collapse;
+                          min-width:460px;">
+                <thead>
+                    <tr style="background:var(--ari-table-head,
+                                              #f3f4f7);">
+                        <th style="text-align:left;
+                                  padding:0.45rem;
+                                  border-bottom:1px solid
+                                  var(--ari-border);">
+                            Module
+                        </th>
+                        <th style="text-align:left;
+                                  padding:0.45rem;
+                                  border-bottom:1px solid
+                                  var(--ari-border);">
+                            Version
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pkg in server_info_packages %}
+                    <tr>
+                        <td style="padding:0.45rem;
+                                  border-bottom:1px solid
+                                  var(--ari-border);">
+                            {{ pkg.name }}
+                        </td>
+                        <td style="padding:0.45rem;
+                                  border-bottom:1px solid
+                                  var(--ari-border);">
+                            {{ pkg.version }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </details>
+</div>
+{% endblock %}

@@ -1469,6 +1469,11 @@ def make_page_view(app, page_id: str, package_dir: Path):
                 app._build_admin_vault_context(perms)
             )
 
+        if page_id == "home.admin_portal.server_information":
+            context.update(
+                app._build_admin_server_information_context(perms)
+            )
+
         if page_id in {"home.admin_portal", "home.admin_portal.health_status"}:
             health, updated_at, in_progress = app._get_admin_health(
                 user_info=user_info,

@@ -7335,6 +7335,371 @@ def ariapp_uploads_share_download(self, token):
     )
 
 
+def _server_info_bytes_to_text(nbytes: Optional[int]) -> str:
+    """Format bytes as a compact human-readable string."""
+    if nbytes is None:
+        return 'n/a'
+    try:
+        value = float(nbytes)
+    except (TypeError, ValueError):
+        return 'n/a'
+    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    idx = 0
+    while value >= 1024.0 and idx < len(units) - 1:
+        value /= 1024.0
+        idx += 1
+    if idx == 0:
+        return '{0:.0f} {1}'.format(value, units[idx])
+    return '{0:.2f} {1}'.format(value, units[idx])
+
+
+def _server_info_usage_level(pct: Optional[float]) -> str:
+    """Map a usage percent into a simple severity level."""
+    if pct is None:
+        return 'unknown'
+    if pct >= 90.0:
+        return 'critical'
+    if pct >= 75.0:
+        return 'warning'
+    return 'ok'
+
+
+def _server_info_package_meta(module_name: str) -> Dict[str, str]:
+    """Return version/date/install metadata for one importable module."""
+    import importlib
+    import importlib.metadata as _im
+
+    payload: Dict[str, str] = dict()
+    payload['module'] = module_name
+    payload['version'] = 'n/a'
+    payload['date'] = 'n/a'
+    payload['install_path'] = 'n/a'
+
+    try:
+        mod = importlib.import_module(module_name)
+    except Exception as exc:  # noqa: BLE001
+        payload['version'] = 'unavailable ({0})'.format(exc)
+        return payload
+
+    file_path = getattr(mod, '__file__', None)
+    if file_path:
+        payload['install_path'] = str(Path(file_path).resolve())
+
+    version = getattr(mod, '__version__', None)
+    if version:
+        payload['version'] = str(version)
+    else:
+        try:
+            payload['version'] = str(_im.version(module_name))
+        except Exception:  # noqa: BLE001
+            payload['version'] = 'n/a'
+
+    mod_date = getattr(mod, '__date__', None)
+    if mod_date:
+        payload['date'] = str(mod_date)
+
+    return payload
+
+
+def _server_info_disk_rows(paths: List[Path]) -> List[dict]:
+    """Build disk usage snapshot rows for selected paths."""
+    import shutil
+
+    out: List[dict] = []
+    for path in paths:
+        row = dict()
+        row['path'] = str(path)
+        row['exists'] = path.exists()
+        probe = path
+        while not probe.exists() and probe.parent != probe:
+            probe = probe.parent
+        row['probe_path'] = str(probe)
+        row['total_bytes'] = None
+        row['used_bytes'] = None
+        row['free_bytes'] = None
+        row['used_pct_value'] = None
+        row['used_pct'] = 'n/a'
+        row['usage_level'] = 'unknown'
+        try:
+            usage = shutil.disk_usage(str(probe))
+            row['total_bytes'] = int(usage.total)
+            row['used_bytes'] = int(usage.used)
+            row['free_bytes'] = int(usage.free)
+            if usage.total > 0:
+                pct = 100.0 * float(usage.used) / float(usage.total)
+                row['used_pct_value'] = pct
+                row['used_pct'] = '{0:.1f}%'.format(pct)
+                row['usage_level'] = _server_info_usage_level(pct)
+        except Exception:  # noqa: BLE001
+            pass
+        out.append(row)
+    return out
+
+
+def _server_info_read_meminfo() -> Dict[str, Optional[int]]:
+    """Read Linux memory snapshot from /proc files."""
+    data: Dict[str, Optional[int]] = dict()
+    data['mem_total'] = None
+    data['mem_available'] = None
+    data['swap_total'] = None
+    data['swap_free'] = None
+    data['process_rss'] = None
+    data['uptime_s'] = None
+
+    try:
+        with open('/proc/meminfo', 'r', encoding='utf-8') as infile:
+            for raw in infile:
+                line = raw.strip()
+                if line.startswith('MemTotal:'):
+                    data['mem_total'] = int(line.split()[1]) * 1024
+                elif line.startswith('MemAvailable:'):
+                    data['mem_available'] = int(line.split()[1]) * 1024
+                elif line.startswith('SwapTotal:'):
+                    data['swap_total'] = int(line.split()[1]) * 1024
+                elif line.startswith('SwapFree:'):
+                    data['swap_free'] = int(line.split()[1]) * 1024
+    except Exception:  # noqa: BLE001
+        pass
+
+    try:
+        with open('/proc/self/status', 'r', encoding='utf-8') as infile:
+            for raw in infile:
+                line = raw.strip()
+                if line.startswith('VmRSS:'):
+                    data['process_rss'] = int(line.split()[1]) * 1024
+                    break
+    except Exception:  # noqa: BLE001
+        pass
+
+    try:
+        with open('/proc/uptime', 'r', encoding='utf-8') as infile:
+            parts = infile.read().strip().split()
+            if len(parts) >= 1:
+                data['uptime_s'] = int(float(parts[0]))
+    except Exception:  # noqa: BLE001
+        pass
+
+    return data
+
+
+def ariapp_build_admin_server_information_context(self, perms):
+    """Build snapshot context for the Server Information admin page."""
+    import importlib.metadata as _im
+    import platform
+    import sys
+
+    _ = perms
+    now = datetime.now(timezone.utc)
+    local_data_dir = self._resolve_local_data_dir()
+    package_root = PACKAGE_DIR
+
+    versions = []
+    labels = [
+        ('apero_ri', 'APERO RI'),
+        ('apero', 'APERO DRS'),
+        ('aperocore', 'APERO Core'),
+    ]
+    for module_name, label in labels:
+        row = _server_info_package_meta(module_name)
+        row['label'] = label
+        versions.append(row)
+
+    install_rows = [
+        {
+            'label': 'ARI local data directory (.ari)',
+            'path': str(local_data_dir),
+            'exists': local_data_dir.exists(),
+        },
+        {
+            'label': 'APERO RI package root',
+            'path': str(package_root),
+            'exists': package_root.exists(),
+        },
+        {
+            'label': 'Current Python executable',
+            'path': str(Path(sys.executable).resolve()),
+            'exists': Path(sys.executable).exists(),
+        },
+    ]
+
+    disk_targets = [
+        local_data_dir,
+        local_data_dir / 'tasks',
+        local_data_dir / 'cache',
+        local_data_dir / 'backups',
+        package_root,
+        Path(sys.executable).resolve().parent,
+    ]
+    storage_rows = _server_info_disk_rows(disk_targets)
+
+    mem = _server_info_read_meminfo()
+    mem_total = mem.get('mem_total')
+    mem_available = mem.get('mem_available')
+    mem_used = None
+    mem_pct_value = None
+    mem_pct = 'n/a'
+    if isinstance(mem_total, int) and isinstance(mem_available, int):
+        mem_used = max(mem_total - mem_available, 0)
+        if mem_total > 0:
+            mem_pct_value = 100.0 * float(mem_used) / float(mem_total)
+            mem_pct = '{0:.1f}%'.format(mem_pct_value)
+
+    swap_total = mem.get('swap_total')
+    swap_free = mem.get('swap_free')
+    swap_used = None
+    swap_pct_value = None
+    swap_pct = 'n/a'
+    if isinstance(swap_total, int) and isinstance(swap_free, int):
+        swap_used = max(swap_total - swap_free, 0)
+        if swap_total > 0:
+            swap_pct_value = 100.0 * float(swap_used) / float(swap_total)
+            swap_pct = '{0:.1f}%'.format(swap_pct_value)
+
+    load_avg = 'n/a'
+    try:
+        l1, l5, l15 = os.getloadavg()
+        load_avg = '{0:.2f}, {1:.2f}, {2:.2f}'.format(l1, l5, l15)
+    except Exception:  # noqa: BLE001
+        pass
+
+    uptime_text = 'n/a'
+    if isinstance(mem.get('uptime_s'), int):
+        up_s = int(mem['uptime_s'])
+        days, rem = divmod(up_s, 86400)
+        hours, rem = divmod(rem, 3600)
+        minutes, _ = divmod(rem, 60)
+        uptime_text = '{0}d {1}h {2}m'.format(days, hours, minutes)
+
+    machine_rows = [
+        {'label': 'Hostname', 'value': socket.gethostname()},
+        {
+            'label': 'Platform',
+            'value': '{0} {1}'.format(
+                platform.system(),
+                platform.release(),
+            ),
+        },
+        {'label': 'Architecture', 'value': platform.machine()},
+        {
+            'label': 'CPU cores (logical)',
+            'value': str(int(os.cpu_count() or 1)),
+        },
+        {'label': 'Load average (1m,5m,15m)', 'value': load_avg},
+        {'label': 'Uptime', 'value': uptime_text},
+        {
+            'label': 'Memory used',
+            'value': '{0} / {1} ({2})'.format(
+                _server_info_bytes_to_text(mem_used),
+                _server_info_bytes_to_text(mem_total),
+                mem_pct,
+            ),
+            'usage_level': _server_info_usage_level(mem_pct_value),
+        },
+        {
+            'label': 'Swap used',
+            'value': '{0} / {1} ({2})'.format(
+                _server_info_bytes_to_text(swap_used),
+                _server_info_bytes_to_text(swap_total),
+                swap_pct,
+            ),
+            'usage_level': _server_info_usage_level(swap_pct_value),
+        },
+        {
+            'label': 'APERO RI process RSS',
+            'value': _server_info_bytes_to_text(
+                mem.get('process_rss')
+            ),
+        },
+    ]
+
+    env_type = 'system'
+    if os.environ.get('CONDA_DEFAULT_ENV'):
+        env_type = 'conda'
+    elif os.environ.get('VIRTUAL_ENV'):
+        env_type = 'venv'
+    elif getattr(sys, 'base_prefix', sys.prefix) != sys.prefix:
+        env_type = 'venv'
+
+    python_rows = [
+        {'label': 'Python version', 'value': sys.version.split()[0]},
+        {'label': 'Environment type', 'value': env_type},
+        {'label': 'Executable', 'value': str(Path(sys.executable).resolve())},
+        {'label': 'sys.prefix', 'value': str(sys.prefix)},
+        {
+            'label': 'sys.base_prefix',
+            'value': str(getattr(sys, 'base_prefix', sys.prefix)),
+        },
+        {
+            'label': 'Conda env',
+            'value': str(os.environ.get('CONDA_DEFAULT_ENV') or 'n/a'),
+        },
+        {
+            'label': 'Virtual env',
+            'value': str(os.environ.get('VIRTUAL_ENV') or 'n/a'),
+        },
+    ]
+
+    packages: List[dict] = []
+    try:
+        for dist in _im.distributions():
+            name = dist.metadata.get('Name') or dist.metadata.get('Summary')
+            if not name:
+                name = getattr(dist, 'name', '')
+            pkg_name = str(name or '').strip()
+            if pkg_name == '':
+                continue
+            packages.append(
+                {
+                    'name': pkg_name,
+                    'version': str(getattr(dist, 'version', '') or 'n/a'),
+                }
+            )
+        packages.sort(key=lambda item: item['name'].lower())
+    except Exception:  # noqa: BLE001
+        packages = []
+
+    profiles_data = auth.load_apero_profiles(hydrate=False)
+    instrument_count = 0
+    profile_count = 0
+    if isinstance(profiles_data, dict):
+        for _inst, cfg in profiles_data.items():
+            if not isinstance(cfg, dict):
+                continue
+            instrument_count += 1
+            profile_count += len(cfg)
+
+    async_cfg = auth.load_async_tasks()
+    async_total = 0
+    async_active = 0
+    if isinstance(async_cfg, dict):
+        for _inst, tasks in async_cfg.items():
+            if not isinstance(tasks, list):
+                continue
+            async_total += len(tasks)
+            for task in tasks:
+                if isinstance(task, dict) and bool(task.get('active', True)):
+                    async_active += 1
+
+    return {
+        'server_info_snapshot_at': now.isoformat(),
+        'server_info_versions': versions,
+        'server_info_install_rows': install_rows,
+        'server_info_storage_rows': storage_rows,
+        'server_info_machine_rows': machine_rows,
+        'server_info_python_rows': python_rows,
+        'server_info_packages': packages,
+        'server_info_profile_summary': {
+            'instrument_count': instrument_count,
+            'profile_count': profile_count,
+        },
+        'server_info_async_summary': {
+            'task_count': async_total,
+            'active_task_count': async_active,
+        },
+        'server_info_bytes_to_text': _server_info_bytes_to_text,
+    }
+
+
 # =============================================================================
 # Vault — Admin portal
 # =============================================================================
