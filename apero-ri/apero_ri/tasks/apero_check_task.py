@@ -237,6 +237,40 @@ def _init_run_context(params: Dict[str, Any]) -> dict:
     }
 
 
+def _format_verbose_check_log(obs_dir: str,
+                              check_key: str,
+                              status_word: str,
+                              duration_s: float,
+                              result: dict) -> List[str]:
+    """Format one verbose check log block with detailed report text."""
+    prefix = (
+        f'{obs_dir} | {check_key} | {status_word} | '
+        f'{duration_s:.2f}s'
+    )
+    lines = [prefix]
+
+    entry = result.get('entry', None)
+    if isinstance(entry, tuple) and len(entry) == 3:
+        bucket = str(entry[0] or '').strip()
+        name = str(entry[1] or '').strip()
+        payload = entry[2] if isinstance(entry[2], dict) else {}
+        if bucket or name:
+            lines.append(f'  entry={bucket}/{name}')
+        message = str(payload.get('message', '') or '').strip()
+        if message:
+            lines.append(f'  message={message}')
+
+    report_text = str(result.get('report', '') or '').strip()
+    if report_text:
+        for line in report_text.splitlines():
+            if line.strip() == '':
+                lines.append('  ')
+            else:
+                lines.append(f'  {line}')
+
+    return lines
+
+
 def _run_profile(task: AperoCheckTask,
                  ctx: dict,
                  profile_name: str) -> dict:
@@ -389,11 +423,16 @@ def _run_profile(task: AperoCheckTask,
                     f'check={check_key} time={dt:.2f}s.',
                     min_verbose=1,
                 )
-            # At verbosity=2 log every individual check result.
-            ctx['tlog'](
-                f'{obs_dir} | {check_key} | {status_word} | {dt:.2f}s',
-                min_verbose=2,
-            )
+            # At verbosity=2 log every individual check result with the
+            # detailed report body for debugging.
+            for line in _format_verbose_check_log(
+                obs_dir,
+                check_key,
+                status_word,
+                dt,
+                check_result,
+            ):
+                ctx['tlog'](line, min_verbose=2)
             report_lines.append(
                 f'{obs_dir} | {check_key} | {check_result["report"]}'
             )

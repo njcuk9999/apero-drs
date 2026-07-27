@@ -46,6 +46,23 @@ def test_normalize_s3_prefix_and_cloud_enabled() -> None:
     assert not backup_backend._is_cloud_enabled(cfg_off)
 
 
+def test_test_backup_connection_reports_disabled_method() -> None:
+    """Disabled methods should explain that backups are not active."""
+    cfg = {
+        'backup_methods': [
+            {
+                'id': 'm1',
+                'enabled': False,
+                'provider': 's3',
+            }
+        ]
+    }
+    result = backup_backend.test_backup_connection(cfg, method_id='m1')
+    assert result['ok'] is True
+    assert 'disabled' in result['detail'].lower()
+    assert 'enable' in result['detail'].lower()
+
+
 def test_validate_gdrive_oauth_client_secret_payload() -> None:
     """OAuth payload validator accepts good payloads and rejects bad ones."""
     ok_payload = {

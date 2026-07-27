@@ -189,8 +189,30 @@ def check_function(instrument: str, obs_dir: str,
         else:
             failed_entries.append((obj_key, obj_name, filename.name))
 
+    obj_name_keys_text = ', '.join(obj_name_keys) if obj_name_keys else '(none)'
+    sci_dprtypes_text = (
+        ', '.join(sorted(sci_dprtypes)) if sci_dprtypes else '(none)'
+    )
+    summary_lines = [
+        (
+            f'\tSummary: files_scanned={len(files)} '
+            f'non_science={n_nonsci} no_object_name={n_no_objname} '
+            f'resolved={len(resolved_counts)} failed={len(fail_groups)}'
+        ),
+        (
+            f'\tobj_name_keys={obj_name_keys_text}'
+        ),
+        (
+            f'\tsci_suffix={sci_suffix if sci_suffix else "(none)"} '
+            f'dprtypes={sci_dprtypes_text}'
+        ),
+        (
+            f'\tdpr_key={dpr_key if dpr_key else "(none)"}'
+        ),
+    ]
+
     # Build passed lines: one per unique resolved object with file count.
-    passed_lines = []
+    passed_lines = list(summary_lines)
     for entry in resolved_order:
         obj_key, obj_name, apero_name = entry
         n = resolved_counts[entry]
@@ -199,7 +221,7 @@ def check_function(instrument: str, obs_dir: str,
         )
 
     # Build failed lines: group by (obj_key, obj_name), list files with count.
-    failed_lines = []
+    failed_lines = list(summary_lines)
     # Collect filenames per (obj_key, obj_name) pair while preserving order.
     fail_groups: dict = {}
     fail_order = []

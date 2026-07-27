@@ -1004,6 +1004,19 @@ function abRenderStatus(ok, detail, error) {
     }
 }
 
+function abRenderDisabledMethodStatus(method) {
+    const card = document.getElementById('abStatusCard');
+    const icon = document.getElementById('abStatusIcon');
+    const title = document.getElementById('abStatusTitle');
+    const text = document.getElementById('abStatusDetail');
+    const methodName = String((method && method.name) || 'selected method').trim() || 'selected method';
+    card.classList.remove('ari-ae-status-card--checking', 'ari-ae-status-card--ok', 'ari-ae-status-card--error');
+    card.classList.add('ari-ae-status-card--error');
+    icon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+    title.textContent = 'Test works, but backup is disabled';
+    text.textContent = `Backup test is not active for “${methodName}” because the method is disabled. Enable it to start backup uploads.`;
+}
+
 async function abTestConnection() {
     const card = document.getElementById('abStatusCard');
     card.classList.remove('ari-ae-status-card--ok', 'ari-ae-status-card--error');
@@ -1021,7 +1034,12 @@ async function abTestConnection() {
             return;
         }
         const query = (data.query_ms || data.query_ms === 0) ? `Query time: ${data.query_ms} ms.` : '';
-        abRenderStatus(!!data.ok, `${data.detail || ''} ${query}`.trim(), data.error || '');
+        const method = abCurrentMethod() || null;
+        if (data.ok && data.detail && /disabled/i.test(data.detail)) {
+            abRenderDisabledMethodStatus(method);
+        } else {
+            abRenderStatus(!!data.ok, `${data.detail || ''} ${query}`.trim(), data.error || '');
+        }
     } catch (_) {
         abRenderStatus(false, '', 'Could not reach backup test endpoint.');
     }

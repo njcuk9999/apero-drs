@@ -1102,10 +1102,14 @@ def test_backup_connection(
 
     provider = str(cfg.get("provider", "local_only")).strip()
     if provider == "local_only" or not bool(cfg.get("enabled", False)):
+        detail = (
+            "Cloud mirror is disabled. Enable the method to start "
+            "backups."
+        )
         return {
             "ok": True,
             "error": "",
-            "detail": "Cloud mirror disabled (local-only mode).",
+            "detail": detail,
             "query_ms": 0,
         }
 
