@@ -189,6 +189,9 @@ def check_function(instrument: str, obs_dir: str,
         else:
             failed_entries.append((obj_key, obj_name, filename.name))
 
+    fail_groups: dict = {}
+    fail_order = []
+
     obj_name_keys_text = ', '.join(obj_name_keys) if obj_name_keys else '(none)'
     sci_dprtypes_text = (
         ', '.join(sorted(sci_dprtypes)) if sci_dprtypes else '(none)'
@@ -223,8 +226,6 @@ def check_function(instrument: str, obs_dir: str,
     # Build failed lines: group by (obj_key, obj_name), list files with count.
     failed_lines = []
     # Collect filenames per (obj_key, obj_name) pair while preserving order.
-    fail_groups: dict = {}
-    fail_order = []
     for obj_key, obj_name, fname in failed_entries:
         key = (obj_key, obj_name)
         if key not in fail_groups:
