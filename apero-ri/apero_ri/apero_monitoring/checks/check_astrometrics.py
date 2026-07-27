@@ -221,7 +221,7 @@ def check_function(instrument: str, obs_dir: str,
         )
 
     # Build failed lines: group by (obj_key, obj_name), list files with count.
-    failed_lines = list(summary_lines)
+    failed_lines = []
     # Collect filenames per (obj_key, obj_name) pair while preserving order.
     fail_groups: dict = {}
     fail_order = []
