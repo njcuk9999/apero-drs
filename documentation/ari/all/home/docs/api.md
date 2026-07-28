@@ -61,6 +61,33 @@ ari_api.configure(
 If the check is running on another machine, the same file must exist there
 with the same values.
 
+### Server-side checks and the ASTROM check
+
+The ASTROM check does not read the YAML files directly from the client side.
+Instead, the check calls the ARI server endpoint
+`/api/astrometrics/resolve-by-name`, and that server endpoint reads the
+astrometric YAML database from disk under the ARI data directory.
+
+That means:
+
+- the file headers are compared against the on-disk astrometric YAML entries
+- the API token is only used to authenticate the HTTP request from the
+  checker process to the ARI server
+- if the request is unauthenticated or the server is not reachable, the
+  check fails even though the YAML files on disk may be present
+
+### Step 8 — set up APERO checks
+
+1. Ensure the ARI server process is running and can access the same ARI data
+   directory used by the checks.
+2. Ensure the astrometric YAML database is present under
+   `<ARI_DIR>/apero-assets/astrometrics`.
+3. Ensure the checker process has a valid `<ARI_DIR>/api_config.json` with
+   `server` and `token` set.
+4. Test the endpoint from the checker host with the same token, for example
+   by running the Python client and calling `ari_api.astrometrics.resolve_by_name()`.
+5. Re-run the ASTROM APERO check after the configuration is in place.
+
 ---
 
 ## 4. Listing Available Profiles

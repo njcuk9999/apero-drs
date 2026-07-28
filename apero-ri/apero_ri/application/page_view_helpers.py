@@ -71,6 +71,76 @@ _POLICY_BUILD_STATUS: dict = {
 }
 
 
+def _build_apero_checks_setup_status(data_dir=None) -> dict:
+    """Return completion state for the server-side APERO checks setup."""
+    local_data_dir = Path(data_dir or "").expanduser()
+    if not str(local_data_dir):
+        local_data_dir = Path.home() / ".ari"
+
+    astrom_dir = local_data_dir / "apero-assets" / "astrometrics"
+    config_path = local_data_dir / "api_config.json"
+
+    issues = []
+    if not astrom_dir.exists() or not astrom_dir.is_dir():
+        issues.append(
+            "The astrometric database directory does not exist yet: "
+            f"{astrom_dir}"
+        )
+    else:
+        yaml_files = sorted(
+            [
+                p.name
+                for p in astrom_dir.iterdir()
+                if p.is_file() and p.suffix.lower() in {".yml", ".yaml"}
+            ]
+        )
+        if not yaml_files:
+            issues.append(
+                "No astrometric YAML files were found under "
+                f"{astrom_dir}"
+            )
+
+    if not config_path.exists() or not config_path.is_file():
+        issues.append(
+            "The ARI client config file is missing: "
+            f"{config_path}"
+        )
+    else:
+        try:
+            with open(config_path, "r", encoding="utf-8") as handle:
+                cfg = json.load(handle) or {}
+            if not str(cfg.get("server", "")).strip():
+                issues.append(
+                    "The 'server' entry is missing from "
+                    f"{config_path}"
+                )
+            if not str(cfg.get("token", "")).strip():
+                issues.append(
+                    "The 'token' entry is missing from "
+                    f"{config_path}"
+                )
+        except Exception as exc:  # noqa: BLE001
+            issues.append(f"Could not read {config_path}: {exc}")
+
+    if issues:
+        return {
+            'status': 'pending',
+            'complete': False,
+            'message': (
+                'APERO checks are not ready yet. ' + ' '.join(issues[:3])
+            ),
+        }
+
+    return {
+        'status': 'ok',
+        'complete': True,
+        'message': (
+            'The ARI data directory, astrometric database, and API '
+            'config all look ready for server-side APERO checks.'
+        ),
+    }
+
+
 def _build_first_time_guide_steps(app, user_info, perms):
     """Build admin first-time guide steps with completion status."""
     health, _, _ = app._get_admin_health(
@@ -138,6 +208,34 @@ def _build_first_time_guide_steps(app, user_info, perms):
             'optional': True,
         },
         {
+            'page_id': 'home.admin_portal.apero_checks_policy',
+            'title': 'APERO Checks',
+            'purpose': (
+                'Set up and verify server-side APERO checks, including '
+                'ASTROM and other monitor checks.'
+            ),
+            'optional': False,
+            'endpoint': 'home_admin_portal_apero_checks_policy',
+            'sub_steps': [
+                (
+                    'Ensure the ARI server can reach the same ARI data '
+                    'directory used by the checker process.'
+                ),
+                (
+                    'Make sure the astrometric YAML database exists under '
+                    '<ARI_DIR>/apero-assets/astrometrics.'
+                ),
+                (
+                    'Create or edit <ARI_DIR>/api_config.json with the '
+                    'server URL and API token used by the checker host.'
+                ),
+                (
+                    'Run the ASTROM check again after the server-side '
+                    'configuration is in place.'
+                ),
+            ],
+        },
+        {
             'page_id': 'home.admin_portal.async_tasks',
             'title': 'Async Tasks',
             'purpose': (
@@ -186,6 +284,14 @@ def _build_first_time_guide_steps(app, user_info, perms):
                 )
         else:
             is_complete = status == 'ok'
+
+        if page_id == 'home.admin_portal.apero_checks_policy':
+            setup_status = _build_apero_checks_setup_status(
+                app._resolve_local_data_dir()
+            )
+            is_complete = setup_status.get('complete', False)
+            message = setup_status.get('message', message)
+            status = setup_status.get('status', status)
 
         row = dict(step)
         row['step_number'] = index
