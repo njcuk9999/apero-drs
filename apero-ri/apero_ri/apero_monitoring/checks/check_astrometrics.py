@@ -57,22 +57,29 @@ CHECK.contact_list['C2'] = clist2
 # =============================================================================
 # Internal helpers
 # =============================================================================
-def _resolve_astrom(name: str) -> Optional[str]:
-    """Resolve *name* in the astrometric database and return the APERO name.
+def _resolve_astrom(name: str) -> Tuple[Optional[str], Optional[str]]:
+    """Resolve *name* in the astrometric database.
 
-    Returns the APERO_NAME string on success, or None when the name cannot be
-    resolved or any network/server error occurs.  The server-side resolver
-    checks the APERO_NAME field, all registered aliases, and normalised
-    (alphanumeric-only) name variants.
+    Returns a tuple of ``(apero_name, detail)``.  ``apero_name`` is the
+    resolved APERO name on success, ``detail`` holds a short explanation when
+    resolution fails so the report can distinguish missing targets from API or
+    configuration problems.  The server-side resolver checks the APERO_NAME
+    field, all registered aliases, and normalised (alphanumeric-only) name
+    variants.
     """
     try:
         from apero_ri.ari_api import astrometrics as _astro_api
         result = _astro_api.resolve_by_name(name)
         if result.get('success', False):
-            return str(result.get('apero_name', '') or '').strip() or name
-        return None
-    except Exception:
-        return None
+            apero_name = str(result.get('apero_name', '') or '').strip() or name
+            return apero_name, None
+        detail = str(result.get('error', '') or '').strip()
+        if not detail:
+            detail = 'resolver returned success=False'
+        return None, detail
+    except Exception as exc:
+        detail = f'{type(exc).__name__}: {exc}'
+        return None, detail
 
 
 # =============================================================================
@@ -127,16 +134,21 @@ def check_function(instrument: str, obs_dir: str,
     # resolved_counts: (obj_key, header_name, apero_name) -> file count
     resolved_counts: dict = {}
     resolved_order = []
-    # failed_entries: list of (obj_key, obj_name, filename) for failed files
+    # failed_entries: list of (obj_key, obj_name, filename, detail) for
+    # failed files
     failed_entries: list = []
     n_nonsci = 0
     n_no_objname = 0
+    resolver_error_details = []
+    resolver_preflight = 'skipped'
+    resolver_preflight_detail = None
 
-    # Per-run resolve cache: maps obj_name -> apero_name (or None).
+    # Per-run resolve cache: maps obj_name -> (apero_name, detail).
     # This ensures each unique object name is queried at most once per obsdir,
     # preventing the same name from appearing in both passed and failed if an
     # API call succeeds on one attempt but not another (transient errors).
     _resolve_cache: dict = {}
+    _retry_attempted = set()
 
     for filename in files:
         # Science filter: suffix check takes priority over DPRTYPE header.
@@ -169,17 +181,39 @@ def check_function(instrument: str, obs_dir: str,
             continue
 
         # Use the per-run cache so each unique name is only resolved once.
-        # A successful result overrides a previous None (retry semantics):
+        # A successful result overrides a previous failure (retry semantics):
         # once we know the name resolves, all files with that name pass.
         if obj_name not in _resolve_cache:
-            _resolve_cache[obj_name] = _resolve_astrom(obj_name)
-        elif _resolve_cache[obj_name] is None:
-            # Previous attempt failed — retry once in case of transient error.
-            result = _resolve_astrom(obj_name)
-            if result is not None:
-                _resolve_cache[obj_name] = result
+            if resolver_preflight == 'skipped':
+                apero_name, detail = _resolve_astrom(obj_name)
+                if apero_name is not None:
+                    resolver_preflight = 'ok'
+                else:
+                    resolver_preflight = 'failed'
+                    resolver_preflight_detail = detail
+                _resolve_cache[obj_name] = (apero_name, detail)
+            else:
+                _resolve_cache[obj_name] = _resolve_astrom(obj_name)
+        else:
+            cached_name, cached_detail = _resolve_cache[obj_name]
+            if (
+                cached_name is None
+                and cached_detail is not None
+                and obj_name not in _retry_attempted
+            ):
+                # Previous attempt failed — retry once in case of transient
+                # error.
+                retry_name, retry_detail = _resolve_astrom(obj_name)
+                if retry_name is not None:
+                    _resolve_cache[obj_name] = (retry_name, None)
+                else:
+                    _resolve_cache[obj_name] = (
+                        None,
+                        retry_detail or cached_detail,
+                    )
+                _retry_attempted.add(obj_name)
 
-        apero_name = _resolve_cache[obj_name]
+        apero_name, detail = _resolve_cache[obj_name]
         if apero_name is not None:
             entry = (obj_key, obj_name, apero_name)
             if entry not in resolved_counts:
@@ -187,20 +221,33 @@ def check_function(instrument: str, obs_dir: str,
                 resolved_order.append(entry)
             resolved_counts[entry] += 1
         else:
-            failed_entries.append((obj_key, obj_name, filename.name))
+            failed_entries.append((obj_key, obj_name, filename.name, detail))
+            if detail:
+                resolver_error_details.append(detail)
 
     fail_groups: dict = {}
     fail_order = []
+
+    # Collect filenames per (obj_key, obj_name) pair while preserving order.
+    for obj_key, obj_name, fname, detail in failed_entries:
+        key = (obj_key, obj_name)
+        if key not in fail_groups:
+            fail_groups[key] = []
+            fail_order.append(key)
+        fail_groups[key].append((fname, detail))
 
     obj_name_keys_text = ', '.join(obj_name_keys) if obj_name_keys else '(none)'
     sci_dprtypes_text = (
         ', '.join(sorted(sci_dprtypes)) if sci_dprtypes else '(none)'
     )
+    if len(resolver_error_details) > 0:
+        resolver_error_details = list(dict.fromkeys(resolver_error_details))
     summary_lines = [
         (
             f'\tSummary: files_scanned={len(files)} '
             f'non_science={n_nonsci} no_object_name={n_no_objname} '
-            f'resolved={len(resolved_counts)} failed={len(fail_groups)}'
+            f'resolved={len(resolved_counts)} '
+            f'failed={len(fail_order)}'
         ),
         (
             f'\tobj_name_keys={obj_name_keys_text}'
@@ -214,6 +261,22 @@ def check_function(instrument: str, obs_dir: str,
         ),
     ]
 
+    if resolver_preflight == 'skipped':
+        summary_lines.append('\tresolver_preflight=skipped')
+    elif resolver_preflight == 'failed':
+        summary_lines.append(
+            f'\tresolver_preflight=failed; reason={resolver_preflight_detail}'
+        )
+    else:
+        summary_lines.append('\tresolver_preflight=ok')
+
+    if resolver_error_details:
+        summary_lines.append(
+            f'\tresolver_health=failed; sample={resolver_error_details[0]}'
+        )
+    else:
+        summary_lines.append('\tresolver_health=ok')
+
     # Build passed lines: one per unique resolved object with file count.
     passed_lines = list(summary_lines)
     for entry in resolved_order:
@@ -225,21 +288,16 @@ def check_function(instrument: str, obs_dir: str,
 
     # Build failed lines: group by (obj_key, obj_name), list files with count.
     failed_lines = []
-    # Collect filenames per (obj_key, obj_name) pair while preserving order.
-    for obj_key, obj_name, fname in failed_entries:
-        key = (obj_key, obj_name)
-        if key not in fail_groups:
-            fail_groups[key] = []
-            fail_order.append(key)
-        fail_groups[key].append(fname)
     for obj_key, obj_name in fail_order:
         fnames = fail_groups[(obj_key, obj_name)]
         n = len(fnames)
         failed_lines.append(
             f'\t{obj_key}: {obj_name}    [N={n}]'
         )
-        for fname in fnames:
+        for fname, detail in fnames[:3]:
             failed_lines.append(f'\t\t(filename: {fname})')
+            if detail:
+                failed_lines.append(f'\t\t(resolver: {detail})')
 
     # Append skipped-file summary to passed lines for visibility.
     if n_nonsci > 0:
