@@ -105,6 +105,13 @@ def run_checks(task: AperoCheckTask, params: Dict[str, Any]) -> List[dict]:
     """Run APERO checks for every selected APERO profile."""
     # Reset the task info before starting a new run.
     task.info = ''
+    # Make the active local data directory visible to the runtime and any
+    # subprocesses that rely on the ARI API client or other config helpers.
+    local_data_dir = _ensure_runtime_data_dir(params)
+    if local_data_dir:
+        task.info += (
+            f'Local data directory: {local_data_dir}\n'
+        )
     # Build the reusable run context.
     ctx = _init_run_context(params)
     # Log the task start for local and scheduled runs.
@@ -169,6 +176,20 @@ def manual_run(params: Dict[str, Any],
         verbose=verbose,
         log_file=log_file,
     )
+
+
+def _ensure_runtime_data_dir(params: Dict[str, Any]) -> str:
+    """Expose the active local data directory to the task environment."""
+    local_data_dir = (
+        str(params.get('LOCAL_DATA_DIR', '') or '').strip()
+        or os.environ.get('ARI_DIR', '').strip()
+        or os.environ.get('LOCAL_DATA_DIR', '').strip()
+        or str(Path.home() / '.ari')
+    )
+    resolved = str(Path(local_data_dir).expanduser())
+    os.environ['LOCAL_DATA_DIR'] = resolved
+    os.environ['ARI_DIR'] = resolved
+    return resolved
 
 
 def _init_run_context(params: Dict[str, Any]) -> dict:

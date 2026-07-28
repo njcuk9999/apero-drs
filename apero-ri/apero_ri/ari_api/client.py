@@ -31,6 +31,9 @@ def _default_config_dir() -> Path:
     ari_dir = os.environ.get("ARI_DIR", "")
     if ari_dir:
         return Path(ari_dir).expanduser()
+    local_data_dir = os.environ.get("LOCAL_DATA_DIR", "")
+    if local_data_dir:
+        return Path(local_data_dir).expanduser()
     return Path.home() / ".ari"
 
 
@@ -121,6 +124,7 @@ def _get_server() -> str:
             "ARI server not configured.  Create or edit "
             f"{_config_hint()} and set 'server' to the base URL of this "
             "ARI instance, for example 'https://your-ari-host'."
+            f"  Active config directory: {_default_config_dir()}"
         )
     return server.rstrip("/")
 
@@ -136,6 +140,7 @@ def _get_token() -> str:
             "ARI API token not configured.  Create or edit "
             f"{_config_hint()} and set 'token' to the API token generated "
             "in the ARI User Portal → API Access page."
+            f"  Active config directory: {_default_config_dir()}"
         )
     return token
 
@@ -162,6 +167,7 @@ def _raise_api_error(resp) -> None:
 def _get(path: str, params: Optional[dict] = None) -> dict:
     """Perform an authenticated GET and return the JSON body."""
     _ensure_requests()
+    assert requests is not None
     url = f"{_get_server()}{path}"
     resp = requests.get(url, headers=_headers(), params=params, timeout=120)
     if not resp.ok:
@@ -175,6 +181,7 @@ def _get(path: str, params: Optional[dict] = None) -> dict:
 def _post(path: str, body: Optional[dict] = None) -> dict:
     """Perform an authenticated POST and return the JSON body."""
     _ensure_requests()
+    assert requests is not None
     url = f"{_get_server()}{path}"
     resp = requests.post(url, headers=_headers(), json=body or {}, timeout=120)
     if not resp.ok:
@@ -188,6 +195,7 @@ def _post(path: str, body: Optional[dict] = None) -> dict:
 def _download(path: str, dest: Path, params: Optional[dict] = None) -> Path:
     """Stream-download a file to *dest*."""
     _ensure_requests()
+    assert requests is not None
     url = f"{_get_server()}{path}"
     with requests.get(
         url, headers=_headers(), params=params, stream=True, timeout=300
