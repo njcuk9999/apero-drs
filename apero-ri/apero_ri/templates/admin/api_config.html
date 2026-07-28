@@ -1,0 +1,69 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - API Config{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-key"></i> Server API Config</h1>
+    <p style="margin:0.45rem 0 0 0; color:var(--ari-text-muted);">
+        Configure the server-side API settings used by the checker host.
+        These values are read from the ARI data directory on the machine that
+        runs the APERO checks.
+    </p>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-folder-open"></i> Active location</h3>
+    </div>
+    <div style="font-size:0.95rem; color:var(--ari-text-muted); line-height:1.6;">
+        <div><strong>Resolved ARI data directory:</strong> {{ resolved_data_dir }}</div>
+        <div><strong>Expected config file:</strong> {{ api_config_path }}</div>
+        <div><strong>Status:</strong> {{ api_config_status }}</div>
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-circle-info"></i> What to set</h3>
+    </div>
+    <ol style="margin:0.35rem 0 0 1.15rem; padding:0; color:var(--ari-text-muted); line-height:1.6;">
+        <li><strong>server</strong>: the base URL of this ARI instance, for example <code>https://your-ari-host</code>.</li>
+        <li><strong>token</strong>: the API token generated from the user portal API Access page.</li>
+    </ol>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-terminal"></i> On the server machine</h3>
+    </div>
+    <p style="margin:0.25rem 0 0.75rem 0; color:var(--ari-text-muted);">
+        Run these commands on the same machine that hosts the APERO checks.
+        The checker process reads this file from the ARI data directory shown above.
+    </p>
+    <pre style="background:#1e1e2e; color:#cdd6f4; border-radius:0.55rem; padding:0.95rem 1rem; overflow-x:auto; font-size:0.84rem; line-height:1.5;"><code>mkdir -p "{{ resolved_data_dir }}"
+cat > "{{ api_config_path }}" &lt;&lt;'EOF'
+{
+  "server": "https://your-ari-host",
+  "token": "paste-your-api-token-here"
+}
+EOF
+chmod 600 "{{ api_config_path }}"
+</code></pre>
+    <p style="margin:0.7rem 0 0 0; color:var(--ari-text-muted); font-size:0.9rem;">
+        If your checker process uses a different ARI data directory, set <code>ARI_DIR</code> before running it so the same path is used.
+    </p>
+</div>
+
+<div class="ari-sg-section">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-question"></i> Where to get the token</h3>
+    </div>
+    <p style="margin:0.25rem 0 0.5rem 0; color:var(--ari-text-muted); line-height:1.6;">
+        Open the user portal API Access page on the ARI instance and generate or copy a token there.
+        Then paste that token into the file above.
+    </p>
+    <p style="margin:0; color:var(--ari-text-muted);">
+        After saving the file, re-run the ASTROM check so the checker can pick up the new settings.
+    </p>
+</div>
+{% endblock %}

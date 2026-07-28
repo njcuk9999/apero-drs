@@ -58,7 +58,23 @@
                         {% if item.sub_steps %}
                         <ol style="margin:0.35rem 0 0 1.15rem; padding:0; color:var(--ari-text-muted); font-size:0.86rem; line-height:1.45;">
                             {% for sub_step in item.sub_steps %}
-                            <li style="margin:0.12rem 0;">{{ sub_step }}</li>
+                            <li style="margin:0.12rem 0;">
+                                {% if sub_step is mapping %}
+                                {{ sub_step.get('text', '') }}
+                                {% if sub_step.get('link') %}
+                                <a href="{{ url_for(sub_step.get('link').get('endpoint')) }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   style="color:var(--ari-primary); text-decoration:none;">
+                                    {{ sub_step.get('link').get('label', 'Open') }}
+                                    <i class="fa-solid fa-arrow-up-right-from-square"
+                                       style="font-size:0.72rem;"></i>
+                                </a>
+                                {% endif %}
+                                {% else %}
+                                {{ sub_step }}
+                                {% endif %}
+                            </li>
                             {% endfor %}
                         </ol>
                         {% endif %}

@@ -150,6 +150,14 @@ def _build_first_time_guide_steps(app, user_info, perms):
         allow_async_refresh=True,
     )
 
+    try:
+        resolved_data_dir = app._resolve_local_data_dir()
+    except Exception:  # noqa: BLE001
+        resolved_data_dir = None
+    resolved_data_dir = str(
+        Path(resolved_data_dir or Path.home() / ".ari").expanduser()
+    )
+
     db_ctx = app._build_admin_db_tunnel_context(user_info, perms)
     db_tunnels = db_ctx.get('db_tunnels', [])
     db_locals = db_ctx.get('db_local_databases', [])
@@ -217,22 +225,37 @@ def _build_first_time_guide_steps(app, user_info, perms):
             'optional': False,
             'endpoint': 'home_admin_portal_apero_checks_policy',
             'sub_steps': [
-                (
-                    'Ensure the ARI server can reach the same ARI data '
-                    'directory used by the checker process.'
-                ),
-                (
-                    'Make sure the astrometric YAML database exists under '
-                    '<ARI_DIR>/apero-assets/astrometrics.'
-                ),
-                (
-                    'Create or edit <ARI_DIR>/api_config.json with the '
-                    'server URL and API token used by the checker host.'
-                ),
-                (
-                    'Run the ASTROM check again after the server-side '
-                    'configuration is in place.'
-                ),
+                {
+                    'text': (
+                        'Ensure the ARI server can reach the same ARI '
+                        'data directory used by the checker process.'
+                    ),
+                },
+                {
+                    'text': (
+                        'Make sure the astrometric YAML database exists '
+                        f'under {resolved_data_dir}/apero-assets/'
+                        'astrometrics.'
+                    ),
+                },
+                {
+                    'text': (
+                        'Create or edit '
+                        f'{resolved_data_dir}/api_config.json with the '
+                        'server URL and API token used by the checker '
+                        'host.'
+                    ),
+                    'link': {
+                        'endpoint': 'home_admin_portal_api_config',
+                        'label': 'Open Server API Config',
+                    },
+                },
+                {
+                    'text': (
+                        'Run the ASTROM check again after the server-side '
+                        'configuration is in place.'
+                    ),
+                },
             ],
         },
         {
@@ -1486,6 +1509,19 @@ def make_page_view(app, page_id: str, package_dir: Path):
 
         if page_id == "home.admin_portal.backup_settings":
             context.update(app._build_admin_backup_context(perms))
+
+        if page_id == "home.admin_portal.api_config":
+            try:
+                resolved_data_dir = app._resolve_local_data_dir()
+            except Exception:  # noqa: BLE001
+                resolved_data_dir = Path.home() / ".ari"
+            resolved_data_dir = Path(resolved_data_dir).expanduser()
+            api_config_path = resolved_data_dir / "api_config.json"
+            context["resolved_data_dir"] = str(resolved_data_dir)
+            context["api_config_path"] = str(api_config_path)
+            context["api_config_status"] = (
+                "present" if api_config_path.exists() else "missing"
+            )
 
         if page_id == 'home.admin_portal.first_time_guide' and user_info:
             context['first_time_steps'] = _build_first_time_guide_steps(

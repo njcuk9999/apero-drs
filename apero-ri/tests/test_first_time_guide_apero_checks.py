@@ -36,3 +36,27 @@ def test_apero_checks_setup_status_requires_config_and_astrom_dir(tmp_path):
     assert status["complete"] is False
     assert status["status"] == "pending"
     assert "api_config.json" in status["message"]
+
+
+def test_apero_checks_guide_step_uses_resolved_data_dir_and_api_access_link():
+    class DummyApp:
+        def _get_admin_health(self, **kwargs):
+            return {}, None, None
+
+        def _build_admin_db_tunnel_context(self, *args, **kwargs):
+            return {"db_tunnels": [], "db_local_databases": []}
+
+        def _resolve_local_data_dir(self):
+            return "/tmp/ari-test"
+
+    steps = page_view_helpers._build_first_time_guide_steps(
+        DummyApp(), None, []
+    )
+    step = next(
+        item for item in steps
+        if item["page_id"] == "home.admin_portal.apero_checks_policy"
+    )
+
+    assert "/tmp/ari-test/apero-assets/astrometrics" in step["sub_steps"][1]["text"]
+    assert "/tmp/ari-test/api_config.json" in step["sub_steps"][2]["text"]
+    assert step["sub_steps"][2]["link"]["endpoint"] == "home_admin_portal_api_config"
