@@ -41,7 +41,14 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 document.querySelectorAll('.ari-doc-content pre code').forEach(function(el) {
-    hljs.highlightElement(el);
+    if (!el.textContent) {
+        return;
+    }
+    try {
+        hljs.highlightElement(el);
+    } catch (err) {
+        console.warn('Unable to highlight code block', err);
+    }
 });
 </script>
 {% endblock %}

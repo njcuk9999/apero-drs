@@ -1020,8 +1020,14 @@ class ARIApp(Flask):
 
     @staticmethod
     def _doc_image_view(filename: str):
-        """Serve uploaded documentation images."""
-        return send_from_directory(str(DOC_IMAGES), filename)
+        """Serve documentation images from the static docs image directory."""
+        safe_name = Path(filename).name
+        if not safe_name or safe_name != filename:
+            return ("Invalid image path", 400)
+        image_path = docs.DOC_IMAGES / safe_name
+        if not image_path.exists() or not image_path.is_file():
+            return ("Image not found", 404)
+        return send_from_directory(str(docs.DOC_IMAGES), safe_name)
 
     # -----------------------------------------------------------------
     # Object table sub-page + API

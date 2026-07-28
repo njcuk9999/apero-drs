@@ -53,6 +53,7 @@ MD_EXTENSION_CONFIGS = {
     "codehilite": {
         "css_class": "highlight",
         "guess_lang": False,
+        "use_pygments": True,
     },
     "toc": {
         "permalink": True,
@@ -501,11 +502,17 @@ def get_doc_last_modified(
 
 
 def render_markdown(text: str) -> str:
-    """Render markdown text to HTML."""
+    """Render markdown text to HTML without allowing raw HTML injection."""
     md = markdown.Markdown(
         extensions=MD_EXTENSIONS,
         extension_configs=MD_EXTENSION_CONFIGS,
+        output_format="html5",
     )
+    md.stripTopLevelTags = False
+    try:
+        md.enable_attributes = False
+    except Exception:
+        pass
     return md.convert(text)
 
 
