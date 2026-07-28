@@ -119,7 +119,9 @@
     <h2><i class="fa-solid fa-key"></i> API Token</h2>
     <p class="ua-note" style="margin-top:0;margin-bottom:0.8rem;">
         Your API token lets you access APERO RI data programmatically via
-        <code>from apero_ri import ari_api</code>.
+        <code>from apero_ri import ari_api</code>. For the Python client,
+        you also need the base URL of this ARI instance as the <code>server</code>
+        value in <code>&lt;ARI_DIR&gt;/api_config.json</code>.
     </p>
 
     {% if token_info %}

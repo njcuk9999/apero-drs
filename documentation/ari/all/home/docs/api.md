@@ -36,8 +36,18 @@ This pulls in the lightweight client only (no apero-drs).
 
 ## 3. Configuration
 
-Configure the client once per machine.  Settings are saved to
-`~/.ari/api_config.json`:
+Configure the client once per machine.  The client reads settings from
+`<ARI_DIR>/api_config.json`, where `ARI_DIR` is the ARI data directory in use
+for the current runtime (usually `~/.ari` unless you set `ARI_DIR` explicitly).
+
+The two values are:
+
+- `server`: the base URL of the ARI instance, for example
+  `https://your-apero-ri-server.example.com`
+- `token`: the API token generated in the ARI web UI at
+  User Portal → API Access
+
+You can set them in Python:
 
 ```python
 from apero_ri import ari_api
@@ -48,8 +58,8 @@ ari_api.configure(
 )
 ```
 
-> **Tip:** The token and server URL are persisted locally so you only need
-> to call `configure()` once.
+If the check is running on another machine, the same file must exist there
+with the same values.
 
 ---
 

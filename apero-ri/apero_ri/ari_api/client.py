@@ -26,7 +26,15 @@ except ImportError:
 # -------------------------------------------------------------------------
 # Configuration persistence
 # -------------------------------------------------------------------------
-_CONFIG_DIR = Path.home() / ".ari"
+def _default_config_dir() -> Path:
+    """Return the ARI data directory used by the current runtime."""
+    ari_dir = os.environ.get("ARI_DIR", "")
+    if ari_dir:
+        return Path(ari_dir).expanduser()
+    return Path.home() / ".ari"
+
+
+_CONFIG_DIR = _default_config_dir()
 _CONFIG_FILE = _CONFIG_DIR / "api_config.json"
 
 # In-memory overrides (set by configure())
@@ -43,11 +51,22 @@ def _ensure_requests():
         )
 
 
+def _config_file() -> Path:
+    """Return the active api_config.json path for the current runtime."""
+    return _default_config_dir() / "api_config.json"
+
+
+def _config_hint() -> str:
+    """Return a user-facing hint for the active config file location."""
+    return str(_config_file())
+
+
 def _load_config() -> Dict[str, str]:
-    """Load config from ``~/.ari/api_config.json``."""
-    if _CONFIG_FILE.exists():
+    """Load config from the active ARI data-directory config file."""
+    config_file = _config_file()
+    if config_file.exists():
         try:
-            with open(_CONFIG_FILE, "r", encoding="utf-8") as fh:
+            with open(config_file, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
             if isinstance(data, dict):
                 return data
@@ -57,12 +76,13 @@ def _load_config() -> Dict[str, str]:
 
 
 def _save_config(cfg: Dict[str, str]) -> None:
-    """Persist config to ``~/.ari/api_config.json`` (chmod 0o600)."""
-    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    with open(_CONFIG_FILE, "w", encoding="utf-8") as fh:
+    """Persist config to the active ARI data-directory config file."""
+    config_file = _config_file()
+    config_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_file, "w", encoding="utf-8") as fh:
         json.dump(cfg, fh, indent=2)
     try:
-        _CONFIG_FILE.chmod(0o600)
+        config_file.chmod(0o600)
     except OSError:
         pass
 
@@ -77,7 +97,8 @@ def configure(server: str, token: str, *, save: bool = True) -> None:
     token : str
         API token obtained from the ARI user portal.
     save : bool
-        If *True* (default), persist to ``~/.ari/api_config.json``.
+        If *True* (default), persist to the active ARI data-directory
+        config file (typically ``<ARI_DIR>/api_config.json``).
     """
     global _runtime_server, _runtime_token
     _runtime_server = server.rstrip("/")
@@ -97,8 +118,9 @@ def _get_server() -> str:
     server = cfg.get("server", "").strip()
     if not server:
         raise RuntimeError(
-            "ARI server not configured.  Call ari_api.configure(server=..., "
-            "token=...) first."
+            "ARI server not configured.  Create or edit "
+            f"{_config_hint()} and set 'server' to the base URL of this "
+            "ARI instance, for example 'https://your-ari-host'."
         )
     return server.rstrip("/")
 
@@ -111,8 +133,9 @@ def _get_token() -> str:
     token = cfg.get("token", "").strip()
     if not token:
         raise RuntimeError(
-            "ARI API token not configured.  Call ari_api.configure(server=..., "
-            "token=...) first, or generate a token in the ARI user portal."
+            "ARI API token not configured.  Create or edit "
+            f"{_config_hint()} and set 'token' to the API token generated "
+            "in the ARI User Portal → API Access page."
         )
     return token
 
