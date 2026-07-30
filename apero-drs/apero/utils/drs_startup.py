@@ -1069,6 +1069,69 @@ def read_runfile(params: ParamDict, recipe: Union[DrsRecipe, None],
         return read_runfile_yaml(params, recipe, runfile, rkind, log_overwrite)
 
 
+def _flatten_runfile_yaml(prefix: str,
+                         value: Any) -> List[Tuple[str, Any]]:
+    """Flatten nested runfile YAML mappings to dotted keys.
+
+    Example: ``DB: {BATCH_QUERIES: False}`` becomes
+    ``('DB.BATCH_QUERIES', False)``.
+    """
+    out = []
+    if not isinstance(value, dict):
+        out.append((prefix, value))
+        return out
+
+    for subkey in value:
+        subname = str(subkey).strip()
+        if subname == '':
+            continue
+        fullkey = f'{prefix}.{subname}'
+        out += _flatten_runfile_yaml(fullkey, value[subkey])
+    return out
+
+
+def _resolve_runfile_key(params: ParamDict, key: str) -> str:
+    """Resolve runfile key name against params with upper-case fallback."""
+    if key in params:
+        return key
+    upper_key = str(key).upper()
+    if upper_key in params:
+        return upper_key
+    return key
+
+
+def _set_runfile_param(params: ParamDict,
+                       key: str,
+                       value: Any,
+                       func_name: str,
+                       log_overwrite: bool,
+                       overwrite_keys: List[str]) -> None:
+    """Set one runfile key into params with type-cast and overwrite logging."""
+    target_key = _resolve_runfile_key(params, key)
+
+    if target_key in params:
+        overwrite_keys.append(target_key)
+        if not log_overwrite:
+            if not drs_text.null_text(params[target_key], ['', 'None']):
+                wargs = [target_key, params[target_key], value]
+                wmsg = textentry('10-503-00002', args=wargs)
+                WLOG(params, 'warning', wmsg, sublevel=2)
+        instance = params.instances[target_key]
+        try:
+            params[target_key] = instance.dtype(value)
+            params.set_source(target_key, func_name)
+        except Exception as _:
+            emsg = ('Run File Error: keyword "{0}"={1} invalid '
+                    '(required "{2}")')
+            eargs = [target_key, value, instance.dtype]
+            raise drs_log.AperoCodedException(params, None,
+                                              message=emsg,
+                                              targs=eargs)
+    else:
+        params[target_key] = value
+        params.set_source(target_key, func_name)
+
+
 def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
                       runfile: str, rkind: str = 'start',
                       log_overwrite: bool = False) -> Tuple[ParamDict, OrderedDict]:
@@ -1125,36 +1188,24 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
         runtable[run_key] = yaml_dict['IDS'][run_key]
     # push keys that already exist in params
     for key in yaml_dict:
-        # get the value
         value = yaml_dict[key]
-        # log if we are overwriting value
-        if key in params:
-            # store these
-            overwrite_keys.append(key)
-            # don't log if log overwrite is set to True
-            if log_overwrite:
+        resolved_key = _resolve_runfile_key(params, str(key))
+
+        if isinstance(value, dict):
+            flat_items = _flatten_runfile_yaml(str(key), value)
+            mapped = False
+            for nested_key, nested_value in flat_items:
+                target_nested = _resolve_runfile_key(params, nested_key)
+                if target_nested in params:
+                    _set_runfile_param(params, target_nested, nested_value,
+                                       func_name, log_overwrite,
+                                       overwrite_keys)
+                    mapped = True
+            if mapped and resolved_key not in params:
                 continue
-            # only log if value was not null before
-            if not drs_text.null_text(params[key], ['', 'None']):
-                wargs = [key, params[key], value]
-                wmsg = textentry('10-503-00002', args=wargs)
-                WLOG(params, 'warning', wmsg, sublevel=2)
-            # get instance
-            instance = params.instances[key]
-            try:
-                params[key] = instance.dtype(value)
-                params.set_source(key, func_name)
-            except Exception as _:
-                # TODO: Add to language database
-                emsg = ('Run File Error: keyword "{0}"={1} invalid '
-                        '(required "{2}")')
-                eargs = [key, value, instance.dtype]
-                raise drs_log.AperoCodedException(params, None,
-                                                  message=emsg,
-                                                  targs=eargs)
-        else:
-            params[key] = value
-            params.set_source(key, func_name)
+
+        _set_runfile_param(params, resolved_key, value, func_name,
+                           log_overwrite, overwrite_keys)
     # ----------------------------------------------------------------------
     if rkind == 'run':
         # get run keys from run_params

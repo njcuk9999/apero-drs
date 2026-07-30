@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 """Raw APERO check that every raw-file object name resolves in the astrometric database."""
 
+from functools import lru_cache
+from pathlib import Path
 from typing import Optional, Tuple
+import os
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck
@@ -63,10 +66,17 @@ def _resolve_astrom(name: str) -> Tuple[Optional[str], Optional[str]]:
     Returns a tuple of ``(apero_name, detail)``.  ``apero_name`` is the
     resolved APERO name on success, ``detail`` holds a short explanation when
     resolution fails so the report can distinguish missing targets from API or
-    configuration problems.  The server-side resolver checks the APERO_NAME
-    field, all registered aliases, and normalised (alphanumeric-only) name
-    variants.
+    configuration problems. The resolver checks local astrometric YAMLs first
+    for speed and falls back to the API resolver when local assets are not
+    available.
     """
+    local_name, local_detail, local_available = _resolve_astrom_local(name)
+    if local_name is not None:
+        return local_name, None
+    if local_available:
+        return None, local_detail
+
+    # Local assets are unavailable; use API resolution as a fallback.
     try:
         from apero_ri.ari_api import astrometrics as _astro_api
         result = _astro_api.resolve_by_name(name)
@@ -80,6 +90,63 @@ def _resolve_astrom(name: str) -> Tuple[Optional[str], Optional[str]]:
     except Exception as exc:
         detail = f'{type(exc).__name__}: {exc}'
         return None, detail
+
+
+def _resolve_astrom_local(name: str
+                          ) -> Tuple[Optional[str], Optional[str], bool]:
+    """Resolve one object name against local astrometric YAML files.
+
+    Returns ``(apero_name, detail, local_available)``.
+    """
+    astrom_root = _local_astrom_root()
+    if astrom_root is None:
+        detail = 'local astrometrics directory not found'
+        return None, detail, False
+
+    try:
+        from apero.core import drs_astrometrics as _dra
+        entry = _dra.find_by_name(str(astrom_root), name)
+    except Exception as exc:
+        detail = f'local resolver failed: {type(exc).__name__}: {exc}'
+        return None, detail, True
+
+    if not isinstance(entry, dict):
+        return None, 'name not found in local astrometrics', True
+
+    apero_name = str(entry.get('APERO_NAME', '') or '').strip()
+    if apero_name == '':
+        apero_name = name
+    return apero_name, None, True
+
+
+@lru_cache(maxsize=1)
+def _local_astrom_root() -> Optional[Path]:
+    """Return the first available local astrometrics directory."""
+    for base_dir in _local_data_dirs():
+        astrom_root = base_dir / 'apero-assets' / 'astrometrics'
+        if astrom_root.exists() and astrom_root.is_dir():
+            return astrom_root
+    return None
+
+
+def _local_data_dirs() -> list:
+    """Return candidate local data directories for assets lookups."""
+    dirs = []
+    for env_key in ['ARI_DIR', 'LOCAL_DATA_DIR']:
+        value = str(os.environ.get(env_key, '') or '').strip()
+        if value != '':
+            dirs.append(Path(value).expanduser())
+    dirs.append(Path.home() / '.ari')
+
+    unique = []
+    seen = set()
+    for path in dirs:
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(path)
+    return unique
 
 
 # =============================================================================
