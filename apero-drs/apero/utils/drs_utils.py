@@ -1106,8 +1106,6 @@ def get_cores(params):
                 eargs = [type(e), e]
                 WLOG(params, 'error', textentry('00-503-00014', args=eargs))
                 cores = 1
-            # update the value in params
-            params.set('CORES', value=cores, source='USER INPUT')
         else:
             cores = None
     # -------------------------------------------------------------------------
@@ -1125,7 +1123,7 @@ def get_cores(params):
             eargs = [type(e), e]
             WLOG(params, 'error', textentry('00-503-00007', args=eargs))
             cores = 1
-    else:
+    elif cores is None:
         cores = 1
     # -------------------------------------------------------------------------
     # if cores is negative use all but this many cores
