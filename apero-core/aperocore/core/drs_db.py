@@ -289,6 +289,12 @@ class AperoDatabase:
         # metadata cache to avoid repeated reflection (improves performance)
         self._metadata_cache = {}
         self._metadata_cache_timestamp = {}
+        # derived caches (invalidated together with metadata cache)
+        # - _table_cache avoids re-constructing sqlalchemy.Table on every call
+        # - _unique_cols_cache avoids re-querying information_schema for
+        #   unique constraints on every write
+        self._table_cache = {}
+        self._unique_cols_cache = {}
 
     def __getstate__(self) -> dict:
         """
@@ -296,7 +302,8 @@ class AperoDatabase:
         :return:
         """
         # what to exclude from state
-        exclude = ['engine', '_metadata_cache', '_metadata_cache_timestamp']
+        exclude = ['engine', '_metadata_cache', '_metadata_cache_timestamp',
+                   '_table_cache', '_unique_cols_cache']
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -329,9 +336,11 @@ class AperoDatabase:
                 pool_reset_on_return='rollback'
             )
         self.engine = _retry_operation(_create_engine, max_retries=5)
-        # reinitialize metadata cache
+        # reinitialize metadata cache and derived caches
         self._metadata_cache = {}
         self._metadata_cache_timestamp = {}
+        self._table_cache = {}
+        self._unique_cols_cache = {}
 
     def __str__(self):
         """
@@ -397,8 +406,41 @@ class AperoDatabase:
         # Cache the result
         self._metadata_cache[cache_key] = metadata
         self._metadata_cache_timestamp[cache_key] = current_time
+        # Invalidate derived caches for this key. The reflected MetaData is a
+        # brand-new object so any previously cached Table objects reference
+        # stale metadata and must be dropped.
+        if cache_key == '__all__':
+            self._table_cache.clear()
+            self._unique_cols_cache.clear()
+        else:
+            self._table_cache.pop(cache_key, None)
+            self._unique_cols_cache.pop(cache_key, None)
 
         return metadata
+
+    def _get_table(self, tablename: Optional[str] = None) -> sqlalchemy.Table:
+        """
+        Return a cached sqlalchemy.Table object for tablename.
+
+        This avoids re-constructing the Table (and re-checking the metadata)
+        on every DB call. The cached object is invalidated automatically
+        whenever _get_metadata refreshes the underlying reflection.
+
+        :param tablename: str, the name of the table (defaults to
+                          self.tablename)
+        :return: sqlalchemy.Table
+        """
+        # infer the tablename
+        _tablename = tablename if tablename is not None else self.tablename
+        # fast path - cached Table object
+        cached = self._table_cache.get(_tablename)
+        if cached is not None:
+            return cached
+        # slow path - reflect metadata and construct Table
+        metadata = self._get_metadata(tablename=_tablename)
+        sqltable = sqlalchemy.Table(_tablename, metadata)
+        self._table_cache[_tablename] = sqltable
+        return sqltable
 
     def clear_metadata_cache(self, tablename: Optional[str] = None):
         """
@@ -412,9 +454,13 @@ class AperoDatabase:
                 del self._metadata_cache[cache_key]
             if cache_key in self._metadata_cache_timestamp:
                 del self._metadata_cache_timestamp[cache_key]
+            self._table_cache.pop(cache_key, None)
+            self._unique_cols_cache.pop(cache_key, None)
         else:
             self._metadata_cache.clear()
             self._metadata_cache_timestamp.clear()
+            self._table_cache.clear()
+            self._unique_cols_cache.clear()
 
     def add_database(self):
         def _check_and_create():
@@ -501,6 +547,9 @@ class AperoDatabase:
             # create table
             metadata.create_all(self.engine)
         _retry_operation(_create_table, max_retries=5)
+        # invalidate any cached metadata/Table/unique_cols for this table
+        # so a subsequent read reflects the newly-created schema
+        self.clear_metadata_cache(tablename)
 
     def get_tables(self):
         """
@@ -552,23 +601,14 @@ class AperoDatabase:
         def _execute_count():
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
-            # get metadata for only this specific table
-            metadata = self._get_metadata(tablename=_tablename)
-            # create a table to fill
-            sqltable = sqlalchemy.Table(_tablename, metadata)
-            # Create a session
-            session_obj = sessionmaker(bind=self.engine)
-            # set up query with session
-            with session_obj() as session:
-                # set up query
-                query = session.query(sqlalchemy.func.count())
-                # add the table to select from
-                query = query.select_from(sqltable)
-                # if we have a condition filter by it
-                if condition is not None:
-                    query = query.filter(sqlalchemy.text(condition))
-                # get the count
-                count = query.scalar()
+            # Build raw SQL to bypass the SQLAlchemy expression-language
+            # overhead (see apero-drs performance notes).
+            sql = 'SELECT COUNT(*) FROM {0}'.format(_tablename)
+            if condition is not None:
+                sql += ' WHERE {0}'.format(condition)
+            # exec_driver_sql skips SQLAlchemy's text-parsing (~35us/call)
+            with self.engine.begin() as conn:
+                count = conn.exec_driver_sql(sql).scalar()
             return count
         # return the count with retry
         return _retry_operation(_execute_count, max_retries=5, retry_delay=2)
@@ -598,20 +638,15 @@ class AperoDatabase:
         def _execute_unique():
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
-            # get metadata for only this specific table
-            metadata = self._get_metadata(tablename=_tablename)
-            # create a table to fill
-            sqltable = sqlalchemy.Table(_tablename, metadata)
-            # add the table to select from
-            query = sqltable.select().with_only_columns(getattr(sqltable.c, column))
-            # deal with where condition
+            # Build raw SQL to bypass the SQLAlchemy expression-language
+            # overhead. column and condition are already free-form SQL
+            # strings supplied by the caller.
+            sql = 'SELECT DISTINCT {0} FROM {1}'.format(column, _tablename)
             if condition is not None:
-                query = query.where(sqlalchemy.text(condition))
-            # make sure we only get unique values
-            query = query.distinct()
-            # get the unique values
+                sql += ' WHERE {0}'.format(condition)
+            # exec_driver_sql skips SQLAlchemy's text-parsing (~35us/call)
             with self.engine.begin() as conn:
-                result = conn.execute(query).fetchall()
+                result = conn.exec_driver_sql(sql).fetchall()
             # flatten result
             items = [item for sublist in result for item in sublist]
             # remove None from items
@@ -685,52 +720,45 @@ class AperoDatabase:
         def _execute_get():
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
-            # get metadata for only this specific table
-            metadata = self._get_metadata(tablename=_tablename)
-            # create a table to fill
-            sqltable = sqlalchemy.Table(_tablename, metadata)
-            # create a query statement
+            # Build raw SQL to bypass the SQLAlchemy expression-language
+            # overhead. columns/condition/sort_by/groupby are already
+            # free-form SQL strings supplied by the caller.
             if columns == '*':
-                query = sqltable.select()
+                col_sql = '*'
             else:
-                # get column instances matching our input columns
-                sqlcols = []
-                for col in columns.split(','):
-                    col = col.strip()
-                    sqlcols.append(getattr(sqltable.c, col))
-                # run query only with these columns
-                query = sqltable.select().with_only_columns(*sqlcols)
+                # normalize whitespace between comma-separated names
+                col_sql = ','.join(c.strip() for c in columns.split(','))
+            sql = 'SELECT {0} FROM {1}'.format(col_sql, _tablename)
             # add condition
             if condition is not None:
-                query = query.where(sqlalchemy.text(condition))
-            # deal with descending
-            if sort_descending:
-                ordering = sqlalchemy.desc
-            else:
-                ordering = sqlalchemy.asc
-            # deal with sort by
-            if sort_by is not None:
-                if isinstance(sort_by, list):
-                    for column in sort_by:
-                        query = query.order_by(ordering(column))
-                else:
-                    query = query.order_by(ordering(sort_by))
-            # deal with max rows
-            if max_rows is not None:
-                query = query.limit(max_rows)
+                sql += ' WHERE {0}'.format(condition)
             # add the group by statement
             if groupby is not None:
-                query = query.group_by(groupby)
+                sql += ' GROUP BY {0}'.format(groupby)
+            # deal with sort by
+            if sort_by is not None:
+                order = 'DESC' if sort_descending else 'ASC'
+                if isinstance(sort_by, list):
+                    sb = ', '.join('{0} {1}'.format(s, order) for s in sort_by)
+                else:
+                    sb = '{0} {1}'.format(sort_by, order)
+                sql += ' ORDER BY {0}'.format(sb)
+            # deal with max rows
+            if max_rows is not None:
+                sql += ' LIMIT {0}'.format(int(max_rows))
             # execute the query
+            # exec_driver_sql skips SQLAlchemy's text-parsing (~35us/call)
             with self.engine.begin() as conn:
-                result = conn.execute(query)
+                result = conn.exec_driver_sql(sql)
+                # capture column keys before Result is exhausted
+                keys = list(result.keys())
                 # annoying hack to avoid decimal types (cast to floats)
                 prows = _process_rows(result.fetchall())
                 # get the results as a list
                 if return_pandas:
-                    rows = pd.DataFrame(prows, columns=result.keys())
+                    rows = pd.DataFrame(prows, columns=keys)
                 elif return_table:
-                    rows = pd.DataFrame(prows, columns=result.keys())
+                    rows = pd.DataFrame(prows, columns=keys)
                     rows = AstropyTable.from_pandas(rows)
                 elif return_array:
                     rows = np.array(prows)
@@ -778,22 +806,17 @@ class AperoDatabase:
         def _execute_set_row():
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
-            # get metadata for only this specific table
-            metadata = self._get_metadata(tablename=_tablename)
-            # create a table to fill
-            sqltable = sqlalchemy.Table(_tablename, metadata)
             # ---------------------------------------------------------------------
             # get a list of the unique columns
             unique_cols = self._unique_cols(_tablename)
-            # ---------------------------------------------------------------------
-            # create an update query statement
-            update_query = sqlalchemy.update(sqltable)
             # ---------------------------------------------------------------------
             # create a dictionary of the columns and values
             _columns = columns
             if _columns is None:
                 _columns = list(update_dict.keys())
             if _columns == '*':
+                # cached Table only needed for the '*' column expansion
+                sqltable = self._get_table(_tablename)
                 # noinspection PyUnresolvedReferences
                 _columns = [col.name for col in sqltable.columns]
             # ---------------------------------------------------------------------
@@ -820,16 +843,20 @@ class AperoDatabase:
                 # condition based on only on unique_col
                 _condition = '{0}="{1}"'.format(UHASH_COL, _update_dict[UHASH_COL])
             # ---------------------------------------------------------------------
-            # add condition
+            # Build raw SQL UPDATE with indexed bind parameters (avoids
+            # SQLAlchemy expression-language overhead).
+            set_parts = []
+            params = {}
+            for i, (col, val) in enumerate(_update_dict.items()):
+                pname = '_v{0}'.format(i)
+                set_parts.append('{0} = :{1}'.format(col, pname))
+                params[pname] = val
+            sql = 'UPDATE {0} SET {1}'.format(_tablename, ', '.join(set_parts))
             if _condition is not None:
-                update_query = update_query.where(sqlalchemy.text(_condition))
-            # ---------------------------------------------------------------------
-            # add values to update
-            update_query = update_query.values(_update_dict)
-            # ---------------------------------------------------------------------
+                sql += ' WHERE {0}'.format(_condition)
             # execute the query
             with self.engine.begin() as conn:
-                conn.execute(update_query)
+                conn.execute(sqlalchemy.text(sql), params)
         _retry_operation(_execute_set_row, max_retries=5)
 
     def add_row(self, values: Optional[List[object]] = None,
@@ -867,16 +894,9 @@ class AperoDatabase:
         # get the table name
         if tablename is None:
             tablename = self.tablename
-        # get metadata for only this specific table
-        metadata = self._get_metadata(tablename=tablename)
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
         # get a list of the unique columns
         unique_cols = self._unique_cols(tablename)
-        # ---------------------------------------------------------------------
-        # create an update query statement
-        insert_query = sqlalchemy.insert(sqltable)
         # ---------------------------------------------------------------------
         # create a dictionary of the columns and values
         if columns is None:
@@ -886,6 +906,8 @@ class AperoDatabase:
             else:
                 columns = list(insert_dict.keys())
         if columns == '*':
+            # cached Table only needed for the '*' column expansion
+            sqltable = self._get_table(tablename)
             # noinspection PyUnresolvedReferences
             columns = [col.name for col in sqltable.columns]
         # ---------------------------------------------------------------------
@@ -906,13 +928,17 @@ class AperoDatabase:
         if len(unique_cols) > 0:
             insert_dict = _hash_col(insert_dict, unique_cols)
         # ---------------------------------------------------------------------
-        # add values to update
-        insert_query = insert_query.values(insert_dict)
-        # ---------------------------------------------------------------------
+        # Build raw SQL INSERT with column-name bind parameters (avoids
+        # SQLAlchemy expression-language overhead). APERO column names
+        # are valid bind-parameter identifiers.
+        col_names = list(insert_dict.keys())
+        placeholders = ','.join(':{0}'.format(c) for c in col_names)
+        sql = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(
+            tablename, ','.join(col_names), placeholders)
         # execute the query
         try:
             with self.engine.begin() as conn:
-                conn.execute(insert_query)
+                conn.execute(sqlalchemy.text(sql), insert_dict)
         except IntegrityError:
             # need to deal with insert_dict being a list
             #   in this case we have to add each row individually
@@ -939,10 +965,8 @@ class AperoDatabase:
         # Get table name first
         if tablename is None:
             tablename = self.tablename
-        # Reflect table
-        metadata = self._get_metadata(tablename=tablename)
-        # ---------------------------------------------------------------------
-        sqltable = sqlalchemy.Table(tablename, metadata)
+        # get cached sqlalchemy.Table (metadata reflected once, then reused)
+        sqltable = self._get_table(tablename)
         # ---------------------------------------------------------------------
         # Unique columns (for hash, duplicate detection)
         unique_cols = self._unique_cols(tablename)
@@ -977,8 +1001,6 @@ class AperoDatabase:
                 for row in cleaned_rows:
                     self.add_row(insert_dict=row, tablename=tablename)
         _retry_operation(_execute_bulk_insert, max_retries=5)
-        # make sure all rows are added an dpending connections closed
-        time.sleep(5)
 
     def set_rows(self,
                  update_dicts: List[dict],
@@ -998,9 +1020,8 @@ class AperoDatabase:
         # Get table name
         if tablename is None:
             tablename = self.tablename
-        # Define metadata and reflect table
-        metadata = self._get_metadata(tablename=tablename)
-        sqltable = sqlalchemy.Table(tablename, metadata)
+        # get cached sqlalchemy.Table (metadata reflected once, then reused)
+        sqltable = self._get_table(tablename)
 
         # Get unique columns
         unique_cols = self._unique_cols(tablename)
@@ -1177,8 +1198,6 @@ class AperoDatabase:
             for row_update, condition in fallback_rows:
                 _execute_row_update(row_update, condition)
         _retry_operation(_execute_set_rows, max_retries=5)
-        # make sure all rows are added an dpending connections closed
-        time.sleep(5)
 
     def delete_rows(self, tablename: Optional[str] = None,
                     condition: Optional[str] = None):
@@ -1199,10 +1218,8 @@ class AperoDatabase:
         # get the table name
         if tablename is None:
             tablename = self.tablename
-        # get metadata for only this specific table
-        metadata = self._get_metadata(tablename=tablename)
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
+        # get cached sqlalchemy.Table (metadata reflected once, then reused)
+        sqltable = self._get_table(tablename)
         # ---------------------------------------------------------------------
         # set up a delete query
         delete_query = sqlalchemy.delete(sqltable)
@@ -1243,17 +1260,16 @@ class AperoDatabase:
             # cannot delete if table does not exist
             if not inspector.has_table(tablename):
                 return
-            # define the meta data
-            # get metadata for only this specific table
-            metadata = self._get_metadata(tablename=tablename)
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
-            # create a table to fill
-            sqltable = sqlalchemy.Table(_tablename, metadata)
+            # get cached sqlalchemy.Table (metadata reflected once, then reused)
+            sqltable = self._get_table(_tablename)
             # execute the query
             with self.engine.begin() as _:
                 sqltable.drop(self.engine)
         _retry_operation(_delete_table, max_retries=5)
+        # invalidate caches for the dropped table
+        self.clear_metadata_cache(tablename)
 
     def rename_table(self, old_name: str, new_name: str):
         """
@@ -1275,6 +1291,9 @@ class AperoDatabase:
             with self.engine.begin() as conn:
                 conn.execute(sqlalchemy.text(command))
         _retry_operation(_execute_rename, max_retries=5)
+        # invalidate cached metadata/Table/unique_cols for both names
+        self.clear_metadata_cache(old_name)
+        self.clear_metadata_cache(new_name)
         # ---------------------------------------------------------------------
         # if old_name is the current tablename then change it the new_name
         if old_name == self.tablename:
@@ -1295,10 +1314,8 @@ class AperoDatabase:
         # get the table name
         if tablename is None:
             tablename = self.tablename
-        # get metadata for only this specific table
-        metadata = self._get_metadata(tablename=tablename)
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
+        # get cached sqlalchemy.Table (metadata reflected once, then reused)
+        sqltable = self._get_table(tablename)
         # ---------------------------------------------------------------------
         # create a dictionary of the columns and values
         if columns == '*':
@@ -1502,6 +1519,15 @@ class AperoDatabase:
         # get tablename
         if tablename is None:
             tablename = self._infer_table_()
+        # ---------------------------------------------------------------------
+        # fast path - return cached list if available. The
+        # get_unique_constraints call below runs a round-trip against
+        # information_schema (MySQL) which is expensive when done on
+        # every write.
+        cached = self._unique_cols_cache.get(tablename)
+        if cached is not None:
+            return list(cached)
+        # ---------------------------------------------------------------------
         # define an inspector and get unique constraints with retry
         def _get_unique_constraints():
             inspector = sqlalchemy.inspect(self.engine)
@@ -1515,8 +1541,11 @@ class AperoDatabase:
                 if _col == UHASH_COL:
                     continue
                 unique_cols.add(_col)
+        # cache result (invalidated together with metadata cache)
+        cached_list = list(unique_cols)
+        self._unique_cols_cache[tablename] = cached_list
         # return a list of unique columns
-        return list(unique_cols)
+        return list(cached_list)
 
 
 class AperoDatabaseColumns:
