@@ -4494,34 +4494,43 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
         elif (value in params) and (value in SPECIAL_LIST_KEYS):
             # get user filter from parameters
             user_filter = params[value]
-            # deal with value not being set or being empty
+            # -----------------------------------------------------------------
+            # work out whether the user has left this filter unset
+            #   i.e. None / empty / "All" / "None"
             if user_filter is None or len(user_filter) == 0:
-                continue
-            # convert to a character array
-            user_filter = np.char.array(user_filter)
-            # Deal with ALL - don't filter
-            if 'ALL' in user_filter.upper():
-                continue
-            # Deal with None - don't filter
-            elif 'None' in user_filter:
-                continue
-            # Deal with telluric targets
-            if value == 'TELLURIC_TARGETS':
-                # get a list of all telluric stars
-                tellu_include_list = telluric.get_tellu_include_list(params)
-                # find special targets and deal with those missing
-                clist = _find_special_targets(params, pconst,
-                                              tellu_include_list,
-                                              'TELLURIC_TARGETS', objdbm)
-                # add cleaned obj list to filters
-                filters[key] = list(np.unique(clist))
+                unset_filter = True
+            else:
+                # convert to a character array
+                char_filter = np.char.array(user_filter)
+                unset_filter = ('ALL' in char_filter.upper()
+                                or 'None' in char_filter)
+            # -----------------------------------------------------------------
+            # deal with an unset filter
+            if unset_filter:
+                # telluric targets must still be filtered by the telluric
+                #   allow-list - without this filter every science file is
+                #   treated as a hot star (and extracted as one)
+                if value == 'TELLURIC_TARGETS':
+                    # get a list of all telluric stars
+                    tellu_include_list = telluric.get_tellu_include_list(
+                        params, srecipe)
+                    # find special targets and deal with those missing
+                    clist = _find_special_targets(params, pconst,
+                                                  tellu_include_list,
+                                                  'TELLURIC_TARGETS', objdbm)
+                    # add cleaned obj list to filters
+                    filters[key] = list(np.unique(clist))
+                # science targets unset means "all non-telluric" - no filter
+                else:
+                    continue
+            # -----------------------------------------------------------------
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif value == 'SCIENCE_TARGETS':
                 # convert back to a list
-                user_filter = list(user_filter)
+                objlist = list(np.char.array(user_filter))
                 # find special targets and deal with those missing
-                clist = _find_special_targets(params, pconst, user_filter,
+                clist = _find_special_targets(params, pconst, objlist,
                                               'SCIENCE_TARGETS', objdbm)
                 # add cleaned obj list to filters
                 filters[key] = list(np.unique(clist))
@@ -4529,11 +4538,10 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 params.set('SCIENCE_TARGETS', value=','.join(clist))
             else:
                 # convert back to a list
-                user_filter = list(user_filter)
+                objlist = list(np.char.array(user_filter))
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
-                clist, _ = objdbm.find_objnames(user_filter,
-                                                allow_empty=True)
+                clist, _ = objdbm.find_objnames(objlist, allow_empty=True)
                 # add cleaned obj list to filters
                 filters[key] = list(np.unique(clist))
 
