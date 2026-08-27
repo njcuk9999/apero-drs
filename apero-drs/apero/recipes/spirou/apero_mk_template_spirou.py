@@ -174,7 +174,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         os.makedirs(abspath, exist_ok=True)
     # ----------------------------------------------------------------------
     # flag whether object is a hot star
-    flag_hotstar = telluric.id_hot_star(params, objname)
+    flag_hotstar = telluric.id_hot_star(params, recipe, objname)
     # ----------------------------------------------------------------------
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
