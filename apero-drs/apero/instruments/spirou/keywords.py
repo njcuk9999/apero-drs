@@ -399,30 +399,39 @@ KDict.set('KW_DRS_MAG_W3', key='PPM_W3', group='resolve', post_exclude=True,
           comment='The WISE W3 magnitude of the object [from resolve]')
 # Magnitude source defiitions
 KDict.set('KW_DRS_MAG_G_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_G',
           comment='The source of the Gaia G magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_GBP_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_GBP',
           comment='The source of the Gaia GBP magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_GRP_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_GRP',
           comment='The source of the Gaia GRP magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_J_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_J',
           comment='The source of the 2MASS J magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_H_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_H',
           comment='The source of the 2MASS H magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_KS_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_KS',
           comment='The source of the 2MASS Ks magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_W1_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_W1',
           comment='The source of the WISE W1 magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_W2_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_W2',
           comment='The source of the WISE W2 magnitude of the object '
                       '[from resolve]')
 KDict.set('KW_DRS_MAG_W3_SOURCE', group='resolve', post_exclude=True,
+          key='PPS_W3',
           comment='The source of the WISE W3 magnitude of the object '
                       '[from resolve]')
 
