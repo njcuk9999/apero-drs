@@ -1089,7 +1089,7 @@ def get_cores(params):
         # get value from inputs
         cores = params['INPUTS']['CORES']
         # deal with strings
-        if isinstance('cores', str):
+        if isinstance(cores, str):
             if cores.upper() == 'ALL':
                 cores = 0
             if cores.upper() == 'SINGLE':

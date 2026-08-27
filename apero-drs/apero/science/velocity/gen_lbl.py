@@ -135,8 +135,12 @@ def run_apero_get(params: ParamDict):
     # -------------------------------------------------------------------------
     objnames = 'None'
     if 'OBJNAMES' in params['INPUTS']:
-        if not drs_text.null_text(params['INPUTS'], ['None', '', 'Null']):
-            objnames = params['INPUTS']['OBJNAMES'].split(',')
+        # get the object names from the inputs
+        _objnames = params['INPUTS']['OBJNAMES']
+        # only override the default when the user actually gave us objects
+        #   (otherwise leave as 'None' so no object filter is applied)
+        if not drs_text.null_text(_objnames, ['None', '', 'Null']):
+            objnames = _objnames.split(',')
     # ----------------------------------------------------------
     # check directories exist - try to make them if they don't
     # ----------------------------------------------------------

@@ -337,15 +337,24 @@ def get_tellu_objs(params: ParamDict, recipe: DrsRecipe, key: str,
     # get base filenames with this mask
     # noinspection PyTypeChecker
     filenames = list(table['FILENAME'][mask])
+    # get the object name for each file (needed to build the path)
+    # noinspection PyTypeChecker
+    fileobjs = list(table['OBJECT'][mask])
     # ----------------------------------------------------------------------
     # make path absolute
     absfilenames = []
-    for filename in filenames:
-        # construct absolute path
-        absfilename = database.filedir.joinpath(filename)
-        # check exists
-        if absfilename.exists():
-            absfilenames.append(str(absfilename))
+    for filename, fileobj in zip(filenames, fileobjs):
+        # telluric database files are stored in
+        #   <filedir>/<key>/<objname>/  - older databases stored them
+        #   flat in <filedir> so we support both layouts here
+        trialpaths = [database.filedir.joinpath(key, str(fileobj), filename),
+                      database.filedir.joinpath(filename)]
+        # use the first path that exists
+        for absfilename in trialpaths:
+            # check exists
+            if absfilename.exists():
+                absfilenames.append(str(absfilename))
+                break
     # ----------------------------------------------------------------------
     # display how many files found
     margs = [len(absfilenames), key]
