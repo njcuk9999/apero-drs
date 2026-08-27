@@ -78,6 +78,31 @@ NON_NULL_OBJ_COLS = ['OBJNAME', 'RA_DEG', 'DEC_DEG', 'PMRA', 'PMDE', 'EPOCH']
 # =============================================================================
 # Define object resolution functions
 # =============================================================================
+def _null_float(value: Any, source: Any) -> Tuple[float, str]:
+    """
+    Convert a string to a float, returning NaN for null values.
+
+    :param value: str, the string to convert
+
+    :return: float, the converted value or NaN if null
+    """
+    # deal with no source
+    if source is None:
+        source = ''
+    # deal with no value
+    if value is None:
+        return np.nan, 'None Value'
+    # deal with a null value
+    if drs_text.null_text(value, ['None', '', 'Null']):
+        return np.nan, 'Null Value'
+    else:
+        # deal with a non-float properly
+        try:
+            return float(value), source
+        except Exception as e:
+            return np.nan, 'Invalid Float'
+
+
 def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
                    objname: Union[str, None] = None,
                    database: Union[ObjectDatabase, None] = None,
@@ -162,19 +187,23 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
             pmde_source = str(legacy['PMDE_SOURCE'])
             # parallax in mas (may not be present)
             plx_val = legacy.get('PLX')
-            plx = float(plx_val) if plx_val is not None else np.nan
-            plx_source = str(legacy.get('PLX_SOURCE') or '')
+            plx, plx_source = _null_float(plx_val, legacy.get('PLX_SOURCE'))
             # RV in km/s (may not be present)
             rv_val = legacy.get('RV')
-            rv = float(rv_val) if rv_val is not None else np.nan
-            rv_source = str(legacy.get('RV_SOURCE') or '')
+            rv, rv_source = _null_float(rv_val, legacy.get('RV_SOURCE'))
             # Teff in K (may not be present)
             teff_val = legacy.get('TEFF')
-            teff = float(teff_val) if teff_val is not None else np.nan
-            teff_source = str(legacy.get('TEFF_SOURCE') or '')
+            teff, teff_source = _null_float(teff_val, legacy.get('TEFF_SOURCE'))
             # spectral type (may not be present)
             sp_type = str(legacy.get('SP_TYPE') or '')
             sp_source = str(legacy.get('SP_SOURCE') or '')
+            # add mags and mag sources
+            mags, mag_sources = dict(), dict()
+            mag_sources = []
+            for mag in drs_astrometrics.MAGS:
+                mag_val = legacy.get(mag)
+                mag_source = legacy.get(f'{mag}_SOURCE')
+                mags[mag], mag_sources[mag] = _null_float(mag_val, mag_source)
             # data source is "database" and the data_date column has no yaml
             # equivalent yet (DATE_ADDED is not stored)
             data_source = 'database'
@@ -195,6 +224,12 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
             ra_source, dec_source, pmra_source, pmde_source, = '', '', '', ''
             plx_source, rv_source, teff_source = '', '', ''
             sp_type, sp_source, data_source, data_date = '', '', '', ''
+            # add mags and mag sources
+            mags, mag_sources = dict(), dict()
+            for mag in drs_astrometrics.MAGS:
+                mags[mag] = np.nan
+                mag_sources[mag] = 'None'
+
     else:
         # mark resolved as not complete
         resolved = False
@@ -205,6 +240,12 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
         ra_source, dec_source, pmra_source, pmde_source, = '', '', '', ''
         plx_source, rv_source, teff_source = '', '', ''
         sp_type, sp_source, data_source, data_date = '', '', '', ''
+        # add mags and mag sources
+        mags, mag_sources = dict(), dict()
+        for mag in drs_astrometrics.MAGS:
+            mags[mag] = np.nan
+            mag_sources[mag] = 'None'
+
     # -------------------------------------------------------------------------
     # if we still do not have a value use the header values (or default values)
     if not resolved:
@@ -266,6 +307,12 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
         # data source is just "header" and no associated date
         data_source = 'header'
         data_date = ''
+        # ---------------------------------------------------------------------
+        # add mags and mag sources
+        mags, mag_sources = dict(), dict()
+        for mag in drs_astrometrics.MAGS:
+            mags[mag] = np.nan
+            mag_sources[mag] = 'None'
     # -------------------------------------------------------------------------
     # deal with bad values here
     #   We trust RA/Dec/PMRA/PMDE have been entered correctly
@@ -323,6 +370,21 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
     header.set_key(params, 'KW_DRS_DDATE', value=data_date)
     # add the geometric airmass
     header.set_key(params, 'KW_DRS_AIRMASS', value=airmass)
+    # -------------------------------------------------------------------------
+    # add magnitudes and sources
+    for mag, hkey in zip(drs_astrometrics.MAGS, drs_astrometrics.MAGS_HDR):
+        # only add if valid (i.e. appears in the header keyword definitions)
+        if hkey in params and f'{hkey}_SOURCE' in params:
+            header.set_key(params, hkey, value=mags[mag])
+            header.set_key(params, f'{hkey}_SOURCE', value=mag_sources[mag])
+        else:
+            emsg = ('Cannot add magnitude {0} to header '
+                    '[defined from drs_astrometrics.MAGS] because header '
+                    'keyword {1} is not defined in the instrument/default '
+                    'keywords  parameters')
+            eargs = [mag, hkey]
+            raise AperoCodedException(params, message=emsg.format(*eargs),
+                                      targs=eargs)
     # -------------------------------------------------------------------------
     # must update DRSOBJN
     header.set_key(params, 'KW_OBJNAME', value=objname)

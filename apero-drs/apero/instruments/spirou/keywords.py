@@ -378,6 +378,53 @@ KDict.set('KW_DRS_DDATE', key='PP_DDATE', unit=uu.K,
 KDict.set('KW_DRS_AIRMASS', key='PP_AIRMASS',
           comment='Calculated airmass at MJDMID',
           group='resolve', post_exclude=True)
+# Magnitude defiitions
+KDict.set('KW_DRS_MAG_G', key='PPM_G', group='resolve', post_exclude=True,
+          comment='The Gaia G magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_GBP', key='PPM_GBP', group='resolve', post_exclude=True,
+          comment='The Gaia GBP magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_GRP', key='PPM_GRP', group='resolve', post_exclude=True,
+          comment='The Gaia GRP magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_J', key='PPM_J', group='resolve', post_exclude=True,
+          comment='The 2MASS J magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_H', key='PPM_H', group='resolve', post_exclude=True,
+          comment='The 2MASS H magnitude of the object')
+KDict.set('KW_DRS_MAG_KS', key='PPM_KS', group='resolve', post_exclude=True,
+          comment='The 2MASS Ks magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_W1', key='PPM_W1', group='resolve', post_exclude=True,
+          comment='The WISE W1 magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_W2', key='PPM_W2', group='resolve', post_exclude=True,
+          comment='The WISE W2 magnitude of the object [from resolve]')
+KDict.set('KW_DRS_MAG_W3', key='PPM_W3', group='resolve', post_exclude=True,
+          comment='The WISE W3 magnitude of the object [from resolve]')
+# Magnitude source defiitions
+KDict.set('KW_DRS_MAG_G_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the Gaia G magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_GBP_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the Gaia GBP magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_GRP_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the Gaia GRP magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_J_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the 2MASS J magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_H_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the 2MASS H magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_KS_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the 2MASS Ks magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_W1_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the WISE W1 magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_W2_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the WISE W2 magnitude of the object '
+                      '[from resolve]')
+KDict.set('KW_DRS_MAG_W3_SOURCE', group='resolve', post_exclude=True,
+          comment='The source of the WISE W3 magnitude of the object '
+                      '[from resolve]')
 
 # -----------------------------------------------------------------------------
 # Define general keywords

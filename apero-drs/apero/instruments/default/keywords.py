@@ -419,6 +419,54 @@ KDict.add('KW_DRS_DDATE', key='NULL', dtype=str,
 KDict.add('KW_DRS_AIRMASS', key='NULL', dtype=float, source=__NAME__,
           description='Calculated geometric airmass at MJDMID')
 
+# Magnitude defiitions
+KDict.add('KW_DRS_MAG_G', key='NULL', dtype=float, source=__NAME__,
+          description='The Gaia G magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_GBP', key='NULL', dtype=float, source=__NAME__,
+          description='The Gaia GBP magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_GRP', key='NULL', dtype=float, source=__NAME__,
+          description='The Gaia GRP magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_J', key='NULL', dtype=float, source=__NAME__,
+          description='The 2MASS J magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_H', key='NULL', dtype=float, source=__NAME__,
+          description='The 2MASS H magnitude of the object')
+KDict.add('KW_DRS_MAG_KS', key='NULL', dtype=float, source=__NAME__,
+            description='The 2MASS Ks magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_W1', key='NULL', dtype=float, source=__NAME__,
+          description='The WISE W1 magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_W2', key='NULL', dtype=float, source=__NAME__,
+          description='The WISE W2 magnitude of the object [from resolve]')
+KDict.add('KW_DRS_MAG_W3', key='NULL', dtype=float, source=__NAME__,
+          description='The WISE W3 magnitude of the object [from resolve]')
+# Magnitude source defiitions
+KDict.add('KW_DRS_MAG_G_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the Gaia G magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_GBP_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the Gaia GBP magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_GRP_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the Gaia GRP magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_J_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the 2MASS J magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_H_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the 2MASS H magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_KS_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the 2MASS Ks magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_W1_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the WISE W1 magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_W2_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the WISE W2 magnitude of the object '
+                      '[from resolve]')
+KDict.add('KW_DRS_MAG_W3_SOURCE', key='NULL', dtype=str, source=__NAME__,
+          description='The source of the WISE W3 magnitude of the object '
+                      '[from resolve]')
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------

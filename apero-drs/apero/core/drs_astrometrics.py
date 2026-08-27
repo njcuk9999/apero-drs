@@ -98,6 +98,14 @@ NAME_KEYS = ['APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME']
 ALIAS_KEY = 'ALIASES'
 # the key whose value is the canonical APERO name returned to callers
 APERO_NAME_KEY = 'APERO_NAME'
+
+# Photometric magnitudes to search for
+# Must also have an entry in instruments.default.keywords to be added
+MAGS = ['G_MAG', 'GBP_MAG', 'GRP_MAG', 'J', 'H', 'KS', 'W1', 'W2', 'W3']
+MAGS_HDR = ['KW_DRS_MAG_G', 'KW_DRS_MAG_GBP', 'KW_DRS_MAG_GRP',
+            'KW_DRS_MAG_J', 'KW_DRS_MAG_H', 'KW_DRS_MAG_KS',
+            'KW_DRS_MAG_W1', 'KW_DRS_MAG_W2', 'KW_DRS_MAG_W3']
+
 # ----------------------------------------------------------------------------
 # Provenance / status metadata keys (added on every entry; back-filled for
 # legacy entries the first time they are touched). All five live at the
@@ -191,6 +199,11 @@ LEGACY_COL_MAP['SP_TYPE_SOURCE'] = lambda e: _nested_source(e, 'SPT')
 LEGACY_COL_MAP['SP_SOURCE'] = lambda e: _nested_source(e, 'SPT')
 LEGACY_COL_MAP['NOTES'] = lambda e: e.get('NOTES')
 LEGACY_COL_MAP['USED'] = lambda e: 1
+# magnitudes are nested values with a value and a source
+for mag in MAGS:
+    LEGACY_COL_MAP[mag] = lambda e, m=mag: _nested_value(e, m)
+    LEGACY_COL_MAP[f'{mag}_SOURCE'] = lambda e: _nested_source(e, 'G_MAG')
+
 # DATE_ADDED has no native yaml field; expose as None for parity
 LEGACY_COL_MAP['DATE_ADDED'] = lambda e: None
 # legacy KEYWORDS column has no yaml equivalent (NO_PM filter is dropped)
@@ -216,6 +229,8 @@ def legacy_view(entry: Optional[Dict[str, Any]]
     for col, getter in LEGACY_COL_MAP.items():
         out[col] = getter(entry)
     return out
+
+
 # -----------------------------------------------------------------------------
 # Module-level caches: shared by all AstrometricDatabase instances within a
 # process, keyed by the absolute path of the astrometrics directory. On a
