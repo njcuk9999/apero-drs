@@ -1179,7 +1179,7 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=ncols, nrows=nrows)
     # loop around col_vals
-    for row in range(np.product(frames.shape)):
+    for row in range(np.prod(frames.shape)):
         # get the correct frame
         jt, it = row % ncols, row // ncols
         frame = frames[it, jt]

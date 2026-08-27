@@ -132,7 +132,7 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
     histo = np.histogram(fimage, bins=hbins, range=(hrangelow, hrangehigh),
                          density=True)
     # get the fraction of dead pixels as a percentage
-    dadead = imax * 100 / np.product(image.shape)
+    dadead = imax * 100 / np.prod(image.shape)
     # log the dark statistics
     wargs = [image_name, dadead, med, dark_qmin, dark_qmax, qmin, qmax]
     WLOG(params, 'info', textentry('40-011-00002', args=wargs))
@@ -165,7 +165,7 @@ def measure_dark_badpix(params: ParamDict, image: np.ndarray,
     # get number of bad dark pixels (as a fraction of total pixels)
     with warnings.catch_warnings(record=True) as _:
         baddark = 100.0 * np.sum(image > darkcutlimit)
-        baddark /= np.product(image.shape)
+        baddark /= np.prod(image.shape)
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]
     WLOG(params, 'info', textentry('40-011-00006', args=wargs))
@@ -173,9 +173,9 @@ def measure_dark_badpix(params: ParamDict, image: np.ndarray,
     with warnings.catch_warnings(record=True) as _:
         datacutmask = ~((image > darkcutlimit) | nanmask)
     # get number of pixels above cut limit or NaN
-    n_bad_pix = np.product(image.shape) - np.sum(datacutmask)
+    n_bad_pix = np.prod(image.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
-    dadeadall = n_bad_pix * 100 / np.product(image.shape)
+    dadeadall = n_bad_pix * 100 / np.prod(image.shape)
     # log fraction of dead pixels + dark > cut
     wargs = [darkcutlimit, dadeadall]
     WLOG(params, 'info', textentry('40-011-00007', args=wargs))

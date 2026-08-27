@@ -118,9 +118,9 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
         # get the 90th percentile of median image
         norm = mp.nanpercentile(image_med[np.isfinite(image_med)], percentile)
     else:
-        v = image_med.reshape(np.product(image.shape))
+        v = image_med.reshape(np.prod(image.shape))
         v = np.sort(v)
-        norm = v[int(np.product(image.shape) * percentile / 100.0)]
+        norm = v[int(np.prod(image.shape) * percentile / 100.0)]
 
     # apply to flat_med and flat_ref
     return image_med / norm, image / norm

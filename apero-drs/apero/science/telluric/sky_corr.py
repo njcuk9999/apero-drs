@@ -351,7 +351,7 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         # get bins
         sky_bins = np.array(sky_table['BIN_NUM'])
         # set up median storage
-        cube = np.zeros([nbins, np.product(refwavemap.shape)])
+        cube = np.zeros([nbins, np.prod(refwavemap.shape)])
         # loop around files
         for it in range(len(sky_files)):
             # print analysing file
