@@ -697,8 +697,9 @@ class TelluricDatabase(DatabaseManager):
         insert_dict['TAU_WATER'] = tau_water
         insert_dict['TAU_OTHERS'] = tau_others
         insert_dict['RUN_ID'] = str(run_id)
-        insert_dict['BERV'] = float(berv)
-        insert_dict['BJD'] = float(bjd)
+        # berv/bjd can be None - but report it
+        insert_dict['BERV'] = _none_float(self.params, berv, 'berv')
+        insert_dict['BJD'] = _none_float(self.params, bjd, 'bjd')
         insert_dict['PID'] = str(self.params['PID'])
         insert_dict['PDATE'] = str(self.params['DATE_NOW'])
         insert_dict['USED'] = 1
@@ -1363,6 +1364,31 @@ def _get_time(params: ParamDict, dbname: str,
     else:
         eargs = [dbname, func_name]
         raise AperoCodedException(params, '00-001-00039', targs=eargs)
+
+
+def _none_float(params: ParamDict, value: Any, name: str) -> float:
+    """
+    Convert value to a float dealing with None and invalid values
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param value: Any, value to try to convert to float
+    :param name: str, the name of the value (for warning)
+
+    :return: float, the value to use as a float
+    """
+    if value is None:
+        wmsg = 'Variable {0} is None'
+        wargs = [name]
+        WLOG(params, 'warning', wmsg.format(*wargs))
+        return np.nan
+    else:
+        try:
+            return float(value)
+        except Exception as e:
+            wmsg = 'Invalid float for {0}: value={1}.\n\tError {2}: {3}'
+            wargs = [name, value, type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            return np.nan
 
 
 # =============================================================================
