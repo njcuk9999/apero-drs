@@ -551,7 +551,7 @@ KDict.set('KW_CDBBLAZE', key='CDBBLAZE', comment='The cal BLAZE file used')
 # time of blaze calibration file used
 KDict.set('KW_CDTBLAZE', key='CDTBLAZE', comment='MJDMID of cal BLAZE file used')
 # wave solution calibration file used
-KDict.set('KW_CDBWAVE', key='CDBWAVE', comment='The cal WAVE file used')
+KDict.set('KW_CDBWAVE', key='CDBWAVE', comment='The cal WAVE file used [extract time]')
 # time of wave solution calibration file used
 KDict.set('KW_CDTWAVE', key='CDTWAVE', comment='MJDMID of cal WAVE file used')
 # thermal calibration file used
