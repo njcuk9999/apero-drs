@@ -499,6 +499,31 @@ CDict.add('PENDING_PATH', dtype=str, source=__NAME__,
                       'the pending database entries should be stored')
 
 
+# =============================================================================
+# QUEUE SETTINGS
+# =============================================================================
+cgroup = 'QUEUE'
+CDict.add_group(cgroup, description='QUEUE: processing queue settings')
+
+# Define whether apero_processing should run in queue mode (jobs are added
+#   to the queue instead of being processed directly)
+CDict.add('MODE', dtype=bool, value=False, source=__NAME__,
+          user=True, active=True, group=cgroup,
+          description='Define whether apero_processing should run in '
+                      'queue mode (jobs are added to the queue instead '
+                      'of being processed directly)')
+
+# Define the queue directory - if a relative path is given the queue
+#   directory is placed inside PATH.OTHER (i.e. PATH.OTHER/{QUEUE.PATH}),
+#   if an absolute path is given the absolute path is used directly
+#   (without the PATH.OTHER sub-directory)
+CDict.add('PATH', dtype=str, value='queue', source=__NAME__,
+          user=True, active=True, group=cgroup,
+          description='Define the queue directory - if a relative path '
+                      'is given the queue directory is placed inside '
+                      'PATH.OTHER (i.e. PATH.OTHER/{QUEUE.PATH}), if an '
+                      'absolute path is given the absolute path is used '
+                      'directly (without the PATH.OTHER sub-directory)')
 
 
 # =============================================================================

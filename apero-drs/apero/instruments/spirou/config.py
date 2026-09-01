@@ -191,6 +191,19 @@ CDict.set('RESET_TELLU', value='reset/telludb/', source=__NAME__,
 CDict.set('RESET_RUN', value='reset/runs/', source=__NAME__,
           author='NJC', group=cgroup)
 
+# -----------------------------------------------------------------------------
+# queue settings
+# -----------------------------------------------------------------------------
+cgroup = 'QUEUE'
+# Define whether apero_processing should run in queue mode (jobs are added
+#   to the queue instead of being processed directly)
+CDict.set('MODE', value=False, source=__NAME__, author='NJC', group=cgroup)
+
+# Define the queue directory - if a relative path is given the queue
+#   directory is placed inside PATH.OTHER (i.e. PATH.OTHER/{QUEUE.PATH}),
+#   if an absolute path is given the absolute path is used directly
+CDict.set('PATH', value='queue', source=__NAME__, author='NJC', group=cgroup)
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

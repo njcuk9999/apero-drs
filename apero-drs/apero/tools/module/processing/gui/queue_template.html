@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>APERO Queue</title>
+<style>
+body { font-family: sans-serif; margin: 20px; background: #fafafa; }
+h1 { color: #333; margin-bottom: 4px; }
+h2 { color: #444; font-size: 16px; margin: 8px 0; }
+.meta { color: #666; margin-bottom: 10px; font-size: 13px; }
+.summary span { display: inline-block; padding: 4px 12px;
+                margin-right: 8px; border-radius: 4px; color: #fff;
+                font-weight: bold; }
+.s-pending { background: #e6a817; }
+.s-running { background: #2a7de1; }
+.s-complete { background: #2e9e4f; }
+.s-failed { background: #d33c3c; }
+.panelrow { display: flex; gap: 16px; flex-wrap: wrap;
+            margin: 12px 0; }
+.panel { background: #fff; border: 1px solid #ddd; border-radius: 6px;
+         padding: 12px 16px; flex: 1; min-width: 260px; }
+.panel input, .panel select { padding: 5px 6px; margin: 3px 0;
+                              width: 95%; }
+.panel label { font-size: 13px; color: #444; }
+.panel button, #controls button, #toolbar button {
+    padding: 6px 14px; margin-top: 8px; font-size: 14px;
+    border: none; border-radius: 4px; color: #fff;
+    background: #2a7de1; cursor: pointer; }
+.panel button:hover { background: #1b5cad; }
+button.danger { background: #d33c3c; }
+button.danger:hover { background: #a82525; }
+#toolbar { margin: 10px 0; }
+#busy { display: none; color: #d37f00; font-weight: bold; }
+#controls { margin: 12px 0; }
+#controls input, #controls select {
+    padding: 6px 8px; margin-right: 8px; font-size: 14px; }
+#pos { margin: 0 8px; color: #333; font-weight: bold; }
+table { border-collapse: collapse; width: 100%; background: #fff; }
+th { cursor: pointer; background: #333; color: #fff; padding: 8px;
+     text-align: left; user-select: none; white-space: nowrap; }
+th:hover { background: #555; }
+td { padding: 5px 8px; border-bottom: 1px solid #ddd;
+     font-size: 13px; }
+td.runstring { font-family: monospace; font-size: 12px; }
+tr.pending { background: #fdf3dc; }
+tr.running { background: #ddeafc; }
+tr.complete { background: #def7e5; }
+tr.failed { background: #fadddd; }
+.badge { padding: 2px 8px; border-radius: 3px; color: #fff;
+         font-size: 12px; font-weight: bold; }
+#log { background: #222; color: #ddd; font-family: monospace;
+       font-size: 12px; padding: 10px; border-radius: 6px;
+       max-height: 200px; overflow-y: auto; margin-top: 12px; }
+textarea { width: 95%; height: 70px; font-family: monospace;
+           font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>APERO Queue</h1>
+<div class="meta">Queue path: XX_QPATH_XX</div>
+<div class="summary" id="summary"></div>
+<div id="toolbar">
+<button onclick="refreshAll()">&#8635; Refresh</button>
+<button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
+<span id="busy">&#9203; action running...</span>
+</div>
+
+<div class="panelrow">
+<div class="panel">
+<h2>Run next task(s)</h2>
+<label>Cores (tasks to run at once)</label>
+<input id="run-cores" type="number" min="1" value="1">
+<label>Multiprocessing mode</label>
+<select id="run-mpmode">
+<option value="linear">linear</option>
+<option value="pool">pool</option>
+<option value="process">process</option>
+</select>
+<br><button onclick="doRun()">&#9654; Run</button>
+</div>
+<div class="panel">
+<h2>Batch (sbatch)</h2>
+<label>Tasks per batch script</label>
+<input id="batch-per" type="number" min="1" value="24">
+<label>Number of batch scripts (blank = as needed)</label>
+<input id="batch-n" type="number" min="1">
+<label><input id="batch-submit" type="checkbox"
+ style="width:auto"> Submit via sbatch</label>
+<br><button onclick="doBatch()">&#9654; Create batches</button>
+</div>
+<div class="panel">
+<h2>Reset</h2>
+<label>State to reset</label>
+<select id="reset-state">
+<option value="all">all states</option>
+<option value="pending">pending</option>
+<option value="running">running</option>
+<option value="complete">complete</option>
+<option value="failed">failed</option>
+</select>
+<br><button class="danger" onclick="doReset()">&#10006; Reset</button>
+</div>
+<div class="panel">
+<h2>Batch template settings</h2>
+<div id="template-fields"></div>
+<label>Activation lines (one per line)</label>
+<textarea id="tpl-activation"></textarea>
+<br><button onclick="saveTemplate()">&#128190; Save template</button>
+</div>
+</div>
+
+<div id="controls">
+<input id="filter" placeholder="Filter (any column)...">
+<select id="statefilter">
+<option value="all">all states</option>
+<option value="pending">pending</option>
+<option value="running">running</option>
+<option value="complete">complete</option>
+<option value="failed">failed</option>
+</select>
+<button onclick="prevPage()">&laquo; Prev</button>
+<span id="pos"></span>
+<button onclick="nextPage()">Next &raquo;</button>
+</div>
+<table id="qtable">
+<thead><tr>
+<th data-key="idx">#</th>
+<th data-key="state">State</th>
+<th data-key="group">Group</th>
+<th data-key="run">Run</th>
+<th data-key="priority">Priority</th>
+<th data-key="recipe">Recipe</th>
+<th data-key="runstring">Runstring</th>
+</tr></thead>
+<tbody id="qbody"></tbody>
+</table>
+<h2>Activity log</h2>
+<div id="log"></div>
+<script>
+var allData = [];
+var pageSize = XX_ROWS_XX;
+var page = 0;
+var sortKey = 'idx';
+var sortAsc = true;
+var view = [];
+var tplFields = XX_TPLFIELDS_XX;
+
+function apiGet(url, callback) {
+    fetch(url).then(function (resp) { return resp.json(); })
+              .then(callback)
+              .catch(function (err) { console.log(err); });
+}
+
+function apiPost(url, data, callback) {
+    fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    }).then(function (resp) { return resp.json(); })
+      .then(callback)
+      .catch(function (err) { console.log(err); });
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+}
+
+function sortView() {
+    view.sort(function (a, b) {
+        var x = a[sortKey]; var y = b[sortKey];
+        if (x === undefined) { x = ''; }
+        if (y === undefined) { y = ''; }
+        if (x < y) { return sortAsc ? -1 : 1; }
+        if (x > y) { return sortAsc ? 1 : -1; }
+        return 0;
+    });
+}
+
+function applyFilter() {
+    var text = document.getElementById('filter').value.toLowerCase();
+    var state = document.getElementById('statefilter').value;
+    view = allData.filter(function (row) {
+        if (state !== 'all' && row.state !== state) { return false; }
+        if (text === '') { return true; }
+        var blob = JSON.stringify(row).toLowerCase();
+        return blob.indexOf(text) !== -1;
+    });
+    sortView();
+    page = 0;
+    render();
+}
+
+function render() {
+    var tbody = document.getElementById('qbody');
+    tbody.innerHTML = '';
+    var start = page * pageSize;
+    var end = Math.min(start + pageSize, view.length);
+    for (var i = start; i < end; i++) {
+        var row = view[i];
+        var tr = document.createElement('tr');
+        tr.className = row.state;
+        var badge = '<span class="badge s-' + row.state + '">' +
+                    row.state + '</span>';
+        tr.innerHTML =
+            '<td>' + row.idx + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + escapeHtml(row.group) + '</td>' +
+            '<td>' + escapeHtml(row.run) + '</td>' +
+            '<td>' + escapeHtml(row.priority || '') + '</td>' +
+            '<td>' + escapeHtml(row.recipe || '') + '</td>' +
+            '<td class="runstring">' +
+            escapeHtml(row.runstring || '') + '</td>';
+        tbody.appendChild(tr);
+    }
+    var pos = document.getElementById('pos');
+    if (view.length === 0) {
+        pos.textContent = 'no entries';
+    } else {
+        pos.textContent = 'N=' + start + '-' + (end - 1) +
+                          ' of ' + view.length;
+    }
+}
+
+function prevPage() {
+    if (page > 0) { page = page - 1; render(); }
+}
+
+function nextPage() {
+    if ((page + 1) * pageSize < view.length) {
+        page = page + 1; render();
+    }
+}
+
+function renderSummary(counts) {
+    var states = ['pending', 'running', 'complete', 'failed'];
+    var html = '';
+    states.forEach(function (state) {
+        html += '<span class="s-' + state + '">' +
+                state.toUpperCase() + ': ' +
+                (counts[state] || 0) + '</span>';
+    });
+    document.getElementById('summary').innerHTML = html;
+}
+
+function refreshStatus() {
+    apiGet('/api/status', function (data) {
+        allData = data.entries;
+        renderSummary(data.counts);
+        applyFilter();
+    });
+}
+
+function refreshTemplate() {
+    apiGet('/api/template', function (data) {
+        var box = document.getElementById('template-fields');
+        box.innerHTML = '';
+        tplFields.forEach(function (key) {
+            box.innerHTML +=
+                '<label>' + key + '</label>' +
+                '<input id="tpl-' + key + '" value="' +
+                escapeHtml(data[key] || '') + '">';
+        });
+        var act = data.activation || [];
+        document.getElementById('tpl-activation').value =
+            act.join('\\n');
+    });
+}
+
+function refreshState() {
+    apiGet('/api/state', function (data) {
+        var busy = document.getElementById('busy');
+        busy.style.display = data.busy ? 'inline' : 'none';
+        var log = document.getElementById('log');
+        log.innerHTML = data.messages.map(escapeHtml).join('<br>');
+        log.scrollTop = log.scrollHeight;
+    });
+}
+
+function refreshAll() {
+    refreshStatus();
+    refreshState();
+}
+
+function doRun() {
+    var cores = document.getElementById('run-cores').value;
+    var mpmode = document.getElementById('run-mpmode').value;
+    apiPost('/api/run', {cores: cores, mpmode: mpmode},
+            function (data) { refreshState(); });
+}
+
+function doBatch() {
+    var per = document.getElementById('batch-per').value;
+    var num = document.getElementById('batch-n').value;
+    var submit = document.getElementById('batch-submit').checked;
+    apiPost('/api/batch',
+            {per_batch: per, n_batches: num, submit: submit},
+            function (data) { refreshState(); });
+}
+
+function doReset() {
+    var state = document.getElementById('reset-state').value;
+    var msg = 'Really reset "' + state + '" queue entries?';
+    if (!confirm(msg)) { return; }
+    apiPost('/api/reset', {qstate: state}, function (data) {
+        refreshAll();
+    });
+}
+
+function saveTemplate() {
+    var data = {};
+    tplFields.forEach(function (key) {
+        data[key] = document.getElementById('tpl-' + key).value;
+    });
+    var act = document.getElementById('tpl-activation').value;
+    data.activation = act.split('\\n').filter(function (line) {
+        return line.trim() !== '';
+    });
+    apiPost('/api/template', data, function (resp) {
+        refreshState();
+    });
+}
+
+function shutdownServer() {
+    if (!confirm('Shut down the queue GUI server?')) { return; }
+    apiPost('/api/shutdown', {}, function (data) {});
+}
+
+document.getElementById('filter')
+    .addEventListener('keyup', applyFilter);
+document.getElementById('statefilter')
+    .addEventListener('change', applyFilter);
+var headers = document.querySelectorAll('#qtable th');
+headers.forEach(function (th) {
+    th.addEventListener('click', function () {
+        var key = th.getAttribute('data-key');
+        if (sortKey === key) { sortAsc = !sortAsc; }
+        else { sortKey = key; sortAsc = true; }
+        sortView();
+        page = 0;
+        render();
+    });
+});
+refreshAll();
+refreshTemplate();
+setInterval(refreshState, 2000);
+</script>
+</body>
+</html>
+

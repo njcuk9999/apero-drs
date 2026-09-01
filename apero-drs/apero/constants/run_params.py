@@ -215,6 +215,17 @@ ritem = RunParam(name='TEST_RUN',
                  section=section)
 ritem.add()
 # -----------------------------------------------------------------------------
+# Run in queue mode (jobs are added to the queue instead of being processed
+#    directly). If None (or not set) the QUEUE.MODE constant is used instead.
+ritem = RunParam(name='QUEUE_MODE',
+                 value=None,
+                 dtype=bool,
+                 comment='Run in queue mode (jobs are added to the queue '
+                         'instead of being processed directly). If None (or '
+                         'not set) the QUEUE.MODE constant is used instead.',
+                 section=section)
+ritem.add()
+# -----------------------------------------------------------------------------
 # Whether to process engineering data
 # -----------------------------------------------------------------------------
 ritem = RunParam(name='USE_ENGINEERING',

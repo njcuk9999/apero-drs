@@ -4258,6 +4258,24 @@ def _group_tasks2(runlist):
     return groups, names
 
 
+GroupTasksReturn = Tuple[Dict[int, List[Run]], Dict[int, str]]
+
+
+def group_tasks2(runlist: List[Run]) -> GroupTasksReturn:
+    """
+    Group a run list by what can be run together (consecutive runs of the
+    same recipe shortname are grouped together)
+
+    :param runlist: list of Run instances, the run list to group
+
+    :return: tuple, 1. dictionary of groups (group number: list of Run
+             instances), 2. dictionary of names (group number: recipe
+             shortname)
+    """
+    # public interface to _group_tasks2 (used by the queue functionality)
+    return _group_tasks2(runlist)
+
+
 def close_all_plots():
     """
     Close all plots (by importing matplotlib)

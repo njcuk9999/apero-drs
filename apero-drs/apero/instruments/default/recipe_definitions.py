@@ -52,6 +52,7 @@ listing = DrsRecipe(__INSTRUMENT__)
 stats = DrsRecipe(__INSTRUMENT__)
 precheck = DrsRecipe(__INSTRUMENT__)
 processing = DrsRecipe(__INSTRUMENT__)
+queue_recipe = DrsRecipe(__INSTRUMENT__)
 remake_doc = DrsRecipe(__INSTRUMENT__)
 req_check = DrsRecipe(__INSTRUMENT__)
 reject = DrsRecipe(__INSTRUMENT__)
@@ -66,7 +67,7 @@ visulise = DrsRecipe(__INSTRUMENT__)
 # push into a list
 recipes = [ari, astrometric, changelog, database_mgr, explorer,
            get_files, go_recipe, langdb, listing,
-           precheck, processing, remake_doc, req_check,
+           precheck, processing, queue_recipe, remake_doc, req_check,
            reject, remove, reset, run_ini,
            static, stats, trigger, validate, visulise]
 
@@ -587,7 +588,73 @@ processing.set_kwarg(name='--to_file', dtype=str, default='None',
                      helpstr=textentry('PROCESS_TO_FILE_HELP'))
 processing.set_kwarg(name='--verify', dtype='switch',
                      helpstr=textentry('PROCESS_VERIFY_HELP'))
+processing.set_kwarg(name='--queue_mode', dtype='options', default='None',
+                     options=['True', 'False', '1', '0', 'None'],
+                     helpstr='Whether to run in queue mode (jobs are added '
+                             'to the queue instead of being processed '
+                             'directly). Overrides QUEUE_MODE from the run '
+                             'file and the QUEUE.MODE constant.')
 processing.description_file = 'apero_processing.rst'
+
+# -----------------------------------------------------------------------------
+# apero_queue.py
+# -----------------------------------------------------------------------------
+queue_recipe.name = 'apero_queue.py'
+queue_recipe.path = 'apero.tools.recipes.bin'
+queue_recipe.shortname = 'QUEUE'
+queue_recipe.instrument = __INSTRUMENT__
+queue_recipe.description = ('The APERO queue management tool - run, batch, '
+                            'monitor and reset the processing queue '
+                            '(created by apero_processing in queue mode)')
+queue_recipe.recipe_type = 'nolog-tool'
+queue_recipe.recipe_kind = 'processing'
+queue_recipe.set_arg(pos=0, name='mode', dtype=str,
+                     helpstr='The queue mode: "run" runs the next task(s) '
+                             'in the queue, "batch" creates (and submits) '
+                             'sbatch scripts for the next group, "status" '
+                             'shows an interactive terminal view of the '
+                             'queue, "gui" starts a browser dashboard '
+                             '(status view + action buttons), "reset" '
+                             'removes entries from the queue, "init" '
+                             'creates the batch template and "system" '
+                             '(internal) moves a task from running to '
+                             'complete/failed')
+queue_recipe.set_kwarg(name='--cores', dtype=str, default='None',
+                       helpstr='Number of tasks to run at once in run '
+                               'mode (same rules as apero_processing '
+                               '--cores)')
+queue_recipe.set_kwarg(name='--mpmode', dtype='options', default='None',
+                       options=['process', 'pool', 'linear', 'None'],
+                       helpstr='The multiprocessing mode for run mode '
+                               '(defaults to the TOOLS.REPROCESS.MP_TYPE '
+                               'constant, same as apero_processing)')
+queue_recipe.set_kwarg(name='--qstate', dtype='options', default='None',
+                       options=['pending', 'running', 'complete', 'failed',
+                                'all', 'None'],
+                       helpstr='Only act on this queue state (for status '
+                               'and reset modes) - default is all states')
+queue_recipe.set_kwarg(name='--rows', dtype=str, default='None',
+                       helpstr='Number of rows to show per page in status '
+                               'mode (cli pager page size) and gui mode '
+                               '(table page size)')
+queue_recipe.set_kwarg(name='--host', dtype=str, default='None',
+                       helpstr='The host address for the gui dashboard '
+                               'server (gui mode only, default 127.0.0.1 '
+                               'i.e. localhost only)')
+queue_recipe.set_kwarg(name='--port', dtype=str, default='None',
+                       helpstr='The port for the gui dashboard server '
+                               '(gui mode only, default 8090 - tries the '
+                               'next ports if taken)')
+queue_recipe.set_kwarg(name='--qpath', dtype=str, default='None',
+                       helpstr='The absolute path to the queue directory '
+                               '(system mode only - allows the fast path '
+                               'to avoid loading the APERO runtime)')
+queue_recipe.set_kwarg(name='--qid', dtype=str, default='None',
+                       helpstr='The queue id of a task, i.e. '
+                               '"{group}/{run_file}" (system mode only)')
+queue_recipe.set_kwarg(name='--qresult', dtype='options', default='None',
+                       options=['success', 'failed', 'None'],
+                       helpstr='The result of a task (system mode only)')
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py

@@ -752,8 +752,22 @@ class AperoDatabase:
                 result = conn.exec_driver_sql(sql)
                 # capture column keys before Result is exhausted
                 keys = list(result.keys())
+                # Get column types from table metadata for NULL->NaN
+                # conversion
+                column_types = None
+                if columns == '*':
+                    # When selecting all columns, get types from table
+                    try:
+                        sqltable = self._get_table(_tablename)
+                        column_types = [
+                            sqltable.columns[key].type for key in keys
+                        ]
+                    except (KeyError, AttributeError):
+                        # If we can't get types, _process_rows handles it
+                        pass
                 # annoying hack to avoid decimal types (cast to floats)
-                prows = _process_rows(result.fetchall())
+                prows = _process_rows(result.fetchall(),
+                                      column_types=column_types)
                 # get the results as a list
                 if return_pandas:
                     rows = pd.DataFrame(prows, columns=keys)
@@ -918,11 +932,19 @@ class AperoDatabase:
         # deal with NaN/None/Null values
         if insert_dict is not None:
             for key, value in insert_dict.items():
-                if value in [None, np.nan]:
-                    insert_dict[key] = None
-                elif isinstance(value, str):
-                    if value.lower() in ['null', 'none', 'nan']:
+                try:
+                    # pd.isna handles NaN/None/pd.NA consistently
+                    if pd.isna(value):
                         insert_dict[key] = None
+                    elif isinstance(value, str):
+                        # Normalize string null markers
+                        if value.lower() in ['null', 'none', 'nan']:
+                            insert_dict[key] = None
+                except (TypeError, ValueError):
+                    # Some objects not compatible with pd.isna
+                    if isinstance(value, str):
+                        if value.lower() in ['null', 'none', 'nan']:
+                            insert_dict[key] = None
         # ---------------------------------------------------------------------
         # add the hash column
         if len(unique_cols) > 0:
@@ -2002,17 +2024,41 @@ def deal_with_null(value: Any = None):
     return value
 
 
-def _process_rows(rows):
+def _process_rows(rows, column_types=None):
     """
-    Annoying hack to
+    Process rows returned from database:
+    - Convert Decimal instances to float
+    - Convert NULL values to np.nan for float columns
+
+    :param rows: List of row tuples from database
+    :param column_types: Optional list mapping column index to SQLAlchemy
+                         column type. If provided, None values in float
+                         columns are converted to np.nan.
     """
     processed_rows = []
     for row in rows:
         processed_row = []
-        for value in row:
+        for i, value in enumerate(row):
             # Check if the value is a Decimal instance
             if isinstance(value, Decimal):
                 processed_row.append(float(value))
+            # Convert None to np.nan for float columns
+            elif (value is None and column_types is not None and
+                  i < len(column_types)):
+                col_type = column_types[i]
+                # Check if column is numeric (Float, Integer, Numeric, etc)
+                if col_type is not None:
+                    col_type_str = str(col_type)
+                    if any(
+                        t in col_type_str.upper()
+                        for t in ['FLOAT', 'DOUBLE', 'REAL', 'DECIMAL',
+                                  'NUMERIC']
+                    ):
+                        processed_row.append(np.nan)
+                    else:
+                        processed_row.append(value)
+                else:
+                    processed_row.append(value)
             else:
                 processed_row.append(value)
         processed_rows.append(processed_row)

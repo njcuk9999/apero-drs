@@ -20,6 +20,7 @@ from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.database import manage_databases
 from apero.tools.module.processing import drs_processing
+from apero.tools.module.processing import drs_queue
 
 # =============================================================================
 # Define variables
@@ -173,6 +174,18 @@ def __main__(recipe, params):
         # deal with verification (end here)
         if params['INPUTS']['VERIFY']:
             # End of main code
+            return locals()
+
+        # ----------------------------------------------------------------------
+        # Queue mode: add runs to the queue instead of processing them
+        # ----------------------------------------------------------------------
+        if drs_queue.queue_mode_active(params):
+            # add the run list to the queue (grouped by what can be run
+            #   together) - runs are written to the pending queue directory
+            drs_queue.add_run_list_to_queue(params, rlist)
+            # send email if configured
+            drs_processing.processing_email(params, 'end', __NAME__)
+            # End of main code (do not process the run list)
             return locals()
 
         # ----------------------------------------------------------------------
