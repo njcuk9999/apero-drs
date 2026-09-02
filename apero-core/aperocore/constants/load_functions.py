@@ -10,10 +10,12 @@ Created on 2024-09-06 at 16:30
 @author: cook
 """
 import argparse
-import os
+import ast
 import copy
+import difflib
+import os
 import time
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 
@@ -302,12 +304,17 @@ def load_pconfig(instruments: Dict[str, Any],
                               message=emsg.format(*eargs))
 
 
-def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
+def load_from_yaml(files: List[str], params: ParamDict = None,
+                   version: str = None,
+                   version_err: str = None) -> ParamDict:
     """
     Load constants/keywords from a yaml file
 
     :param files: list of strings, the file paths to the config/const files
     :param instances: list of Consts, the module paths
+    :param version: str or None, required version token to find in yaml file
+    :param version_err: str or None, optional error message template
+                        formatted with (filename, version)
 
     :return: list of keys (str), list of values (Any), list of sources (str),
              list of instances (either Const or Keyword instances)
@@ -322,6 +329,9 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     # -------------------------------------------------------------------------
     # loop around files
     for filename in files:
+        # enforce a yaml version token when requested
+        _check_yaml_version(filename, version, version_err,
+                            raise_exception=True)
         # load the yaml in the standard way
         yaml_dict = base.load_yaml(filename)
         # deal with nothing in a yaml file
@@ -339,6 +349,266 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
                                   check=True)
     # return updated parameters
     return params
+
+
+def _check_yaml_version(filename: str, version: str = None,
+                        version_err: str = None,
+                        raise_exception: bool = True) -> bool:
+    """
+    Check that a yaml file contains a required version token.
+
+    :param filename: str, the yaml file path
+    :param version: str or None, required version
+    :param version_err: str or None, optional error message template
+    :param raise_exception: bool, if True raise when version is wrong,
+                            if False return False
+
+    :return: bool, True if version check passes or version is None
+    """
+    if version is None:
+        return True
+    required = f'VERSION = {version}'.upper()
+    with open(filename, 'r', encoding='utf-8') as fhandle:
+        for line in fhandle:
+            if required in line.upper():
+                return True
+    if not raise_exception:
+        return False
+    eargs = [filename, version]
+    if version_err is None:
+        emsg = 'Yaml version is incorrect must be {1}'
+    else:
+        emsg = version_err
+    raise AperoCodedException(None, None, message=emsg.format(*eargs))
+
+
+def _flat_to_nested_dict(flat_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a flat dotted-key dictionary into a nested dictionary."""
+    nested_dict: Dict[str, Any] = {}
+    for key, value in flat_dict.items():
+        parts = key.split('.')
+        cursor = nested_dict
+        for part in parts[:-1]:
+            if part not in cursor or not isinstance(cursor[part], dict):
+                cursor[part] = {}
+            cursor = cursor[part]
+        cursor[parts[-1]] = value
+    return nested_dict
+
+
+def _validate_flat_yaml_values(flat_dict: Dict[str, Any],
+                               instances: Dict[str, Const],
+                               source: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Validate flat yaml values against known constant instances."""
+    known_keys = list(instances.keys())
+    known_set = set(known_keys)
+    # keys below dict-typed constants are valid by design (free-form entries)
+    dict_prefixes = []
+    for known_key in known_keys:
+        instance = instances.get(known_key)
+        if instance is None:
+            continue
+        if getattr(instance, 'dtype', None) in [dict, 'dict']:
+            dict_prefixes.append(f'{known_key}.')
+    results = dict(unknown=[], invalid=[])
+    for key, value in flat_dict.items():
+        if key not in known_set:
+            # stop unknown-key checks at the constant level for dict constants
+            if any(key.startswith(prefix) for prefix in dict_prefixes):
+                continue
+            suggestions = difflib.get_close_matches(key, known_keys, n=3,
+                                                    cutoff=0.6)
+            hierarchy = _hierarchy_mismatch_hint(key, known_keys)
+            results['unknown'].append(dict(key=key, value=value,
+                                           suggestions=suggestions,
+                                           hierarchy=hierarchy))
+            continue
+        instance = instances.get(key)
+        if instance is None:
+            continue
+        try:
+            instance.validate(value, source=source)
+        except Exception as e:
+            results['invalid'].append(dict(key=key, value=value,
+                                           error=str(e),
+                                           expected=getattr(instance,
+                                                            'dtype', None)))
+    return results
+
+
+def _hierarchy_mismatch_hint(key: str,
+                             known_keys: List[str]) -> Optional[Dict[str, Any]]:
+    """
+    Find the first hierarchy segment mismatch for a dotted key.
+
+    Example: key=SORBET.WLCA.INPUT_PATH and known include SORBET.WLCA.*,
+    mismatch is at token WLCA under parent SORBET.
+    """
+    parts = key.split('.')
+    candidates = list(known_keys)
+    for level, token in enumerate(parts):
+        # valid tokens at this level within current candidate set
+        valid_tokens = sorted({ck.split('.')[level]
+                               for ck in candidates
+                               if len(ck.split('.')) > level})
+        # exact segment match keeps narrowing candidates
+        next_candidates = [ck for ck in candidates
+                           if len(ck.split('.')) > level
+                           and ck.split('.')[level] == token]
+        if len(next_candidates) > 0:
+            candidates = next_candidates
+            continue
+        # first mismatch found
+        token_suggestions = difflib.get_close_matches(token, valid_tokens,
+                                                      n=3, cutoff=0.6)
+        parent = '.'.join(parts[:level]) if level > 0 else '<root>'
+        suggested_prefixes = []
+        for suggestion in token_suggestions:
+            sparts = parts[:level] + [suggestion]
+            suggested_prefixes.append('.'.join(sparts))
+        return dict(level=level + 1,
+                    parent=parent,
+                    bad_token=token,
+                    token_suggestions=token_suggestions,
+                    suggested_prefixes=suggested_prefixes,
+                    valid_tokens=valid_tokens[:10])
+    return None
+
+
+def _prompt_yaml_fix_value(key: str, current_value: Any,
+                           instance: Optional[Const]) -> Any:
+    """Prompt user for a corrected value for one yaml key."""
+    expected = getattr(instance, 'dtype', None)
+    if expected in [bool, 'bool']:
+        question = (f'\nFix value for "{key}"? Current value = {current_value}'
+                    '\nEnter [Y] for True or [N] for False.')
+        return drs_text.user_input(question, dtype='YN', required=True)
+    if expected in [int, float, str, 'int', 'float', 'str']:
+        question = (f'\nEnter corrected value for "{key}"'
+                    f'\nCurrent value = {current_value}')
+        return drs_text.user_input(question, dtype=expected, required=True)
+    question = (f'\nEnter corrected value for "{key}" as a Python literal '
+                '(example: [1, 2] or {"a": 1})'
+                f'\nCurrent value = {current_value}'
+                '\nType "skip" to leave unchanged.')
+    while True:
+        user_text = str(drs_text.user_input(question, dtype=str,
+                                            required=True)).strip()
+        if user_text.lower() == 'skip':
+            return None
+        try:
+            return ast.literal_eval(user_text)
+        except Exception:
+            print('Could not parse value. Please try again or type "skip".')
+
+
+def validate_yaml_config(config_list: List[Union[ConstDict, KeywordDict]],
+                         yaml_file: str,
+                         external_const: Dict[str, Any] = None,
+                         version: str = None,
+                         version_err: str = None,
+                         raise_version_exception: bool = False,
+                         interactive: bool = False,
+                         config_script: str = None,
+                         save_if_changed: bool = True) -> Dict[str, Any]:
+    """
+    Validate one yaml config file against constants definitions.
+
+    Generic utility for modules using aperocore-style constants.
+    """
+    if config_list is None:
+        config_list = []
+    full_config_list = list(config_list)
+    if external_const is not None:
+        full_config_list = add_ext_config_list(full_config_list,
+                                               external_const)
+
+    base_params = load_parameters(full_config_list, check=False)
+    version_ok = _check_yaml_version(yaml_file, version, version_err,
+                                     raise_exception=raise_version_exception)
+
+    aborted = False
+    if interactive and version is not None and not version_ok:
+        msg = (f'\nVersion mismatch detected in: {yaml_file}'
+               f'\nExpected: {version}'
+               '\nContinue anyway and validate parameter compatibility?')
+        if not drs_text.user_input(msg, dtype='YN', required=True):
+            aborted = True
+
+    yaml_dict = base.load_yaml(yaml_file)
+    flat_dict = _to_flat_dict(yaml_dict)
+    issues = _validate_flat_yaml_values(flat_dict, base_params.instances,
+                                        source=os.path.basename(yaml_file))
+
+    changes_made = False
+    if interactive and not aborted:
+        for item in list(issues['invalid']):
+            key = item['key']
+            current = item['value']
+            err_text = item['error']
+            expected = item['expected']
+            print('\n' + '=' * 70)
+            print(f'Invalid parameter: {key}')
+            print(f'Current value: {current}')
+            print(f'Expected dtype: {expected}')
+            print(f'Validation error: {err_text}')
+            fix_now = drs_text.user_input('Would you like to edit this value?',
+                                          dtype='YN', required=True)
+            if not fix_now:
+                continue
+            instance = base_params.instances.get(key)
+            while True:
+                new_value = _prompt_yaml_fix_value(key, current, instance)
+                if new_value is None:
+                    break
+                try:
+                    valid_value = instance.validate(test_value=new_value)
+                except Exception as e:
+                    print(f'New value is still invalid: {e}')
+                    continue
+                flat_dict[key] = valid_value
+                changes_made = True
+                print(f'Updated {key} -> {valid_value}')
+                break
+
+    issues = _validate_flat_yaml_values(flat_dict, base_params.instances,
+                                        source=os.path.basename(yaml_file))
+
+    if changes_made and save_if_changed:
+        new_yaml = _flat_to_nested_dict(flat_dict)
+        base.write_yaml(new_yaml, yaml_file)
+
+    suggestions = []
+    for item in issues['unknown']:
+        hierarchy = item.get('hierarchy', None)
+        if hierarchy is not None:
+            hmsg = ('Hierarchy mismatch for {0}: token "{1}" is not valid '
+                    'under "{2}" (level {3}).')
+            hargs = [item['key'], hierarchy['bad_token'], hierarchy['parent'],
+                     hierarchy['level']]
+            suggestions.append(hmsg.format(*hargs))
+            if len(hierarchy['suggested_prefixes']) > 0:
+                pfx = ', '.join(hierarchy['suggested_prefixes'])
+                suggestions.append(f'Possible prefix fix: {pfx}')
+            elif len(hierarchy['valid_tokens']) > 0:
+                vtok = ', '.join(hierarchy['valid_tokens'])
+                suggestions.append(f'Valid tokens under {hierarchy["parent"]}: {vtok}')
+            continue
+        if len(item['suggestions']) == 0:
+            suggestions.append(f'Unknown constant: {item["key"]}')
+        else:
+            hints = ', '.join(item['suggestions'])
+            suggestions.append(f'Unknown constant: {item["key"]} (maybe: {hints})')
+    if len(issues['unknown']) > 0 and config_script is not None:
+        suggestions.append(f'Consider regenerating the yaml via: {config_script}')
+
+    return dict(version_ok=version_ok,
+                aborted=aborted,
+                unknown=issues['unknown'],
+                invalid=issues['invalid'],
+                suggestions=suggestions,
+                changes_made=changes_made,
+                yaml_file=yaml_file)
 
 
 def update_sources(params: ParamDict, flat_dict: Dict[str, Any],
@@ -447,7 +717,9 @@ def get_all_params(name: str, description: str, inputargs: List[str],
                    param_file_path: str = None,
                    external_const: Dict[str, Any] = None,
                    kwargs: Dict[str, Any] = None,
-                   cmd_kwargs: Dict[str, Any] = None) -> ParamDict:
+                   cmd_kwargs: Dict[str, Any] = None,
+                   version: str = None,
+                   version_err: str = None) -> ParamDict:
     """
     Get the parameters (default, command line and function call)
 
@@ -488,9 +760,10 @@ def get_all_params(name: str, description: str, inputargs: List[str],
         # get param file path
         param_file = get_param_file(params, param_file_path, func_name)
         # get instrument user config files
-        largs = [[os.path.realpath(param_file)], params]
+        largs = dict(files=[os.path.realpath(param_file)], params=params,
+                     version=version, version_err=version_err)
         # load keys, values, sources and instances from yaml files
-        params = load_from_yaml(*largs)
+        params = load_from_yaml(**largs)
     # make sure we have the minimal log parameters from wlog
     params = WLOG.minimal_params(params)
     # save the config list for use later
