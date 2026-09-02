@@ -8,6 +8,7 @@ body { font-family: sans-serif; margin: 20px; background: #fafafa; }
 h1 { color: #333; margin-bottom: 4px; }
 h2 { color: #444; font-size: 16px; margin: 8px 0; }
 .meta { color: #666; margin-bottom: 10px; font-size: 13px; }
+.summary { margin: 8px 0 10px 0; }
 .summary span { display: inline-block; padding: 4px 12px;
                 margin-right: 8px; border-radius: 4px; color: #fff;
                 font-weight: bold; }
@@ -15,14 +16,22 @@ h2 { color: #444; font-size: 16px; margin: 8px 0; }
 .s-running { background: #2a7de1; }
 .s-complete { background: #2e9e4f; }
 .s-failed { background: #d33c3c; }
+#tabbar { margin: 10px 0; }
+#tabbar button { padding: 6px 14px; margin-right: 6px; font-size: 14px;
+                 border: 1px solid #bbb; border-radius: 4px;
+                 background: #f0f0f0; color: #333; cursor: pointer; }
+#tabbar button.active { background: #2a7de1; color: #fff;
+                        border-color: #2a7de1; }
+.tabpage { display: none; }
+.tabpage.active { display: block; }
 .panelrow { display: flex; gap: 16px; flex-wrap: wrap;
             margin: 12px 0; }
 .panel { background: #fff; border: 1px solid #ddd; border-radius: 6px;
-         padding: 12px 16px; flex: 1; min-width: 260px; }
+         padding: 12px 16px; flex: 1; min-width: 300px; }
 .panel input, .panel select { padding: 5px 6px; margin: 3px 0;
                               width: 95%; }
 .panel label { font-size: 13px; color: #444; }
-.panel button, #controls button, #toolbar button {
+.panel button, #status-controls button, #toolbar button {
     padding: 6px 14px; margin-top: 8px; font-size: 14px;
     border: none; border-radius: 4px; color: #fff;
     background: #2a7de1; cursor: pointer; }
@@ -31,8 +40,23 @@ button.danger { background: #d33c3c; }
 button.danger:hover { background: #a82525; }
 #toolbar { margin: 10px 0; }
 #busy { display: none; color: #d37f00; font-weight: bold; }
-#controls { margin: 12px 0; }
-#controls input, #controls select {
+.cli-title { font-size: 12px; color: #666; margin-top: 8px; }
+.cli-wrap { display: flex; align-items: stretch; gap: 8px; }
+.cli-box { flex: 1; min-height: 58px; font-family: monospace;
+           font-size: 12px; }
+.copy-btn { margin-top: 0; white-space: nowrap; }
+.label-row { display: flex; align-items: center; gap: 6px; }
+.info-btn { margin-top: 0; width: 22px; height: 22px; padding: 0;
+            border-radius: 50%; font-size: 12px; line-height: 22px;
+            background: #2a7de1; color: #fff; cursor: pointer;
+            border: none; }
+.info-box { margin-top: 6px; padding: 8px; border: 1px solid #ccd;
+            border-radius: 4px; background: #f8fbff; font-size: 12px;
+            display: none; }
+.info-box pre { margin: 6px 0 0 0; white-space: pre-wrap;
+                font-family: monospace; }
+#status-controls { margin: 12px 0; }
+#status-controls input, #status-controls select {
     padding: 6px 8px; margin-right: 8px; font-size: 14px; }
 #pos { margin: 0 8px; color: #333; font-weight: bold; }
 table { border-collapse: collapse; width: 100%; background: #fff; }
@@ -50,15 +74,21 @@ tr.failed { background: #fadddd; }
          font-size: 12px; font-weight: bold; }
 #log { background: #222; color: #ddd; font-family: monospace;
        font-size: 12px; padding: 10px; border-radius: 6px;
-       max-height: 200px; overflow-y: auto; margin-top: 12px; }
-textarea { width: 95%; height: 70px; font-family: monospace;
-           font-size: 12px; }
+       max-height: 220px; overflow-y: auto; margin-top: 12px; }
 </style>
 </head>
 <body>
 <h1>APERO Queue</h1>
 <div class="meta">Queue path: XX_QPATH_XX</div>
-<div class="summary" id="summary"></div>
+
+<div id="tabbar">
+<button id="tab-btn-control" class="active"
+        onclick="setTab('control')">Control</button>
+<button id="tab-btn-status" onclick="setTab('status')">Status</button>
+</div>
+
+<div id="tab-control" class="tabpage active">
+<div class="summary" id="summary-control"></div>
 <div id="toolbar">
 <button onclick="refreshAll()">&#8635; Refresh</button>
 <button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
@@ -68,6 +98,11 @@ textarea { width: 95%; height: 70px; font-family: monospace;
 <div class="panelrow">
 <div class="panel">
 <h2>Run next task(s)</h2>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-run" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-run')">Copy</button>
+</div>
 <label>Cores (tasks to run at once)</label>
 <input id="run-cores" type="number" min="1" value="1">
 <label>Multiprocessing mode</label>
@@ -78,8 +113,14 @@ textarea { width: 95%; height: 70px; font-family: monospace;
 </select>
 <br><button onclick="doRun()">&#9654; Run</button>
 </div>
+
 <div class="panel">
 <h2>Batch (sbatch)</h2>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-batch" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-batch')">Copy</button>
+</div>
 <label>Tasks per batch script</label>
 <input id="batch-per" type="number" min="1" value="24">
 <label>Number of batch scripts (blank = as needed)</label>
@@ -88,8 +129,14 @@ textarea { width: 95%; height: 70px; font-family: monospace;
  style="width:auto"> Submit via sbatch</label>
 <br><button onclick="doBatch()">&#9654; Create batches</button>
 </div>
+
 <div class="panel">
 <h2>Reset</h2>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-reset" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-reset')">Copy</button>
+</div>
 <label>State to reset</label>
 <select id="reset-state">
 <option value="all">all states</option>
@@ -100,16 +147,43 @@ textarea { width: 95%; height: 70px; font-family: monospace;
 </select>
 <br><button class="danger" onclick="doReset()">&#10006; Reset</button>
 </div>
+
 <div class="panel">
 <h2>Batch template settings</h2>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-template" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-template')">Copy</button>
+</div>
 <div id="template-fields"></div>
-<label>Activation lines (one per line)</label>
-<textarea id="tpl-activation"></textarea>
+<div class="label-row">
+<label for="tpl-activation">Activation lines (one per line)</label>
+<button type="button" class="info-btn"
+        onclick="toggleActivationInfo()">&#9432;</button>
+</div>
+<div id="activation-info" class="info-box">
+Examples:<br>
+<pre># Alliance example
+module load StdEnv/2023 python/3.12 hdf5 cmake/3.31.0 gcc opencv/4.13.0
+source apero-env-08/bin/activate
+
+# Jupiter conda example
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate apero-env-08
+source apero_profile.sh my_profile</pre>
+</div>
+<textarea id="tpl-activation" class="cli-box"></textarea>
 <br><button onclick="saveTemplate()">&#128190; Save template</button>
 </div>
 </div>
 
-<div id="controls">
+<h2>Activity log</h2>
+<div id="log"></div>
+</div>
+
+<div id="tab-status" class="tabpage">
+<div class="summary" id="summary-status"></div>
+<div id="status-controls">
 <input id="filter" placeholder="Filter (any column)...">
 <select id="statefilter">
 <option value="all">all states</option>
@@ -134,8 +208,8 @@ textarea { width: 95%; height: 70px; font-family: monospace;
 </tr></thead>
 <tbody id="qbody"></tbody>
 </table>
-<h2>Activity log</h2>
-<div id="log"></div>
+</div>
+
 <script>
 var allData = [];
 var pageSize = XX_ROWS_XX;
@@ -167,9 +241,29 @@ function escapeHtml(value) {
                         .replace(/>/g, '&gt;');
 }
 
+function setTab(tabName) {
+    var controlPage = document.getElementById('tab-control');
+    var statusPage = document.getElementById('tab-status');
+    var controlBtn = document.getElementById('tab-btn-control');
+    var statusBtn = document.getElementById('tab-btn-status');
+    if (tabName === 'status') {
+        statusPage.classList.add('active');
+        controlPage.classList.remove('active');
+        statusBtn.classList.add('active');
+        controlBtn.classList.remove('active');
+        render();
+    } else {
+        controlPage.classList.add('active');
+        statusPage.classList.remove('active');
+        controlBtn.classList.add('active');
+        statusBtn.classList.remove('active');
+    }
+}
+
 function sortView() {
     view.sort(function (a, b) {
-        var x = a[sortKey]; var y = b[sortKey];
+        var x = a[sortKey];
+        var y = b[sortKey];
         if (x === undefined) { x = ''; }
         if (y === undefined) { y = ''; }
         if (x < y) { return sortAsc ? -1 : 1; }
@@ -224,12 +318,16 @@ function render() {
 }
 
 function prevPage() {
-    if (page > 0) { page = page - 1; render(); }
+    if (page > 0) {
+        page = page - 1;
+        render();
+    }
 }
 
 function nextPage() {
     if ((page + 1) * pageSize < view.length) {
-        page = page + 1; render();
+        page = page + 1;
+        render();
     }
 }
 
@@ -241,7 +339,71 @@ function renderSummary(counts) {
                 state.toUpperCase() + ': ' +
                 (counts[state] || 0) + '</span>';
     });
-    document.getElementById('summary').innerHTML = html;
+    document.getElementById('summary-control').innerHTML = html;
+    document.getElementById('summary-status').innerHTML = html;
+}
+
+function buildRunCli() {
+    var cores = document.getElementById('run-cores').value || '1';
+    var mpmode = document.getElementById('run-mpmode').value || 'linear';
+    return 'apero_queue.py run --cores ' + cores + ' --mpmode ' + mpmode;
+}
+
+function buildBatchCli() {
+    var per = document.getElementById('batch-per').value || '24';
+    var num = document.getElementById('batch-n').value;
+    var submit = document.getElementById('batch-submit').checked ? 'y' : 'n';
+    if (num === '') {
+        num = '';
+    }
+    return "printf '%s\\n%s\\n%s\\n' '" + per + "' '" + num + "' '" +
+           submit + "' | apero_queue.py batch";
+}
+
+function buildResetCli() {
+    var qstate = document.getElementById('reset-state').value || 'all';
+    return 'apero_queue.py reset --qstate ' + qstate;
+}
+
+function buildTemplateCli() {
+    var lines = document.getElementById('tpl-activation').value
+        .split('\n')
+        .filter(function (line) {
+            return line.trim() !== '';
+        });
+    var cmd = 'apero_queue.py init';
+    if (lines.length > 0) {
+        cmd += '\n# activation lines example from current form:';
+        cmd += '\n# ' + lines.join('\n# ');
+    }
+    return cmd;
+}
+
+function updateCliCommands() {
+    document.getElementById('cli-run').value = buildRunCli();
+    document.getElementById('cli-batch').value = buildBatchCli();
+    document.getElementById('cli-reset').value = buildResetCli();
+    document.getElementById('cli-template').value = buildTemplateCli();
+}
+
+function copyCli(idValue) {
+    var box = document.getElementById(idValue);
+    box.focus();
+    box.select();
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(box.value);
+    } else {
+        document.execCommand('copy');
+    }
+}
+
+function toggleActivationInfo() {
+    var box = document.getElementById('activation-info');
+    if (box.style.display === 'block') {
+        box.style.display = 'none';
+    } else {
+        box.style.display = 'block';
+    }
 }
 
 function refreshStatus() {
@@ -263,8 +425,8 @@ function refreshTemplate() {
                 escapeHtml(data[key] || '') + '">';
         });
         var act = data.activation || [];
-        document.getElementById('tpl-activation').value =
-            act.join('\\n');
+        document.getElementById('tpl-activation').value = act.join('\n');
+        updateCliCommands();
     });
 }
 
@@ -314,11 +476,12 @@ function saveTemplate() {
         data[key] = document.getElementById('tpl-' + key).value;
     });
     var act = document.getElementById('tpl-activation').value;
-    data.activation = act.split('\\n').filter(function (line) {
+    data.activation = act.split('\n').filter(function (line) {
         return line.trim() !== '';
     });
     apiPost('/api/template', data, function (resp) {
         refreshState();
+        updateCliCommands();
     });
 }
 
@@ -331,6 +494,24 @@ document.getElementById('filter')
     .addEventListener('keyup', applyFilter);
 document.getElementById('statefilter')
     .addEventListener('change', applyFilter);
+
+document.getElementById('run-cores')
+    .addEventListener('input', updateCliCommands);
+document.getElementById('run-mpmode')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('batch-per')
+    .addEventListener('input', updateCliCommands);
+document.getElementById('batch-n')
+    .addEventListener('input', updateCliCommands);
+document.getElementById('batch-submit')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('reset-state')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('template-fields')
+    .addEventListener('input', updateCliCommands);
+document.getElementById('tpl-activation')
+    .addEventListener('input', updateCliCommands);
+
 var headers = document.querySelectorAll('#qtable th');
 headers.forEach(function (th) {
     th.addEventListener('click', function () {
@@ -342,6 +523,8 @@ headers.forEach(function (th) {
         render();
     });
 });
+
+updateCliCommands();
 refreshAll();
 refreshTemplate();
 setInterval(refreshState, 2000);
