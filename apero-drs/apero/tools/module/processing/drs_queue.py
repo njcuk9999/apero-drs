@@ -29,6 +29,7 @@ Created on 2026-08-31
 @author: cook
 """
 import os
+import signal
 import shutil
 import subprocess
 import sys
@@ -73,8 +74,12 @@ QUEUE_ERRORS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'errors')
 QUEUE_SCRIPTS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'scripts')
 # define the queue lock file name (stops multiple apero_queues clashing)
 QUEUE_LOCK_FILE = 'apero_queue.lock'
-# define the batch template file name (created by apero_queue init)
+# define the legacy (pre-named-templates) single batch template file name
 QUEUE_BATCH_TEMPLATE = 'batch_template.yaml'
+# define the directory holding named batch templates (created by init mode)
+QUEUE_BATCH_TEMPLATE_DIR = 'batch_templates'
+# define the template name used when none is given
+QUEUE_DEFAULT_TEMPLATE = 'default'
 # define the queue group directory name format
 #    {0} = unix time (zero padded so groups sort alphabetically by time)
 #    {1} = group name (zero padded group number + recipe shortname)
@@ -103,6 +108,11 @@ QUEUE_FAIL_SIGNATURE = 'has NOT been successfully completed'
 QUEUE_STATUS_PAGE_SIZE = 10
 # define the valid mp modes for run mode
 QUEUE_MP_MODES = ['process', 'pool', 'linear']
+# define valid explicit queue actions
+QUEUE_ACTIONS = ['move_to_pending', 'move_all_failed_to_pending',
+                 'move_all_complete_to_pending', 'stop_all_running',
+                 'stop_to_pending', 'stop_to_complete',
+                 'stop_to_failed', 'clear_all_pending']
 # define default batch template values (used as defaults in init mode)
 QUEUE_BATCH_DEFAULTS = dict()
 QUEUE_BATCH_DEFAULTS['time'] = '48:00:00'
@@ -440,6 +450,129 @@ def setup_output_directories(params: ParamDict) -> Dict[str, str]:
     return out_dirs
 
 
+def sanitize_template_name(name: Optional[str]) -> str:
+    """
+    Normalize a batch template name for use as a file name
+
+    Blank/None falls back to the default template name. Only
+    alphanumeric characters, dashes and underscores are kept (anything
+    else, e.g. path separators, is replaced with an underscore) so the
+    name is always safe to use as a file name.
+
+    :param name: str or None, the requested template name
+
+    :return: str, the sanitized template name
+    """
+    # fall back to the default name for blank/None input
+    if drs_text.null_text(name, ['', 'None']):
+        return QUEUE_DEFAULT_TEMPLATE
+    # keep only safe characters
+    safe_chars = [char if (char.isalnum() or char in '-_') else '_'
+                 for char in str(name).strip()]
+    safe_name = ''.join(safe_chars)
+    # deal with a name that sanitizes down to nothing
+    if len(safe_name) == 0:
+        return QUEUE_DEFAULT_TEMPLATE
+    return safe_name
+
+
+def get_template_dir(params: ParamDict) -> str:
+    """
+    Get the directory that holds the named batch templates
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: str, the absolute path to the batch template directory
+    """
+    return os.path.join(get_queue_path(params), QUEUE_BATCH_TEMPLATE_DIR)
+
+
+def get_template_path(params: ParamDict, name: Optional[str] = None) -> str:
+    """
+    Get the absolute path to a named batch template file
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str or None, the template name (default template used
+                if None/blank)
+
+    :return: str, the absolute path to the template yaml file
+    """
+    safe_name = sanitize_template_name(name)
+    return os.path.join(get_template_dir(params), safe_name + '.yaml')
+
+
+def list_templates(params: ParamDict) -> List[str]:
+    """
+    List the names of all saved batch templates (sorted alphabetically)
+
+    Also picks up the legacy single template file
+    ({QUEUE.PATH}/batch_template.yaml) as the default template, for
+    queues created before named templates were supported.
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: list of strings, the available template names
+    """
+    names = set()
+    # legacy single-template file counts as the default template
+    legacy_path = os.path.join(get_queue_path(params), QUEUE_BATCH_TEMPLATE)
+    if os.path.exists(legacy_path):
+        names.add(QUEUE_DEFAULT_TEMPLATE)
+    # named templates directory
+    template_dir = get_template_dir(params)
+    if os.path.exists(template_dir):
+        for filename in os.listdir(template_dir):
+            if filename.endswith('.yaml'):
+                names.add(filename[:-len('.yaml')])
+    return sorted(names)
+
+
+def load_template(params: ParamDict,
+                  name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Load a named batch template (falling back to the legacy single
+    template file, then to the built-in defaults)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str or None, the template name (default template used
+                if None/blank)
+
+    :return: dictionary, the batch template values
+    """
+    safe_name = sanitize_template_name(name)
+    template_path = get_template_path(params, safe_name)
+    # prefer the named template file
+    if os.path.exists(template_path):
+        return base.load_yaml(template_path,
+                              default=dict(QUEUE_BATCH_DEFAULTS))
+    # fall back to the legacy single template file for the default name
+    legacy_path = os.path.join(get_queue_path(params), QUEUE_BATCH_TEMPLATE)
+    if safe_name == QUEUE_DEFAULT_TEMPLATE and os.path.exists(legacy_path):
+        return base.load_yaml(legacy_path, default=dict(QUEUE_BATCH_DEFAULTS))
+    # nothing saved yet - use the built-in defaults
+    return dict(QUEUE_BATCH_DEFAULTS)
+
+
+def save_template(params: ParamDict, template: Dict[str, Any],
+                  name: Optional[str] = None) -> str:
+    """
+    Save a batch template under a given name
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param template: dictionary, the batch template values to save
+    :param name: str or None, the template name (default template used
+                if None/blank)
+
+    :return: str, the absolute path the template was saved to
+    """
+    template_dir = get_template_dir(params)
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+    template_path = get_template_path(params, name)
+    base.write_yaml(template, template_path, width=float('inf'))
+    return template_path
+
+
 def list_queue_entries(params: ParamDict,
                        states: Optional[List[str]] = None
                        ) -> List[Dict[str, str]]:
@@ -634,28 +767,67 @@ def get_queue_mpmode(params: ParamDict) -> str:
     return mpmode
 
 
+def _parse_task_limit(value: Any, default: int) -> Optional[int]:
+    """
+    Parse the requested queue task limit
+
+    The special value "all" means no limit and returns None.
+
+    :param value: Any, user value from cli/gui
+    :param default: int, default value when input is unset/invalid
+
+    :return: int or None, the parsed task limit
+    """
+    # null/empty values fall back to default
+    if drs_text.null_text(value, ['', 'None']):
+        return default
+    # normalize text value for special handling
+    text_value = str(value).strip().lower()
+    # all means run without an explicit limit
+    if text_value == 'all':
+        return None
+    # parse integers and enforce minimum one
+    try:
+        return max(1, int(text_value))
+    except (TypeError, ValueError):
+        return default
+
+
+def get_queue_task_limit(params: ParamDict, cores: int) -> Optional[int]:
+    """
+    Get the maximum number of tasks to run in one queue command
+
+    Default behaviour is one queue cycle (up to cores tasks). The
+    --ntasks value can request a larger total, or "all".
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param cores: int, number of tasks that can run at once
+
+    :return: int or None, task limit (None means all)
+    """
+    # default keeps previous one-cycle behaviour
+    limit = cores
+    # override from command line input when present
+    if 'INPUTS' in params and 'NTASKS' in params['INPUTS']:
+        limit = _parse_task_limit(params['INPUTS']['NTASKS'], cores)
+    # return the parsed limit
+    return limit
+
+
 # =============================================================================
 # Define queue mode functions
 # =============================================================================
-def queue_run(params: ParamDict, cores: Optional[int] = None,
-              mpmode: Optional[str] = None) -> Dict[str, Any]:
+def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
+                    mpmode: str) -> Dict[str, Any]:
     """
-    Run mode: run the next task(s) in the queue
-
-    Takes the next N pending tasks (N = cores) from the earliest
-    unfinished group, moves them to running, executes them and moves them
-    to complete/failed based on the result. Never crosses a group
-    boundary - if the earliest group has tasks running (but none pending)
-    nothing is run (we must wait for the group to finish).
+    Run one queue claim/execute cycle
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param cores: int or None, override the number of cores (None uses
-                  the --cores argument / CORES parameter via get_cores)
-    :param mpmode: str or None, override the multiprocessing mode (None
-                   uses the --mpmode argument / MP_TYPE constant)
+    :param queue_path: str, absolute path to queue directory
+    :param cores: int, maximum number of tasks to claim this cycle
+    :param mpmode: str, multiprocessing mode
 
-    :return: dictionary, summary of what was done (keys: 'group',
-             'n_run', 'n_complete', 'n_failed', 'message')
+    :return: dictionary, summary for this cycle
     """
     # storage for the summary (returned - used by the gui/flask)
     summary = dict(group=None, n_run=0, n_complete=0, n_failed=0,
@@ -715,6 +887,7 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
         task = dict()
         task['group'] = group
         task['run_file'] = run_file
+        task['run_path'] = run_path
         task['runstring'] = str(run_dict['runstring'])
         task['shortname'] = str(run_dict['shortname'])
         tasks.append(task)
@@ -746,6 +919,79 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     summary['message'] = msg.format(len(results), n_ok, n_bad)
     WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
     # return the summary (used by the gui/flask)
+    return summary
+
+
+def queue_run(params: ParamDict, cores: Optional[int] = None,
+              mpmode: Optional[str] = None,
+              ntasks: Optional[Any] = None) -> Dict[str, Any]:
+    """
+    Run queue task(s), optionally across multiple claim/execute cycles
+
+    If ntasks is unset the command runs one cycle by default (up to the
+    selected core count). If ntasks is set to a larger integer, or to
+    "all", repeated cycles are run until that limit is reached or the
+    queue cannot continue.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param cores: int or None, override the number of cores for this call
+    :param mpmode: str or None, override multiprocessing mode for this call
+    :param ntasks: int/str or None, total number of tasks to run, or
+                   "all" for no limit
+
+    :return: dictionary, combined summary of the queue run
+    """
+    # normalize runtime options once for the whole command
+    if cores is None:
+        cores = get_queue_cores(params)
+    if mpmode is None:
+        mpmode = get_queue_mpmode(params)
+    # parse the requested total task limit
+    if ntasks is None:
+        limit = get_queue_task_limit(params, cores)
+    else:
+        limit = _parse_task_limit(ntasks, cores)
+    # keep a combined summary across one or more cycles
+    summary = dict(group=None, n_run=0, n_complete=0, n_failed=0,
+                   message='')
+    # loop until we hit the limit, the queue empties, or a group blocks
+    while True:
+        # respect the remaining task budget for this cycle
+        cycle_cores = int(cores)
+        if limit is not None:
+            remaining = limit - summary['n_run']
+            if remaining <= 0:
+                break
+            cycle_cores = min(cycle_cores, remaining)
+        # run one claim/execute cycle
+        cycle = _queue_run_once(params, get_queue_path(params), cycle_cores,
+                                mpmode)
+        # keep the first touched group for reporting
+        if summary['group'] is None and cycle['group'] is not None:
+            summary['group'] = cycle['group']
+        # stop immediately if nothing ran in this cycle
+        if cycle['n_run'] == 0:
+            if summary['n_run'] == 0:
+                return cycle
+            break
+        # accumulate totals
+        summary['n_run'] += cycle['n_run']
+        summary['n_complete'] += cycle['n_complete']
+        summary['n_failed'] += cycle['n_failed']
+        summary['message'] = cycle['message']
+        # one-cycle behaviour remains the default unless user asked for more
+        if limit is not None and summary['n_run'] >= limit:
+            break
+        # limit is None ("all") means keep going until the queue empties
+        #   or a group blocks (both handled by the n_run == 0 case above)
+        continue
+    # construct the combined summary message
+    if summary['n_run'] > 0:
+        msg = 'Finished {0} task(s): {1} complete, {2} failed'
+        margs = [summary['n_run'], summary['n_complete'],
+                 summary['n_failed']]
+        summary['message'] = msg.format(*margs)
+    # return the combined summary
     return summary
 
 
@@ -926,13 +1172,15 @@ def queue_reset(params: ParamDict):
 
 def queue_init(params: ParamDict):
     """
-    Init mode: interactively create the batch template file
+    Init mode: interactively create a named batch template file
 
-    Asks the user for the sbatch settings (time, nodes, cpus, memory,
-    account, email etc) and for any activation script lines needed to set
-    up the environment inside a batch job (e.g. module loads, conda/venv
-    activation, apero profile setup). The template is stored in
-    {QUEUE.PATH}/batch_template.yaml and used by batch mode.
+    Asks for a template name (multiple templates can be saved side by
+    side, e.g. for different clusters/accounts) then for the sbatch
+    settings (time, nodes, cpus, memory, account, email etc) and for any
+    activation script lines needed to set up the environment inside a
+    batch job (e.g. module loads, conda/venv activation, apero profile
+    setup). The template is stored in
+    {QUEUE.PATH}/batch_templates/{name}.yaml and used by batch mode.
 
     :param params: ParamDict, the parameter dictionary of constants
 
@@ -941,19 +1189,29 @@ def queue_init(params: ParamDict):
     # make sure the queue (and output) directories exist
     setup_queue_directories(params)
     setup_output_directories(params)
-    # get the queue path and template path
-    queue_path = get_queue_path(params)
-    template_path = os.path.join(queue_path, QUEUE_BATCH_TEMPLATE)
-    # start from the defaults (or the current template if it exists)
-    if os.path.exists(template_path):
-        template = base.load_yaml(template_path,
-                                  default=dict(QUEUE_BATCH_DEFAULTS))
-        WLOG(params, '', 'Queue: Updating existing batch template')
-    else:
-        template = dict(QUEUE_BATCH_DEFAULTS)
+    # -------------------------------------------------------------------------
+    # get the template name (from --template if given, otherwise ask)
+    name = None
+    if 'INPUTS' in params and 'TEMPLATE' in params['INPUTS']:
+        value = params['INPUTS']['TEMPLATE']
+        if not drs_text.null_text(value, ['', 'None']):
+            name = str(value)
+    if name is None:
+        existing = list_templates(params)
+        if len(existing) > 0:
+            print('Existing templates: {0}'.format(', '.join(existing)))
+        prompt = 'Template name [{0}]: '.format(QUEUE_DEFAULT_TEMPLATE)
+        name = _ask(prompt)
+    name = sanitize_template_name(name)
+    # start from the current named template if it exists (or the
+    #   defaults otherwise)
+    template = load_template(params, name)
+    if template != dict(QUEUE_BATCH_DEFAULTS):
+        msg = 'Queue: Updating existing batch template "{0}"'
+        WLOG(params, '', msg.format(name))
     # -------------------------------------------------------------------------
     # ask the user for the sbatch settings (enter keeps current value)
-    print('APERO QUEUE BATCH TEMPLATE SETUP')
+    print('APERO QUEUE BATCH TEMPLATE SETUP ("{0}")'.format(name))
     print('Press ENTER to keep the [current] value\n')
     # define the questions to ask (key, question)
     questions = [
@@ -1000,16 +1258,17 @@ def queue_init(params: ParamDict):
         # add the activation line to the template
         template['activation'].append(user_input.strip())
     # -------------------------------------------------------------------------
-    # save the template to the queue directory
-    base.write_yaml(template, template_path, width=float('inf'))
+    # save the template under its name
+    template_path = save_template(params, template, name)
     # log that the template has been written
-    msg = 'Queue: Batch template written to {0}'
-    WLOG(params, 'info', msg.format(template_path))
+    msg = 'Queue: Batch template "{0}" written to {1}'
+    WLOG(params, 'info', msg.format(name, template_path))
 
 
 def batch_queue(params: ParamDict, per_batch: int,
                 n_batches: Optional[int] = None,
-                submit: bool = False) -> Dict[str, Any]:
+                submit: bool = False,
+                template_name: Optional[str] = None) -> Dict[str, Any]:
     """
     Batch the queue (non-interactive core): create (and optionally
     submit) sbatch scripts for the next unfinished group in the queue
@@ -1029,6 +1288,8 @@ def batch_queue(params: ParamDict, per_batch: int,
                       (None means as many as needed for all pending
                       tasks in the group)
     :param submit: bool, if True submit the scripts via sbatch
+    :param template_name: str or None, the named batch template to use
+                          (default template used if None/blank)
 
     :return: dictionary, summary of what was done (keys: 'group',
              'scripts', 'n_claimed', 'n_submitted', 'message')
@@ -1039,17 +1300,15 @@ def batch_queue(params: ParamDict, per_batch: int,
     # make sure the queue (and output) directories exist
     setup_queue_directories(params)
     out_dirs = setup_output_directories(params)
-    # get the queue path
-    queue_path = get_queue_path(params)
     # -------------------------------------------------------------------------
-    # load the batch template (created by init mode)
-    template_path = os.path.join(queue_path, QUEUE_BATCH_TEMPLATE)
-    if not os.path.exists(template_path):
-        summary['message'] = ('No batch template found - please run '
-                              '"apero_queue.py init" first')
+    # load the named batch template (created by init mode)
+    safe_name = sanitize_template_name(template_name)
+    if safe_name not in list_templates(params):
+        summary['message'] = ('No batch template "{0}" found - please '
+                              'run "apero_queue.py init" first'
+                              ).format(safe_name)
         return summary
-    template = base.load_yaml(template_path,
-                              default=dict(QUEUE_BATCH_DEFAULTS))
+    template = load_template(params, safe_name)
     # -------------------------------------------------------------------------
     # claim tasks inside the queue lock
     with QueueLock(params):
@@ -1139,30 +1398,49 @@ def batch_queue(params: ParamDict, per_batch: int,
 def queue_batch(params: ParamDict):
     """
     Batch mode: create (and optionally submit) sbatch scripts for the
-    next unfinished group in the queue (interactive cli wrapper around
-    batch_queue)
+    next unfinished group in the queue (cli wrapper around batch_queue)
 
-    The user is asked how many tasks to put in each batch script
-    (activation scripts are slow to load so we do not want one batch
-    script per task), how many batch scripts to create and whether to
-    submit them via sbatch.
+    Asks how many tasks to put in each batch script (activation scripts
+    are slow to load so we do not want one batch script per task), how
+    many batch scripts to create and whether to submit them via sbatch -
+    any of these can be given directly on the command line (--template,
+    --per_batch, --n_batches, --submit) to skip the corresponding
+    question and run fully non-interactively.
 
     :param params: ParamDict, the parameter dictionary of constants
 
     :return: None
     """
-    # get the queue path
-    queue_path = get_queue_path(params)
+    inputs = params['INPUTS'] if 'INPUTS' in params else dict()
+
+    def _input_text(key: str) -> Optional[str]:
+        """Get a plain text --kwarg value (None if unset)"""
+        if key in inputs and not drs_text.null_text(inputs[key],
+                                                     ['', 'None']):
+            return str(inputs[key])
+        return None
+
     # -------------------------------------------------------------------------
-    # check the batch template exists (created by init mode)
-    template_path = os.path.join(queue_path, QUEUE_BATCH_TEMPLATE)
-    if not os.path.exists(template_path):
+    # work out the template name (from --template, or ask)
+    name = _input_text('TEMPLATE')
+    existing = list_templates(params)
+    if len(existing) == 0:
         emsg = ('Queue: No batch template found - please run '
-                '"apero_queue.py init" first (expected: {0})')
-        WLOG(params, 'error', emsg.format(template_path))
+                '"apero_queue.py init" first')
+        WLOG(params, 'error', emsg)
         return
-    template = base.load_yaml(template_path,
-                              default=dict(QUEUE_BATCH_DEFAULTS))
+    if name is None:
+        default_name = (QUEUE_DEFAULT_TEMPLATE if
+                        QUEUE_DEFAULT_TEMPLATE in existing else existing[0])
+        prompt = 'Which template? {0} [{1}]: '.format(existing, default_name)
+        user_input = _ask(prompt).strip()
+        name = user_input if len(user_input) > 0 else default_name
+    name = sanitize_template_name(name)
+    if name not in existing:
+        emsg = 'Queue: No batch template "{0}" found (available: {1})'
+        WLOG(params, 'error', emsg.format(name, ', '.join(existing)))
+        return
+    template = load_template(params, name)
     # -------------------------------------------------------------------------
     # peek at the next unfinished group (to show the user the counts)
     group, pending_runs, running_runs = get_next_group(params)
@@ -1178,28 +1456,41 @@ def queue_batch(params: ParamDict):
         WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
         return
     # ---------------------------------------------------------------------
-    # interactively work out how to split the tasks into batches
+    # work out how to split the tasks into batches (cli args skip the
+    #   corresponding question)
     n_tasks = len(pending_runs)
     msg = 'Queue: Group "{0}" has {1} pending task(s)'
     WLOG(params, 'info', msg.format(group, n_tasks))
-    # ask how many tasks per batch script
+    # tasks per batch script
     default_per_batch = int(template['cpus_per_task'])
-    prompt = 'How many tasks per batch script? [{0}]: '
-    per_batch = _ask_int(prompt.format(default_per_batch),
-                         default_per_batch, minimum=1)
+    per_batch_input = _input_text('PER_BATCH')
+    if per_batch_input is not None:
+        per_batch = max(1, int(per_batch_input))
+    else:
+        prompt = 'How many tasks per batch script? [{0}]: '
+        per_batch = _ask_int(prompt.format(default_per_batch),
+                             default_per_batch, minimum=1)
     # work out the maximum number of batch scripts needed
     max_batches = (n_tasks + per_batch - 1) // per_batch
-    # ask how many batch scripts to create (may be less than needed
-    #   e.g. user only wants to submit a few batches at a time)
-    prompt = 'How many batch scripts to create? [{0}]: '
-    n_batches = _ask_int(prompt.format(max_batches), max_batches,
-                         minimum=1)
-    # ask whether to submit the batch scripts via sbatch
-    user_input = _ask('Submit batch script(s) via sbatch? [y/N]: ')
-    submit = user_input.lower().startswith('y')
+    # number of batch scripts to create (may be less than needed e.g.
+    #   user only wants to submit a few batches at a time)
+    n_batches_input = _input_text('N_BATCHES')
+    if n_batches_input is not None:
+        n_batches = max(1, int(n_batches_input))
+    else:
+        prompt = 'How many batch scripts to create? [{0}]: '
+        n_batches = _ask_int(prompt.format(max_batches), max_batches,
+                             minimum=1)
+    # whether to submit the batch scripts via sbatch
+    submit_input = _input_text('SUBMIT')
+    if submit_input is not None:
+        submit = drs_text.true_text(submit_input)
+    else:
+        user_input = _ask('Submit batch script(s) via sbatch? [y/N]: ')
+        submit = user_input.lower().startswith('y')
     # -------------------------------------------------------------------------
     # do the batching (non-interactive core - claims tasks under lock)
-    summary = batch_queue(params, per_batch, n_batches, submit)
+    summary = batch_queue(params, per_batch, n_batches, submit, name)
     # log the summary message
     WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
     # tell the user where the scripts are (if not submitted)
@@ -1250,6 +1541,330 @@ def queue_system(params: ParamDict):
     else:
         wmsg = 'Queue: could not move {0} (not in running)'
         WLOG(params, 'warning', wmsg.format(qid), sublevel=2)
+
+
+def queue_action_core(params: ParamDict, qaction: str,
+                      qid: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Run a non-interactive queue action
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param qaction: str, the queue action to apply
+    :param qid: str or None, queue id (group/run_file) for per-run actions
+
+    :return: dictionary, action result summary
+    """
+    # construct default response
+    result = dict(success=False, moved=0, stopped=0, failed=0, message='')
+    # validate the action name
+    if qaction not in QUEUE_ACTIONS:
+        msg = 'Queue: Invalid --qaction "{0}"'
+        result['message'] = msg.format(qaction)
+        return result
+    # route per-run action
+    if qaction == 'move_to_pending':
+        moved, message = _move_one_to_pending(params, qid)
+        result['success'] = moved == 1
+        result['moved'] = moved
+        result['message'] = message
+        return result
+    # route per-run running stop actions
+    if qaction in ['stop_to_pending', 'stop_to_complete',
+                   'stop_to_failed']:
+        stop_states = dict()
+        stop_states['stop_to_pending'] = QUEUE_PENDING_DIR
+        stop_states['stop_to_complete'] = QUEUE_COMPLETE_DIR
+        stop_states['stop_to_failed'] = QUEUE_FAILED_DIR
+        stopped, moved, message = _stop_one_running(params, qid,
+                                                    stop_states[qaction])
+        result['success'] = moved == 1
+        result['stopped'] = stopped
+        result['moved'] = moved
+        result['failed'] = int(moved == 0)
+        result['message'] = message
+        return result
+    # route bulk failed/complete actions
+    if qaction == 'move_all_failed_to_pending':
+        moved = _move_all_state_to_pending(params, QUEUE_FAILED_DIR)
+        result['success'] = True
+        result['moved'] = moved
+        msg = 'Queue: Moved {0} failed task(s) to pending'
+        result['message'] = msg.format(moved)
+        return result
+    if qaction == 'move_all_complete_to_pending':
+        moved = _move_all_state_to_pending(params, QUEUE_COMPLETE_DIR)
+        result['success'] = True
+        result['moved'] = moved
+        msg = 'Queue: Moved {0} complete task(s) to pending'
+        result['message'] = msg.format(moved)
+        return result
+    # route stop-all-running action
+    if qaction == 'stop_all_running':
+        stopped, moved, failed = _stop_all_running(params)
+        result['success'] = failed == 0
+        result['stopped'] = stopped
+        result['moved'] = moved
+        result['failed'] = failed
+        msg = 'Queue: Stopped {0}, moved {1}, failed {2}'
+        result['message'] = msg.format(stopped, moved, failed)
+        return result
+    # remaining action: clear pending
+    removed = reset_queue(params, [QUEUE_PENDING_DIR])
+    result['success'] = True
+    result['moved'] = removed
+    result['message'] = 'Queue: Cleared {0} pending task(s)'.format(removed)
+    return result
+
+
+def queue_action(params: ParamDict):
+    """
+    Action mode: run one explicit queue action from command line inputs
+
+    Required input is --qaction. For per-run move actions, --qid is also
+    required.
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None
+    """
+    # get action input
+    qaction = str(params['INPUTS'].get('QACTION', 'None')).strip().lower()
+    if drs_text.null_text(qaction, ['', 'None']):
+        WLOG(params, 'error', 'Queue: action mode requires --qaction')
+        return
+    # get optional queue id
+    qid = str(params['INPUTS'].get('QID', 'None')).strip()
+    if drs_text.null_text(qid, ['', 'None']):
+        qid = None
+    # run the action core
+    result = queue_action_core(params, qaction, qid)
+    # report result
+    if result['success']:
+        WLOG(params, 'info', result['message'])
+    else:
+        WLOG(params, 'warning', result['message'], sublevel=2)
+
+
+def _move_one_to_pending(params: ParamDict,
+                         qid: Optional[str]) -> Tuple[int, str]:
+    """
+    Move a single complete/failed queue entry back to pending
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param qid: str or None, queue id "{group}/{run_file}"
+
+    :return: tuple, moved count and status message
+    """
+    # queue id is required for single-item actions
+    if qid is None:
+        return 0, 'Queue: move_to_pending requires --qid'
+    # qid must have group/run format
+    if '/' not in qid:
+        return 0, 'Queue: Invalid qid "{0}"'.format(qid)
+    group, run_file = qid.split('/', 1)
+    queue_path = get_queue_path(params)
+    # running tasks must not be moved this way
+    running_path = os.path.join(queue_path, QUEUE_RUNNING_DIR,
+                                group, run_file)
+    if os.path.exists(running_path):
+        msg = 'Queue: {0} is running - cannot move to pending'
+        return 0, msg.format(qid)
+    # try complete then failed
+    moved = move_run_file(queue_path, group, run_file,
+                          QUEUE_COMPLETE_DIR, QUEUE_PENDING_DIR)
+    if not moved:
+        moved = move_run_file(queue_path, group, run_file,
+                              QUEUE_FAILED_DIR, QUEUE_PENDING_DIR)
+    # report result
+    if moved:
+        return 1, 'Queue: {0} moved to pending'.format(qid)
+    return 0, 'Queue: {0} not found in complete/failed'.format(qid)
+
+
+def _move_all_state_to_pending(params: ParamDict, state: str) -> int:
+    """
+    Move all entries from one state back to pending
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param state: str, source state (complete or failed)
+
+    :return: int, number of moved entries
+    """
+    queue_path = get_queue_path(params)
+    entries = list_queue_entries(params, states=[state])
+    moved = 0
+    for entry in entries:
+        ok = move_run_file(queue_path, entry['group'], entry['run'],
+                           state, QUEUE_PENDING_DIR)
+        moved = moved + int(ok)
+    return moved
+
+
+def _stop_one_running(params: ParamDict, qid: Optional[str],
+                      to_state: str) -> Tuple[int, int, str]:
+    """
+    Stop one running task and move it to the requested destination
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param qid: str or None, queue id "{group}/{run_file}"
+    :param to_state: str, destination state after stopping the task
+
+    :return: tuple, stopped count, moved count and status message
+    """
+    # queue id is required for single-item running actions
+    if qid is None:
+        return 0, 0, 'Queue: running stop action requires --qid'
+    # queue id must contain the group and run file
+    if '/' not in qid:
+        return 0, 0, 'Queue: Invalid qid "{0}"'.format(qid)
+    # validate the destination state
+    valid_states = [QUEUE_PENDING_DIR, QUEUE_COMPLETE_DIR, QUEUE_FAILED_DIR]
+    if to_state not in valid_states:
+        msg = 'Queue: Invalid running stop destination "{0}"'
+        return 0, 0, msg.format(to_state)
+    # split the queue id and locate the running yaml file
+    group, run_file = qid.split('/', 1)
+    queue_path = get_queue_path(params)
+    run_path = os.path.join(queue_path, QUEUE_RUNNING_DIR, group, run_file)
+    if not os.path.exists(run_path):
+        return 0, 0, 'Queue: {0} not found in running'.format(qid)
+    # try to read a stored pid from the running yaml file
+    pid = None
+    try:
+        run_dict = base.load_yaml(run_path, default=dict())
+        pid = run_dict.get('pid')
+    except Exception:
+        pid = None
+    # if a pid is present, terminate it before moving the queue item
+    stopped = 0
+    can_move = True
+    if not drs_text.null_text(pid, ['', 'None']):
+        try:
+            can_move = _kill_pid(int(pid))
+        except (TypeError, ValueError):
+            can_move = False
+        if can_move:
+            stopped = 1
+    if not can_move:
+        return 0, 0, 'Queue: could not stop {0}'.format(qid)
+    # move the queue file under lock once the process is gone
+    with QueueLock(params):
+        moved = move_run_file(queue_path, group, run_file,
+                              QUEUE_RUNNING_DIR, to_state)
+    if moved:
+        msg = 'Queue: {0} stopped -> {1}'
+        return stopped, 1, msg.format(qid, to_state)
+    return stopped, 0, 'Queue: could not move {0}'.format(qid)
+
+
+def _set_task_pid(task: Dict[str, str], pid: Optional[int]):
+    """
+    Store/remove a running process pid in the task yaml file
+
+    :param task: dictionary, queue task dictionary
+    :param pid: int or None, pid to store (None removes pid key)
+
+    :return: None
+    """
+    run_path = task.get('run_path')
+    if run_path is None:
+        return
+    if not os.path.exists(run_path):
+        return
+    try:
+        run_dict = base.load_yaml(run_path, default=dict())
+        if pid is None:
+            if 'pid' in run_dict:
+                del run_dict['pid']
+        else:
+            run_dict['pid'] = int(pid)
+        base.write_yaml(run_dict, run_path, width=float('inf'))
+    except Exception:
+        return
+
+
+def _kill_pid(pid: int) -> bool:
+    """
+    Try to terminate one pid cleanly then force kill if needed
+
+    :param pid: int, process id
+
+    :return: bool, True if process is gone after kill attempts
+    """
+    # process already gone counts as success
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    # send TERM first
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        return False
+    # allow a short grace period
+    for _ in range(20):
+        time.sleep(0.1)
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        except PermissionError:
+            return False
+    # still alive: force kill
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        return False
+    # verify it is gone
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    return False
+
+
+def _stop_all_running(params: ParamDict) -> Tuple[int, int, int]:
+    """
+    Stop all running tasks and move them back to pending
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: tuple, stopped count, moved count, failed count
+    """
+    queue_path = get_queue_path(params)
+    entries = list_queue_entries(params, states=[QUEUE_RUNNING_DIR])
+    stopped, moved, failed = 0, 0, 0
+    for entry in entries:
+        # try to read pid from the running yaml file
+        pid = None
+        try:
+            run_dict = base.load_yaml(entry['path'], default=dict())
+            pid = run_dict.get('pid')
+        except Exception:
+            pid = None
+        # if we have a pid attempt to terminate it first
+        can_move = True
+        if not drs_text.null_text(pid, ['', 'None']):
+            try:
+                can_move = _kill_pid(int(pid))
+            except (TypeError, ValueError):
+                can_move = False
+            if can_move:
+                stopped = stopped + 1
+        # move back to pending only if stop succeeded or pid unknown
+        if can_move:
+            ok = move_run_file(queue_path, entry['group'], entry['run'],
+                               QUEUE_RUNNING_DIR, QUEUE_PENDING_DIR)
+            moved = moved + int(ok)
+            if not ok:
+                failed = failed + 1
+        else:
+            failed = failed + 1
+    return stopped, moved, failed
 
 
 # =============================================================================
@@ -1458,11 +2073,15 @@ def _run_task(task: Dict[str, str]) -> Tuple[str, bool, str]:
              successful, 3. str the tail of the task output (for
              reporting failures)
     """
-    # run the runstring in a shell (capturing all output)
-    process = subprocess.run(task['runstring'], shell=True,
-                             capture_output=True, text=True)
+    # run the queue command in a shell (capturing all output)
+    command = _build_task_command(task)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, text=True)
+    _set_task_pid(task, process.pid)
+    stdout, stderr = process.communicate()
+    _set_task_pid(task, None)
     # combine standard output and error for the failure check
-    output = str(process.stdout) + str(process.stderr)
+    output = str(stdout) + str(stderr)
     # keep only the tail of the output (for reporting)
     tail = '\n'.join(output.splitlines()[-10:])
     # success requires a zero return code
@@ -1495,11 +2114,12 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
     if mpmode == 'linear' or cores == 1 or len(tasks) == 1:
         # loop around tasks
         for t_it, task in enumerate(tasks):
+            command = _build_task_command(task)
             # log which task we are running
             msg = 'Queue: Running {0} [{1}/{2}]'
             margs = [task['shortname'], t_it + 1, len(tasks)]
             WLOG(params, '', msg.format(*margs))
-            WLOG(params, '', '\t{0}'.format(task['runstring']), wrap=False)
+            WLOG(params, '', '\t{0}'.format(command), wrap=False)
             # run the task
             run_file, success, tail = _run_task(task)
             # store the result
@@ -1557,6 +2177,25 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
                  sublevel=2)
     # return the results
     return results
+
+
+def _build_task_command(task: Dict[str, str]) -> str:
+    """
+    Construct the shell command used to execute one queue task
+
+    Queue task runstrings are wrapped with apero_execute.py in v0.8.
+
+    :param task: dictionary, the task with key 'runstring'
+
+    :return: str, command to execute in a shell
+    """
+    # normalize the stored runstring
+    runstring = str(task['runstring']).strip()
+    # avoid double-prefixing already wrapped commands
+    if runstring.startswith('apero_execute.py '):
+        return runstring
+    # wrap all queue recipe calls with apero_execute.py
+    return 'apero_execute.py {0}'.format(runstring)
 
 
 def _write_batch_script(params: ParamDict, template: Dict[str, Any],

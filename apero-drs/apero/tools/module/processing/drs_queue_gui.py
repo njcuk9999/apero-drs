@@ -203,6 +203,7 @@ def get_status_data(params: ParamDict,
         row['state'] = entry['state']
         row['group'] = entry['group']
         row['run'] = entry['run']
+        row['qid'] = '{0}/{1}'.format(entry['group'], entry['run'])
         # detail information (requires reading the yaml file)
         if details:
             try:
@@ -232,46 +233,53 @@ def get_status_data(params: ParamDict,
     return status
 
 
-def get_template_data(params: ParamDict) -> Dict[str, Any]:
+def list_template_names(params: ParamDict) -> List[str]:
     """
-    Get the batch template as a plain (JSON-able) dictionary
+    List the names of all saved batch templates
 
     :param params: ParamDict, the parameter dictionary of constants
+
+    :return: list of strings, the available template names
+    """
+    return drs_queue.list_templates(params)
+
+
+def get_template_data(params: ParamDict,
+                     name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get a named batch template as a plain (JSON-able) dictionary
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str or None, the template name (default template used
+                if None/blank)
 
     :return: dictionary, the batch template values (defaults if no
              template file exists yet)
     """
-    # get the template path
-    queue_path = drs_queue.get_queue_path(params)
-    template_path = os.path.join(queue_path,
-                                 drs_queue.QUEUE_BATCH_TEMPLATE)
-    # load the template (or the defaults if it doesn't exist)
-    if os.path.exists(template_path):
-        defaults = dict(drs_queue.QUEUE_BATCH_DEFAULTS)
-        template = base.load_yaml(template_path, default=defaults)
-    else:
-        template = dict(drs_queue.QUEUE_BATCH_DEFAULTS)
-    # return the template
+    template = drs_queue.load_template(params, name)
     return dict(template)
 
 
-def set_template_data(params: ParamDict,
-                      form: Dict[str, Any]) -> Dict[str, Any]:
+def set_template_data(params: ParamDict, form: Dict[str, Any],
+                     name: Optional[str] = None) -> Dict[str, Any]:
     """
-    Save the batch template from a plain dictionary (e.g. a gui/flask
-    form)
+    Save a named batch template from a plain dictionary (e.g. a
+    gui/flask form)
 
     :param params: ParamDict, the parameter dictionary of constants
     :param form: dictionary, the template values to save (only known
                  template keys are used)
+    :param name: str or None, the template name (default template used
+                if None/blank)
 
-    :return: dictionary, the saved template values
+    :return: dictionary with keys 'template' (the saved values) and
+             'path' (the absolute path it was saved to)
     """
     # make sure the queue directories exist
     drs_queue.setup_queue_directories(params)
     drs_queue.setup_output_directories(params)
-    # start from the current template (or defaults)
-    template = get_template_data(params)
+    # start from the current named template (or defaults)
+    template = get_template_data(params, name)
     # update the simple fields from the form
     for key in GUI_TEMPLATE_FIELDS:
         if key in form:
@@ -285,13 +293,10 @@ def set_template_data(params: ParamDict,
         template['activation'] = [str(line).strip()
                                   for line in activation
                                   if str(line).strip() != '']
-    # save the template to the queue directory
-    queue_path = drs_queue.get_queue_path(params)
-    template_path = os.path.join(queue_path,
-                                 drs_queue.QUEUE_BATCH_TEMPLATE)
-    base.write_yaml(template, template_path, width=float('inf'))
-    # return the saved template
-    return template
+    # save the named template
+    template_path = drs_queue.save_template(params, template, name)
+    # return the saved template and where it was saved
+    return dict(template=template, path=template_path)
 
 
 def render_dashboard(params: ParamDict,
@@ -320,7 +325,8 @@ def render_dashboard(params: ParamDict,
 # =============================================================================
 def action_run(params: ParamDict, state: GuiState,
                cores: Optional[Any] = None,
-               mpmode: Optional[str] = None) -> Dict[str, Any]:
+               mpmode: Optional[str] = None,
+               ntasks: Optional[Any] = None) -> Dict[str, Any]:
     """
     Start a queue run action in the background (run the next task(s) in
     the queue - see drs_queue.queue_run)
@@ -329,6 +335,8 @@ def action_run(params: ParamDict, state: GuiState,
     :param state: GuiState, the shared gui state (busy flag/log)
     :param cores: int/str or None, the number of tasks to run at once
     :param mpmode: str or None, the multiprocessing mode
+    :param ntasks: int/str or None, total number of tasks to run in this
+                   action (or "all")
 
     :return: dictionary with keys 'started' (bool) and 'message' (str)
     """
@@ -340,13 +348,20 @@ def action_run(params: ParamDict, state: GuiState,
     # sanitize the mpmode value
     if mpmode not in drs_queue.QUEUE_MP_MODES:
         mpmode = 'linear'
+    # sanitize ntasks text from the form
+    if ntasks is None:
+        ntasks = ''
+    ntasks = str(ntasks).strip()
+    if len(ntasks) == 0:
+        ntasks = None
 
     # define the run action (executed in the worker thread)
     def _do_run():
-        state.add_message('Run started (cores={0}, mpmode={1})'
-                          ''.format(cores, mpmode))
+        state.add_message('Run started (cores={0}, mpmode={1}, '
+                          'ntasks={2})'.format(cores, mpmode, ntasks))
         summary = drs_queue.queue_run(params, cores=cores,
-                                      mpmode=mpmode)
+                                      mpmode=mpmode,
+                                      ntasks=ntasks)
         state.add_message('Run: {0}'.format(summary['message']))
     # start the action in the background (if not busy)
     started = state.start_action('Run', _do_run, tuple())
@@ -359,7 +374,8 @@ def action_run(params: ParamDict, state: GuiState,
 def action_batch(params: ParamDict, state: GuiState,
                  per_batch: Optional[Any] = None,
                  n_batches: Optional[Any] = None,
-                 submit: bool = False) -> Dict[str, Any]:
+                 submit: bool = False,
+                 template_name: Optional[str] = None) -> Dict[str, Any]:
     """
     Start a queue batch action in the background (create and optionally
     submit sbatch scripts - see drs_queue.batch_queue)
@@ -371,14 +387,19 @@ def action_batch(params: ParamDict, state: GuiState,
     :param n_batches: int/str or None, the number of batch scripts
                       (None means as many as needed)
     :param submit: bool, if True submit the scripts via sbatch
+    :param template_name: str or None, the named batch template to use
+                          (default template used if None/blank)
 
     :return: dictionary with keys 'started' (bool) and 'message' (str)
     """
+    # work out the template name up front (used for the cpus fallback
+    #   below and passed through to batch_queue)
+    template_name = drs_queue.sanitize_template_name(template_name)
     # sanitize the per_batch value (fall back to template cpus)
     try:
         per_batch = max(1, int(per_batch))
     except (TypeError, ValueError):
-        template = get_template_data(params)
+        template = get_template_data(params, template_name)
         try:
             per_batch = max(1, int(template['cpus_per_task']))
         except (TypeError, ValueError):
@@ -393,11 +414,11 @@ def action_batch(params: ParamDict, state: GuiState,
 
     # define the batch action (executed in the worker thread)
     def _do_batch():
-        state.add_message('Batch started (per_batch={0}, n_batches={1},'
-                          ' submit={2})'.format(per_batch, n_batches,
-                                                submit))
+        state.add_message('Batch started (template={0}, per_batch={1}, '
+                          'n_batches={2}, submit={3})'.format(
+                              template_name, per_batch, n_batches, submit))
         summary = drs_queue.batch_queue(params, per_batch, n_batches,
-                                        submit)
+                                        submit, template_name)
         state.add_message('Batch: {0}'.format(summary['message']))
     # start the action in the background (if not busy)
     started = state.start_action('Batch', _do_batch, tuple())
@@ -437,6 +458,38 @@ def action_reset(params: ParamDict, state: GuiState,
     state.add_message(message)
     # construct the response
     return dict(removed=n_removed, message=message)
+
+
+def action_queue(params: ParamDict, state: GuiState,
+                 qaction: Optional[str] = None,
+                 qid: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Run a queue action (move/retry/stop/clear) synchronously
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param state: GuiState, the shared gui state (busy flag/log)
+    :param qaction: str or None, queue action name
+    :param qid: str or None, optional queue id (group/run file)
+
+    :return: dictionary, action result summary
+    """
+    # normalize inputs
+    qaction = str(qaction or '').strip().lower()
+    qid = str(qid or '').strip()
+    if len(qid) == 0:
+        qid = None
+    # do not mix with a running background action except stop requests
+    stop_actions = ['stop_all_running', 'stop_to_pending',
+                    'stop_to_complete', 'stop_to_failed']
+    if state.busy and qaction not in stop_actions:
+        return dict(success=False, moved=0, stopped=0, failed=0,
+                    message='busy - action already running')
+    # run action core
+    result = drs_queue.queue_action_core(params, qaction, qid)
+    # log it for the activity panel
+    state.add_message(result['message'])
+    # return action result
+    return result
 
 
 # =============================================================================
@@ -506,9 +559,15 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
             elif route == '/api/state':
                 data = dict(busy=state.busy, messages=state.messages)
                 self._send(json.dumps(data))
-            # the batch template values
+            # the list of saved batch template names
+            elif route == '/api/templates':
+                data = dict(names=list_template_names(params))
+                self._send(json.dumps(data))
+            # the batch template values (optional ?name= query param)
             elif route == '/api/template':
-                self._send(json.dumps(get_template_data(params)))
+                query = parse_qs(parsed.query)
+                name = query.get('name', [None])[0]
+                self._send(json.dumps(get_template_data(params, name)))
             # unknown route
             else:
                 self._send(json.dumps(dict(error='not found')),
@@ -524,14 +583,16 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
             if route == '/api/run':
                 response = action_run(params, state,
                                       cores=form.get('cores'),
-                                      mpmode=form.get('mpmode'))
+                                      mpmode=form.get('mpmode'),
+                                      ntasks=form.get('ntasks'))
                 self._send(json.dumps(response))
             # create (and optionally submit) batch scripts
             elif route == '/api/batch':
                 response = action_batch(
                     params, state, per_batch=form.get('per_batch'),
                     n_batches=form.get('n_batches'),
-                    submit=form.get('submit', False))
+                    submit=form.get('submit', False),
+                    template_name=form.get('template'))
                 self._send(json.dumps(response))
             # reset the queue
             elif route == '/api/reset':
@@ -539,11 +600,23 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
                                         qstate=form.get('qstate',
                                                         'all'))
                 self._send(json.dumps(response))
-            # save the batch template
+            # run queue action(s) from the status page
+            elif route == '/api/action':
+                response = action_queue(params, state,
+                                        qaction=form.get('qaction'),
+                                        qid=form.get('qid'))
+                self._send(json.dumps(response))
+            # save the batch template (name defaults to "default")
             elif route == '/api/template':
-                template = set_template_data(params, form)
-                state.add_message('Batch template saved')
-                self._send(json.dumps(template))
+                name = form.get('name')
+                result = set_template_data(params, form, name)
+                msg = 'Batch template "{0}" saved to {1}'
+                msg = msg.format(drs_queue.sanitize_template_name(name),
+                                 result['path'])
+                state.add_message(msg)
+                response = dict(template=result['template'],
+                                path=result['path'], message=msg)
+                self._send(json.dumps(response))
             # shut down the gui server
             elif route == '/api/shutdown':
                 self._send(json.dumps(dict(message='shutting down')))
@@ -643,9 +716,30 @@ def queue_gui(params: ParamDict):
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        pass
+        # optional interactive stop when Ctrl+C is used from terminal
+        if state.busy:
+            prompt = ('Queue: Action is running. Stop running tasks and '
+                      'move them back to pending? [y/N]: ')
+            try:
+                user_input = input(prompt).strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                user_input = ''
+            if user_input.startswith('y'):
+                result = drs_queue.queue_action_core(params,
+                                                     'stop_all_running')
+                if result['success']:
+                    WLOG(params, 'info', result['message'])
+                else:
+                    WLOG(params, 'warning', result['message'],
+                         sublevel=2)
+            else:
+                WLOG(params, '', 'Queue: Leaving running tasks active')
     finally:
         server.server_close()
+    # if action still running, keep process alive until worker completes
+    if state.busy and state.worker is not None:
+        WLOG(params, '', 'Queue: Waiting for active action to finish')
+        state.worker.join()
     # log that the server has stopped
     WLOG(params, '', 'Queue: Dashboard stopped')
 

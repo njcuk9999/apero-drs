@@ -616,7 +616,8 @@ queue_recipe.set_arg(pos=0, name='mode', dtype=str,
                              'queue, "gui" starts a browser dashboard '
                              '(status view + action buttons), "reset" '
                              'removes entries from the queue, "init" '
-                             'creates the batch template and "system" '
+                             'creates the batch template, "action" runs '
+                             'an explicit queue action and "system" '
                              '(internal) moves a task from running to '
                              'complete/failed')
 queue_recipe.set_kwarg(name='--cores', dtype=str, default='None',
@@ -628,11 +629,27 @@ queue_recipe.set_kwarg(name='--mpmode', dtype='options', default='None',
                        helpstr='The multiprocessing mode for run mode '
                                '(defaults to the TOOLS.REPROCESS.MP_TYPE '
                                'constant, same as apero_processing)')
+queue_recipe.set_kwarg(name='--ntasks', dtype=str, default='None',
+                       helpstr='Total number of queue tasks to run in run '
+                               'mode. Default is one cycle (up to --cores). '
+                               'Use "all" to keep running until blocked or '
+                               'the queue is empty')
 queue_recipe.set_kwarg(name='--qstate', dtype='options', default='None',
                        options=['pending', 'running', 'complete', 'failed',
                                 'all', 'None'],
                        helpstr='Only act on this queue state (for status '
                                'and reset modes) - default is all states')
+queue_recipe.set_kwarg(name='--qaction', dtype='options', default='None',
+                       options=['move_to_pending',
+                                'move_all_failed_to_pending',
+                                'move_all_complete_to_pending',
+                                'stop_all_running',
+                                'stop_to_pending',
+                                'stop_to_complete',
+                                'stop_to_failed',
+                                'clear_all_pending', 'None'],
+                       helpstr='Explicit queue action for action mode. Use '
+                               '--qid for per-run actions')
 queue_recipe.set_kwarg(name='--rows', dtype=str, default='None',
                        helpstr='Number of rows to show per page in status '
                                'mode (cli pager page size) and gui mode '
@@ -651,10 +668,29 @@ queue_recipe.set_kwarg(name='--qpath', dtype=str, default='None',
                                'to avoid loading the APERO runtime)')
 queue_recipe.set_kwarg(name='--qid', dtype=str, default='None',
                        helpstr='The queue id of a task, i.e. '
-                               '"{group}/{run_file}" (system mode only)')
+                               '"{group}/{run_file}" (action mode '
+                               'per-run actions and system mode)')
 queue_recipe.set_kwarg(name='--qresult', dtype='options', default='None',
                        options=['success', 'failed', 'None'],
                        helpstr='The result of a task (system mode only)')
+queue_recipe.set_kwarg(name='--template', dtype=str, default='None',
+                       helpstr='The name of the batch template to use '
+                               '(init and batch modes) - default is '
+                               '"default". Use "apero_queue.py init" to '
+                               'create named templates')
+queue_recipe.set_kwarg(name='--per_batch', dtype=str, default='None',
+                       helpstr='Number of tasks per batch script (batch '
+                               'mode) - if given, skips the interactive '
+                               'question')
+queue_recipe.set_kwarg(name='--n_batches', dtype=str, default='None',
+                       helpstr='Number of batch scripts to create (batch '
+                               'mode) - if given, skips the interactive '
+                               'question')
+queue_recipe.set_kwarg(name='--submit', dtype='options', default='None',
+                       options=['True', 'False', 'None'],
+                       helpstr='Whether to submit the batch script(s) via '
+                               'sbatch (batch mode) - if given, skips the '
+                               'interactive question')
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py

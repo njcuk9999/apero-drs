@@ -19,6 +19,8 @@ mode). The main argument is "mode":
              --qstate)
     - init: interactively create the batch template (sbatch settings and
             activation scripts) - required before using batch mode
+    - action: run one explicit queue action such as retrying failed items,
+              clearing pending items or stopping running tasks
     - system: internal fast mode used by batch scripts to move a task
               from running to complete/failed (uses --qpath, --qid and
               --qresult and avoids loading the full APERO runtime)
@@ -54,7 +56,8 @@ QUEUE_RUNNING_DIR = 'running'
 QUEUE_COMPLETE_DIR = 'complete'
 QUEUE_FAILED_DIR = 'failed'
 # define the valid queue modes
-QUEUE_MODES = ['run', 'batch', 'status', 'gui', 'reset', 'init', 'system']
+QUEUE_MODES = ['run', 'batch', 'status', 'gui', 'reset', 'init',
+               'action', 'system']
 
 
 # =============================================================================
@@ -168,7 +171,7 @@ def main(mode=None, **kwargs):
     """
     Main function for apero_queue.py
 
-    :param mode: str, the queue mode (run/batch/status/reset/init/system)
+    :param mode: str, the queue mode
     :param kwargs: additional keyword arguments
 
     :type mode: str
@@ -256,6 +259,9 @@ def __main__(recipe, params):
     # init mode: interactively create the batch template
     elif qmode == 'init':
         drs_queue.queue_init(params)
+    # action mode: run an explicit queue action
+    elif qmode == 'action':
+        drs_queue.queue_action(params)
     # system mode (slow fallback): move a task from running to
     #   complete/failed (the fast path in main() handles the usual case)
     elif qmode == 'system':

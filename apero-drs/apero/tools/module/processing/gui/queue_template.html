@@ -59,6 +59,16 @@ button.danger:hover { background: #a82525; }
 #status-controls input, #status-controls select {
     padding: 6px 8px; margin-right: 8px; font-size: 14px; }
 #pos { margin: 0 8px; color: #333; font-weight: bold; }
+.statefilter-group { display: inline-block; margin-right: 8px; }
+.statefilter-btn { padding: 6px 10px; margin-right: 4px; font-size: 13px;
+                   border: 1px solid #bbb; border-radius: 4px;
+                   background: #eee; color: #333; cursor: pointer;
+                   opacity: 0.5; }
+.statefilter-btn.active { opacity: 1; color: #fff; border-color: transparent; }
+.statefilter-btn.pending.active { background: #e6a817; }
+.statefilter-btn.running.active { background: #2a7de1; }
+.statefilter-btn.complete.active { background: #2e9e4f; }
+.statefilter-btn.failed.active { background: #d33c3c; }
 table { border-collapse: collapse; width: 100%; background: #fff; }
 th { cursor: pointer; background: #333; color: #fff; padding: 8px;
      text-align: left; user-select: none; white-space: nowrap; }
@@ -72,6 +82,9 @@ tr.complete { background: #def7e5; }
 tr.failed { background: #fadddd; }
 .badge { padding: 2px 8px; border-radius: 3px; color: #fff;
          font-size: 12px; font-weight: bold; }
+.row-actions { white-space: nowrap; }
+.row-actions select { padding: 4px 6px; font-size: 12px; }
+.action-buttons button { margin-right: 8px; margin-bottom: 8px; }
 #log { background: #222; color: #ddd; font-family: monospace;
        font-size: 12px; padding: 10px; border-radius: 6px;
        max-height: 220px; overflow-y: auto; margin-top: 12px; }
@@ -105,6 +118,8 @@ tr.failed { background: #fadddd; }
 </div>
 <label>Cores (tasks to run at once)</label>
 <input id="run-cores" type="number" min="1" value="1">
+<label>Total tasks for this command (blank = one cycle, "all" = no limit)</label>
+<input id="run-ntasks" type="text" value="">
 <label>Multiprocessing mode</label>
 <select id="run-mpmode">
 <option value="linear">linear</option>
@@ -121,6 +136,8 @@ tr.failed { background: #fadddd; }
 <textarea id="cli-batch" class="cli-box" readonly></textarea>
 <button class="copy-btn" onclick="copyCli('cli-batch')">Copy</button>
 </div>
+<label>Batch template</label>
+<select id="batch-template"></select>
 <label>Tasks per batch script</label>
 <input id="batch-per" type="number" min="1" value="24">
 <label>Number of batch scripts (blank = as needed)</label>
@@ -149,12 +166,39 @@ tr.failed { background: #fadddd; }
 </div>
 
 <div class="panel">
+<h2>Queue actions</h2>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-action" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-action')">Copy</button>
+</div>
+<div class="action-buttons">
+<button onclick="doAction('move_all_failed_to_pending')">
+    Retry all failed
+</button>
+<button onclick="doAction('move_all_complete_to_pending')">
+    Move all complete to pending
+</button>
+<button class="danger" onclick="doAction('stop_all_running')">
+    Stop all running
+</button>
+<button class="danger" onclick="doAction('clear_all_pending')">
+    Clear all pending
+</button>
+</div>
+</div>
+
+<div class="panel">
 <h2>Batch template settings</h2>
 <div class="cli-title">CLI equivalent</div>
 <div class="cli-wrap">
 <textarea id="cli-template" class="cli-box" readonly></textarea>
 <button class="copy-btn" onclick="copyCli('cli-template')">Copy</button>
 </div>
+<label>Load existing template</label>
+<select id="tpl-load"></select>
+<label>Template name (used when saving)</label>
+<input id="tpl-name" type="text" value="default">
 <div id="template-fields"></div>
 <div class="label-row">
 <label for="tpl-activation">Activation lines (one per line)</label>
@@ -174,6 +218,7 @@ source apero_profile.sh my_profile</pre>
 </div>
 <textarea id="tpl-activation" class="cli-box"></textarea>
 <br><button onclick="saveTemplate()">&#128190; Save template</button>
+<div id="tpl-saved-path" class="cli-title"></div>
 </div>
 </div>
 
@@ -185,13 +230,24 @@ source apero_profile.sh my_profile</pre>
 <div class="summary" id="summary-status"></div>
 <div id="status-controls">
 <input id="filter" placeholder="Filter (any column)...">
-<select id="statefilter">
-<option value="all">all states</option>
-<option value="pending">pending</option>
-<option value="running">running</option>
-<option value="complete">complete</option>
-<option value="failed">failed</option>
-</select>
+<span id="statefilter-group" class="statefilter-group">
+<button type="button" class="statefilter-btn pending active"
+        data-state="pending" onclick="toggleStateFilter('pending')">
+    pending
+</button>
+<button type="button" class="statefilter-btn running active"
+        data-state="running" onclick="toggleStateFilter('running')">
+    running
+</button>
+<button type="button" class="statefilter-btn complete active"
+        data-state="complete" onclick="toggleStateFilter('complete')">
+    complete
+</button>
+<button type="button" class="statefilter-btn failed active"
+        data-state="failed" onclick="toggleStateFilter('failed')">
+    failed
+</button>
+</span>
 <button onclick="prevPage()">&laquo; Prev</button>
 <span id="pos"></span>
 <button onclick="nextPage()">Next &raquo;</button>
@@ -205,6 +261,7 @@ source apero_profile.sh my_profile</pre>
 <th data-key="priority">Priority</th>
 <th data-key="recipe">Recipe</th>
 <th data-key="runstring">Runstring</th>
+<th data-key="actions">Actions</th>
 </tr></thead>
 <tbody id="qbody"></tbody>
 </table>
@@ -217,6 +274,9 @@ var page = 0;
 var sortKey = 'idx';
 var sortAsc = true;
 var view = [];
+// which states are currently shown (all shown by default)
+var activeStates = {pending: true, running: true,
+                    complete: true, failed: true};
 var tplFields = XX_TPLFIELDS_XX;
 
 function apiGet(url, callback) {
@@ -272,11 +332,18 @@ function sortView() {
     });
 }
 
+function toggleStateFilter(state) {
+    activeStates[state] = !activeStates[state];
+    var btn = document.querySelector(
+        '.statefilter-btn[data-state="' + state + '"]');
+    btn.classList.toggle('active');
+    applyFilter();
+}
+
 function applyFilter() {
     var text = document.getElementById('filter').value.toLowerCase();
-    var state = document.getElementById('statefilter').value;
     view = allData.filter(function (row) {
-        if (state !== 'all' && row.state !== state) { return false; }
+        if (!activeStates[row.state]) { return false; }
         if (text === '') { return true; }
         var blob = JSON.stringify(row).toLowerCase();
         return blob.indexOf(text) !== -1;
@@ -297,6 +364,29 @@ function render() {
         tr.className = row.state;
         var badge = '<span class="badge s-' + row.state + '">' +
                     row.state + '</span>';
+        var qid = row.group + '/' + row.run;
+        var actions = '<td></td>';
+        if (row.state === 'running') {
+            actions = '<td class="row-actions">' +
+                '<select onchange="handleRowAction(this, \'' +
+                qid + '\')">' +
+                '<option value="">Action...</option>' +
+                '<option value="stop_to_complete|complete">' +
+                'Mark complete</option>' +
+                '<option value="stop_to_pending|pending">' +
+                'Reset to pending</option>' +
+                '<option value="stop_to_failed|failed">' +
+                'Mark failed</option>' +
+                '</select></td>';
+        } else if (row.state === 'complete' || row.state === 'failed') {
+            actions = '<td class="row-actions">' +
+                '<select onchange="handleRowAction(this, \'' +
+                qid + '\')">' +
+                '<option value="">Action...</option>' +
+                '<option value="move_to_pending|pending">' +
+                'Reset to pending</option>' +
+                '</select></td>';
+        }
         tr.innerHTML =
             '<td>' + row.idx + '</td>' +
             '<td>' + badge + '</td>' +
@@ -305,7 +395,8 @@ function render() {
             '<td>' + escapeHtml(row.priority || '') + '</td>' +
             '<td>' + escapeHtml(row.recipe || '') + '</td>' +
             '<td class="runstring">' +
-            escapeHtml(row.runstring || '') + '</td>';
+            escapeHtml(row.runstring || '') + '</td>' +
+            actions;
         tbody.appendChild(tr);
     }
     var pos = document.getElementById('pos');
@@ -345,19 +436,28 @@ function renderSummary(counts) {
 
 function buildRunCli() {
     var cores = document.getElementById('run-cores').value || '1';
+    var ntasks = document.getElementById('run-ntasks').value || '';
     var mpmode = document.getElementById('run-mpmode').value || 'linear';
-    return 'apero_queue.py run --cores ' + cores + ' --mpmode ' + mpmode;
+    var cmd = 'apero_queue.py run --cores ' + cores +
+              ' --mpmode ' + mpmode;
+    if (ntasks !== '') {
+        cmd += ' --ntasks ' + ntasks;
+    }
+    return cmd;
 }
 
 function buildBatchCli() {
+    var tpl = document.getElementById('batch-template').value || 'default';
     var per = document.getElementById('batch-per').value || '24';
     var num = document.getElementById('batch-n').value;
-    var submit = document.getElementById('batch-submit').checked ? 'y' : 'n';
-    if (num === '') {
-        num = '';
+    var submit = document.getElementById('batch-submit').checked;
+    var cmd = 'apero_queue.py batch --template ' + tpl +
+              ' --per_batch ' + per;
+    if (num !== '') {
+        cmd += ' --n_batches ' + num;
     }
-    return "printf '%s\\n%s\\n%s\\n' '" + per + "' '" + num + "' '" +
-           submit + "' | apero_queue.py batch";
+    cmd += ' --submit ' + (submit ? 'True' : 'False');
+    return cmd;
 }
 
 function buildResetCli() {
@@ -365,13 +465,19 @@ function buildResetCli() {
     return 'apero_queue.py reset --qstate ' + qstate;
 }
 
+function buildActionCli() {
+    return 'apero_queue.py action --qaction move_all_failed_to_pending';
+}
+
 function buildTemplateCli() {
+    var name = document.getElementById('tpl-name').value.trim() ||
+               'default';
     var lines = document.getElementById('tpl-activation').value
         .split('\n')
         .filter(function (line) {
             return line.trim() !== '';
         });
-    var cmd = 'apero_queue.py init';
+    var cmd = 'apero_queue.py init --template ' + name;
     if (lines.length > 0) {
         cmd += '\n# activation lines example from current form:';
         cmd += '\n# ' + lines.join('\n# ');
@@ -383,7 +489,16 @@ function updateCliCommands() {
     document.getElementById('cli-run').value = buildRunCli();
     document.getElementById('cli-batch').value = buildBatchCli();
     document.getElementById('cli-reset').value = buildResetCli();
+    document.getElementById('cli-action').value = buildActionCli();
     document.getElementById('cli-template').value = buildTemplateCli();
+}
+
+function setActionCli(qaction, qid) {
+    var cmd = 'apero_queue.py action --qaction ' + qaction;
+    if (qid) {
+        cmd += ' --qid ' + qid;
+    }
+    document.getElementById('cli-action').value = cmd;
 }
 
 function copyCli(idValue) {
@@ -414,8 +529,12 @@ function refreshStatus() {
     });
 }
 
-function refreshTemplate() {
-    apiGet('/api/template', function (data) {
+function refreshTemplate(name) {
+    var url = '/api/template';
+    if (name) {
+        url += '?name=' + encodeURIComponent(name);
+    }
+    apiGet(url, function (data) {
         var box = document.getElementById('template-fields');
         box.innerHTML = '';
         tplFields.forEach(function (key) {
@@ -426,8 +545,40 @@ function refreshTemplate() {
         });
         var act = data.activation || [];
         document.getElementById('tpl-activation').value = act.join('\n');
+        if (name) {
+            document.getElementById('tpl-name').value = name;
+        }
         updateCliCommands();
     });
+}
+
+function refreshTemplateNames() {
+    apiGet('/api/templates', function (data) {
+        var names = data.names.length > 0 ? data.names : ['default'];
+        var fillSelect = function (select, addBlank) {
+            var current = select.value;
+            select.innerHTML = '';
+            if (addBlank) {
+                select.innerHTML += '<option value="">-- select --</option>';
+            }
+            names.forEach(function (name) {
+                select.innerHTML += '<option value="' + name + '">' +
+                    escapeHtml(name) + '</option>';
+            });
+            if (names.indexOf(current) !== -1) {
+                select.value = current;
+            }
+        };
+        fillSelect(document.getElementById('batch-template'), false);
+        fillSelect(document.getElementById('tpl-load'), true);
+        updateCliCommands();
+    });
+}
+
+function loadTemplate() {
+    var name = document.getElementById('tpl-load').value;
+    if (!name) { return; }
+    refreshTemplate(name);
 }
 
 function refreshState() {
@@ -447,17 +598,20 @@ function refreshAll() {
 
 function doRun() {
     var cores = document.getElementById('run-cores').value;
+    var ntasks = document.getElementById('run-ntasks').value;
     var mpmode = document.getElementById('run-mpmode').value;
-    apiPost('/api/run', {cores: cores, mpmode: mpmode},
+    apiPost('/api/run', {cores: cores, mpmode: mpmode, ntasks: ntasks},
             function (data) { refreshState(); });
 }
 
 function doBatch() {
+    var tpl = document.getElementById('batch-template').value;
     var per = document.getElementById('batch-per').value;
     var num = document.getElementById('batch-n').value;
     var submit = document.getElementById('batch-submit').checked;
     apiPost('/api/batch',
-            {per_batch: per, n_batches: num, submit: submit},
+            {template: tpl, per_batch: per, n_batches: num,
+             submit: submit},
             function (data) { refreshState(); });
 }
 
@@ -470,8 +624,32 @@ function doReset() {
     });
 }
 
+function doAction(qaction, qid, message) {
+    var msg = message || ('Run queue action "' + qaction + '"?');
+    if (!confirm(msg)) { return; }
+    setActionCli(qaction, qid || '');
+    apiPost('/api/action', {qaction: qaction, qid: qid},
+            function (data) {
+                refreshAll();
+            });
+}
+
+function handleRowAction(selectEl, qid) {
+    // read the choice then reset the dropdown to its placeholder
+    var choice = selectEl.value;
+    selectEl.value = '';
+    if (choice === '') { return; }
+    var parts = choice.split('|');
+    var qaction = parts[0];
+    var toState = parts[1];
+    var msg = 'Move queue entry "' + qid + '" to "' + toState + '"?';
+    doAction(qaction, qid, msg);
+}
+
 function saveTemplate() {
-    var data = {};
+    var name = document.getElementById('tpl-name').value.trim() ||
+               'default';
+    var data = {name: name};
     tplFields.forEach(function (key) {
         data[key] = document.getElementById('tpl-' + key).value;
     });
@@ -480,7 +658,10 @@ function saveTemplate() {
         return line.trim() !== '';
     });
     apiPost('/api/template', data, function (resp) {
+        document.getElementById('tpl-saved-path').textContent =
+            'Saved to: ' + resp.path;
         refreshState();
+        refreshTemplateNames();
         updateCliCommands();
     });
 }
@@ -492,12 +673,14 @@ function shutdownServer() {
 
 document.getElementById('filter')
     .addEventListener('keyup', applyFilter);
-document.getElementById('statefilter')
-    .addEventListener('change', applyFilter);
 
 document.getElementById('run-cores')
     .addEventListener('input', updateCliCommands);
+document.getElementById('run-ntasks')
+    .addEventListener('input', updateCliCommands);
 document.getElementById('run-mpmode')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('batch-template')
     .addEventListener('change', updateCliCommands);
 document.getElementById('batch-per')
     .addEventListener('input', updateCliCommands);
@@ -507,6 +690,10 @@ document.getElementById('batch-submit')
     .addEventListener('change', updateCliCommands);
 document.getElementById('reset-state')
     .addEventListener('change', updateCliCommands);
+document.getElementById('tpl-load')
+    .addEventListener('change', loadTemplate);
+document.getElementById('tpl-name')
+    .addEventListener('input', updateCliCommands);
 document.getElementById('template-fields')
     .addEventListener('input', updateCliCommands);
 document.getElementById('tpl-activation')
@@ -526,9 +713,9 @@ headers.forEach(function (th) {
 
 updateCliCommands();
 refreshAll();
+refreshTemplateNames();
 refreshTemplate();
 setInterval(refreshState, 2000);
 </script>
 </body>
 </html>
-
