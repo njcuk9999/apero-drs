@@ -2,6 +2,116 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- [APERO.PROCESSING] Refactor multiprocessing handling for header fix
+  processing. [Neil Cook]
+- [APERO.DATABASE] Enhance UHASH handling: deduplicate entries and purge
+  stale DB rows. [Neil Cook]
+- [APERO.ARI] push v0.8 apero-ri to v0.7. [Neil Cook]
+- Merge branch 'v0.7.297-live' into v0.7.297-stable-test. [Neil Cook]
+
+  # Conflicts:
+  #    `apero-ri/apero_ri/_version.py`
+  #    `apero-ri/apero_ri/application/async_tasks_api_helpers.py`
+  #    `apero-ri/apero_ri/application/rejection_list_api_helpers.py`
+  #    `apero-ri/apero_ri/application/user_context_helpers.py`
+  #    `apero-ri/apero_ri/core/task_runner.py`
+  #    `apero-ri/apero_ri/resources/aprofile_instruments/nirps_he_v7.yaml`
+  #    `apero-ri/apero_ri/resources/pages.yaml`
+  #    `apero-ri/apero_ri/static/css/monitor_issues.css`
+  #    `apero-ri/apero_ri/static/css/user_portal_messaging.css`
+  #    `apero-ri/apero_ri/static/css/user_portal_user_cards.css`
+  #    `apero-ri/apero_ri/static/js/admin_apero_profiles.js`
+  #    `apero-ri/apero_ri/static/js/astrometrics.js`
+  #    `apero-ri/apero_ri/static/js/rejection_list.js`
+  #    `apero-ri/apero_ri/tasks/apero_assets_sync.py`
+  #    `apero-ri/apero_ri/templates/admin/async_tasks.html`
+  #    `apero-ri/apero_ri/templates/home/astrometrics.html`
+  #    `apero-ri/apero_ri/templates/monitor_portal/rejection_list.html`
+  #    `apero/tools/module/processing/drs_processing.py`
+- Merge remote-tracking branch 'origin/v0.7.297-live' into
+  v0.7.297-live. [Neil Cook]
+- [MANUAL TRIGGER] Move manual trigger logging to the manual trigger
+  directory (inside the github) [Neil Cook]
+- [APERO.ARI2] Add from v0.8. [Neil Cook]
+- Merge branch 'v0.7.297-live' into v0.7.296-live-bulksend. [Neil Cook]
+
+  # Conflicts:
+  #    `apero/base/drs_base.py`
+  #    `apero/base/drs_db.py`
+  #    `apero/core/core/drs_database.py`
+  #    `apero/core/core/drs_file.py`
+  #    `apero/science/telluric/gen_tellu.py`
+  #    `apero/tools/module/processing/drs_processing.py`
+- `[APERO.astrom_db]` Enhance astrometric database performance by
+  implementing a caching mechanism for object names and aliases. [Neil
+  Cook]
+- [APERO.database] Add bulk update functionality for index entries and
+  enhance header fix process. [Neil Cook]
+- `[APERO.recipe_definitions]` Allow run.ini `eng_seq` to run `EXT_HC2HC2` and
+  `PP_HC2HC2`. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.296-live' into
+  v0.7.296-live. [Neil Cook]
+- [APERO.database] database patch for table disappearing for short
+  amount of time. [Neil Cook]
+- [APERO] patch fit tellu bug + `drs_db` error reporting bug. [Neil Cook]
+- [APERO.tellu+db] Merge duplicate log entries in `database_update.py` to
+  preserve QC information. And fix pclean file having no `QCC_ALL` value.
+  [Neil Cook]
+- Fix null comparison in `drs_base.py` to handle leading/trailing
+  whitespace. [Neil Cook]
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- [APERO.DATABASE] Use `KW_DRS_QC` instead of `log.PASSED_ALL_QC`. [Neil
+  Cook]
+- `[APERO.PSEUDO_CONST]` Deal with is None --> in [None, np.nan] [Neil
+  Cook]
+- [APERO.ARELDATE] Enhance IRELDATE handling with improved parsing and
+  fallback mechanisms. [Neil Cook]
+- [APERO.PROCESSING] Improve multiprocessing handling and enhance
+  run.ini comments for better clarity. [Neil Cook]
+- [APERO.PROCESSING] Enhance multiprocessing for header fixes with
+  improved error handling and fallback mechanisms. [Neil Cook]
+- [APERO.CHECK] Add `APERO_CHECK_PATH` constant for apero check YAML
+  storage. [Neil Cook]
+- [APERO.PROCESSING] Refactor header processing to use bulk updates and
+  improve multiprocessing efficiency (this was in v0.7.296 but not
+  pushed into v0.7.297) [Neil Cook]
+- [APERO.ALLIANCE] change numpy/pandas/scipy versions to match alliance.
+  [Neil Cook]
+- [APERO.astrometrics] Update `drs_astrometrics.py` to accommodate changes
+  in astroquery behavior. [Neil Cook]
+- [APERO.astrometrics] Update `drs_astrometrics.py` to accommodate changes
+  in astroquery behavior. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-stable-test' into
+  v0.7.297-stable-test. [Neil Cook]
+- [APERO] Update `pseudo_const` to be able to deal with NaN instead of
+  Null in certain keys DRSOBJN, DRSOUTID etc. [Neil Cook]
+- [APERO.astrometrics] Update `drs_astrometrics.py` to accommodate changes
+  in astroquery behavior. [Neil Cook]
+- Add a requirements file for alliance. [Neil Cook]
+- Add a requirements file for alliance. [Neil Cook]
+- [NIRPS.ARI2] update the `nirps_he_v7.yaml` with `science_fiber` and
+  `science_types` [type all others correct] [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-stable-test' into
+  v0.7.297-stable-test. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-stable-test' into
+  v0.7.297-stable-test. [Neil Cook]
+- Update .gitignore. [Neil Cook]
+- [APERO.ARI] fixes when profile names are the name (or nan/null in
+  objnames) [Neil Cook]
+- `[manual_trigger]` another typo wmsg {1} --> {0} [Neil Cook]
+- Update ARI name `apero_ri` --> `apero_ari`. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-stable-test' into
+  v0.7.297-stable-test. [Neil Cook]
+- `[manual_trigger]` get all out files as well as red files. [Neil Cook]
+- [APERO.ARI] Update `apero_ri` --> `apero_ari`. [Neil Cook]
+- Update to version v0.7.297. [Neil Cook]
+
+
 0.7.297 (2026-05-06)
 --------------------
 - Udpate readme. [Neil Cook]
