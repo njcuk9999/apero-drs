@@ -1471,6 +1471,9 @@ def download_data(params: ParamDict, demolocal: str = None,
         url, demolocal, demosymlink = ask_about_download_data(params, url)
     # -------------------------------------------------------------------------
     # print progress
+    if url is None and demolocal is None and demosymlink is None:
+        WLOG(params, 'info', f'Skipping downloading/copying demo data.')
+        return
     if demolocal is None:
         WLOG(params, 'info', f'Downloading data. Please wait...')
     elif demosymlink:
