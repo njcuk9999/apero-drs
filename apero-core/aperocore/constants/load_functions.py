@@ -1350,7 +1350,7 @@ def ask_about_download_data(params, url):
         userinput = str(input(prompt)).upper().strip()
         # handle skip option
         if userinput in ['S', 'SKIP']:
-            return
+            return None, None, None
         if userinput in ['U', 'USE']:
             # ask user for custom url
             while True:
@@ -1359,7 +1359,7 @@ def ask_about_download_data(params, url):
                 user_url = str(input(prompt_url)).strip()
                 # handle quit option
                 if user_url.upper() in ['Q', 'QUIT']:
-                    return
+                    return  None, None, None
                 # validate url format and accessibility
                 if (user_url.startswith('http://') or
                         user_url.startswith('https://')):
@@ -1464,13 +1464,16 @@ def download_data(params: ParamDict, demolocal: str = None,
     # -------------------------------------------------------------------------
     # deal with not being active
     if not active:
-        return
+        return  None, None, None
     # -------------------------------------------------------------------------
     # ask the user how they want to handle demo data
     if demolocal is None:
         url, demolocal, demosymlink = ask_about_download_data(params, url)
     # -------------------------------------------------------------------------
     # print progress
+    if url is None and demolocal is None and demosymlink is None:
+        WLOG(params, 'info', f'Skipping downloading/copying demo data.')
+        return
     if demolocal is None:
         WLOG(params, 'info', f'Downloading data. Please wait...')
     elif demosymlink:

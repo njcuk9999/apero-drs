@@ -933,7 +933,7 @@ class ConstantsDict:
         # set the yaml width to a large number so we don't get line breaks
         yaml_inst.width = 4096
         # remove the yaml if it already exists
-        if os.path.exists(outpath):
+        if os.path.exists(outpath) and os.path.isfile(outpath):
             os.remove(outpath)
         # write files
         with open(outpath, 'w') as y_file:
