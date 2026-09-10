@@ -3,7 +3,7 @@
 
 
 ################################################################################
-apero_run_ini
+apero_update_run_config
 ################################################################################
 
 
@@ -32,7 +32,7 @@ Contents
 SHORTNAME: RUN_INI
 
 
-.. include:: ../../../resources/default/descriptions/apero_run_ini.rst
+.. include:: ../../../resources/default/descriptions/apero_update_run_config.rst
 
 
 2. Schematic
@@ -54,7 +54,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_run_ini.py {options}
+    apero_update_run_config.py {options}
 
 
 No optional arguments

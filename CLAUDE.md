@@ -2,4 +2,4 @@
 
 ## Agent Instructions
 
-@.github/instructions/python-apero.instructions.md
+@AGENTS.md

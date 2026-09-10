@@ -172,10 +172,10 @@ def ask(question: str, dtype: Union[str, type, None] = None,
         cprint(question, color)
         # print options
         if options is not None:
-            cprint(lang.OPTIONS_ARE + ':', 'b')
+            cprint(drs_lang.OPTIONS_ARE + ':', 'b')
             print('   ' + '\n   '.join(list(np.array(optiondesc, dtype=str))))
         if default is not None:
-            cprint('   {0}: {1}'.format(lang.DEFAULT_IS, default), 'b')
+            cprint('   {0}: {1}'.format(drs_lang.DEFAULT_IS, default), 'b')
         # record response
         uinput = input(' >>   ')
         # deal with string ints, floats, logic
@@ -282,7 +282,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 check = False
                 continue
             else:
-                ortxt = ' {0} '.format(lang.OR)
+                ortxt = ' {0} '.format(drs_lang.OR)
                 optionstr = ortxt.join(np.array(options, dtype=str))
                 cprint(textentry('40-001-00039', args=[optionstr]), 'y')
                 check = True

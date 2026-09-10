@@ -814,9 +814,9 @@ reset.set_kwarg(name='--only_other', dtype='switch',
 reset.description_file = 'apero_reset.rst'
 
 # -----------------------------------------------------------------------------
-# apero_run_ini.py
+# apero_update_run_config.py
 # -----------------------------------------------------------------------------
-run_ini.name = 'apero_run_ini.py'
+run_ini.name = 'apero_update_run_config.py'
 run_ini.path = 'apero.tools.recipes.dev'
 run_ini.shortname = 'RUN_INI'
 run_ini.instrument = __INSTRUMENT__
@@ -828,7 +828,7 @@ run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   helpstr=textentry('RUN_INI_INSTRUMENT_HELP'))
 run_ini.set_kwarg(name='--runfile', dtype=str, default='None',
                   helpstr='Only create a single run file (for debugging)')
-run_ini.description_file = 'apero_run_ini.rst'
+run_ini.description_file = 'apero_update_run_config.rst'
 
 # -----------------------------------------------------------------------------
 # apero_validate.py

@@ -95,7 +95,8 @@ EXTRA_SKIP_TEXT['lbl'] = ('Please note SKIP_XXX=True for LBL recipes skips '
 # Define classes
 # =============================================================================
 class RunIniFile:
-    def __init__(self, params: ParamDict, instrument: str, name: str):
+    def __init__(self, params: ParamDict, recipe: DrsRecipe,
+                 instrument: str, name: str):
         # core properties
         self.name = name
         self.instrument = instrument
@@ -103,6 +104,8 @@ class RunIniFile:
         self.params = params
         self.pconst = load_functions.load_pconfig(select.INSTRUMENTS,
                                                   instrument)
+        # keep track of the recipe that called RunIniFile
+        self.recipe = recipe
         # import the recipe module
         self.recipemod = self.pconst.RECIPEMOD()
         # get run keys (from startup)
@@ -247,6 +250,42 @@ class RunIniFile:
         """
         self.extra_params[key] = value
 
+    def _convert_override_run_keys(self, params: ParamDict):
+        """
+        Convert plain run key values into APERO override run parameters.
+
+        :param params: ParamDict, the parameter dictionary to use for comment
+                       metadata
+
+        :return: None, updates self.run_keys in place
+        """
+        override_section = 'Default apero parameters overridden'
+
+        override_position = self.run_keys['IDS'].position - 1
+        for key, value in self.run_keys.items():
+            if isinstance(value, run_params.RunParam):
+                continue
+            comment = 'Param: {0}'.format(key)
+            dtype = type(value)
+            if key in params.instances:
+                instance = params.instances[key]
+                description = getattr(instance, 'description', None)
+                inst_comment = getattr(instance, 'comment', None)
+                inst_dtype = getattr(instance, 'dtype', None)
+                if description is not None:
+                    comment = description
+                elif inst_comment is not None:
+                    comment = inst_comment
+                if inst_dtype is not None:
+                    dtype = inst_dtype
+            ritem = run_params.RunParam(name=key,
+                                        value=value,
+                                        dtype=dtype,
+                                        comment=comment,
+                                        section=override_section,
+                                        position=override_position)
+            self.run_keys[key] = ritem
+
     def write_yaml_file(self, params: ParamDict):
         # ---------------------------------------------------------------------
         # step 1: construct output filename for this instrument
@@ -359,6 +398,9 @@ class RunIniFile:
         # ---------------------------------------------------------------------
         # add the ids to the id section
         self.run_keys['IDS'].value = self.ids
+        # ---------------------------------------------------------------------
+        # Convert any non-RunParam keys into APERO override yaml entries
+        self._convert_override_run_keys(params)
         # ---------------------------------------------------------------------
         # Create a commented map
         data = CommentedMap()
@@ -490,7 +532,7 @@ class RunIniFile:
         all_objects = drs_processing.get_uobjs_from_findex(self.params,
                                                            findexdbm)
         # get all telluric stars
-        tstars = telluric.get_tellu_include_list(self.params,
+        tstars = telluric.get_tellu_include_list(self.params, self.recipe,
                                                  all_objects=all_objects)
         # get all other stars
         ostars = drs_processing.get_non_telluric_stars(self.params, all_objects,

@@ -43,6 +43,20 @@ AperoCodedException = drs_log.AperoCodedException
 # =============================================================================
 # functions
 # =============================================================================
+def get_asset_directory(package: str = None) -> str:
+    """
+    Get the package asset directory used for APERO remote assets.
+
+    :param package: str or None, package name to resolve assets from. If None,
+                    use the APERO package name.
+
+    :return: str, absolute path to the package apero-assets directory
+    """
+    if package is None:
+        package = __PACKAGE__
+    return drs_path.get_relative_folder(package, 'apero-assets')
+
+
 def update_remote_assets(params: ParamDict, indir: str):
     """
     Create a yaml file containing all checksums and create a tar file of the

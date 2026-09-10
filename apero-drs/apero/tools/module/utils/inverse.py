@@ -132,8 +132,10 @@ def main():
     from astropy.io import fits
     workspace = '/scratch3/rali/spirou/mini_data/calibDB/'
     workspace1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
-    locofile_ab = workspace + '2019-04-20_2400399f_pp_loco_AB.fits'
-    locofile_c = workspace + '2019-04-20_2400550f_pp_loco_C.fits'
+    # a single combined LOC_LOCO file now covers all fibers (order profile +
+    #   position/width coefficients as ORDERP_{FIBER}/LOC_CTR_{FIBER}/
+    #   LOC_WID_{FIBER} extensions) instead of one file per fiber
+    locofile = workspace + '2019-04-20_2400399f_pp_loco.fits'
     shapex = fits.getdata(workspace + '2019-04-20_2400409a_pp_shapex.fits')
     shapey = fits.getdata(workspace + '2019-04-20_2400409a_pp_shapey.fits')
     wave_a = fits.getdata(workspace + '2019-04-20_2400416c_pp_e2dsff_A_wavem_fp_A.fits')
@@ -142,10 +144,10 @@ def main():
     fp_a = fits.getdata(workspace1 + '2400565a_pp_e2dsff_A.fits')
     fp_b = fits.getdata(workspace1 + '2400565a_pp_e2dsff_B.fits')
     fp_c = fits.getdata(workspace1 + '2400565a_pp_e2dsff_C.fits')
-    orderp_ab = fits.getdata(workspace + '2019-04-20_2400399f_pp_order_profile_AB.fits')
-    orderp_c = fits.getdata(workspace + '2019-04-20_2400394f_pp_order_profile_C.fits')
+    orderp_ab = fits.getdata(locofile, extname='ORDERP_AB')
+    orderp_c = fits.getdata(locofile, extname='ORDERP_C')
 
-    locofiles = dict(A=locofile_ab, B=locofile_ab, C=locofile_c)
+    locofiles = dict(A=locofile, B=locofile, C=locofile)
     fpfiles = dict(A=fp_a, B=fp_b, C=fp_c)
     wavefiles = dict(A=wave_a, B=wave_b, C=wave_c)
     nbxpix = 4088

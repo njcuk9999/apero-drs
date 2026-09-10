@@ -114,46 +114,74 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         infiles = params['INPUTS']['FILES'][1]
     # check the quality control from input files
     infiles = drs_file.check_input_qc(params, infiles, 'files')
-    # loc is run twice we need to check that all input files can be used
-    #  together and we are not mixing both types
-    infiles = drs_file.check_input_dprtypes(params, recipe, infiles)
-    # get list of filenames (for output)
-    rawfiles = []
-    for infile in infiles:
-        rawfiles.append(infile.basename)
-    # deal with input data from function
-    if 'files' in params['DATA_DICT']:
-        rawfiles = params['DATA_DICT']['rawfiles']
-        combine = params['DATA_DICT']['combine']
-    # combine input images if required
-    elif params['IMAGE.COMBINE_INPUT']:
-        # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median',
-                                same_type=False)
-        infiles = [cond[0]]
-        combine = True
-    else:
-        combine = False
-    # get the number of infiles
-    num_files = len(infiles)
+    # get pseudo constants (shared by every fiber group below)
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-
     # ----------------------------------------------------------------------
-    # Loop around input files
+    # group input files by the fiber group they illuminate - DARK_FLAT
+    #   illuminates the reference fiber and FLAT_DARK illuminates the
+    #   science fiber pair - both groups are now supplied in a single call
+    #   so one combined loc calibration file can be produced (covering all
+    #   fibers) instead of running this recipe once per fiber
     # ----------------------------------------------------------------------
-    for it in range(num_files):
+    fiber_groups = dict()
+    for infile in infiles:
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
+        fiber = pconst.FIBER_DPRTYPE(dprtype=dprtype)
+        if fiber is None:
+            eargs = [dprtype, recipe.name, 'FLAT_DARK or DARK_FLAT',
+                     infile.basename]
+            raise AperoCodedException(params, '00-013-00001', targs=eargs)
+        fiber_groups.setdefault(fiber, []).append(infile)
+    # fiber kinds used to flag science/reference fiber in the recipe log
+    science_fiber, _ = pconst.FIBER_KINDS()
+    # ----------------------------------------------------------------------
+    # storage for each fiber groups outputs (used to write the combined
+    #    localisation file once all fiber groups have been processed)
+    all_infiles, all_images, all_rawfiles = dict(), dict(), dict()
+    all_combine, all_props, all_orderps = dict(), dict(), dict()
+    all_lprops, all_qc_params, all_passed = dict(), dict(), dict()
+    # ----------------------------------------------------------------------
+    # Loop around fiber groups (e.g. science fiber from FLAT_DARK,
+    #    reference fiber from DARK_FLAT)
+    # ----------------------------------------------------------------------
+    fibers = sorted(fiber_groups.keys())
+    for group_num, fiber in enumerate(fibers):
+        group_infiles = fiber_groups[fiber]
         # ------------------------------------------------------------------
         # add level to recipe log
-        log1 = recipe.log.add_level(params, 'num', it)
+        log1 = recipe.log.add_level(params, 'num', group_num)
+        # set a flag for fiber type in logging
+        if fiber in science_fiber:
+            log1.update_flags(SCIFIBER=True)
+        else:
+            log1.update_flags(REFFIBER=True)
         # ------------------------------------------------------------------
         # set up plotting (no plotting before this)
-        recipe.plot.set_location(it)
+        recipe.plot.set_location(group_num)
         # print file iteration progress
-        drs_startup.file_processing_update(params, it, num_files)
-        # ge this iterations file
-        infile = infiles[it]
+        drs_startup.file_processing_update(params, group_num, len(fibers))
+        # get list of filenames (for output)
+        rawfiles = [group_infile.basename for group_infile in group_infiles]
+        # ------------------------------------------------------------------
+        # combine this fiber group's input images - a single combined image
+        #   per fiber group is required to build the combined loc file
+        if params['IMAGE.COMBINE_INPUT']:
+            cond = drs_file.combine(params, recipe, group_infiles,
+                                    math='median', same_type=False)
+            infile = cond[0]
+            combine = True
+        elif len(group_infiles) == 1:
+            infile = group_infiles[0]
+            combine = False
+        else:
+            wargs = [fiber, len(group_infiles)]
+            WLOG(params, 'error', 'LOC recipe requires combine=True when '
+                                  'more than one {0} file is provided (got '
+                                  '{1} files)'.format(*wargs))
+            infile, combine = group_infiles[0], False
         # get header from file instance
         header = infile.get_header()
         # ------------------------------------------------------------------
@@ -161,23 +189,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
                                                   database=calibdbm)
-        # ------------------------------------------------------------------
-        # Identify fiber type
-        # ------------------------------------------------------------------
-        # get pconst
-        pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-        # identify fiber type based on data type
-        fiber = pconst.FIBER_DPRTYPE(dprtype=props['DPRTYPE'])
-        if fiber is None:
-            eargs = [props['DPRTYPE'], recipe.name, 'FLAT_DARK or DARK_FLAT',
-                     infile.basename]
-            raise AperoCodedException(params, '00-013-00001', targs=eargs)
-        # set a flag for fiber type in logging
-        science_fiber, _ = pconst.FIBER_KINDS()
-        if fiber in science_fiber:
-            log1.update_flags(SCIFIBER=True)
-        else:
-            log1.update_flags(REFFIBER=True)
         # ------------------------------------------------------------------
         # Construct image order_profile
         # ------------------------------------------------------------------
@@ -221,29 +232,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         qc_params, passed = localisation.loc_quality_control(params, lprops)
         # update recipe log
         log1.add_qc(qc_params, passed)
-
-        # ------------------------------------------------------------------
-        # write files
-        # ------------------------------------------------------------------
-        fargs = [infile, image, rawfiles, combine, fiber, props, order_profile,
-                 lprops, qc_params]
-        outfiles = localisation.write_localisation_files(params, recipe, *fargs)
-        orderpfile, loco1file = outfiles
-
-        # ------------------------------------------------------------------
-        # Move to calibDB and update calibDB
-        # ------------------------------------------------------------------
-        if passed and params['INPUTS']['DATABASE']:
-            # copy the order profile to the calibDB
-            calibdbm.add_calib_file(orderpfile)
-            # copy the loco file to the calibDB
-            calibdbm.add_calib_file(loco1file)
-        # ---------------------------------------------------------------------
-        # if recipe is a reference and QC fail we generate an error
-        # ---------------------------------------------------------------------
-        if not passed and params['INPUTS']['REF']:
-            eargs = [recipe.name]
-            raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------
@@ -254,11 +242,55 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------
-        localisation.loc_summary(recipe, it, params, qc_params, props, lprops)
+        localisation.loc_summary(recipe, group_num, params, qc_params, props,
+                                 lprops)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
         log1.end()
+        # ------------------------------------------------------------------
+        # store this fiber group's outputs for the combined write below
+        # ------------------------------------------------------------------
+        all_infiles[fiber] = infile
+        all_images[fiber] = image
+        all_rawfiles[fiber] = rawfiles
+        all_combine[fiber] = combine
+        all_props[fiber] = props
+        all_orderps[fiber] = order_profile
+        all_lprops[fiber] = lprops
+        all_qc_params[fiber] = qc_params
+        all_passed[fiber] = passed
+
+    # ----------------------------------------------------------------------
+    # write the combined localisation file (order profile + position/width
+    #    coefficients + superposition debug image for every fiber group)
+    # ----------------------------------------------------------------------
+    locofile = localisation.write_localisation_files_multi(
+        params, recipe, all_infiles, all_images, all_rawfiles, all_combine,
+        all_props, all_orderps, all_lprops, all_qc_params)
+    # all fiber groups must pass QC before we add this file to the calibDB
+    passed = all(all_passed.values())
+    # ----------------------------------------------------------------------
+    # Move to calibDB and update calibDB
+    # ----------------------------------------------------------------------
+    if passed and params['INPUTS']['DATABASE']:
+        # add one calibDB entry per fiber group - all entries point at the
+        #   same physical (combined) file, downstream code reads the
+        #   fiber-specific extension out of it (see localisation.
+        #   get_coefficients and extract.gen_ext.order_profiles)
+        for fiber in fibers:
+            locofile.add_hkey('KW_FIBER', value=fiber)
+            calibdbm.add_calib_file(locofile)
+    # ---------------------------------------------------------------------
+    # if recipe is a reference and QC fail we generate an error
+    # ---------------------------------------------------------------------
+    if not passed and params['INPUTS']['REF']:
+        eargs = [recipe.name]
+        raise AperoCodedException(params, '09-000-00011', targs=eargs)
+    # ----------------------------------------------------------------------
+    # Construct summary document
+    # ----------------------------------------------------------------------
+    recipe.plot.summary_document(0)
 
     # ----------------------------------------------------------------------
     # End of main code

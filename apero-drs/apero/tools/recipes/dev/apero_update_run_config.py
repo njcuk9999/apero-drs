@@ -16,12 +16,15 @@ from aperocore.constants import constant_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 from apero.base import base as apero_base
+from apero.tools.module.setup import drs_assets
+from apero.tools.module.setup import drs_installation
+from apero.tools.recipes.dev import apero_data_checksum
 from apero.utils import drs_startup
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_run_ini.py'
+__NAME__ = 'apero_update_run_config.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = apero_pkg.__NAME__
 __version__ = apero_pkg.__version__
@@ -42,7 +45,7 @@ RUNDEF_PATH = 'apero.tools.module.processing.instruments.runfiles_{0}'
 # =============================================================================
 def main(**kwargs):
     """
-    Main function for apero_changelog.py
+    Main function for apero_update_run_config.py
 
     :param kwargs: any additional keywords
 
@@ -94,7 +97,7 @@ def __main__(recipe, params):
             wargs = [modpath, type(e), str(e)]
             WLOG(params, 'warning', wmsg.format(*wargs))
             continue
-        run_files += rundef.get().get_runfiles(params)
+        run_files += rundef.get().get_runfiles(params, recipe)
     # -------------------------------------------------------------------------
     # print how many found
     WLOG(params, '', '\tFound {0} run file templates'.format(len(run_files)))
@@ -121,6 +124,17 @@ def __main__(recipe, params):
         # run_file.write_text_file()
         # write to yaml file
         run_file.write_yaml_file(params)
+
+    # -------------------------------------------------------------------------
+    # ask whether to update remote assets now that run files have changed
+    asset_dir = drs_assets.get_asset_directory(__PACKAGE__)
+    question = ('\n\nUpdate remote assets with apero_data_checksum.py '
+                'mode=update-remote?\n\tindir={0}')
+    update_remote = drs_installation.ask(question.format(asset_dir),
+                                         dtype='YN', color='m')
+    print()
+    if update_remote:
+        apero_data_checksum.main(mode='update-remote', indir=asset_dir)
 
     # ----------------------------------------------------------------------
     # End of main code

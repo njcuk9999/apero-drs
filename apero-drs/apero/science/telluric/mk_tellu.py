@@ -228,7 +228,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # get berv from bprops
     berv = bprops['USE_BERV']
     # deal with bad berv (nan or None)
-    if berv in [np.nan, None] or not isinstance(berv, (int, float)):
+    if not isinstance(berv, (int, float)) or not np.isfinite(berv):
         eargs = [berv, func_name]
         raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # get airmass from header

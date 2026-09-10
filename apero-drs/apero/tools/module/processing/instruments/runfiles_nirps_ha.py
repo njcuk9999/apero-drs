@@ -13,6 +13,7 @@ from typing import List
 
 from aperocore.base import base
 from aperocore.constants import param_functions
+from apero.utils import drs_recipe
 from apero.tools.module.processing import drs_run_ini
 from apero.base import base as apero_base
 
@@ -30,6 +31,7 @@ __release__ = apero_base.__release__
 RunIniFile = drs_run_ini.RunIniFile
 # get parameter dictionary class
 ParamDict = param_functions.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Define the default reference observation directory
 DEFAULT_REF_OBSDIR = drs_run_ini.DEFAULT_REF_OBSDIR[__INSTRUMENT__]
 
@@ -37,7 +39,7 @@ DEFAULT_REF_OBSDIR = drs_run_ini.DEFAULT_REF_OBSDIR[__INSTRUMENT__]
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_runfiles(params: ParamDict) -> List[RunIniFile]:
+def get_runfiles(params: ParamDict, recipe: DrsRecipe) -> List[RunIniFile]:
     """
     Defines all possible run files
 
@@ -51,11 +53,11 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     # create default runs files for nirps_ha
     # -------------------------------------------------------------------------
     # blank run
-    blank_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'blank_run')
+    blank_run_nirps_ha = RunIniFile(params, recipe, 'NIRPS_HA', 'blank_run')
     blank_run_nirps_ha.append_sequence('blank_seq')
     run_files.append(blank_run_nirps_ha)
     # mini run
-    mini_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'mini_run')
+    mini_run_nirps_ha = RunIniFile(params, recipe, 'NIRPS_HA', 'mini_run')
     mini_run_nirps_ha.modify('USE_ENGINEERING', True)
     mini_run_nirps_ha.append_sequence('limited_seq')
     # do not skip any steps of the lbl
@@ -71,7 +73,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
 
     run_files.append(mini_run_nirps_ha)
     # quick run
-    quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')
+    quick_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'quick_run')
     quick_run_nirps_ha.append_sequence('pp_seq_opt')
     quick_run_nirps_ha.append_sequence('quick_seq')
     quick_run_nirps_ha.modify('RUN_PP_CAL', False)
@@ -86,7 +88,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     quick_run_nirps_ha.modify('RUN_PP_FPLFC', False)
     run_files.append(quick_run_nirps_ha)
     # calib run
-    calib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'calib_run')
+    calib_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'calib_run')
     calib_run_nirps_ha.append_sequence('pp_seq_opt')
     calib_run_nirps_ha.append_sequence('calib_seq')
     calib_run_nirps_ha.modify('RUN_PP_SCI', False)
@@ -101,12 +103,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     calib_run_nirps_ha.modify('RUN_PP_FPLFC', False)
     run_files.append(calib_run_nirps_ha)
     # complete run
-    complete_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'complete_run')
+    complete_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'complete_run')
     complete_run_nirps_ha.skip_default = False
     complete_run_nirps_ha.append_sequence('full_seq')
     run_files.append(complete_run_nirps_ha)
     # reference calib run
-    mcalib_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'ref_calib_run')
+    mcalib_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'ref_calib_run')
     mcalib_run_nirps_ha.append_sequence('pp_seq_opt')
     mcalib_run_nirps_ha.append_sequence('ref_seq')
     mcalib_run_nirps_ha.modify('RUN_PP_SCI', False)
@@ -121,7 +123,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mcalib_run_nirps_ha.modify('RUN_PP_FPLFC', False)
     run_files.append(mcalib_run_nirps_ha)
     # static calib run (for static wavelength calibration)
-    static_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'static_run')
+    static_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'static_run')
     static_run_nirps_ha.append_sequence('pp_seq_opt')
     static_run_nirps_ha.append_sequence('ref_seq')
     static_run_nirps_ha.rkey('REF_OBS_DIR', 'STATIC')
@@ -144,13 +146,13 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     static_run_nirps_ha.add_extra('CAL.GEN.NO_WAVE_SOL', True)
     run_files.append(static_run_nirps_ha)
     # other run
-    other_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'other_run')
+    other_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'other_run')
     other_run_nirps_ha.append_sequence('pp_seq_opt')
     other_run_nirps_ha.append_sequence('eng_seq')
     other_run_nirps_ha.run_default = False
     run_files.append(other_run_nirps_ha)
     # science run
-    science_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'science_run')
+    science_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'science_run')
     science_run_nirps_ha.append_sequence('pp_seq_opt')
     science_run_nirps_ha.append_sequence('science_seq')
     science_run_nirps_ha.append_sequence('lbl_seq')
@@ -167,7 +169,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     science_run_nirps_ha.modify('RECAL_TEMPLATE_IF_EXISTS', False)
     run_files.append(science_run_nirps_ha)
     # tellu run
-    tellu_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'tellu_run')
+    tellu_run_nirps_ha = RunIniFile(params, recipe, 'NIRPS_HA', 'tellu_run')
     tellu_run_nirps_ha.append_sequence('pp_seq_opt')
     tellu_run_nirps_ha.append_sequence('science_seq')
     tellu_run_nirps_ha.modify('RUN_PP_CAL', False)
@@ -182,7 +184,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tellu_run_nirps_ha.modify('RUN_PP_FPLFC', False)
     run_files.append(tellu_run_nirps_ha)
     # online run
-    online_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'online_run')
+    online_run_nirps_ha = RunIniFile(params, recipe, 'NIRPS_HA', 'online_run')
     online_run_nirps_ha.append_sequence('pp_seq_opt')
     online_run_nirps_ha.append_sequence('calib_seq')
     online_run_nirps_ha.append_sequence('science_seq')
@@ -207,24 +209,25 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     online_run_nirps_ha.modify('USE_ENGINEERING', True)
     run_files.append(online_run_nirps_ha)
     # offline run
-    offline_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'offline_run')
+    offline_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'offline_run')
     offline_run_nirps_ha.skip_default = False
     offline_run_nirps_ha.append_sequence('full_seq')
     offline_run_nirps_ha.modify('CORES', 15)
     offline_run_nirps_ha.modify('USE_ENGINEERING', True)
     run_files.append(offline_run_nirps_ha)
     # test run
-    test_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'test_run')
+    test_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'test_run')
     test_run_nirps_ha.append_sequence('limited_seq')
     test_run_nirps_ha.run_default = False
     test_run_nirps_ha.modify('TEST_RUN', True)
     run_files.append(test_run_nirps_ha)
     # helios run
-    helios_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'helios_run')
+    helios_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'helios_run')
     helios_nirps_ha.append_sequence('helios_seq')
     run_files.append(helios_nirps_ha)
     # trigger night calib run
-    tnc_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'trigger_night_calibrun')
+    tnc_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA',
+                                  'trigger_night_calibrun')
     tnc_run_nirps_ha.append_sequence('pp_seq_opt')
     tnc_run_nirps_ha.append_sequence('calib_seq')
     tnc_run_nirps_ha.modify('RUN_PP_SCI', False)
@@ -242,7 +245,8 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tnc_run_nirps_ha.modify('USE_ENGINEERING', True)
     run_files.append(tnc_run_nirps_ha)
     # trigger night science run
-    tns_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'trigger_night_scirun')
+    tns_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA',
+                                  'trigger_night_scirun')
     tns_run_nirps_ha.append_sequence('pp_seq_opt')
     tns_run_nirps_ha.append_sequence('science_seq')
     tns_run_nirps_ha.modify('RUN_PP_CAL', False)
@@ -260,7 +264,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     tns_run_nirps_ha.modify('USE_ENGINEERING', True)
     run_files.append(tns_run_nirps_ha)
     # lbl run
-    lbl_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'lbl_run')
+    lbl_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'lbl_run')
     lbl_run_nirps_ha.append_sequence('lbl_seq')
     # do not skip any steps of the lbl
     lbl_run_nirps_ha.modify('SKIP_LBLREF', False)
@@ -269,7 +273,7 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     lbl_run_nirps_ha.modify('SKIP_LBLCOMPILE_SCI', False)
     run_files.append(lbl_run_nirps_ha)
     # batch run
-    # batch_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'batch_run')
+    # batch_run_nirps_ha = RunIniFile(params,  recipe, 'NIRPS_HA', 'batch_run')
     # batch_run_nirps_ha.add_sequence_as_command('limited_seq')
     # batch_run_nirps_ha.modify('RUN_OBS_DIR', DEFAULT_REF_OBSDIR['NIRPS_HA'])
     # run_files.append(batch_run_nirps_ha)

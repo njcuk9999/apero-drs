@@ -1854,7 +1854,7 @@ class DrsInputFile:
                                                   suffix, filename)
             except AperoCodedException as e:
                 eargs = e.get('targs', None)
-                emsg = textentry(e.codeid, args=eargs)
+                emsg = textentry(e.code, args=eargs)
                 raise AperoCodedException(None, e.code, targs=eargs,
                                           message=emsg.format(*eargs))
 

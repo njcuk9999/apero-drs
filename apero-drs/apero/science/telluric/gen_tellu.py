@@ -2439,7 +2439,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # Get the Barycentric correction from berv props
     dv = bprops['USE_BERV'] - (rvoffset / 1000.0)
     # deal with bad berv (nan or None)
-    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
+    if not isinstance(dv, (int, float)) or not np.isfinite(dv):
         eargs = [dv, func_name]
         if log:
             raise AperoCodedException(params, '09-016-00004', targs=eargs)

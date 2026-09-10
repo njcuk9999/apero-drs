@@ -71,6 +71,17 @@ POOL_RECYCLE = 1200  # seconds before recycling connections (20 min)
 # =============================================================================
 # Define helper functions
 # =============================================================================
+def _is_null_value(value: Any) -> bool:
+    """Return whether a database value must be represented as SQL NULL."""
+    if value is None or isinstance(value, sqlalchemy.Null):
+        return True
+    if isinstance(value, (float, np.floating)):
+        return not np.isfinite(value)
+    if isinstance(value, Decimal):
+        return not value.is_finite()
+    return False
+
+
 def _is_transient_table_error(exception: Exception) -> bool:
     """
     Detect transient table-missing errors (MySQL errno 1146).
@@ -842,9 +853,7 @@ class AperoDatabase:
             # deal with NaN/None/Null values
             if _update_dict is not None:
                 for key, value in _update_dict.items():
-                    if isinstance(value, sqlalchemy.Null):
-                        _update_dict[key] = None
-                    elif value in [None, np.nan]:
+                    if _is_null_value(value):
                         _update_dict[key] = None
                     elif isinstance(value, str):
                         if value.lower() in ['null', 'none', 'nan']:
@@ -1000,7 +1009,7 @@ class AperoDatabase:
             # loop around rows
             for key, value in row.items():
                 # deal with None and np.nan values
-                if value in [None, np.nan]:
+                if _is_null_value(value):
                     row[key] = None
                 # deal with null string values
                 elif isinstance(value, str):

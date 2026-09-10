@@ -16,6 +16,7 @@ import os
 
 from aperocore.base import base
 from apero.core import drs_file
+from apero.core import drs_data_models
 from apero.core import drs_out_file as out
 from apero.base import base as apero_base
 
@@ -42,6 +43,9 @@ drs_ninput = drs_file.DrsNpyFile
 drs_oinput = drs_file.DrsOutFile
 drs_linput = drs_file.DrsLBLFile
 DrsFileGroup = drs_file.DrsFileGroup
+# get Apero Data Model classes
+AperoTableModel = drs_data_models.AperoTableModel
+AperoImageModel = drs_data_models.AperoImageModel
 # define out file classes
 blank_ofile = out.BlankOutFile()
 general_ofile = out.GeneralOutFile()
@@ -1236,45 +1240,45 @@ calib_file.addset(out_backmap)
 # -----------------------------------------------------------------------------
 # define fiber valid for localisation
 valid_lfibers = ['A', 'B']
-# localisation
-out_loc_orderp = drs_finput('LOC_ORDERP', hkeys=dict(KW_OUTPUT='LOC_ORDERP'),
-                            fibers=valid_lfibers,
-                            filetype='.fits',
-                            intype=[pp_flat_dark, pp_dark_flat],
-                            suffix='_order_profile',
-                            outclass=calib_ofile,
-                            dbname='calibration', dbkey='ORDER_PROFILE',
-                            description='Localisation: Order profile '
-                                        'calibration file')
-out_loc_loco = drs_finput('LOC_LOCO', hkeys=dict(KW_OUTPUT='LOC_LOCO'),
-                          fibers=valid_lfibers,
-                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
-                          suffix='_loco',
-                          outclass=calib_ofile,
-                          dbname='calibration', dbkey='LOC',
-                          description='Localisation: Position polynomial '
-                                      'calibration file')
-out_loc_fwhm = drs_finput('LOC_FWHM', hkeys=dict(KW_OUTPUT='LOC_FWHM'),
-                          fibers=valid_lfibers,
-                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
-                          suffix='_fwhm-order',
-                          outclass=calib_ofile,
-                          description='Localisation: Width polynomial '
-                                      'calibration file')
-out_loc_sup = drs_finput('LOC_SUP', hkeys=dict(KW_OUTPUT='LOC_SUP'),
-                         fibers=valid_lfibers,
-                         filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
-                         suffix='_with-order',
-                         outclass=calib_ofile,
-                         description='Localisation: Position superposition'
-                                     'image calibration file')
-# add localisation outputs to output fileset
-red_file.addset(out_loc_orderp)
-red_file.addset(out_loc_loco)
-red_file.addset(out_loc_fwhm)
-red_file.addset(out_loc_sup)
-calib_file.addset(out_loc_orderp)
-calib_file.addset(out_loc_loco)
+# localisation: a single combined calibration file holding the order
+#   profile, the position/width polynomial coefficients and the
+#   superposition debug image for every fiber (previously these were 4
+#   separate files - now they are extensions of one file so that a single
+#   apero_loc run (using both DARK_FLAT and FLAT_DARK files at once) can
+#   produce one calibDB entry covering all fibers)
+out_loc_calib = drs_finput('LOC_LOCO', hkeys=dict(KW_OUTPUT='LOC_LOCO'),
+                           filetype='.fits',
+                           intype=[pp_flat_dark, pp_dark_flat],
+                           suffix='_loco',
+                           outclass=calib_ofile,
+                           dbname='calibration', dbkey='LOC',
+                           description='Localisation: combined order '
+                                       'profile + position/width polynomial '
+                                       'calibration file (all fibers)')
+# add the per-fiber extensions: order profile image, center position image
+#   + coefficients table, width image + coefficients table and the
+#   superposition debug image
+for _lfiber in valid_lfibers:
+    # order profile image
+    out_loc_calib.hdulist['ORDERP_{0}'.format(_lfiber)] = (
+        AperoImageModel('ORDERP_{0}'.format(_lfiber)))
+    # localisation center position image + coefficients table
+    out_loc_calib.hdulist['LOC_CTR_{0}'.format(_lfiber)] = (
+        AperoImageModel('LOC_CTR_{0}'.format(_lfiber)))
+    out_loc_calib.hdulist['LOC_CTR_TABLE_{0}'.format(_lfiber)] = (
+        AperoTableModel('LOC_CTR_TABLE_{0}'.format(_lfiber)))
+    # localisation width image + coefficients table
+    out_loc_calib.hdulist['LOC_WID_{0}'.format(_lfiber)] = (
+        AperoImageModel('LOC_WID_{0}'.format(_lfiber)))
+    out_loc_calib.hdulist['LOC_WID_TABLE_{0}'.format(_lfiber)] = (
+        AperoTableModel('LOC_WID_TABLE_{0}'.format(_lfiber)))
+    # superposition debug image
+    out_loc_calib.hdulist['LOC_SUP_{0}'.format(_lfiber)] = (
+        AperoImageModel('LOC_SUP_{0}'.format(_lfiber)))
+del _lfiber
+# add localisation output to output filesets
+red_file.addset(out_loc_calib)
+calib_file.addset(out_loc_calib)
 
 # -----------------------------------------------------------------------------
 # shape files (reference)

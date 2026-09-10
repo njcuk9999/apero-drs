@@ -199,7 +199,6 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
             sp_source = str(legacy.get('SP_SOURCE') or '')
             # add mags and mag sources
             mags, mag_sources = dict(), dict()
-            mag_sources = []
             for mag in drs_astrometrics.MAGS:
                 mag_val = legacy.get(mag)
                 mag_source = legacy.get(f'{mag}_SOURCE')

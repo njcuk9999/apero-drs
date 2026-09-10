@@ -316,7 +316,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # Get the Barycentric correction from berv props
     dv = bprops['USE_BERV']
     # deal with bad berv (nan or None)
-    if dv in [np.nan, None] or not isinstance(dv, (int, float)):
+    if not isinstance(dv, (int, float)) or not np.isfinite(dv):
         eargs = [dv, func_name]
         raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # Get the reference wavemap from reference wave props

@@ -92,11 +92,26 @@ def get_base_params(instrument: str):
     :return: ParamDict, the apero constants
     """
     # test and create temporary apero config files/directories required
-    drs_uconfig(instrument)
+    get_uconfig_path(instrument)
     # now we can import from apero-drs (not before drs_uconfig)
     from apero.instruments import select
     # return the parameters as they are in the config
     return load_functions.load_config(select.INSTRUMENTS, instrument)
+
+
+def get_uconfig_path(instrument: str) -> str:
+    """
+    Create and return the temporary DRS_UCONFIG directory for an instrument.
+
+    :param instrument: str, the APERO instrument name (e.g. SPIROU)
+
+    :return: str, path to the generated temporary configuration directory
+    """
+    # create a reusable temporary profile when a valid one is not available
+    drs_uconfig(instrument)
+    # drs_uconfig always sets this environment variable before returning
+    uconfig = os.environ[base.USER_ENV]
+    return uconfig
 
 
 # =============================================================================

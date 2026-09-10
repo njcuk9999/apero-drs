@@ -83,7 +83,9 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
             filenames[fiber] = 'None'
     # ------------------------------------------------------------------------
     # get generic drs file types required
-    opfile = drs_file.get_file_definition(params, 'LOC_ORDERP',
+    # the order profile is stored as the 'ORDERP_{fiber}' extension of the
+    #   combined 'LOC_LOCO' loc calibration file (see save_tmp_orderps_file)
+    opfile = drs_file.get_file_definition(params, 'LOC_LOCO',
                                           block_kind='red')
     ospfile = drs_file.get_file_definition(params, 'ORDERP_STRAIGHT',
                                            block_kind='red')
@@ -236,12 +238,12 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
     #   defined then we need to figure out the order profile file -
     #   load it and then save it as a straighted version (orderpsfile)
     if not orderp_read:
-        # get key
-        key = opfile.get_dbkey()
         # get pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
         usefiber = pconst.FIBER_LOC_TYPES(fiber)
+        # get key
+        key = opfile.get_dbkey()
         # get the order profile filename
         cfile = gen_calib.CalibFile()
         cfile.load_calib_file(params, recipe.shortname, key,
@@ -250,9 +252,11 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
                               fiber=usefiber, return_filename=True)
         # get properties from calibration file
         filename, orderptime = cfile.filename, cfile.mjdmid
-        # load order profile
+        # load the order profile from its extension in the combined loc
+        #   calibration file
+        extname = 'ORDERP_{0}'.format(usefiber)
         orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
-                                             gethdr=True)
+                                             gethdr=True, extname=extname)
         orderpfilename = filename
         # straighten orders
         orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],

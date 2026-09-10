@@ -2,13 +2,16 @@
 # -*- coding: utf-8 -*-
 """Shared pytest setup for apero-drs tests."""
 
-import os
-import tempfile
-from pathlib import Path
+import pytest
 
-# Many apero modules require DRS_UCONFIG at import time.
-_DRS_CFG = Path(tempfile.mkdtemp(prefix='apero_drs_test_cfg_'))
-(_DRS_CFG / 'database.yaml').write_text('{}', encoding='utf-8')
-(_DRS_CFG / 'install.yaml').write_text('{}', encoding='utf-8')
-os.environ.setdefault('DRS_UCONFIG', str(_DRS_CFG))
+from apero.dev import get_base_params
+
+# Configure DRS_UCONFIG before pytest imports APERO modules from test files.
+_SPIROU_PARAMS = get_base_params('SPIROU')
+
+
+@pytest.fixture(scope='session')
+def spirou_params():
+	"""Return profile-free default SPIROU parameters for unit tests."""
+	return _SPIROU_PARAMS
 

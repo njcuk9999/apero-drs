@@ -24,6 +24,7 @@ from apero.core import drs_database
 from aperocore.core import drs_log
 from apero.core import drs_file
 from apero.utils import drs_recipe
+from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.instruments import select
@@ -730,6 +731,9 @@ def get_coefficients(params: ParamDict, recipe: DrsRecipe,
     # get loco file instance
     locofile = drs_file.get_file_definition(params, 'LOC_LOCO',
                                             block_kind='red')
+    # the position/width coefficients for this fiber are stored as a named
+    #   extension of the combined loc calibration file
+    combined_ext = 'LOC_CTR_{0}'.format(usefiber)
     # get calibration key
     key = locofile.get_dbkey()
     # load database
@@ -747,10 +751,15 @@ def get_coefficients(params: ParamDict, recipe: DrsRecipe,
     # get properties from calibration file
     locofilepath, locotime = cfile.filename, cfile.mjdmid
     # ------------------------------------------------------------------------
-    # construct new infile instance and read data/header
+    # construct new infile instance and read the fiber-specific extension
+    #   (image + header) rather than the primary HDU
     locofile = locofile.newcopy(filename=locofilepath, params=params,
                                 fiber=usefiber)
-    locofile.read_file()
+    cdata, chdr = drs_fits.readfits(params, locofilepath, getdata=True,
+                                    gethdr=True, fmt='fits-image',
+                                    extname=combined_ext)
+    locofile.data = cdata
+    locofile.header = drs_fits.Header.from_fits_header(chdr)
     # -------------------------------------------------------------------------
     # extract keys from header
     nbo = locofile.get_hkey('KW_LOC_NBO', dtype=int)
@@ -1322,6 +1331,183 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # return out files
     return orderpfile, loco1file
+
+
+def write_localisation_files_multi(
+        params: ParamDict, recipe: DrsRecipe,
+        infiles: Dict[str, DrsFitsFile], images: Dict[str, np.ndarray],
+        rawfiles: Dict[str, List[str]], combines: Dict[str, bool],
+        props: Dict[str, ParamDict], order_profiles: Dict[str, np.ndarray],
+        lprops: Dict[str, ParamDict], qc_params: Dict[str, list]
+        ) -> DrsFitsFile:
+    """
+    Write a single combined localisation calibration file containing the
+    order profile, position/width polynomial coefficients and (optionally)
+    the superposition debug image for every fiber group (e.g. 'AB' and 'C'
+    for SPIROU) as separate named fits extensions:
+    ORDERP_{FIBER}, LOC_CTR_{FIBER} (+ LOC_CTR_TABLE_{FIBER}),
+    LOC_WID_{FIBER} (+ LOC_WID_TABLE_{FIBER}) and LOC_SUP_{FIBER}
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance that called this function
+    :param infiles: dict, the representative input file, keyed by fiber group
+    :param images: dict, the (combined) input image, keyed by fiber group
+    :param rawfiles: dict, the raw input filenames, keyed by fiber group
+    :param combines: dict, whether inputs were combined, keyed by fiber group
+    :param props: dict, the calibrated pp file properties, keyed by fiber
+                  group
+    :param order_profiles: dict, the order profile image, keyed by fiber
+                           group
+    :param lprops: dict, the localisation parameter dictionary, keyed by
+                   fiber group
+    :param qc_params: dict, the quality control lists, keyed by fiber group
+
+    :return: DrsFitsFile, the combined localisation drs file instance
+    """
+    # this one comes from pseudo constants
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # sort the fiber groups for reproducibility
+    fiber_groups = sorted(images.keys())
+    # use the first fiber group's infile to construct the combined filename
+    ref_fiber = fiber_groups[0]
+    ref_infile = infiles[ref_fiber]
+    # ------------------------------------------------------------------
+    # get a new copy of the combined localisation output file
+    locofile = recipe.outputs['LOC_FILE'].newcopy(params=params)
+    # construct the filename from the reference input file
+    locofile.construct_filename(infile=ref_infile)
+    # define header keys for the primary hdu
+    locofile.copy_original_keys(ref_infile)
+    locofile.add_core_hkeys(params)
+    # combine the raw input file names from all fiber groups (for indexing)
+    allhfiles = []
+    for fiber in fiber_groups:
+        if combines[fiber]:
+            allhfiles += list(rawfiles[fiber])
+        else:
+            allhfiles += [infiles[fiber].basename]
+    locofile.add_hkey_1d('KW_INFILE1', values=allhfiles, dim1name='file')
+    locofile.infiles = allhfiles
+    # ------------------------------------------------------------------
+    # build up the extensions - one set per fiber group
+    data_list, header_list = [], []
+    name_list, datatype_list = [], []
+    # loop around fiber groups
+    for fiber in fiber_groups:
+        # get properties for this fiber group
+        _lprops = lprops[fiber]
+        cent_coeffs = _lprops['CENT_COEFFS']
+        wid_coeffs = _lprops['WID_COEFFS']
+        center_fits = _lprops['CENTER_FITS']
+        width_fits = _lprops['WIDTH_FITS']
+        mean_backgrd = _lprops['MEAN_BACKGRD']
+        rorder_num = _lprops['NORDERS']
+        max_signal = _lprops['MAX_SIGNAL']
+        # get the raw input files for this fiber group's header
+        if combines[fiber]:
+            hfiles = list(rawfiles[fiber])
+        else:
+            hfiles = [infiles[fiber].basename]
+        # --------------------------------------------------------------
+        # build this fiber group's extension header (re-uses the same
+        #   header helpers used for a single-fiber output file)
+        fiberfile = recipe.outputs['LOC_FILE'].newcopy(params=params,
+                                                       fiber=fiber)
+        fiberfile.copy_original_keys(infiles[fiber])
+        fiberfile.add_core_hkeys(params)
+        fiberfile.add_hkey('KW_FIBER', value=fiber)
+        fiberfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
+        fiberfile.infiles = hfiles
+        fiberfile = gen_calib.add_calibs_to_header(fiberfile, props[fiber])
+        fiberfile.add_hkey('KW_LOC_BCKGRD', value=mean_backgrd)
+        fiberfile.add_hkey('KW_LOC_NBO', value=rorder_num)
+        fiberfile.add_hkey('KW_LOC_DEG_C',
+                           value=params['CAL.LOC.CENT_POLYDEG'])
+        fiberfile.add_hkey('KW_LOC_DEG_W',
+                           value=params['CAL.LOC.WID_POLYDEG'])
+        fiberfile.add_hkey('KW_LOC_MAXFLX', value=max_signal)
+        fiberfile.add_hkey_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
+                              dim1name='order', dim2name='coeff')
+        fiberfile.add_hkey_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
+                              dim1name='order', dim2name='coeff')
+        fiberfile.add_hkey('KW_LOC_POLYT', value=_lprops['LOC_POLY_TYPE'])
+        fiberfile.add_qckeys(qc_params[fiber])
+        fiberfile.update_header_with_hdict()
+        fiberhdr = fiberfile.header
+        # --------------------------------------------------------------
+        # order profile extension
+        data_list.append(order_profiles[fiber])
+        header_list.append(fiberhdr.copy())
+        name_list.append('ORDERP_{0}'.format(fiber))
+        datatype_list.append('image')
+        # --------------------------------------------------------------
+        # center position extension (image + coefficients table)
+        data_list.append(center_fits)
+        header_list.append(fiberhdr.copy())
+        name_list.append('LOC_CTR_{0}'.format(fiber))
+        datatype_list.append('image')
+        # cent coefficient table
+        nbo = cent_coeffs.shape[0]
+        fiberlist = pconst.FIBER_LOC(fiber=fiber)
+        cent_cols = ['ORDER', 'FIBER']
+        cent_vals = [np.repeat(np.arange(nbo // len(fiberlist)),
+                               len(fiberlist)),
+                    np.tile([fiberlist], nbo // len(fiberlist))[0]]
+        for c_it in range(cent_coeffs.shape[1]):
+            cent_cols.append('COEFFS_{0}'.format(c_it))
+            cent_vals.append(cent_coeffs[:, c_it])
+        cent_table = drs_table.make_table(columns=cent_cols,
+                                          values=cent_vals)
+        data_list.append(cent_table)
+        header_list.append(None)
+        name_list.append('LOC_CTR_TABLE_{0}'.format(fiber))
+        datatype_list.append('table')
+        # --------------------------------------------------------------
+        # width extension (image + coefficients table)
+        data_list.append(width_fits)
+        header_list.append(fiberhdr.copy())
+        name_list.append('LOC_WID_{0}'.format(fiber))
+        datatype_list.append('image')
+        wid_cols = ['ORDER', 'FIBER']
+        wid_vals = [np.repeat(np.arange(nbo // len(fiberlist)),
+                              len(fiberlist)),
+                   np.tile([fiberlist], nbo // len(fiberlist))[0]]
+        for c_it in range(wid_coeffs.shape[1]):
+            wid_cols.append('COEFFS_{0}'.format(c_it))
+            wid_vals.append(wid_coeffs[:, c_it])
+        wid_table = drs_table.make_table(columns=wid_cols, values=wid_vals)
+        data_list.append(wid_table)
+        header_list.append(None)
+        name_list.append('LOC_WID_TABLE_{0}'.format(fiber))
+        datatype_list.append('table')
+        # --------------------------------------------------------------
+        # superposition debug extension
+        if params['CAL.LOC.SAVE_SUPERIM_FILE']:
+            image5 = image_superimp(images[fiber], cent_coeffs)
+            data_list.append(image5)
+            header_list.append(fiberhdr.copy())
+            name_list.append('LOC_SUP_{0}'.format(fiber))
+            datatype_list.append('image')
+    # ------------------------------------------------------------------
+    # snapshot of parameters (once, as its own extension)
+    if params['GLOBAL.PSNAPSHOT']:
+        data_list += [params.snapshot_table(recipe, drsfitsfile=locofile)]
+        header_list += [None]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
+    # ------------------------------------------------------------------
+    # log that we are saving the combined localisation file
+    WLOG(params, '', textentry('40-013-00019', args=[locofile.filename]))
+    # write all extensions to file
+    locofile.write_multi(data_list=data_list, header_list=header_list,
+                         name_list=name_list, datatype_list=datatype_list,
+                         block_kind=recipe.out_block_str,
+                         runstring=recipe.runstring)
+    # add to output files (for indexing)
+    recipe.add_output_file(locofile)
+    # ------------------------------------------------------------------
+    # return the combined loc file
+    return locofile
 
 
 def loc_summary(recipe: DrsRecipe, it: int, params: ParamDict,

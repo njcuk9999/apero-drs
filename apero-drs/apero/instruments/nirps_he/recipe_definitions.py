@@ -119,10 +119,10 @@ fpref = dict(name='--fpref', dtype='file', default='None',
              helpstr=textentry('FPREFFILE_HELP'))
 # -----------------------------------------------------------------------------
 locofile = dict(name='--locofile', dtype='file', default='None',
-                files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
+                files=[files.out_loc_calib], helpstr=textentry('LOCOFILE_HELP'))
 # -----------------------------------------------------------------------------
 orderpfile = dict(name='--orderpfile', dtype='file', default='None',
-                  files=[files.out_loc_orderp],
+                  files=[files.out_loc_calib],
                   helpstr=textentry('ORDERPFILE_HELP'))
 # -----------------------------------------------------------------------------
 shapexfile = dict(name='--shapex', dtype='file', default='None',
@@ -363,19 +363,16 @@ apero_loc.epilog = textentry('LOC_EXAMPLE')
 apero_loc.recipe_type = 'recipe'
 apero_loc.recipe_kind = 'calib-night'
 apero_loc.calib_required = True
-apero_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
-                      LOCO_FILE=files.out_loc_loco,
-                      FWHM_FILE=files.out_loc_fwhm,
-                      SUP_FILE=files.out_loc_sup,
+# a single combined loc file now holds the order profile, position/width
+#   coefficients and superposition debug image for every fiber - one
+#   apero_loc call using both DARK_FLAT and FLAT_DARK files together
+#   produces this one output (see apero.science.calib.localisation)
+apero_loc.set_outputs(LOC_FILE=files.out_loc_calib,
                       DEBUG_BACK=files.debug_back)
 # define meta data for expected outputs
 loc_dict = dict()
 loc_dict['fibers'] = ref_fibers + cal_fibers
-loc_dict['LOG_FLAG'] = dict()
-loc_dict['LOG_FLAG'][ref_fiber] = ['SCIFIBER']
-loc_dict['LOG_FLAG'][cal_fiber] = ['REFFIBER']
-apero_loc.set_output_data(ORDERP_FILE=loc_dict, LOCO_FILE=loc_dict,
-                          FWHM_FILE=loc_dict, SUP_FILE=loc_dict)
+apero_loc.set_output_data(LOC_FILE=loc_dict)
 apero_loc.set_flags(SCIFIBER=False, REFFIBER=False)
 apero_loc.set_debug_plots('LOC_WIDTH_REGIONS', 'LOC_FIBER_DOUBLET_PARITY',
                           'LOC_GAP_ORDERS', 'LOC_IMAGE_FIT', 'LOC_IM_CORNER',
@@ -1417,12 +1414,10 @@ full_seq.add(apero_preprocess, recipe_kind='pre-all')
 full_seq.add(apero_dark_ref, ref=True)
 full_seq.add(apero_badpix, name='BADREF', ref=True,
              recipe_kind='calib-reference')
-full_seq.add(apero_loc, name='LOCREFCAL',
-             files=[files.pp_dark_flat, files.calib_dark_flat],
-             ref=True, recipe_kind='calib-reference-CAL')
-full_seq.add(apero_loc, name='LOCREFSCI',
-             files=[files.pp_flat_dark, files.calib_flat_dark],
-             ref=True, recipe_kind='calib-reference-SCI')
+full_seq.add(apero_loc, name='LOCREF',
+             files=[files.pp_dark_flat, files.calib_dark_flat,
+                    files.pp_flat_dark, files.calib_flat_dark],
+             ref=True, recipe_kind='calib-reference')
 full_seq.add(apero_shape_ref, ref=True)
 full_seq.add(apero_shape, name='SHAPELREF', ref=True,
              recipe_kind='calib-reference')
@@ -1434,10 +1429,8 @@ full_seq.add(apero_wave_ref, ref=True,
                           fpfiles=[files.pp_fp_fp]))
 # night runs
 full_seq.add(apero_badpix)
-full_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat],
-             name='LOCCAL', recipe_kind='calib-night-CAL')
-full_seq.add(apero_loc, files=[files.pp_flat_dark, files.calib_flat_dark],
-             name='LOCSCI', recipe_kind='calib-night-SCI')
+full_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat,
+                               files.pp_flat_dark, files.calib_flat_dark])
 full_seq.add(apero_shape)
 full_seq.add(apero_flat, files=[files.pp_flat_flat, files.pp_dark_flat,
                                 files.pp_flat_dark, files.calib_flat_dark,
@@ -1558,12 +1551,10 @@ limited_seq.add(apero_preprocess, recipe_kind='pre-all')
 limited_seq.add(apero_dark_ref, ref=True)
 limited_seq.add(apero_badpix, name='BADREF', ref=True,
                 recipe_kind='calib-reference')
-limited_seq.add(apero_loc, name='LOCREFCAL',
-                files=[files.pp_dark_flat, files.calib_dark_flat],
-                ref=True, recipe_kind='calib-reference-CAL')
-limited_seq.add(apero_loc, name='LOCREFSCI',
-                files=[files.pp_flat_dark, files.calib_flat_dark],
-                ref=True, recipe_kind='calib-reference-SCI')
+limited_seq.add(apero_loc, name='LOCREF',
+                files=[files.pp_dark_flat, files.calib_dark_flat,
+                       files.pp_flat_dark, files.calib_flat_dark],
+                ref=True, recipe_kind='calib-reference')
 limited_seq.add(apero_shape_ref, ref=True)
 limited_seq.add(apero_shape, name='SHAPELREF', ref=True,
                 recipe_kind='calib-reference')
@@ -1576,11 +1567,8 @@ limited_seq.add(apero_wave_ref, ref=True,
 # night runs
 limited_seq.add(apero_badpix)
 limited_seq.add(apero_loc,
-                files=[files.pp_dark_flat, files.calib_dark_flat],
-                name='LOCCAL', recipe_kind='calib-night-CAL')
-limited_seq.add(apero_loc,
-                files=[files.pp_flat_dark, files.calib_flat_dark],
-                name='LOCSCI', recipe_kind='calib-night-SCI')
+                files=[files.pp_dark_flat, files.calib_dark_flat,
+                       files.pp_flat_dark, files.calib_flat_dark])
 limited_seq.add(apero_shape)
 limited_seq.add(apero_flat,
                 files=[files.pp_flat_flat, files.pp_dark_flat,
@@ -1741,12 +1729,10 @@ ref_seq.description_file = None
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
             recipe_kind='calib-reference')
-ref_seq.add(apero_loc, name='LOCREFCAL',
-            files=[files.pp_dark_flat, files.calib_dark_flat],
-            ref=True, recipe_kind='calib-reference-CAL')
-ref_seq.add(apero_loc, name='LOCREFSCI',
-            files=[files.pp_flat_dark, files.calib_flat_dark],
-            ref=True, recipe_kind='calib-reference-SCI')
+ref_seq.add(apero_loc, name='LOCREF',
+            files=[files.pp_dark_flat, files.calib_dark_flat,
+                   files.pp_flat_dark, files.calib_flat_dark],
+            ref=True, recipe_kind='calib-reference')
 ref_seq.add(apero_shape_ref, ref=True)
 ref_seq.add(apero_shape, name='SHAPELREF', ref=True,
             recipe_kind='calib-reference')
@@ -1767,10 +1753,8 @@ calib_seq.schematic = 'calib_seq.jpg'
 calib_seq.description_file = None
 # night runs
 calib_seq.add(apero_badpix)
-calib_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat],
-              name='LOCCAL', recipe_kind='calib-night-CAL')
-calib_seq.add(apero_loc, files=[files.pp_flat_dark, files.calib_flat_dark],
-              name='LOCSCI', recipe_kind='calib-night-SCI')
+calib_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat,
+                                files.pp_flat_dark, files.calib_flat_dark])
 calib_seq.add(apero_shape)
 calib_seq.add(apero_flat,
               files=[files.pp_flat_flat, files.pp_dark_flat,

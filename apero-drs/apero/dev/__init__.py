@@ -15,3 +15,4 @@ from apero.dev import core
 
 # Get APERO parameters without loading the full APERO package / installing APERO
 get_base_params = core.get_base_params
+get_uconfig_path = core.get_uconfig_path
