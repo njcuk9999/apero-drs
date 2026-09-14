@@ -475,6 +475,39 @@ CDict.set('KER_WY', value=9, source=__NAME__, group=cgroup)
 # Do NOT make it a -10 to +10 sigma gaussian!
 CDict.set('KER_SIG', value=3, source=__NAME__, group=cgroup)
 
+# correction_lower_envelope: degree of the 2D background polynomial
+# along the columns (x direction)
+CDict.set('ENV_XORDER', value=3, source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: degree of the 2D background polynomial
+# along the rows (y direction)
+CDict.set('ENV_YORDER', value=3, source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: what a pixel above the fitted surface costs
+# relative to one below it ('auto' solves for it)
+CDict.set('ENV_FPOS', value='auto', source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: prior on a pixel being bad rather than noise
+CDict.set('ENV_FBAD', value=1e-3, source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: sigma inflation factors of the first passes
+CDict.set('ENV_ANNEAL', value=[8.0, 4.0, 2.0, 1.4, 1.0], source=__NAME__,
+          group=cgroup)
+
+# correction_lower_envelope: maximum number of passes after the annealing
+CDict.set('ENV_NITER', value=60, source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: the quantile taken in each tile for the
+# first guess of the surface
+CDict.set('ENV_START_Q', value=0.20, source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: number of tiles (in y, in x) used for the
+# first guess of the surface
+CDict.set('ENV_NBIN', value=[16, 16], source=__NAME__, group=cgroup)
+
+# correction_lower_envelope: convergence tolerance
+CDict.set('ENV_TOL', value=1e-5, source=__NAME__, group=cgroup)
+
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================

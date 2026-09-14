@@ -29,6 +29,7 @@ from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.instruments import select
 from apero.base import base as apero_base
+from aperocore.science import localisation_core
 
 # =============================================================================
 # Define variables
@@ -61,8 +62,9 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 # =============================================================================
 # Define functions
 # =============================================================================
-def calculate_order_profile(params: ParamDict, image: np.ndarray,
-                            box_size: Optional[int] = None) -> np.ndarray:
+def calculate_order_profile_old(params: ParamDict, image: np.ndarray,
+                                box_size: Optional[int] = None
+                                ) -> np.ndarray:
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
         size=2*"size" pixels, edges are dealt with by expanding the size of the
@@ -113,6 +115,97 @@ def calculate_order_profile(params: ParamDict, image: np.ndarray,
             newimage[:, it] = mp.nanmedian(part, axis=1)
     # return the new smoothed image
     return newimage
+
+
+def calculate_order_profile(params: ParamDict, image: np.ndarray,
+                            box_size: Optional[int] = None) -> np.ndarray:
+    """
+    Produce the order profile used for order localisation
+
+    Unlike calculate_order_profile_old (the previous box-smoothed profile),
+    this simply nan-fills the image (see aperocore.math.fill_nans): the
+    orders themselves are left untouched and only the gaps (bad pixels,
+    masked regions) are filled in from their neighbours.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param image: numpy array (2D), the image
+    :param box_size: int, unused, kept for backwards compatible call sites
+
+    :return newimage: numpy array (2D), the nan-filled image
+    """
+    # log that we are creating order profile
+    WLOG(params, '', textentry('40-013-00001'))
+    # nan-fill the image: fills holes only, does not smooth the orders
+    return np.asarray(mp.fill_nans(image))
+
+
+def build_order_position_map(shape: Tuple[int, int],
+                             cent_coeffs: Dict[str, np.ndarray],
+                             wid_coeffs: Dict[str, np.ndarray]
+                             ) -> Tuple[np.ndarray, np.ndarray,
+                                       Dict[str, Tuple[int, int]]]:
+    """
+    Build the order position map and label ranges for a set of fiber groups
+
+    Thin apero wrapper around
+    aperocore.science.localisation_core.build_order_position_map: evaluates
+    each fiber group's chebyshev center coefficients over the full image
+    width, takes the constant term of the width fit as the trace width (as
+    order_widths does for the WIDTH_TABLE), then builds the map.
+
+    :param shape: tuple, (ny, nx), the shape of the detector image
+    :param cent_coeffs: dict, fiber label -> position coefficients (2D array,
+                        one row of coefficients per trace), as returned by
+                        merge_coeffs/calc_localisation
+    :param wid_coeffs: dict, fiber label -> width coefficients (2D array),
+                       same shape convention as cent_coeffs
+
+    :return: tuple, 1. the integer map of trace labels (0 = none), 2. an
+             integer map of the nearest trace to each pixel (whether or not
+             the pixel falls inside it), 3. dict, fiber label -> label range
+             (first, last) in the map
+    """
+    nx = shape[1]
+    xpix = np.arange(nx)
+    fibers = list(cent_coeffs.keys())
+    fiber_centers, fiber_widths = [], []
+    # loop around fiber groups, evaluating their coefficients over the image
+    for fiber in fibers:
+        ccoeffs = cent_coeffs[fiber]
+        ntrace = ccoeffs.shape[0]
+        centers = np.array([mp.val_cheby(ccoeffs[it], xpix, domain=[0, nx])
+                            for it in range(ntrace)])
+        # the constant term of the width fit is the width at mid-domain,
+        #   the same convention order_widths uses for WIDTH_TABLE
+        widths = np.array(wid_coeffs[fiber])[:, 0]
+        fiber_centers.append(centers)
+        fiber_widths.append(widths)
+    # build the map using the pure aperocore implementation
+    bargs = [shape, fiber_centers, fiber_widths]
+    bout = localisation_core.build_order_position_map(*bargs)
+    omap, nearest, ranges = bout
+    # return the map, the nearest map and the ranges keyed by fiber label
+    return omap, nearest, dict(zip(fibers, ranges))
+
+
+def get_order_ranges(wid_coeffs: Dict[str, np.ndarray]
+                     ) -> Dict[str, Tuple[int, int]]:
+    """
+    Get the label range each fiber group occupies, without building the map
+
+    Thin apero wrapper around
+    aperocore.science.localisation_core.order_ranges_from_widths.
+
+    :param wid_coeffs: dict, fiber label -> width coefficients (2D array),
+                       one row per trace (only the number of traces per
+                       fiber is used here)
+
+    :return: dict, fiber label -> label range (first, last)
+    """
+    fibers = list(wid_coeffs.keys())
+    fiber_widths = [wid_coeffs[fiber] for fiber in fibers]
+    ranges = localisation_core.order_ranges_from_widths(fiber_widths)
+    return dict(zip(fibers, ranges))
 
 
 def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
@@ -1338,7 +1431,9 @@ def write_localisation_files_multi(
         infiles: Dict[str, DrsFitsFile], images: Dict[str, np.ndarray],
         rawfiles: Dict[str, List[str]], combines: Dict[str, bool],
         props: Dict[str, ParamDict], order_profiles: Dict[str, np.ndarray],
-        lprops: Dict[str, ParamDict], qc_params: Dict[str, list]
+        lprops: Dict[str, ParamDict], qc_params: Dict[str, list],
+        order_pos_map: Optional[np.ndarray] = None,
+        order_range: Optional[Dict[str, Tuple[int, int]]] = None
         ) -> DrsFitsFile:
     """
     Write a single combined localisation calibration file containing the
@@ -1347,6 +1442,10 @@ def write_localisation_files_multi(
     for SPIROU) as separate named fits extensions:
     ORDERP_{FIBER}, LOC_CTR_{FIBER} (+ LOC_CTR_TABLE_{FIBER}),
     LOC_WID_{FIBER} (+ LOC_WID_TABLE_{FIBER}) and LOC_SUP_{FIBER}
+
+    If order_pos_map/order_range are given, two extra extensions are added,
+    shared by all fiber groups: ORDER_POS_MAP (the trace-label image) and
+    ORDER_RANGE_TABLE (the label range of each fiber group in that image)
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe instance that called this function
@@ -1361,6 +1460,10 @@ def write_localisation_files_multi(
     :param lprops: dict, the localisation parameter dictionary, keyed by
                    fiber group
     :param qc_params: dict, the quality control lists, keyed by fiber group
+    :param order_pos_map: numpy array (2D) or None, the trace label owning
+                          each pixel, as returned by build_order_position_map
+    :param order_range: dict or None, fiber group -> (first, last) label
+                        range, as returned by build_order_position_map
 
     :return: DrsFitsFile, the combined localisation drs file instance
     """
@@ -1488,6 +1591,29 @@ def write_localisation_files_multi(
             header_list.append(fiberhdr.copy())
             name_list.append('LOC_SUP_{0}'.format(fiber))
             datatype_list.append('image')
+    # ------------------------------------------------------------------
+    # order position map + range extensions (shared by all fiber groups)
+    # ------------------------------------------------------------------
+    if order_pos_map is not None and order_range is not None:
+        # materialise the primary hdu header (built from copy_original_keys
+        #   + add_core_hkeys + add_hkey_1d above) so it can be reused here
+        locofile.update_header_with_hdict()
+        data_list.append(order_pos_map)
+        header_list.append(locofile.header.copy())
+        name_list.append('ORDER_POS_MAP')
+        datatype_list.append('image')
+        # range table, one row per fiber group
+        range_fibers = sorted(order_range.keys())
+        range_first = [order_range[fkey][0] for fkey in range_fibers]
+        range_last = [order_range[fkey][1] for fkey in range_fibers]
+        range_cols = ['FIBER', 'FIRST', 'LAST']
+        range_vals = [range_fibers, range_first, range_last]
+        range_table = drs_table.make_table(columns=range_cols,
+                                          values=range_vals)
+        data_list.append(range_table)
+        header_list.append(None)
+        name_list.append('ORDER_RANGE_TABLE')
+        datatype_list.append('table')
     # ------------------------------------------------------------------
     # snapshot of parameters (once, as its own extension)
     if params['GLOBAL.PSNAPSHOT']:

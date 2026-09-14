@@ -12,6 +12,22 @@
 - `apero-ri/apero_ri` is the Flask reduction interface. It may use `aperocore`
   and `apero`, but interface-specific code belongs in the RI package.
 
+## `aperocore.science` functions
+
+- Functions in `apero-core/aperocore/science/*_core.py` (e.g. `wave_core.py`,
+  `background_core.py`, `localisation_core.py`) must not import or receive
+  an APERO `ParamDict`, `DrsRecipe`, `DrsFitsFile`, or any other apero-drs
+  object. They must only take plain, well-documented arguments (numpy
+  arrays, floats, ints, strings, tuples/lists of those). This keeps them
+  usable by external packages that depend on `apero-core` without an APERO
+  profile/`apero-drs` installed.
+- Put the thin apero wrapper that reads params/config, unpacks a
+  `ParamDict`/`DrsFitsFile`/calibration file, and calls the corresponding
+  `aperocore.science` function next to the higher-level apero function it
+  supports (e.g. `apero-drs/apero/science/calib/localisation.py` wraps
+  `aperocore.science.localisation_core`).
+
+
 ## Python code
 
 @.github/instructions/python-apero.instructions.md
@@ -44,6 +60,36 @@
   PYTHONPATH="apero-core:apero-drs" python -m pytest -q apero-drs/tests
   PYTHONPATH="apero-ri" python -m pytest -q apero-ri/tests
   ```
+
+## APERO v0.8 constants
+
+- Every constant is declared once, in a `CDict.add(...)` call in
+  `apero-drs/apero/instruments/default/constants.py`, inside the `cgroup`
+  section it belongs to (e.g. `cgroup = 'CAL.BCORR'`). Give it `value=None`
+  there (no instrument default belongs in this file), the correct `dtype`
+  (`int`, `float`, `bool`, `str`, `list` with `dtypei=...` for a list of a
+  simple type, or `'path'`), `source=__NAME__`, `group=cgroup`, and a clear
+  `description` explaining what the constant controls and, if relevant,
+  which function/recipe reads it.
+- Each instrument then overrides the value in its own
+  `apero-drs/apero/instruments/<instrument>/constants.py` (currently
+  `spirou`, `nirps_ha`, `nirps_he`) using `CDict.set('NAME', value=...,
+  source=__NAME__, group=cgroup)` under the matching `cgroup` section. Do
+  not repeat `dtype`/`description` here - `set` reuses the definition from
+  `default/constants.py`. Add the override to all instruments, even if the
+  value is identical across them, so the constant is never left undefined
+  for one instrument.
+- Access a constant in code as `params['GROUP.NAME']` or, in functions that
+  accept overrides, via `param_functions.PCheck` (aliased `pcheck` in most
+  modules): `pcheck(params, 'GROUP.NAME', 'localvar', func=func_name,
+  override=override_kwarg)`. Follow the pattern used by `no_sub` in
+  `apero/science/calib/background.py::correction` for how to expose a
+  constant as an optional keyword argument that defaults to the params
+  value.
+- For a constant that is a tuple/list of numbers (e.g. polynomial orders,
+  bin counts), use `dtype=list, dtypei=float` (or `dtypei=int`) in
+  `default/constants.py` and a plain Python list (e.g. `value=[16, 16]`) in
+  each instrument override; `CDict` does not support raw tuples.
 
 ## APERO RI
 

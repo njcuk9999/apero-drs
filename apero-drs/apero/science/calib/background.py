@@ -8,7 +8,7 @@ Created on 2019-05-13 at 12:40
 @author: cook
 """
 import warnings
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 from scipy.ndimage import map_coordinates as mapc
@@ -19,6 +19,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
+from aperocore.science import background_core as background_mod
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
@@ -428,6 +429,217 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
             return background_image_full
         else:
             return corrected_image
+
+
+def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
+                              infile: DrsFitsFile, image: np.ndarray,
+                              bkgrdfile: str, return_map: bool = False,
+                              bkgr_no_sub: Optional[bool] = None,
+                              bkgr_boxsize: Optional[int] = None,
+                              bkgr_ker_amp: Optional[int] = None,
+                              env_xorder: Optional[int] = None,
+                              env_yorder: Optional[int] = None,
+                              env_fpos: Optional[Union[float, str]] = None,
+                              env_fbad: Optional[float] = None,
+                              env_anneal: Optional[List[float]] = None,
+                              env_niter: Optional[int] = None,
+                              env_start_q: Optional[float] = None,
+                              env_nbin: Optional[List[int]] = None,
+                              env_tol: Optional[float] = None
+                              ) -> np.ndarray:
+    """
+    Background correct an image using a 2D polynomial fit to the lower
+    envelope of the background pixels (see
+    aperocore.science.background_core.fit_lower_envelope_2d)
+
+    Unlike `correction`, the background level is not estimated with a
+    running-median box filter, but with a smooth 2D polynomial that is
+    fitted to sit under the background pixels (never above them), which
+    removes the box-size/percentile tuning `correction` needs.
+
+    :param recipe: DrsRecipe, used for producing the DEBUG output
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, input file
+    :param image: np.ndarray, the input image
+    :param bkgrdfile: str, the background calibration absolute filename
+    :param return_map: bool, if True, return the full background image
+    :param bkgr_no_sub: bool or None, optional, whether to do the background
+                        measurement (True or False), overrides
+                        params['BKGR_NO_SUBTRACTION']
+    :param bkgr_boxsize: int, optional, width of the box used for the local
+                         (scattered light) background correction, overrides
+                         params['CAL.BCORR.BKGR_BOXSIZE']
+    :param bkgr_ker_amp: int, optional, kernel amplitude, overrides
+                         params['CAL.BCORR.KER_AMP']
+    :param env_xorder: int or None, optional, degree of the 2D background
+                       polynomial along the columns, overrides
+                       params['CAL.BCORR.ENV_XORDER']
+    :param env_yorder: int or None, optional, degree of the 2D background
+                       polynomial along the rows, overrides
+                       params['CAL.BCORR.ENV_YORDER']
+    :param env_fpos: float, str or None, optional, what a pixel above the
+                     fitted surface costs relative to one below it,
+                     overrides params['CAL.BCORR.ENV_FPOS']
+    :param env_fbad: float or None, optional, prior on a pixel being bad
+                     rather than noise, overrides
+                     params['CAL.BCORR.ENV_FBAD']
+    :param env_anneal: list of float or None, optional, sigma inflation
+                       factors of the first passes, overrides
+                       params['CAL.BCORR.ENV_ANNEAL']
+    :param env_niter: int or None, optional, maximum number of passes after
+                      the annealing, overrides params['CAL.BCORR.ENV_NITER']
+    :param env_start_q: float or None, optional, the quantile taken in each
+                        tile for the first guess of the surface, overrides
+                        params['CAL.BCORR.ENV_START_Q']
+    :param env_nbin: list of int or None, optional, number of tiles (in y,
+                     in x) used for the first guess of the surface,
+                     overrides params['CAL.BCORR.ENV_NBIN']
+    :param env_tol: float or None, optional, convergence tolerance,
+                    overrides params['CAL.BCORR.ENV_TOL']
+
+    :return: numpy array, either the corrected image, or the full background
+             map (if return_map is True)
+    """
+    func_name = __NAME__ + '.correction_lower_envelope()'
+    # get constants from params/kwargs
+    no_sub = pcheck(params, 'CAL.BCORR.NO_CORR', 'no_sub', func=func_name,
+                    override=bkgr_no_sub)
+    # amp_ker = pcheck(params, 'CAL.BCORR.KER_AMP', 'amp_ker', func=func_name,
+    #                  override=bkgr_ker_amp)
+    # get the 2D lower envelope fit constants
+    xorder = pcheck(params, 'CAL.BCORR.ENV_XORDER', 'env_xorder',
+                    func=func_name, override=env_xorder)
+    yorder = pcheck(params, 'CAL.BCORR.ENV_YORDER', 'env_yorder',
+                    func=func_name, override=env_yorder)
+    f_pos = pcheck(params, 'CAL.BCORR.ENV_FPOS', 'env_fpos', func=func_name,
+                   override=env_fpos)
+    f_bad = pcheck(params, 'CAL.BCORR.ENV_FBAD', 'env_fbad', func=func_name,
+                   override=env_fbad)
+    anneal = pcheck(params, 'CAL.BCORR.ENV_ANNEAL', 'env_anneal',
+                    func=func_name, override=env_anneal)
+    niter = pcheck(params, 'CAL.BCORR.ENV_NITER', 'env_niter',
+                   func=func_name, override=env_niter)
+    start_q = pcheck(params, 'CAL.BCORR.ENV_START_Q', 'env_start_q',
+                     func=func_name, override=env_start_q)
+    nbin = pcheck(params, 'CAL.BCORR.ENV_NBIN', 'env_nbin', func=func_name,
+                  override=env_nbin)
+    tol = pcheck(params, 'CAL.BCORR.ENV_TOL', 'env_tol', func=func_name,
+                 override=env_tol)
+    # deal with no correction needed
+    if no_sub:
+        background = np.zeros_like(image)
+        # if return map just return the bad pixel map
+        if return_map:
+            return background
+        else:
+            return np.array(image)
+    else:
+        # ------------------------------------------------------------------
+        # if amp_ker > 0:
+        #     # measure local background
+        #     scattered_light = correct_local_background(params, image)
+        #     # we extract a median order profile for the center of the image
+        #     local_background_correction = scattered_light / amp_ker
+        #     # correct the image for local background
+        #     image1 = image - local_background_correction
+        # else:
+        # copy the image (don't change the original)
+        image1 = np.array(image)
+        # ------------------------------------------------------------------
+        # log process
+        WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
+        # # ------------------------------------------------------------------
+        # # get background mask file (defines the background-only pixels)
+        # bkgrdimage = drs_fits.readfits(params, bkgrdfile)
+        # # create mask from badpixmask
+        # bmap = np.array(bkgrdimage, dtype=bool)
+        # # copy image
+        # image2 = np.array(image1)
+        # # set to NAN all "illuminated" (non-background) pixels
+        # image2[~bmap] = np.nan
+        # ------------------------------------------------------------------
+        # estimate a (constant) per-pixel noise from the pixel-to-pixel
+        #    scatter of the background pixels, used to weight the envelope
+        #    fit
+        noise = mp.robust_nanstd(np.diff(image1, axis=1))
+        errimg = np.full_like(image1, noise)
+        # ------------------------------------------------------------------
+        # fit a smooth 2D polynomial to the lower envelope of the
+        #    background pixels (never fits above the background)
+        kwargs = dict(xorder=xorder, yorder=yorder, f_pos=f_pos,
+                      f_bad=f_bad, anneal=tuple(anneal), niter=niter,
+                      start_q=start_q, nbin=tuple(nbin), tol=tol)
+        envelope = background_mod.fit_lower_envelope_2d(image1, errimg,
+                                                        **kwargs)
+        # ------------------------------------------------------------------
+        # correct image
+        corrected_image = image - envelope['fit']
+        # ------------------------------------------------------------------
+        # produce debug file
+        dimages = [corrected_image, image, envelope['fit'],
+                   envelope['nsig']]
+        # save debug file
+        if params['DEBUG.OUTFILE.BCKGRD_FILE']:
+            debug_file_envelope(recipe, params, infile, dimages)
+        # ------------------------------------------------------------------
+        # if return map just return the bad pixel map
+        if return_map:
+            return envelope['fit']
+        else:
+            return corrected_image
+
+
+def debug_file_envelope(recipe: DrsRecipe, params: ParamDict,
+                        infile: DrsFitsFile, dlist: List[np.ndarray]):
+    """
+    Produce the background DEBUG file for `correction_lower_envelope`
+
+    :param recipe: DrsRecipe, the recipe that called this function
+    :param params: ParamDict, parameter dictionary of constants
+    :param infile: DrsFitsFile, the input file class
+    :param dlist: list of numpy array, the images for each extension:
+                  1. corrected image
+                  2. original image
+                  3. Global (2D lower envelope) Background image
+                  4. Deviation of each background pixel from the envelope,
+                     in units of sigma
+
+    :return: None, writes debug file to disk
+    """
+    # debug output
+    debug_back = recipe.outputs['DEBUG_BACK'].newcopy(params=params)
+    # construct the filename from file instance
+    debug_back.construct_filename(infile=infile, check=False)
+    # copy keys from input file
+    debug_back.copy_original_keys(infile)
+    # add core values (that should be in all headers)
+    debug_back.add_core_hkeys(params)
+    # add extention info
+    kws1 = ['EXTDESC1', 'CORRECTED', 'Corrected image']
+    kws2 = ['EXTDESC2', 'ORIGINAL', 'Original image']
+    kws3 = ['EXTDESC3', 'GLOB_BKGRD', 'Global (lower envelope) Background '
+           'image']
+    kws4 = ['EXTDESC4', 'GLOB_NSIG', 'Deviation from lower envelope '
+           '(sigma)']
+    # add to hdict
+    debug_back.add_hkey(key=kws1)
+    debug_back.add_hkey(key=kws2)
+    debug_back.add_hkey(key=kws3)
+    debug_back.add_hkey(key=kws4)
+    # add primage data to debug_back file
+    debug_back.data = dlist[0]
+    # print progress: saving file
+    WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
+    # define name of extensions
+    name_list = ['CORRECTED', 'ORIGINAL', 'GLOB_BKGRD', 'GLOB_NSIG']
+    # snapshot of parameters
+    if params['GLOBAL.PSNAPSHOT']:
+        dlist += [params.snapshot_table(recipe, drsfitsfile=debug_back)]
+        name_list += ['PARAM_TABLE']
+    # write multiple to file
+    debug_back.write_multi(block_kind=recipe.out_block_str,
+                           name_list=name_list, data_list=dlist[1:],
+                           runstring=recipe.runstring)
 
 
 def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,

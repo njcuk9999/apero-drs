@@ -258,12 +258,26 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         all_passed[fiber] = passed
 
     # ----------------------------------------------------------------------
+    # build the order position map + label ranges (which trace owns each
+    #    pixel) from the localisation coefficients of every fiber group
+    # ----------------------------------------------------------------------
+    all_cent_coeffs = {fkey: all_lprops[fkey]['CENT_COEFFS']
+                       for fkey in all_lprops}
+    all_wid_coeffs = {fkey: all_lprops[fkey]['WID_COEFFS']
+                     for fkey in all_lprops}
+    ref_shape = list(all_images.values())[0].shape
+    bargs = [ref_shape, all_cent_coeffs, all_wid_coeffs]
+    bout = localisation.build_order_position_map(*bargs)
+    order_pos_map, _, order_range = bout
+
+    # ----------------------------------------------------------------------
     # write the combined localisation file (order profile + position/width
     #    coefficients + superposition debug image for every fiber group)
     # ----------------------------------------------------------------------
-    locofile = localisation.write_localisation_files_multi(
-        params, recipe, all_infiles, all_images, all_rawfiles, all_combine,
-        all_props, all_orderps, all_lprops, all_qc_params)
+    largs = [params, recipe, all_infiles, all_images, all_rawfiles,
+            all_combine, all_props, all_orderps, all_lprops, all_qc_params,
+            order_pos_map, order_range]
+    locofile = localisation.write_localisation_files_multi(*largs)
     # all fiber groups must pass QC before we add this file to the calibDB
     passed = all(all_passed.values())
     # ----------------------------------------------------------------------

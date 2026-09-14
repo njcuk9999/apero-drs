@@ -44,7 +44,7 @@ from apero.science import velocity
 from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.instruments import select
-from aperocore.science import wavecore
+from aperocore.science import wave_core
 
 
 # =============================================================================
@@ -2500,14 +2500,14 @@ def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     if ref or not np.isfinite(ew_cov):
         # calculate the equivalent width covariance
-        ew_cov, popt, cov_dv = wavecore.slinky_ewidth(fp_wave_ref, fp_dv)
+        ew_cov, popt, cov_dv = wave_core.slinky_ewidth(fp_wave_ref, fp_dv)
         # plot the covariance
         recipe.plot('WAVE_SLINKY_EW_COV', gridx=cov_dv[0], gridy=cov_dv[1],
                     coeffs=popt, ew_cov=ew_cov, fiber=fiber)
     # -------------------------------------------------------------------------
     # Step 1: Calculate out slinky correction
     # -------------------------------------------------------------------------
-    slinky = wavecore.slinky_fit(fp_wave_ref, fp_dv, yerr=fp_dv_err,
+    slinky = wave_core.slinky_fit(fp_wave_ref, fp_dv, yerr=fp_dv_err,
                                  wslinky=ew_cov)
     # plot the slinky fit
     recipe.plot('WAVE_SLINKY_FIT', wavegrid=fp_wave_ref, dv=fp_dv,

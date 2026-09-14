@@ -1033,6 +1033,76 @@ CDict.add('KER_SIG', value=None, dtype=float, source=__NAME__,
                       '2D convolution. Do NOT make it a -10 to +10 '
                       'sigma gaussian!')
 
+#  correction_lower_envelope: degree of the 2D background polynomial
+#      along the columns (x direction)
+CDict.add('ENV_XORDER', value=None, dtype=int, source=__NAME__,
+          minimum=0, group=cgroup,
+          description='correction_lower_envelope: degree of the 2D '
+                      'background polynomial along the columns '
+                      '(x direction)')
+
+#  correction_lower_envelope: degree of the 2D background polynomial
+#      along the rows (y direction)
+CDict.add('ENV_YORDER', value=None, dtype=int, source=__NAME__,
+          minimum=0, group=cgroup,
+          description='correction_lower_envelope: degree of the 2D '
+                      'background polynomial along the rows (y direction)')
+
+#  correction_lower_envelope: what a pixel above the fitted surface costs
+#      relative to one below it, either a float or 'auto' (solves for the
+#      value that puts half the believable pixels on each side of the
+#      surface)
+CDict.add('ENV_FPOS', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description="correction_lower_envelope: what a pixel above the "
+                      "fitted surface costs relative to one below it, "
+                      "either a float or 'auto' (solves for the value "
+                      "that puts half the believable pixels on each side "
+                      "of the surface)")
+
+#  correction_lower_envelope: prior on a pixel being bad rather than noise
+CDict.add('ENV_FBAD', value=None, dtype=float, source=__NAME__,
+          minimum=0.0, group=cgroup,
+          description='correction_lower_envelope: prior on a pixel being '
+                      'bad rather than noise')
+
+#  correction_lower_envelope: sigma inflation factors of the first passes,
+#      so nothing is rejected while the surface first walks down
+CDict.add('ENV_ANNEAL', value=None, dtype=list, dtypei=float,
+          source=__NAME__, group=cgroup,
+          description='correction_lower_envelope: sigma inflation '
+                      'factors of the first passes, so nothing is '
+                      'rejected while the surface first walks down')
+
+#  correction_lower_envelope: maximum number of passes after the annealing
+CDict.add('ENV_NITER', value=None, dtype=int, source=__NAME__,
+          minimum=1, group=cgroup,
+          description='correction_lower_envelope: maximum number of '
+                      'passes after the annealing')
+
+#  correction_lower_envelope: the quantile taken in each tile for the
+#      first guess of the surface
+CDict.add('ENV_START_Q', value=None, dtype=float, source=__NAME__,
+          minimum=0.0, maximum=1.0, group=cgroup,
+          description='correction_lower_envelope: the quantile taken in '
+                      'each tile for the first guess of the surface')
+
+#  correction_lower_envelope: number of tiles (in y, in x) used for the
+#      first guess of the surface
+CDict.add('ENV_NBIN', value=None, dtype=list, dtypei=int,
+          source=__NAME__, group=cgroup,
+          description='correction_lower_envelope: number of tiles '
+                      '(in y, in x) used for the first guess of the '
+                      'surface')
+
+#  correction_lower_envelope: convergence tolerance - stop when the
+#      surface moves by less than this many sigma
+CDict.add('ENV_TOL', value=None, dtype=float, source=__NAME__,
+          minimum=0.0, group=cgroup,
+          description='correction_lower_envelope: convergence tolerance '
+                      '- stop when the surface moves by less than this '
+                      'many sigma')
+
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================

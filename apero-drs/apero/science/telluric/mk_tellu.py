@@ -23,7 +23,7 @@ from apero.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import wave
-from aperocore.science import wavecore
+from aperocore.science import wave_core
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -246,7 +246,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # ------------------------------------------------------------------
     # Shift the image to the reference grid
     # ------------------------------------------------------------------
-    image1 = wavecore.wave_to_wave(image1, wavemap, mwavemap)
+    image1 = wave_core.wave_to_wave(image1, wavemap, mwavemap)
 
     # ------------------------------------------------------------------
     # Apply template

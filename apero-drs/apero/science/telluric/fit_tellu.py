@@ -20,7 +20,7 @@ from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
 from aperocore.core import drs_log
-from aperocore.science import wavecore
+from aperocore.science import wave_core
 from apero.core import drs_file
 from apero.utils import drs_recipe
 from apero.io import drs_fits
@@ -28,7 +28,7 @@ from apero.io import drs_path
 from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from aperocore.science import wavecore
+from aperocore.science import wave_core
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -372,7 +372,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
         wargs = [wavefile_ref, wavefile]
         WLOG(params, '', textentry('40-019-00021', args=wargs))
         # shift template
-        shift_temp = wavecore.wave_to_wave(template2, wavemap_ref,
+        shift_temp = wave_core.wave_to_wave(template2, wavemap_ref,
                                            wavemap, reshape=True)
         template2 = shift_temp.reshape(template2.shape)
 
@@ -393,11 +393,11 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     WLOG(params, '', textentry('40-019-00018', args=wargs))
     # shift pca components (one by one)
     for comp in range(npc):
-        shift_pc = wavecore.wave_to_wave(pc2[:, comp], wavemap_ref,
+        shift_pc = wave_core.wave_to_wave(pc2[:, comp], wavemap_ref,
                                          wavemap, reshape=True)
         pc2[:, comp] = shift_pc.reshape(pc2[:, comp].shape)
 
-        shift_fpc = wavecore.wave_to_wave(fit_pc2[:, comp],
+        shift_fpc = wave_core.wave_to_wave(fit_pc2[:, comp],
                                           wavemap_ref, wavemap, reshape=True)
         fit_pc2[:, comp] = shift_fpc.reshape(fit_pc2[:, comp].shape)
     # ------------------------------------------------------------------
@@ -408,7 +408,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     WLOG(params, '', textentry('40-019-00019', args=wargs))
     # shift tapas species
     for row in range(len(tapas_all_species2)):
-        stapas = wavecore.wave_to_wave(tapas_all_species[row],
+        stapas = wave_core.wave_to_wave(tapas_all_species[row],
                                        wavemap_ref, wavemap, reshape=True)
         tapas_all_species2[row] = stapas.reshape(tapas_all_species[row].shape)
 
@@ -783,7 +783,7 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     res_model = np.exp(zero_res + pwater + pothers)
     # shift model to image frame
     wargs = [res_model, refprops['WAVEMAP'], wprops['WAVEMAP']]
-    res_model2 = wavecore.wave_to_wave(*wargs, splinek=1)
+    res_model2 = wave_core.wave_to_wave(*wargs, splinek=1)
     # ------------------------------------------------------------------
     # Calculate reconstructed absorption + correct E2DS file
     # ------------------------------------------------------------------

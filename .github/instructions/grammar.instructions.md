@@ -33,6 +33,33 @@ part2 = ...
 result = part1 + part2
 ```
 
+## Long function calls (not a thin wrapper)
+
+When a call (e.g. one whose result is unpacked into several variables) does
+not fit within 80 chars, do not split the call's arguments across
+continuation lines. Instead prefer, in order of preference:
+
+1. Assign the call's result to a single variable first, then unpack:
+```python
+bout = module.some_function(arg1, arg2, arg3)
+result1, result2, result3 = bout
+```
+2. If the arguments themselves are long, collect them into a list first and
+   splat with `*args`, keeping the call on one line:
+```python
+bargs = [arg1, arg2, arg3]
+result1, result2, result3 = module.some_function(*bargs)
+```
+3. Combine both when needed (long arguments and a call that still would not
+   fit):
+```python
+bargs = [arg1, arg2, arg3]
+bout = module.some_function(*bargs)
+result1, result2, result3 = bout
+```
+
+Pick the first option that keeps every line within 80 chars.
+
 
 
 ## Python dictionaries

@@ -100,6 +100,8 @@ nanmedian = fast.nanmedian
 
 nanpad = nan.nanpad
 
+fill_nans = nan.fill_nans
+
 nanchebyfit = nan.nanchebyfit
 
 nanpolyfit = nan.nanpolyfit

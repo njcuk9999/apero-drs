@@ -614,9 +614,10 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     bkgrdfile, backtime = cfile.filename, cfile.mjdmid
 
     if correctback:
-        # correct image for background
-        image4 = background.correction(recipe, params, infile, image3,
-                                       bkgrdfile=bkgrdfile)
+        # correct image for background (2D lower envelope fit)
+        image4 = background.correction_lower_envelope(recipe, params, infile,
+                                                       image3,
+                                                       bkgrdfile=bkgrdfile)
         bkgrdfile_used = str(bkgrdfile)
     else:
         image4 = np.array(image3)
