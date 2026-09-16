@@ -9,7 +9,6 @@ Created on 2019-07-08 at 16:32
 
 @author: cook
 """
-import warnings
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -18,6 +17,7 @@ from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_log
+from aperocore.science.extract import extract_core
 from apero.core import drs_file
 from apero.science.calib import flat_blaze
 from apero.base import base as apero_base
@@ -316,92 +316,14 @@ def extraction(simage, orderp, pos, r1, r2, cosmic_sigcut):
                  size = image.shape[1] (along the order direction)
     :return nbcos: int, the number of cosmic rays found
     """
-    dim1, dim2 = simage.shape
-    # create storage for extration
-    spe = np.zeros(dim2, dtype=float)
-    # create array of pixel values
-    ics = np.arange(dim2)
-    # get positions across the orders for each pixel value along the order
-    jcs = np.full(dim2, mp.val_cheby(pos, dim2//2, domain=[0, dim2]))
-    # get the lower bound of the order for each pixel value along the order
-    lim1s = jcs - r1
-    # get the upper bound of the order for each pixel value along the order
-    lim2s = jcs + r2
-    # TODO: Note we still miss the top and bottom
-    # get the integer pixel position of the lower bounds
-    j1s = np.array(np.round(lim1s), dtype=int)
-    # get the integer pixel position of the upper bounds
-    j2s = np.array(np.round(lim2s), dtype=int)
-    # make sure the pixel positions are within the image
-    mask = (j1s > 0) & (j2s < dim1)
-    # create a slice image
-    spelong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
-    coslong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
-    # define the number of cosmics found
-    cpt = 0
-    # loop around each pixel along the order
-    with warnings.catch_warnings(record=True) as _:
-        for ic in ics:
-            if mask[ic]:
-                # get the image slice
-                sx = simage[j1s[ic]:j2s[ic] + 1, ic]
-                # get hte order profile slice
-                fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
-                # Renormalise the rotated order profile
-                sumfx = mp.nansum(fx)
-                if sumfx > 0:
-                    fx = fx / sumfx
-                else:
-                    fx = np.ones(fx.shape, dtype=float)
-                # get the amplitude (ratio between flux and flat)
-                amp = mp.nanmedian(sx / fx)
-                # residuals
-                res = sx - fx * amp
-                # work out number of sigma away from the median res
-                ares = np.abs(res)
-                nsig = ares / mp.nanmedian(ares)
-                # work out weights (0 or 1 based on number of sigma)
-                # TODO: Look at this later for the narrow NIRPS fiber
-                if (r1 + r2) > 10:
-                    weights = nsig < cosmic_sigcut
-                else:
-                    weights = np.isfinite(nsig)
-                # add to the number of rejected cosmics
-                cpt += np.sum(~weights)
-                # weights to floats
-                weights_float = np.array(weights).astype(float)
-                # some matrix manipulation
-                wsxfx = weights_float * sx * fx
-                wfxfx = weights_float * fx ** 2
-                sum_wfxfx = mp.nansum(wfxfx)
-                # set the value of this pixel to the weighted sum
-                spelong[:, ic] = wsxfx
-                # nan the cosmic rays (to keep it consistent with spe)
-                spelong[:, ic][~weights] = np.nan
-                # collapse spectrum
-                spe[ic] = mp.nansum(wsxfx)
-                # normalise spe
-                spe[ic] = spe[ic] / sum_wfxfx
-                spelong[:, ic] = spelong[:, ic] / sum_wfxfx
-                coslong[:, ic] = weights_float
-
-    return spe, spelong, cpt, coslong
+    # delegate numerical work to the profile-independent core module
+    return extract_core.extraction(simage, orderp, pos, r1, r2,
+                                   cosmic_sigcut)
 
 
 def calculate_snr(e2ds, blaze_width, r1, r2, eff_ron):
-    # get the central pixel position
-    cent_pos = int(len(e2ds) / 2)
-    # get the blaze window size
-    blaze_lower = cent_pos - blaze_width
-    blaze_upper = cent_pos + blaze_width
-    # get the average flux in the blaze window
-    flux = mp.nansum(e2ds[blaze_lower:blaze_upper] / (2 * blaze_width))
-    # calculate the noise
-    noise = eff_ron * np.sqrt(r1 + r2)
-    # calculate the snr ratio = flux / sqrt(flux + noise**2)
-    snr = flux / np.sqrt(flux + noise ** 2)
-    # return snr
-    return snr, flux
+    # delegate numerical work to the profile-independent core module
+    return extract_core.calculate_snr(e2ds, blaze_width, r1, r2, eff_ron)
 
 
 def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
@@ -419,61 +341,13 @@ def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
 
     :return: float, the measure of the pixel to pixel scatter in this order
     """
-    # set up output properties
-    sprops = dict()
-    # return array
-    snrs = np.full(e2ds.shape[0], fill_value=np.nan)
     # deal with no blaze given
     if blaze_width is None:
         blaze_width = params['CAL.FLAT.HALF_WINDOW']
-    # loop in order number
-    for order_num in range(e2ds.shape[0]):
-        # get the central pixel position
-        cent_pos = int(len(e2ds[order_num]) / 2)
-        # get the blaze window size
-        blaze_lower = cent_pos - blaze_width
-        blaze_upper = cent_pos + blaze_width
-        # get the flux in the blaze window
-        e2ds_bw = e2ds[order_num][blaze_lower:blaze_upper]
-        # get the average flux in the blaze window
-        with warnings.catch_warnings(record=True) as _:
-            medflux = mp.nanpercentile(e2ds_bw, 90)
-        # don't continue if we have no med flux (order center is empty)
-        if not np.isfinite(medflux):
-            continue
-        # get the point to point flux for the noise estimate
-        roll1 = (np.roll(e2ds_bw, 1) + np.roll(e2ds_bw, -1))/2
-        # TODO: kw comment:   STD of spectrum + (mean of spectrum - 1)
-        point2point = e2ds_bw - roll1
-        # calculate the noise
-        noise = mp.estimate_sigma(point2point) / np.sqrt(1.5)
-        # calculate the snr ratio
-        snr = medflux / noise
-        # add to vector
-        snrs[order_num] = snr
-    # add to sprops
-    sprops['MP2P'] = snrs
-    # -------------------------------------------------------------------------
-    # now work out per band SNRs
-    # -------------------------------------------------------------------------
-    # storage in sprops
-    sprops['BP2P'] = dict()
-    # get the mean wavelength per order
-    waveord = np.nanmean(wavemap, axis=1)
     # get the bands from params
     bands = params['CAL.EXT.MEAS_SNR_PHOT_BANDS']
-    # loop around bands
-    for iband in bands.keys():
-        # get the band limits
-        band = bands[iband]
-        # make a mask of the orders for this band
-        band_mask = (waveord > band[0]) & (waveord < band[1])
-        # get the mean snr for this band
-        band_snr = np.nanmean(snrs[band_mask])
-        # push into sprops
-        sprops['BP2P'][iband] = band_snr
-    # return the snr
-    return sprops
+    # delegate numerical work to the profile-independent core module
+    return extract_core.measure_p2p_scat(wavemap, e2ds, blaze_width, bands)
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
@@ -496,37 +370,9 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
                  size = image.shape[1] (along the order direction)
     :return cpt: int, the number of cosmic rays found
     """
-    # define the critical pixel values?
-    crit = (sx - spe[ic] * fx)
-    # re-cast the sigcut parameters
-    sigcut = cosmic_sigcut  # 25% of the flux
-    # start the loop counter
-    nbloop = 0
-    # loop around until either:
-    #       critical pixel values > sigcut * extraction
-    #    or
-    #       the loop exceeds "cosmic_threshold"
-    cond1 = mp.nanmax(crit) > mp.nanmax([sigcut * spe[ic], 1000.0])
-    cond2 = nbloop < cosmic_threshold
-    while cond1 and cond2:
-        # define the cosmic ray mask (True where not cosmic ray)
-        cosmask = ~(crit > mp.nanmax(crit) - 0.1)
-        # set the pixels where there is a cosmic ray to zero
-        part1 = weights * cosmask * sx * fx
-        part2 = weights * cosmask * fx ** 2
-        spe[ic] = mp.nansum(part1) / mp.nansum(part2)
-        # recalculate the critical parameter
-        crit = (sx * cosmask - spe[ic] * fx * cosmask)
-        # increase the number of found cosmic rays by 1
-        cpt += 1
-        # increase the loop counter
-        nbloop += 1
-        # recalculate conditions
-        cond1 = mp.nanmax(crit) > mp.nanmax([sigcut * spe[ic], 1000.0])
-        cond2 = nbloop < cosmic_threshold
-
-    # finally return spe and cpt
-    return spe, cpt
+    # delegate numerical work to the profile-independent core module
+    return extract_core.cosmic_correction(sx, spe, fx, ic, weights, cpt,
+                                          cosmic_sigcut, cosmic_threshold)
 
 
 # =============================================================================
@@ -534,67 +380,22 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
 # =============================================================================
 def _valid_orders(params, start_order, end_order, skip_orders=None):
     func_name = __NAME__ + '._valid_orders()'
-    # push start and end to ints
+    # delegate numerical work to the profile-independent core module
     try:
-        start_order = int(start_order)
-    except Exception as e:
-        eargs = [start_order, type(e), e, func_name]
-        raise AperoCodedException(params, '00-016-00001', targs=eargs)
-    try:
-        end_order = int(end_order)
-    except Exception as e:
-        eargs = [end_order, type(e), e, func_name]
-        raise AperoCodedException(params, '00-016-00002', targs=eargs)
-    # start order must be zero or greater
-    if start_order < 0:
-        eargs = [start_order, func_name]
-        raise AperoCodedException(params, '00-016-00003', targs=eargs)
-    # check that start order is less than end order
-    if start_order > end_order:
-        eargs = [start_order, end_order, func_name]
-        raise AperoCodedException(params, '00-016-00004', targs=eargs)
-    # deal with skip orders
-    if not isinstance(skip_orders, list):
-        skip_orders = []
-    else:
-        try:
-            skip_orders = np.array(skip_orders).astype(float).astype(int)
-        except Exception as e:
-            eargs = [skip_orders, type(e), e, func_name]
-            raise AperoCodedException(params, '00-016-00005', targs=eargs)
-    # define storage
-    valid_orders = []
-    # loop around orders
-    for order_num in range(start_order, end_order + 1):
-        if order_num in skip_orders:
-            continue
-        else:
-            valid_orders.append(order_num)
-    # return valid orders
-    return valid_orders
+        return extract_core.valid_orders(start_order, end_order, skip_orders)
+    except ValueError as e:
+        eargs = [str(e), func_name]
+        raise AperoCodedException(params, message=str(e), targs=eargs)
 
 
 def _get_range(params, rangedict, fiber, keys):
     func_name = __NAME__ + '._get_range()'
-
-    if not isinstance(rangedict, dict):
-        eargs = [keys[0], keys[1], func_name]
-        raise AperoCodedException(params, '00-016-00007', targs=eargs)
-    # deal with fiber not being in range dictionary
-    if fiber not in rangedict:
-        # log that range1 had invalid fiber type
+    # delegate numerical work to the profile-independent core module
+    try:
+        return extract_core.get_range(rangedict, fiber)
+    except ValueError as e:
         eargs = [fiber, rangedict, keys[0], keys[1], func_name]
         raise AperoCodedException(params, '00-016-00008', targs=eargs)
-    else:
-        try:
-            # return range value
-            return float(rangedict[fiber])
-        except ValueError as _:
-            eargs = [fiber, rangedict, keys[0], keys[1], func_name]
-            raise AperoCodedException(params, '00-016-00009', targs=eargs)
-        except Exception as e:
-            eargs = [fiber, rangedict, type(e), e, keys[0], keys[1], func_name]
-            raise AperoCodedException(params, '00-016-00010', targs=eargs)
 
 
 # =============================================================================

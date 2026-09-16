@@ -13,7 +13,6 @@ import warnings
 from typing import Any, List, Union
 
 import numpy as np
-from scipy.ndimage import convolve, distance_transform_edt
 
 from aperocore.base import base
 from aperocore.math import fast
@@ -77,23 +76,17 @@ def nanpad(oimage: np.ndarray) -> np.ndarray:
 
 
 def fill_nans(image: Union[np.ndarray, List[np.ndarray]],
-             nsmooth: int = 1
+             box_size: int = 5
              ) -> Union[np.ndarray, List[np.ndarray]]:
     """
-    Grow the finite pixels of a 2D image into its NaNs
+    Fill non-finite pixels from a horizontal running box median
 
-    Every filled pixel has no data behind it, so the only requirements are
-    that it be continuous with its surroundings and cheap to compute. This
-    is done with a single distance transform (giving every NaN the value of
-    the nearest finite pixel) followed by "nsmooth" passes of a 3x3 mean
-    over the filled pixels only, which removes the seams left by the
-    distance transform.
+    The box median is calculated from the original image. Only non-finite
+    pixels are replaced, so finite input pixels are left unchanged.
 
-    :param image: numpy array (2D), or a list of 2D arrays. If a list is
-                  passed, arrays sharing the same NaN pattern share the
-                  (expensive) distance transform
-    :param nsmooth: int, number of 3x3 smoothing passes over the filled
-                    pixels
+    :param image: numpy array (2D), or a list of 2D arrays
+    :param box_size: int, number of columns on either side of each pixel in
+                     the median box
 
     :return: numpy array (2D), the filled image, or a list of them (matching
              the input type)
@@ -102,29 +95,18 @@ def fill_nans(image: Union[np.ndarray, List[np.ndarray]],
     single = not isinstance(image, (list, tuple))
     images = [image] if single else list(image)
     outs = [np.array(one, dtype=float) for one in images]
-    kernel = np.ones((3, 3)) / 9.0
-    # hole patterns already solved, as (mask, indices) pairs, so images that
-    #   share a NaN pattern share the (expensive) distance transform
-    solved = []
     for out in outs:
         bad = ~np.isfinite(out)
-        # nothing to do, or nothing to do it with
-        if not bad.any() or bad.all():
+        if not bad.any():
             continue
-        idx = None
-        for prev_bad, prev_idx in solved:
-            if np.array_equal(bad, prev_bad):
-                idx = prev_idx
-                break
-        if idx is None:
-            # the nearest finite pixel, for every hole at once
-            idx = distance_transform_edt(bad, return_distances=False,
-                                         return_indices=True)
-            solved.append((bad, idx))
-        out[bad] = out[tuple(idx)][bad]
-        # take the seams out, touching only what was missing
-        for _ in range(nsmooth):
-            out[bad] = convolve(out, kernel, mode='nearest')[bad]
+        smooth = np.zeros_like(out)
+        for column in range(out.shape[1]):
+            start = max(0, column - box_size)
+            stop = min(out.shape[1], column + box_size + 1)
+            with warnings.catch_warnings(record=True) as _:
+                smooth[:, column] = fast.nanmedian(out[:, start:stop],
+                                                   axis=1)
+        out[bad] = smooth[bad]
     # return in the same form as the input
     return outs[0] if single else outs
 

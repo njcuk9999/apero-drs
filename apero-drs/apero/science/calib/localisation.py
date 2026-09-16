@@ -29,7 +29,7 @@ from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.instruments import select
 from apero.base import base as apero_base
-from aperocore.science import localisation_core
+from aperocore.science.calib import localisation_core
 
 # =============================================================================
 # Define variables
@@ -129,14 +129,18 @@ def calculate_order_profile(params: ParamDict, image: np.ndarray,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param image: numpy array (2D), the image
-    :param box_size: int, unused, kept for backwards compatible call sites
+    :param box_size: int, number of columns on either side of each pixel in
+                     the median box, overrides "CAL.LOC.ORDERP_BOXSIZE"
 
     :return newimage: numpy array (2D), the nan-filled image
     """
+    func_name = __NAME__ + '.calculate_order_profile()'
+    size = pcheck(params, 'CAL.LOC.ORDERP_BOXSIZE', func=func_name,
+                  override=box_size)
     # log that we are creating order profile
     WLOG(params, '', textentry('40-013-00001'))
     # nan-fill the image: fills holes only, does not smooth the orders
-    return np.asarray(mp.fill_nans(image))
+    return np.asarray(mp.fill_nans(image, box_size=size))
 
 
 def build_order_position_map(shape: Tuple[int, int],
@@ -148,7 +152,7 @@ def build_order_position_map(shape: Tuple[int, int],
     Build the order position map and label ranges for a set of fiber groups
 
     Thin apero wrapper around
-    aperocore.science.localisation_core.build_order_position_map: evaluates
+    aperocore.science.calib.localisation_core.build_order_position_map: evaluates
     each fiber group's chebyshev center coefficients over the full image
     width, takes the constant term of the width fit as the trace width (as
     order_widths does for the WIDTH_TABLE), then builds the map.
@@ -194,7 +198,7 @@ def get_order_ranges(wid_coeffs: Dict[str, np.ndarray]
     Get the label range each fiber group occupies, without building the map
 
     Thin apero wrapper around
-    aperocore.science.localisation_core.order_ranges_from_widths.
+    aperocore.science.calib.localisation_core.order_ranges_from_widths.
 
     :param wid_coeffs: dict, fiber label -> width coefficients (2D array),
                        one row per trace (only the number of traces per

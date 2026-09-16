@@ -8,6 +8,8 @@ This directory contains fast unit tests for pure or low-dependency helpers in
 - hash/text helpers in `aperocore.base.drs_base`
 - gaussian and NaN-safe math helpers in `aperocore.math`
 - general numerical helpers in `aperocore.math.gen_math`
+- pure calibration science functions in `aperocore.science.calib`
+  (background, badpix, dark, flat/blaze, localisation, shape, wave)
 
 ## Run
 

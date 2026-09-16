@@ -24,6 +24,7 @@ from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
+from aperocore.science.telluric import telluric_core
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
@@ -35,7 +36,7 @@ from apero.science.telluric import gen_tellu
 from apero.instruments import select
 from apero.base import base as apero_base
 from apero.science.telluric.core_tellu import load_tellu_file
-from aperocore.science.wave_core import wave_to_wave
+from aperocore.science.calib.wave_core import wave_to_wave
 
 
 # =============================================================================
@@ -410,64 +411,10 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
     wave1d = sky_props['WAVEMAPR']
     # get the median sky spectrum
     sky_med = sky_props['MED']
-    # set all NaN values to zero
-    sky_med[~np.isfinite(sky_med)] = 0.0
-    # find positive excursions in sky signal
-    nsig = sky_med / mp.estimate_sigma(sky_med)
-    # identify lines that are n sigma positive excursions
-    line = np.array(nsig > line_sigma, dtype=int)
-    # erode features that are too narrow
-    line = binary_erosion(line, structure=np.ones(erode_size))
-    # dilate to get wings of lines
-    line = binary_dilation(line, structure=np.ones(dilate_size))
-    # build the region mask
-    regions = np.cumsum(line != np.roll(line, 1))
-    # set all the even regions to zero
-    regions[(regions % 2) == 0] = 0
-    # re-number all non-zero regions to produce labels from 1--> N
-    #   (original were all the odd numbers)
-    non_zero = regions != 0
-    regions[non_zero] = (regions[non_zero] + 1) // 2
-    # velocity grid in round numbers of m / s
-    magic_grid = mp.get_magic_grid(wavestart, waveend, binvelo * 1000)
-    # put the line mask onto the magic grid to avoid errors at order overlaps
-    magic_mask = np.zeros_like(magic_grid, dtype=bool)
-    # find unique valid regions
-    valid_regions = set(regions)
-    valid_regions.remove(0)
-    # loop around regions and fill magic mask
-    for region in valid_regions:
-        # find pixels that are in this region
-        good = regions == region
-        # find mask of minimum and maximum wavelength for this region
-        minmask = magic_grid > np.min(wave1d[good])
-        maxmask = magic_grid < np.max(wave1d[good])
-        magic_mask[minmask & maxmask] = True
-    # now in the space of magic grid work out the regions
-    # build the region mask
-    regions_magic = np.cumsum(magic_mask != np.roll(magic_mask, 1))
-    # set all the even regions to zero
-    regions_magic[(regions_magic % 2) == 0] = 0
-    # re-number all non-zero regions to produce labels from 1--> N
-    #   (original were all the odd numbers)
-    non_zero_magic = regions_magic != 0
-    regions_magic[non_zero_magic] = (regions_magic[non_zero_magic] + 1) // 2
-    # fill the original map with unique values and common ID for overlapping
-    #   orders
-    regions = np.zeros_like(regions, dtype=int)
-    # find unique valid regions
-    valid_regions = set(regions_magic)
-    valid_regions.remove(0)
-    # loop around regions and fill
-    for region in valid_regions:
-        wave_min = np.min(magic_grid[regions_magic == region])
-        wave_max = np.max(magic_grid[regions_magic == region])
-        # find valid pixels in wavelength
-        good = (wave1d > wave_min) & (wave1d < wave_max)
-        # update the region id for these good pixels
-        regions[good] = region
-    # return updated sky props parameter dictionary
-    return regions
+    # delegate numerical work to the profile-independent core module
+    args = [wave1d, sky_med, line_sigma, erode_size, dilate_size, wavestart,
+           waveend, binvelo]
+    return telluric_core.identify_sky_line_regions(*args)
 
 
 def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,

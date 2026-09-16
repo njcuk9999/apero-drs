@@ -15,7 +15,7 @@
 ## `aperocore.science` functions
 
 - Functions in `apero-core/aperocore/science/*_core.py` (e.g. `wave_core.py`,
-  `background_core.py`, `localisation_core.py`) must not import or receive
+  `background_core.py`, `localisation_core.py`, `shape_core.py`) must not import or receive
   an APERO `ParamDict`, `DrsRecipe`, `DrsFitsFile`, or any other apero-drs
   object. They must only take plain, well-documented arguments (numpy
   arrays, floats, ints, strings, tuples/lists of those). This keeps them
@@ -25,7 +25,7 @@
   `ParamDict`/`DrsFitsFile`/calibration file, and calls the corresponding
   `aperocore.science` function next to the higher-level apero function it
   supports (e.g. `apero-drs/apero/science/calib/localisation.py` wraps
-  `aperocore.science.localisation_core`).
+  `aperocore.science.calib.localisation_core`).
 
 
 ## Python code

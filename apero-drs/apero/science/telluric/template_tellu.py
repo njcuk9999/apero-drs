@@ -36,7 +36,7 @@ from apero.science.calib import gen_calib
 from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
 from apero.base import base as apero_base
-from aperocore.science import wave_core
+from aperocore.science.calib import wave_core
 
 
 # =============================================================================

@@ -18,6 +18,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
+from aperocore.science.calib import dark_core
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
@@ -118,26 +119,15 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
     except Exception as e:
         eargs = [type(e), e, func_name]
         raise AperoCodedException(params, '00-001-00026', targs=eargs)
-    # flatten the image
-    fimage = image.flat
-    # get the finite (non-NaN) mask
-    fimage = fimage[np.isfinite(fimage)]
-    # get the number of NaNs
-    imax = image.size - len(fimage)
-    # get the median value of the non-NaN data
-    med = mp.nanmedian(fimage)
-    # get the 5th and 95th percentile qmin
-    qmin, qmax = np.percentile(fimage, [dark_qmin, dark_qmax])
-    # get the histogram for flattened data
-    histo = np.histogram(fimage, bins=hbins, range=(hrangelow, hrangehigh),
-                         density=True)
-    # get the fraction of dead pixels as a percentage
-    dadead = imax * 100 / np.prod(image.shape)
+    # delegate numerical work to the profile-independent core module
+    args = [image, dark_qmin, dark_qmax, hbins, hrangelow, hrangehigh]
+    outs = dark_core.measure_dark(*args)
+    histo, med, dadead, qmin, qmax = outs
     # log the dark statistics
     wargs = [image_name, dadead, med, dark_qmin, dark_qmax, qmin, qmax]
     WLOG(params, 'info', textentry('40-011-00002', args=wargs))
     # return the parameter dictionary with new values
-    return np.array(histo), float(med), float(dadead)
+    return histo, med, dadead
 
 
 def measure_dark_badpix(params: ParamDict, image: np.ndarray,
@@ -162,20 +152,13 @@ def measure_dark_badpix(params: ParamDict, image: np.ndarray,
     # get constants from params/kwargs
     darkcutlimit = pcheck(params, 'CAL.DARK.CUTLIMIT', func=func_name,
                           override=dark_cutlimit)
-    # get number of bad dark pixels (as a fraction of total pixels)
-    with warnings.catch_warnings(record=True) as _:
-        baddark = 100.0 * np.sum(image > darkcutlimit)
-        baddark /= np.prod(image.shape)
+    # delegate numerical work to the profile-independent core module
+    args = [image, nanmask, darkcutlimit]
+    outs = dark_core.measure_dark_badpix(*args)
+    baddark, dadeadall = outs
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]
     WLOG(params, 'info', textentry('40-011-00006', args=wargs))
-    # define mask for values above cut limit or NaN
-    with warnings.catch_warnings(record=True) as _:
-        datacutmask = ~((image > darkcutlimit) | nanmask)
-    # get number of pixels above cut limit or NaN
-    n_bad_pix = np.prod(image.shape) - np.sum(datacutmask)
-    # work out fraction of dead pixels + dark > cut, as percentage
-    dadeadall = n_bad_pix * 100 / np.prod(image.shape)
     # log fraction of dead pixels + dark > cut
     wargs = [darkcutlimit, dadeadall]
     WLOG(params, 'info', textentry('40-011-00007', args=wargs))
@@ -208,7 +191,8 @@ def correction(params: ParamDict, image: np.ndarray, nfiles: int,
     # Read dark file
     wargs = ['DARK_FILE', darkfile]
     WLOG(params, '', textentry('40-011-00011', args=wargs))
-    corrected_image = image - (darkimage * nfiles)
+    # delegate numerical work to the profile-independent core module
+    corrected_image = dark_core.correct_dark(image, darkimage, nfiles)
     # -------------------------------------------------------------------------
     # finally return datac
     if return_dark:

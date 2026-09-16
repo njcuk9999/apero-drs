@@ -19,6 +19,17 @@ def test_nanpad_fills_center_nan_from_neighbor_median() -> None:
     assert np.isclose(out[1, 1], 5.0)
 
 
+def test_fill_nans_uses_horizontal_box_median_for_holes() -> None:
+    """`fill_nans` should replace only holes with the running box median."""
+    image = np.array([[1.0, 100.0, np.nan, 5.0, 9.0],
+                      [2.0, np.nan, np.nan, np.nan, 10.0]])
+    out = nan.fill_nans(image, box_size=2)
+    assert np.array_equal(out[np.isfinite(image)],
+                          image[np.isfinite(image)])
+    assert np.isclose(out[0, 2], 7.0)
+    assert np.isclose(out[1, 2], 6.0)
+
+
 def test_centered_super_gauss_peak_is_amplitude() -> None:
     """Centered super-gaussian should evaluate to `amp` at x=0."""
     value = gauss.centered_super_gauss(np.array([0.0]), fwhm=2.0,

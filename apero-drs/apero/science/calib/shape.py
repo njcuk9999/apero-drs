@@ -13,7 +13,7 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
-from scipy.ndimage import filters, map_coordinates as mapc
+from scipy.ndimage import filters
 from scipy.signal import convolve2d
 from scipy.stats import pearsonr
 
@@ -22,6 +22,7 @@ from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
+from aperocore.science.calib import shape_core
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
@@ -570,42 +571,35 @@ def ea_transform(params, image, lin_transform_vect=None,
         if dymap.shape != image.shape:
             eargs = [dymap.shape, image.shape, func_name]
             raise AperoCodedException(params, '00-014-00003', targs=eargs)
-    # deal with no linear transform required (just a dxmap or dymap shift)
-    if lin_transform_vect is None:
-        lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
-    # copy the image
-    image = np.array(image)
-    # transforming an image with the 6 linear transform terms
-    # Be careful with NaN values, there should be none
-    lout = list(lin_transform_vect)
-    shape_dx, shape_dy, shape_a, shape_b, shape_c, shape_d = lout
-    # get the pixel locations for the image
-    yy, xx = np.indices(image.shape, dtype=float)
-    # get the shifted x pixel locations
-    xx2 = shape_dx + xx * shape_a + yy * shape_b
-    if dxmap is not None:
-        xx2 += dxmap
-    # get the shifted y pixel locations
-    yy2 = shape_dy + xx * shape_c + yy * shape_d
-    if dymap is not None:
-        yy2 += dymap
-    # get the valid (non Nan) pixels
-    valid_mask = np.isfinite(image)
-    # set the weight equal to the valid pixels (1 for valid, 0 for not valid)
-    weight = valid_mask.astype(float)
-    # set all NaNs to zero (for transform)
-    image[~valid_mask] = 0
-    # we need to properly propagate NaN in the interpolation.
-    out_image = mapc(image, [yy2, xx2], order=2, cval=np.nan, output=float,
-                     mode='constant')
-    out_weight = mapc(weight, [yy2, xx2], order=2, cval=0, output=float,
-                      mode='constant')
-    # divide by the weight (NaN pixels)
-    with warnings.catch_warnings(record=True) as _:
-        out_image = out_image / out_weight
-        out_image[out_weight < 0.5] = np.nan
-    # return transformed image
-    return out_image
+    # delegate numerical work to the profile-independent core module
+    return shape_core.ea_transform(image, lin_transform_vect, dxmap, dymap)
+
+
+def ea_transform_reverse(params, image, lin_transform_vect=None,
+                         dxmap=None, dymap=None, niter=6):
+    """
+    Reverse an ``ea_transform`` using the supplied shape calibrations
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param image: numpy array (2D), image in the forward-transform frame
+    :param lin_transform_vect: array of six transform values or None
+    :param dxmap: numpy array (2D) or None, x displacement map
+    :param dymap: numpy array (2D) or None, y displacement map
+    :param niter: int, number of inverse coordinate iterations
+
+    :return: numpy array (2D), image in the reverse-transform frame
+    """
+    func_name = __NAME__ + '.ea_transform_reverse()'
+    # log the numerical operation using the same message as ea_transform
+    wargs = [int(dxmap is not None), int(dymap is not None),
+             int(lin_transform_vect is not None)]
+    WLOG(params, '', textentry('40-014-00041', args=wargs))
+    try:
+        return shape_core.ea_transform_reverse(
+            image, lin_transform_vect, dxmap, dymap, niter=niter)
+    except ValueError as exc:
+        raise AperoCodedException(params, message=str(exc),
+                                  targs=[func_name]) from exc
 
 
 def ea_transform_coeff(image, coeffs, lin_transform_vect):

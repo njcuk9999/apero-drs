@@ -1103,6 +1103,13 @@ CDict.add('ENV_TOL', value=None, dtype=float, source=__NAME__,
                       '- stop when the surface moves by less than this '
                       'many sigma')
 
+#  correction_lower_envelope: median-binning factor used for fitting
+CDict.add('ENV_BIN_SIZE', value=None, dtype=int, source=__NAME__,
+          minimum=1, group=cgroup,
+          description='correction_lower_envelope: median-binning factor '
+                      'used to fit the surface before evaluating it on the '
+                      'full detector frame')
+
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================

@@ -20,7 +20,7 @@ from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
 from aperocore.core import drs_log
-from aperocore.science import wave_core
+from aperocore.science.calib import wave_core
 from apero.core import drs_file
 from apero.utils import drs_recipe
 from apero.io import drs_fits
@@ -28,7 +28,7 @@ from apero.io import drs_path
 from apero.science import extract
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from aperocore.science import wave_core
+from aperocore.science.calib import wave_core
 from apero.base import base as apero_base
 
 # =============================================================================

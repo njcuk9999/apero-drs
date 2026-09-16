@@ -494,6 +494,9 @@ CDict.set('ENV_NBIN', value=[16, 16], source=__NAME__, group=cgroup)
 # correction_lower_envelope: convergence tolerance
 CDict.set('ENV_TOL', value=1e-5, source=__NAME__, group=cgroup)
 
+# correction_lower_envelope: median-binning factor used for fitting
+CDict.set('ENV_BIN_SIZE', value=4, source=__NAME__, group=cgroup)
+
 # =============================================================================
 # CALIBRATION: LOCALISATION SETTINGS
 # =============================================================================

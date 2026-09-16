@@ -21,6 +21,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
+from aperocore.science.preprocessing import detector_core
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
@@ -228,36 +229,12 @@ def ref_top_bottom(params: ParamDict, image: np.ndarray) -> np.ndarray:
     :return image: numpy array (2D), the corrected image
     :rtype: np.ndarray
     """
-    # get the image size
-    dim1, dim2 = image.shape
     # get constants from p
     tamp = params['PP.TOTAL_AMP_NUM']
     ntop = params['PP.NUM_REF_TOP']
     nbottom = params['PP.NUM_REF_BOTTOM']
-    # get number of pixels in amplifier
-    pix_in_amp = dim2 // tamp
-    pix_in_amp_2 = pix_in_amp // 2
-    # work out the weights for y pixels
-    weight = np.arange(dim1) / (dim1 - 1)
-    # pipe into array to cover odd pixels and even pixels
-    weightarr = np.repeat(weight, dim2 // pix_in_amp_2)
-    # reshape
-    weightarr = weightarr.reshape(dim1, pix_in_amp_2)
-    # loop around each amplifier
-    for amp_num in range(tamp):
-        # get the pixel mask for this amplifier
-        pixmask = (amp_num * dim2 // tamp) + 2 * np.arange(pix_in_amp_2)
-        # loop around the even and then the odd pixels
-        for oddeven in range(2):
-            # work out the median of the bottom pixels for this amplifier
-            bottom = mp.nanmedian(image[:nbottom, pixmask + oddeven])
-            top = mp.nanmedian(image[dim1 - ntop:, pixmask + oddeven])
-            # work out contribution to subtract from top and bottom
-            contrib = (top * weightarr) + (bottom * (1 - weightarr))
-            # subtraction contribution from image for this amplifier
-            image[:, pixmask + oddeven] -= contrib
-    # return corrected image
-    return image
+    # delegate numerical work to the profile-independent core module
+    return detector_core.ref_top_bottom(image, tamp, ntop, nbottom)
 
 
 def correct_left_right(params: ParamDict, image: np.ndarray) -> np.ndarray:

@@ -25,6 +25,7 @@ from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
+from aperocore.science.velocity import velocity_core
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_data
@@ -275,69 +276,13 @@ def fwhm_fp_airy(popt: np.ndarray) -> float:
 
     :return: numpy array (1D), the FWHM of the FP peaks
     """
-    # we find the fwhm of this function:
-    #     # calculate ea_airy_function
-    #     y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
-    #   done in mp.ea_airy_function
-    # get the parameters
-    amp, x0, w, beta, zp = popt
-
-    part1 = 2 * ((0.5 ** (1 / beta)) - 1)
-    # deal with out of bounds
-    if abs(part1) > 1:
-        return np.nan
-    # calculate the half width (inverse of beta)
-    half_width = w * np.arccos(part1) / (2 * np.pi)
-    # calculate the full width
-    full_width = 2 * half_width
-    # return the FWHM and error on the FWHM
-    return full_width
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.fwhm_fp_airy(popt)
 
 
 def fit_fp_peaks(x, y, size, return_model=False):
-    # storage of warnings
-    warns = None
-    # get gauss function
-    ea_airy = mp.ea_airy_function
-    # get the guess on the maximum peak position
-    maxpos = mp.nanargmax(y)
-    minpos = mp.nanargmin(y)
-    ymax = y[maxpos]
-    ymin = y[minpos]
-    # set up initial guess
-    # [amp, position, period, exponent, zero point]
-    p0 = [ymax - ymin, mp.nanmedian(x), size, 1.5, np.max([0, ymin])]
-
-    # deal with bad bounds
-    if warns is not None:
-        popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
-        pcov = None
-        model = np.repeat([np.nan], len(x))
-    else:
-        # try to fit etiennes airy function
-        try:
-            with warnings.catch_warnings(record=True) as _:
-                # popt, pcov = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
-                # noinspection PyTupleAssignmentBalance
-                popt, pcov = curve_fit(ea_airy, x, y, p0=p0)
-            model = ea_airy(x, *popt)
-        except ValueError as e:
-            # log that ydata or xdata contains NaNs
-            popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
-            pcov = None
-            warns = '{0}: {1}'.format(type(e), e)
-            model = np.repeat([np.nan], len(x))
-        except RuntimeError as e:
-            popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
-            pcov = None
-            warns = '{0}: {1}'.format(type(e), e)
-            model = np.repeat([np.nan], len(x))
-    # deal with returning model
-    if return_model:
-        return p0, popt, pcov, warns, model
-    else:
-        # return the guess and the best fit
-        return p0, popt, pcov, warns
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.fit_fp_peaks(x, y, size, return_model=return_model)
 
 
 def remove_wide_peaks(params: ParamDict, props: ParamDict,
@@ -595,31 +540,8 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     :return dvrms2: numpy array (1D), the photon noise for each pixel (squared)
     :return weightedmean: float, weighted mean photon noise across all orders
     """
-    # flag (saturated) fluxes above threshold as "bad pixels"
-    with warnings.catch_warnings(record=True) as _:
-        flag = spe < threshold
-    # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
-    for i_it in range(1, 2 * size, 1):
-        flag[:, size:-size] *= flag[:, i_it: i_it - 2 * size]
-    # get the wavelength normalised to the wavelength spacing
-    nwave = wave[:, 1:-1] / (wave[:, 2:] - wave[:, :-2])
-    # get the flux + noise array
-    sxn = (spe[:, 1:-1] + sigdet ** 2)
-    # get the flux difference normalised to the flux + noise
-    nspe = (spe[:, 2:] - spe[:, :-2]) / sxn
-    # get the mask value
-    maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
-    # get the total per order
-    tot = mp.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
-    # convert to dvrms2
-    with warnings.catch_warnings(record=True) as _:
-        dvrms2 = (speed_of_light_ms ** 2) / abs(tot)
-    # weighted mean of dvrms2 values
-    weightedmean = 1. / np.sqrt(mp.nansum(1.0 / dvrms2))
-    # per order value
-    weightedmeanorder = np.sqrt(dvrms2)
-    # return dv rms and weighted mean
-    return dvrms2, weightedmean, weightedmeanorder
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.delta_v_rms_2d(spe, wave, sigdet, threshold, size)
 
 
 def remove_telluric_domain(params, infile, fiber, **kwargs):
@@ -1545,24 +1467,10 @@ def estimate_photon_noise(wavemap: np.ndarray, rv_ccf: np.ndarray,
 
     :return: tuple, 1. the CCF photon noise, 2. The CCF SNR
     """
-    # some gradients
-    gradwave = np.nanmedian(wavemap / np.gradient(wavemap))
-    grad_dv = np.gradient(rv_ccf)
-    med_grad_dv = mp.nanmedian(grad_dv)
-    # estimate oversampling factor
-    oversampling_ratio_ord = (speed_of_light / gradwave) / med_grad_dv
-    # error on the RV from the photon noise
-    ccf_grad = np.gradient(ccf_fit_ord * norm) / grad_dv
-    # bouchy 2001 formula
-    sum_ratio2 = np.sqrt(np.sum((ccf_grad / sig_ord) ** 2))
-    ccf_phot_noise = (1 / sum_ratio2) * np.sqrt(oversampling_ratio_ord)
-    # get the ccf snr (1/mean snr)*depth
-    if fit_type == 0:
-        ccf_snr = ccf_coeffs_ord[1] * mp.fwhm() / ccf_phot_noise
-    else:
-        ccf_snr = ccf_coeffs_ord[2] * mp.fwhm() / ccf_phot_noise
-    # return the photon noise and SNR
-    return ccf_phot_noise, ccf_snr
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.estimate_photon_noise(
+        wavemap, rv_ccf, ccf_fit_ord, ccf_coeffs_ord, sig_ord, fit_type,
+        norm=norm)
 
 
 def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
@@ -1581,22 +1489,9 @@ def bisector(params: ParamDict, rv: np.ndarray, ccf: np.ndarray,
     # get min and max depth for the bisector
     bs_cut_top = params['OBJ.CCF.BIS_CUT_TOP'] / 100.0
     bs_cut_bottom = params['OBJ.CCF.BIS_CUT_BOTTOM'] / 100.0
-    # take the gaussian fit without a depth
-    ccf_coeffs2 = np.array(ccf_coeffs)
-    # set the depth to 0 (i.e. no depth)
-    ccf_coeffs2[2] = 0
-    # normalize CCF without the gaussian. Sets the continuum flat to 1
-    if fit_type == 0:
-        ccf2 = (1 - ccf / mp.gaussian_slope(rv, *ccf_coeffs2)) / ccf_coeffs[2]
-    else:
-        ccf2 = (ccf - mp.gauss_fit_s(rv, *ccf_coeffs2)) / ccf_coeffs[0]
-    # ----------------------------------------------------------------------
-    # Bisector at cut1
-    span_top = bisector_cut(rv, ccf2, bs_cut_top)
-    # Bisector at cut2
-    span_bottom = bisector_cut(rv, ccf2, bs_cut_bottom)
-    # difference between the two bisector cuts
-    return span_top - span_bottom
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.bisector(rv, ccf, ccf_coeffs, fit_type, bs_cut_top,
+                                  bs_cut_bottom)
 
 
 def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
@@ -1609,21 +1504,8 @@ def bisector_cut(xx: np.ndarray, yy: np.ndarray, cut: float) -> float:
 
     :return: float, the bisector span at this cut value
     """
-    # find the two points where the CCF is above cut and interpolate with a
-    #    linear fit
-    lims1 = np.where(yy > cut)[0][[0, -1]]
-    # find the value at the left side
-    x1_start = max([lims1[0] - 2, 0])
-    x1_end = min([lims1[0] + 1, len(yy)])
-    v1_fit = np.polyfit(yy[x1_start:x1_end], xx[x1_start:x1_end], 1)
-    v1_val = np.polyval(v1_fit, cut)
-    # find the value at the right side
-    x2_start = lims1[1]
-    x2_end = min([lims1[1] + 2, len(yy)])
-    v2_fit = np.polyfit(yy[x2_start:x2_end], xx[x2_start:x2_end], 1)
-    v2_val = np.polyval(v2_fit, cut)
-    # return the bisector span for this cut
-    return (v1_val + v2_val) / 2
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.bisector_cut(xx, yy, cut)
 
 
 def get_coeff_dict(coeffs: np.ndarray, names: List[str]
@@ -1638,16 +1520,8 @@ def get_coeff_dict(coeffs: np.ndarray, names: List[str]
 
     :return: dict, dictionary of coefficients key = name
     """
-    # storage for coefficients
-    cdict = dict()
-    # loop around fit names
-    for f_it, name in enumerate(names):
-        if len(coeffs.shape) == 2:
-            cdict[name] = coeffs[:, f_it]
-        else:
-            cdict[name] = coeffs[f_it]
-    # return coefficients
-    return cdict
+    # delegate numerical work to the profile-independent core module
+    return velocity_core.get_coeff_dict(coeffs, names)
 
 
 # =============================================================================

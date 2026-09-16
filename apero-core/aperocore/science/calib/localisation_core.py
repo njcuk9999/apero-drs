@@ -20,7 +20,7 @@ from aperocore.base import base
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'aperocore.science.localisation_core'
+__NAME__ = 'aperocore.science.calib.localisation_core'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

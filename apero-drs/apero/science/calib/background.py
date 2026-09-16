@@ -7,19 +7,15 @@ Created on 2019-05-13 at 12:40
 
 @author: cook
 """
-import warnings
 from typing import List, Optional, Union
 
 import numpy as np
-from scipy.ndimage import map_coordinates as mapc
-from scipy.ndimage import zoom
-from scipy.signal import convolve2d
 
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
-from aperocore.science import background_core as background_mod
+from aperocore.science.calib import background_core as background_mod
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
@@ -92,54 +88,9 @@ def create_background_map(params: ParamDict, image: np.ndarray,
                    override=bkgr_mask_conv_size)
     nbad = pcheck(params, 'CAL.BCORR.NBAD_NEIGHBOURS', func=func_name,
                   override=bkgr_n_bad)
-    # set image bad pixels to NaN
-    image0 = np.array(image)
-    badmask = np.array(badpixmask, dtype=bool)
-    image0[badmask] = np.nan
-    # image that will contain the background estimate
-    backest = np.zeros_like(image0)
-    # we slice the image in ribbons of width "width".
-    # The slicing is done in the cross-dispersion direction, so we
-    # can simply take a median along the "fast" dispersion to find the
-    # order profile. We pick width to be small enough for the orders not
-    # to show a significant curvature within w pixels
-
-    # width in fast dispersion axis - smaller so there is no blur due to the
-    # curvature of orders
-    width2 = width // 4
-    # loop around this regions (per region)
-    for x_it in range(0, image0.shape[1], width2):
-        # ribbon to find the order profile
-        ribbon = mp.nanmedian(image0[:, x_it:x_it + width2], axis=1)
-        # loop around the columns (per pixel)
-        for y_it in range(image0.shape[0]):
-            # we perform a running Nth percentile filter along the
-            # order profile. The box of the filter is w. Note that it could
-            # differ in princile from w, its just the same for the sake of
-            # simplicity.
-            ystart = y_it - width // 2
-            yend = y_it + width // 2
-            if ystart < 0:
-                ystart = 0
-            if yend > image0.shape[0] - 1:
-                yend = image0.shape[0] - 1
-            # background estimate
-            backest_pix = mp.nanpercentile(ribbon[ystart:yend], percent)
-            backest[y_it, x_it: x_it + width2] = backest_pix
-    # the mask is the area that is below then Nth percentile threshold
-    with warnings.catch_warnings(record=True) as _:
-        backmask = np.array(image0 < backest, dtype=float)
-    # we take advantage of the order geometry and for that the "dark"
-    # region of the array be continuous in the "fast" dispersion axis
-    nribbon = convolve2d(backmask, np.ones([1, csize]), mode='same')
-    # we remove from the binary mask all isolated (within 1x7 ribbon)
-    # dark pixels
-    backmask[nribbon == 1] = 0
-    # If a pixel has 3 or more "dark" neighbours, we consider it dark
-    # regardless of its initial value
-    backmask[nribbon >= nbad] = 1
-    # return the background mask
-    return backmask
+    # delegate numerical work to the profile-independent core module
+    args = [image, badpixmask, width, percent, csize, nbad]
+    return background_mod.create_background_map(*args)
 
 
 def correct_local_background(params: ParamDict, image: np.ndarray,
@@ -193,49 +144,9 @@ def correct_local_background(params: ParamDict, image: np.ndarray,
                      override=bkgr_ker_sig)
     # log process
     WLOG(params, '', textentry('40-012-00010'))
-    # Remove NaNs from image
-    image1 = mp.nanpad(image)
-    # size if input image
-    sz = image1.shape
-    # size of the smaller image. It is an integer divider of the input image
-    # 4088 on an axis and wN_ker = 9 would lead to an 8x scale-down (8*511)
-    sz_small = [sz[0] // mp.largest_divisor_below(sz[0], wy_ker),
-                sz[1] // mp.largest_divisor_below(sz[1], wx_ker)]
-
-    # downsizing image prior to convolution
-    # bins an image from its shape down to a smaller shape, say 4096x4096 to
-    # 512x512. Before/after axis ratio must be integers in all dims.
-    #
-    shape = (sz_small[0], image1.shape[0] // sz_small[0],
-             sz_small[1], image1.shape[1] // sz_small[1])
-    image2 = np.array(image1).reshape(shape).mean(-1).mean(1)
-
-    # downsizing ratio to properly scale convolution kernel
-    downsize_ratio = np.array(sz) / np.array(sz_small)
-
-    # convolution kernel in the downsized domain
-    ker_sigx = int((wx_ker * sig_ker * 2) / downsize_ratio[1] + 1)
-    ker_sigy = int((wy_ker * sig_ker * 2) / downsize_ratio[0] + 1)
-    kery, kerx = np.indices([ker_sigy, ker_sigx], dtype=float)
-    # this normalises kernal x and y between +1 and -1
-    kery = kery - np.mean(kery)
-    kerx = kerx - np.mean(kerx)
-    # calculate 2D gaussian kernel
-    ker = np.exp(-0.5 * ((kerx / wx_ker * downsize_ratio[1]) ** 2
-                         + (kery / wy_ker * downsize_ratio[0]) ** 2))
-
-    # we normalize the integral of the kernel to 1 so that the AMP factor
-    #    corresponds to the fraction of scattered light and therefore has a
-    #    physical meaning.
-    ker = ker / np.sum(ker)
-
-    # upscale image back to original dimensions
-    image3 = convolve2d(image2, ker, mode='same')
-    image4 = np.array(image1.shape) / np.array(image2.shape)
-    scattered_light = zoom(image3, image4, output=None, order=1,
-                           mode='constant', cval=0.0)
-    # returned the scattered light
-    return scattered_light
+    # delegate numerical work to the profile-independent core module
+    args = [image, wx_ker, wy_ker, sig_ker]
+    return background_mod.correct_local_background(*args)
 
 
 def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
@@ -309,43 +220,11 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
         #     estimate of the background for each x+y "center". This image
         #     will be up-scaled to the size of the full science image and
         #     subtracted
-        xc = np.arange(0, image2.shape[0])
-        yc = np.arange(width // 4, image2.shape[1], width // 4)
-
-        imageshape = image2.shape
-
-        background_image = np.zeros((len(xc), len(yc)))
-        background_image_offset = np.zeros((len(xc), len(yc)))
-        background_image_full = np.zeros_like(image2)
-        gridshape = background_image.shape
-
-        # get fractional positions of the full image
-        indices = np.indices(imageshape)
-        fypix = indices[0] / imageshape[0]
-        fxpix = indices[1] / imageshape[1]
-        # scalge fraction positions to size of background image
-        sypix = (gridshape[0] - 1) * fypix
-        sxpix = (gridshape[1] - 1) * fxpix
-        # coords for mapping
-        coords = np.array([sypix, sxpix])
-
-        for ite in range(3):
-            image2b = np.array(image2 - background_image_full)
-            #     # loop around all boxes with centers xc and yc
-            #     # and find pixels within a given widths
-            #     # around these centers in the full image
-            for ii, icol in enumerate(yc):
-                i0 = np.max([icol - width // 2, 0])
-                i1 = np.min([icol + width // 2, image2.shape[1]])
-                with warnings.catch_warnings(record=True) as _:
-                    medcol = np.nanmedian(image2b[:, i0:i1], axis=1)
-                background_image_offset[:, ii] = mp.lowpassfilter(medcol, width)
-
-            background_image_full += mapc(background_image_offset, coords,
-                                          order=2, cval=np.nan, output=float,
-                                          mode='constant')
-            background_image += background_image_offset
-            # print(np.nanstd(background_image_offset),np.nanstd(background_image))
+        # delegate numerical work to the profile-independent core module
+        args = [image2, width]
+        kwargs = dict(niter=3)
+        outs = background_mod.iterative_box_background(*args, **kwargs)
+        background_image_full, background_image = outs
 
         # ------------------------------------------------------------------
         # create the box centers
@@ -445,12 +324,13 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
                               env_niter: Optional[int] = None,
                               env_start_q: Optional[float] = None,
                               env_nbin: Optional[List[int]] = None,
-                              env_tol: Optional[float] = None
+                              env_tol: Optional[float] = None,
+                              env_bin_size: Optional[int] = None
                               ) -> np.ndarray:
     """
     Background correct an image using a 2D polynomial fit to the lower
     envelope of the background pixels (see
-    aperocore.science.background_core.fit_lower_envelope_2d)
+    aperocore.science.calib.background_core.fit_lower_envelope_2d)
 
     Unlike `correction`, the background level is not estimated with a
     running-median box filter, but with a smooth 2D polynomial that is
@@ -496,6 +376,9 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
                      overrides params['CAL.BCORR.ENV_NBIN']
     :param env_tol: float or None, optional, convergence tolerance,
                     overrides params['CAL.BCORR.ENV_TOL']
+    :param env_bin_size: int or None, optional, median-binning factor used
+                         for the fit, overrides
+                         params['CAL.BCORR.ENV_BIN_SIZE']
 
     :return: numpy array, either the corrected image, or the full background
              map (if return_map is True)
@@ -525,6 +408,8 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
                   override=env_nbin)
     tol = pcheck(params, 'CAL.BCORR.ENV_TOL', 'env_tol', func=func_name,
                  override=env_tol)
+    bin_size = pcheck(params, 'CAL.BCORR.ENV_BIN_SIZE', 'env_bin_size',
+                      func=func_name, override=env_bin_size)
     # deal with no correction needed
     if no_sub:
         background = np.zeros_like(image)
@@ -547,7 +432,8 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
         image1 = np.array(image)
         # ------------------------------------------------------------------
         # log process
-        WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
+        msg = 'Background correction [fit lower envelope 2d]'
+        WLOG(params, '', msg)
         # # ------------------------------------------------------------------
         # # get background mask file (defines the background-only pixels)
         # bkgrdimage = drs_fits.readfits(params, bkgrdfile)
@@ -568,7 +454,8 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
         #    background pixels (never fits above the background)
         kwargs = dict(xorder=xorder, yorder=yorder, f_pos=f_pos,
                       f_bad=f_bad, anneal=tuple(anneal), niter=niter,
-                      start_q=start_q, nbin=tuple(nbin), tol=tol)
+                      start_q=start_q, nbin=tuple(nbin), tol=tol,
+                      bin_size=bin_size)
         envelope = background_mod.fit_lower_envelope_2d(image1, errimg,
                                                         **kwargs)
         # ------------------------------------------------------------------

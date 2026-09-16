@@ -17,13 +17,14 @@ from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
+from aperocore.science.telluric import telluric_core
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import wave
-from aperocore.science import wave_core
+from aperocore.science.calib import wave_core
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -124,76 +125,14 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     # get vectors from table
     expo_water = transtable['EXPO_H2O']
     expo_others = transtable['EXPO_OTHERS']
-    # get a reference trans file from cube (first trans file)
-    ref_trans = transcube[:, :, 0]
     # -------------------------------------------------------------------------
     # print progress: Calculating Transmission model
     WLOG(params, '', textentry('40-019-00055'))
     # -------------------------------------------------------------------------
-    # sample vectors for the reconstruction
-    sample = np.zeros([3, len(expo_water)])
-    # bias level of the residual
-    sample[0] = 1
-    # water abso
-    sample[1] = expo_water
-    # dry abso
-    sample[2] = expo_others
-    # -------------------------------------------------------------------------
-    # create the reference vectors
-    zero_residual = np.full_like(ref_trans, np.nan)
-    expo_water_residual = np.full_like(ref_trans, np.nan)
-    expo_others_residual = np.full_like(ref_trans, np.nan)
-    # rms_map = np.full_like(ref_trans, np.nan)
-    # num_map = np.full_like(ref_trans, np.nan)
-    # loop around all orders
-    for order_num in range(ref_trans.shape[0]):
-        # print progress: processing order {0} / {1}
-        margs = [order_num, ref_trans.shape[0]]
-        WLOG(params, '', textentry('40-019-00056', args=margs))
-        # loop around all pixels in order
-        for ix in range(ref_trans.shape[1]):
-            # get one pixel of the trans_cube for all observations
-            trans_slice = transcube[order_num, ix, :]
-            # deal with not having enough pixels (skip)
-            if np.sum(np.isfinite(trans_slice)) < min_trans_files:
-                continue
-            # if we can all zero values skip
-            # TODO: why do we have values exactly at zero?
-            if mp.nansum(trans_slice) == 0:
-                continue
-            # construct a linear model with offset and water+dry components
-            worst_offender = np.inf
-            # loop until no point is an outlier beyond "sigma cut" sigma
-            while worst_offender > sigma_cut:
-                # get the linear minimization between trans files and our sample
-                # noinspection PyBroadException
-                try:
-                    amp, recon = mp.linear_minimization(trans_slice, sample)
-                except Exception as _:
-                    break
-                # work out the sigma between trans slice and recon
-                res = trans_slice - recon
-                est_sig = mp.estimate_sigma(res)
-                sigma = res / est_sig
-                # re-calculate worst offender
-                worst_pos = mp.nanargmax(sigma)
-                worst_offender = sigma[worst_pos]
-                # deal with worst offender - remove worst
-                if worst_offender > sigma_cut:
-                    trans_slice[worst_pos] = np.nan
-                # else we are good - push values into output vectors
-                else:
-                    # num_map[order_num, ix] = num
-                    # rms_map[order_num, ix] = est_sig
-                    zero_residual[order_num, ix] = amp[0]
-                    expo_water_residual[order_num, ix] = amp[1]
-                    expo_others_residual[order_num, ix] = amp[2]
-                # recalculate the size of trans_slice
-                num = np.sum(np.isfinite(trans_slice))
-                # if we have less than the minimum number of points left
-                #   stop here
-                if num < min_trans_files:
-                    break
+    # delegate numerical work to the profile-independent core module
+    args = [transcube, expo_water, expo_others, sigma_cut, min_trans_files]
+    outs = telluric_core.make_trans_model(*args)
+    zero_residual, expo_water_residual, expo_others_residual = outs
     # -------------------------------------------------------------------------
     # return e2ds shaped vectors in props
     props = ParamDict()

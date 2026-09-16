@@ -7,16 +7,14 @@ Created on 2019-05-13 at 11:28
 
 @author: cook
 """
-import warnings
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from scipy.ndimage import filters
 
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
-from aperocore import math as mp
+from aperocore.science.calib import badpix_core
 from aperocore.core import drs_log
 from apero.core import drs_file
 from apero.utils import drs_data
@@ -104,26 +102,8 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
     wmed = pcheck(params, 'CAL.BPIX.FLAT_MED_WID', func=func_name,
                   override=wmed)
 
-    # create storage for median-filtered flat image
-    image_med = np.zeros_like(image)
-    # must be forced to a native-ordered copy of the image for the median
-    # filter to work properly
-    image = np.array(image, dtype=np.float64)
-    # loop around x axis
-    for i_it in range(image.shape[1]):
-        # x-spatial filtering and insert filtering into image_med array
-        image_med[i_it, :] = filters.median_filter(image[i_it, :], wmed)
-
-    if method == 'new':
-        # get the 90th percentile of median image
-        norm = mp.nanpercentile(image_med[np.isfinite(image_med)], percentile)
-    else:
-        v = image_med.reshape(np.prod(image.shape))
-        v = np.sort(v)
-        norm = v[int(np.prod(image.shape) * percentile / 100.0)]
-
-    # apply to flat_med and flat_ref
-    return image_med / norm, image / norm
+    # delegate numerical work to the profile-independent core module
+    return badpix_core.normalise_median_flat(image, wmed, percentile, method)
 
 
 def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
@@ -201,54 +181,17 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
     max_hotpix = pcheck(params, 'CAL.BPIX.MAX_HOTPIX', func=func_name,
                         override=max_hotpix)
     # -------------------------------------------------------------------------
-    # create storage for ratio of flat_ref to flat_med
-    fratio = np.zeros_like(fimage)
-    # create storage for bad dark pixels
-    badpix_dark = np.zeros_like(dimage, dtype=bool)
-    # -------------------------------------------------------------------------
     # complain if the flat image and dark image do not have the same dimensions
     if dimage.shape != fimage.shape:
         eargs = [fimage.shape, dimage.shape, func_name]
         raise AperoCodedException(params, '09-012-00002', targs=eargs)
     # -------------------------------------------------------------------------
-    # must be forced to a native-ordered copy of the image for the median
-    # filter to work properly
-    dimage = np.array(dimage, dtype=np.float64)
-    # as there may be a small level of scattered light and thermal
-    # background in the dark  we subtract the running median to look
-    # only for isolate hot pixels
-    for i_it in range(fimage.shape[1]):
-        dimage[i_it, :] -= filters.median_filter(dimage[i_it, :], wmed)
-    # work out how much do flat pixels deviate compared to expected value
-    zmask = fmed != 0
-    fratio[zmask] = fimage[zmask] / fmed[zmask]
-    # catch the warnings
-    with warnings.catch_warnings(record=True) as _:
-        # if illumination is low, then consider pixel valid for this criterion
-        fratio[fmed < illum_cut] = 1
-    # catch the warnings
-    with warnings.catch_warnings(record=True) as _:
-        # where do pixels deviate too much
-        badpix_flat = (np.abs(fratio - 1)) > cut_ratio
-    # -------------------------------------------------------------------------
-    # get finite flat pixels
-    valid_flat = np.isfinite(fimage)
-    # -------------------------------------------------------------------------
-    # get finite dark pixels
-    valid_dark = np.isfinite(dimage)
-    # -------------------------------------------------------------------------
-    # select pixels that are hot
-    badpix_dark[valid_dark] = dimage[valid_dark] > max_hotpix
-    # -------------------------------------------------------------------------
-    # construct the bad pixel mask
-    badpix_map = badpix_flat | badpix_dark | ~valid_flat | ~valid_dark
+    # delegate numerical work to the profile-independent core module
+    args = [fimage, fmed, dimage, wmed, cut_ratio, illum_cut, max_hotpix]
+    outs = badpix_core.locate_bad_pixels(*args)
+    badpix_map, badpix_stats = outs
     # -------------------------------------------------------------------------
     # log results
-    badpix_stats = [(np.sum(badpix_dark) / np.array(badpix_dark).size) * 100,
-                    (np.sum(badpix_flat) / np.array(badpix_flat).size) * 100,
-                    (np.sum(~valid_dark) / np.array(valid_dark).size) * 100,
-                    (np.sum(~valid_flat) / np.array(valid_flat).size) * 100,
-                    (np.sum(badpix_map) / np.array(badpix_map).size) * 100]
     WLOG(params, '', textentry('40-012-00006', args=badpix_stats))
     # -------------------------------------------------------------------------
     # return bad pixel map
@@ -310,8 +253,9 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     if image.shape != mdata.shape:
         eargs = [mdata.shape, image.shape, func_name]
         raise AperoCodedException(params, '09-012-00001', targs=eargs)
-    # apply threshold
-    mask = np.abs(mp.rot8(mdata, rotnum) - 1) > threshold
+    # apply threshold (delegate numerical work to the profile-independent
+    # core module)
+    mask = badpix_core.full_flat_badpix_mask(mdata, rotnum, threshold)
     # -------------------------------------------------------------------------
     # log results
     badpix_stats = [100.0 * (np.sum(mask) / np.array(mask).size)]

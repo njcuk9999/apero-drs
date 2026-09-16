@@ -16,6 +16,9 @@ applyTo: "**/*.py"
 # Python line wrapping
 
 - Wrap using parentheses where possible, rather than backslashes
+- Never use a trailing backslash (`\`) line continuation, for any
+  statement (including unpacking assignments) - restructure the code
+  (e.g. via an intermediate `outs = ...` variable) instead
 - Do not break after binary operators; instead, break before them to improve readability
 - When breaking after an open parenthesis, indent the continued line to align with the first character after the open parenthesis on the previous line
 - When breaking before a binary operator, indent the continued line to align with the operator on the previous line
@@ -23,8 +26,9 @@ applyTo: "**/*.py"
 
 # Delegate call style
 
-- For long delegated calls (for example to `_impls.*`) avoid large
-  multiline argument blocks directly in the call.
+- For long delegated calls (for example to `_impls.*` or to
+  `aperocore.science.*_core` modules) avoid large multiline argument blocks
+  directly in the call.
 - Prefer collecting positional arguments into an `args` list and then calling
   with splat expansion:
 ```python
@@ -36,6 +40,17 @@ return _impls.some_delegate(self, *args)
 ```python
 kwargs = {'kwarg1': value1, 'kwarg2': value2}
 return _impls.some_delegate(self, **kwargs)
+```
+- When a delegated call returns a tuple that must be unpacked and the call
+  itself does not fit on one line, assign the whole return value to a single
+  variable (`outs`, or `args`/`kwargs` if clearer) on its own line, then
+  unpack it on the next line - do not wrap the call across lines with a
+  backslash:
+```python
+args = [arg1, arg2, arg3]
+kwargs = dict(kwarg1=value1)
+outs = module.function(*args, **kwargs)
+out1, out2, out3 = outs
 ```
 
 # Commentation

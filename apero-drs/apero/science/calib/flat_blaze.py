@@ -11,12 +11,12 @@ import warnings
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from scipy.optimize import curve_fit
 
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore import math as mp
+from aperocore.science.calib import flat_blaze_core
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
@@ -84,164 +84,17 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     # get med filt parameter
     med_size = pcheck(params, 'CAL.FLAT.BLAZE_SINC_MED_SIZE', func=func_name,
                       override=sinc_med_size)
-    # ----------------------------------------------------------------------
-    # defnie the x positions
-    xpix = np.arange(len(e2ds_ini))
-    # ------------------------------------------------------------------
-    # Need to median filter the e2ds here as we want to fit the shape not
-    #   individual line shapes for the blaze
-    e2ds = mp.medfilt_1d(e2ds_ini, med_size)
-    # region over which we will fit
-    keep = np.isfinite(e2ds)
-    # keep only regions that make sense compared to the 95th percentile
-    #   max would be affected by outliers
-    with warnings.catch_warnings(record=True) as _:
-        keep &= e2ds > 0.05 * mp.nanpercentile(e2ds, 95)
-        keep &= e2ds < 2 * mp.nanpercentile(e2ds, 95)
-    # ------------------------------------------------------------------
-    # guess of peak value, we do not take the max as there may be a
-    #     hot/bad pix in the order
-    thres = mp.nanpercentile(e2ds, badpercentile)
-    # ------------------------------------------------------------------
-    # how many points above 50% of peak value?
-    # The period should be a factor of about 2.0 more than the domain
-    # that is above the 5th percentile
-    nthres = mp.nansum(e2ds[keep] > thres / 2.0)
-    # median position of points above threshold
-    with warnings.catch_warnings(record=True) as _:
-        pospeak = mp.nanmedian(xpix[e2ds > thres])
-    # bounds
-    # with warnings.catch_warnings(record=True) as _:
-    #     xlower = mp.nanmin(xpix[e2ds > thres])
-    #     xupper = mp.nanmax(xpix[e2ds > thres])
-    # ------------------------------------------------------------------
-    # starting point for the fit to the blaze sinc model
-    # we start with :
-    #
-    # peak value is == threshold percentile
-    # period of sinc is == 2x the width of pixels above 50% of the peak
-    # the peak position is == the median x value of pixels above
-    #                         95th percent.
-    # no quadratic term
-    # no SED slope
-    fit_guess = [thres, nthres * 2.0, pospeak, 0, 0, 0]
-    # ------------------------------------------------------------------
-    # we set reasonable bounds
-    # bounds = [(thres * 0.5, 0.0, 0.0, -np.inf, -np.inf, -1e-2),
-    #           (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-2)]
-    # pass without DC and SLOPE
-    bounds = [(0, 0.0, 0.0, -np.inf, -np.inf, -1e-20),
-              (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-20)]
-    # set a counter
-    n_it = -1
-    # -------------------------------------------------------------------------
-    # try a few times (this can fix it not working)
-    tries = 0
-    popt, pcov = [], []
-    # loop around 5 times
-    while tries <= 5:
-        # try to fit and if there is a failure catch it
-        try:
-            # we optimize over pixels that are not NaN
-            # noinspection PyTupleAssignmentBalance
-            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                   p0=fit_guess, bounds=bounds)
-            # we then re-fit to avoid local minima (this has happened - fitting
-            #   a second time seemed to fix this - when the guess is off)
-            # noinspection PyTupleAssignmentBalance
-            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt,
-                                   bounds=bounds)
-            # worked --> break while loop
-            break
-        except RuntimeError as _:
-            # if it failed with bounds try without bounds
-            try:
-                # we optimize over pixels that are not NaN (this time with
-                # no bounds)
-                # noinspection PyTupleAssignmentBalance
-                popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                       p0=fit_guess)
-                # we then re-fit to avoid local minima (this has happened
-                #    - fitting a second time seemed to fix this
-                #    - when the guess is off)
-                # noinspection PyTupleAssignmentBalance
-                popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=popt)
-                # worked --> break while loop
-                break
-            except RuntimeError as _:
-                # finally try without the cubic term
-                try:
-                    fit_guess1 = fit_guess[:5]
-                    # we optimize over pixels that are not NaN (this time with
-                    #    no bounds)
-                    # noinspection PyTupleAssignmentBalance
-                    popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
-                                           p0=fit_guess1)
-                    # worked --> break while loop
-                    break
-                except RuntimeError as e:
-                    # try again and give warning that we are trying again
-                    if tries < 5:
-                        wmsg = textentry('10-015-00001', args=[tries])
-                        WLOG(params, 'warning', wmsg, sublevel=2)
-                        tries += 1
-                    # on the 5th attempt give up
-                    if tries == 5:
-                        strlist = ('amp={0} period={1} lin={2} slope={3} '
-                                   'quad={4} (cube={5})')
-                        strguess = strlist.format(*fit_guess)
-                        strlower = strlist.format(*bounds[0])
-                        strupper = strlist.format(*bounds[1])
-                        eargs = [order_num, fiber, n_it, strguess, strlower,
-                                 strupper, type(e), str(e), func_name]
-                        raise AperoCodedException(params, '40-015-00009',
-                                                  targs=eargs)
-    # ------------------------------------------------------------------
-    # calculate the blaze from the curve_fit coefficients
-    blaze = mp.sinc(xpix, *popt, peak_cut=peak_cut)
-    # ----------------------------------------------------------------------
-    # remove nan in the blaze also in the e2ds
-    # ----------------------------------------------------------------------
-    blazemask = np.isnan(blaze)
-    e2ds_ini[blazemask] = np.nan
-    # calculate the flat
-    with warnings.catch_warnings(record=True) as _:
-        flat = e2ds_ini / blaze
-    # ----------------------------------------------------------------------
-    # calculate the rms
-    # ----------------------------------------------------------------------
-    rms = mp.robust_nanstd(flat[keep])
-    # remove any very large outliers (set to NaN)
-    with warnings.catch_warnings(record=True) as _:
-        bad_mask1 = np.abs(flat - 1) > 10 * rms
-        # apply mask
-        flat[bad_mask1] = np.nan
-        blaze[bad_mask1] = np.nan
-        e2ds_ini[bad_mask1] = np.nan
-    # ----------------------------------------------------------------------
-    # remove outliers within flat field to avoid division by small numbers
-    #   or suspiciously large flat response
-    with warnings.catch_warnings(record=True) as _:
-        bad_mask2 = np.abs(1 - flat) > 0.2
-        # apply mask
-        flat[bad_mask2] = np.nan
-        blaze[bad_mask2] = np.nan
-        e2ds_ini[bad_mask1] = np.nan
-    # ----------------------------------------------------------------------
-    # If the blaze is below 0.25 we consider that the blaze and flat correction
-    # are not reliable
-    with warnings.catch_warnings(record=True) as _:
-        bad_mask3 = blaze < 0.25 * np.nanmax(blaze)
-        flat[bad_mask3] = np.nan
-        blaze[bad_mask3] = np.nan
-        e2ds_ini[bad_mask3] = np.nan
-    # ----------------------------------------------------------------------
-    # recalculate calculate the rms
-    # ----------------------------------------------------------------------
-    rms = mp.robust_nanstd(flat[keep])
-    # ----------------------------------------------------------------------
-    # return values
-    return e2ds_ini, flat, blaze, rms
+    # delegate numerical work to the profile-independent core module
+    args = [e2ds_ini, peak_cut, badpercentile, med_size]
+    try:
+        with warnings.catch_warnings(record=True) as _:
+            outs = flat_blaze_core.calculate_blaze_flat_sinc(*args)
+        return outs
+    except RuntimeError as e:
+        strguess, strlower, strupper, errtype, errmsg = e.args
+        eargs = [order_num, fiber, -1, strguess, strlower, strupper,
+                errtype, errmsg, func_name]
+        raise AperoCodedException(params, '40-015-00009', targs=eargs)
 
 
 def get_flat(params: ParamDict, recipe: DrsRecipe,
@@ -366,33 +219,14 @@ def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
     ignore_orders = params['CAL.FLAT.QC_FLUX_EDGE_IGNORE']
     # get the number of orders
     norders = eprops['E2DS'].shape[0]
-    # get the e2dsll
-    image = eprops['E2DSLL']
-    # find the middle of the array
-    mid = image.shape[1] // 2
+    # delegate numerical work to the profile-independent core module
+    args = [eprops['E2DS'], eprops['E2DSLL'], mid_size, ignore_orders,
+           flux_edge_limit]
+    outs = flat_blaze_core.flux_edge_trace(*args)
+    med, flux_edge, max_edge_flux, failed_orders = outs
     # -------------------------------------------------------------------------
-    # median trace profile of the center of the image
-    med = np.nanmedian(image[:, mid-mid_size:mid+mid_size], axis=1)
-    # reshape the median profile to have the number of orders
-    med = med.reshape(norders, med.shape[0]//norders)
-    # -------------------------------------------------------------------------
-    # normalize each order to a mean of 1
-    for order_num in range(norders):
-        segment = med[order_num]
-        med[order_num] /= np.nansum(segment)
-    # -------------------------------------------------------------------------
-    # we find the flux at the edges of the trace for each order. The total
-    # edge flux should be small and account for <1% of the total flux.
-    flux_left = med[:, 0]
-    flux_right = med[:, -1]
-    # set ignore orders to nans
-    cut_mask = np.isin(np.arange(norders), ignore_orders)
-    # set these orders to NaN
-    flux_left[cut_mask] = np.nan
-    flux_right[cut_mask] = np.nan
-    # get the total edge flux
-    flux_edge = flux_left + flux_right
-    # -------------------------------------------------------------------------
+    # get the left/right edge flux (for plotting only)
+    flux_left, flux_right = med[:, 0], med[:, -1]
     # plot edge plot
     recipe.plot('FLAT_EDGE_ORDERS', med=med, flux_edge=flux_edge,
                 flux_left=flux_left, flux_right=flux_right,
@@ -401,12 +235,8 @@ def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
                 flux_left=flux_left, flux_right=flux_right,
                 norders=norders, flux_edge_limit=flux_edge_limit, fiber=fiber)
     # -------------------------------------------------------------------------
-    # store the orders with flux greater than limit
-    failed = (flux_edge > flux_edge_limit) & np.isfinite(flux_edge)
-    failed_orders = list(np.where(failed)[0])
+    # convert failed orders to strings
     failed_orders_str = [str(order_num) for order_num in failed_orders]
-    # get the maximum edge flux across all orders
-    max_edge_flux = np.nanmax(flux_edge)
     # -------------------------------------------------------------------------
     # return max edge flux and list failed orders
     return max_edge_flux, failed_orders_str

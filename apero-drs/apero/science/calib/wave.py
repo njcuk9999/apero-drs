@@ -44,7 +44,7 @@ from apero.science import velocity
 from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.instruments import select
-from aperocore.science import wave_core
+from aperocore.science.calib import wave_core
 
 
 # =============================================================================

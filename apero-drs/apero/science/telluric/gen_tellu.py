@@ -25,6 +25,7 @@ from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
+from aperocore.science.telluric import telluric_core
 from apero.core import drs_database
 from apero.core import drs_astrometrics
 from apero.core import drs_file
@@ -43,7 +44,7 @@ from apero.base import base as apero_base
 from apero.science.telluric.core_tellu import load_tellu_file
 from apero.science.telluric import sky_corr
 from apero.science import extract
-from aperocore.science import wave_core
+from aperocore.science.calib import wave_core
 
 
 # =============================================================================
@@ -185,29 +186,9 @@ def normalise_by_pblaze(params, recipe, image, header, fiber, **kwargs):
     # load the blaze file for this fiber
     bout = flat_blaze.get_blaze(params, recipe, header, fiber)
     blaze_file, blaze_time, blaze = bout
-    # copy blaze
-    blaze_norm = np.array(blaze)
-    # loop through blaze orders, normalize blaze by its peak amplitude
-    for order_num in range(image1.shape[0]):
-        # normalize the spectrum
-        spo, bzo = image1[order_num], blaze[order_num]
-        # normalise image
-        image1[order_num] = spo / mp.nanpercentile(spo, blaze_p)
-        # normalize the blaze
-        blaze_norm[order_num] = bzo / mp.nanpercentile(bzo, blaze_p)
-    # ----------------------------------------------------------------------
-    # find where the blaze is bad
-    with warnings.catch_warnings(record=True) as _:
-        badblaze = blaze_norm < cut_blaze_norm
-    # ----------------------------------------------------------------------
-    # set bad blaze to NaN
-    blaze_norm[badblaze] = np.nan
-    # set to NaN values where spectrum is zero
-    zeromask = image1 == 0
-    image1[zeromask] = np.nan
-    # divide spectrum by blaze
-    with warnings.catch_warnings(record=True) as _:
-        image1 = image1 / blaze_norm
+    # delegate numerical work to the profile-independent core module
+    image1, blaze_norm = telluric_core.normalise_by_pblaze(
+        image1, blaze, blaze_p, cut_blaze_norm)
     # ----------------------------------------------------------------------
     # parameter dictionary
     nprops = ParamDict()

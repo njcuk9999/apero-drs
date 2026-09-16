@@ -30,7 +30,7 @@ from aperocore.base import physics
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'aperocore.science.wave_core'
+__NAME__ = 'aperocore.science.calib.wave_core'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
