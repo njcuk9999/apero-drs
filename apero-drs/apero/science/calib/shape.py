@@ -595,8 +595,9 @@ def ea_transform_reverse(params, image, lin_transform_vect=None,
              int(lin_transform_vect is not None)]
     WLOG(params, '', textentry('40-014-00041', args=wargs))
     try:
-        return shape_core.ea_transform_reverse(
-            image, lin_transform_vect, dxmap, dymap, niter=niter)
+        et_args = [image, lin_transform_vect, dxmap, dymap]
+        et_kwargs = dict(niter=niter)
+        return shape_core.ea_transform_reverse(*et_args, **et_kwargs)
     except ValueError as exc:
         raise AperoCodedException(params, message=str(exc),
                                   targs=[func_name]) from exc
@@ -1761,7 +1762,8 @@ def shape_local_qc(params, transform, xres, yres):
 
 
 def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
-                            sprops, image, image2, qc_params):
+                            sprops, image, image2, qc_params,
+                            dxmap_no_shape=None):
     # define outfile
     outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(params=params)
     # construct the filename from file instance
@@ -1804,6 +1806,9 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     WLOG(params, '', textentry('40-014-00037', args=[outfile.filename]))
     # define multi lists
     data_list, name_list = [], []
+    if dxmap_no_shape is not None:
+        data_list += [dxmap_no_shape]
+        name_list += ['DXMAP_NO_SHAPE']
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]

@@ -130,8 +130,9 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     WLOG(params, '', textentry('40-019-00055'))
     # -------------------------------------------------------------------------
     # delegate numerical work to the profile-independent core module
-    args = [transcube, expo_water, expo_others, sigma_cut, min_trans_files]
-    outs = telluric_core.make_trans_model(*args)
+    tmodel_args = [transcube, expo_water, expo_others, sigma_cut,
+                   min_trans_files]
+    outs = telluric_core.make_trans_model(*tmodel_args)
     zero_residual, expo_water_residual, expo_others_residual = outs
     # -------------------------------------------------------------------------
     # return e2ds shaped vectors in props

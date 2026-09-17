@@ -187,8 +187,8 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
         raise AperoCodedException(params, '09-012-00002', targs=eargs)
     # -------------------------------------------------------------------------
     # delegate numerical work to the profile-independent core module
-    args = [fimage, fmed, dimage, wmed, cut_ratio, illum_cut, max_hotpix]
-    outs = badpix_core.locate_bad_pixels(*args)
+    bpx_args = [fimage, fmed, dimage, wmed, cut_ratio, illum_cut, max_hotpix]
+    outs = badpix_core.locate_bad_pixels(*bpx_args)
     badpix_map, badpix_stats = outs
     # -------------------------------------------------------------------------
     # log results

@@ -89,8 +89,8 @@ def create_background_map(params: ParamDict, image: np.ndarray,
     nbad = pcheck(params, 'CAL.BCORR.NBAD_NEIGHBOURS', func=func_name,
                   override=bkgr_n_bad)
     # delegate numerical work to the profile-independent core module
-    args = [image, badpixmask, width, percent, csize, nbad]
-    return background_mod.create_background_map(*args)
+    bmap_args = [image, badpixmask, width, percent, csize, nbad]
+    return background_mod.create_background_map(*bmap_args)
 
 
 def correct_local_background(params: ParamDict, image: np.ndarray,
@@ -145,8 +145,8 @@ def correct_local_background(params: ParamDict, image: np.ndarray,
     # log process
     WLOG(params, '', textentry('40-012-00010'))
     # delegate numerical work to the profile-independent core module
-    args = [image, wx_ker, wy_ker, sig_ker]
-    return background_mod.correct_local_background(*args)
+    lbkg_args = [image, wx_ker, wy_ker, sig_ker]
+    return background_mod.correct_local_background(*lbkg_args)
 
 
 def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
@@ -221,9 +221,10 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
         #     will be up-scaled to the size of the full science image and
         #     subtracted
         # delegate numerical work to the profile-independent core module
-        args = [image2, width]
-        kwargs = dict(niter=3)
-        outs = background_mod.iterative_box_background(*args, **kwargs)
+        ibkg_args = [image2, width]
+        ibkg_kwargs = dict(niter=3)
+        outs = background_mod.iterative_box_background(*ibkg_args,
+                                   **ibkg_kwargs)
         background_image_full, background_image = outs
 
         # ------------------------------------------------------------------
@@ -436,9 +437,6 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
         WLOG(params, '', msg)
         # # ------------------------------------------------------------------
         # # get background mask file (defines the background-only pixels)
-        # bkgrdimage = drs_fits.readfits(params, bkgrdfile)
-        # # create mask from badpixmask
-        # bmap = np.array(bkgrdimage, dtype=bool)
         # # copy image
         # image2 = np.array(image1)
         # # set to NAN all "illuminated" (non-background) pixels
@@ -452,12 +450,12 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
         # ------------------------------------------------------------------
         # fit a smooth 2D polynomial to the lower envelope of the
         #    background pixels (never fits above the background)
-        kwargs = dict(xorder=xorder, yorder=yorder, f_pos=f_pos,
-                      f_bad=f_bad, anneal=tuple(anneal), niter=niter,
-                      start_q=start_q, nbin=tuple(nbin), tol=tol,
-                      bin_size=bin_size)
+        env_kwargs = dict(xorder=xorder, yorder=yorder, f_pos=f_pos,
+                          f_bad=f_bad, anneal=tuple(anneal), niter=niter,
+                          start_q=start_q, nbin=tuple(nbin), tol=tol,
+                          bin_size=bin_size)
         envelope = background_mod.fit_lower_envelope_2d(image1, errimg,
-                                                        **kwargs)
+                                                        **env_kwargs)
         # ------------------------------------------------------------------
         # correct image
         corrected_image = image - envelope['fit']

@@ -172,6 +172,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ----------------------------------------------------------------------
         image2 = shape.ea_transform(params, image, transform, dxmap=dxmap,
                                     dymap=dymap)
+        # remove the shape transform from DXMAP without self-applying DXMAP
+        et_args = [params, dxmap, transform]
+        et_kwargs = dict(dxmap=None, dymap=dymap)
+        dxmap_no_shape = shape.ea_transform_reverse(*et_args, **et_kwargs)
         # ----------------------------------------------------------------------
         # Quality control
         # ----------------------------------------------------------------------
@@ -189,7 +193,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # write to file
         outfile = shape.write_shape_local_files(params, recipe, infile, combine,
                                                 rawfiles, props, sprops,
-                                                image, image2, qc_params)
+                                                image, image2, qc_params,
+                                                dxmap_no_shape)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------

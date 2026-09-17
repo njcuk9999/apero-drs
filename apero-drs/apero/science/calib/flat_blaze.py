@@ -85,10 +85,10 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     med_size = pcheck(params, 'CAL.FLAT.BLAZE_SINC_MED_SIZE', func=func_name,
                       override=sinc_med_size)
     # delegate numerical work to the profile-independent core module
-    args = [e2ds_ini, peak_cut, badpercentile, med_size]
+    sinc_args = [e2ds_ini, peak_cut, badpercentile, med_size]
     try:
         with warnings.catch_warnings(record=True) as _:
-            outs = flat_blaze_core.calculate_blaze_flat_sinc(*args)
+            outs = flat_blaze_core.calculate_blaze_flat_sinc(*sinc_args)
         return outs
     except RuntimeError as e:
         strguess, strlower, strupper, errtype, errmsg = e.args
@@ -220,9 +220,9 @@ def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
     # get the number of orders
     norders = eprops['E2DS'].shape[0]
     # delegate numerical work to the profile-independent core module
-    args = [eprops['E2DS'], eprops['E2DSLL'], mid_size, ignore_orders,
-           flux_edge_limit]
-    outs = flat_blaze_core.flux_edge_trace(*args)
+    edge_args = [eprops['E2DS'], eprops['E2DSLL'], mid_size, ignore_orders,
+                 flux_edge_limit]
+    outs = flat_blaze_core.flux_edge_trace(*edge_args)
     med, flux_edge, max_edge_flux, failed_orders = outs
     # -------------------------------------------------------------------------
     # get the left/right edge flux (for plotting only)

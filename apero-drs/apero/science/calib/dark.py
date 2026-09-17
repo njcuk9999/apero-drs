@@ -120,8 +120,8 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
         eargs = [type(e), e, func_name]
         raise AperoCodedException(params, '00-001-00026', targs=eargs)
     # delegate numerical work to the profile-independent core module
-    args = [image, dark_qmin, dark_qmax, hbins, hrangelow, hrangehigh]
-    outs = dark_core.measure_dark(*args)
+    mdark_args = [image, dark_qmin, dark_qmax, hbins, hrangelow, hrangehigh]
+    outs = dark_core.measure_dark(*mdark_args)
     histo, med, dadead, qmin, qmax = outs
     # log the dark statistics
     wargs = [image_name, dadead, med, dark_qmin, dark_qmax, qmin, qmax]
@@ -153,8 +153,8 @@ def measure_dark_badpix(params: ParamDict, image: np.ndarray,
     darkcutlimit = pcheck(params, 'CAL.DARK.CUTLIMIT', func=func_name,
                           override=dark_cutlimit)
     # delegate numerical work to the profile-independent core module
-    args = [image, nanmask, darkcutlimit]
-    outs = dark_core.measure_dark_badpix(*args)
+    dbpix_args = [image, nanmask, darkcutlimit]
+    outs = dark_core.measure_dark_badpix(*dbpix_args)
     baddark, dadeadall = outs
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]

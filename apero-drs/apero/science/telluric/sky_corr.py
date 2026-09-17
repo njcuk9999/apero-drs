@@ -412,9 +412,9 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
     # get the median sky spectrum
     sky_med = sky_props['MED']
     # delegate numerical work to the profile-independent core module
-    args = [wave1d, sky_med, line_sigma, erode_size, dilate_size, wavestart,
-           waveend, binvelo]
-    return telluric_core.identify_sky_line_regions(*args)
+    skyreg_args = [wave1d, sky_med, line_sigma, erode_size, dilate_size,
+                   wavestart, waveend, binvelo]
+    return telluric_core.identify_sky_line_regions(*skyreg_args)
 
 
 def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,

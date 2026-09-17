@@ -83,46 +83,48 @@ or multi-line dict or `{}` dict literals, to avoid long lines and to make it eas
 
 When a method does nothing except forward its non-`self` parameters
 **positionally** to a single helper function, collect the forwarded values
-into an `args` tuple and splat with `*args`:
+into a context-named tuple and splat it:
 
 ```python
 def _method_name(self, param1, param2, param3):
-    args = (param1, param2, param3)
-    return module.helper_func(self, *args)
+    helper_args = (param1, param2, param3)
+    return module.helper_func(self, *helper_args)
 ```
 
-Wrap the `args = (...)` assignment at 80 chars; continuation lines align to
-the `(` of `args = (`:
+Do not use bare `args`/`kwargs` for temporary delegate variables; reserve
+those names for actual function inputs or parser output. Wrap the
+`helper_args = (...)` assignment at 80 chars; continuation lines align to
+the `(` of `helper_args = (`:
 
 ```python
 def _large_method(self, alpha: str, beta: str,  gamma: str,   
                   delta: str, epsilon: str):
-    args = (alpha, beta, gamma, delta,
-            epsilon)
-    return module.helper_func(self, *args)
+    helper_args = (alpha, beta, gamma, delta,
+                   epsilon)
+    return module.helper_func(self, *helper_args)
 ```
 
 ## Thin wrapper methods – forwarding keyword args
 
 When a method forwards all non-`self` parameters **as matching keyword
-arguments** (`name=name`) to a single helper, collect them with `kwargs =
-dict(...)` and splat with `**kwargs`:
+arguments** (`name=name`) to a single helper, collect them with a
+context-named `dict(...)` and splat with double-star expansion:
 
 ```python
 def _method_name(self, param1, param2):
-    kwargs = dict(param1=param1, param2=param2)
-    return module.helper_func(self, **kwargs)
+    helper_kwargs = dict(param1=param1, param2=param2)
+    return module.helper_func(self, **helper_kwargs)
 ```
 
-Wrap the `kwargs = dict(...)` assignment at 80 chars; continuation lines
-align to the `(` of `kwargs = dict(`:
+Wrap the `helper_kwargs = dict(...)` assignment at 80 chars; continuation
+lines align to the `(` of `helper_kwargs = dict(`:
 
 ```python
 def _method_name(self,  alpha, beta, gamma: bool = False,
                  delta: bool = True):
-    kwargs = dict(alpha=alpha, beta=beta,
-                  gamma=gamma, delta=delta)
-    return module.helper_func(self, **kwargs)
+    helper_kwargs = dict(alpha=alpha, beta=beta,
+                         gamma=gamma, delta=delta)
+    return module.helper_func(self, **helper_kwargs)
 ```
 
 ## Thin wrapper methods – mixed positional and keyword args
@@ -131,9 +133,9 @@ When a method forwards some args positionally and some as kwargs, use both:
 
 ```python
 def _method_name(self, pos1, pos2, key1=None, key2=True):
-    args = (pos1, pos2)
-    kwargs = dict(key1=key1, key2=key2)
-    return module.helper_func(self, *args, **kwargs)
+    helper_args = (pos1, pos2)
+    helper_kwargs = dict(key1=key1, key2=key2)
+    return module.helper_func(self, *helper_args, **helper_kwargs)
 ```
 
 ## Multi-line function signatures

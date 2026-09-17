@@ -29,27 +29,29 @@ applyTo: "**/*.py"
 - For long delegated calls (for example to `_impls.*` or to
   `aperocore.science.*_core` modules) avoid large multiline argument blocks
   directly in the call.
-- Prefer collecting positional arguments into an `args` list and then calling
-  with splat expansion:
+- Prefer collecting positional arguments into a context-named list and then
+  calling with splat expansion. Do not use bare `args`/`kwargs` for these
+  temporary delegate variables; reserve those names for actual function inputs
+  or parser output:
 ```python
-args = [arg1, arg2, arg3]
-return _impls.some_delegate(self, *args)
+delegate_args = [arg1, arg2, arg3]
+return _impls.some_delegate(self, *delegate_args)
 ```
-- For keyword arguments, prefer collecting them into a `kwargs` dict and then
-  calling with double-splat expansion:
+- For keyword arguments, prefer collecting them into a context-named dict and
+  then calling with double-splat expansion:
 ```python
-kwargs = {'kwarg1': value1, 'kwarg2': value2}
-return _impls.some_delegate(self, **kwargs)
+delegate_kwargs = dict(kwarg1=value1, kwarg2=value2)
+return _impls.some_delegate(self, **delegate_kwargs)
 ```
 - When a delegated call returns a tuple that must be unpacked and the call
   itself does not fit on one line, assign the whole return value to a single
-  variable (`outs`, or `args`/`kwargs` if clearer) on its own line, then
+  variable (`outs` or a clearer contextual name) on its own line, then
   unpack it on the next line - do not wrap the call across lines with a
   backslash:
 ```python
-args = [arg1, arg2, arg3]
-kwargs = dict(kwarg1=value1)
-outs = module.function(*args, **kwargs)
+delegate_args = [arg1, arg2, arg3]
+delegate_kwargs = dict(kwarg1=value1)
+outs = module.function(*delegate_args, **delegate_kwargs)
 out1, out2, out3 = outs
 ```
 
