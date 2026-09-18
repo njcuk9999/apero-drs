@@ -30,6 +30,7 @@ from apero.science.calib import gen_calib
 from apero.instruments import select
 from apero.base import base as apero_base
 from aperocore.science.calib import localisation_core
+from aperocore.science.extract import extract_model_core
 
 # =============================================================================
 # Define variables
@@ -170,14 +171,15 @@ def build_order_position_map(shape: Tuple[int, int],
              (first, last) in the map
     """
     nx = shape[1]
-    xpix = np.arange(nx)
+    xmid = nx // 2
     fibers = list(cent_coeffs.keys())
     fiber_centers, fiber_widths = [], []
     # loop around fiber groups, evaluating their coefficients over the image
     for fiber in fibers:
         ccoeffs = cent_coeffs[fiber]
         ntrace = ccoeffs.shape[0]
-        centers = np.array([mp.val_cheby(ccoeffs[it], xpix, domain=[0, nx])
+        centers = np.array([mp.val_cheby(ccoeffs[it], np.arange(nx),
+                         domain=[0, nx])
                             for it in range(ntrace)])
         # the constant term of the width fit is the width at mid-domain,
         #   the same convention order_widths uses for WIDTH_TABLE
@@ -210,6 +212,37 @@ def get_order_ranges(wid_coeffs: Dict[str, np.ndarray]
     fiber_widths = [wid_coeffs[fiber] for fiber in fibers]
     ranges = localisation_core.order_ranges_from_widths(fiber_widths)
     return dict(zip(fibers, ranges))
+
+
+def build_order_bounds(
+        shape: Tuple[int, int],
+        cent_coeffs: Dict[str, np.ndarray],
+        wid_coeffs: Dict[str, np.ndarray],
+        interleaved: bool = False
+        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Evaluate per-order top and bottom detector rows across dispersion.
+
+    :param shape: Detector image shape.
+    :param cent_coeffs: Center polynomial coefficients by fiber group.
+    :param wid_coeffs: Width polynomial coefficients by fiber group.
+    :param interleaved: Collapse adjacent traces in the first group.
+    :return: Midpoint, top, and bottom row arrays, each ``(norder,)`` in the
+             straightened frame.
+    """
+    nx = shape[1]
+    xmid = nx // 2
+    fibers = list(cent_coeffs.keys())
+    centers = []
+    widths = []
+    for fiber in fibers:
+        coeffs = cent_coeffs[fiber]
+        centers.append(np.array([
+            mp.val_cheby(coeffs[index], xmid, domain=[0, nx])
+            for index in range(coeffs.shape[0])]))
+        widths.append(np.asarray(wid_coeffs[fiber])[:, 0])
+    return extract_model_core.ribbon_geometry(
+        centers[0], widths[0], centers[1], widths[1],
+        interleaved=interleaved)
 
 
 def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
@@ -1437,7 +1470,10 @@ def write_localisation_files_multi(
         props: Dict[str, ParamDict], order_profiles: Dict[str, np.ndarray],
         lprops: Dict[str, ParamDict], qc_params: Dict[str, list],
         order_pos_map: Optional[np.ndarray] = None,
-        order_range: Optional[Dict[str, Tuple[int, int]]] = None
+        order_range: Optional[Dict[str, Tuple[int, int]]] = None,
+        order_top: Optional[np.ndarray] = None,
+        order_bottom: Optional[np.ndarray] = None,
+        order_mid: Optional[np.ndarray] = None
         ) -> DrsFitsFile:
     """
     Write a single combined localisation calibration file containing the
@@ -1447,9 +1483,9 @@ def write_localisation_files_multi(
     ORDERP_{FIBER}, LOC_CTR_{FIBER} (+ LOC_CTR_TABLE_{FIBER}),
     LOC_WID_{FIBER} (+ LOC_WID_TABLE_{FIBER}) and LOC_SUP_{FIBER}
 
-    If order_pos_map/order_range are given, two extra extensions are added,
-    shared by all fiber groups: ORDER_POS_MAP (the trace-label image) and
-    ORDER_RANGE_TABLE (the label range of each fiber group in that image)
+    If order_pos_map/order_range/order_top/order_bottom/order_mid are given,
+    five shared extensions are added, including the existing
+    ORDER_RANGE_TABLE and the ribbon-position images.
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe instance that called this function
@@ -1466,8 +1502,12 @@ def write_localisation_files_multi(
     :param qc_params: dict, the quality control lists, keyed by fiber group
     :param order_pos_map: numpy array (2D) or None, the trace label owning
                           each pixel, as returned by build_order_position_map
-    :param order_range: dict or None, fiber group -> (first, last) label
-                        range, as returned by build_order_position_map
+    :param order_range: dict or None, fiber group to trace-label range
+    :param order_top: numpy array or None, per-order top rows across columns
+    :param order_bottom: numpy array or None, per-order bottom rows across
+                         columns
+    :param order_mid: numpy array or None, per-order midpoint rows across
+                      columns
 
     :return: DrsFitsFile, the combined localisation drs file instance
     """
@@ -1596,9 +1636,11 @@ def write_localisation_files_multi(
             name_list.append('LOC_SUP_{0}'.format(fiber))
             datatype_list.append('image')
     # ------------------------------------------------------------------
-    # order position map + range extensions (shared by all fiber groups)
+    # order position map, trace ranges, and ribbon positions
     # ------------------------------------------------------------------
-    if order_pos_map is not None and order_range is not None:
+    if (order_pos_map is not None and order_range is not None
+            and order_top is not None
+            and order_bottom is not None and order_mid is not None):
         # materialise the primary hdu header (built from copy_original_keys
         #   + add_core_hkeys + add_hkey_1d above) so it can be reused here
         locofile.update_header_with_hdict()
@@ -1606,18 +1648,21 @@ def write_localisation_files_multi(
         header_list.append(locofile.header.copy())
         name_list.append('ORDER_POS_MAP')
         datatype_list.append('image')
-        # range table, one row per fiber group
         range_fibers = sorted(order_range.keys())
-        range_first = [order_range[fkey][0] for fkey in range_fibers]
-        range_last = [order_range[fkey][1] for fkey in range_fibers]
-        range_cols = ['FIBER', 'FIRST', 'LAST']
-        range_vals = [range_fibers, range_first, range_last]
-        range_table = drs_table.make_table(columns=range_cols,
-                                          values=range_vals)
+        range_values = [range_fibers,
+                        [order_range[fiber][0] for fiber in range_fibers],
+                        [order_range[fiber][1] for fiber in range_fibers]]
+        range_table = drs_table.make_table(
+            columns=['FIBER', 'FIRST', 'LAST'], values=range_values)
         data_list.append(range_table)
         header_list.append(None)
         name_list.append('ORDER_RANGE_TABLE')
         datatype_list.append('table')
+        data_list.extend([order_top, order_bottom, order_mid])
+        header_list.extend([locofile.header.copy(), locofile.header.copy(),
+                    locofile.header.copy()])
+        name_list.extend(['ORDER_TOP', 'ORDER_BOTTOM', 'ORDER_MID'])
+        datatype_list.extend(['image', 'image', 'image'])
     # ------------------------------------------------------------------
     # snapshot of parameters (once, as its own extension)
     if params['GLOBAL.PSNAPSHOT']:

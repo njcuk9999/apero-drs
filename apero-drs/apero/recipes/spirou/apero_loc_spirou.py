@@ -263,6 +263,8 @@ def __main__(recipe, params):
     bargs = [ref_shape, all_cent_coeffs, all_wid_coeffs]
     bout = localisation.build_order_position_map(*bargs)
     order_pos_map, _, order_range = bout
+    order_mid, order_top, order_bottom = localisation.build_order_bounds(
+        ref_shape, all_cent_coeffs, all_wid_coeffs, interleaved=True)
 
     # ----------------------------------------------------------------------
     # write the combined localisation file (order profile + position/width
@@ -270,7 +272,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     largs = [params, recipe, all_infiles, all_images, all_rawfiles,
             all_combine, all_props, all_orderps, all_lprops, all_qc_params,
-            order_pos_map, order_range]
+            order_pos_map, order_range, order_top, order_bottom, order_mid]
     locofile = localisation.write_localisation_files_multi(*largs)
     # all fiber groups must pass QC before we add this file to the calibDB
     passed = all(all_passed.values())

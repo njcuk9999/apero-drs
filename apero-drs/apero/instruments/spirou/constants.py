@@ -884,7 +884,7 @@ CDict.set('REF_MAX_FILES', value=20, source=__NAME__, group=cgroup)
 CDict.set('EXT_FILE', value='E2DSFF_FILE', source=__NAME__, group=cgroup)
 
 # Define the extraction files which are 2D images (i.e. order num x nbpix)
-CDict.set('EXT2D_FILES', value=['E2DS_FILE', 'E2DSFF_FILE'],
+CDict.set('EXT2D_FILES', value=['E2DSFF_FILE'],
           source=__NAME__, group=cgroup)
 
 # Define the extraction files which are 1D spectra
@@ -919,6 +919,34 @@ cgroup = 'CAL.EXT'
 # Whether extraction code is done in quick look mode (do not use for
 # final products)
 CDict.set('QUICKLOOK', value=False, source=__NAME__, group=cgroup)
+
+# Maximum fraction of unusable profile pixels allowed in a fit column
+CDict.set('TRACE_NAN_FRAC', value=0.30, source=__NAME__, group=cgroup)
+# Fraction of pixels retained by the robust trimmed fit start
+CDict.set('TRIM_KEEP', value=0.70, source=__NAME__, group=cgroup)
+# Number of iteratively reweighted least-squares passes
+CDict.set('IRLS_ITER', value=10, source=__NAME__, group=cgroup)
+# Student-t degrees of freedom used by robust extraction fitting
+CDict.set('FIT_NU', value=4.0, source=__NAME__, group=cgroup)
+CDict.set('RON_START', value=8.0, source=__NAME__, group=cgroup)
+CDict.set('FIT_RON', value=True, source=__NAME__, group=cgroup)
+CDict.set('RON_STRIDE', value=5, source=__NAME__, group=cgroup)
+CDict.set('RON_LAG', value=4, source=__NAME__, group=cgroup)
+CDict.set('BKG_BOX', value=[31, 7], source=__NAME__, group=cgroup)
+CDict.set('BKG_STRIDE_FRAC', value=0.5, source=__NAME__, group=cgroup)
+CDict.set('MASK_NSIG1', value=10.0, source=__NAME__, group=cgroup)
+CDict.set('MASK_NSIG2', value=3.0, source=__NAME__, group=cgroup)
+CDict.set('FIT_ROBUST', value=False, source=__NAME__, group=cgroup)
+CDict.set('FIT_NCLIP', value=2, source=__NAME__, group=cgroup)
+CDict.set('FIT_NSIG_CLIP', value=20.0, source=__NAME__, group=cgroup)
+CDict.set('FIT_ZP_MAD_CUT', value=10.0, source=__NAME__, group=cgroup)
+CDict.set('SAVGOL_WINDOW', value=0.45, source=__NAME__, group=cgroup)
+CDict.set('SAVGOL_POLYORDER', value=2, source=__NAME__, group=cgroup)
+CDict.set('SAVGOL_STEP', value=0.5, source=__NAME__, group=cgroup)
+CDict.set('SAVGOL_CUT', value=3.0, source=__NAME__, group=cgroup)
+CDict.set('SAVGOL_MINPTS', value=3, source=__NAME__, group=cgroup)
+CDict.set('SAVGOL_WEIGHT', value='gauss', source=__NAME__, group=cgroup)
+CDict.set('MAKE_BLAZE', value=True, source=__NAME__, group=cgroup)
 
 # Start order of the extraction in apero_flat if None starts from 0
 CDict.set('START_ORDER', value=None, source=__NAME__, group=cgroup)

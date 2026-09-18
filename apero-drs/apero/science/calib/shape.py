@@ -1270,6 +1270,9 @@ def get_shape_calibs(params, recipe, header, database):
     # get shape local
     sout = get_shapelocal(params, recipe, header, database=database)
     shapelocalfile, shapelocaltime, shapelocal = sout
+    # load the shape-x map in the unshaped science frame
+    dxmap_no_shape = drs_fits.readfits(params, shapelocalfile,
+                                       extname='DXMAP_NO_SHAPE')
     # out to parameter dictionary
     sprops = ParamDict()
     sprops['SHAPEX'] = shapex
@@ -1281,10 +1284,15 @@ def get_shape_calibs(params, recipe, header, database):
     sprops['SHAPEL'] = shapelocal
     sprops['SHAPELFILE'] = shapelocalfile
     sprops['SHAPELTIME'] = shapelocaltime
+    sprops['DXMAP_NO_SHAPE'] = dxmap_no_shape
+    sprops['DXMAP_NO_SHAPEFILE'] = shapelocalfile
+    sprops['DXMAP_NO_SHAPETIME'] = shapelocaltime
     # set source
     keys = ['SHAPEX', 'SHAPEXFILE', 'SHAPEXTIME',
             'SHAPEY', 'SHAPEYFILE', 'SHAPEYTIME',
-            'SHAPEL', 'SHAPELFILE', 'SHAPELTIME']
+            'SHAPEL', 'SHAPELFILE', 'SHAPELTIME',
+            'DXMAP_NO_SHAPE', 'DXMAP_NO_SHAPEFILE',
+            'DXMAP_NO_SHAPETIME']
     sprops.set_sources(keys, func_name)
     # return shape properties
     return sprops

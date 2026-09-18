@@ -143,13 +143,14 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                       kwargs, func_name)
     filter_wid = pcheck(params, 'CAL.THERM.FILT_WID', 'filter_wid', kwargs,
                         func_name)
-    torder = pcheck(params, 'CAL.THERM.SCALE_ORDER', 'torder', kwargs, func_name)
+    torder = pcheck(params, 'CAL.THERM.SCALE_ORDER', 'torder', kwargs,
+                    func_name)
     red_limit = pcheck(params, 'CAL.THERM.RED_WAVE_LIM', 'red_limit', kwargs,
                        func_name)
-    blue_limit = pcheck(params, 'CAL.THERM.BLUE_WAVE_LIM', 'blue_limit', kwargs,
-                        func_name)
-    thermal_limit = pcheck(params, 'CAL.THERM.MIN_WAVE_LIM', 'thermal_limit', kwargs,
-                           func_name)
+    blue_limit = pcheck(params, 'CAL.THERM.BLUE_WAVE_LIM', 'blue_limit',
+                        kwargs, func_name)
+    thermal_limit = pcheck(params, 'CAL.THERM.MIN_WAVE_LIM', 'thermal_limit',
+                           kwargs, func_name)
     e2ds = pcheck(params, 'E2DS', 'e2ds', kwargs, func_name, paramdict=eprops)
     e2dsff = pcheck(params, 'E2DSFF', 'e2dsff', kwargs, func_name,
                     paramdict=eprops)
@@ -161,8 +162,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                        func_name, dtype=str)
 
     thermal_file = kwargs.get('thermal_file', None)
-    thermal_correct = pcheck(params, 'CAL.THERM.THERMAL_CORR', 'thermal_correct',
-                             kwargs, func_name)
+    thermal_correct = pcheck(params, 'CAL.THERM.THERMAL_CORR',
+                             'thermal_correct', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get pconstant from p
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -304,6 +305,71 @@ def get_thermal(params, recipe, header, fiber, kind, filename=None,
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the reference image
     return thermal_file, thermaltime, thermal
+
+
+def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
+                             header: drs_file.Header,
+                             props: ParamDict, spectrum: np.ndarray,
+                             fiber: str,
+                             database: Optional[drs_database.CalibrationDatabase]
+                             = None
+                             ) -> Tuple[np.ndarray, ParamDict]:
+    """Apply thermal correction directly to a new extracted spectrum."""
+    func_name = __NAME__ + '.correct_spectrum_thermal()'
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    fibertype = pconst.FIBER_DATA_TYPE(props['DPRTYPE'], fiber)
+    if not params['CAL.THERM.THERMAL_CORR']:
+        tprops = ParamDict()
+        tprops['THERMALFILE'] = 'None'
+        tprops['THERMALTIME'] = np.nan
+        tprops['THERMAL_RATIO'] = np.nan
+        tprops['THERMAL_RATIO_USED'] = 'None'
+        tprops.set_all_sources(func_name)
+        return np.asarray(spectrum, dtype=float), tprops
+    wprops = wave.get_wavesolution(params, recipe, ref=True,
+                                   database=database)
+    wavemap = wprops['WAVEMAP']
+    thermal_file = None
+    thermal_time = np.nan
+    thermal = None
+    if fibertype in params['CAL.THERM.CORR_TYPE1']:
+        thermal_file, thermal_time, thermal = get_thermal(
+            params, recipe, header, fiber=fiber, kind='THERMALT_E2DS',
+            database=database, required=False)
+        if thermal_file is None:
+            thermal_file, thermal_time, thermal = get_thermal(
+                params, recipe, header, fiber=fiber, kind='THERMALI_E2DS',
+                database=database)
+        corrected, ratios = tcorrect1(
+            params, recipe, spectrum, header, fiber, wavemap, thermal=thermal,
+            database=database, tapas_thres=params['CAL.THERM.THRES_TAPAS'],
+            torder=params['CAL.THERM.SCALE_ORDER'],
+            red_limit=params['CAL.THERM.RED_WAVE_LIM'],
+            thermal_limit=params['CAL.THERM.MIN_WAVE_LIM'])
+    elif fibertype in params['CAL.THERM.CORR_TYPE2']:
+        thermal_file, thermal_time, thermal = get_thermal(
+            params, recipe, header, fiber=fiber, kind='THERMALI_E2DS',
+            database=database)
+        corrected, ratios = tcorrect2(
+            params, recipe, spectrum, header, fiber, wavemap, thermal=thermal,
+            database=database, envelope=params['CAL.THERM.ENVELOPE_PTILE'],
+            filter_wid=params['CAL.THERM.FILT_WID'],
+            torder=params['CAL.THERM.SCALE_ORDER'],
+            red_limit=params['CAL.THERM.RED_WAVE_LIM'],
+            blue_limit=params['CAL.THERM.BLUE_WAVE_LIM'],
+            thermal_limit=params['CAL.THERM.MIN_WAVE_LIM'])
+    else:
+        corrected = np.asarray(spectrum, dtype=float)
+        ratios = ParamDict()
+        ratios['ratio'] = np.nan
+        ratios['ratio_used'] = 'None'
+    tprops = ParamDict()
+    tprops['THERMALFILE'] = thermal_file or 'None'
+    tprops['THERMALTIME'] = thermal_time
+    tprops['THERMAL_RATIO'] = ratios['ratio']
+    tprops['THERMAL_RATIO_USED'] = ratios['ratio_used']
+    tprops.set_all_sources(func_name)
+    return corrected, tprops
 
 
 def tcorrect1(params: ParamDict, recipe: DrsRecipe,

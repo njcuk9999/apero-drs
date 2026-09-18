@@ -12,6 +12,7 @@ Created on 2019-01-17 at 14:31
 from apero.science.extract import berv
 from apero.science.extract import extraction
 from apero.science.extract import gen_ext
+from apero.science.extract import model_background
 
 __all__ = []
 
@@ -45,6 +46,16 @@ write_extraction_files = gen_ext.write_extraction_files
 write_extraction_files_ql = gen_ext.write_extraction_files_ql
 
 extract_summary = gen_ext.extract_summary
+
+model_background_correction = model_background.model_background_correction
+
+prepare_model_bckgrd_geo = model_background.prepare_model_bckgrd_geo
+
+extract_all_fibers = model_background.extract_all_fibers
+
+run_all_fiber_model = model_background.run_all_fiber_model
+
+spectra_to_eprops = model_background.spectra_to_eprops
 
 # =============================================================================
 # End of code

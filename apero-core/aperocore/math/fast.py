@@ -60,6 +60,22 @@ nanpercentile = np.nanpercentile
 # =============================================================================
 # Define functions
 # =============================================================================
+def rot8(image: np.ndarray, nrotation: int,
+         invert: bool = False) -> np.ndarray:
+    """Rotate or flip a two-dimensional image in one of eight orientations.
+
+    :param image: Two-dimensional image array.
+    :param nrotation: Orientation number, reduced modulo eight.
+    :param invert: Reverse the selected orientation when true.
+    :return: Rotated and/or flipped image array.
+    """
+    inversion = {1: 3, 2: 2, 3: 1, 4: 4, 5: 7, 6: 6, 7: 5, 0: 0}
+    nrot = int(nrotation % 8)
+    if invert:
+        nrot = inversion[nrot]
+    return np.rot90(image[::1 - 2 * (nrot // 4)], nrot % 4)
+
+
 def nanargmax(a: Union[list, np.ndarray],
               axis: Union[None, int, Tuple[int]] = None
               ) -> Union[int, float, np.ndarray]:

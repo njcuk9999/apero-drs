@@ -10,6 +10,7 @@ Created on 2019-01-18 at 14:44
 import os
 import string
 import sys
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -47,6 +48,17 @@ NOT_IMPLEMENTED = ('Definition Error: Must be overwritten in instrument '
 DatabaseColumns = drs_db.AperoDatabaseColumns
 # get display func
 display_func = drs_misc.display_func
+
+
+@dataclass(frozen=True)
+class FiberDefinition:
+    """Describe one instrument fiber and its localisation channels."""
+
+    name: str
+    role: str
+    localisation: Tuple[str, ...]
+
+
 # define bad characters for objects (alpha numeric + "_")
 BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 # null text
@@ -402,7 +414,8 @@ class Instrument:
 
         :return clevels: dictionary, containing all the keys identical to
                          LOG_TRIG_KEYS or WRITE_LEVEL, values must be strings
-                         that prodive colour information to python print statement
+                         that prodive colour information to python print
+                         statement
                          see here:
                              http://ozzmaker.com/add-colour-to-text-in-python/
         """
@@ -793,6 +806,36 @@ class Instrument:
         # set function name
         func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def FIBER_SPECS(self) -> List[FiberDefinition]:
+        """Return generic descriptors for reference and science fibers."""
+        science, reference = self.FIBER_KINDS()
+        specs = [FiberDefinition(reference, 'reference',
+                                 tuple(self.FIBER_LOC(reference)))]
+        specs.extend(FiberDefinition(fiber, 'science',
+                                     tuple(self.FIBER_LOC(fiber)))
+                     for fiber in science)
+        return specs
+
+    def FIBER_SPECTRAL_GROUPS(
+            self, ranges: Dict[str, Tuple[int, int]]
+            ) -> List[Tuple[str, List[List[int]]]]:
+        """
+        Return default one-trace spectral groups for instrument fibers.
+
+        :param ranges: dict, fiber name to first and last trace labels
+
+        :return: list, fiber names and grouped trace labels
+        """
+        groups = []
+        for fiber, (first, last) in ranges.items():
+            groups.append((fiber, [[trace]
+                                   for trace in range(first, last + 1)]))
+        return groups
+
+    def FIBER_RIBBON_INTERLEAVED(self) -> bool:
+        """Return whether the first science fiber has interleaved traces."""
+        return False
 
     def FIBER_LOC(self, fiber: str) -> Any:
         """

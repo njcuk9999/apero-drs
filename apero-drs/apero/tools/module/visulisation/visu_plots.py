@@ -77,7 +77,7 @@ class SpectrumPlot:
         # line variables
         self.line_bkind = ['red', 'red', 'red', 'red', 'red']
         self.line_labels = ['e2dsff', 'e2ds', 'tcorr', 'recon', 'skymodel']
-        self.line_otypes = ['EXT_E2DS_FF', 'EXT_E2DS', 'TELLU_OBJ',
+        self.line_otypes = ['EXT_E2DS_FF', 'TELLU_OBJ',
                             'TELLU_RECON', 'TELLU_PCLEAN']
         self.line_norm = ['med', 'med', 'med', None, 'max']
         self.line_blaze_cor = [True, True, True, False, False]

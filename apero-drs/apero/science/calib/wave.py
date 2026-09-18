@@ -2278,7 +2278,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     infile.set_filename(input_filename)
     # ----------------------------------------------------------------------
     # get extraction files
-    e2ds_file = extrecipe.outputs['E2DS_FILE'].newcopy(params=params,
+    e2ds_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     e2dsff_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(params=params,
                                                            fiber=fiber)

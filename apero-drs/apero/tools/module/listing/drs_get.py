@@ -993,7 +993,8 @@ def _convert_records_to_dataframe(records: List[Dict[str, Any]],
     :param records: list of dictionaries, each dictionary contains header keys
                     and file information for a single file
     :param condition: str or None, SQL-like condition to filter the records
-                      (e.g., 'KW_OBJNAME="GL699" AND KW_OUTPUT="EXT_E2DS"')
+                      (e.g., 'KW_OBJNAME="GL699" AND '
+                      'KW_OUTPUT="EXT_E2DS_FF"')
 
     :return: pandas DataFrame, the filtered table containing the header keys
              and file information

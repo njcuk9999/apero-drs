@@ -681,7 +681,7 @@ apero_leak_ref.epilog = textentry('LEAKREF_EXAMPLE')
 apero_leak_ref.recipe_type = 'recipe'
 apero_leak_ref.recipe_kind = 'calib-reference'
 apero_leak_ref.calib_required = False
-apero_leak_ref.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2ds,
+apero_leak_ref.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2dsff,
                            LEAK_REF=files.out_leak_ref)
 leakref_dict = dict()
 leakref_dict['fibers'] = sci_fibers + cal_fibers
@@ -717,15 +717,13 @@ apero_extract.description = textentry('EXTRACT_DESC')
 apero_extract.epilog = textentry('EXTRACT_EXAMPLE')
 apero_extract.recipe_type = 'recipe'
 apero_extract.recipe_kind = 'extract'
-apero_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
-                          E2DSFF_FILE=files.out_ext_e2dsff,
+apero_extract.set_outputs(E2DSFF_FILE=files.out_ext_e2dsff,
                           E2DSLL_FILE=files.out_ext_e2dsll,
                           S1D_W_FILE=files.out_ext_s1d_w,
                           S1D_V_FILE=files.out_ext_s1d_v,
                           ORDERP_SFILE=files.out_orderp_straight,
                           DEBUG_BACK=files.debug_back,
                           EXT_FPLINES=files.out_ext_fplines,
-                          Q2DS_FILE=files.out_ql_e2ds,
                           Q2DSFF_FILE=files.out_ql_e2dsff)
 extract_dict = dict()
 extract_dict['fibers'] = sci_fibers + cal_fibers
@@ -741,22 +739,22 @@ qextract_dict = dict()
 qextract_dict['fibers'] = ref_fiber
 qextract_dict['LOG_FLAG'] = dict()
 qextract_dict['LOG_FLAG'][ref_fiber] = ['QUICKLOOK']
-apero_extract.set_output_data(E2DS_FILE=extract_dict,
-                              E2DSFF_FILE=extract_dict,
+apero_extract.set_output_data(E2DSFF_FILE=extract_dict,
                               E2DSLL_FILE=extract_dict,
                               S1D_W_FILE=extract_dict,
                               S1D_V_FILE=extract_dict,
                               EXT_FPLINES=fplines_dict,
-                              Q2DS_FILE=qextract_dict,
                               Q2DSFF_FILE=qextract_dict)
 apero_extract.set_flags(QUICKLOOK=False, EXP_FPLINE=False)
 apero_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                               'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                               'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
                               'EXTRACT_SPECTRAL_ORDER2', 'EXTRACT_S1D',
-                              'EXTRACT_S1D_WEIGHT', 'WAVEREF_EXPECTED')
+                              'EXTRACT_S1D_WEIGHT', 'WAVEREF_EXPECTED',
+                              'EXTRACT_MODEL_BACKGROUND')
 apero_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
-                                'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D')
+                                'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D',
+                                'SUM_EXTRACT_MODEL_BACKGROUND')
 apero_extract.set_arg(pos=0, **obs_dir)
 apero_extract.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.pp_file],
@@ -1015,7 +1013,7 @@ apero_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
 apero_ccf.set_summary_plots('SUM_CCF_PHOTON_UNCERT', 'SUM_CCF_RV_FIT')
 apero_ccf.set_arg(pos=0, **obs_dir)
 apero_ccf.set_arg(name='files', dtype='files', pos='1+',
-                  files=[files.out_ext_e2ds, files.out_ext_e2dsff,
+                  files=[files.out_ext_e2dsff,
                          files.out_tellu_obj], filelogic='exclusive',
                   helpstr=textentry('FILES_HELP') + textentry('CCF_FILES_HELP'),
                   limit=1)
@@ -1102,7 +1100,7 @@ apero_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
                                  'SUM_TELLUP_MEAN_RES', 'SUM_TELLUP_ABSO_SPEC')
 apero_mk_tellu.set_arg(pos=0, **obs_dir)
 apero_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
-                       files=[files.out_ext_e2ds, files.out_ext_e2dsff],
+                       files=[files.out_ext_e2dsff],
                        filelogic='exclusive',
                        helpstr=(textentry('FILES_HELP') +
                                 textentry('MKTELL_FILES_HELP')),
@@ -1235,7 +1233,7 @@ apero_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
                                   'SUM_FTELLU_RES_MODEL')
 apero_fit_tellu.set_arg(pos=0, **obs_dir)
 apero_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
-                        files=[files.out_ext_e2ds, files.out_ext_e2dsff],
+                        files=[files.out_ext_e2dsff],
                         filelogic='exclusive',
                         helpstr=(textentry('FILES_HELP')
                                  + textentry('FTELLU_FILES_HELP')),

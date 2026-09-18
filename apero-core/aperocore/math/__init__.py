@@ -13,6 +13,7 @@ Created on 2019-01-18 at 15:53
 from aperocore.math import fast
 from aperocore.math import gauss
 from aperocore.math import gen_math
+from aperocore.math import interpolate
 from aperocore.math import nan
 
 # =============================================================================
@@ -101,6 +102,18 @@ nanmedian = fast.nanmedian
 nanpad = nan.nanpad
 
 fill_nans = nan.fill_nans
+
+fill_nans_nearest = interpolate.fill_nans_nearest
+
+finite_spline = interpolate.finite_spline
+
+expand_bilinear = interpolate.expand_bilinear
+
+sample_bilinear = interpolate.sample_bilinear
+
+kernel_total = interpolate.kernel_total
+
+irregular_savgol = interpolate.irregular_savgol
 
 nanchebyfit = nan.nanchebyfit
 

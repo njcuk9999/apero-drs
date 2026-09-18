@@ -123,6 +123,7 @@ STRTYPE[str] = 'str'
 STRTYPE[complex] = 'complex'
 STRTYPE[list] = 'list'
 STRTYPE[bool] = 'bool'
+STRTYPE[dict] = 'dict'
 STRTYPE[np.ndarray] = 'np.ndarray'
 # Invert STRTYPE
 TYPESTR = {v: k for k, v in STRTYPE.items()}

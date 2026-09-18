@@ -1276,6 +1276,16 @@ for _lfiber in valid_lfibers:
     out_loc_calib.hdulist['LOC_SUP_{0}'.format(_lfiber)] = (
         AperoImageModel('LOC_SUP_{0}'.format(_lfiber)))
 del _lfiber
+# Shared trace-label map and per-column order bounds written by apero_loc.
+out_loc_calib.hdulist['ORDER_POS_MAP'] = AperoImageModel('ORDER_POS_MAP')
+order_range_model = AperoTableModel('ORDER_RANGE_TABLE')
+order_range_model.add_column('FIBER', description='Fiber group name')
+order_range_model.add_column('FIRST', description='First trace label')
+order_range_model.add_column('LAST', description='Last trace label')
+out_loc_calib.hdulist['ORDER_RANGE_TABLE'] = order_range_model
+out_loc_calib.hdulist['ORDER_TOP'] = AperoImageModel('ORDER_TOP')
+out_loc_calib.hdulist['ORDER_BOTTOM'] = AperoImageModel('ORDER_BOTTOM')
+out_loc_calib.hdulist['ORDER_MID'] = AperoImageModel('ORDER_MID')
 # add localisation output to output filesets
 red_file.addset(out_loc_calib)
 calib_file.addset(out_loc_calib)
@@ -1398,13 +1408,6 @@ calib_file.addset(out_ff_flat)
 # -----------------------------------------------------------------------------
 # extract files (quick look)
 # -----------------------------------------------------------------------------
-# extract E2DS without flat fielding
-out_ql_e2ds = drs_finput('QL_E2DS', hkeys=dict(KW_OUTPUT='QL_E2DS'),
-                         fibers=valid_efibers,
-                         filetype='.fits', intype=pp_file,
-                         suffix='_q2ds', outclass=general_ofile,
-                         description='Extracted 2D spectrum (quick output)')
-
 # extract E2DS with flat fielding
 out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
                            fibers=valid_efibers,
@@ -1412,16 +1415,12 @@ out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
                            suffix='_q2dsff', outclass=general_ofile,
                            description='Extracted + flat-fielded 2D spectrum '
                                        '(quick output)')
+# E2DS extraction now uses the flat-corrected product definition.
+out_ql_e2ds = out_ql_e2dsff
 
 # -----------------------------------------------------------------------------
 # extract files
 # -----------------------------------------------------------------------------
-# extract E2DS without flat fielding
-out_ext_e2ds = drs_finput('EXT_E2DS', hkeys=dict(KW_OUTPUT='EXT_E2DS'),
-                          fibers=valid_efibers,
-                          filetype='.fits', intype=pp_file,
-                          suffix='_e2ds', outclass=general_ofile,
-                          description='Extracted 2D spectrum')
 # extract E2DS with flat fielding
 out_ext_e2dsff = drs_finput('EXT_E2DS_FF', hkeys=dict(KW_OUTPUT='EXT_E2DS_FF'),
                             fibers=valid_efibers,
@@ -1429,6 +1428,8 @@ out_ext_e2dsff = drs_finput('EXT_E2DS_FF', hkeys=dict(KW_OUTPUT='EXT_E2DS_FF'),
                             suffix='_e2dsff', outclass=general_ofile,
                             s1d=['EXT_S1D_W', 'EXT_S1D_V'],
                             description='Extracted + flat-fielded 2D spectrum')
+# Compatibility alias: extraction has one E2DSFF product only.
+out_ext_e2ds = out_ext_e2dsff
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', hkeys=dict(KW_OUTPUT='EXT_E2DS_LL'),
                             fibers=valid_efibers,
@@ -1468,7 +1469,6 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
                                          ' FP fiber')
 
 # add extract outputs to output fileset
-red_file.addset(out_ext_e2ds)
 red_file.addset(out_ext_e2dsff)
 red_file.addset(out_ext_e2dsll)
 red_file.addset(out_ext_loco)

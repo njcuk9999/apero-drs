@@ -38,6 +38,19 @@ __version__ = base.__version__
 __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
+# Re-export shared base constants for callers using the low-level API.
+SIMPLE_TYPES = base.SIMPLE_TYPES
+SIMPLE_STYPES = base.SIMPLE_STYPES
+NUMBER_TYPES = base.NUMBER_TYPES
+STRTYPE = base.STRTYPE
+TYPESTR = base.TYPESTR
+COLOURS = base.COLOURS
+AUTHORS = base.AUTHORS
+DEFAULT_LANG = base.DEFAULT_LANG
+LANGUAGES = base.LANGUAGES
+DEF_LANG_FILES = base.DEF_LANG_FILES
+INSTALL_YAML = base.INSTALL_YAML
+DATABASE_YAML = base.DATABASE_YAML
 # relative folder cache
 REL_CACHE = dict()
 # cache for language proxy dict
@@ -461,6 +474,10 @@ def base_null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
         return True
     # if variable is in nulls (and nulls is set) return True
     if isinstance(variable, str):
+        if variable.strip() == '':
+            return True
+        if nulls is None and variable.strip().upper() == 'NONE':
+            return True
         if nulls is not None:
             for null in nulls:
                 if null is None:

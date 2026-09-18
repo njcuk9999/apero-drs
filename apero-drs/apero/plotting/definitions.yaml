@@ -207,6 +207,22 @@ FLAT_ORDER_FIT_EDGES1:
   figsize:
   - 6.4
   - 4.8
+EXTRACT_MODEL_BACKGROUND:
+  kind: debug
+  func: plot_functions.plot_extract_model_background
+  dpi: 100
+  description: New model/background extraction products
+  figsize:
+  - 12
+  - 8
+SUM_EXTRACT_MODEL_BACKGROUND:
+  kind: summary
+  func: plot_functions.plot_extract_model_background
+  dpi: 150
+  description: Summary of model/background extraction products
+  figsize:
+  - 12
+  - 8
 FLAT_ORDER_FIT_EDGES2:
   kind: debug
   func: plot_functions.plot_flat_order_fit_edges

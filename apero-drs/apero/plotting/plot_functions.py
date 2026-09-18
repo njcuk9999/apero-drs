@@ -1967,6 +1967,35 @@ def plot_thermal_background(plotter: Plotter, graph: Graph,
 # =============================================================================
 # Define extraction plotting functions
 # =============================================================================
+def plot_extract_model_background(plotter: Plotter, graph: Graph,
+                                  kwargs: Dict[str, Any]) -> None:
+    """
+    Plot the new science-frame model/background extraction products.
+
+    :param plotter: core plotting instance
+    :param graph: plot graph definition
+    :param kwargs: plot inputs containing model/background properties
+
+    :return: None, writes the debug plot
+    """
+    if not plotter.plotstart(graph):
+        return
+    model_props = kwargs['model_props']
+    images = [model_props['SCIENCE_MODEL'],
+              model_props['SCI_BKGSUB'],
+              model_props['RESIDUAL_NOSHAPE'],
+              model_props['MASK_NOSHAPE']]
+    titles = ['Science-frame model', 'Background-subtracted science',
+              'Science-frame residual', 'Hysteresis mask']
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=2)
+    for frame, image, title in zip(frames.flat, images, titles):
+        frame.imshow(image, aspect='auto', origin='lower', cmap='viridis')
+        frame.set_title(title)
+    graph.set_filename(plotter.params, plotter.location,
+                       suffix='_model_background')
+    plotter.plotend(graph)
+
+
 def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
                                 kwargs: Dict[str, Any]):
     """

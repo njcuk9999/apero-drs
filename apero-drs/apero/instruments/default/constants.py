@@ -1946,7 +1946,7 @@ CDict.add('EXT_FILE', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description=('define the type of file to use for the '
                        'leak correction (currently allowed are '
-                       'E2DS_FILE or E2DSFF_FILE (linked to '
+                       'E2DSFF_FILE (linked to '
                        'recipe definition outputs) must match '
                        'with LEAKREF_EXTRACT_TYPE'))
 
@@ -2021,6 +2021,93 @@ CDict.add('QUICKLOOK', value=None, dtype=bool,
           description=('Whether extraction code is done in quick '
                        'look mode (do not use for final '
                        'products)'))
+
+# Maximum fraction of unusable profile pixels allowed in a fit column
+CDict.add('TRACE_NAN_FRAC', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Maximum missing profile fraction for a fit column')
+
+# Fraction of pixels retained by the robust trimmed fit start
+CDict.add('TRIM_KEEP', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Fraction of pixels retained by the fit start')
+
+# Number of iteratively reweighted least-squares passes
+CDict.add('IRLS_ITER', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Number of robust extraction fit iterations')
+
+# Student-t degrees of freedom used by robust extraction fitting
+CDict.add('FIT_NU', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Student-t degrees of freedom for extraction fitting')
+
+# Initial readout-noise estimate used before the fit is refined
+CDict.add('RON_START', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Initial readout-noise estimate in electrons')
+
+# Whether and how the readout-noise estimate is refined
+CDict.add('FIT_RON', value=None, dtype=bool,
+          source=__NAME__, group=cgroup,
+          description='Fit readout noise from the science residuals')
+CDict.add('RON_STRIDE', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Spatial stride used by the readout-noise fit')
+CDict.add('RON_LAG', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Pixel lag used by the between-order noise check')
+
+# Straight-frame background model controls
+CDict.add('BKG_BOX', value=None, dtype=list, dtypei=int,
+          source=__NAME__, group=cgroup,
+          description='Background median-filter box as rows and columns')
+CDict.add('BKG_STRIDE_FRAC', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Fraction of the background box used as grid stride')
+CDict.add('MASK_NSIG1', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Sigma threshold that seeds hysteresis masking')
+CDict.add('MASK_NSIG2', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Sigma threshold that grows hysteresis masking')
+
+# Robust ribbon-fit controls
+CDict.add('FIT_ROBUST', value=None, dtype=bool,
+          source=__NAME__, group=cgroup,
+          description='Use robust reweighted simultaneous profile fitting')
+CDict.add('FIT_NCLIP', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Number of residual clipping passes for robust fitting')
+CDict.add('FIT_NSIG_CLIP', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Residual sigma threshold for fit clipping')
+CDict.add('FIT_ZP_MAD_CUT', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='MAD threshold for rejecting fit zero-point columns')
+
+# Irregular spectrum-grid extraction controls
+CDict.add('SAVGOL_WINDOW', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Local polynomial fitting window in pixels')
+CDict.add('SAVGOL_POLYORDER', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Local polynomial degree for spectrum extraction')
+CDict.add('SAVGOL_STEP', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Output spectrum grid step in detector pixels')
+CDict.add('SAVGOL_CUT', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description='Local-fit support radius in window widths')
+CDict.add('SAVGOL_MINPTS', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description='Minimum extra samples required by local fits')
+CDict.add('SAVGOL_WEIGHT', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Local-fit distance weight, gauss or triangular')
+CDict.add('MAKE_BLAZE', value=None, dtype=bool,
+          source=__NAME__, group=cgroup,
+          description='Build profile-throughput grids for S1D stitching')
 
 #  Start order of the extraction in apero_flat if None starts from 0
 CDict.add('START_ORDER', value=None, dtype=int,

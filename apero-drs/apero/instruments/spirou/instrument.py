@@ -772,6 +772,30 @@ class Spirou(instrument_mod.Instrument):
         # return science and reference fiber(s)
         return science, reference
 
+    def FIBER_SPECTRAL_GROUPS(
+            self, ranges: Dict[str, Tuple[int, int]]
+            ) -> List[Tuple[str, List[List[int]]]]:
+        """
+        Return SPIROU A/B/AB/C extraction trace groupings.
+
+        :param ranges: dict, fiber name to first and last trace labels
+
+        :return: list, SPIROU fiber names and grouped trace labels
+        """
+        first, last = ranges['AB']
+        trace_a = list(range(first, last + 1, 2))
+        trace_b = list(range(first + 1, last + 1, 2))
+        groups = [('A', [[trace] for trace in trace_a])]
+        groups.append(('B', [[trace] for trace in trace_b]))
+        groups.append(('AB', [[a, b] for a, b in zip(trace_a, trace_b)]))
+        first, last = ranges['C']
+        groups.append(('C', [[trace] for trace in range(first, last + 1)]))
+        return groups
+
+    def FIBER_RIBBON_INTERLEAVED(self) -> bool:
+        """Return whether SPIROU's AB traces are interleaved."""
+        return True
+
     def FIBER_LOC(self, fiber: str) -> List[str]:
         """
         Set the localisation fibers

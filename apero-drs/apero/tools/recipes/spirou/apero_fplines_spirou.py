@@ -53,7 +53,7 @@ get_ext_fplines.description = 'Produces an FPLINES file for an e2ds/e2dsff file'
 get_ext_fplines.kind = 'misc'
 get_ext_fplines.set_arg(pos=0, **RMOD.mod.obs_dir)
 get_ext_fplines.set_arg(name='files', dtype='files', pos='1+',
-                        files=[FMOD.files.out_ext_e2ds,
+                        files=[FMOD.files.out_ext_e2dsff,
                                FMOD.files.out_ext_e2dsff],
                         helpstr=(textentry('FILES_HELP') +
                                  'Currently allowed types: E2DS, E2DSFF'))

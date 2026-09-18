@@ -417,6 +417,66 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     return eprops
 
 
+def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
+                         spectrum: np.ndarray,
+                         reference: Optional[np.ndarray],
+                         infile: DrsFitsFile, fiber: str,
+                         database: Optional[CalibrationDatabase] = None
+                         ) -> Tuple[np.ndarray, np.ndarray, ParamDict]:
+    """
+    Correct a new model-extracted spectrum for reference-fiber leakage.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, calling recipe
+    :param spectrum: numpy array (2D), science fiber spectrum
+    :param reference: numpy array (2D) or None, reference fiber spectrum
+    :param infile: DrsFitsFile, source exposure for headers and DPRTYPE
+    :param fiber: str, science or reference fiber name
+    :param database: CalibrationDatabase or None, calibration database
+
+    :return: tuple, corrected spectrum, leak correction array, properties
+    """
+    func_name = __NAME__ + '.correct_spectra_leak()'
+    spectrum = np.asarray(spectrum, dtype=float)
+    no_correction = np.full_like(spectrum, np.nan)
+    props = ParamDict()
+    props['LEAK_CORRECTED'] = False
+    props['LEAKREF_FILE'] = 'No leak'
+    props['LEAKREF_TIME'] = 'No leak'
+    props['LEAKREF_REFFILE'] = 'No leak'
+    props['LEAKREF_REFTIME'] = 'No leak'
+    for key in ('LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
+                'LEAK_BCKGRD_PERCENTILE_USED',
+                'LEAK_NORM_PERCENTILE_USED', 'LEAK_LOW_PERCENTILE_USED',
+                'LEAK_HIGH_PERCENTILE_USED',
+                'LEAK_BAD_RATIO_OFFSET_USED'):
+        props[key] = 'No leak'
+    props.set_all_sources(func_name)
+    # Reference, quicklook, disabled, or missing-reference spectra are not
+    # eligible for leakage correction.
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+    dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
+    ref_type = pconst.FIBER_DATA_TYPE(dprtype, ref_fiber)
+    enabled = params['INPUTS']['LEAKCORR']
+    allowed = ref_type in params['CAL.LEAK.REF_TYPES']
+    eligible = (enabled and not params['CAL.EXT.QUICKLOOK']
+                and fiber in sci_fibers and reference is not None
+                and allowed)
+    if not eligible:
+        return spectrum, no_correction, props
+    # Delegate the physical correction and calibration lookup to the existing
+    # low-level implementation, which already owns leak-reference semantics.
+    corrected, leakcorr, leak_props = correct_ext_dark_fp(
+        params, recipe, spectrum, reference, infile.header, fiber,
+        database=database)
+    for key in leak_props:
+        props[key] = leak_props[key]
+    props['LEAK_CORRECTED'] = True
+    props.set_all_sources(func_name)
+    return corrected, leakcorr, props
+
+
 def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
                         sciimage: np.ndarray,
                         refimage: np.ndarray, header: drs_file.Header,
@@ -729,7 +789,7 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     if not eprops['LEAK_CORRECTED']:
         return
     # get a new copy of the e2ds file
-    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(params=params,
+    e2dsfile = recipe.outputs['E2DSFF_FILE'].newcopy(params=params,
                                                    fiber=fiber)
     # construct the filename from file instance
     e2dsfile.construct_filename(infile=infile)
@@ -975,8 +1035,10 @@ def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
                              value=props['CAL.LEAK.BCKGRD_PTILE'])
             outfile.add_hkey('KW_LEAK_NP_U',
                              value=props['CAL.LEAK.NORM_PTILE'])
-            outfile.add_hkey('KW_LEAK_WSMOOTH', value=props['CAL.LEAK.REF_WSMOOTH'])
-            outfile.add_hkey('KW_LEAK_KERSIZE', value=props['CAL.LEAK.REF_KERSIZE'])
+            outfile.add_hkey(
+                'KW_LEAK_WSMOOTH', value=props['CAL.LEAK.REF_WSMOOTH'])
+            outfile.add_hkey(
+                'KW_LEAK_KERSIZE', value=props['CAL.LEAK.REF_KERSIZE'])
         # log that we are saving rotated image
         wargs = [fiber, outfile.filename]
         WLOG(params, '', textentry('40-016-00025', args=wargs))

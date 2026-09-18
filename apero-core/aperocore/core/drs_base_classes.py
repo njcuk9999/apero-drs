@@ -52,7 +52,7 @@ AperoCodedException = drs_log.AperoCodedException
 # Define dictionary Custom classes
 # =============================================================================
 # case insensitive dictionary
-class CaseInsensitiveDict(UserDict):
+class CaseInsensitiveDict(dict):
     # Custom dictionary with string keys that are case insensitive
     # Note we inherit from UserDict and not dict due to problems with pickle
     #  UserDict allows __setstate__ and __getstate__ to work as expected
@@ -70,9 +70,13 @@ class CaseInsensitiveDict(UserDict):
         """
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
-        # super from dict
-        super(CaseInsensitiveDict, self).__init__(*arg, **kw)
-        # force keys to be capitals (internally)
+        # Keep the historical backing mapping used by ParamDict subclasses.
+        initial = dict(*arg, **kw)
+        dict.__init__(self)
+        self.data = dict()
+        for key, value in initial.items():
+            self.__setitem__(key, value)
+        # Force keys to be capitals internally.
         self.__capitalise_keys__()
 
     def __getitem__(self, key: str) -> object:
@@ -91,7 +95,7 @@ class CaseInsensitiveDict(UserDict):
         key = drs_text.capitalise_key(key)
         # return from supers dictionary storage
         # return super(CaseInsensitiveDict, self).__getitem__(key)
-        return self.data[key]
+        return dict.__getitem__(self, key)
 
     def __setitem__(self, key: str, value: Any):
         """
@@ -109,7 +113,10 @@ class CaseInsensitiveDict(UserDict):
         key = drs_text.capitalise_key(key)
         # then do the normal dictionary setting
         # super(CaseInsensitiveDict, self).__setitem__(key, value)
+        if not hasattr(self, 'data'):
+            self.data = dict()
         self.data[key] = value
+        dict.__setitem__(self, key, value)
 
     def __contains__(self, key: str) -> bool:
         """
@@ -131,7 +138,7 @@ class CaseInsensitiveDict(UserDict):
         key = drs_text.capitalise_key(key)
         # return True if key in keys else return False
         # return super(CaseInsensitiveDict, self).__contains__(key)
-        return key in self.data.keys()
+        return key in self.data
 
     def __delitem__(self, key: str):
         """
@@ -150,6 +157,7 @@ class CaseInsensitiveDict(UserDict):
         # delete key from keys
         # super(CaseInsensitiveDict, self).__delitem__(key)
         del self.data[key]
+        dict.__delitem__(self, key)
 
     def get(self, key: str, default: Union[None, object] = None):
         """
@@ -203,11 +211,13 @@ class CaseInsensitiveDict(UserDict):
                 # delete old key
                 # super(CaseInsensitiveDict, self).__delitem__(key)
                 del self.data[key]
+                dict.__delitem__(self, key)
                 # if it is a string set it to upper case
                 key = key.upper()
                 # set the new key
                 # super(CaseInsensitiveDict, self).__setitem__(key, value)
                 self.data[key] = value
+                dict.__setitem__(self, key, value)
 
     def __str__(self):
         """
@@ -217,7 +227,7 @@ class CaseInsensitiveDict(UserDict):
         # Start the return string
         return_string = f'{self.class_name}:\n'
         # Print all keys and value pairs
-        for key, value in self.data.items():
+        for key, value in dict.items(self):
             # force string of value
             value = str(value)
             # add to return string

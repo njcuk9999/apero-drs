@@ -111,7 +111,7 @@ def __main__(recipe, params):
     # find all OBJ_DARK and OBJ_FP files
     filetypes = ['OBJ_FP', 'OBJ_DARK']
     # set the KW_OUTPUT (DRSOUTID) to get
-    intypes = ['EXT_E2DS', 'EXT_E2DS_FF', 'EXT_S1D_W', 'EXT_S1D_V',
+    intypes = ['EXT_E2DS_FF', 'EXT_S1D_W', 'EXT_S1D_V',
                'EXT_FPLIST']
     # set the fibers
     fibers = ['AB', 'A', 'B', 'C']

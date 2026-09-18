@@ -11,6 +11,8 @@ Created on 2019-07-05 at 16:46
 """
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
@@ -183,7 +185,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get header from file instance
         header = infile.get_header()
         # get the fiber types needed
-        sci_fibers, ref_fiber = pconst.FIBER_KINDS()
+        fiber_specs = pconst.FIBER_SPECS()
+        sci_fibers = [spec.name for spec in fiber_specs
+                  if spec.role == 'science']
+        ref_fiber = next(spec.name for spec in fiber_specs
+                 if spec.role == 'reference')
         # get the fibers
         if params['INPUTS']['FIBER'] == 'ALL':
             # must do reference fiber first (for leak correction)
@@ -206,8 +212,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Load and straighten order profiles
         # ------------------------------------------------------------------
         sargs = [infile, fibertypes, sprops]
-        oout = extract.order_profiles(params, recipe, *sargs, database=calibdbm)
-        orderps, orderpfiles, orderptimes = oout
+        oprops = extract.order_profiles(params, recipe, *sargs,
+                        database=calibdbm)
+        orderps = oprops['ORDERP']
+        orderpfiles = oprops['ORDERPFILE']
+        orderptimes = oprops['ORDERPTIME']
 
         # ------------------------------------------------------------------
         # Apply shape transformations
@@ -218,6 +227,23 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         image2 = shape.ea_transform(params, image, sprops['SHAPEL'],
                                     dxmap=sprops['SHAPEX'],
                                     dymap=sprops['SHAPEY'])
+        # prepare geometry required by the all-fiber model/background path
+        mbgprops = extract.prepare_model_bckgrd_geo(
+            params, image.shape, sprops)
+        model_fiber1 = sci_fibers[0]
+        model_fiber2 = ref_fiber
+        model_order_map = oprops['ORDER_MAP']
+        model_groups = pconst.FIBER_SPECTRAL_GROUPS(oprops['ORDER_RANGES'])
+        # Fit both fiber profiles together and subtract the model background.
+        mpargs = (params, image, image2, orderps, mbgprops,
+              model_order_map, oprops['ORDER_RANGES'],
+              oprops['ORDER_TOP'], oprops['ORDER_BOTTOM'],
+              oprops['ORDER_MID'], model_groups, model_fiber1,
+              model_fiber2)
+        model_props = extract.run_all_fiber_model(*mpargs)
+        # Register the new model/background products with APERO plotting.
+        recipe.plot('EXTRACT_MODEL_BACKGROUND', params=params,
+                    model_props=model_props)
         # ------------------------------------------------------------------
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
@@ -228,6 +254,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
         # storage for return / reference fiber usage
         e2dsoutputs = dict()
+        ref_e2ds = model_props['SPECTRA'][ref_fiber][0]
         # ------------------------------------------------------------------
         # Fiber loop
         # ------------------------------------------------------------------
@@ -243,16 +270,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]
             WLOG(params, 'info', textentry('40-016-00014', args=wargs))
-            # ------------------------------------------------------------------
-            # get reference fiber data
-            ref_key = 'E2DS_{0}'.format(ref_fiber)
-            # if we have reference data populate ref_e2ds
-            if ref_key in e2dsoutputs:
-                ref_e2ds = e2dsoutputs[ref_key].data
-            # otherwise this is set to None - and we cannot use it
-            else:
-                ref_e2ds = None
-            # --------------------------------------------------------------
+            # The simultaneous model supplies the reference spectrum directly.
             # load wavelength solution for this fiber
             if not quicklook:
                 # check forcing reference wave solution
@@ -308,31 +326,44 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # log progress: extracting image
             WLOG(params, 'info', textentry('40-016-00011'))
-            # extract spectrum
-            eprops = extract.extract2d(params, image2, lprops['ORDERP'],
-                                       lcoeffs2, nframes, props, fiber=fiber)
-            # leak correction
-            eprops = leak.manage_leak_correction(params, recipe, eprops,
-                                                 infile, fiber, ref_e2ds)
-            # flat correction for e2dsff
-            eprops = extract.flat_blaze_correction(eprops, fbprops['FLAT'],
-                                                   fbprops['BLAZE'])
+            # Start with the new science-frame spectrum and uncertainty.
+            model_spectrum, model_error = model_props['SPECTRA'][fiber]
+            # TODO: add blaze back in here before leak correction once the new
+            #       flat-corrected extraction path replaces E2DS.
+            # Correct the new model spectrum directly for reference leakage.
+            corrected_spectrum, leakcorr, leak_props = (
+                leak.correct_spectra_leak(
+                    params, recipe, model_spectrum, ref_e2ds, infile, fiber,
+                    database=calibdbm))
+            model_spectrum = corrected_spectrum
+            # SPECTRA is already normalized by the fitted order profiles.
             # --------------------------------------------------------------
             if not quicklook:
-                s1dextfile = params['CAL.EXT.S1D_INTYPE']
-                # create 1d spectra (s1d) of the e2ds file
-                sargs = [wprops['WAVEMAP'], eprops[s1dextfile], eprops['BLAZE']]
+                # Build S1D directly from the new science-frame spectra.
+                model_blaze = model_props['BLAZE'][fiber]
+                sargs = [wprops['WAVEMAP'], model_spectrum, model_blaze]
                 swprops = extract.e2ds_to_s1d(params, recipe, *sargs,
                                               wgrid='wave', fiber=fiber,
-                                              s1dkind=s1dextfile)
+                                              s1dkind='SPECTRA',
+                                              e2dserr=model_error)
                 svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
                                               wgrid='velocity', fiber=fiber,
-                                              s1dkind=s1dextfile)
+                                              s1dkind='SPECTRA',
+                                              e2dserr=model_error)
             else:
                 swprops, svprops = None, None
             # --------------------------------------------------------------
             # Calculate measured pixel to pixel scatter
             # --------------------------------------------------------------
+            # Build the legacy property bag only for current QC and writers.
+            eprops = extract.spectra_to_eprops(
+                params, model_props, fiber, nframes=nframes)
+            eprops['E2DS'] = model_spectrum
+            eprops['E2DSFF'] = model_spectrum
+            eprops['E2DS_ERROR'] = model_error
+            eprops['LEAKCORR'] = leakcorr
+            for leak_key in leak_props:
+                eprops[leak_key] = leak_props[leak_key]
             if not quicklook:
                 mp2p_e2ds = extract.measure_p2p_scat(params, wprops['WAVEMAP'],
                                                      eprops['E2DS'])
@@ -373,7 +404,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # Quality control
             # --------------------------------------------------------------
-            qc_params, passed = extract.qc_extraction(params, eprops)
+            qc_params, passed = extract.qc_extraction(
+                params, eprops, spectra=model_props['SPECTRA'][fiber])
             # update recipe log
             log2.add_qc(qc_params, passed)
 

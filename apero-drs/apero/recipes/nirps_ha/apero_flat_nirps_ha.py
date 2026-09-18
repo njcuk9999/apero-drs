@@ -169,8 +169,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Load and straighten order profiles
         # ------------------------------------------------------------------
         sargs = [infile, fibertypes, sprops]
-        oout = extract.order_profiles(params, recipe, *sargs, database=calibdbm)
-        orderps, orderpfiles, orderptimes = oout
+        oprops = extract.order_profiles(params, recipe, *sargs,
+                                        database=calibdbm)
+        orderps = oprops['ORDERP']
+        orderpfiles = oprops['ORDERPFILE']
+        orderptimes = oprops['ORDERPTIME']
         # ------------------------------------------------------------------
         # Apply shape transformations
         # ------------------------------------------------------------------

@@ -232,9 +232,13 @@ def display_func(name: Union[str, None] = None,
     if program is not None:
         strfunc = str(program)
     if class_name is not None:
-        strfunc += '.{0}'.format(class_name)
-    # add the name
-    strfunc += '.{0}'.format(name)
+        if strfunc:
+            strfunc += '.'
+        strfunc += class_name
+    # Add the name, inserting a separator only after a program or class.
+    if strfunc:
+        strfunc += '.'
+    strfunc += name
     # add brackets to show function
     if not strfunc.endswith('()'):
         strfunc += '()'

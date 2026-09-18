@@ -34,10 +34,30 @@
 
 ## APERO recipe structure
 
+- Most lines of Python code should have a concise comment when their purpose,
+  data-flow role, or non-obvious assumption is not immediately clear. Use
+  comments to make the surrounding algorithm easy to follow, while avoiding
+  empty narration that merely repeats the code.
+- New or modified Python functions should type all parameters and return
+  values, and their docstrings should document every parameter and the return
+  value. Keep annotations and documentation aligned with the actual API.
+- TODO: review all extraction migration code added during this work,
+  especially the `apero-core` extraction/math modules, APERO extraction
+  wrappers, fiber descriptors, and recipe hooks. Add concise comments to
+  nearly every line where that improves understanding, but leave genuinely
+  self-explanatory lines uncommented.
 - Main APERO recipe scripts should generally define only `main` and
   `__main__`. Put reusable helpers in an appropriate module under
   `apero.tools.module`, `apero.core`, `apero.io`, or another shared package
   location.
+- APERO plots should go through the standard `recipe.plot(...)` system, not
+  ad hoc matplotlib/PDF output in recipes. Register the plot name in
+  `apero-drs/apero/plotting/definitions.yaml`, implement the plotting function
+  in `apero-drs/apero/plotting/plot_functions.py`, enable it on the owning
+  recipe with `set_debug_plots(...)` or `set_summary_plots(...)` in the
+  relevant instrument `recipe_definitions.py`, and call it from recipe/science
+  code as `recipe.plot('PLOT_NAME', ...)` with arrays/properties passed as
+  keyword arguments.
 - Do not write fallback/dual-path code to support an old file, database, or
   calibration layout alongside the new one (e.g. `if is_combined: ... else:
   <old behaviour>`). APERO profiles are reset/rebuilt from a clean state
@@ -79,6 +99,10 @@
   `default/constants.py`. Add the override to all instruments, even if the
   value is identical across them, so the constant is never left undefined
   for one instrument.
+- Keep the explanatory comment from the corresponding `CDict.add(...)`
+  definition immediately above every instrument-level `CDict.set(...)`
+  override. The instrument files should explain what each overridden value
+  controls even though the type and description are defined centrally.
 - Access a constant in code as `params['GROUP.NAME']` or, in functions that
   accept overrides, via `param_functions.PCheck` (aliased `pcheck` in most
   modules): `pcheck(params, 'GROUP.NAME', 'localvar', func=func_name,

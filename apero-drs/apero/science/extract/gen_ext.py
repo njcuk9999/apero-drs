@@ -32,6 +32,7 @@ from apero.utils import drs_recipe
 from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.science.calib import gen_calib
+from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science.extract import berv
@@ -134,7 +135,7 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
         lockfile = os.path.basename(filename)
         # start a lock
         lock = drs_lock.Lock(params, lockfile)
-        # -------------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # must check that a pid is set
         if params['PID'] is None:
             raise AperoCodedException(params, '10-005-00006')
@@ -165,8 +166,38 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
         orderprofiles[fiber] = orderp
         orderfiles[fiber] = orderpfilename
         ordertimes[fiber] = orderptime
-    # return order profiles
-    return orderprofiles, orderfiles, ordertimes
+    # Load the shared localisation products from the same LOC_LOCO calibration
+    # that supplied the ORDERP extensions above.
+    locprops = localisation.get_coefficients(
+        params, recipe, header, fiber=fibertypes[0], merge=True,
+        database=calibdbm)
+    locofile = locprops['LOCOFILE']
+    order_map = drs_fits.readfits(params, locofile,
+                                  extname='ORDER_POS_MAP')
+    order_top = drs_fits.readfits(params, locofile, extname='ORDER_TOP')
+    order_bottom = drs_fits.readfits(params, locofile,
+                                     extname='ORDER_BOTTOM')
+    order_mid = drs_fits.readfits(params, locofile, extname='ORDER_MID')
+    range_table = drs_fits.readfits(params, locofile, fmt='fits-table',
+                                    extname='ORDER_RANGE_TABLE')
+    order_ranges = dict()
+    for fiber, first, last in zip(range_table['FIBER'],
+                                  range_table['FIRST'],
+                                  range_table['LAST']):
+        order_ranges[str(fiber)] = (int(first), int(last))
+    # Return one property bag so profiles and their related LOC_LOCO products
+    # stay together at the extraction call site.
+    oprops = dict()
+    oprops['ORDERP'] = orderprofiles
+    oprops['ORDERPFILE'] = orderfiles
+    oprops['ORDERPTIME'] = ordertimes
+    oprops['LOCOFILE'] = locofile
+    oprops['ORDER_MAP'] = np.asarray(order_map, dtype=np.int32)
+    oprops['ORDER_RANGES'] = order_ranges
+    oprops['ORDER_TOP'] = np.asarray(order_top, dtype=float)
+    oprops['ORDER_BOTTOM'] = np.asarray(order_bottom, dtype=float)
+    oprops['ORDER_MID'] = np.asarray(order_mid, dtype=float)
+    return oprops
 
 
 OrderPSReturn = Tuple[Union[DrsFitsFile, None], str, float]
@@ -303,7 +334,8 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
-    allowtypes = pcheck(params, 'CAL.WAVE.FP.DPRLIST', 'fptypes', kwargs, func_name)
+    allowtypes = pcheck(params, 'CAL.WAVE.FP.DPRLIST', 'fptypes',
+                        kwargs, func_name)
 
     allowfibers = pcheck(params, 'CAL.WAVE.FP.FIBER_TYPES', 'fpfibers', kwargs)
     # get dprtype
@@ -371,8 +403,8 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
                      func_name)
     smooth_size = pcheck(params, 'CAL.EXT.S1D_EDGE_SSIZE', 'smooth_size',
                          kwargs, func_name)
-    blazethres = pcheck(params, 'OBJ.TELL.GEN.CUT_BLAZE_NORM', 'blazethres', kwargs,
-                        func_name)
+    blazethres = pcheck(params, 'OBJ.TELL.GEN.CUT_BLAZE_NORM',
+                        'blazethres', kwargs, func_name)
     # -------------------------------------------------------------------------
     # get size from e2ds
     nord, npix = e2ds.shape
@@ -550,13 +582,43 @@ def add_s1d_keys(infile, props):
 # =============================================================================
 # writing and qc functions
 # =============================================================================
-def qc_extraction(params, eprops):
+def _extracted_image_key(eprops: ParamDict) -> str:
+    """
+    Get the primary extracted-image key from an extraction property dict
+
+    :param eprops: ParamDict, extraction property dictionary
+
+    :return: str, extracted-image key to use for image-level checks
+    """
+    if 'E2DS' in eprops:
+        return 'E2DS'
+    if 'E2DSFF' in eprops:
+        return 'E2DSFF'
+    raise KeyError('Extraction properties contain no E2DS/E2DSFF image')
+
+
+def qc_extraction(params, eprops=None, spectra=None):
+    """
+    Check that the extracted spectrum contract contains finite data.
+
+    :param params: ParamDict, APERO constants
+    :param eprops: ParamDict or None, legacy extraction properties
+    :param spectra: tuple or None, spectrum and error arrays
+
+    :return: tuple, QC parameter lists and pass flag
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
+    # Prefer the new spectrum tuple when supplied by the model path.
+    if spectra is not None:
+        image = spectra[0]
+    else:
+        image_key = _extracted_image_key(eprops)
+        image = eprops[image_key]
     # --------------------------------------------------------------
     # if array is completely NaNs it shouldn't pass
-    if np.sum(np.isfinite(eprops['E2DS'])) == 0:
+    if np.sum(np.isfinite(image)) == 0:
         # add failed message to fail message list
         fail_msg.append(textentry('40-016-00008'))
         qc_pass.append(0)
@@ -615,9 +677,11 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     order_table['SNR'] = eprops['SNR']
     order_table['NCOSMIC'] = eprops['N_COSMIC']
     order_table['FLUXVAL'] = eprops['FLUX_VAL']
-    # loop around e2ds frames
+    # loop around available extraction frames
     keys = ['E2DS', 'E2DSFF', 'FLAT', 'BLAZE']
     for key in keys:
+        if key not in eprops:
+            continue
         order_table[f'{key}_MIN'] = mp.nanmin(eprops[key], axis=1)
         order_table[f'{key}_MAX'] = mp.nanmax(eprops[key], axis=1)
         order_table[f'{key}_MED'] = mp.nanmedian(eprops[key], axis=1)
@@ -640,11 +704,11 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # create extraction order table
     order_table = create_order_table(lprops, wprops, eprops)
     # ----------------------------------------------------------------------
-    # Store E2DS in file
+    # Store the single E2DSFF product.
     # ----------------------------------------------------------------------
     # get a new copy of the e2ds file
-    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(params=params,
-                                                   fiber=fiber)
+    e2dsfile = recipe.outputs['E2DSFF_FILE'].newcopy(params=params,
+                                                     fiber=fiber)
     # construct the filename from file instance
     e2dsfile.construct_filename(infile=infile)
     # define header keys for output file
@@ -727,7 +791,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey('KW_EXT_NBO', value=len(eprops['SNR']))
     # ----------------------------------------------------------------------
     # get measured pixel to pixel scatter values
-    mp2p_e2ds = eprops['MP2P_E2DS']
+    mp2p_e2ds = eprops['MP2P_E2DSFF']
     # add the measured snr
     e2dsfile.add_hkey_1d('KW_P2P_SCAT', values=mp2p_e2ds['MP2P'])
     # add the measured band snrs
@@ -777,37 +841,10 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         e2dsfile.add_hkey(keys[it], value=eprops[values[it]])
     # ----------------------------------------------------------------------
     # copy data
-    e2dsfile.data = eprops['E2DS']
+    e2dsfile.data = eprops['E2DSFF']
     # ----------------------------------------------------------------------
-    # log that we are saving rotated image
-    wargs = [e2dsfile.filename]
-    WLOG(params, '', textentry('40-016-00005', args=wargs))
-    # define multi lists
-    data_list, name_list = [order_table], ['ORDER_TABLE']
-    # snapshot of parameters
-    if params['GLOBAL.PSNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    e2dsfile.write_multi(data_list=data_list, name_list=name_list,
-                         block_kind=recipe.out_block_str,
-                         runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(e2dsfile)
-    # ----------------------------------------------------------------------
-    # Store E2DSFF in file
-    # ----------------------------------------------------------------------
-    # get a new copy of the e2dsff file
-    e2dsfffile = recipe.outputs['E2DSFF_FILE'].newcopy(params=params,
-                                                       fiber=fiber)
-    # construct the filename from file instance
-    e2dsfffile.construct_filename(infile=infile)
-    # copy header from e2dsff file
-    e2dsfffile.copy_hdict(e2dsfile)
-    # add infiles to outfile
-    e2dsfffile.infiles = list(hfiles)
-    # add extraction type (does not change for future files)
-    e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # Use the prepared E2DSFF file for the final write.
+    e2dsfffile = e2dsfile
     # ----------------------------------------------------------------------
     # get measured pixel to pixel scatter values
     mp2p_e2dsff = eprops['MP2P_E2DSFF']
@@ -961,11 +998,11 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
                               props, lprops, eprops, sprops, fbprops,
                               qc_params):
     # ----------------------------------------------------------------------
-    # Store E2DS in file
+    # Store the single quicklook E2DSFF product.
     # ----------------------------------------------------------------------
     # get a new copy of the e2ds file
-    e2dsfile = recipe.outputs['Q2DS_FILE'].newcopy(params=params,
-                                                   fiber=fiber)
+    e2dsfile = recipe.outputs['Q2DSFF_FILE'].newcopy(params=params,
+                                                     fiber=fiber)
     # construct the filename from file instance
     e2dsfile.construct_filename(infile=infile)
     # define header keys for output file
@@ -1045,37 +1082,10 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey('KW_LEAK_CORR', value=0)
     # ----------------------------------------------------------------------
     # copy data
-    e2dsfile.data = eprops['E2DS']
+    e2dsfile.data = eprops['E2DSFF']
     # ----------------------------------------------------------------------
-    # log that we are saving rotated image
-    wargs = [e2dsfile.filename]
-    WLOG(params, '', textentry('40-016-00005', args=wargs))
-    # define multi lists
-    data_list, name_list = [], []
-    # snapshot of parameters
-    if params['GLOBAL.PSNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfile)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    e2dsfile.write_multi(data_list=data_list, name_list=name_list,
-                         block_kind=recipe.out_block_str,
-                         runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(e2dsfile)
-    # ----------------------------------------------------------------------
-    # Store E2DSFF in file
-    # ----------------------------------------------------------------------
-    # get a new copy of the e2dsff file
-    e2dsfffile = recipe.outputs['Q2DSFF_FILE'].newcopy(params=params,
-                                                       fiber=fiber)
-    # construct the filename from file instance
-    e2dsfffile.construct_filename(infile=infile)
-    # copy header from e2dsff file
-    e2dsfffile.copy_hdict(e2dsfile)
-    # add infiles to outfile
-    e2dsfffile.infiles = list(hfiles)
-    # add extraction type (does not change for future files)
-    e2dsfffile.add_hkey('KW_EXT_TYPE', value=e2dsfffile.name)
+    # Use the prepared Q2DSFF file for the final write.
+    e2dsfffile = e2dsfile
     # -------------------------------------------------------------------------
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
