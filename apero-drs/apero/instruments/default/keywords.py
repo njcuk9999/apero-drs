@@ -585,6 +585,9 @@ KDict.add('KW_CDBSHAPEDX', key='NULL', dtype=str, source=__NAME__,
 # time of shape dx calibration file used
 KDict.add('KW_CDTSHAPEDX', key='NULL', dtype=str, source=__NAME__,
           description='time of shape dx cal file used in extract')
+# shape-transform spline order used
+KDict.add('KW_C_SPLINE', key='NULL', dtype=str, source=__NAME__,
+          description='shape-transform spline order used in extract')
 # flat calibration file used
 KDict.add('KW_CDBFLAT', key='NULL', dtype=str, source=__NAME__,
           description='flat calibration file used in extract')

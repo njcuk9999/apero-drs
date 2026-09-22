@@ -2109,6 +2109,11 @@ CDict.add('MAKE_BLAZE', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description='Build profile-throughput grids for S1D stitching')
 
+# Shape-transform spline order used by model extraction
+CDict.add('SPLINE_ORDER', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Shape-transform spline order for model extraction')
+
 #  Start order of the extraction in apero_flat if None starts from 0
 CDict.add('START_ORDER', value=None, dtype=int,
           source=__NAME__, group=cgroup,

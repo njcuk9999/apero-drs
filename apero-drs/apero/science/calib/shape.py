@@ -520,8 +520,17 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     return lin_transform_vect, xres, yres
 
 
+def _spline_order_value(order):
+    """Convert an APERO spline-order setting into a scipy order integer."""
+    if order is None:
+        return 2
+    if isinstance(order, str) and order.startswith('spline'):
+        return int(order[6:])
+    return int(order)
+
+
 def ea_transform(params, image, lin_transform_vect=None,
-                 dxmap=None, dymap=None):
+                 dxmap=None, dymap=None, order=None):
     """
     Shifts / transforms image by three different transformations:
 
@@ -545,6 +554,9 @@ def ea_transform(params, image, lin_transform_vect=None,
                                parameters (dx, dy, A, B, C, D)
     :param dxmap: numpy array (2D), the x shift map (same size as image)
     :param dymap: numpy array (2D), the y shift map (same size as image)
+    :param order: int or str or None, scipy spline order.  Strings of the
+                  form ``splineN`` are accepted.  None keeps APERO's legacy
+                  default of order 2.
 
     :type image: np.ndarray
     :type lin_transform_vect: np.ndarray
@@ -572,11 +584,13 @@ def ea_transform(params, image, lin_transform_vect=None,
             eargs = [dymap.shape, image.shape, func_name]
             raise AperoCodedException(params, '00-014-00003', targs=eargs)
     # delegate numerical work to the profile-independent core module
-    return shape_core.ea_transform(image, lin_transform_vect, dxmap, dymap)
+    sorder = _spline_order_value(order)
+    return shape_core.ea_transform(image, lin_transform_vect, dxmap, dymap,
+                                   order=sorder)
 
 
 def ea_transform_reverse(params, image, lin_transform_vect=None,
-                         dxmap=None, dymap=None, niter=6):
+                         dxmap=None, dymap=None, niter=6, order=None):
     """
     Reverse an ``ea_transform`` using the supplied shape calibrations
 
@@ -586,6 +600,9 @@ def ea_transform_reverse(params, image, lin_transform_vect=None,
     :param dxmap: numpy array (2D) or None, x displacement map
     :param dymap: numpy array (2D) or None, y displacement map
     :param niter: int, number of inverse coordinate iterations
+    :param order: int or str or None, scipy spline order.  Strings of the
+                  form ``splineN`` are accepted.  None keeps APERO's legacy
+                  default of order 2.
 
     :return: numpy array (2D), image in the reverse-transform frame
     """
@@ -596,7 +613,7 @@ def ea_transform_reverse(params, image, lin_transform_vect=None,
     WLOG(params, '', textentry('40-014-00041', args=wargs))
     try:
         et_args = [image, lin_transform_vect, dxmap, dymap]
-        et_kwargs = dict(niter=niter)
+        et_kwargs = dict(niter=niter, order=_spline_order_value(order))
         return shape_core.ea_transform_reverse(*et_args, **et_kwargs)
     except ValueError as exc:
         raise AperoCodedException(params, message=str(exc),

@@ -36,16 +36,46 @@ def test_model_background_correction_returns_expected_props(
     assert np.isfinite(mb_props['EFF_RON_FIT'])
 
 
-def test_model_background_correction_converts_model_to_adu(
+def test_model_background_correction_keeps_electron_model_units(
         spirou_params) -> None:
-    """The straight-frame model must be converted from electrons to ADU."""
+    """The straight-frame model should stay in electron units."""
     image = np.full((16, 20), 10.0)
     model = np.full(image.shape, 4.0)
     mb_props = model_background.model_background_correction(
         spirou_params, image, image, model, np.indices(image.shape)[1],
         np.indices(image.shape)[0], gain=2.0, ron_start=8.0,
         bkg_box=(7, 5))
-    assert np.allclose(mb_props['DIFF_STRAIGHT'], 8.0)
+    assert np.allclose(mb_props['DIFF_STRAIGHT'], 6.0)
+
+
+def test_run_all_fiber_model_keeps_zero_point_out_of_background_fit(
+        spirou_params) -> None:
+    """The smooth background should subtract the fiber model, not the zero point."""
+    image = np.zeros((8, 12))
+    profile1 = np.zeros_like(image)
+    profile2 = np.zeros_like(image)
+    profile1[2:5, 2:10] = 1.0
+    profile2[3:6, 1:11] = 1.0
+    image = 4.0 * profile1 + 7.0 * profile2 + 3.0
+    geometry = ParamDict()
+    geometry['INV_XMAP'] = np.tile(np.arange(12.0), (8, 1))
+    geometry['INV_YMAP'] = np.tile(np.arange(8.0)[:, None], (1, 12))
+    geometry['DXMAP_NO_SHAPE'] = np.zeros_like(image)
+    geometry['SHAPEL'] = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
+    geometry['SHAPEX'] = np.zeros_like(image)
+    geometry['SHAPEY'] = np.zeros_like(image)
+    order_map = np.zeros((8, 12), dtype=int)
+    order_map[2:4, :] = 1
+    order_map[4:6, :] = 2
+    order_nearest = np.array(order_map)
+    order_profiles = dict(A=profile1, B=profile2)
+    props = model_background.run_all_fiber_model(
+        spirou_params, image, image, order_profiles, geometry, order_map,
+        order_nearest, {'A': (1, 1), 'B': (2, 2)}, np.array([1]),
+        np.array([7]), np.array([3]), [('A', [[1]]), ('B', [[2]])],
+        'A', 'B', gain=1.0, ron=1.0)
+    assert np.allclose(props['DIFF_STRAIGHT'], image - props['IMAGE_MODEL'],
+                       rtol=1e-2, atol=1e-2)
 
 
 def test_prepare_model_bckgrd_geo_uses_dxmap_no_shape(
@@ -112,12 +142,13 @@ def test_run_all_fiber_model_uses_profiles_and_geometry(spirou_params) -> None:
     order_map = np.zeros((6, 10), dtype=int)
     order_map[1, :] = 1
     order_map[4, :] = 2
+    order_nearest = np.array(order_map)
     order_profiles = dict(A=profile1, B=profile2)
     props = model_background.run_all_fiber_model(
         spirou_params, image, image, order_profiles, geometry, order_map,
-        {'A': (1, 1), 'B': (2, 2)}, np.array([1]), np.array([5]),
-        np.array([3]), [('A', [[1]]), ('B', [[2]])], 'A', 'B',
-        gain=1.0, ron=1.0)
+        order_nearest, {'A': (1, 1), 'B': (2, 2)}, np.array([1]),
+        np.array([5]), np.array([3]), [('A', [[1]]), ('B', [[2]])],
+        'A', 'B', gain=1.0, ron=1.0)
     assert props['FIBER1'] == 'A'
     assert props['FIBER2'] == 'B'
     assert props['IMAGE_MODEL'].shape == image.shape

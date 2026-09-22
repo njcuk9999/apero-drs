@@ -722,6 +722,11 @@ def extract_spectra(image: np.ndarray, error: np.ndarray,
                 polyorder=polyorder, cut=cut, weight_kind=weight_kind,
                 minpts=minpts)
             spec[order_num], espec[order_num] = fit_out
+        # mask out any values with extremely high errors
+        bad = espec > 2 * np.nanpercentile(espec, 95)
+        spec[bad] = np.nan
+        espec[bad] = np.nan
+        # push into output dictionary
         outputs[name] = (spec, espec)
     return outputs
 

@@ -790,6 +790,8 @@ for _lfiber in valid_lfibers:
 del _lfiber
 # Shared trace-label map and per-column order bounds written by apero_loc.
 out_loc_calib.hdulist['ORDER_POS_MAP'] = AperoImageModel('ORDER_POS_MAP')
+out_loc_calib.hdulist['ORDER_NEAREST_MAP'] = AperoImageModel(
+    'ORDER_NEAREST_MAP')
 order_range_model = AperoTableModel('ORDER_RANGE_TABLE')
 order_range_model.add_column('FIBER', description='Fiber group name')
 order_range_model.add_column('FIRST', description='First trace label')

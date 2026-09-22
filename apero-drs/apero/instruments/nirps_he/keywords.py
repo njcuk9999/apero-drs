@@ -543,6 +543,9 @@ KDict.set('KW_CDTSHAPEDY', key='CDTSHAPY', comment='MJDMID of cal SHAPE DX file 
 KDict.set('KW_CDBSHAPEDX', key='CDBSHAPX', comment='The cal SHAPE DX file used')
 # time of shape dx calibration file used
 KDict.set('KW_CDTSHAPEDX', key='CDTSHAPX', comment='MJDMID of cal SHAPE DX file used')
+# shape-transform spline order used
+KDict.set('KW_C_SPLINE', key='CALSPLIN',
+          comment='Shape-transform spline order used')
 # flat calibration file used
 KDict.set('KW_CDBFLAT', key='CDBFLAT', comment='The cal FLAT file used')
 # time of flat calibration file used

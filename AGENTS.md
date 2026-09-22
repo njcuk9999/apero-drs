@@ -65,7 +65,7 @@
   previous code version. Change the code and its callers to the new
   behaviour outright; do not keep the old path "just in case".
 
-## APERO v0.8 tests
+## APERO tests
 
 - Use `apero.dev` for every unit test and response test. It provides the
   default parameters and loads `DRS_UCONFIG` without accessing an APERO
@@ -81,7 +81,7 @@
   PYTHONPATH="apero-ri" python -m pytest -q apero-ri/tests
   ```
 
-## APERO v0.8 constants
+## APERO constants
 
 - Every constant is declared once, in a `CDict.add(...)` call in
   `apero-drs/apero/instruments/default/constants.py`, inside the `cgroup`
@@ -114,6 +114,21 @@
   bin counts), use `dtype=list, dtypei=float` (or `dtypei=int`) in
   `default/constants.py` and a plain Python list (e.g. `value=[16, 16]`) in
   each instrument override; `CDict` does not support raw tuples.
+
+## APERO keywords
+
+- Every new header keyword is declared once in
+  `apero-drs/apero/instruments/default/keywords.py` with `KDict.add(...)`.
+  Give it `key='NULL'`, the correct `dtype`, `source=__NAME__`, and a clear
+  `description` explaining what the keyword records.
+- Each instrument then overrides the FITS card name in its own
+  `apero-drs/apero/instruments/<instrument>/keywords.py` using
+  `KDict.set('KW_NAME', key='CARDNAME', comment='...')`. Add the override to
+  all instruments (`spirou`, `nirps_ha`, `nirps_he`) so the keyword is never
+  left undefined for one instrument.
+- Keep the explanatory comment from the corresponding `KDict.add(...)`
+  definition immediately above every instrument-level `KDict.set(...)`
+  override, matching the constants convention.
 
 ## APERO RI
 

@@ -207,7 +207,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Correction of file
         # ------------------------------------------------------------------
         props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
-                                                  database=calibdbm)
+                                                  database=calibdbm,
+                                                  correctback=False)
 
         # ------------------------------------------------------------------
         # Load and straighten order profiles
@@ -224,10 +225,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # log progress (straightening orderp)
         WLOG(params, 'info', textentry('40-016-00004'))
+        shape_order = params['CAL.EXT.SPLINE_ORDER']
         # straighten image
         image2 = shape.ea_transform(params, image, sprops['SHAPEL'],
                                     dxmap=sprops['SHAPEX'],
-                                    dymap=sprops['SHAPEY'])
+                                    dymap=sprops['SHAPEY'],
+                                    order=shape_order)
         # prepare geometry required by the all-fiber model/background path
         mbgprops = extract.prepare_model_bckgrd_geo(params, image.shape, sprops)
         model_fiber1 = sci_fibers[0]
@@ -236,10 +239,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Main extraction and modeling step
         # ------------------------------------------------------------------
         model_order_map = oprops['ORDER_MAP']
+        model_nearest_map = oprops['ORDER_NEAREST']
         model_groups = pconst.FIBER_SPECTRAL_GROUPS(oprops['ORDER_RANGES'])
         # Fit both fiber profiles together and subtract the model background.
         mpargs = (params, image, image2, orderps, mbgprops,
-              model_order_map, oprops['ORDER_RANGES'],
+              model_order_map, model_nearest_map, oprops['ORDER_RANGES'],
               oprops['ORDER_TOP'], oprops['ORDER_BOTTOM'],
               oprops['ORDER_MID'], model_groups, model_fiber1,
               model_fiber2)

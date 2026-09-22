@@ -1,7 +1,6 @@
 data:
   .rejection_history/rejection_list.jsonl: e205e7ddf0e8189709cd5ce151eb8ad6
   .rejection_history/rejection_list.lock: d41d8cd98f00b204e9800998ecf8427e
-  1776846221_444746_assets.tar (1).gz: 834003efc935f9304bce9c78d0f34993
   README.md: ebac85b292b700fa2b7bf4d31272345e
   apero-assets.txt: f827cf462f62848df37c5e1e94a4da74
   astrometrics/.history/SKY.jsonl: 8d8d3ce835aaf0dda60decf3868990f4
@@ -3922,18 +3921,10 @@ data:
   spirou/reset/calibdb/REF/REF_LEAK_AB.fits: d2a9a96b32f02b59f5cc62b55a8f2037
   spirou/reset/calibdb/REF/REF_LEAK_B.fits: dccb455acd0cb0758c95cfe046a0810d
   spirou/reset/calibdb/REF/REF_LEAK_C.fits: 9b48d7e509f885f11fa2729ce4f406f6
-  spirou/reset/calibdb/REF/REF_WAVE_2400416c_A.fits: 6a6e4b0f9727f0b294996b677174f354
-  spirou/reset/calibdb/REF/REF_WAVE_2400416c_AB.fits: debfaa57b0605120ffd80da50045f53b
-  spirou/reset/calibdb/REF/REF_WAVE_2400416c_B.fits: d5cc3ffa4315c025500dbf30a4b45e39
-  spirou/reset/calibdb/REF/REF_WAVE_2400416c_C.fits: 8e28afbfd3078a653910394ee4201d85
-  spirou/reset/calibdb/REF_LEAK_A.fits: 47c2f1df4fad56341caa9f400264b50d
-  spirou/reset/calibdb/REF_LEAK_AB.fits: d2a9a96b32f02b59f5cc62b55a8f2037
-  spirou/reset/calibdb/REF_LEAK_B.fits: dccb455acd0cb0758c95cfe046a0810d
-  spirou/reset/calibdb/REF_LEAK_C.fits: 9b48d7e509f885f11fa2729ce4f406f6
-  spirou/reset/calibdb/REF_WAVE_2400416c_A.fits: 6a6e4b0f9727f0b294996b677174f354
-  spirou/reset/calibdb/REF_WAVE_2400416c_AB.fits: debfaa57b0605120ffd80da50045f53b
-  spirou/reset/calibdb/REF_WAVE_2400416c_B.fits: d5cc3ffa4315c025500dbf30a4b45e39
-  spirou/reset/calibdb/REF_WAVE_2400416c_C.fits: 8e28afbfd3078a653910394ee4201d85
+  spirou/reset/calibdb/REF/REF_WAVE_2400416c_A.fits: 4f868de48b2eb8fe38cce9364d7b82dc
+  spirou/reset/calibdb/REF/REF_WAVE_2400416c_AB.fits: d89bdcb55acf4366af2ee8c98e286fff
+  spirou/reset/calibdb/REF/REF_WAVE_2400416c_B.fits: 23b2fdd8969f9cbaef57ef3b55e9b07e
+  spirou/reset/calibdb/REF/REF_WAVE_2400416c_C.fits: ec9387f032b367779190504913dfd6fe
   spirou/reset/calibdb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   spirou/reset/runs/1783609452_405263_assets.tar.gzllfrccqq.tmp: 523e3f8da1cf8d110378dd2f441a9d10
   spirou/reset/runs/README.md: d67e72e286f03b8460c7d6deb4b50c9d
@@ -3974,10 +3965,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2026-09-10 15:07:38.885'
+  humantime: '2026-09-22 18:22:55.015'
   servers:
   - http://206.12.93.77/ari/data/apero/assets/
-  tarfile: 1789052858_885347_assets.tar.gz
-  unixtime: 1789052858.885347
+  tarfile: 1790101375_015397_assets.tar.gz
+  unixtime: 1790101375.015397
   vdate: '2026-05-06'
   version: 0.9.0.dev3+g85a57c200.d20260506

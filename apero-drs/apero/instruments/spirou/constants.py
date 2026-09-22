@@ -947,6 +947,8 @@ CDict.set('SAVGOL_CUT', value=3.0, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_MINPTS', value=3, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_WEIGHT', value='gauss', source=__NAME__, group=cgroup)
 CDict.set('MAKE_BLAZE', value=True, source=__NAME__, group=cgroup)
+# Shape-transform spline order used by model extraction
+CDict.set('SPLINE_ORDER', value='spline3', source=__NAME__, group=cgroup)
 
 # Start order of the extraction in apero_flat if None starts from 0
 CDict.set('START_ORDER', value=None, source=__NAME__, group=cgroup)

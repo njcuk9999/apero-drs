@@ -1470,6 +1470,7 @@ def write_localisation_files_multi(
         props: Dict[str, ParamDict], order_profiles: Dict[str, np.ndarray],
         lprops: Dict[str, ParamDict], qc_params: Dict[str, list],
         order_pos_map: Optional[np.ndarray] = None,
+        order_nearest_map: Optional[np.ndarray] = None,
         order_range: Optional[Dict[str, Tuple[int, int]]] = None,
         order_top: Optional[np.ndarray] = None,
         order_bottom: Optional[np.ndarray] = None,
@@ -1483,8 +1484,8 @@ def write_localisation_files_multi(
     ORDERP_{FIBER}, LOC_CTR_{FIBER} (+ LOC_CTR_TABLE_{FIBER}),
     LOC_WID_{FIBER} (+ LOC_WID_TABLE_{FIBER}) and LOC_SUP_{FIBER}
 
-    If order_pos_map/order_range/order_top/order_bottom/order_mid are given,
-    five shared extensions are added, including the existing
+    If order_pos_map/order_nearest_map/order_range/order_top/order_bottom/
+    order_mid are given, shared extensions are added, including the existing
     ORDER_RANGE_TABLE and the ribbon-position images.
 
     :param params: ParamDict, parameter dictionary of constants
@@ -1502,6 +1503,8 @@ def write_localisation_files_multi(
     :param qc_params: dict, the quality control lists, keyed by fiber group
     :param order_pos_map: numpy array (2D) or None, the trace label owning
                           each pixel, as returned by build_order_position_map
+    :param order_nearest_map: numpy array (2D) or None, the nearest trace
+                              label to each pixel, with no width cut
     :param order_range: dict or None, fiber group to trace-label range
     :param order_top: numpy array or None, per-order top rows across columns
     :param order_bottom: numpy array or None, per-order bottom rows across
@@ -1638,7 +1641,8 @@ def write_localisation_files_multi(
     # ------------------------------------------------------------------
     # order position map, trace ranges, and ribbon positions
     # ------------------------------------------------------------------
-    if (order_pos_map is not None and order_range is not None
+    if (order_pos_map is not None and order_nearest_map is not None
+            and order_range is not None
             and order_top is not None
             and order_bottom is not None and order_mid is not None):
         # materialise the primary hdu header (built from copy_original_keys
@@ -1647,6 +1651,10 @@ def write_localisation_files_multi(
         data_list.append(order_pos_map)
         header_list.append(locofile.header.copy())
         name_list.append('ORDER_POS_MAP')
+        datatype_list.append('image')
+        data_list.append(order_nearest_map)
+        header_list.append(locofile.header.copy())
+        name_list.append('ORDER_NEAREST_MAP')
         datatype_list.append('image')
         range_fibers = sorted(order_range.keys())
         range_values = [range_fibers,

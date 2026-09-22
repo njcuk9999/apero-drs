@@ -174,6 +174,8 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
     locofile = locprops['LOCOFILE']
     order_map = drs_fits.readfits(params, locofile,
                                   extname='ORDER_POS_MAP')
+    order_nearest = drs_fits.readfits(params, locofile,
+                                      extname='ORDER_NEAREST_MAP')
     order_top = drs_fits.readfits(params, locofile, extname='ORDER_TOP')
     order_bottom = drs_fits.readfits(params, locofile,
                                      extname='ORDER_BOTTOM')
@@ -193,6 +195,7 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
     oprops['ORDERPTIME'] = ordertimes
     oprops['LOCOFILE'] = locofile
     oprops['ORDER_MAP'] = np.asarray(order_map, dtype=np.int32)
+    oprops['ORDER_NEAREST'] = np.asarray(order_nearest, dtype=np.int32)
     oprops['ORDER_RANGES'] = order_ranges
     oprops['ORDER_TOP'] = np.asarray(order_top, dtype=float)
     oprops['ORDER_BOTTOM'] = np.asarray(order_bottom, dtype=float)
@@ -235,6 +238,7 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
     orderp = None
     orderpfilename = 'Unknown'
     orderptime = np.nan
+    shape_order = params['CAL.EXT.SPLINE_ORDER']
     # check if temporary file exists
     if orderpsfile.file_exists():
         # we need to wait (as file may exist but still be writing to disk
@@ -255,8 +259,11 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
             orderpfilename = orderpsfile.filename
             # time is the MJDMID of the order profile
             orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
-            # mark orderp as read
-            orderp_read = True
+            cached_order = orderpsfile.header.get('KW_C_SPLINE', 'None')
+            if str(cached_order) != str(shape_order):
+                orderp_read = False
+            else:
+                orderp_read = True
         except Exception as e:
             # args for warning (from error thrown)
             wargs = [orderpsfile.filename, type(e), str(e), func_name]
@@ -292,7 +299,8 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
         # straighten orders
         orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
                                     dxmap=sprops['SHAPEX'],
-                                    dymap=sprops['SHAPEY'])
+                                    dymap=sprops['SHAPEY'],
+                                    order=shape_order)
         # copy full header from order profile
         orderpsfile.copy_header(header=orderhdr)
         # add core values (that should be in all headers)
@@ -306,6 +314,7 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
         orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
         orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
         orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
+        orderpsfile.add_hkey('KW_C_SPLINE', value=str(shape_order))
         # push into orderpsfile
         orderpsfile.data = orderp
         # log progress (saving to file)

@@ -106,10 +106,10 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
     subtract it in the unshaped science frame
 
     :param params: ParamDict, APERO constants
-    :param image_noshape: numpy array (2D), science-frame image in ADU
-    :param image_straight: numpy array (2D), straightened image in ADU
+    :param image_noshape: numpy array (2D), science-frame image in electrons
+    :param image_straight: numpy array (2D), straightened image in electrons
     :param model_straight: numpy array (2D), all-fiber model in straight
-                           frame, in ADU
+                           frame, in electrons
     :param inverse_x: numpy array (2D), straightened x coordinate read by
                       each science-frame pixel
     :param inverse_y: numpy array (2D), straightened y coordinate read by
@@ -154,10 +154,9 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
     mask_nsig1_value = 10.0 if mask_nsig1 is None else float(mask_nsig1)
     mask_nsig2_value = 3.0 if mask_nsig2 is None else float(mask_nsig2)
     # ----------------------------------------------------------------------
-    # Convert the fitted electron model back to ADU before subtraction.
     # Remove the fitted model first; what remains is the smooth additive light
     #   that should be sampled on the coarse background grid.
-    diff_straight = image_straight - model_straight / gain
+    diff_straight = image_straight - model_straight
     xargs = [diff_straight]
     xkwargs = dict(size=bkg_box, stride_frac=bkg_stride_frac, coarse=True)
     xout = extract_model_core.background_model(*xargs, **xkwargs)
@@ -170,7 +169,7 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
     bkg_noshape, bkgerr_noshape = xout
     # ----------------------------------------------------------------------
     # estimate readout noise and mask deviant science-frame residuals
-    image_noshape_e = image_noshape * gain
+    image_noshape_e = np.asarray(image_noshape, dtype=float)
     model_noshape_array = (np.zeros_like(image_noshape_e)
                            if model_noshape is None
                            else np.asarray(model_noshape, dtype=float))
@@ -184,7 +183,7 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
     else:
         ron = ron_start_value
     with np.errstate(invalid='ignore'):
-        err_noshape = np.sqrt(np.abs(image_noshape_e) + ron ** 2) / gain
+        err_noshape = np.sqrt(np.abs(image_noshape_e) + ron ** 2)
         err_noshape = np.sqrt(err_noshape ** 2
                               + np.nan_to_num(bkgerr_noshape) ** 2)
         nsig_noshape = residual_noshape / np.sqrt(
@@ -200,7 +199,7 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
         ron_between = np.nan
     else:
         ron_between = extract_model_core.ron_between_orders(
-            image_noshape_e, bkg_noshape * gain, order_map,
+            image_noshape_e, bkg_noshape, order_map,
             lag=ron_lag_value)
     # ----------------------------------------------------------------------
     WLOG(params, '', 'Model background correction complete')
@@ -257,7 +256,7 @@ def extract_all_fibers(params: ParamDict, image_straight: np.ndarray,
     trim_keep = params['CAL.EXT.TRIM_KEEP']
     n_iter = params['CAL.EXT.IRLS_ITER']
     fit_nu = params['CAL.EXT.FIT_NU']
-    image_e = np.asarray(image_straight, dtype=float) * gain
+    image_e = np.asarray(image_straight, dtype=float)
     profile1 = np.asarray(profile1, dtype=float)
     profile2 = np.asarray(profile2, dtype=float)
     xargs = [image_e, profile1, profile2, row1, row2]
@@ -284,11 +283,19 @@ def extract_all_fibers(params: ParamDict, image_straight: np.ndarray,
     return props
 
 
+def _spline_order_value(order: object) -> int:
+    """Convert a spline-order constant into a scipy order integer."""
+    if isinstance(order, str) and order.startswith('spline'):
+        return int(order[6:])
+    return int(order)
+
+
 def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
                         image_straight: np.ndarray,
                         order_profiles: dict,
                         geometry: ParamDict,
                         order_map: Optional[np.ndarray],
+                        order_nearest: Optional[np.ndarray],
                         order_ranges: dict,
                         order_top_pos: np.ndarray,
                         order_bottom_pos: np.ndarray,
@@ -310,6 +317,7 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     :param order_mid_pos: numpy array, midpoint row of each straightened ribbon
     :param geometry: ParamDict, inverse shape geometry products
     :param order_map: numpy array or None, localisation order-label map
+    :param order_nearest: numpy array or None, nearest trace-label map
     :param order_ranges: dict, fiber trace-label ranges from LOC_LOCO
     :param spectral_groups: list, instrument-owned extraction groupings
     :param fiber1: str, first fiber-set name
@@ -321,6 +329,8 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     :return: ParamDict, model-fit and background-subtraction products
     """
     func_name = __NAME__ + '.run_all_fiber_model()'
+    shape_order = params['CAL.EXT.SPLINE_ORDER']
+    spline_order = _spline_order_value(shape_order)
     # Read the two straightened profiles that are fitted simultaneously.
     profile1 = np.asarray(order_profiles[fiber1], dtype=float)
     profile2 = np.asarray(order_profiles[fiber2], dtype=float)
@@ -331,51 +341,70 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     #   the background and model products that follow.
     if robust is None:
         robust = params['CAL.EXT.FIT_ROBUST']
-    fit_props = extract_all_fibers(params, image_straight, profile1,
-                                   profile2, row1, row2, gain=gain, ron=ron,
-                                   robust=robust, products=True, extras=True)
     # Rebuild the fitted fiber and zero-point model in the science frame.
     profiles_noshape = dict()
     # Rebuild the order profiles in the science frame so the model can be
     #   projected back to the detector geometry for the smooth background.
     for fiber, profile in order_profiles.items():
         profiles_noshape[fiber] = shape_core.ea_transform_reverse(
-            profile, geometry['SHAPEL'], geometry['SHAPEX'], geometry['SHAPEY'])
+            profile, geometry['SHAPEL'], geometry['SHAPEX'], geometry['SHAPEY'],
+            order=spline_order)
     dxmap = np.asarray(geometry['DXMAP_NO_SHAPE'], dtype=float)
     xmap = np.arange(dxmap.shape[1], dtype=float)[None, :] - dxmap
+    fit_props = extract_all_fibers(params, image_straight, profile1,
+                                   profile2, row1, row2, gain=gain, ron=ron,
+                                   robust=robust, products=True, extras=True)
+    if params['CAL.EXT.FIT_RON']:
+        fiber_model, zero_model = extract_model_core.model_in_science(
+            fit_props['FLUX1'], fit_props['FLUX2'], fit_props['ZEROPOINT'],
+            order_nearest, xmap, profiles_noshape, order_ranges,
+            fibers=(fiber1, fiber2))
+        full_model = fiber_model + zero_model
+        image_noshape_e = np.asarray(image_noshape, dtype=float)
+        ron_fit = extract_model_core.fit_ron(
+            image_noshape_e - full_model, full_model,
+            ron_start=fit_props['RON'], stride=params['CAL.EXT.RON_STRIDE'])
+        fit_props = extract_all_fibers(
+            params, image_straight, profile1, profile2, row1, row2,
+            gain=gain, ron=ron_fit, robust=robust, products=True,
+            extras=True)
     fiber_model, zero_model = extract_model_core.model_in_science(
         fit_props['FLUX1'], fit_props['FLUX2'], fit_props['ZEROPOINT'],
-        order_map, xmap, profiles_noshape, order_ranges,
+        order_nearest, xmap, profiles_noshape, order_ranges,
         fibers=(fiber1, fiber2))
     full_model = fiber_model + zero_model
-    # Use the fitted straight-frame model to estimate smooth background light.
+    # Match the original prototype: estimate the smooth background after
+    #   subtracting the paired-fiber model while keeping the zero-point term in
+    #   the fit diagnostics and the science-frame residuals.
     bkargs = [params, image_noshape, image_straight,
-              fit_props['IMAGE_MODEL'] + fit_props['ZERO_IMAGE'],
+              fit_props['IMAGE_MODEL'],
               geometry['INV_XMAP'], geometry['INV_YMAP']]
-    bkkwargs = dict(order_map=order_map, model_noshape=full_model,
+    bkkwargs = dict(order_map=order_map, model_noshape=fiber_model,
                     gain=gain, ron_start=fit_props['RON'],
-                    fit_ron=params['CAL.EXT.FIT_RON'])
+                    fit_ron=False)
     bkg_props = model_background_correction(*bkargs, **bkkwargs)
     # Extract each configured fiber grouping from the corrected science frame.
     corrected = bkg_props['SCI_BKGSUB']
     corrected_err = bkg_props['SCI_BKGSUB_ERR']
     spectrum_step = params['CAL.EXT.SAVGOL_STEP']
     xgrid = np.arange(0.0, corrected.shape[1], spectrum_step)
-    spectrum_kwargs = dict(window=params['CAL.EXT.SAVGOL_WINDOW'],
-                           polyorder=params['CAL.EXT.SAVGOL_POLYORDER'],
-                           cut=params['CAL.EXT.SAVGOL_CUT'],
-                           minpts=params['CAL.EXT.SAVGOL_MINPTS'],
-                           weight_kind=params['CAL.EXT.SAVGOL_WEIGHT'])
-    blaze_kwargs = dict(window=spectrum_kwargs['window'],
-                        cut=spectrum_kwargs['cut'],
-                        weight_kind=spectrum_kwargs['weight_kind'])
-    spectra = extract_model_core.extract_spectra(
-        corrected, corrected_err, order_map, xmap, profiles_noshape,
-        order_ranges, xgrid, spectral_groups, **spectrum_kwargs)
+
+    spec_args = [corrected, corrected_err, order_map, xmap,
+                 profiles_noshape, order_ranges, xgrid, spectral_groups]
+    spec_kwargs = dict(window=params['CAL.EXT.SAVGOL_WINDOW'],
+                       polyorder=params['CAL.EXT.SAVGOL_POLYORDER'],
+                       cut=params['CAL.EXT.SAVGOL_CUT'],
+                       minpts=params['CAL.EXT.SAVGOL_MINPTS'],
+                       weight_kind=params['CAL.EXT.SAVGOL_WEIGHT'])
+    spectra = extract_model_core.extract_spectra(*spec_args, **spec_kwargs)
+
     if params['CAL.EXT.MAKE_BLAZE']:
-        blaze = extract_model_core.extract_blaze(
-            order_map, xmap, profiles_noshape, order_ranges, xgrid,
-            spectral_groups, **blaze_kwargs)
+        blaze_args = [order_map, xmap, profiles_noshape, order_ranges,
+                      xgrid, spectral_groups]
+        blaze_kwargs = dict(window=spec_kwargs['window'],
+                            cut=spec_kwargs['cut'],
+                            weight_kind=spec_kwargs['weight_kind'])
+        blaze = extract_model_core.extract_blaze(*blaze_args, **blaze_kwargs)
     else:
         blaze = dict()
         for name, spectrum in spectra.items():
