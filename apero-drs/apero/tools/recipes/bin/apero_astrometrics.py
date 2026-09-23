@@ -15,7 +15,7 @@ import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_startup
-from apero.tools.module.database import drs_astrometrics
+from apero.tools.module.database import drs_astro_wrap
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
 
@@ -84,7 +84,7 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # get the filename parameter (and modify inputs if required)
-    params = drs_astrometrics.identify_from_file(params)
+    params = drs_astro_wrap.identify_from_file(params)
     # get the raw objects
     rawobjs = params['INPUTS']['OBJECTS']
     # get the overwrite parameter
@@ -92,20 +92,20 @@ def __main__(recipe, params):
     # get the check parameter
     check = params['INPUTS']['CHECK']
     if check:
-        drs_astrometrics.check_database(params, recipe.shortname)
+        drs_astro_wrap.check_database(params, recipe.shortname)
         return locals()
     # ----------------------------------------------------------------------
     # step 1: Is object in database?
     # ----------------------------------------------------------------------
     # query local object database
-    unfound_objs, found_objs = drs_astrometrics.query_database(params,
-                                                               recipe.shortname,
-                                                               rawobjs,
-                                                               overwrite)
+    unfound_objs, found_objs = drs_astro_wrap.query_database(params,
+                                                             recipe.shortname,
+                                                             rawobjs,
+                                                             overwrite)
     # stop here if all objects found
     if len(found_objs) > 0:
         # check that object doesn't currently have problems
-        drs_astrometrics.check_object(params, recipe, found_objs)
+        drs_astro_wrap.check_object(params, recipe, found_objs)
     # if we have no unfound object stop here
     if len(unfound_objs) == 0:
         msg = 'All objects found in database'
@@ -134,15 +134,15 @@ def __main__(recipe, params):
             continue
         # ---------------------------------------------------------------------
         # search in simbad for objects
-        astro_objs, reason = drs_astrometrics.query_simbad(params,
-                                                           rawobjname=objname)
+        astro_objs, reason = drs_astro_wrap.query_simbad(params,
+                                                         rawobjname=objname)
         # ---------------------------------------------------------------------
         # deal with 1 object
         if len(astro_objs) == 1:
             # get first object
             astro_obj = astro_objs[0]
             # ask user about object
-            aout = drs_astrometrics.ask_user(params, recipe, astro_obj)
+            aout = drs_astro_wrap.ask_user(params, recipe, astro_obj)
             astro_obj, add_to_list = aout
             # finally add to list
             if add_to_list:
@@ -152,12 +152,12 @@ def __main__(recipe, params):
         # if we cannot find in simbad try to look elsewhere
         if len(astro_objs) == 0 and 'proper motion catalog' not in reason:
             # try to look up object elsewhere
-            astro_obj, reason1 = drs_astrometrics.lookup(params, objname)
+            astro_obj, reason1 = drs_astro_wrap.lookup(params, objname)
             reason += reason1
             # if astro_obj is not None we found it elsewhere
             if astro_obj is not None:
                 # ask user about object
-                aout = drs_astrometrics.ask_user(params, recipe, astro_obj)
+                aout = drs_astro_wrap.ask_user(params, recipe, astro_obj)
                 astro_obj, add_to_list = aout
                 # finally add to list
                 if add_to_list:
@@ -202,7 +202,7 @@ def __main__(recipe, params):
         WLOG(params, 'info', 'Updating pending-list online database')
         WLOG(params, 'info', params['LOG.HEADER'])
         # add all objects in add list to google-sheet
-        drs_astrometrics.add_obj_to_sheet(params, add_objs)
+        drs_astro_wrap.add_obj_to_sheet(params, add_objs)
         # log progress
         WLOG(params, '', textentry('40-503-00039'))
         # update database

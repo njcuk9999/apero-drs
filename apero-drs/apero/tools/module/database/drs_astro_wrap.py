@@ -272,22 +272,30 @@ def identify_from_file(params: ParamDict) -> ParamDict:
            '\n\n Note "NAME" should be added as an alias later!')
     WLOG(params, '', msg.format(fileoption, rawobjname, ra, dec))
     # build SkyCoord and query SIMBAD region
+    # astroquery >= 0.4.8 uses 'H'/'V' field names and returns lowercase
+    # column names ('main_id', 'H', 'V') instead of the legacy uppercase
+    # ('MAIN_ID', 'FLUX_H', 'FLUX_V')
     coord = SkyCoord(ra, dec, unit='deg')
     with warnings.catch_warnings(record=True):
-        Simbad.add_votable_fields('flux(H)', 'flux(V)')
-        result = Simbad.query_region(coord, radius='0d1m0s')
+        _sim = Simbad()
+        _sim.add_votable_fields('H', 'V')
+        result = _sim.query_region(coord, radius='0d1m0s')
+    # determine column names (new lowercase vs old uppercase layout)
+    col_id = 'main_id' if 'main_id' in result.colnames else 'MAIN_ID'
+    col_h = 'H' if 'H' in result.colnames else 'FLUX_H'
+    col_v = 'V' if 'V' in result.colnames else 'FLUX_V'
     # mask any missing magnitudes for sorting
-    if 'FLUX_H' in result.colnames:
-        h_mask = result['FLUX_H'].mask
-        result['FLUX_H'][h_mask] = 99
-    if 'FLUX_V' in result.colnames:
-        v_mask = result['FLUX_V'].mask
-        result['FLUX_V'][v_mask] = 99
+    if col_h in result.colnames and hasattr(result[col_h], 'mask'):
+        h_mask = result[col_h].mask
+        result[col_h][h_mask] = 99
+    if col_v in result.colnames and hasattr(result[col_v], 'mask'):
+        v_mask = result[col_v].mask
+        result[col_v][v_mask] = 99
     # sort and keep brightest 10 by H
-    sortmask = np.argsort(result['FLUX_H'])
-    names = result['MAIN_ID'][sortmask][:10]
-    hmags = result['FLUX_H'][sortmask][:10]
-    vmags = result['FLUX_V'][sortmask][:10]
+    sortmask = np.argsort(result[col_h])
+    names = result[col_id][sortmask][:10]
+    hmags = result[col_h][sortmask][:10]
+    vmags = result[col_v][sortmask][:10]
     options = list(np.arange(1, len(names) + 1).astype(int))
     max_name_len = max(len(name) for name in names)
     # build option labels
