@@ -995,7 +995,7 @@ def query_simbad(params: ParamDict, rawobjname: str,
         Simbad.reset_votable_fields()
         # add ids column
         for simbad_column in SIMBAD_COLUMNS:
-            Simbad.add_votable_fields(simbad_column)
+            _add_simbad_votable_field(params, simbad_column)
         # 'coordinates' is not a valid field in astroquery>=0.4.7;
         # RA/DEC are returned in degrees by default after reset_votable_fields
         try:
@@ -1304,6 +1304,31 @@ def _check_objname(params: ParamDict, bad_objs: Dict[str, List[str]],
     return bad_objs
 
 
+def _add_simbad_votable_field(params: ParamDict, simbad_column: str):
+    """
+    Add a SIMBAD votable field with backward compatibility for old syntax.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param simbad_column: str, the SIMBAD column to add
+
+    :return None, adds the votable field to Simbad
+    """
+    column = simbad_column.strip()
+    # astroquery>=0.4.7 rejects field arguments (e.g. coo(d)); drop them safely.
+    if '(' in column and column.endswith(')'):
+        base_column = column.split('(', 1)[0].strip()
+        if base_column.lower() in ['coo', 'coordinates']:
+            WLOG(params, 'warning',
+                 f'Skipping deprecated SIMBAD field "{column}"; '
+                 'RA/DEC are already returned in degrees (ICRS).')
+            return
+        WLOG(params, 'warning',
+             f'Converting deprecated SIMBAD field "{column}" '
+             f'to "{base_column}".')
+        column = base_column
+    Simbad.add_votable_fields(column)
+
+
 def _check_crossmatch(params: ParamDict, bad_objs: Dict[str, List[str]],
                       objname: str, row: int, skycoords: SkyCoord,
                       atable: pd.DataFrame) -> Dict[str, List[str]]:
@@ -1390,8 +1415,10 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     # Query Simbad for H and V magnitudes in a small region around the coordinates
     # get results
     with warnings.catch_warnings(record=True) as _:
+        # reset avoids carrying fields from previous SIMBAD calls
+        Simbad.reset_votable_fields()
         # add just H and V band mags
-        Simbad.add_votable_fields('allfluxes')
+        _add_simbad_votable_field(params, 'allfluxes')
         # query region around coordinate
         result = Simbad.query_region(coord, radius='0d1m0s')
 
