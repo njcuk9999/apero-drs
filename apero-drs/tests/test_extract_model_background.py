@@ -168,8 +168,8 @@ def test_spectra_to_eprops_adapts_new_spectrum_contract(spirou_params) -> None:
     model_props['RON'] = 2.0
     eprops = model_background.spectra_to_eprops(
         spirou_params, model_props, 'A', nframes=1)
-    for key in ('E2DS', 'E2DSFF', 'E2DSLL', 'E2DSCC', 'SNR', 'FLAT',
-                'BLAZE', 'EFF_RON', 'E2DS_ERROR'):
+    for key in ('E2DS', 'E2DSFF', 'SNR', 'FLAT', 'BLAZE',
+                'EFF_RON', 'E2DS_ERROR'):
         assert key in eprops
     assert eprops['E2DS'].shape == (2, 5)
     assert np.allclose(eprops['E2DSFF'], 1.0)

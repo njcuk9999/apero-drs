@@ -102,7 +102,6 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # ----------------------------------------------------------------------
     # storage for all orders
     e2ds = np.zeros([nbo, dim2]) * np.nan
-    e2dsll, e2dscc = [], []
     cpt = np.repeat([np.nan], nbo)
     snr = np.repeat([np.nan], nbo)
     fluxval = np.repeat([np.nan], nbo)
@@ -114,8 +113,6 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
         if order_num not in valid_orders:
             # set all values to NaN
             e2dsi = np.repeat([np.nan], dim2)
-            e2dslli = np.zeros((int(range1+range2), dim2)) * np.nan
-            e2dscci = np.zeros((int(range1+range2), dim2)) * np.nan
             cpti = np.nan
             snri = np.nan
             fluxi = np.repeat([np.nan], dim2)
@@ -130,9 +127,8 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # get the coefficients for this order
             opos = pos[order_num]
             # extract 1D for this order
-            eout = extraction(simage, orderp, opos, range1, range2,
-                              cosmic_sigcut)
-            e2dsi, e2dslli, cpti, e2dscci = eout
+            e2dsi, _, cpti, _ = extraction(simage, orderp, opos, range1, range2,
+                                           cosmic_sigcut)
             # --------------------------------------------------------------
             # calculate the signal to noise ratio
             snri, fluxi = calculate_snr(e2dsi, blaze_size, range1, range2,
@@ -160,8 +156,6 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
         # ------------------------------------------------------------------
         # append to arrays
         e2ds[order_num] = e2dsi
-        e2dsll.append(e2dslli)
-        e2dscc.append(e2dscci)
         cpt[order_num] = cpti
         snr[order_num] = snri
         fluxval[order_num] = fluxval_i
@@ -170,8 +164,6 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # store extraction properties in parameter dictionary
     props = ParamDict()
     props['E2DS'] = e2ds
-    props['E2DSLL'] = np.vstack(e2dsll)
-    props['E2DSCC'] = np.vstack(e2dscc)
     props['SNR'] = snr
     props['N_COSMIC'] = cpt
     props['FLUX_VAL'] = fluxval
@@ -192,7 +184,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['SAT_QC'] = qc_ext_flux_max
     props['SAT_LEVEL'] = sat_level
     # add source
-    keys = ['E2DS', 'E2DSLL', 'E2DSCC', 'SNR', 'N_COSMIC', 'FLUX_VAL', 'FIBER',
+    keys = ['E2DS', 'SNR', 'N_COSMIC', 'FLUX_VAL', 'FIBER',
             'START_ORDER', 'END_ORDER', 'CAL.EXT.RANGE1', 'CAL.EXT.RANGE2', 'SKIP_ORDERS',
             'GAIN', 'SIGDET', 'EFF_RON', 'EFF_GAIN', 'COSMIC', 'COSMIC_SIGCUT',
             'COSMIC_THRESHOLD', 'SAT_QC', 'SAT_LEVEL']

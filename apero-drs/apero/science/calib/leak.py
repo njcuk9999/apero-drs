@@ -544,6 +544,10 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
                              override=high_percentile)
     bad_ratio = pcheck(params, 'CAL.LEAK.BAD_RATIO_OFFSET', func=func_name,
                        override=bad_ratio)
+    # print progress
+    msg = 'Correcting leakage for fiber "{0}" using reference fiber'
+    margs = [fiber]
+    WLOG(params, '', msg.format(*margs))
     # group bounding percentiles
     bpercents = [low_percentile, high_percentile]
     # get size of reference image

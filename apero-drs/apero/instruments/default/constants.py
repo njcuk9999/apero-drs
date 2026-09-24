@@ -5107,15 +5107,6 @@ CDict.add('BCKGRD_FILE', value=False,
                       'file (large 0.5 GB per file) one '
                       'of these per extraction (lots)')
 
-# Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
-#   one of these per fiber (lots)
-CDict.add('E2DSLL_FILE', value=False,
-          dtype=bool, source=__NAME__,
-          user=True, active=False, group=cgroup,
-          description='Whether to save the E2DSLL file '
-                      '(around 0.05 to 0.1 GB per file) '
-                      'one of these per fiber (lots)')
-
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
 CDict.add('SHAPE_FILES', value=False,

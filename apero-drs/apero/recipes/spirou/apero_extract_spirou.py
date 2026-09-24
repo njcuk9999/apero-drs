@@ -265,7 +265,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             # Leak correction: remove reference-fiber contamination
             # ----------------------------------------------------------------
-            WLOG(params, 'info', textentry('40-016-00011'))
             lkargs = [params, recipe, eprops['E2DS'],
                       ref_e2ds, infile, fiber]
             lkkwargs = dict(database=calibdbm)
@@ -366,7 +365,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 resp_data = flat_response.get(fiber)
                 if resp_data is not None:
                     flat_blaze.write_flat_response(
-                        params, recipe, infile, resp_data, fiber)
+                        params, recipe, e2dsfile, resp_data, fiber)
             # ----------------------------------------------------------------
             # FP reference lines (ref_fplines returns None for quicklook/flat)
             # ----------------------------------------------------------------

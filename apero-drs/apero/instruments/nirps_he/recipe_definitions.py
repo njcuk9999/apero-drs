@@ -533,16 +533,15 @@ apero_flat.recipe_kind = 'calib-night'
 apero_flat.calib_required = True
 apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
                        BLAZE_FILE=files.out_ff_blaze,
-                       E2DSLL_FILE=files.out_ext_e2dsll,
                        ORDERP_SFILE=files.out_orderp_straight,
                        DEBUG_BACK=files.debug_back,
+                       FLAT_RESPONSE_FILE=files.out_flat_response,
                        FLAT_E2DS_FILE=files.out_ext_e2dsff)
 flat_dict = dict()
 flat_dict['fibers'] = sci_fibers + cal_fibers
 flat_dict['ARG'] = dict(zip(flat_dict['fibers'],
                             ['fiber'] * len(flat_dict['fibers'])))
 apero_flat.set_output_data(FLAT_FILE=flat_dict, BLAZE_FILE=flat_dict,
-                           E2DSLL_FILE=flat_dict,
                            FLAT_E2DS_FILE=flat_dict)
 apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                            'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
@@ -641,7 +640,6 @@ apero_extract.epilog = textentry('EXTRACT_EXAMPLE')
 apero_extract.recipe_type = 'recipe'
 apero_extract.recipe_kind = 'extract'
 apero_extract.set_outputs(E2DSFF_FILE=files.out_ext_e2dsff,
-                          E2DSLL_FILE=files.out_ext_e2dsll,
                           S1D_W_FILE=files.out_ext_s1d_w,
                           S1D_V_FILE=files.out_ext_s1d_v,
                           ORDERP_SFILE=files.out_orderp_straight,
@@ -664,7 +662,6 @@ qextract_dict['fibers'] = ref_fiber
 qextract_dict['LOG_FLAG'] = dict()
 qextract_dict['LOG_FLAG'][ref_fiber] = ['QUICKLOOK']
 apero_extract.set_output_data(E2DSFF_FILE=extract_dict,
-                              E2DSLL_FILE=extract_dict,
                               S1D_W_FILE=extract_dict,
                               S1D_V_FILE=extract_dict,
                               EXT_FPLINES=fplines_dict,

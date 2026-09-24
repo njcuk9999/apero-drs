@@ -976,14 +976,6 @@ out_ext_e2dsff.hdulist['ORDER_TABLE'] = ext2
 # Compatibility alias: extraction has one E2DSFF product only.
 out_ext_e2ds = out_ext_e2dsff
 
-
-# pre-extract debug file
-out_ext_e2dsll = drs_finput('EXT_E2DS_LL', hkeys=dict(KW_OUTPUT='EXT_E2DS_LL'),
-                            fibers=valid_efibers,
-                            filetype='.fits', intype=[pp_file, pp_flat_flat],
-                            suffix='_e2dsll', outclass=debug_ofile,
-                            description='Pre-extracted straighted stacked '
-                                        'spectrum')
 # extraction localisation file
 out_ext_loco = drs_finput('EXT_LOCO', hkeys=dict(KW_OUTPUT='EXT_LOCO'),
                           fibers=valid_efibers,
@@ -1017,19 +1009,20 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
 
 # flat response file: per-order flat-response profile from convolve_irregular,
 # produced during flat-field extraction; not stored in the calibration database
-out_flat_response = drs_finput(
-    'FLAT_RESPONSE',
-    hkeys=dict(KW_OUTPUT='FLAT_RESPONSE'),
-    fibers=valid_efibers,
-    filetype='.fits', intype=pp_flat_flat,
-    suffix='_flat_response',
-    outclass=general_ofile,
-    description='Per-order flat-field response profile from the '
-                'convolve_irregular resampling algorithm')
+out_flat_response = drs_finput('FLAT_RESPONSE',
+                               hkeys=dict(KW_OUTPUT='FLAT_RESPONSE'),
+                               fibers=valid_efibers,
+                               filetype='.fits',
+                               intype=[out_ext_e2ds, out_ext_e2dsff,
+                                       out_ql_e2ds, out_ql_e2dsff],
+                               suffix='_flat_response',
+                               outclass=general_ofile,
+                               description='Per-order flat-field response '
+                                           'profile from the convolve_irregular'
+                                           ' resampling algorithm')
 
 # add extract outputs to output fileset
 red_file.addset(out_ext_e2dsff)
-red_file.addset(out_ext_e2dsll)
 red_file.addset(out_flat_response)
 red_file.addset(out_ext_loco)
 red_file.addset(out_ext_s1d_w)

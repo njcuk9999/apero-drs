@@ -2282,8 +2282,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
                                                        fiber=fiber)
     e2dsff_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(params=params,
                                                            fiber=fiber)
-    e2dsll_file = extrecipe.outputs['E2DSLL_FILE'].newcopy(params=params,
-                                                           fiber=fiber)
     s1dw_file = extrecipe.outputs['S1D_W_FILE'].newcopy(params=params,
                                                         fiber=fiber)
     s1dv_file = extrecipe.outputs['S1D_V_FILE'].newcopy(params=params,
@@ -2292,7 +2290,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # construct filename
     e2ds_file.construct_filename(infile=infile)
     e2dsff_file.construct_filename(infile=infile)
-    e2dsll_file.construct_filename(infile=infile)
     s1dw_file.construct_filename(infile=infile)
     s1dv_file.construct_filename(infile=infile)
     # ----------------------------------------------------------------------
@@ -2337,34 +2334,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # add to output files (for indexing)
     recipe.add_output_file(e2dsff_file)
     # ----------------------------------------------------------------------
-    # E2DSLL file may not exist (it is a debug file that can be turned off)
-    if os.path.exists(e2dsll_file.filename):
-        # log that we are updating the file with wave params
-        wargs = [e2dsll_file.name, e2dsll_file.filename]
-        WLOG(params, '', textentry('40-017-00038', args=wargs))
-        # update the e2ds file
-        e2dsll_file.read_multi()
-        e2dsll_file = add_wave_keys(e2dsll_file, wprops)
-        e2dsll_file.infiles = [infile.basename]
-        # define multi lists
-        data_list, name_list = e2dsll_file.data_array, e2dsll_file.name_array
-        if data_list is None:
-            data_list, name_list = [], []
-        # snapshot of parameters
-        if params['GLOBAL.PSNAPSHOT']:
-            data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsll_file)]
-            # there should be a param_table from extraction
-            if 'PARAM_TABLE' in name_list:
-                name_list += ['PARAM_UPDATE']
-            else:
-                name_list += ['PARAM_TABLE']
-        # write file
-        e2dsll_file.write_multi(data_list=data_list, name_list=name_list,
-                                block_kind=recipe.out_block_str,
-                                runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(e2dsll_file)
-    # ----------------------------------------------------------------------
     # Need to re-calculate the s1d files
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
@@ -2385,7 +2354,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # Store S1D_W in file
     # ----------------------------------------------------------------------
-    # copy header from e2dsll file
+    # copy header from e2ds file
     s1dw_file.copy_header(e2ds_file)
     s1dw_file.copy_hdict(e2ds_file)
     # set output key
@@ -2416,7 +2385,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # Store S1D_W in file
     # ----------------------------------------------------------------------
-    # copy header from e2dsll file
+    # copy header from e2ds file
     s1dv_file.copy_header(e2ds_file)
     s1dv_file.copy_hdict(e2ds_file)
     # add new header keys

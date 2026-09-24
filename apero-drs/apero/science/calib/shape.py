@@ -19,6 +19,7 @@ from scipy.stats import pearsonr
 
 from aperocore.base import base
 from aperocore.constants import param_functions
+from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
@@ -35,6 +36,7 @@ from apero.io import drs_path
 from apero.io import drs_table
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
+from apero.instruments import select
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -1401,6 +1403,136 @@ def get_shapelocal(params, recipe, header, filename=None, database=None):
     WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))
     # return the reference image
     return shapel_file, shapetime, shapel.flatten()
+
+
+# =============================================================================
+# order profile functions (called in apero_shape to embed profiles in SHAPEL)
+# =============================================================================
+def compute_shape_order_profiles(
+        params: ParamDict,
+        recipe: DrsRecipe,
+        header: drs_fits.Header,
+        image_shape: Tuple[int, int],
+        transform: np.ndarray,
+        dxmap: np.ndarray,
+        dymap: np.ndarray,
+        database: Optional[drs_database.CalibrationDatabase] = None,
+        niter: int = 6) -> ParamDict:
+    """
+    Load, straighten, and reverse-transform every fiber order profile using
+    the shape calibration from the current FP frame, then compute the inverse
+    coordinate maps needed for background subtraction.
+
+    All products are saved as extensions of the SHAPEL calibration file by
+    ``write_shape_local_files``, so that ``apero_extract`` can load them
+    directly instead of recomputing them for every science frame.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, the calling recipe instance
+    :param header: fits Header, used to select the closest-in-time LOC_LOCO
+    :param image_shape: tuple (rows, cols), detector image shape used for
+                        ``inverse_coordinates``
+    :param transform: numpy array (6,), linear shape transform (dx,dy,A,B,C,D)
+    :param dxmap: numpy array (2D), x-displacement map (SHAPEX)
+    :param dymap: numpy array (2D), y-displacement map (SHAPEY)
+    :param database: CalibrationDatabase or None; opened internally if None
+    :param niter: int, number of Newton iterations for inverse coordinates
+
+    :return: ParamDict containing per-fiber straightened profiles
+             (``ORDERP_STRAIGHT_{fiber}``), detector-frame profiles
+             (``PROFILES_NOSHAPE_{fiber}``), inverse coordinate maps
+             (``INV_XMAP``, ``INV_YMAP``), localisation geometry arrays
+             (``ORDER_MAP``, ``ORDER_NEAREST``, ``ORDER_TOP``,
+             ``ORDER_BOTTOM``, ``ORDER_MID``, ``ORDER_RANGE_TABLE``),
+             and provenance keys (``LOCOFILE``, ``LOCOTIME``,
+             ``ALL_FIBERS``, ``SPLINE_ORDER``).
+    """
+    func_name = __NAME__ + '.compute_shape_order_profiles()'
+    # load pseudo-constants for fiber topology
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    all_fibers = [spec.name for spec in pconst.FIBER_SPECS()]
+    # resolve the spline order constant to an integer
+    spline_order_const = params['CAL.EXT.SPLINE_ORDER']
+    spline_order = _spline_order_value(spline_order_const)
+    # open database if not provided by caller
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # find the closest-in-time LOC_LOCO calibration file
+    locofile_def = drs_file.get_file_definition(params, 'LOC_LOCO',
+                                                block_kind='red')
+    key = locofile_def.get_dbkey()
+    # use first fiber's usefiber to locate the single LOC_LOCO file
+    usefiber0 = pconst.FIBER_LOC_TYPES(all_fibers[0])
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, recipe.shortname, key, header,
+                          userinputkey='LOCOFILE', database=calibdbm,
+                          fiber=usefiber0, return_filename=True)
+    locofilepath = cfile.filename
+    locotime = cfile.mjdmid
+    WLOG(params, '', 'Using LOC_LOCO: {0}'.format(locofilepath))
+    # straighten each unique LOC fiber type's order profile once
+    straightened = dict()
+    for fiber in all_fibers:
+        usefiber = pconst.FIBER_LOC_TYPES(fiber)
+        if usefiber in straightened:
+            # A and B share ORDERP_AB — no need to straighten twice
+            continue
+        extname = 'ORDERP_{0}'.format(usefiber)
+        WLOG(params, 'info',
+             'Straightening order profile: {0}'.format(extname))
+        orderp, _ = drs_fits.readfits(params, locofilepath, getdata=True,
+                                      gethdr=True, extname=extname)
+        straightened[usefiber] = ea_transform(
+            params, orderp, transform,
+            dxmap=dxmap, dymap=dymap, order=str(spline_order))
+    # compute reverse-transform (detector-frame) profiles for every fiber
+    noshape = dict()
+    for usefiber, orderp_straight in straightened.items():
+        WLOG(params, 'info',
+             'Computing detector-frame profile: {0}'.format(usefiber))
+        noshape[usefiber] = ea_transform_reverse(
+            params, orderp_straight, transform,
+            dxmap=dxmap, dymap=dymap, order=str(spline_order))
+    # compute inverse coordinate maps for background subtraction geometry
+    WLOG(params, '', 'Computing inverse coordinate maps')
+    inv_xmap, inv_ymap = shape_core.inverse_coordinates(
+        image_shape, transform, dxmap=dxmap, dymap=dymap, niter=niter)
+    # load localisation geometry from LOC_LOCO
+    order_map = drs_fits.readfits(params, locofilepath,
+                                  extname='ORDER_POS_MAP')
+    order_nearest = drs_fits.readfits(params, locofilepath,
+                                      extname='ORDER_NEAREST_MAP')
+    order_top = drs_fits.readfits(params, locofilepath, extname='ORDER_TOP')
+    order_bottom = drs_fits.readfits(params, locofilepath,
+                                     extname='ORDER_BOTTOM')
+    order_mid = drs_fits.readfits(params, locofilepath, extname='ORDER_MID')
+    range_table = drs_fits.readfits(params, locofilepath, fmt='fits-table',
+                                    extname='ORDER_RANGE_TABLE')
+    # store per-fiber arrays keyed by fiber name so callers use fiber names
+    oprofile_props = ParamDict()
+    for fiber in all_fibers:
+        usefiber = pconst.FIBER_LOC_TYPES(fiber)
+        oprofile_props['ORDERP_STRAIGHT_{0}'.format(fiber)] = (
+            np.array(straightened[usefiber]))
+        oprofile_props['PROFILES_NOSHAPE_{0}'.format(fiber)] = (
+            np.array(noshape[usefiber]))
+    oprofile_props['INV_XMAP'] = inv_xmap
+    oprofile_props['INV_YMAP'] = inv_ymap
+    oprofile_props['ORDER_MAP'] = np.array(order_map, dtype=np.int32)
+    oprofile_props['ORDER_NEAREST'] = np.array(order_nearest, dtype=np.int32)
+    oprofile_props['ORDER_TOP'] = np.array(order_top, dtype=float)
+    oprofile_props['ORDER_BOTTOM'] = np.array(order_bottom, dtype=float)
+    oprofile_props['ORDER_MID'] = np.array(order_mid, dtype=float)
+    oprofile_props['ORDER_RANGE_TABLE'] = range_table
+    oprofile_props['LOCOFILE'] = locofilepath
+    oprofile_props['LOCOTIME'] = locotime
+    oprofile_props['ALL_FIBERS'] = all_fibers
+    oprofile_props['SPLINE_ORDER'] = str(spline_order_const)
+    oprofile_props.set_all_sources(func_name)
+    return oprofile_props
 
 
 # =============================================================================

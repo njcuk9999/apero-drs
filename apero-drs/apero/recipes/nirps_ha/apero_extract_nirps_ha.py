@@ -265,7 +265,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             # Leak correction: remove reference-fiber contamination
             # ----------------------------------------------------------------
-            WLOG(params, 'info', textentry('40-016-00011'))
             lkargs = [params, recipe, eprops['E2DS'],
                       ref_e2ds, infile, fiber]
             lkkwargs = dict(database=calibdbm)

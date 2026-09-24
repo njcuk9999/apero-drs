@@ -225,50 +225,6 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
     return fbprops
 
 
-def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
-                    eprops: ParamDict, fiber: str
-                    ) -> Tuple[float, List[str]]:
-    """
-    Calculate the flux at the edges of the trace
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, the drs recipe object
-    :param eprops: dictionary, the extraction dictionary
-    :param fiber: str, the fiber name
-
-    :return: float, the value of the total flux at the edge of the e2dsll
-    """
-    # get the width of the center of the trace
-    mid_size = params['CAL.FLAT.QC_FLUX_EDGE_MIDSIZE']
-    # get limit
-    flux_edge_limit = params['CAL.FLAT.QC_FLUX_EDGE_LIMIT']
-    # get orders to ignore
-    ignore_orders = params['CAL.FLAT.QC_FLUX_EDGE_IGNORE']
-    # get the number of orders
-    norders = eprops['E2DS'].shape[0]
-    # delegate numerical work to the profile-independent core module
-    edge_args = [eprops['E2DS'], eprops['E2DSLL'], mid_size, ignore_orders,
-                 flux_edge_limit]
-    outs = flat_blaze_core.flux_edge_trace(*edge_args)
-    med, flux_edge, max_edge_flux, failed_orders = outs
-    # -------------------------------------------------------------------------
-    # get the left/right edge flux (for plotting only)
-    flux_left, flux_right = med[:, 0], med[:, -1]
-    # plot edge plot
-    recipe.plot('FLAT_EDGE_ORDERS', med=med, flux_edge=flux_edge,
-                flux_left=flux_left, flux_right=flux_right,
-                norders=norders, flux_edge_limit=flux_edge_limit, fiber=fiber)
-    recipe.plot('SUM_FLAT_EDGE_ORDERS', med=med, flux_edge=flux_edge,
-                flux_left=flux_left, flux_right=flux_right,
-                norders=norders, flux_edge_limit=flux_edge_limit, fiber=fiber)
-    # -------------------------------------------------------------------------
-    # convert failed orders to strings
-    failed_orders_str = [str(order_num) for order_num in failed_orders]
-    # -------------------------------------------------------------------------
-    # return max edge flux and list failed orders
-    return max_edge_flux, failed_orders_str
-
-
 def compute_flat_response(
     params: ParamDict,
     recipe: DrsRecipe,
@@ -534,7 +490,7 @@ def write_flat_response(params: ParamDict, recipe: DrsRecipe,
     # attach the 2D flat-response data
     resp_file.data = flat_response_data
     # write the file to disk
-    resp_file.write_file()
+    resp_file.write_file(block_kind=recipe.out_block_str)
     # register with the recipe for indexing and downstream use
     recipe.add_output_file(resp_file)
 

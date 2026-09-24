@@ -458,8 +458,6 @@ def spectra_to_eprops(params: ParamDict, model_props: ParamDict,
     props['E2DS'] = e2ds
     props['E2DSFF'] = np.array(e2ds)
     props['E2DS_ERROR'] = e2ds_error
-    props['E2DSLL'] = np.full((e2ds.shape[0] * 2, e2ds.shape[1]), np.nan)
-    props['E2DSCC'] = np.full_like(props['E2DSLL'], np.nan)
     props['SNR'] = snr
     props['N_COSMIC'] = np.zeros(e2ds.shape[0])
     props['FLUX_VAL'] = np.nanmean(e2ds, axis=1)

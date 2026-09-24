@@ -899,10 +899,9 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # set output key
     e2dsfffile.add_hkey('KW_OUTPUT', value=e2dsfffile.name)
     # need to use different thermal ratio keys if we have corrected thermal
-    if 'THERMALFILE' in eprops:
-        e2dsfffile.add_hkey('KW_THERM_RATIO', value=eprops['THERMALFF_RATIO'])
-        e2dsfffile.add_hkey('KW_THERM_RATIO_U',
-                            value=eprops['THERMALFF_RATIO_USED'])
+    e2dsfffile.add_hkey('KW_THERM_RATIO', value=eprops['THERMAL_RATIO'])
+    e2dsfffile.add_hkey('KW_THERM_RATIO_U',
+                        value=eprops['THERMAL_RATIO_USED'])
     # copy data
     e2dsfffile.data = eprops['E2DSFF']
     # ----------------------------------------------------------------------
@@ -921,43 +920,6 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
                            runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
-    # ----------------------------------------------------------------------
-    # Store E2DSLL in file
-    # ----------------------------------------------------------------------
-    if params['DEBUG.OUTFILE.E2DSLL_FILE']:
-        # get a new copy of the e2dsll file
-        e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
-                                                           fiber=fiber)
-        # construct the filename from file instance
-        e2dsllfile.construct_filename(infile=infile)
-        # copy header from e2dsll file
-        e2dsllfile.copy_hdict(e2dsfffile)
-        # add infiles to outfile
-        e2dsllfile.infiles = list(hfiles)
-        # set output key
-        e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
-        # copy data
-        e2dsllfile.data = eprops['E2DSLL']
-        # ----------------------------------------------------------------------
-        # log that we are saving rotated image
-        wargs = [e2dsllfile.filename]
-        WLOG(params, '', textentry('40-016-00007', args=wargs))
-        # define multi lists
-        data_list = [eprops['E2DSCC']]
-        name_list = ['E2DSLL', 'E2DSCC']
-        datatype_list = ['image']
-        # snapshot of parameters
-        if params['GLOBAL.PSNAPSHOT']:
-            data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
-            name_list += ['PARAM_TABLE']
-            datatype_list += ['table']
-        # write image to file
-        e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
-                               datatype_list=datatype_list,
-                               block_kind=recipe.out_block_str,
-                               runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------
     # Store S1D_W in file (skipped for flat extractions where swprops is None)
     # ----------------------------------------------------------------------

@@ -2272,10 +2272,6 @@ cgroup = 'DEBUG.OUTFILE'
 # one of these per extraction (lots)
 CDict.set('BCKGRD_FILE', value=False, source=__NAME__, group=cgroup)
 
-# Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
-# one of these per fiber (lots)
-CDict.set('E2DSLL_FILE', value=True, source=__NAME__, group=cgroup)
-
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 # but only one set of these per night
 CDict.set('SHAPE_FILES', value=False, source=__NAME__, group=cgroup)

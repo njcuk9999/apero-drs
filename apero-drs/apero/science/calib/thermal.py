@@ -262,12 +262,9 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     eprops['THERMALTIME'] = thermaltime
     eprops['THERMAL_RATIO'] = tprops['ratio']
     eprops['THERMAL_RATIO_USED'] = tprops['ratio_used']
-    eprops['THERMALFF_RATIO'] = tpropsff['ratio']
-    eprops['THERMALFF_RATIO_USED'] = tpropsff['ratio_used']
     # update source
     keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE', 'THERMALTIME',
-            'THERMAL_RATIO', 'THERMAL_RATIO_USED',
-            'THERMALFF_RATIO', 'THERMALFF_RATIO_USED']
+            'THERMAL_RATIO', 'THERMAL_RATIO_USED']
     eprops.set_sources(keys, func_name)
     # return eprops
     return eprops

@@ -67,7 +67,6 @@ def get_runfiles(params: ParamDict, recipe: DrsRecipe) -> List[RunIniFile]:
     mini_run_nirps_he.modify('SKIP_LBLCOMPILE_SCI', False)
     # mini runs need debug data
     mini_run_nirps_he.modify('DEBUG.OUTFILE.BCKGRD_FILE', True)
-    mini_run_nirps_he.modify('DEBUG.OUTFILE.E2DSLL_FILE', True)
     mini_run_nirps_he.modify('DEBUG.OUTFILE.SHAPE_FILES', True)
     mini_run_nirps_he.modify('DEBUG.OUTFILE.UNCORR_EXT_FILES', True)
     run_files.append(mini_run_nirps_he)

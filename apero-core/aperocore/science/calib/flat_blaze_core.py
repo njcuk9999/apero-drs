@@ -209,67 +209,6 @@ def calculate_blaze_flat_sinc(e2ds_ini: np.ndarray, peak_cut: float,
     return e2ds_ini, flat, blaze, rms
 
 
-def flux_edge_trace(e2ds: np.ndarray, e2dsll: np.ndarray, mid_size: int,
-                    ignore_orders: List[int], flux_edge_limit: float
-                    ) -> Tuple[np.ndarray, np.ndarray, float, List[int]]:
-    """
-    Calculate the flux at the edges of the trace
-
-    :param e2ds: numpy (2D) array, the extracted 2D spectrum (used only for
-                the number of orders)
-    :param e2dsll: numpy (2D) array, the per-pixel (unbinned) extracted flux
-    :param mid_size: int, the half-width of the region (in pixels) around
-                     the center of the array used to compute the median
-                     trace profile
-    :param ignore_orders: list of int, orders to ignore (set to NaN) when
-                          computing the edge flux
-    :param flux_edge_limit: float, the edge flux value above which an order
-                            is considered to have failed
-
-    :return: tuple, 1. numpy array, the per-order normalized median trace
-                profile
-             2. numpy array, the total edge flux for each order
-             3. float, the maximum edge flux across all orders
-             4. list of int, the orders whose edge flux is above
-                flux_edge_limit
-    """
-    # get the number of orders
-    norders = e2ds.shape[0]
-    # find the middle of the array
-    mid = e2dsll.shape[1] // 2
-    # -------------------------------------------------------------------------
-    # median trace profile of the center of the image
-    med = np.nanmedian(e2dsll[:, mid - mid_size:mid + mid_size], axis=1)
-    # reshape the median profile to have the number of orders
-    med = med.reshape(norders, med.shape[0] // norders)
-    # -------------------------------------------------------------------------
-    # normalize each order to a mean of 1
-    for order_num in range(norders):
-        segment = med[order_num]
-        med[order_num] /= np.nansum(segment)
-    # -------------------------------------------------------------------------
-    # we find the flux at the edges of the trace for each order. The total
-    # edge flux should be small and account for <1% of the total flux.
-    flux_left = med[:, 0]
-    flux_right = med[:, -1]
-    # set ignore orders to nans
-    cut_mask = np.isin(np.arange(norders), ignore_orders)
-    # set these orders to NaN
-    flux_left[cut_mask] = np.nan
-    flux_right[cut_mask] = np.nan
-    # get the total edge flux
-    flux_edge = flux_left + flux_right
-    # -------------------------------------------------------------------------
-    # store the orders with flux greater than limit
-    failed = (flux_edge > flux_edge_limit) & np.isfinite(flux_edge)
-    failed_orders = list(np.where(failed)[0])
-    # get the maximum edge flux across all orders
-    max_edge_flux = np.nanmax(flux_edge)
-    # -------------------------------------------------------------------------
-    # return normalized trace, max edge flux and list of failed orders
-    return med, flux_edge, float(max_edge_flux), failed_orders
-
-
 def fit_blaze_model(
     flat_response: np.ndarray,
     wave: np.ndarray,
