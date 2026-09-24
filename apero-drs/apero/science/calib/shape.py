@@ -1292,6 +1292,9 @@ def get_shape_calibs(params, recipe, header, database):
     # load the shape-x map in the unshaped science frame
     dxmap_no_shape = drs_fits.readfits(params, shapelocalfile,
                                        extname='DXMAP_NO_SHAPE')
+    # load pre-computed inverse coordinate maps (stored by apero_shape)
+    inv_xmap = drs_fits.readfits(params, shapelocalfile, extname='INV_XMAP')
+    inv_ymap = drs_fits.readfits(params, shapelocalfile, extname='INV_YMAP')
     # out to parameter dictionary
     sprops = ParamDict()
     sprops['SHAPEX'] = shapex
@@ -1306,12 +1309,15 @@ def get_shape_calibs(params, recipe, header, database):
     sprops['DXMAP_NO_SHAPE'] = dxmap_no_shape
     sprops['DXMAP_NO_SHAPEFILE'] = shapelocalfile
     sprops['DXMAP_NO_SHAPETIME'] = shapelocaltime
+    sprops['INV_XMAP'] = inv_xmap
+    sprops['INV_YMAP'] = inv_ymap
     # set source
     keys = ['SHAPEX', 'SHAPEXFILE', 'SHAPEXTIME',
             'SHAPEY', 'SHAPEYFILE', 'SHAPEYTIME',
             'SHAPEL', 'SHAPELFILE', 'SHAPELTIME',
             'DXMAP_NO_SHAPE', 'DXMAP_NO_SHAPEFILE',
-            'DXMAP_NO_SHAPETIME']
+            'DXMAP_NO_SHAPETIME',
+            'INV_XMAP', 'INV_YMAP']
     sprops.set_sources(keys, func_name)
     # return shape properties
     return sprops
@@ -1920,7 +1926,8 @@ def shape_local_qc(params, transform, xres, yres):
 
 def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
                             sprops, image, image2, qc_params,
-                            dxmap_no_shape=None):
+                            dxmap_no_shape=None,
+                            oprofile_props=None):
     # define outfile
     outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(params=params)
     # construct the filename from file instance
@@ -1956,22 +1963,61 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     outfile.add_hkey('KW_SHAPE_B', value=sprops['TRANSFORM'][3])
     outfile.add_hkey('KW_SHAPE_C', value=sprops['TRANSFORM'][4])
     outfile.add_hkey('KW_SHAPE_D', value=sprops['TRANSFORM'][5])
+    # add LOC_LOCO provenance (set from order profile props when available)
+    if oprofile_props is not None:
+        outfile.add_hkey('KW_CDBLOCO', value=oprofile_props['LOCOFILE'])
+        outfile.add_hkey('KW_CDTLOCO', value=oprofile_props['LOCOTIME'])
+        # KW_CDBORDP records the source LOC_LOCO for the embedded profiles
+        outfile.add_hkey('KW_CDBORDP', value=oprofile_props['LOCOFILE'])
+        outfile.add_hkey('KW_CDTORDP', value=oprofile_props['LOCOTIME'])
+        # record the spline order used to straighten/reverse the profiles
+        outfile.add_hkey('KW_C_SPLINE', value=oprofile_props['SPLINE_ORDER'])
     # copy data
     outfile.data = [sprops['TRANSFORM']]
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
     WLOG(params, '', textentry('40-014-00037', args=[outfile.filename]))
-    # define multi lists
-    data_list, name_list = [], []
+    # define multi lists (datatype_list distinguishes images from tables)
+    data_list, name_list, datatype_list = [], [], []
     if dxmap_no_shape is not None:
         data_list += [dxmap_no_shape]
         name_list += ['DXMAP_NO_SHAPE']
+        datatype_list += ['image']
+    # add order profile extensions produced by compute_shape_order_profiles
+    if oprofile_props is not None:
+        for fiber in oprofile_props['ALL_FIBERS']:
+            # straightened profile (used directly by run_all_fiber_model)
+            data_list += [oprofile_props['ORDERP_STRAIGHT_{0}'.format(fiber)]]
+            name_list += ['ORDERP_STRAIGHT_{0}'.format(fiber)]
+            datatype_list += ['image']
+            # detector-frame profile (used for background/spectra extraction)
+            data_list += [oprofile_props['PROFILES_NOSHAPE_{0}'.format(fiber)]]
+            name_list += ['PROFILES_NOSHAPE_{0}'.format(fiber)]
+            datatype_list += ['image']
+        # inverse coordinate maps for the background geometry
+        data_list += [oprofile_props['INV_XMAP'], oprofile_props['INV_YMAP']]
+        name_list += ['INV_XMAP', 'INV_YMAP']
+        datatype_list += ['image', 'image']
+        # localisation geometry maps (mirroring LOC_LOCO extension names)
+        data_list += [oprofile_props['ORDER_MAP'],
+                      oprofile_props['ORDER_NEAREST'],
+                      oprofile_props['ORDER_TOP'],
+                      oprofile_props['ORDER_BOTTOM'],
+                      oprofile_props['ORDER_MID']]
+        name_list += ['ORDER_POS_MAP', 'ORDER_NEAREST_MAP',
+                      'ORDER_TOP', 'ORDER_BOTTOM', 'ORDER_MID']
+        datatype_list += ['image', 'image', 'image', 'image', 'image']
+        data_list += [oprofile_props['ORDER_RANGE_TABLE']]
+        name_list += ['ORDER_RANGE_TABLE']
+        datatype_list += ['table']
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=outfile)]
         name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
     outfile.write_multi(data_list=data_list, name_list=name_list,
+                        datatype_list=datatype_list,
                         block_kind=recipe.out_block_str,
                         runstring=recipe.runstring)
     # add to output files (for indexing)

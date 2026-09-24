@@ -18,7 +18,6 @@ import numpy as np
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.math import interpolate
-from aperocore.science.calib import shape_core
 from aperocore.science.extract import extract_model_core
 from apero.base import base as apero_base
 
@@ -44,42 +43,40 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 # Define functions
 # =============================================================================
 def prepare_model_bckgrd_geo(
-    params: ParamDict, image_shape: Tuple[int, int],
-    sprops: ParamDict, niter: int = 6) -> ParamDict:
+    params: ParamDict,
+    sprops: ParamDict) -> ParamDict:
     """
-    Prepare geometry products used by model-background extraction
+    Prepare geometry products used by model-background extraction.
+
+    The inverse detector maps (``INV_XMAP``, ``INV_YMAP``) were computed
+    once in ``apero_shape`` and stored as SHAPEL extensions; they are
+    already present in *sprops* after ``shape.get_shape_calibs`` loads them.
+    This function simply copies the relevant fields into a dedicated geometry
+    ParamDict so the rest of the extraction code has a stable interface.
 
     :param params: ParamDict, APERO constants
-    :param image_shape: tuple, unshaped science-frame image shape
-    :param sprops: ParamDict, shape calibration properties
-    :param niter: int, number of inverse-coordinate iterations
+    :param sprops: ParamDict, shape calibration properties including
+                   ``INV_XMAP`` and ``INV_YMAP`` loaded from SHAPEL
 
     :return: ParamDict, geometry products for model-background extraction
     """
     func_name = __NAME__ + '.prepare_model_bckgrd_geo()'
     WLOG(params, '', 'Preparing model-background extraction geometry')
-    # Build the inverse detector map once so each science-frame pixel can be
-    #   mapped back to straightened coordinates without re-solving the shape.
-    xargs = [image_shape, sprops['SHAPEL']]
-    xkwargs = dict(dxmap=sprops['SHAPEX'], dymap=sprops['SHAPEY'],
-                   niter=niter)
-    xout = shape_core.inverse_coordinates(*xargs, **xkwargs)
-    inverse_x, inverse_y = xout
+    # Copy the pre-computed inverse maps and shape arrays from sprops;
+    # no re-computation needed here since apero_shape already did it.
     gprops = ParamDict()
     gprops['DXMAP_NO_SHAPE'] = sprops['DXMAP_NO_SHAPE']
     gprops['SHAPEL'] = sprops['SHAPEL']
     gprops['SHAPEX'] = sprops['SHAPEX']
     gprops['SHAPEY'] = sprops['SHAPEY']
-    gprops['INV_XMAP'] = inverse_x
-    gprops['INV_YMAP'] = inverse_y
+    gprops['INV_XMAP'] = np.array(sprops['INV_XMAP'], dtype=float)
+    gprops['INV_YMAP'] = np.array(sprops['INV_YMAP'], dtype=float)
     gprops['SHAPELFILE'] = sprops['SHAPELFILE']
     gprops['SHAPELTIME'] = sprops['SHAPELTIME']
     gprops['DXMAP_NO_SHAPEFILE'] = sprops['DXMAP_NO_SHAPEFILE']
     gprops['DXMAP_NO_SHAPETIME'] = sprops['DXMAP_NO_SHAPETIME']
-    gprops['NITER'] = int(niter)
     keys = ['DXMAP_NO_SHAPE', 'INV_XMAP', 'INV_YMAP', 'SHAPELFILE',
-        'SHAPELTIME', 'DXMAP_NO_SHAPEFILE', 'DXMAP_NO_SHAPETIME',
-        'NITER']
+            'SHAPELTIME', 'DXMAP_NO_SHAPEFILE', 'DXMAP_NO_SHAPETIME']
     gprops.set_sources(keys, func_name)
     return gprops
 
@@ -283,16 +280,10 @@ def extract_all_fibers(params: ParamDict, image_straight: np.ndarray,
     return props
 
 
-def _spline_order_value(order: object) -> int:
-    """Convert a spline-order constant into a scipy order integer."""
-    if isinstance(order, str) and order.startswith('spline'):
-        return int(order[6:])
-    return int(order)
-
-
 def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
                         image_straight: np.ndarray,
                         order_profiles: dict,
+                        profiles_noshape: dict,
                         geometry: ParamDict,
                         order_map: np.ndarray,
                         order_nearest: np.ndarray,
@@ -313,13 +304,16 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     :param image_noshape: numpy array, calibrated science frame
     :param image_straight: numpy array, straightened science frame
     :param order_profiles: dict, straightened profiles by fiber name
-    :param order_top_pos: numpy array, top row of each straightened ribbon
-    :param order_bottom_pos: numpy array, bottom row of each straightened ribbon
-    :param order_mid_pos: numpy array, midpoint row of each straightened ribbon
+    :param profiles_noshape: dict, detector-frame profiles by fiber name,
+                             pre-computed by ``apero_shape`` and loaded from
+                             the SHAPEL calibration file
     :param geometry: ParamDict, inverse shape geometry products
     :param order_map: numpy array, localisation order-label map
     :param order_nearest: numpy array, nearest trace-label map
     :param order_ranges: dict, fiber trace-label ranges from LOC_LOCO
+    :param order_top_pos: numpy array, top row of each straightened ribbon
+    :param order_bottom_pos: numpy array, bottom row of each straightened ribbon
+    :param order_mid_pos: numpy array, midpoint row of each straightened ribbon
     :param spectral_groups: list, instrument-owned extraction groupings
     :param fiber1: str, first fiber-set name
     :param fiber2: str, second fiber-set name
@@ -330,26 +324,16 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     :return: ParamDict, model-fit and background-subtraction products
     """
     func_name = __NAME__ + '.run_all_fiber_model()'
-    shape_order = params['CAL.EXT.SPLINE_ORDER']
-    spline_order = _spline_order_value(shape_order)
     # Read the two straightened profiles that are fitted simultaneously.
     profile1 = np.array(order_profiles[fiber1], dtype=float)
     profile2 = np.array(order_profiles[fiber2], dtype=float)
     # Use the localization-produced straightened ribbon bounds directly.
     row1 = np.array(order_top_pos, dtype=int)
     row2 = np.array(order_bottom_pos, dtype=int)
-    # Fit the paired ribbon profiles and keep the image-sized diagnostics for
-    #   the background and model products that follow.
     if robust is None:
         robust = params['CAL.EXT.FIT_ROBUST']
-    # Rebuild the fitted fiber and zero-point model in the science frame.
-    profiles_noshape = dict()
-    # Rebuild the order profiles in the science frame so the model can be
-    #   projected back to the detector geometry for the smooth background.
-    for fiber, profile in order_profiles.items():
-        profiles_noshape[fiber] = shape_core.ea_transform_reverse(
-            profile, geometry['SHAPEL'], geometry['SHAPEX'], geometry['SHAPEY'],
-            order=spline_order)
+    # profiles_noshape was computed once in apero_shape and loaded from the
+    # SHAPEL file; no per-science-frame reverse transform is needed here.
     dxmap = np.array(geometry['DXMAP_NO_SHAPE'], dtype=float)
     xmap = np.arange(dxmap.shape[1], dtype=float)[None, :] - dxmap
     fit_props = extract_all_fibers(params, image_straight, profile1,

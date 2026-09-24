@@ -176,6 +176,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         et_kwargs = dict(dxmap=None, dymap=dymap)
         dxmap_no_shape = shape.ea_transform_reverse(*et_args, **et_kwargs)
         # ----------------------------------------------------------------------
+        # Order profiles: straighten, reverse-transform, compute inverse maps
+        # All products are embedded as SHAPEL extensions so apero_extract can
+        # load them directly without recomputing per science frame.
+        # ----------------------------------------------------------------------
+        opargs = [params, recipe, header, image.shape,
+                  transform, dxmap, dymap]
+        oprofile_props = shape.compute_shape_order_profiles(
+            *opargs, database=calibdbm)
+        # ----------------------------------------------------------------------
         # Quality control
         # ----------------------------------------------------------------------
         qc_params, passed = shape.shape_local_qc(params, transform, xres, yres)
@@ -189,11 +198,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         sprops = dict(SHAPEX_FILE=dxmap_file, SHAPEX_TIME=dxtime,
                       SHAPEY_FILE=dymap_file, SHAPEY_TIME=dytime,
                       TRANSFORM=transform)
-        # write to file
+        # write to file (includes order profile and geometry extensions)
         outfile = shape.write_shape_local_files(params, recipe, infile, combine,
                                                 rawfiles, props, sprops,
                                                 image, image2, qc_params,
-                                                dxmap_no_shape)
+                                                dxmap_no_shape,
+                                                oprofile_props=oprofile_props)
         # ------------------------------------------------------------------
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------

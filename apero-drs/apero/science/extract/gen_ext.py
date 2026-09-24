@@ -9,7 +9,6 @@ Created on 2019-07-09 at 13:42
 
 @author: cook
 """
-import os
 import warnings
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -30,7 +29,6 @@ from apero.core import drs_file
 from aperocore.core import drs_text
 from apero.utils import drs_recipe
 from apero.io import drs_fits
-from apero.io import drs_lock
 from apero.science.calib import gen_calib
 from apero.science.calib import localisation
 from apero.science.calib import shape
@@ -76,124 +74,88 @@ display_func = drs_misc.display_func
 # =============================================================================
 # Define general functions
 # =============================================================================
-def order_profiles(params, recipe, infile, fibertypes, sprops,
-                   filenames=None, database=None):
-    # filenames must be a dictionary
-    if not isinstance(filenames, dict):
-        filenames = dict()
-        for fiber in fibertypes:
-            filenames[fiber] = 'None'
-    # ------------------------------------------------------------------------
-    # get generic drs file types required
-    # the order profile is stored as the 'ORDERP_{fiber}' extension of the
-    #   combined 'LOC_LOCO' loc calibration file (see save_tmp_orderps_file)
-    opfile = drs_file.get_file_definition(params, 'LOC_LOCO',
-                                          block_kind='red')
-    ospfile = drs_file.get_file_definition(params, 'ORDERP_STRAIGHT',
-                                           block_kind='red')
-    slocalfile = drs_file.get_file_definition(params, 'SHAPEL',
-                                              block_kind='red')
-    # ------------------------------------------------------------------------
-    # get header from infile
-    header = infile.get_header()
-    # ----------------------------------------------------------------------
-    # load database
-    if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
-        calibdbm.load_db()
-    else:
-        calibdbm = database
-    # ------------------------------------------------------------------------
-    # storage for order profiles
-    orderprofiles = dict()
-    orderfiles = dict()
-    ordertimes = dict()
-    # loop around fibers
-    for fiber in fibertypes:
-        # log progress (straightening orderp)
-        WLOG(params, 'info', textentry('40-016-00003', args=[fiber]))
-        # ------------------------------------------------------------------
-        # get the order profile filename
-        filename = filenames[fiber]
-        # ------------------------------------------------------------------
-        # deal with filename from user entry
-        cond1 = not drs_text.null_text(filename, ['None'])
-        cond2 = os.path.exists(filename)
-        if cond1 and cond2:
-            # construct order profile straightened
-            orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
-            orderpsfile.set_filename(filename)
-        else:
-            # infile of opderpsfile should be a shape local file
-            oinfile = slocalfile.newcopy(params=params, fiber=fiber)
-            oinfile.set_filename(sprops['SHAPELFILE'])
-            # construct order profile straightened
-            orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
-            orderpsfile.construct_filename(infile=oinfile)
-        # ----------------------------------------------------------------------
-        # define a synchronized lock for indexing (so multiple instances do not
-        #  run at the same time)
-        lockfile = os.path.basename(filename)
-        # start a lock
-        lock = drs_lock.Lock(params, lockfile)
-        # ------------------------------------------------------------------
-        # must check that a pid is set
-        if params['PID'] is None:
-            raise AperoCodedException(params, '10-005-00006')
-        else:
-            pid = params['PID']
+def get_order_profiles(params: ParamDict, recipe: DrsRecipe,
+                       fibertypes: List[str],
+                       sprops: ParamDict) -> dict:
+    """
+    Load pre-computed order profiles and localisation geometry from the SHAPEL
+    calibration file.
 
-        # ------------------------------------------------------------------
-        # need a lock here as orderps temporary file can be writing to disk
-        #    and other cores then try to read the file while writing
-        @drs_lock.synchronized(lock, pid)
-        def locked_save_file():
-            return save_tmp_orderps_file(params, recipe, orderpsfile, opfile,
-                                         fiber, header, filename, calibdbm,
-                                         sprops)
-        # -----------------------------------------------------------------
-        # try to run locked makedirs
-        try:
-            orderp, orderpfilename, orderptime = locked_save_file()
-        except KeyboardInterrupt as e:
-            lock.reset()
-            raise e
-        except Exception as e:
-            # reset lock
-            lock.reset()
-            raise e
-        # -----------------------------------------------------------------
-        # store in storage dictionary
-        orderprofiles[fiber] = orderp
-        orderfiles[fiber] = orderpfilename
-        ordertimes[fiber] = orderptime
-    # Load the shared localisation products from the same LOC_LOCO calibration
-    # that supplied the ORDERP extensions above.
-    locprops = localisation.get_coefficients(
-        params, recipe, header, fiber=fibertypes[0], merge=True,
-        database=calibdbm)
-    locofile = locprops['LOCOFILE']
-    order_map = drs_fits.readfits(params, locofile,
+    The straightened profiles (``ORDERP_STRAIGHT_{fiber}``), detector-frame
+    profiles (``PROFILES_NOSHAPE_{fiber}``), and localisation geometry arrays
+    are written into the SHAPEL file by ``apero_shape`` via
+    ``shape.compute_shape_order_profiles``.  This function reads them back so
+    that ``apero_extract`` does not need to recompute or re-straighten anything.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, the calling recipe instance
+    :param fibertypes: list of str, fiber names to load (e.g. ['A', 'B', 'C'])
+    :param sprops: ParamDict, shape calibration properties from
+                   ``shape.get_shape_calibs``; must contain ``SHAPELFILE``,
+                   ``SHAPELTIME``, ``KW_CDBORDP``, and ``KW_CDTORDP``
+
+    :return: dict with keys:
+        ``ORDERP``         – {fiber: straightened profile array}
+        ``ORDERPFILE``     – {fiber: source LOC_LOCO filename}
+        ``ORDERPTIME``     – {fiber: source LOC_LOCO MJD-MID}
+        ``PROFILES_NOSHAPE`` – {fiber: detector-frame profile array}
+        ``LOCOFILE``       – path to the LOC_LOCO used
+        ``ORDER_MAP``      – order label map (int32 array)
+        ``ORDER_NEAREST``  – nearest-trace label map (int32 array)
+        ``ORDER_RANGES``   – {fiber: (first_label, last_label)}
+        ``ORDER_TOP``      – top-row bounds (float array)
+        ``ORDER_BOTTOM``   – bottom-row bounds (float array)
+        ``ORDER_MID``      – midpoint rows (float array)
+    """
+    func_name = __NAME__ + '.get_order_profiles()'
+    shapelfile = sprops['SHAPELFILE']
+    WLOG(params, 'info',
+         'Loading order profiles from SHAPEL: {0}'.format(shapelfile))
+    # load the LOC_LOCO provenance recorded in the SHAPEL header so downstream
+    # header keys reflect where the profiles originally came from
+    shapel_hdr = drs_fits.read_header(params, shapelfile)
+    locofile = shapel_hdr.get_hkey(params, 'KW_CDBLOCO', dtype=str)
+    locotime = shapel_hdr.get_hkey(params, 'KW_CDTLOCO', dtype=float)
+    # straight profiles and detector-frame profiles, keyed by fiber name
+    orderprofiles = dict()
+    profiles_noshape = dict()
+    orderpfiles = dict()
+    orderptimes = dict()
+    for fiber in fibertypes:
+        WLOG(params, '', textentry('40-016-00003', args=[fiber]))
+        orderprofiles[fiber] = np.array(
+            drs_fits.readfits(params, shapelfile,
+                              extname='ORDERP_STRAIGHT_{0}'.format(fiber)))
+        profiles_noshape[fiber] = np.array(
+            drs_fits.readfits(params, shapelfile,
+                              extname='PROFILES_NOSHAPE_{0}'.format(fiber)))
+        # provenance: each fiber's profile traces back to the same LOC_LOCO
+        orderpfiles[fiber] = locofile
+        orderptimes[fiber] = locotime
+    # load localisation geometry stored in SHAPEL by apero_shape
+    order_map = drs_fits.readfits(params, shapelfile,
                                   extname='ORDER_POS_MAP')
-    order_nearest = drs_fits.readfits(params, locofile,
+    order_nearest = drs_fits.readfits(params, shapelfile,
                                       extname='ORDER_NEAREST_MAP')
-    order_top = drs_fits.readfits(params, locofile, extname='ORDER_TOP')
-    order_bottom = drs_fits.readfits(params, locofile,
+    order_top = drs_fits.readfits(params, shapelfile, extname='ORDER_TOP')
+    order_bottom = drs_fits.readfits(params, shapelfile,
                                      extname='ORDER_BOTTOM')
-    order_mid = drs_fits.readfits(params, locofile, extname='ORDER_MID')
-    range_table = drs_fits.readfits(params, locofile, fmt='fits-table',
+    order_mid = drs_fits.readfits(params, shapelfile, extname='ORDER_MID')
+    range_table = drs_fits.readfits(params, shapelfile, fmt='fits-table',
                                     extname='ORDER_RANGE_TABLE')
+    # convert the range table into the {fiber: (first, last)} dict used by the
+    # extraction model
     order_ranges = dict()
-    for fiber, first, last in zip(range_table['FIBER'],
-                                  range_table['FIRST'],
-                                  range_table['LAST']):
-        order_ranges[str(fiber)] = (int(first), int(last))
-    # Return one property bag so profiles and their related LOC_LOCO products
-    # stay together at the extraction call site.
+    for rt_fiber, first, last in zip(range_table['FIBER'],
+                                     range_table['FIRST'],
+                                     range_table['LAST']):
+        order_ranges[str(rt_fiber)] = (int(first), int(last))
+    # assemble the property bag used by main_extract and run_all_fiber_model
     oprops = dict()
     oprops['ORDERP'] = orderprofiles
-    oprops['ORDERPFILE'] = orderfiles
-    oprops['ORDERPTIME'] = ordertimes
+    oprops['ORDERPFILE'] = orderpfiles
+    oprops['ORDERPTIME'] = orderptimes
+    oprops['PROFILES_NOSHAPE'] = profiles_noshape
     oprops['LOCOFILE'] = locofile
     oprops['ORDER_MAP'] = np.array(order_map, dtype=np.int32)
     oprops['ORDER_NEAREST'] = np.array(order_nearest, dtype=np.int32)
@@ -202,141 +164,6 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
     oprops['ORDER_BOTTOM'] = np.array(order_bottom, dtype=float)
     oprops['ORDER_MID'] = np.array(order_mid, dtype=float)
     return oprops
-
-
-OrderPSReturn = Tuple[Union[DrsFitsFile, None], str, float]
-
-
-def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
-                          orderpsfile: DrsFitsFile, opfile: DrsFitsFile,
-                          fiber: str, header: drs_fits.Header,
-                          filename: str,
-                          calibdbm: drs_database.CalibrationDatabase,
-                          sprops: ParamDict) -> OrderPSReturn:
-    """
-    We need to find the temporary order ps file one core at a time (if we
-    don't find the file we create it) this can lead to problems when we are
-    writing it at the same time as trying to find it on another core
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the recipe instance that called this function
-    :param orderpsfile: DrsFitsFile, the output straightened order profile
-                        file class instance
-    :param opfile: DrsFitsFile, the input order profile file class instance
-    :param fiber: str, the fiber name
-    :param header: Header, the fits Header class for the input file
-    :param filename: str, the input filename
-    :param calibdbm: Calibration database, the calibration database class
-    :param sprops: ParamDict, the shape parameter dictionary
-
-    :return: tuple, 1. return the order profile, 2. the filename and
-             3. the time of this file
-    """
-    # set function name
-    func_name = display_func('save_tmp_orderps_file', __NAME__)
-    # flag that order profile has been read (or not read)
-    orderp_read = False
-    orderp = None
-    orderpfilename = 'Unknown'
-    orderptime = np.nan
-    shape_order = params['CAL.EXT.SPLINE_ORDER']
-    # check if temporary file exists
-    if orderpsfile.file_exists():
-        # we need to wait (as file may exist but still be writing to disk
-        try:
-            # load the numpy temporary file
-            #    Note: NpyFitsFile needs arguments params!
-            if isinstance(orderpsfile, DrsFitsFile):
-                # log progress (read file)
-                wargs = [orderpsfile.filename]
-                WLOG(params, '', textentry('40-013-00023', args=wargs))
-                # read npy file
-                orderpsfile.read_file()
-            else:
-                eargs = [orderpsfile.__str__(), func_name]
-                raise AperoCodedException(params, '00-016-00023', targs=eargs)
-            # push data into orderp
-            orderp = orderpsfile.get_data()
-            orderpfilename = orderpsfile.filename
-            # time is the MJDMID of the order profile
-            orderptime = orderpsfile.get_hkey('KW_MID_OBS_TIME')
-            cached_order = orderpsfile.header.get('KW_C_SPLINE', 'None')
-            if str(cached_order) != str(shape_order):
-                orderp_read = False
-            else:
-                orderp_read = True
-        except Exception as e:
-            # args for warning (from error thrown)
-            wargs = [orderpsfile.filename, type(e), str(e), func_name]
-            # report error as warning
-            WLOG(params, 'warning', textentry('10-016-00026', args=wargs),
-                 sublevel=2)
-            # make sure we know order profile has not been read
-            orderp_read = False
-    # if straighted order profile doesn't exist and we have no filename
-    #   defined then we need to figure out the order profile file -
-    #   load it and then save it as a straighted version (orderpsfile)
-    if not orderp_read:
-        # get pseudo constants
-        pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-        # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
-        usefiber = pconst.FIBER_LOC_TYPES(fiber)
-        # get key
-        key = opfile.get_dbkey()
-        # get the order profile filename
-        cfile = gen_calib.CalibFile()
-        cfile.load_calib_file(params, recipe.shortname, key,
-                              header, filename=filename,
-                              userinputkey='ORDERPFILE', database=calibdbm,
-                              fiber=usefiber, return_filename=True)
-        # get properties from calibration file
-        filename, orderptime = cfile.filename, cfile.mjdmid
-        # load the order profile from its extension in the combined loc
-        #   calibration file
-        extname = 'ORDERP_{0}'.format(usefiber)
-        orderp, orderhdr = drs_fits.readfits(params, filename, getdata=True,
-                                             gethdr=True, extname=extname)
-        orderpfilename = filename
-        # straighten orders
-        orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
-                                    dxmap=sprops['SHAPEX'],
-                                    dymap=sprops['SHAPEY'],
-                                    order=shape_order)
-        # copy full header from order profile
-        orderpsfile.copy_header(header=orderhdr)
-        # add core values (that should be in all headers)
-        orderpsfile.add_core_hkeys(params)
-        # add fiber
-        orderpsfile.add_hkey('KW_FIBER', value=fiber)
-        # add the shape keys
-        orderpsfile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
-        orderpsfile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
-        orderpsfile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
-        orderpsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
-        orderpsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
-        orderpsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
-        orderpsfile.add_hkey('KW_C_SPLINE', value=str(shape_order))
-        # push into orderpsfile
-        orderpsfile.data = orderp
-        # log progress (saving to file)
-        wargs = [orderpsfile.filename]
-        WLOG(params, '', textentry('40-013-00024', args=wargs))
-        # define multi lists
-        data_list, name_list = [], []
-        # snapshot of parameters
-        if params['GLOBAL.PSNAPSHOT']:
-            data_list += [params.snapshot_table(recipe,
-                                                drsfitsfile=orderpsfile)]
-            name_list += ['PARAM_TABLE']
-        # write the shapel file
-        orderpsfile.write_multi(data_list=data_list,
-                                name_list=name_list,
-                                block_kind=recipe.out_block_str,
-                                runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(orderpsfile)
-    # return the order profile, the filename and the time of this file
-    return orderp, orderpfilename, orderptime
 
 
 def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
@@ -1179,7 +1006,7 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
         HEADER        - FITS header from infile
         SHAPE_PROPS   - shape calibration ParamDict
         CALIB_PROPS   - general calibration ParamDict (from calibrate_ppfile)
-        ORDER_PROPS   - order-profile ParamDict (from order_profiles)
+        ORDER_PROPS   - order-profile dict (from get_order_profiles)
         MODEL_PROPS   - simultaneous-fiber model ParamDict
         EPROPS_ALL    - dict mapping fiber name to per-fiber ParamDict
         FIBERTYPES    - list of fibers being processed (ref first)
@@ -1221,10 +1048,11 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     cout = gen_calib.calibrate_ppfile(*cargs, **ckwargs)
     props, image = cout
     # ------------------------------------------------------------------
-    # Load and straighten order profiles for all required fibers
+    # Load order profiles and geometry from SHAPEL calibration file
     # ------------------------------------------------------------------
-    opargs = [infile, fibertypes, sprops]
-    oprops = order_profiles(params, recipe, *opargs, database=calibdbm)
+    # Profiles were straightened once in apero_shape; load them here so
+    # apero_extract does not recompute anything per-science-frame.
+    oprops = get_order_profiles(params, recipe, fibertypes, sprops)
     # ------------------------------------------------------------------
     # Apply shape transformation to straighten the science image
     # ------------------------------------------------------------------
@@ -1238,8 +1066,7 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # ------------------------------------------------------------------
     # Prepare geometry for the all-fiber model / background path
     # ------------------------------------------------------------------
-    mbgprops = model_background.prepare_model_bckgrd_geo(
-        params, image.shape, sprops)
+    mbgprops = model_background.prepare_model_bckgrd_geo(params, sprops)
     # ------------------------------------------------------------------
     # Run the simultaneous all-fiber model extraction
     # ------------------------------------------------------------------
@@ -1247,7 +1074,9 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     model_fiber1 = sci_fibers[0]
     model_fiber2 = ref_fiber
     model_groups = pconst.FIBER_SPECTRAL_GROUPS(oprops['ORDER_RANGES'])
-    mpargs = (params, image, image2, oprops['ORDERP'], mbgprops,
+    mpargs = (params, image, image2,
+              oprops['ORDERP'], oprops['PROFILES_NOSHAPE'],
+              mbgprops,
               oprops['ORDER_MAP'], oprops['ORDER_NEAREST'],
               oprops['ORDER_RANGES'],
               oprops['ORDER_TOP'], oprops['ORDER_BOTTOM'],
