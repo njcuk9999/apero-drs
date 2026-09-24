@@ -53,8 +53,8 @@ def fit_ron(residual: np.ndarray, model: np.ndarray,
 
     :return: float, readout noise in electrons
     """
-    residual = np.asarray(residual, dtype=float)
-    model = np.asarray(model, dtype=float)
+    residual = np.array(residual, dtype=float)
+    model = np.array(model, dtype=float)
     # Use a coarse spatial subsample only for large images so the noise fit is
     #   still stable but no longer dominated by a dense 2D grid.
     if stride > 1 and residual.ndim == 2:
@@ -198,7 +198,7 @@ def background_model(image: np.ndarray, size: Tuple[int, int] = (31, 7),
     sx = max(int(kx * stride_frac), 1)
     ny, nx = image.shape
     # Pad once so the median boxes are valid all the way to the image edge.
-    pad = np.pad(np.asarray(image, dtype=float),
+    pad = np.pad(np.array(image, dtype=float),
                  ((ky // 2, ky - 1 - ky // 2),
                   (kx // 2, kx - 1 - kx // 2)),
                  mode='constant', constant_values=np.nan)
@@ -253,7 +253,7 @@ def trace_pixels(labelmap: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     starts = np.searchsorted(labels,
                              np.arange(int(flat.max()) + 2,
                                        dtype=np.int32))
-    return pos, np.asarray(starts)
+    return pos, np.array(starts)
 
 
 def spectral_groups(
@@ -293,10 +293,10 @@ def ribbon_geometry(centers1: np.ndarray, widths1: np.ndarray,
 
     :return: tuple, ribbon centers, first rows and last rows
     """
-    centers1 = np.asarray(centers1, dtype=float)
-    widths1 = np.asarray(widths1, dtype=float)
-    centers2 = np.asarray(centers2, dtype=float)
-    widths2 = np.asarray(widths2, dtype=float)
+    centers1 = np.array(centers1, dtype=float)
+    widths1 = np.array(widths1, dtype=float)
+    centers2 = np.array(centers2, dtype=float)
+    widths2 = np.array(widths2, dtype=float)
     per_column = centers1.ndim == 2
     if per_column:
         widths1 = widths1[:, np.newaxis]
@@ -622,8 +622,8 @@ def model_spectra(flux1: np.ndarray, flux2: np.ndarray,
     :return: dict, individual fiber spectra and their combined spectrum
     """
     spectra = dict()
-    spectra[fiber1] = np.asarray(flux1, dtype=float)
-    spectra[fiber2] = np.asarray(flux2, dtype=float)
+    spectra[fiber1] = np.array(flux1, dtype=float)
+    spectra[fiber2] = np.array(flux2, dtype=float)
     with np.errstate(invalid='ignore'):
         spectra['COMBINED'] = np.nansum(
             np.stack([spectra[fiber1], spectra[fiber2]]), axis=0)
@@ -728,51 +728,6 @@ def extract_spectra(image: np.ndarray, error: np.ndarray,
         espec[bad] = np.nan
         # push into output dictionary
         outputs[name] = (spec, espec)
-    return outputs
-
-
-def extract_blaze(
-        order_map: np.ndarray, xmap: np.ndarray,
-        profiles: Dict[str, np.ndarray],
-        ranges: Dict[str, Tuple[int, int]], xgrid: np.ndarray,
-        groupings: Optional[List[Tuple[str, List[List[int]]]]] = None,
-        window: float = 0.45, cut: float = 3.0,
-        weight_kind: str = 'gauss'
-        ) -> Dict[str, np.ndarray]:
-    """Extract the order-profile throughput on the spectrum grid.
-
-    The science extraction divides by the spatial order profile. This
-    companion product restores the profile integral on the same irregular
-    grid, so a spectrum multiplied by its blaze has detector-flux units.
-
-    :param order_map: Integer trace-label map in the science frame.
-    :param xmap: Rectified column coordinate for each science pixel.
-    :param profiles: Science-frame order profiles by fiber name.
-    :param ranges: Inclusive trace-label range for each fiber.
-    :param xgrid: Output spectrum grid in detector-pixel coordinates.
-    :param groupings: Instrument-owned extraction groupings.
-    :param window: Local-fit half-width in pixels.
-    :param cut: Local-fit distance cutoff in window widths.
-    :return: Group name to blaze array mapping.
-    """
-    outputs = dict()
-    trace_pos, trace_start = trace_pixels(order_map)
-    xflat = np.ascontiguousarray(xmap).ravel()
-    pflat = {key: np.ascontiguousarray(value).ravel()
-             for key, value in profiles.items()}
-    for name, orders in spectral_groups(ranges, groupings):
-        blaze = np.full((len(orders), xgrid.size), np.nan)
-        for order_num, traces in enumerate(orders):
-            indices = np.concatenate([
-                trace_pos[trace_start[trace]:trace_start[trace + 1]]
-                for trace in traces])
-            if indices.size == 0:
-                continue
-            fiber = _fiber_for_trace(traces[0], ranges)
-            blaze[order_num] = interpolate.kernel_total(
-                xflat[indices], pflat[fiber][indices], xgrid,
-                window=window, cut=cut, weight_kind=weight_kind)
-        outputs[name] = blaze
     return outputs
 
 

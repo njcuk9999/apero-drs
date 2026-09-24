@@ -437,7 +437,7 @@ def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
     :return: tuple, corrected spectrum, leak correction array, properties
     """
     func_name = __NAME__ + '.correct_spectra_leak()'
-    spectrum = np.asarray(spectrum, dtype=float)
+    spectrum = np.array(spectrum, dtype=float)
     no_correction = np.full_like(spectrum, np.nan)
     props = ParamDict()
     props['LEAK_CORRECTED'] = False
@@ -458,9 +458,13 @@ def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
     ref_type = pconst.FIBER_DATA_TYPE(dprtype, ref_fiber)
+    extract_type = params['INPUTS'].get('EXTRACT_TYPE', 'standard')
     enabled = params['INPUTS']['LEAKCORR']
     allowed = ref_type in params['CAL.LEAK.REF_TYPES']
+    # skip for quicklook, flat extractions, non-science fibers, and
+    # when the reference spectrum is missing
     eligible = (enabled and not params['CAL.EXT.QUICKLOOK']
+                and extract_type != 'flat'
                 and fiber in sci_fibers and reference is not None
                 and allowed)
     if not eligible:

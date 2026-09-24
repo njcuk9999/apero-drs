@@ -318,14 +318,22 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
     func_name = __NAME__ + '.correct_spectrum_thermal()'
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     fibertype = pconst.FIBER_DATA_TYPE(props['DPRTYPE'], fiber)
-    if not params['CAL.THERM.THERMAL_CORR']:
+    extract_type = params['INPUTS'].get('EXTRACT_TYPE', 'standard')
+    # skip thermal correction in quick-look mode, for flat extractions,
+    # or when the constant disables it entirely
+    skip_thermal = (params['CAL.EXT.QUICKLOOK']
+                    or extract_type == 'flat'
+                    or not params['CAL.THERM.THERMAL_CORR'])
+    if skip_thermal:
         tprops = ParamDict()
         tprops['THERMALFILE'] = 'None'
         tprops['THERMALTIME'] = np.nan
         tprops['THERMAL_RATIO'] = np.nan
         tprops['THERMAL_RATIO_USED'] = 'None'
         tprops.set_all_sources(func_name)
-        return np.asarray(spectrum, dtype=float), tprops
+        return np.array(spectrum, dtype=float), tprops
+    WLOG(params, '', 'Applying thermal correction for '
+                     'fiber {0}'.format(fiber))
     wprops = wave.get_wavesolution(params, recipe, ref=True,
                                    database=database)
     wavemap = wprops['WAVEMAP']
@@ -359,7 +367,7 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
             blue_limit=params['CAL.THERM.BLUE_WAVE_LIM'],
             thermal_limit=params['CAL.THERM.MIN_WAVE_LIM'])
     else:
-        corrected = np.asarray(spectrum, dtype=float)
+        corrected = np.array(spectrum, dtype=float)
         ratios = ParamDict()
         ratios['ratio'] = np.nan
         ratios['ratio_used'] = 'None'

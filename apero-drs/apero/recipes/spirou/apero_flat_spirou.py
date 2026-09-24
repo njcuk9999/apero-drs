@@ -21,11 +21,9 @@ from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.io import drs_image
-from apero.science import extract
 from apero.science.calib import flat_blaze
-from apero.science.calib import gen_calib
-from apero.science.calib import localisation
-from apero.science.calib import shape
+from apero.science.calib import wave
+from apero.science.extract import other as extractother
 
 # =============================================================================
 # Define variables
@@ -47,6 +45,8 @@ DrsRecipe = drs_recipe.DrsRecipe
 ParamDict = param_functions.ParamDict
 # Get the text types
 textentry = drs_lang.textentry
+# name of the extraction recipe called as a sub-recipe
+EXTRACT_NAME = 'apero_extract_spirou.py'
 
 
 # =============================================================================
@@ -134,6 +134,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
+    # get the fiber types from a list parameter
+    fiber_types = drs_image.get_fiber_types(params)
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -146,111 +148,84 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         recipe.plot.set_location(it)
         # print file iteration progress
         drs_startup.file_processing_update(params, it, num_files)
-        # ge this iterations file
+        # get this iteration's file
         infile = infiles[it]
-        # get header from file instance
-        header = infile.get_header()
-        # get the fiber types needed
-        fibertypes = drs_image.get_fiber_types(params)
 
         # ------------------------------------------------------------------
-        # Load shape components
+        # Get the flat output e2ds filename and extract/read file
         # ------------------------------------------------------------------
-        sprops = shape.get_shape_calibs(params, recipe,
-                                        header, database=calibdbm)
+        eargs = [params, recipe, EXTRACT_NAME, infile, log1]
+        # returns {'e2ds': {fiber: DrsFitsFile}, 'flat_response': {fiber: ...}}
+        flat_outputs = extractother.extract_flat_files(*eargs)
+        # per-fiber extracted spectra
+        flat_files = flat_outputs['e2ds']
+        # per-fiber flat-response profiles (used by the blaze step below)
+        flat_response_files = flat_outputs['flat_response']
 
         # ------------------------------------------------------------------
-        # Correction of file
+        # Load wave solution for each fiber (use ref wave as default)
         # ------------------------------------------------------------------
-        props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
-                                                  database=calibdbm)
+        WLOG(params, '',
+             'Loading reference wave solutions for fibers: '
+             '{0}'.format(', '.join(fiber_types)))
+        wave_maps = dict()
+        for fiber in fiber_types:
+            # load the reference wave solution for this fiber
+            wkwargs = dict(fiber=fiber, infile=infile, ref=True,
+                           database=calibdbm)
+            wprops = wave.get_wavesolution(params, recipe, **wkwargs)
+            wave_maps[fiber] = wprops['WAVEMAP']
+        WLOG(params, '', 'Wave solutions loaded')
 
         # ------------------------------------------------------------------
-        # Load and straighten order profiles
+        # Fit physical blaze model and compute flat per fiber
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, sprops]
-        oprops = extract.order_profiles(params, recipe, *sargs,
-                                        database=calibdbm)
-        orderps = oprops['ORDERP']
-        orderpfiles = oprops['ORDERPFILE']
-        orderptimes = oprops['ORDERPTIME']
-        # ------------------------------------------------------------------
-        # Apply shape transformations
-        # ------------------------------------------------------------------
-        # log progress (straightening orderp)
-        WLOG(params, 'info', textentry('40-016-00004'))
-        # straighten image
-        image2 = shape.ea_transform(params, image, sprops['SHAPEL'],
-                                    dxmap=sprops['SHAPEX'],
-                                    dymap=sprops['SHAPEY'])
+        bargs = [params, recipe, flat_response_files, flat_files,
+                 wave_maps, fiber_types]
+        eprops_all = flat_blaze.make_blaze(*bargs)
 
         # ------------------------------------------------------------------
         # Fiber loop
         # ------------------------------------------------------------------
         # loop around fiber types
-        for fiber in fibertypes:
+        for fiber in fiber_types:
             # ------------------------------------------------------------------
             # add level to recipe log
             log2 = log1.add_level(params, 'fiber', fiber)
-            # --------------------------------------------------------------
-            # load the localisation properties for this fiber
-            lprops = localisation.get_coefficients(params, recipe,
-                                                   header, fiber=fiber,
-                                                   merge=True,
-                                                   database=calibdbm)
-            # get the localisation center coefficients for this fiber
-            lcoeffs = lprops['CENT_COEFFS']
-            # shift the coefficients
-            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs,
-                                                sprops['SHAPEL'])
-            # --------------------------------------------------------------
-            # get the number of frames used
-            nframes = infile.numfiles
-            # --------------------------------------------------------------
-            # get the order profile for this fiber
-            lprops['ORDERP'] = orderps[fiber]
-            lprops['ORDERPFILE'] = orderpfiles[fiber]
-            lprops['ORDERPTIME'] = orderptimes[fiber]
-            lprops.set_sources(['ORDERP', 'ORDERPFILE', 'ORDERPTIME'], mainname)
-            # --------------------------------------------------------------
-            # extract spectrum
-            eprops = extract.extract2d(params, image2, lprops['ORDERP'],
-                                       lcoeffs2, nframes, props,
-                                       kind='flat', fiber=fiber)
-            # fit blaze and get flat
-            eprops = extract.extract_blaze_flat(params, eprops, fiber)
+            # retrieve eprops built by make_blaze for this fiber
+            eprops = eprops_all[fiber]
+            WLOG(params, '',
+                 'Fiber {0}: blaze model fit — '
+                 'rms={1:.2%}'.format(fiber, eprops['BLAZE_FIT_RMS']))
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------
             sorder = params['CAL.FLAT.PLOT_ORDER']
-            # plot (in a loop) order fit + e2ds (on original image)
-            recipe.plot('FLAT_ORDER_FIT_EDGES1', params=params, image1=image,
-                        image2=image2, order=None, coeffs1=lcoeffs,
-                        coeffs2=lcoeffs2, fiber=fiber)
-            # plot for sorder order fit + e2ds (on original image)
-            recipe.plot('FLAT_ORDER_FIT_EDGES2', params=params, image1=image,
-                        image2=image2, order=sorder, coeffs1=lcoeffs,
-                        coeffs2=lcoeffs2, fiber=fiber)
-            # plot (in a loop) the fitted blaze and calculated flat with the
-            #     e2ds image
+            # plot (in a loop) the fitted blaze and calculated flat with
+            # the e2ds image
             recipe.plot('FLAT_BLAZE_ORDER1', order=None, eprops=eprops,
                         fiber=fiber)
-            # plot for sorder the fitted blaze and calculated flat with the
-            #     e2ds image
+            # plot for sorder the fitted blaze and calculated flat with
+            # the e2ds image
             recipe.plot('FLAT_BLAZE_ORDER2', order=sorder, eprops=eprops,
                         fiber=fiber)
             # --------------------------------------------------------------
             # Quality control
             # --------------------------------------------------------------
             qc_params, passed = flat_blaze.flat_blaze_qc(params, recipe,
-                                                         eprops, fiber)
+                                                          eprops, fiber)
             # update recipe log
             log2.add_qc(qc_params, passed)
             # --------------------------------------------------------------
             # write files
+            # flat_files[fiber] carries full calibration provenance in
+            # its header (shape, loco, wave) and is used as source_file
             # --------------------------------------------------------------
-            wargs = [infile, eprops, fiber, rawfiles, combine, props, lprops,
-                     sprops, qc_params]
+            WLOG(params, '',
+                 'Fiber {0}: writing blaze and flat '
+                 'calibration files'.format(fiber))
+            wargs = [infile, eprops, fiber, rawfiles, combine,
+                     flat_files[fiber], qc_params]
             outfiles = flat_blaze.flat_blaze_write(params, recipe, *wargs)
             blazefile, flatfile = outfiles
 
@@ -258,13 +233,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # Update the calibration database
             # --------------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
+                WLOG(params, '',
+                     'Fiber {0}: updating calibration '
+                     'database'.format(fiber))
                 # copy the blaze file to the calibDB
                 calibdbm.add_calib_file(blazefile)
                 # copy the flat file to the calibDB
                 calibdbm.add_calib_file(flatfile)
-            # ---------------------------------------------------------------------
+            # ------------------------------------------------------------------
             # if recipe is a reference and QC fail we generate an error
-            # ---------------------------------------------------------------------
+            # ------------------------------------------------------------------
             if not passed and params['INPUTS']['REF']:
                 eargs = [recipe.name]
                 raise AperoCodedException(params, '09-000-00011', targs=eargs)
@@ -272,10 +250,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # Summary plots
             # ------------------------------------------------------------------
             sorder = params['CAL.FLAT.PLOT_ORDER']
-            # plot (in a loop) order fit + e2ds (on original image)
-            recipe.plot('SUM_FLAT_ORDER_FIT_EDGES', params=params, image1=image,
-                        image2=image2, order=sorder, coeffs1=lcoeffs,
-                        coeffs2=lcoeffs2, fiber=fiber)
             # plot the fitted blaze and calculated flat with the e2ds image
             recipe.plot('SUM_FLAT_BLAZE_ORDER', order=sorder, eprops=eprops,
                         fiber=fiber)

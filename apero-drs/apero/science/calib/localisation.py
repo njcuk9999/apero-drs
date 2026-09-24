@@ -141,7 +141,7 @@ def calculate_order_profile(params: ParamDict, image: np.ndarray,
     # log that we are creating order profile
     WLOG(params, '', textentry('40-013-00001'))
     # nan-fill the image: fills holes only, does not smooth the orders
-    return np.asarray(mp.fill_nans(image, box_size=size))
+    return np.array(mp.fill_nans(image, box_size=size))
 
 
 def build_order_position_map(shape: Tuple[int, int],
@@ -239,7 +239,7 @@ def build_order_bounds(
         centers.append(np.array([
             mp.val_cheby(coeffs[index], xmid, domain=[0, nx])
             for index in range(coeffs.shape[0])]))
-        widths.append(np.asarray(wid_coeffs[fiber])[:, 0])
+        widths.append(np.array(wid_coeffs[fiber])[:, 0])
     return extract_model_core.ribbon_geometry(
         centers[0], widths[0], centers[1], widths[1],
         interleaved=interleaved)

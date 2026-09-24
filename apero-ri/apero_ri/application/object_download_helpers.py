@@ -536,7 +536,7 @@ def _build_ccf_profile_csv(
         ), 404
     rv_vec, all_ccf, _datetimes, _dv_ms, _sdv_ms, _summary = out
 
-    ccf_used = np.asarray(all_ccf, dtype=float)
+    ccf_used = np.array(all_ccf, dtype=float)
     if ccf_used.size == 0 or rv_vec is None:
         return jsonify(
             success=False,
@@ -552,11 +552,11 @@ def _build_ccf_profile_csv(
     med_ccf = np.nanmedian(ccf_used, axis=0)
 
     has_fit, fit_arr, _xlim = _fit_ccf_gaussian(
-        np.asarray(rv_vec, dtype=float), med_ccf
+        np.array(rv_vec, dtype=float), med_ccf
     )
     fit_vec: np.ndarray
     if has_fit and fit_arr is not None and len(fit_arr) == len(med_ccf):
-        fit_vec = np.asarray(fit_arr, dtype=float)
+        fit_vec = np.array(fit_arr, dtype=float)
     else:
         fit_vec = np.full_like(med_ccf, np.nan)
     residual = med_ccf - fit_vec

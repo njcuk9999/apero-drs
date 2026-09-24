@@ -520,7 +520,7 @@ class Database:
             result = self.execute(command, fetch=True)
             # if numpy array requested return it as one
             if return_array:
-                return np.asarray(result)
+                return np.array(result)
             # if astropy table request return it as one (need the cursor for
             #    columns)
             if return_table:

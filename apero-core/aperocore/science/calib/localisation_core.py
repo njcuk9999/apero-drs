@@ -71,8 +71,8 @@ def build_order_position_map(shape: Tuple[int, int],
     offset = 0
     # loop around fiber groups (e.g. 'AB' then 'C')
     for centers, widths in zip(fiber_centers, fiber_widths):
-        centers = np.asarray(centers, dtype=float)
-        widths = np.asarray(widths, dtype=float)
+        centers = np.array(centers, dtype=float)
+        widths = np.array(widths, dtype=float)
         ntrace = centers.shape[0]
         ranges.append((offset + 1, offset + ntrace))
         # loop around each trace of this fiber group

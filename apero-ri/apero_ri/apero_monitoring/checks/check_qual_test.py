@@ -135,8 +135,8 @@ def check_function(instrument: str, obs_dir: str,
                 f'\t{filename.name}: missing image or nread data'
             )
             continue
-        image_arr = np.asarray(image)
-        nread_arr = np.asarray(nread)
+        image_arr = np.array(image)
+        nread_arr = np.array(nread)
         # Compute summary metrics used by the quality rules.
         p99 = float(np.nanpercentile(image_arr, 99))
         fsat = float(np.mean(nread_arr != np.nanmax(nread_arr)))

@@ -1891,6 +1891,73 @@ CDict.add('QC_FLUX_EDGE_IGNORE', value=None,  dtype=list, dtypei=int,
           source=__NAME__, group=cgroup,
           description='Define orders not to include in flux edge limit check')
 
+# Define whether to always extract flat files (i.e. overwrite existing files)
+CDict.add('ALWAYS_EXTRACT', value=None, dtype=bool,
+          source=__NAME__, user=True, active=False,
+          group=cgroup,
+          description=('Define whether to always extract flat files '
+                       '(i.e. overwrite existing files)'))
+
+# Oversampling factor for the flat-response convolution grid (integer >= 1)
+CDict.add('RESPONSE_OVERSAMPLING', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Integer oversampling factor for the flat-response '
+                       'convolution grid; the output x-grid has '
+                       'ncols * RESPONSE_OVERSAMPLING points'))
+
+# Maximum Voronoi half-cell width for flat-response convolution, in detector
+# pixels.  Prevents a sample at a gap edge from claiming half the gap.
+CDict.add('RESPONSE_MAX_HALF_CELL', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description=('Maximum Voronoi cell half-width in detector pixels '
+                       'used by the flat-response convolve_irregular call; '
+                       'caps cells that border detector gaps'))
+
+# Gaussian FWHM (in oversampled output pixels) for flat-response convolution
+CDict.add('RESPONSE_FWHM_PIX', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description=('Gaussian FWHM in oversampled output pixels for '
+                       'the flat-response convolve_irregular kernel'))
+
+# Effective blackbody temperature of the flat lamp used in the physical
+# blaze model fit (BB_photon * Trans * sinc^2 * dlambda/dpix)
+CDict.add('BLAZE_TEFF', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description=('Effective blackbody temperature of the flat lamp '
+                       'in Kelvin used by the physical blaze model fit'))
+
+# Red wavelength limit (nm) beyond which the blaze model is not fitted;
+# the detector cut-off is sharper than the model can follow there.
+CDict.add('BLAZE_WAVE_FIT_MAX', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description=('Red wavelength limit in nm: the physical blaze '
+                       'model is only fitted blueward of this; the model '
+                       'is still evaluated there as an extrapolation'))
+
+# Sigma-clipping threshold for iterative outlier rejection in the blaze fit
+CDict.add('BLAZE_SIGMA_CLIP', value=None, dtype=float,
+          source=__NAME__, group=cgroup,
+          description=('Sigma-clipping threshold used in iterative '
+                       'rejection of outlier pixels during the physical '
+                       'blaze model fit'))
+
+# Half-width in pixels of the window around each order peak used to place
+# transmission spline knots (one knot per order, at its peak)
+CDict.add('BLAZE_PEAK_HW', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Half-width in pixels around each order peak used '
+                       'to derive the spline knot value for the '
+                       'transmission component of the blaze model'))
+
+# Polynomial degree of the log-transmission spline in the blaze model;
+# 1 = piecewise-linear between order peaks (recommended)
+CDict.add('BLAZE_SPLINE_K', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Degree of the interpolating spline used for '
+                       'log(transmission) in the physical blaze model; '
+                       '1 gives piecewise-linear interpolation between '
+                       'order peaks'))
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -2105,10 +2172,6 @@ CDict.add('SAVGOL_MINPTS', value=None, dtype=int,
 CDict.add('SAVGOL_WEIGHT', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Local-fit distance weight, gauss or triangular')
-CDict.add('MAKE_BLAZE', value=None, dtype=bool,
-          source=__NAME__, group=cgroup,
-          description='Build profile-throughput grids for S1D stitching')
-
 # Shape-transform spline order used by model extraction
 CDict.add('SPLINE_ORDER', value=None, dtype=str,
           source=__NAME__, group=cgroup,

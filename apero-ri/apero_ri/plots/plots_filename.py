@@ -1432,7 +1432,7 @@ def _build_frame_plot(
                     try:
                         _hdata = hdul[_ext].data
                         if _hdata is not None:
-                            d = np.asarray(_hdata, dtype=float)
+                            d = np.array(_hdata, dtype=float)
                             if d.ndim == 2:
                                 data = d
                                 orig_shape = d.shape
@@ -1444,7 +1444,7 @@ def _build_frame_plot(
                 for hdu in hdul:
                     if hdu.data is None:
                         continue
-                    d = np.asarray(hdu.data, dtype=float)
+                    d = np.array(hdu.data, dtype=float)
                     if d.ndim == 2:
                         data = d
                         orig_shape = d.shape

@@ -869,6 +869,38 @@ CDict.set('QC_FLUX_EDGE_LIMIT', value=0.01, source=__NAME__, group=cgroup)
 CDict.set('QC_FLUX_EDGE_IGNORE', value=[43, 44, 45, 46], source=__NAME__,
           group=cgroup)
 
+# Define whether to always extract flat files (i.e. overwrite existing files)
+CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, group=cgroup)
+
+# Integer oversampling factor for the flat-response convolution grid
+CDict.set('RESPONSE_OVERSAMPLING', value=2,
+          source=__NAME__, group=cgroup)
+
+# Maximum Voronoi cell half-width in detector pixels for flat-response
+# convolution; caps cells that border detector gaps
+CDict.set('RESPONSE_MAX_HALF_CELL', value=0.75,
+          source=__NAME__, group=cgroup)
+
+# Gaussian FWHM in oversampled output pixels for flat-response convolution
+CDict.set('RESPONSE_FWHM_PIX', value=1.0,
+          source=__NAME__, group=cgroup)
+
+# Effective blackbody temperature of the flat lamp [K]
+CDict.set('BLAZE_TEFF', value=5000.0, source=__NAME__, group=cgroup)
+
+# Red wavelength limit for physical blaze model fit [nm]
+CDict.set('BLAZE_WAVE_FIT_MAX', value=1800.0,
+          source=__NAME__, group=cgroup)
+
+# Sigma-clipping threshold for blaze model fit residuals
+CDict.set('BLAZE_SIGMA_CLIP', value=5.0, source=__NAME__, group=cgroup)
+
+# Half-width in pixels of the peak window for transmission spline knots
+CDict.set('BLAZE_PEAK_HW', value=50, source=__NAME__, group=cgroup)
+
+# Degree of the log-transmission spline (1 = linear between order peaks)
+CDict.set('BLAZE_SPLINE_K', value=1, source=__NAME__, group=cgroup)
+
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
@@ -961,7 +993,6 @@ CDict.set('SAVGOL_STEP', value=0.5, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_CUT', value=3.0, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_MINPTS', value=3, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_WEIGHT', value='gauss', source=__NAME__, group=cgroup)
-CDict.set('MAKE_BLAZE', value=True, source=__NAME__, group=cgroup)
 # Shape-transform spline order used by model extraction
 CDict.set('SPLINE_ORDER', value='spline3', source=__NAME__, group=cgroup)
 

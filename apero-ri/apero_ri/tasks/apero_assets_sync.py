@@ -10,7 +10,7 @@ remote APERO data-assets bundle used by the ARI UI for the
 Two modes are supported:
 
 ``mode='remote'`` (default)
-    Drives the apero developer recipe ``apero_data_checksum.py`` as a
+    Drives the apero developer recipe ``apero_assets.py`` as a
     subprocess to keep the local ``{LOCAL_DATA_DIR}/apero-assets/``
     directory in sync with the configured remote checksum/tar server:
       * ``update-local --indir <assets_dir>``: download anything that is
@@ -329,7 +329,7 @@ def _build_local_checksums(assets_dir: Path,
 
 
 # ---------------------------------------------------------------------------
-# Remote (apero_data_checksum.py) and local (bidirectional copy) helpers
+# Remote (apero_assets.py) and local (bidirectional copy) helpers
 # ---------------------------------------------------------------------------
 _LEGACY_REMOTE_MODES = ('remote', 'sync', 'upload')
 _LEGACY_LOCAL_MODES = ('local',)
@@ -345,15 +345,15 @@ def _normalise_mode(raw_mode: Any) -> str:
     return 'remote'
 
 
-def _find_apero_data_checksum_script() -> Optional[Path]:
-    """Locate the installed ``apero_data_checksum.py`` recipe."""
+def _find_apero_assets_script() -> Optional[Path]:
+    """Locate the installed ``apero_assets.py`` recipe."""
     try:
         import apero as _apero_pkg
     except ImportError:
         return None
     candidate = (Path(_apero_pkg.__file__).parent
                  / 'tools' / 'recipes' / 'dev'
-                 / 'apero_data_checksum.py')
+                 / 'apero_assets.py')
     return candidate if candidate.is_file() else None
 
 
@@ -390,15 +390,15 @@ def _run_subprocess(cmd: List[str], tlog,
 
 def _run_remote_sync(assets_dir: Path, tlog,
                      drs_uconfig: Optional[str] = None) -> List[str]:
-    """Drive ``apero_data_checksum.py update-local`` then ``update-remote``.
+    """Drive ``apero_assets.py update-local`` then ``update-remote``.
 
     :return: list of human-readable status lines for the task ``info``
              panel.
     """
     summary: List[str] = []
-    script = _find_apero_data_checksum_script()
+    script = _find_apero_assets_script()
     if script is None:
-        msg = ('Could not locate apero_data_checksum.py inside the '
+        msg = ('Could not locate apero_assets.py inside the '
                'installed apero package.')
         tlog('ERROR: ' + msg)
         raise FileNotFoundError(msg)
@@ -436,7 +436,7 @@ def _run_remote_sync(assets_dir: Path, tlog,
         cmd = cmd_map[sub]
         rc, output = _run_subprocess(cmd, tlog, extra_env=extra_env)
         if rc != 0:
-            msg = ('apero_data_checksum.py {0} failed (exit {1}).'
+            msg = ('apero_assets.py {0} failed (exit {1}).'
                    ).format(sub, rc)
             if output:
                 lines = output.splitlines()
@@ -791,7 +791,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
             return
 
         # =====================================================================
-        # REMOTE mode: drive apero_data_checksum.py update-local + update-remote
+        # REMOTE mode: drive apero_assets.py update-local + update-remote
         # =====================================================================
         self.progress = 0.1
         drs_uconfig = str(task_cfg.get('drs_uconfig') or '').strip()
@@ -810,7 +810,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         if force_download:
             self.info += (
                 '\n_Note: ``force_download`` is ignored in '
-                'remote mode (handled by apero_data_checksum.py).'
+                'remote mode (handled by apero_assets.py).'
                 '_\n'
             )
         tlog('APERO_SYNC_ASSETS completed (remote).')

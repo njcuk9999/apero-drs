@@ -32,7 +32,40 @@
 
 @.github/instructions/python-apero.instructions.md
 
-## APERO recipe structure
+- Prefer `np.array(x)` over `np.asarray(x)`. `np.asarray` avoids a copy when
+  `x` is already an array, which can cause hard-to-trace mutations of the
+  caller's data. Use `np.array(x)` (which always copies) unless you have
+  explicitly profiled the allocation and determined that a view is safe.
+
+## APERO recipe structure: top-level principles
+
+- APERO recipe `__main__` functions should be top-level, easy to follow, and
+  minimal in code — the less code in the recipe the better.
+- Structure each recipe with clear `# ----` section headers that name each
+  phase (e.g. ``# Main extraction``, ``# Flat response``, ``# Fiber loop``).
+  Each section should contain a brief description of what is happening and
+  ideally a single call to a science function.  Occasional ``if`` statements
+  are fine to show that a section is skipped in a particular case.
+- Avoid multi-line argument lists directly in the recipe body; collect
+  arguments into named lists/dicts using the ``xargs`` / ``xkwargs`` pattern
+  (where ``x`` is a short context prefix, e.g. ``lkargs`` for leak) and call
+  with splat expansion:
+  ```python
+  lkargs = [params, recipe, spectrum, ref_e2ds, infile, fiber]
+  lkkwargs = dict(database=calibdbm)
+  lkout = leak.correct_spectra_leak(*lkargs, **lkkwargs)
+  corrected_spectrum, leakcorr, leak_props = lkout
+  ```
+- All instruments that process the same data type must use an identical recipe
+  structure — if the steps are the same, the code should be the same.
+  Instrument-specific differences belong in constants or science modules,
+  not in duplicated recipe blocks.
+- The main per-file setup (shape calibration, image calibration, order
+  profiles, shape transform, geometry, and model extraction) should be
+  delegated to a single ``extract.main_extract()`` call that returns all
+  products needed by the fiber loop.
+
+## APERO recipe structure: code guidelines
 
 - Most lines of Python code should have a concise comment when their purpose,
   data-flow role, or non-obvious assumption is not immediately clear. Use

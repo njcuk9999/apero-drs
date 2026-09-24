@@ -1470,9 +1470,21 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
                              description='FP lines identified from extracted'
                                          ' FP fiber')
 
+# per-order flat-field response profile (from flat extraction)
+out_flat_response = drs_finput(
+    'FLAT_RESPONSE',
+    hkeys=dict(KW_OUTPUT='FLAT_RESPONSE'),
+    fibers=valid_efibers,
+    filetype='.fits', intype=pp_flat_flat,
+    suffix='_flat_response',
+    outclass=general_ofile,
+    description='Per-order flat-field response profile from the '
+                'convolve_irregular resampling algorithm')
+
 # add extract outputs to output fileset
 red_file.addset(out_ext_e2dsff)
 red_file.addset(out_ext_e2dsll)
+red_file.addset(out_flat_response)
 red_file.addset(out_ext_loco)
 red_file.addset(out_ext_s1d_w)
 red_file.addset(out_ext_s1d_v)

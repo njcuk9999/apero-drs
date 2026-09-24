@@ -50,7 +50,7 @@ def _transform_coordinates(shape: Tuple[int, int],
     """
     if lin_transform_vect is None:
         lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
-    dx0, dy0, a, b, c, d = np.asarray(lin_transform_vect, dtype=float)
+    dx0, dy0, a, b, c, d = np.array(lin_transform_vect, dtype=float)
     yy, xx = np.indices(shape, dtype=float)
     xcoord = dx0 + xx * a + yy * b
     ycoord = dy0 + xx * c + yy * d
@@ -82,7 +82,7 @@ def ea_transform(image: np.ndarray,
 
     :return: numpy array (2D), transformed image with NaNs propagated
     """
-    image = np.asarray(image, dtype=float)
+    image = np.array(image, dtype=float)
     for name, value in [('dxmap', dxmap), ('dymap', dymap)]:
         if value is not None and np.shape(value) != image.shape:
             emsg = '{0} must have the same shape as image'
@@ -129,7 +129,7 @@ def inverse_coordinates(shape: Tuple[int, int],
     """
     if lin_transform_vect is None:
         lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
-    dx0, dy0, a, b, c, d = np.asarray(lin_transform_vect, dtype=float)
+    dx0, dy0, a, b, c, d = np.array(lin_transform_vect, dtype=float)
     if dxmap is None:
         dxmap = np.zeros(shape, dtype=float)
     if dymap is None:
@@ -173,7 +173,7 @@ def ea_transform_reverse(image: np.ndarray,
 
     :return: numpy array (2D), image in the reverse-transform frame
     """
-    image = np.asarray(image, dtype=float)
+    image = np.array(image, dtype=float)
     if lin_transform_vect is None and dxmap is None and dymap is None:
         return np.array(image, copy=True)
     xcoord, ycoord = inverse_coordinates(image.shape, lin_transform_vect,

@@ -154,7 +154,7 @@ def _fit_blackbody(
     """
     if lams_um.size < 3:
         return None, None, None
-    fluxes = np.asarray(fluxes_jy, dtype=float)
+    fluxes = np.array(fluxes_jy, dtype=float)
     sigmas = np.maximum(0.08 * np.abs(fluxes), 1.0e-9)
     weights = 1.0 / (sigmas ** 2)
     best = None

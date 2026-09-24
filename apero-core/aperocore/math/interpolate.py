@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Generic interpolation and local fitting algorithms."""
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from scipy import sparse as _sp_sparse
 from scipy.interpolate import CubicSpline
 from scipy.ndimage import convolve
 from scipy.ndimage import distance_transform_edt
+from scipy.special import erf as _sp_erf
 
 # =============================================================================
 # Define functions
@@ -113,9 +115,9 @@ def kernel_total(xpos: np.ndarray, values: np.ndarray, xout: np.ndarray,
                  window: float = 0.45, cut: float = 3.0,
                  weight_kind: str = 'gauss') -> np.ndarray:
     """Total irregular samples onto an output grid using a normalized kernel."""
-    xpos = np.asarray(xpos, dtype=float).ravel()
-    values = np.asarray(values, dtype=float).ravel()
-    xout = np.asarray(xout, dtype=float).ravel()
+    xpos = np.array(xpos, dtype=float).ravel()
+    values = np.array(values, dtype=float).ravel()
+    xout = np.array(xout, dtype=float).ravel()
     out = np.full(xout.size, np.nan)
     good = np.isfinite(xpos) & np.isfinite(values)
     xpos, values = xpos[good], values[good]
@@ -160,9 +162,9 @@ def irregular_savgol(xpos: np.ndarray, values: np.ndarray,
                      weight_kind: str = 'gauss',
                      minpts: int = 3) -> Tuple[np.ndarray, np.ndarray]:
     """Fit local polynomials to values sampled on an irregular grid."""
-    xpos = np.asarray(xpos, dtype=float).ravel()
-    values = np.asarray(values, dtype=float).ravel()
-    xout = np.asarray(xout, dtype=float).ravel()
+    xpos = np.array(xpos, dtype=float).ravel()
+    values = np.array(values, dtype=float).ravel()
+    xout = np.array(xout, dtype=float).ravel()
     nout = xout.size
     yout = np.full(nout, np.nan)
     eout = np.full(nout, np.nan)
@@ -172,7 +174,7 @@ def irregular_savgol(xpos: np.ndarray, values: np.ndarray,
     if yerr is None:
         ivar = np.ones(values.size)
     else:
-        errors = np.asarray(yerr, dtype=float).ravel()
+        errors = np.array(yerr, dtype=float).ravel()
         with np.errstate(divide='ignore', invalid='ignore'):
             ivar = np.where((errors > 0) & np.isfinite(errors),
                             1.0 / errors ** 2, 0.0)
@@ -242,3 +244,333 @@ def irregular_savgol(xpos: np.ndarray, values: np.ndarray,
     eout[sel] = np.where(variance[sel] > 0,
                          np.sqrt(np.abs(variance[sel])), np.nan)
     return yout, eout
+
+
+# =============================================================================
+# Kernel-based convolution of irregularly sampled data onto a regular grid
+# =============================================================================
+class Kernel:
+    """
+    Abstract interface for a parametric convolution kernel.
+
+    Distances dx are in x units (same units as the input positions).
+    Subclasses must implement profile, cdf, and half_width.
+    """
+
+    def profile(self, dx: np.ndarray) -> np.ndarray:
+        """
+        Kernel shape normalised to 1 at its peak.
+
+        :param dx: numpy array, signed distances from the kernel centre
+
+        :return: numpy array, kernel values in [0, 1]
+        """
+        raise NotImplementedError
+
+    def cdf(self, dx: np.ndarray) -> np.ndarray:
+        """
+        Cumulative integral of the unit-area kernel from -inf to dx.
+
+        :param dx: numpy array, upper limit of integration
+
+        :return: numpy array, CDF values in [0, 1]
+        """
+        raise NotImplementedError
+
+    def half_width(self, threshold: float) -> float:
+        """
+        Return the half-width beyond which profile(dx) < threshold * peak.
+
+        :param threshold: float, fractional cutoff (e.g. 1e-6)
+
+        :return: float, half-width in x units
+        """
+        raise NotImplementedError
+
+
+class GaussianKernel(Kernel):
+    """
+    Gaussian convolution kernel parameterised by its FWHM.
+
+    :param fwhm: float, full-width at half-maximum in x units
+    """
+
+    def __init__(self, fwhm: float):
+        """
+        Initialise a Gaussian kernel.
+
+        :param fwhm: float, full-width at half-maximum in x units
+        """
+        self.fwhm = float(fwhm)
+        # sigma derived from FWHM = 2 * sqrt(2 * ln 2) * sigma
+        self.sigma = self.fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
+
+    def profile(self, dx: np.ndarray) -> np.ndarray:
+        """
+        Gaussian profile normalised to 1 at the centre.
+
+        :param dx: numpy array, offsets from the kernel centre
+
+        :return: numpy array, Gaussian values in [0, 1]
+        """
+        return np.exp(-0.5 * (dx / self.sigma) ** 2)
+
+    def cdf(self, dx: np.ndarray) -> np.ndarray:
+        """
+        Cumulative distribution of the unit-area Gaussian.
+
+        :param dx: numpy array, upper limit of integration
+
+        :return: numpy array, CDF values in [0, 1]
+        """
+        return 0.5 * (1.0 + _sp_erf(dx / (self.sigma * np.sqrt(2.0))))
+
+    def half_width(self, threshold: float) -> float:
+        """
+        Return |dx| at which the Gaussian drops below threshold * peak.
+
+        :param threshold: float, fractional peak cutoff
+
+        :return: float, half-width in x units
+        """
+        return self.sigma * np.sqrt(-2.0 * np.log(threshold))
+
+
+def _cell_edges(x: np.ndarray,
+                max_half_cell: Optional[float] = None
+                ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Build Voronoi cell boundaries (midpoints) for sorted sample positions.
+
+    End cells are made symmetric around the first and last sample.
+    max_half_cell caps any cell that would otherwise span a gap.
+
+    :param x: numpy array (1D), sorted sample x positions
+    :param max_half_cell: float or None, maximum half-cell width in x units
+
+    :return: tuple (left, right), 1D arrays of cell left and right edges
+    """
+    if x.size == 1:
+        # single sample: infinite cell unless max_half_cell is set
+        half = np.inf if max_half_cell is None else max_half_cell
+        return x - half, x + half
+    # midpoints between adjacent samples form the interior boundaries
+    mid = 0.5 * (x[1:] + x[:-1])
+    # mirror the first and last gap to give symmetric end cells
+    left = np.concatenate([[x[0] - (mid[0] - x[0])], mid])
+    right = np.concatenate([mid, [x[-1] + (x[-1] - mid[-1])]])
+    if max_half_cell is not None:
+        # cap cells that would span a gap or the detector edge
+        left = np.maximum(left, x - max_half_cell)
+        right = np.minimum(right, x + max_half_cell)
+    return left, right
+
+
+def _window_pairs(left: np.ndarray, right: np.ndarray,
+                  x2: np.ndarray, half_width: float
+                  ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Find all (output pixel j, input sample i) pairs within the kernel window.
+
+    Uses two binary searches on the sorted cell-edge arrays so the cost
+    scales as O(n_out * log n_in) rather than O(n_out * n_in).
+
+    :param left: numpy array (1D), sorted left cell edges of input samples
+    :param right: numpy array (1D), sorted right cell edges (same length)
+    :param x2: numpy array (1D), output grid positions
+    :param half_width: float, kernel half-width, defines the search window
+
+    :return: tuple (rows, cols), flat index arrays into x2 and the input
+             sample array; one entry per overlapping (output, input) pair
+    """
+    # samples whose right edge is inside [x2_j - hw, x2_j + hw]
+    lo = np.searchsorted(right, x2 - half_width, side='right')
+    hi = np.searchsorted(left, x2 + half_width, side='left')
+    counts = np.clip(hi - lo, 0, None)
+    rows = np.repeat(np.arange(x2.size), counts)
+    starts = np.cumsum(counts) - counts
+    cols = lo[rows] + (np.arange(counts.sum()) - starts[rows])
+    return rows, cols
+
+
+def convolve_irregular(
+        x: np.ndarray,
+        y: np.ndarray,
+        yerr: np.ndarray,
+        x2: np.ndarray,
+        kernel: Optional[Kernel] = None,
+        fwhm_pix: float = 2.0,
+        threshold: float = 1e-6,
+        weighting: str = 'integral',
+        max_half_cell: Optional[float] = None,
+        min_coverage: float = 0.5,
+        group: Optional[np.ndarray] = None,
+        normalize: bool = True,
+        return_matrix: bool = False
+) -> Dict[str, np.ndarray]:
+    """
+    Convolve irregularly sampled (x, y, yerr) onto the regular grid x2.
+
+    Each input sample owns a Voronoi cell bounded by midpoints to its
+    neighbours.  The weight of sample i in output pixel j equals the
+    kernel mass that falls inside that cell::
+
+        w_ij = CDF(right_i - x2_j) - CDF(left_i - x2_j)
+
+    This is the exact convolution of the piecewise-constant (nearest-
+    neighbour) interpolant of the data, which makes dense clusters
+    contribute proportionally to the x range they occupy rather than
+    their count.
+
+    When group is supplied (e.g. detector row indices for a spectrograph
+    flat), cells are built within each group independently.  Setting
+    normalize=False then gives the resampled equivalent of a plain
+    column sum over rows (use with weighting='integral').
+
+    :param x: numpy array (1D), input sample positions in any order
+    :param y: numpy array (1D), input sample values
+    :param yerr: numpy array (1D), input uncertainties; non-positive and
+                 non-finite values are excluded automatically
+    :param x2: numpy array (1D), strictly increasing regular output grid
+    :param kernel: Kernel instance or None; a GaussianKernel with FWHM
+                   equal to fwhm_pix output pixels is used when None
+    :param fwhm_pix: float, FWHM in x2 pixel units for the default kernel
+    :param threshold: float, samples where the kernel < threshold * peak
+                      are ignored (default 1e-6, i.e. +/-5.26 sigma)
+    :param weighting: str, 'integral' -> w_ij = kernel mass in cell
+                      (true piecewise-constant convolution);
+                      'ivar' -> w_ij = kernel(x_i - x2_j) / yerr_i^2
+                      (minimum-variance kernel-weighted mean)
+    :param max_half_cell: float or None, cap on cell half-width in x
+                          units; prevents a sample at a gap edge from
+                          claiming half the gap so coverage drops there
+    :param min_coverage: float, output pixels whose fraction of kernel
+                         mass backed by data is below this are set to NaN
+    :param group: numpy array (1D) or None, integer group labels; cells
+                  are built within each group only (e.g. detector rows)
+    :param normalize: bool, True -> weighted mean over all groups;
+                      False -> weighted sum (normalize=False requires
+                      weighting='integral')
+    :param return_matrix: bool, if True also return the sparse linear
+                          operator W with y2 = W @ y
+
+    :return: dict with keys:
+             'y'        - output values (NaN where coverage < min_coverage)
+             'err'      - propagated uncertainties (same masking)
+             'coverage' - mean fraction of kernel mass backed by data
+             'sum_w'    - sum of cell weights (effective group count)
+             'npts'     - number of input samples used per output pixel
+             'matrix'   - sparse (n_out, n_in) operator (if return_matrix)
+    """
+    x = np.array(x, dtype=float)
+    y = np.array(y, dtype=float)
+    yerr = np.array(yerr, dtype=float)
+    x2 = np.array(x2, dtype=float)
+    n_in, n_out = x.size, x2.size
+    # validate the regular output grid
+    step = np.diff(x2)
+    if n_out < 2 or np.any(step <= 0):
+        raise ValueError(
+            'x2 must be strictly increasing with >= 2 points')
+    dx2 = step.mean()
+    if not np.allclose(step, dx2, rtol=1e-6, atol=0):
+        raise ValueError('x2 must be a regular (uniform-step) grid')
+    if weighting not in ('integral', 'ivar'):
+        raise ValueError("weighting must be 'integral' or 'ivar'")
+    if not normalize and weighting != 'integral':
+        raise ValueError(
+            "normalize=False requires weighting='integral'")
+    # use a Gaussian kernel with the given FWHM if none is supplied
+    if kernel is None:
+        kernel = GaussianKernel(fwhm_pix * dx2)
+    half_width = kernel.half_width(threshold)
+    # default: all samples belong to the same group
+    if group is None:
+        group = np.zeros(n_in, dtype=int)
+    group = np.array(group)
+    # retain only valid samples and sort by (group, x) so that within
+    # each group the samples are in ascending x order for cell edges
+    valid = (np.isfinite(x) & np.isfinite(y)
+             & np.isfinite(yerr) & (yerr > 0))
+    idx = np.flatnonzero(valid)
+    idx = idx[np.lexsort((x[idx], group[idx]))]
+    xs = x[idx]
+    ys = y[idx]
+    es = yerr[idx]
+    gs = group[idx]
+    # process each group independently so cell boundaries never cross
+    # group borders (each group is an independent irregular sampling)
+    bounds = np.flatnonzero(np.diff(gs) != 0) + 1
+    all_rows: List[np.ndarray] = []
+    all_cols: List[np.ndarray] = []
+    all_cell_w: List[np.ndarray] = []
+    # ngroups counts how many groups have nonzero weight at each pixel
+    ngroups = np.zeros(n_out)
+    for i0, i1 in zip(np.r_[0, bounds], np.r_[bounds, xs.size]):
+        if i1 == i0:
+            continue
+        # Voronoi cells within this group only
+        left, right = _cell_edges(xs[i0:i1], max_half_cell)
+        # (output, sample) index pairs within the kernel window
+        rows, cols = _window_pairs(left, right, x2, half_width)
+        xc = x2[rows]
+        # kernel mass that falls inside each cell
+        cell_w = (kernel.cdf(right[cols] - xc)
+                  - kernel.cdf(left[cols] - xc))
+        # a group contributes to output pixel j when its total weight > 0
+        ngroups += (
+            np.bincount(rows, weights=cell_w, minlength=n_out) > 0)
+        all_rows.append(rows)
+        # offset cols back to the full sorted-sample index space
+        all_cols.append(cols + i0)
+        all_cell_w.append(cell_w)
+    # concatenate contributions from every group
+    rows = (np.concatenate(all_rows) if all_rows
+            else np.zeros(0, dtype=int))
+    cols = (np.concatenate(all_cols) if all_cols
+            else np.zeros(0, dtype=int))
+    cell_w = (np.concatenate(all_cell_w) if all_cell_w
+              else np.zeros(0))
+    # compute per-pair weights for the chosen weighting mode
+    if weighting == 'integral':
+        # weight = kernel mass within each Voronoi cell
+        w = cell_w
+    else:
+        # ivar: weight = kernel profile / variance
+        prof = kernel.profile(xs[cols] - x2[rows])
+        # cell-overlap selection may include centres just past the cutoff
+        keep = prof >= threshold
+        rows = rows[keep]
+        cols = cols[keep]
+        prof = prof[keep]
+        cell_w = cell_w[keep]
+        w = prof / es[cols] ** 2
+    # weighted sums needed for the output value, error and coverage
+    sum_w = np.bincount(rows, weights=w, minlength=n_out)
+    sum_wy = np.bincount(rows, weights=w * ys[cols], minlength=n_out)
+    sum_w2e2 = np.bincount(rows, weights=(w * es[cols]) ** 2,
+                           minlength=n_out)
+    sum_cell = np.bincount(rows, weights=cell_w, minlength=n_out)
+    # coverage: average fraction of kernel mass backed by data per group
+    coverage = np.zeros(n_out)
+    np.divide(sum_cell, ngroups, out=coverage, where=ngroups > 0)
+    # normalisation: mean (normalize=True) or sum (normalize=False)
+    norm_w = sum_w if normalize else np.ones(n_out)
+    good = (sum_w > 0) & (coverage >= min_coverage)
+    out: Dict[str, np.ndarray] = dict(
+        y=np.full(n_out, np.nan),
+        err=np.full(n_out, np.nan))
+    out['y'][good] = sum_wy[good] / norm_w[good]
+    out['err'][good] = np.sqrt(sum_w2e2[good]) / norm_w[good]
+    out['coverage'] = coverage
+    # sum_w in the return dict is the cell-weight sum (effective group count)
+    out['sum_w'] = sum_cell
+    out['npts'] = np.bincount(rows, minlength=n_out)
+    if return_matrix:
+        # sparse linear operator W such that y2 = W @ y
+        keep_m = good[rows]
+        vals = w[keep_m] / norm_w[rows[keep_m]]
+        out['matrix'] = _sp_sparse.csr_matrix(
+            (vals, (rows[keep_m], idx[cols[keep_m]])),
+            shape=(n_out, n_in))
+    return out

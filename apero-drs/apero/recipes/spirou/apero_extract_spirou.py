@@ -11,8 +11,6 @@ Created on 2019-07-05 at 16:46
 """
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
-
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
@@ -105,413 +103,325 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
-    # get pconst
+    # load instrument pseudo-constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get files
+    # -------------------------------------------------------------------------
+    # Setup: input files and combine options
+    # -------------------------------------------------------------------------
+    # get input files and check QC
     infiles = params['INPUTS']['FILES'][1]
-    # check qc
     infiles = drs_file.check_input_qc(params, infiles, 'files')
-    # get list of filenames (for output)
-    rawfiles = []
-    for infile in infiles:
-        rawfiles.append(infile.basename)
-    # deal with input data from function
+    # collect raw basenames for header provenance
+    rawfiles = [infile.basename for infile in infiles]
+    # handle files / combine mode passed via DATA_DICT (e.g. from apero_flat)
     if 'files' in params['DATA_DICT']:
-        # get list of in files from data dict (passed in)
         if params['DATA_DICT']['files'] is not None:
             infiles = params['DATA_DICT']['files']
-        # get list of raw files from data dict (passed in)
         rawfiles = params['DATA_DICT']['rawfiles']
-        # get combine parameter from data dict (passed in)
         combine = params['DATA_DICT']['combine']
-    # combine input images if required
     elif params['IMAGE.COMBINE_INPUT']:
-        # get combined file
+        # combine all input frames into one before processing
         cond = drs_file.combine(params, recipe, infiles,
                                 math=params['INPUTS']['COMBINE_METHOD'])
         infiles = [cond[0]]
         combine = True
     else:
         combine = False
-    # get the number of infiles
     num_files = len(infiles)
-    # ----------------------------------------------------------------------
-    # get quick look mode
+    # -------------------------------------------------------------------------
+    # Setup: pipeline control flags from DATA_DICT / INPUTS
+    # -------------------------------------------------------------------------
     quicklook = params['CAL.EXT.QUICKLOOK']
-    # deal with leak corr
+    # leak correction flag may be injected by the calling recipe
     if 'leakcorr' in params['DATA_DICT']:
-        # add leak corr to params from data dict (passed in)
         params['INPUTS']['LEAKCORR'] = params['DATA_DICT']['LEAKCORR']
-    # deal with wave sol from data dict
+    # wavelength solution file may be injected by the calling recipe
     if 'wavefile' in params['DATA_DICT']:
-        # add wave file to params from data dict (passed in)
         params['INPUTS']['WAVEFILE'] = params['DATA_DICT']['WAVEFILE']
-    # ----------------------------------------------------------------------
-    # load the calibration database
+    # extract_type controls whether flat-response products are generated
+    if 'EXTRACT_TYPE' in params['DATA_DICT']:
+        params['INPUTS']['EXTRACT_TYPE'] = (
+            params['DATA_DICT']['EXTRACT_TYPE'])
+    else:
+        params['INPUTS']['EXTRACT_TYPE'] = 'standard'
+    # -------------------------------------------------------------------------
+    # Load calibration database (shared across all files)
+    # -------------------------------------------------------------------------
     calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-    # ----------------------------------------------------------------------
+    # =========================================================================
     # Loop around input files
-    # ----------------------------------------------------------------------
+    # =========================================================================
     for it in range(num_files):
-        # ------------------------------------------------------------------
-        # add level to recipe log
+        # add level to recipe log and initialise plotting for this file
         log1 = recipe.log.add_level(params, 'num', it)
-        # ------------------------------------------------------------------
-        # set up plotting (no plotting before this)
         recipe.plot.set_location(it)
-        # print file iteration progress
         drs_startup.file_processing_update(params, it, num_files)
-        # ge this iterations file
         infile = infiles[it]
-
-        # ------------------------------------------------------------------
-        # deal with skipping files defined by inputs OBJNAME and DPRTYPE
+        # --------------------------------------------------------------------
+        # Skip files that do not match the required DPRTYPE / OBJNAME filters
+        # --------------------------------------------------------------------
         skip, skip_conditions = gen_calib.check_files(params, recipe.shortname,
                                                       infile)
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
-                wargs = skip_conditions[1]
-                WLOG(params, 'warning', textentry('10-016-00012', args=wargs),
+                WLOG(params, 'warning',
+                     textentry('10-016-00012', args=skip_conditions[1]),
                      sublevel=2)
             if 'OBJNAME' in skip_conditions[0]:
-                wargs = skip_conditions[2]
-                WLOG(params, 'warning', textentry('10-016-00013', args=wargs),
+                WLOG(params, 'warning',
+                     textentry('10-016-00013', args=skip_conditions[2]),
                      sublevel=2)
-            # write log here
             log1.write_logfile()
-            # skip this file
             continue
-        # ------------------------------------------------------------------
-        # get header from file instance
-        header = infile.get_header()
-        # get the fiber types needed
-        fiber_specs = pconst.FIBER_SPECS()
-        sci_fibers = [spec.name for spec in fiber_specs
-                  if spec.role == 'science']
-        ref_fiber = next(spec.name for spec in fiber_specs
-                 if spec.role == 'reference')
-        # get the fibers
-        if params['INPUTS']['FIBER'] == 'ALL':
-            # must do reference fiber first (for leak correction)
-            fibertypes = [ref_fiber] + sci_fibers
+        extract_type = params['INPUTS']['EXTRACT_TYPE']
+        # --------------------------------------------------------------------
+        # Main extraction: shape → calibrate → profiles → model
+        # Returns image, image2, sprops, props, oprops, model_props, eprops_all
+        # --------------------------------------------------------------------
+        WLOG(params, 'info',
+             'Running main extraction (shape, calibration, '
+             'profiles, model)')
+        mprops = extract.main_extract(params, recipe, infile, pconst,
+                                      database=calibdbm)
+        WLOG(params, '', 'Main extraction complete')
+        # reference spectrum used by leak correction for all science fibers
+        ref_e2ds = (mprops['MODEL_PROPS']['SPECTRA']
+                    [mprops['REF_FIBER']][0])
+        # --------------------------------------------------------------------
+        # Flat response: per-order response profiles (flat extractions only)
+        # --------------------------------------------------------------------
+        if extract_type == 'flat':
+            WLOG(params, '', 'Computing flat-response profiles')
+            frargs = [params, recipe, mprops['MODEL_PROPS'],
+                      mprops['ORDER_PROPS']['ORDER_MAP'],
+                      mprops['ORDER_PROPS']['ORDER_RANGES']]
+            frout = flat_blaze.compute_flat_response(*frargs)
+            flat_response, flat_response_err = frout
         else:
-            fibertypes = [params['INPUTS']['FIBER']]
-        # ------------------------------------------------------------------
-        # Load shape components
-        # ------------------------------------------------------------------
-        sprops = shape.get_shape_calibs(params, recipe,
-                                        header, database=calibdbm)
-
-        # ------------------------------------------------------------------
-        # Correction of file
-        # ------------------------------------------------------------------
-        props, image = gen_calib.calibrate_ppfile(params, recipe, infile,
-                                                  database=calibdbm,
-                                                  correctback=False)
-
-        # ------------------------------------------------------------------
-        # Load and straighten order profiles
-        # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, sprops]
-        oprops = extract.order_profiles(params, recipe, *sargs,
-                        database=calibdbm)
-        orderps = oprops['ORDERP']
-        orderpfiles = oprops['ORDERPFILE']
-        orderptimes = oprops['ORDERPTIME']
-
-        # ------------------------------------------------------------------
-        # Apply shape transformations
-        # ------------------------------------------------------------------
-        # log progress (straightening orderp)
-        WLOG(params, 'info', textentry('40-016-00004'))
-        shape_order = params['CAL.EXT.SPLINE_ORDER']
-        # straighten image
-        image2 = shape.ea_transform(params, image, sprops['SHAPEL'],
-                                    dxmap=sprops['SHAPEX'],
-                                    dymap=sprops['SHAPEY'],
-                                    order=shape_order)
-        # prepare geometry required by the all-fiber model/background path
-        mbgprops = extract.prepare_model_bckgrd_geo(params, image.shape, sprops)
-        model_fiber1 = sci_fibers[0]
-        model_fiber2 = ref_fiber
-        # ------------------------------------------------------------------
-        # Main extraction and modeling step
-        # ------------------------------------------------------------------
-        model_order_map = oprops['ORDER_MAP']
-        model_nearest_map = oprops['ORDER_NEAREST']
-        model_groups = pconst.FIBER_SPECTRAL_GROUPS(oprops['ORDER_RANGES'])
-        # Fit both fiber profiles together and subtract the model background.
-        mpargs = (params, image, image2, orderps, mbgprops,
-              model_order_map, model_nearest_map, oprops['ORDER_RANGES'],
-              oprops['ORDER_TOP'], oprops['ORDER_BOTTOM'],
-              oprops['ORDER_MID'], model_groups, model_fiber1,
-              model_fiber2)
-        model_props = extract.run_all_fiber_model(*mpargs)
-        # Register the new model/background products with APERO plotting.
-        recipe.plot('EXTRACT_MODEL_BACKGROUND', params=params,
-                    model_props=model_props)
-        # ------------------------------------------------------------------
-        # Calculate Barycentric correction
-        # ------------------------------------------------------------------
+            flat_response = dict()
+        # --------------------------------------------------------------------
+        # Barycentric correction (skipped in quick-look mode)
+        # --------------------------------------------------------------------
         if not quicklook:
-            bprops = extract.get_berv(params, infile, header)
+            WLOG(params, '', 'Computing barycentric velocity correction')
+            bprops = extract.get_berv(params, infile, mprops['HEADER'])
         else:
             bprops = None
-
-        # storage for return / reference fiber usage
+        # storage for downstream output files (e.g. for wave recipe)
         e2dsoutputs = dict()
-        ref_e2ds = model_props['SPECTRA'][ref_fiber][0]
-        # ------------------------------------------------------------------
-        # Fiber loop (post extraction)
-        # ------------------------------------------------------------------
-        # loop around fiber types
-        for fiber in fibertypes:
-            # ------------------------------------------------------------------
-            # add level to recipe log
+        # =====================================================================
+        # Fiber loop: post-extraction calibrations and output products
+        # =====================================================================
+        for fiber in mprops['FIBERTYPES']:
             log2 = log1.add_level(params, 'fiber', fiber)
-            # flag quick look
             if quicklook:
                 log2.update_flags(QUICKLOOK=True)
-            # ------------------------------------------------------------------
-            # log process: processing fiber
-            wargs = [fiber, ', '.join(fibertypes)]
+            wargs = [fiber, ', '.join(mprops['FIBERTYPES'])]
             WLOG(params, 'info', textentry('40-016-00014', args=wargs))
-            # The simultaneous model supplies the reference spectrum directly.
-            # load wavelength solution for this fiber
+            # per-fiber extraction properties (mutated below by calibrations)
+            eprops = mprops['EPROPS_ALL'][fiber]
+            # short aliases for dicts subscripted repeatedly in this loop body
+            sprops = mprops['SHAPE_PROPS']
+            oprops = mprops['ORDER_PROPS']
+            # ----------------------------------------------------------------
+            # Wavelength solution for this fiber (skipped in quick-look mode)
+            # ----------------------------------------------------------------
             if not quicklook:
-                # check forcing reference wave solution
-                mwave = False
-                if 'FORCE_REF_WAVE' in params['INPUTS']:
-                    mwave = params['INPUTS']['FORCE_REF_WAVE']
-                # get the wave solution
-                wprops = wave.get_wavesolution(params, recipe, header,
-                                               fiber=fiber, ref=mwave,
-                                               database=calibdbm, log=log2)
+                mwave = params['INPUTS'].get('FORCE_REF_WAVE', False)
+                wpargs = [params, recipe, mprops['HEADER']]
+                wpkwargs = dict(fiber=fiber, ref=mwave,
+                                database=calibdbm, log=log2)
+                wprops = wave.get_wavesolution(*wpargs, **wpkwargs)
             else:
                 wprops = ParamDict()
-            # --------------------------------------------------------------
-            # load the localisation properties for this fiber
-            lprops = localisation.get_coefficients(params, recipe,
-                                                   header, fiber=fiber,
-                                                   merge=True,
-                                                   database=calibdbm)
-            # get the localisation center coefficients for this fiber
+            # wavemap is None for quick-look (no wave solution loaded)
+            wavemap = wprops.get('WAVEMAP', None)
+            # ----------------------------------------------------------------
+            # Localisation coefficients for this fiber
+            # ----------------------------------------------------------------
+            lpargs = [params, recipe, mprops['HEADER']]
+            lpkwargs = dict(fiber=fiber, merge=True, database=calibdbm)
+            lprops = localisation.get_coefficients(*lpargs, **lpkwargs)
+            # straightened localisation coefficients (for plots)
             lcoeffs = lprops['CENT_COEFFS']
-            # shift the coefficients
-            lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs,
-                                                sprops['SHAPEL'])
-            # --------------------------------------------------------------
-            # load the flat file for this fiber
-            fout = flat_blaze.get_flat(params, recipe, header, fiber,
-                                       database=calibdbm)
-            # --------------------------------------------------------------
-            # load the blaze file for this fiber
-            bout = flat_blaze.get_blaze(params, recipe, header, fiber,
-                                        database=calibdbm)
-            # add blaze and flat to parameter dictionary
-            fbprops = ParamDict()
-            fbprops['FLAT'] = fout[2]
-            fbprops['FLATFILE'] = fout[0]
-            fbprops['FLATTIME'] = fout[1]
-            fbprops['BLAZE'] = bout[2]
-            fbprops['BLAZEFILE'] = bout[0]
-            fbprops['BLAZETIME'] = bout[1]
-            # add keys
-            keys = ['FLAT', 'FLATFILE', 'FLATTIME', 'BLAZE', 'BLAZEFILE',
-                    'BLAZETIME']
-            fbprops.set_sources(keys, mainname)
-            # --------------------------------------------------------------
-            # get the number of frames used
-            nframes = infile.numfiles
-            # --------------------------------------------------------------
-            # get the order profile for this fiber
-            lprops['ORDERP'] = orderps[fiber]
-            lprops['ORDERPFILE'] = orderpfiles[fiber]
-            lprops['ORDERPTIME'] = orderptimes[fiber]
-            lprops.set_sources(['ORDERP', 'ORDERPFILE', 'ORDERPTIME'], mainname)
-            # --------------------------------------------------------------
-            # log progress: extracting image
+            lcoeffs2 = shape.ea_transform_coeff(mprops['IMAGE_STRAIGHT'],
+                                                lcoeffs, sprops['SHAPEL'])
+            # attach order-profile provenance to localisation props
+            lprops['ORDERP'] = oprops['ORDERP'][fiber]
+            lprops['ORDERPFILE'] = oprops['ORDERPFILE'][fiber]
+            lprops['ORDERPTIME'] = oprops['ORDERPTIME'][fiber]
+            lprops.set_sources(
+                ['ORDERP', 'ORDERPFILE', 'ORDERPTIME'], mainname)
+            # ----------------------------------------------------------------
+            # Blaze calibration for this fiber
+            # get_blaze returns a unity blaze for flat extractions and
+            # loads from the calibDB otherwise.
+            # ----------------------------------------------------------------
+            fbargs = [params, recipe, mprops['HEADER'], fiber,
+                      eprops['E2DS']]
+            fbkwargs = dict(database=calibdbm)
+            fbprops = flat_blaze.get_blaze(*fbargs, **fbkwargs)
+            # ----------------------------------------------------------------
+            # Leak correction: remove reference-fiber contamination
+            # ----------------------------------------------------------------
             WLOG(params, 'info', textentry('40-016-00011'))
-            # Start with the new science-frame spectrum and uncertainty.
-            model_spectrum, model_error = model_props['SPECTRA'][fiber]
-            # TODO: add blaze back in here before leak correction once the new
-            #       flat-corrected extraction path replaces E2DS.
-            # Correct the new model spectrum directly for reference leakage.
-            corrected_spectrum, leakcorr, leak_props = (
-                leak.correct_spectra_leak(
-                    params, recipe, model_spectrum, ref_e2ds, infile, fiber,
-                    database=calibdbm))
-            model_spectrum = corrected_spectrum
-            # SPECTRA is already normalized by the fitted order profiles.
-            # --------------------------------------------------------------
-            # thermal correction of spectrum
-            if not quicklook:
-                thermal_spectrum, thermal_props = (
-                    thermal.correct_spectrum_thermal(
-                        params, recipe, header, props, model_spectrum, fiber,
-                        database=calibdbm))
-                model_spectrum = thermal_spectrum
-            # --------------------------------------------------------------
-            # S1D creation
-            # --------------------------------------------------------------
-            if not quicklook:
-                # Build S1D directly from the new science-frame spectra.
-                model_blaze = model_props['BLAZE'][fiber]
-                sargs = [wprops['WAVEMAP'], model_spectrum, model_blaze]
-                swprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                              wgrid='wave', fiber=fiber,
-                                              s1dkind='SPECTRA',
-                                              e2dserr=model_error)
-                svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                              wgrid='velocity', fiber=fiber,
-                                              s1dkind='SPECTRA',
-                                              e2dserr=model_error)
-            else:
-                swprops, svprops = None, None
-            # --------------------------------------------------------------
-            # Calculate measured pixel to pixel scatter
-            # --------------------------------------------------------------
-            # Build the legacy property bag only for current QC and writers.
-            eprops = extract.spectra_to_eprops(
-                params, model_props, fiber, nframes=nframes)
-            eprops['E2DS'] = model_spectrum
-            eprops['E2DSFF'] = model_spectrum
-            eprops['E2DS_ERROR'] = model_error
+            lkargs = [params, recipe, eprops['E2DS'],
+                      ref_e2ds, infile, fiber]
+            lkkwargs = dict(database=calibdbm)
+            lkout = leak.correct_spectra_leak(*lkargs, **lkkwargs)
+            corrected_spectrum, leakcorr, leak_props = lkout
+            # store corrected spectrum and leak diagnostics in eprops
+            eprops['E2DS'] = corrected_spectrum
+            eprops['E2DSFF'] = corrected_spectrum
             eprops['LEAKCORR'] = leakcorr
-            for leak_key in leak_props:
-                eprops[leak_key] = leak_props[leak_key]
-            if not quicklook:
-                for thermal_key in thermal_props:
-                    eprops[thermal_key] = thermal_props[thermal_key]
-            if not quicklook:
-                mp2p_e2ds = extract.measure_p2p_scat(params, wprops['WAVEMAP'],
-                                                     eprops['E2DS'])
-                mp2p_e2dsff = extract.measure_p2p_scat(params,
-                                                       wprops['WAVEMAP'],
-                                                       eprops['E2DSFF'])
-
-                eprops['MP2P_E2DS'] = mp2p_e2ds
-                eprops['MP2P_E2DSFF'] = mp2p_e2dsff
-                # set the source
-                skeys = ['MP2P_E2DS', 'MP2P_E2DSFF']
-                eprops.set_sources(skeys, mainname)
-            # --------------------------------------------------------------
+            for key, val in leak_props.items():
+                eprops[key] = val
+            # ----------------------------------------------------------------
+            # Thermal correction (handled internally for quicklook/flat)
+            # ----------------------------------------------------------------
+            thargs = [params, recipe, mprops['HEADER'],
+                      mprops['CALIB_PROPS'], eprops['E2DS'], fiber]
+            thkwargs = dict(database=calibdbm)
+            thout = thermal.correct_spectrum_thermal(*thargs, **thkwargs)
+            thermal_spectrum, thermal_props = thout
+            eprops['E2DS'] = thermal_spectrum
+            eprops['E2DSFF'] = thermal_spectrum
+            for key, val in thermal_props.items():
+                eprops[key] = val
+            # ----------------------------------------------------------------
+            # S1D: resampled 1D spectrum on wavelength and velocity grids
+            # e2ds_to_s1d returns None for quicklook, flat, or missing wave.
+            # ----------------------------------------------------------------
+            model_blaze = fbprops['BLAZE']
+            s1args = [wavemap, eprops['E2DS'], model_blaze]
+            s1kwargs = dict(fiber=fiber, s1dkind='SPECTRA',
+                            e2dserr=eprops['E2DS_ERROR'])
+            swprops = extract.e2ds_to_s1d(params, recipe, *s1args,
+                                           wgrid='wave', **s1kwargs)
+            svprops = extract.e2ds_to_s1d(params, recipe, *s1args,
+                                           wgrid='velocity', **s1kwargs)
+            # ----------------------------------------------------------------
+            # Pixel-to-pixel scatter (returns None when wavemap is None)
+            # ----------------------------------------------------------------
+            eprops['MP2P_E2DS'] = extract.measure_p2p_scat(
+                params, wavemap, eprops['E2DS'])
+            eprops['MP2P_E2DSFF'] = extract.measure_p2p_scat(
+                params, wavemap, eprops['E2DSFF'])
+            eprops.set_sources(['MP2P_E2DS', 'MP2P_E2DSFF'], mainname)
+            # ----------------------------------------------------------------
             # Plots
-            # --------------------------------------------------------------
+            # ----------------------------------------------------------------
             sorder = params['CAL.EXT.PLOT_ORDER']
-            # plot (in a loop) order fit + e2ds (on original image)
-            recipe.plot('FLAT_ORDER_FIT_EDGES1', params=params, image1=image,
-                        image2=image2, order=None, coeffs1=lcoeffs,
-                        coeffs2=lcoeffs2, fiber=fiber)
-            # plot for sorder order fit + e2ds (on original image)
-            recipe.plot('FLAT_ORDER_FIT_EDGES2', params=params, image1=image,
-                        image2=image2, order=sorder, coeffs1=lcoeffs,
-                        coeffs2=lcoeffs2, fiber=fiber)
-            # plot non-quick look graphs
+            recipe.plot('FLAT_ORDER_FIT_EDGES1', params=params,
+                        image1=mprops['IMAGE'],
+                        image2=mprops['IMAGE_STRAIGHT'],
+                        order=None, coeffs1=lcoeffs, coeffs2=lcoeffs2,
+                        fiber=fiber)
+            recipe.plot('FLAT_ORDER_FIT_EDGES2', params=params,
+                        image1=mprops['IMAGE'],
+                        image2=mprops['IMAGE_STRAIGHT'],
+                        order=sorder, coeffs1=lcoeffs, coeffs2=lcoeffs2,
+                        fiber=fiber)
             if not quicklook:
-                # plot (in a loop) the fitted blaze and calculated flat with the
-                #     e2ds image
                 recipe.plot('EXTRACT_SPECTRAL_ORDER1', order=None,
-                            eprops=eprops, wave=wprops['WAVEMAP'], fiber=fiber)
-                # plot for sorder the fitted blaze and calculated flat with the
-                #     e2ds image
+                            eprops=eprops, wave=wprops['WAVEMAP'],
+                            fiber=fiber)
                 recipe.plot('EXTRACT_SPECTRAL_ORDER2', order=sorder,
-                            eprops=eprops, wave=wprops['WAVEMAP'], fiber=fiber)
-                # plot the s1d plot
-                recipe.plot('EXTRACT_S1D', params=params, props=svprops,
-                            fiber=fiber, kind='E2DSFF')
-            # --------------------------------------------------------------
+                            eprops=eprops, wave=wprops['WAVEMAP'],
+                            fiber=fiber)
+                if svprops is not None:
+                    recipe.plot('EXTRACT_S1D', params=params, props=svprops,
+                                fiber=fiber, kind='E2DSFF')
+            # ----------------------------------------------------------------
             # Quality control
-            # --------------------------------------------------------------
+            # ----------------------------------------------------------------
             qc_params, passed = extract.qc_extraction(
-                params, eprops, spectra=model_props['SPECTRA'][fiber])
-            # update recipe log
+                params, eprops,
+                spectra=mprops['MODEL_PROPS']['SPECTRA'][fiber])
             log2.add_qc(qc_params, passed)
-
-            # --------------------------------------------------------------
-            # write files
-            # --------------------------------------------------------------
+            # ----------------------------------------------------------------
+            # Write extraction files
+            # ----------------------------------------------------------------
+            WLOG(params, '',
+                 'Fiber {0}: writing extraction '
+                 'files'.format(fiber))
             if quicklook:
-                fargs = [params, recipe, infile, rawfiles, combine, fiber,
-                         props, lprops, eprops, sprops, fbprops, qc_params]
-                outfiles = extract.write_extraction_files_ql(*fargs)
-                e2dsfile, e2dsfffile = outfiles
+                wqlargs = [params, recipe, infile, rawfiles, combine,
+                           fiber, mprops['CALIB_PROPS'], lprops, eprops,
+                           sprops, fbprops, qc_params]
+                wqlout = extract.write_extraction_files_ql(*wqlargs)
+                e2dsfile, e2dsfffile = wqlout
             else:
-                fargs = [params, recipe, infile, rawfiles, combine, fiber,
-                         props, lprops, wprops, eprops, bprops,
-                         swprops, svprops, sprops, fbprops, qc_params]
-                outfiles = extract.write_extraction_files(*fargs)
-                e2dsfile, e2dsfffile = outfiles
-
-            # --------------------------------------------------------------
-            # create fplines file for required fibers
-            # --------------------------------------------------------------
+                wfargs = [params, recipe, infile, rawfiles, combine,
+                          fiber, mprops['CALIB_PROPS'], lprops, wprops,
+                          eprops, bprops, swprops, svprops,
+                          sprops, fbprops, qc_params]
+                wfout = extract.write_extraction_files(*wfargs)
+                e2dsfile, e2dsfffile = wfout
+            # ----------------------------------------------------------------
+            # Write flat-response file (flat extractions only)
+            # ----------------------------------------------------------------
+            if extract_type == 'flat':
+                resp_data = flat_response.get(fiber)
+                if resp_data is not None:
+                    flat_blaze.write_flat_response(
+                        params, recipe, infile, resp_data, fiber)
+            # ----------------------------------------------------------------
+            # FP reference lines (ref_fplines returns None for quicklook/flat)
+            # ----------------------------------------------------------------
+            rfargs = [e2dsfile, wavemap, fiber,
+                      wprops.get('CAVITY', None)]
+            rfpl = extract.ref_fplines(params, recipe, *rfargs,
+                                       database=calibdbm)
+            if rfpl is not None:
+                rfwargs = [rfpl, e2dsfile, e2dsfile,
+                           fiber, 'EXT_FPLINES']
+                wave.write_fplines(params, recipe, *rfwargs)
+                log2.update_flags(EXP_FPLINE=True)
+            else:
+                log2.update_flags(EXP_FPLINE=False)
+            # ----------------------------------------------------------------
+            # Register output files for downstream use (e.g. wave recipe)
+            # ----------------------------------------------------------------
             if not quicklook:
-                rargs = [e2dsfile, wprops['WAVEMAP'], fiber, wprops['CAVITY']]
-                rfpl = extract.ref_fplines(params, recipe, *rargs,
-                                           database=calibdbm)
-                # write rfpl file
-                if rfpl is not None:
-                    rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
-                    wave.write_fplines(params, recipe, *rargs)
-                    # update flags
-                    log2.update_flags(EXP_FPLINE=True)
-                else:
-                    # update flags
-                    log2.update_flags(EXP_FPLINE=False)
-
-            # --------------------------------------------------------------
-            # add files to outputs
-            # --------------------------------------------------------------
-            if not quicklook:
-                ekeys = ['E2DS', 'E2DSFF']
-                efiles = [e2dsfile, e2dsfffile]
-                # loop around keys to add
-                for key, efile in zip(ekeys, efiles):
-                    # construct output key
+                for key, efile in zip(['E2DS', 'E2DSFF'],
+                                      [e2dsfile, e2dsfffile]):
                     outkey = '{0}_{1}'.format(key, fiber)
-                    # copy file to dictionary
                     e2dsoutputs[outkey] = efile.completecopy(efile)
-            # ------------------------------------------------------------------
+            # ----------------------------------------------------------------
             # Summary plots
-            # ------------------------------------------------------------------
+            # ----------------------------------------------------------------
             if not quicklook:
                 sorder = params['CAL.EXT.PLOT_ORDER']
-                # plot (in a loop) order fit + e2ds (on original image)
                 recipe.plot('SUM_FLAT_ORDER_FIT_EDGES', params=params,
-                            image1=image, image2=image2, order=sorder,
-                            coeffs1=lcoeffs, coeffs2=lcoeffs2, fiber=fiber)
-                # plot for sorder the fitted blaze and calculated flat with the
-                #     e2ds image
-                recipe.plot('SUM_EXTRACT_SP_ORDER', order=sorder,
-                            wave=wprops['WAVEMAP'], eprops=eprops, fiber=fiber)
-                # plot the s1d plot
-                recipe.plot('SUM_EXTRACT_S1D', params=params, props=svprops,
+                            image1=mprops['IMAGE'],
+                            image2=mprops['IMAGE_STRAIGHT'],
+                            order=sorder, coeffs1=lcoeffs, coeffs2=lcoeffs2,
                             fiber=fiber)
-            # ------------------------------------------------------------------
-            # Construct summary document
-            # ------------------------------------------------------------------
+                recipe.plot('SUM_EXTRACT_SP_ORDER', order=sorder,
+                            wave=wprops['WAVEMAP'], eprops=eprops,
+                            fiber=fiber)
+                if svprops is not None:
+                    recipe.plot('SUM_EXTRACT_S1D', params=params,
+                                props=svprops, fiber=fiber)
+                # SUM_FLAT_RESPONSE_ORDER is emitted by
+                # flat_blaze.compute_flat_response before the fiber loop
+            # ----------------------------------------------------------------
+            # Summary document (per fiber)
+            # ----------------------------------------------------------------
             if not quicklook:
                 extract.extract_summary(recipe, params, qc_params, e2dsfile,
                                         sprops, eprops, fiber)
-            # ------------------------------------------------------------------
-            # update recipe log file
-            # ------------------------------------------------------------------
             log2.end()
-
-        # construct summary (outside fiber loop)
+        # end of fiber loop
+        # construct per-file summary document (outside fiber loop)
         if not quicklook:
             recipe.plot.summary_document(it)
-
-        # ------------------------------------------------------------------
-        # update recipe log file
-        # ------------------------------------------------------------------
         log1.end()
-
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # End of main code
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     return locals()
 
 

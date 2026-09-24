@@ -18,7 +18,7 @@ from aperocore.core import drs_text
 from apero.base import base as apero_base
 from apero.tools.module.setup import drs_assets
 from apero.tools.module.setup import drs_installation
-from apero.tools.recipes.dev import apero_data_checksum
+from apero.tools.recipes.dev import apero_assets
 from apero.utils import drs_startup
 
 # =============================================================================
@@ -128,13 +128,13 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # ask whether to update remote assets now that run files have changed
     asset_dir = drs_assets.get_asset_directory(__PACKAGE__)
-    question = ('\n\nUpdate remote assets with apero_data_checksum.py '
+    question = ('\n\nUpdate remote assets with apero_assets.py '
                 'mode=update-remote?\n\tindir={0}')
     update_remote = drs_installation.ask(question.format(asset_dir),
                                          dtype='YN', color='m')
     print()
     if update_remote:
-        apero_data_checksum.main(mode='update-remote', indir=asset_dir)
+        apero_assets.main(mode='update-remote', indir=asset_dir)
 
     # ----------------------------------------------------------------------
     # End of main code

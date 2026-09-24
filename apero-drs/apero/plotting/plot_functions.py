@@ -1841,6 +1841,178 @@ def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
+def plot_flat_response_order(plotter: Plotter, graph: Graph,
+                             kwargs: Dict[str, Any]):
+    """
+    Graph: Flat-field response profile per order.
+
+    When ``order`` is None the function loops over every order and draws
+    a single panel (d): the full normalised profile with 1-sigma error
+    shading.  When ``order`` is an integer two panels are drawn: (d) the
+    full profile and (e) a 120-column zoom centred on the order midpoint
+    with the 1-sigma envelope shaded more prominently.
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+      - ``flat_response`` (np.ndarray): 2-D array (norders x ncols)
+        of flat-response values per order and detector column.
+      - ``flat_response_err`` (np.ndarray): 2-D array (norders x ncols)
+        of propagated 1-sigma uncertainties matching ``flat_response``.
+      - ``fiber`` (str): fiber identifier, used in the plot title.
+      - ``order`` (int or None): order index to plot; None loops over
+        all orders (single-panel loop), integer gives the two-panel view.
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # get plt
+    plt = plotter.plt
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    flat_response = kwargs['flat_response']
+    flat_response_err = kwargs['flat_response_err']
+    fiber = kwargs['fiber']
+    nbo = flat_response.shape[0]
+    ncols = flat_response.shape[1]
+    order = kwargs.get('order', None)
+    # x axis: detector column positions
+    xpix = np.arange(ncols)
+    # half-width of the zoom window in panel (e)
+    zoom_half = 60
+
+    # get order generator: None means loop over all orders
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        order_gen = [order]
+
+    # loop around orders
+    for order_num in order_gen:
+        # get response and error for this order
+        y = flat_response[order_num]
+        err = flat_response_err[order_num]
+        # normalise by median, ignoring NaNs
+        med = np.nanmedian(y)
+        if med == 0 or not np.isfinite(med):
+            med = 1.0
+        y_norm = y / med
+        err_norm = err / med
+        # ------------------------------------------------------------------
+        if order is None:
+            # panel (d) only: full profile, single panel (loop mode)
+            fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
+            _plot_response_profile(frame, xpix, y_norm, err_norm,
+                                   ncols, panel='d')
+            title = 'Flat Response Profile (Order {0} Fiber {1})'
+            fig.suptitle(title.format(order_num, fiber))
+            plt.subplots_adjust(top=0.9, bottom=0.12,
+                                left=0.08, right=0.97)
+        else:
+            # panels (d) + (e): full + zoom, two rows
+            gs = dict(height_ratios=[1, 1])
+            fig, frames = graph.set_figure(plotter, ncols=1, nrows=2,
+                                           sharex=False,
+                                           gridspec_kw=gs)
+            # (d) full profile
+            _plot_response_profile(frames[0], xpix, y_norm, err_norm,
+                                   ncols, panel='d')
+            # (e) 120-column zoom centred on the order midpoint
+            mid = int(np.nanmedian(xpix[np.isfinite(y_norm)]))
+            lo = max(mid - zoom_half, 0)
+            hi = min(mid + zoom_half, ncols)
+            zoom = slice(lo, hi)
+            _plot_response_zoom(frames[1], xpix[zoom],
+                                y_norm[zoom], err_norm[zoom],
+                                panel='e')
+            title = 'Flat Response Profile (Order {0} Fiber {1})'
+            fig.suptitle(title.format(order_num, fiber))
+            plt.subplots_adjust(top=0.92, bottom=0.09,
+                                left=0.08, right=0.97,
+                                hspace=0.35)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}_{1}'.format(order_num, fiber)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def _plot_response_profile(frame, xpix: np.ndarray,
+                           y_norm: np.ndarray,
+                           err_norm: np.ndarray,
+                           ncols: int, panel: str = 'd'):
+    """
+    Draw the full normalised flat-response profile (order_profile panel d).
+
+    :param frame: matplotlib Axes to draw on
+    :param xpix: 1-D array, detector column positions
+    :param y_norm: 1-D array, normalised flat response (y / median)
+    :param err_norm: 1-D array, normalised 1-sigma error
+    :param ncols: int, number of detector columns (sets x-axis limits)
+    :param panel: str, panel label used in the title string
+
+    :return: None
+    """
+    # shade the 1-sigma error envelope
+    frame.fill_between(xpix, y_norm - err_norm, y_norm + err_norm,
+                       alpha=0.25, label='1-sigma envelope')
+    # profile curve
+    frame.plot(xpix, y_norm, lw=1.2, label='flat response / median')
+    # reference line at unity
+    frame.axhline(1.0, color='red', lw=0.8, ls='--')
+    # axis limits: clip y to a sensible range around 1
+    yfinite = y_norm[np.isfinite(y_norm)]
+    if yfinite.size:
+        ylo = max(0, np.nanpercentile(yfinite, 0.5) - 0.05)
+        yhi = np.nanpercentile(yfinite, 99.5) + 0.05
+    else:
+        ylo, yhi = 0.0, 1.5
+    frame.set(xlabel='detector column', ylabel='response / median',
+              xlim=[-10, ncols + 10], ylim=[ylo, yhi],
+              title='({0}) Profile along the order'.format(panel))
+    frame.legend(loc='upper right', fontsize=8)
+
+
+def _plot_response_zoom(frame, xpix_zoom: np.ndarray,
+                        y_zoom: np.ndarray,
+                        err_zoom: np.ndarray,
+                        panel: str = 'e'):
+    """
+    Draw the 120-column zoom with propagated error envelope
+    (order_profile panel e).
+
+    :param frame: matplotlib Axes to draw on
+    :param xpix_zoom: 1-D array, detector column positions for the zoom
+    :param y_zoom: 1-D array, normalised flat response in the zoom window
+    :param err_zoom: 1-D array, normalised 1-sigma error in the zoom window
+    :param panel: str, panel label used in the title string
+
+    :return: None
+    """
+    # prominently shaded 1-sigma envelope
+    frame.fill_between(xpix_zoom,
+                       y_zoom - err_zoom,
+                       y_zoom + err_zoom,
+                       alpha=0.35, label='1-sigma envelope')
+    # profile curve on top
+    frame.plot(xpix_zoom, y_zoom, lw=1.4,
+               label='flat response / median')
+    # reference line at unity
+    frame.axhline(1.0, color='red', lw=0.8, ls='--')
+    frame.set(xlabel='detector column', ylabel='response / median',
+              title='({0}) Zoom — 120 columns with 1-sigma '
+                    'envelope'.format(panel))
+    frame.legend(loc='upper right', fontsize=8)
+
+
 def plot_flat_edge_orders(plotter: Plotter, graph: Graph,
                           kwargs: Dict[str, Any]):
     """
@@ -2041,11 +2213,11 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
         # set up plot
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
         # get normalised values
-        e2dsn = e2ds[order_num] / mp.nanmedian(e2ds[order_num])
+        # e2dsn = e2ds[order_num] / mp.nanmedian(e2ds[order_num])
         e2dsffn = e2dsff[order_num] / mp.nanmedian(e2ds[order_num])
         blazen = blaze[order_num] / mp.nanmedian(blaze[order_num])
         # plot fits
-        frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
+        # frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
         frames[0].plot(wavemap[order_num], e2dsffn, label='e2dsff')
         frames[0].plot(wavemap[order_num], blazen, label='blaze')
         # plot blaze corrected

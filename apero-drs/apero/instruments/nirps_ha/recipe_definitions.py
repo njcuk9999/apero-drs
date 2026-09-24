@@ -536,13 +536,15 @@ apero_flat.set_outputs(FLAT_FILE=files.out_ff_flat,
                        BLAZE_FILE=files.out_ff_blaze,
                        E2DSLL_FILE=files.out_ext_e2dsll,
                        ORDERP_SFILE=files.out_orderp_straight,
-                       DEBUG_BACK=files.debug_back)
+                       DEBUG_BACK=files.debug_back,
+                       FLAT_E2DS_FILE=files.out_ext_e2dsff)
 flat_dict = dict()
 flat_dict['fibers'] = sci_fibers + cal_fibers
 flat_dict['ARG'] = dict(zip(flat_dict['fibers'],
                             ['fiber'] * len(flat_dict['fibers'])))
 apero_flat.set_output_data(FLAT_FILE=flat_dict, BLAZE_FILE=flat_dict,
-                           E2DSLL_FILE=flat_dict)
+                           E2DSLL_FILE=flat_dict,
+                           FLAT_E2DS_FILE=flat_dict)
 apero_flat.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                            'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                            'FLAT_EDGE_ORDERS')
@@ -646,7 +648,8 @@ apero_extract.set_outputs(E2DSFF_FILE=files.out_ext_e2dsff,
                           ORDERP_SFILE=files.out_orderp_straight,
                           DEBUG_BACK=files.debug_back,
                           EXT_FPLINES=files.out_ext_fplines,
-                          Q2DSFF_FILE=files.out_ql_e2dsff)
+                          Q2DSFF_FILE=files.out_ql_e2dsff,
+                          FLAT_RESPONSE_FILE=files.out_flat_response)
 extract_dict = dict()
 extract_dict['fibers'] = sci_fibers + cal_fibers
 extract_dict['LOG_FLAG'] = dict()
@@ -666,17 +669,20 @@ apero_extract.set_output_data(E2DSFF_FILE=extract_dict,
                               S1D_W_FILE=extract_dict,
                               S1D_V_FILE=extract_dict,
                               EXT_FPLINES=fplines_dict,
-                              Q2DSFF_FILE=qextract_dict)
+                              Q2DSFF_FILE=qextract_dict,
+                              FLAT_RESPONSE_FILE=extract_dict)
 apero_extract.set_flags(QUICKLOOK=False, EXP_FPLINE=False)
 apero_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                               'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                               'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
                               'EXTRACT_SPECTRAL_ORDER2', 'EXTRACT_S1D',
                               'EXTRACT_S1D_WEIGHT', 'WAVEREF_EXPECTED',
-                              'EXTRACT_MODEL_BACKGROUND')
+                              'EXTRACT_MODEL_BACKGROUND',
+                              'FLAT_RESPONSE_ORDER1', 'FLAT_RESPONSE_ORDER2')
 apero_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
                                 'SUM_EXTRACT_SP_ORDER', 'SUM_EXTRACT_S1D',
-                                'SUM_EXTRACT_MODEL_BACKGROUND')
+                                'SUM_EXTRACT_MODEL_BACKGROUND',
+                                'SUM_FLAT_RESPONSE_ORDER')
 apero_extract.set_arg(pos=0, **obs_dir)
 apero_extract.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.pp_file],

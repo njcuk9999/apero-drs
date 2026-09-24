@@ -1497,9 +1497,9 @@ def covariance_vs_distance(xvector: np.ndarray, yvector: np.ndarray,
         Number of point pairs in each distance bin
     """
     # copy arrays to avoid modifying inputs
-    xvector = np.asarray(xvector)
-    yvector = np.asarray(yvector)
-    distances = np.asarray(distances)
+    xvector = np.array(xvector)
+    yvector = np.array(yvector)
+    distances = np.array(distances)
 
     # Remove NaN values from x and y
     valid = np.isfinite(xvector) & np.isfinite(yvector)

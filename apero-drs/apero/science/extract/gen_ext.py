@@ -11,7 +11,7 @@ Created on 2019-07-09 at 13:42
 """
 import os
 import warnings
-from typing import Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -36,6 +36,7 @@ from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science.extract import berv
+from apero.science.extract import model_background
 from apero.instruments import select
 from apero.base import base as apero_base
 
@@ -194,12 +195,12 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
     oprops['ORDERPFILE'] = orderfiles
     oprops['ORDERPTIME'] = ordertimes
     oprops['LOCOFILE'] = locofile
-    oprops['ORDER_MAP'] = np.asarray(order_map, dtype=np.int32)
-    oprops['ORDER_NEAREST'] = np.asarray(order_nearest, dtype=np.int32)
+    oprops['ORDER_MAP'] = np.array(order_map, dtype=np.int32)
+    oprops['ORDER_NEAREST'] = np.array(order_nearest, dtype=np.int32)
     oprops['ORDER_RANGES'] = order_ranges
-    oprops['ORDER_TOP'] = np.asarray(order_top, dtype=float)
-    oprops['ORDER_BOTTOM'] = np.asarray(order_bottom, dtype=float)
-    oprops['ORDER_MID'] = np.asarray(order_mid, dtype=float)
+    oprops['ORDER_TOP'] = np.array(order_top, dtype=float)
+    oprops['ORDER_BOTTOM'] = np.array(order_bottom, dtype=float)
+    oprops['ORDER_MID'] = np.array(order_mid, dtype=float)
     return oprops
 
 
@@ -342,6 +343,11 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
                 database=None, **kwargs):
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
+    # skip FP-line processing for quick-look mode and flat extractions;
+    # wave solution is not available or not yet meaningful in these cases
+    extract_type = params['INPUTS'].get('EXTRACT_TYPE', 'standard')
+    if params['CAL.EXT.QUICKLOOK'] or extract_type == 'flat':
+        return None
     # get constant from params
     allowtypes = pcheck(params, 'CAL.WAVE.FP.DPRLIST', 'fptypes',
                         kwargs, func_name)
@@ -374,6 +380,9 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
         WLOG(params, 'debug', textentry('90-016-00003', args=[fiber]))
         return None
     # ----------------------------------------------------------------------
+    # announce FP-line processing (after all early-exit checks pass)
+    WLOG(params, '', 'Computing FP reference lines for '
+                     'fiber {0}'.format(fiber))
     # get reference hc lines and fp lines from calibDB
     wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile,
                               database=database)
@@ -394,13 +403,39 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
 # =============================================================================
 # Define s1d functions
 # =============================================================================
-def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,  wavemap: np.ndarray,
+def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,
+                wavemap: Optional[np.ndarray],
                 e2ds: np.ndarray,  blaze: np.ndarray,
                 fiber: Union[str, None] = None, wgrid: str = 'wave',
                 s1dkind: Union[str, None] = None,
                 e2dserr: Union[np.ndarray, None] = None,
                 **kwargs):
+    """
+    Resample an extracted 2D spectrum onto a 1D wavelength or velocity grid.
+
+    Returns None when the 1D spectrum should be skipped: quick-look mode,
+    flat extractions (no meaningful blaze), or when the wave solution is
+    absent (wavemap is None).
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, calling recipe
+    :param wavemap: numpy (2D) array or None; the per-order wavelength solution
+    :param e2ds: numpy (2D) array, the extracted spectrum
+    :param blaze: numpy (2D) array, the blaze function
+    :param fiber: str or None, the fiber name
+    :param wgrid: str, 'wave' or 'velocity' grid type
+    :param s1dkind: str or None, label for the spectrum kind
+    :param e2dserr: numpy (2D) array or None, errors on e2ds
+
+    :return: ParamDict with S1D properties, or None when skipped
+    """
     func_name = __NAME__ + '.e2ds_to_s1d()'
+    # skip S1D for quick-look mode, flat extractions (blaze is unity and
+    # velocity corrections are not yet applied), or missing wave solution
+    extract_type = params['INPUTS'].get('EXTRACT_TYPE', 'standard')
+    if (params['CAL.EXT.QUICKLOOK'] or extract_type == 'flat'
+            or wavemap is None):
+        return None
     # get parameters from p
     wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', 'wavestart', kwargs,
                        func_name)
@@ -753,10 +788,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # add the shape dy file used
     e2dsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
     e2dsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
-    # add the flat file used
-    e2dsfile.add_hkey('KW_CDBFLAT', value=fbprops['FLATFILE'])
-    e2dsfile.add_hkey('KW_CDTFLAT', value=fbprops['FLATTIME'])
-    # add the blaze file used
+    # add the blaze file used (flat is no longer applied during extraction)
     e2dsfile.add_hkey('KW_CDBBLAZE', value=fbprops['BLAZEFILE'])
     e2dsfile.add_hkey('KW_CDTBLAZE', value=fbprops['BLAZETIME'])
     # add the thermal file used
@@ -927,77 +959,79 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         # add to output files (for indexing)
         recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------
-    # Store S1D_W in file
+    # Store S1D_W in file (skipped for flat extractions where swprops is None)
     # ----------------------------------------------------------------------
-    # get a new copy of the s1d_w file
-    s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(params=params,
-                                                    fiber=fiber)
-    # construct the filename from file instance
-    s1dwfile.construct_filename(infile=infile)
-    # copy header from e2dsll file
-    s1dwfile.copy_hdict(e2dsfffile)
-    # add infiles to outfile
-    s1dwfile.infiles = list(hfiles)
-    # set output key
-    s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
-    # add new header keys
-    s1dwfile = add_s1d_keys(s1dwfile, swprops)
-    # copy data
-    s1dwfile.data = swprops['S1DTABLE']
-    # must change the datatype to 'table'
-    s1dwfile.datatype = 'table'
+    if swprops is not None:
+        # get a new copy of the s1d_w file
+        s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(params=params,
+                                                        fiber=fiber)
+        # construct the filename from file instance
+        s1dwfile.construct_filename(infile=infile)
+        # copy header from e2dsff file
+        s1dwfile.copy_hdict(e2dsfffile)
+        # add infiles to outfile
+        s1dwfile.infiles = list(hfiles)
+        # set output key
+        s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
+        # add new header keys
+        s1dwfile = add_s1d_keys(s1dwfile, swprops)
+        # copy data
+        s1dwfile.data = swprops['S1DTABLE']
+        # must change the datatype to 'table'
+        s1dwfile.datatype = 'table'
+        # log that we are saving the wave-grid S1D
+        wargs = ['wave', s1dwfile.filename]
+        WLOG(params, '', textentry('40-016-00010', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['GLOBAL.PSNAPSHOT']:
+            data_list += [
+                params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
+            name_list += ['PARAM_TABLE']
+        # write image to file
+        s1dwfile.write_multi(data_list=data_list, name_list=name_list,
+                             block_kind=recipe.out_block_str,
+                             runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(s1dwfile)
     # ----------------------------------------------------------------------
-    # log that we are saving rotated image
-    wargs = ['wave', s1dwfile.filename]
-    WLOG(params, '', textentry('40-016-00010', args=wargs))
-    # define multi lists
-    data_list, name_list = [], []
-    # snapshot of parameters
-    if params['GLOBAL.PSNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    s1dwfile.write_multi(data_list=data_list, name_list=name_list,
-                         block_kind=recipe.out_block_str,
-                         runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(s1dwfile)
+    # Store S1D_V in file (skipped for flat extractions where svprops is None)
     # ----------------------------------------------------------------------
-    # Store S1D_V in file
-    # ----------------------------------------------------------------------
-    # get a new copy of the s1d_v file
-    s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(params=params,
-                                                    fiber=fiber)
-    # construct the filename from file instance
-    s1dvfile.construct_filename(infile=infile)
-    # copy header from e2dsll file
-    s1dvfile.copy_hdict(e2dsfffile)
-    # add new header keys
-    s1dvfile = add_s1d_keys(s1dvfile, svprops)
-    # add infiles to outfile
-    s1dvfile.infiles = list(hfiles)
-    # set output key
-    s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
-    # copy data
-    s1dvfile.data = svprops['S1DTABLE']
-    # must change the datatype to 'table'
-    s1dvfile.datatype = 'table'
-    # ----------------------------------------------------------------------
-    # log that we are saving rotated image
-    wargs = ['velocity', s1dvfile.filename]
-    WLOG(params, '', textentry('40-016-00010', args=wargs))
-    # define multi lists
-    data_list, name_list = [], []
-    # snapshot of parameters
-    if params['GLOBAL.PSNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=s1dvfile)]
-        name_list += ['PARAM_TABLE']
-    # write image to file
-    s1dvfile.write_multi(data_list=data_list, name_list=name_list,
-                         block_kind=recipe.out_block_str,
-                         runstring=recipe.runstring)
-    # add to output files (for indexing)
-    recipe.add_output_file(s1dvfile)
+    if svprops is not None:
+        # get a new copy of the s1d_v file
+        s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(params=params,
+                                                        fiber=fiber)
+        # construct the filename from file instance
+        s1dvfile.construct_filename(infile=infile)
+        # copy header from e2dsff file
+        s1dvfile.copy_hdict(e2dsfffile)
+        # add new header keys
+        s1dvfile = add_s1d_keys(s1dvfile, svprops)
+        # add infiles to outfile
+        s1dvfile.infiles = list(hfiles)
+        # set output key
+        s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
+        # copy data
+        s1dvfile.data = svprops['S1DTABLE']
+        # must change the datatype to 'table'
+        s1dvfile.datatype = 'table'
+        # log that we are saving the velocity-grid S1D
+        wargs = ['velocity', s1dvfile.filename]
+        WLOG(params, '', textentry('40-016-00010', args=wargs))
+        # define multi lists
+        data_list, name_list = [], []
+        # snapshot of parameters
+        if params['GLOBAL.PSNAPSHOT']:
+            data_list += [
+                params.snapshot_table(recipe, drsfitsfile=s1dvfile)]
+            name_list += ['PARAM_TABLE']
+        # write image to file
+        s1dvfile.write_multi(data_list=data_list, name_list=name_list,
+                             block_kind=recipe.out_block_str,
+                             runstring=recipe.runstring)
+        # add to output files (for indexing)
+        recipe.add_output_file(s1dvfile)
     # ----------------------------------------------------------------------
     # return e2ds files
     return e2dsfile, e2dsfffile
@@ -1043,8 +1077,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
     e2dsfile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
     e2dsfile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
-    e2dsfile.add_hkey('KW_CDBFLAT', value=fbprops['FLATFILE'])
-    e2dsfile.add_hkey('KW_CDTFLAT', value=fbprops['FLATTIME'])
+    # flat is no longer applied during extraction; blaze only
     e2dsfile.add_hkey('KW_CDBBLAZE', value=fbprops['BLAZEFILE'])
     e2dsfile.add_hkey('KW_CDTBLAZE', value=fbprops['BLAZETIME'])
     # additional calibration keys
@@ -1158,6 +1191,177 @@ def extract_summary(recipe, params, qc_params, e2dsfile, sprops, eprops,
                          fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
                          value=eprops['COSMIC_THRESHOLD'])
+
+
+def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+                 pconst,
+                 database: Optional[drs_database.CalibrationDatabase] = None) -> ParamDict:
+    """
+    Top-level extraction setup: shape calibration, image calibration, order
+    profiles, shape transform, geometry, and simultaneous-fiber model fit.
+
+    Wraps the complete per-file setup that precedes the per-fiber loop in every
+    extraction recipe.  All instruments run identical steps so a single call
+    here replaces ~80 lines of boilerplate in each recipe.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, the calling recipe
+    :param infile: DrsFitsFile, the science frame to process
+    :param pconst: instrument pseudo-constants (from load_pconfig)
+    :param database: CalibrationDatabase or None; if None a new one is
+                     opened internally
+
+    :return: ParamDict with the following keys:
+        IMAGE         - original calibrated image (2D array)
+        IMAGE_STRAIGHT - shape-transformed image (2D array)
+        HEADER        - FITS header from infile
+        SHAPE_PROPS   - shape calibration ParamDict
+        CALIB_PROPS   - general calibration ParamDict (from calibrate_ppfile)
+        ORDER_PROPS   - order-profile ParamDict (from order_profiles)
+        MODEL_PROPS   - simultaneous-fiber model ParamDict
+        EPROPS_ALL    - dict mapping fiber name to per-fiber ParamDict
+        FIBERTYPES    - list of fibers being processed (ref first)
+        SCI_FIBERS    - list of science fiber names
+        REF_FIBER     - reference fiber name
+    """
+    func_name = __NAME__ + '.main_extract()'
+    # use supplied database or open a new one
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(
+            params, recipe.shortname)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ------------------------------------------------------------------
+    # Determine fiber topology from instrument pseudo-constants
+    # ------------------------------------------------------------------
+    fiber_specs = pconst.FIBER_SPECS()
+    sci_fibers = [spec.name for spec in fiber_specs
+                  if spec.role == 'science']
+    ref_fiber = next(spec.name for spec in fiber_specs
+                     if spec.role == 'reference')
+    # reference fiber must be processed first (leak correction depends on it)
+    if params['INPUTS']['FIBER'] == 'ALL':
+        fibertypes = [ref_fiber] + sci_fibers
+    else:
+        fibertypes = [params['INPUTS']['FIBER']]
+    # ------------------------------------------------------------------
+    # Load shape calibration components
+    # ------------------------------------------------------------------
+    header = infile.get_header()
+    sprops = shape.get_shape_calibs(params, recipe, header,
+                                    database=calibdbm)
+    # ------------------------------------------------------------------
+    # Calibrate the input pre-processed frame
+    # ------------------------------------------------------------------
+    cargs = [params, recipe, infile]
+    ckwargs = dict(database=calibdbm, correctback=False)
+    cout = gen_calib.calibrate_ppfile(*cargs, **ckwargs)
+    props, image = cout
+    # ------------------------------------------------------------------
+    # Load and straighten order profiles for all required fibers
+    # ------------------------------------------------------------------
+    opargs = [infile, fibertypes, sprops]
+    oprops = order_profiles(params, recipe, *opargs, database=calibdbm)
+    # ------------------------------------------------------------------
+    # Apply shape transformation to straighten the science image
+    # ------------------------------------------------------------------
+    WLOG(params, 'info', textentry('40-016-00004'))
+    shape_order = params['CAL.EXT.SPLINE_ORDER']
+    shargs = [params, image, sprops['SHAPEL']]
+    shkwargs = dict(dxmap=sprops['SHAPEX'],
+                    dymap=sprops['SHAPEY'],
+                    order=shape_order)
+    image2 = shape.ea_transform(*shargs, **shkwargs)
+    # ------------------------------------------------------------------
+    # Prepare geometry for the all-fiber model / background path
+    # ------------------------------------------------------------------
+    mbgprops = model_background.prepare_model_bckgrd_geo(
+        params, image.shape, sprops)
+    # ------------------------------------------------------------------
+    # Run the simultaneous all-fiber model extraction
+    # ------------------------------------------------------------------
+    # science fiber is the first model fiber; reference is the second
+    model_fiber1 = sci_fibers[0]
+    model_fiber2 = ref_fiber
+    model_groups = pconst.FIBER_SPECTRAL_GROUPS(oprops['ORDER_RANGES'])
+    mpargs = (params, image, image2, oprops['ORDERP'], mbgprops,
+              oprops['ORDER_MAP'], oprops['ORDER_NEAREST'],
+              oprops['ORDER_RANGES'],
+              oprops['ORDER_TOP'], oprops['ORDER_BOTTOM'],
+              oprops['ORDER_MID'], model_groups,
+              model_fiber1, model_fiber2)
+    model_props = model_background.run_all_fiber_model(*mpargs)
+    # emit the model/background diagnostic plot
+    recipe.plot('EXTRACT_MODEL_BACKGROUND', params=params,
+                model_props=model_props)
+    # ------------------------------------------------------------------
+    # Build initial per-fiber extraction property bags from model output
+    # ------------------------------------------------------------------
+    # nframes is used to scale the saturation-level quality-control threshold
+    nframes = infile.numfiles
+    ron = float(model_props['RON'])
+    eprops_all: Dict[str, ParamDict] = dict()
+    for fiber in fibertypes:
+        e2ds, e2ds_err = model_props['SPECTRA'][fiber]
+        e2ds = np.array(e2ds, dtype=float)
+        e2ds_err = np.array(e2ds_err, dtype=float)
+        # per-order SNR: median signal-to-noise ratio per order
+        with np.errstate(invalid='ignore', divide='ignore'):
+            snr = np.nanmedian(
+                e2ds / np.sqrt(np.abs(e2ds) + ron ** 2), axis=1)
+        eprops = ParamDict()
+        # raw model spectrum and its uncertainty
+        eprops['E2DS'] = e2ds
+        eprops['E2DSFF'] = np.array(e2ds)
+        eprops['E2DS_ERROR'] = e2ds_err
+        eprops['SNR'] = snr
+        # per-order mean flux (used for saturation QC)
+        eprops['FLUX_VAL'] = np.nanmean(e2ds, axis=1)
+        eprops['N_COSMIC'] = np.zeros(e2ds.shape[0])
+        eprops['FIBER'] = fiber
+        # extraction order range (full range; no order trimming here)
+        eprops['START_ORDER'] = 0
+        eprops['END_ORDER'] = e2ds.shape[0] - 1
+        eprops['CAL.EXT.RANGE1'] = 0
+        eprops['CAL.EXT.RANGE2'] = 0
+        eprops['SKIP_ORDERS'] = []
+        # detector noise and gain parameters
+        eprops['GAIN'] = params['IMAGE.EFFGAIN']
+        eprops['SIGDET'] = ron
+        eprops['EFF_RON'] = ron
+        eprops['EFF_GAIN'] = params['IMAGE.EFFGAIN']
+        # saturation quality-control thresholds
+        eprops['SAT_QC'] = params['CAL.EXT.QC_FLUX_MAX']
+        eprops['SAT_LEVEL'] = params['CAL.EXT.QC_FLUX_MAX'] * nframes
+        # placeholder flat and blaze (ones until calib files are applied)
+        eprops['FLAT'] = np.ones_like(e2ds)
+        eprops['BLAZE'] = np.ones_like(e2ds)
+        # per-order RMS (zero until blaze fit is run for flat extractions)
+        eprops['RMS'] = np.zeros(e2ds.shape[0])
+        # cosmic correction: not applied in the model-based extraction
+        eprops['COSMIC'] = False
+        eprops['COSMIC_SIGCUT'] = params['CAL.EXT.COSMIC_SIGCUT']
+        eprops['COSMIC_THRESHOLD'] = params['CAL.EXT.COSMIC_THRES']
+        eprops.set_all_sources(func_name)
+        eprops_all[fiber] = eprops
+    # ------------------------------------------------------------------
+    # Bundle all products into a single return dict
+    # ------------------------------------------------------------------
+    mprops = ParamDict()
+    mprops['IMAGE'] = image
+    mprops['IMAGE_STRAIGHT'] = image2
+    mprops['HEADER'] = header
+    mprops['SHAPE_PROPS'] = sprops
+    mprops['CALIB_PROPS'] = props
+    mprops['ORDER_PROPS'] = oprops
+    mprops['MODEL_PROPS'] = model_props
+    mprops['EPROPS_ALL'] = eprops_all
+    mprops['FIBERTYPES'] = fibertypes
+    mprops['SCI_FIBERS'] = sci_fibers
+    mprops['REF_FIBER'] = ref_fiber
+    mprops.set_all_sources(func_name)
+    return mprops
 
 
 # =============================================================================

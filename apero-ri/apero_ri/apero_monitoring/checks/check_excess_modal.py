@@ -163,7 +163,7 @@ def check_function(instrument: str, obs_dir: str,
             data = fits.getdata(str(filename), ext=1)
             if data is None:
                 continue
-            arr = np.asarray(data)
+            arr = np.array(data)
             # Select the sample order row (FITS rows are 1-indexed).
             row_idx = sample_order - 1
             if row_idx < 0 or row_idx >= arr.shape[0]:

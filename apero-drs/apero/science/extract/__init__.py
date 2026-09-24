@@ -47,6 +47,8 @@ write_extraction_files_ql = gen_ext.write_extraction_files_ql
 
 extract_summary = gen_ext.extract_summary
 
+main_extract = gen_ext.main_extract
+
 model_background_correction = model_background.model_background_correction
 
 prepare_model_bckgrd_geo = model_background.prepare_model_bckgrd_geo
@@ -54,8 +56,6 @@ prepare_model_bckgrd_geo = model_background.prepare_model_bckgrd_geo
 extract_all_fibers = model_background.extract_all_fibers
 
 run_all_fiber_model = model_background.run_all_fiber_model
-
-spectra_to_eprops = model_background.spectra_to_eprops
 
 # =============================================================================
 # End of code

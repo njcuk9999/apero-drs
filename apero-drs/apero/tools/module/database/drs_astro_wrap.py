@@ -17,14 +17,12 @@ import os
 import socket
 import sys
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from apero.base import base as apero_base
 from apero.core import drs_astrometrics as _core_astrom
-from apero.core import drs_database
-from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
@@ -32,7 +30,6 @@ from aperocore import drs_lang
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
-from aperocore.core import drs_misc
 from aperocore.core import drs_text
 
 

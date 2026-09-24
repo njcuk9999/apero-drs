@@ -22,7 +22,7 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_constants.py'
+__NAME__ = 'apero_assets.py'
 __INSTRUMENT__ = base.IPARAMS['OBS.INSTRUMENT']
 __PACKAGE__ = apero_pkg.__NAME__
 __version__ = apero_pkg.__version__
@@ -43,34 +43,38 @@ RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
 # get file definitions for this instrument
 FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
 # define a recipe for this tool
-apero_dcheck = drs_dev.TmpRecipe()
-apero_dcheck.name = __NAME__
-apero_dcheck.shortname = 'APERO_DCHECK'
-apero_dcheck.instrument = __INSTRUMENT__
-apero_dcheck.in_block_str = 'red'
-apero_dcheck.out_block_str = 'red'
-apero_dcheck.extension = 'fits'
-apero_dcheck.description = ('Developer functionality dealing with local/remote asset data files.      '
-                            'mode=update-remote - creates a new tar on the server from local assets'
-                            'mode=check-local - checks whether the local assets need updating from server'
-                            'mode=update-local - update local assets from server')
-apero_dcheck.kind = 'misc'
-apero_dcheck.set_debug_plots()
-apero_dcheck.set_summary_plots()
+apero_assets_recipe = drs_dev.TmpRecipe()
+apero_assets_recipe.name = __NAME__
+apero_assets_recipe.shortname = 'ASSETS'
+apero_assets_recipe.instrument = __INSTRUMENT__
+apero_assets_recipe.in_block_str = 'red'
+apero_assets_recipe.out_block_str = 'red'
+apero_assets_recipe.extension = 'fits'
+apero_assets_recipe.description = (
+    'Developer functionality dealing with local/remote asset data files.      '
+    'mode=update-remote - creates a new tar on the server from local assets'
+    'mode=check-local - checks whether the local assets need updating from server'
+    'mode=update-local - update local assets from server')
+apero_assets_recipe.kind = 'misc'
+apero_assets_recipe.set_debug_plots()
+apero_assets_recipe.set_summary_plots()
 
-apero_dcheck.set_arg(pos=0, name='mode', dtype=str,
-                     helpstr='Mode of operation (update-remote, check-local, update-local)        '
-                             'mode=update-remote - creates a new tar on the server from local assets'
-                             'mode=check-local - checks whether the local assets need updating from server'
-                             'mode=update-local - update local assets from server')
-apero_dcheck.set_kwarg(name='--indir', dtype=str, default='None',
-                       helpstr='Input data directory. If set recreates '
-                               'checksums and tar file from --indir')
-apero_dcheck.set_kwarg(name='--tarfile', dtype=str, default='None',
-                       helpstr='Force a local assets tar file to be used '
-                               '(If correct does not download from server)')
+apero_assets_recipe.set_arg(
+    pos=0, name='mode', dtype=str,
+    helpstr=('Mode of operation (update-remote, check-local, update-local)        '
+             'mode=update-remote - creates a new tar on the server from local assets'
+             'mode=check-local - checks whether the local assets need updating from server'
+             'mode=update-local - update local assets from server'))
+apero_assets_recipe.set_kwarg(
+    name='--indir', dtype=str, default='None',
+    helpstr=('Input data directory. If set recreates '
+             'checksums and tar file from --indir'))
+apero_assets_recipe.set_kwarg(
+    name='--tarfile', dtype=str, default='None',
+    helpstr=('Force a local assets tar file to be used '
+             '(If correct does not download from server)'))
 # add recipe to recipe definition
-RMOD.add(apero_dcheck)
+RMOD.add(apero_assets_recipe)
 
 
 # =============================================================================
@@ -84,7 +88,7 @@ RMOD.add(apero_dcheck)
 # Everything else is controlled from recipe_definition
 def main(**kwargs):
     """
-    Main function for exposuremeter_spirou.py
+    Main function for apero_assets.py
 
     :param kwargs: additional keyword arguments
 

@@ -316,8 +316,8 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
              of usable pixels ('ok')
     """
     func_name = f'{__NAME__}.fit_lower_envelope_2d()'
-    zfull = np.asarray(image, dtype=float)
-    efull = np.asarray(err, dtype=float)
+    zfull = np.array(image, dtype=float)
+    efull = np.array(err, dtype=float)
     if zfull.shape != efull.shape:
         emsg = 'image and err must have the same shape \n\t Function = {0}'
         raise ValueError(emsg.format(func_name))

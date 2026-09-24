@@ -169,10 +169,10 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
     bkg_noshape, bkgerr_noshape = xout
     # ----------------------------------------------------------------------
     # estimate readout noise and mask deviant science-frame residuals
-    image_noshape_e = np.asarray(image_noshape, dtype=float)
+    image_noshape_e = np.array(image_noshape, dtype=float)
     model_noshape_array = (np.zeros_like(image_noshape_e)
                            if model_noshape is None
-                           else np.asarray(model_noshape, dtype=float))
+                           else np.array(model_noshape, dtype=float))
     # The science-frame residual is the ADU data minus the electron model, so
     #   the readout-noise estimate sees the same units as the fitted model.
     residual_noshape = image_noshape_e - model_noshape_array
@@ -256,9 +256,9 @@ def extract_all_fibers(params: ParamDict, image_straight: np.ndarray,
     trim_keep = params['CAL.EXT.TRIM_KEEP']
     n_iter = params['CAL.EXT.IRLS_ITER']
     fit_nu = params['CAL.EXT.FIT_NU']
-    image_e = np.asarray(image_straight, dtype=float)
-    profile1 = np.asarray(profile1, dtype=float)
-    profile2 = np.asarray(profile2, dtype=float)
+    image_e = np.array(image_straight, dtype=float)
+    profile1 = np.array(profile1, dtype=float)
+    profile2 = np.array(profile2, dtype=float)
     xargs = [image_e, profile1, profile2, row1, row2]
     xkwargs = dict(noise=ron, nclip=params['CAL.EXT.FIT_NCLIP'],
                    nsig_clip=params['CAL.EXT.FIT_NSIG_CLIP'],
@@ -294,17 +294,18 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
                         image_straight: np.ndarray,
                         order_profiles: dict,
                         geometry: ParamDict,
-                        order_map: Optional[np.ndarray],
-                        order_nearest: Optional[np.ndarray],
+                        order_map: np.ndarray,
+                        order_nearest: np.ndarray,
                         order_ranges: dict,
                         order_top_pos: np.ndarray,
                         order_bottom_pos: np.ndarray,
                         order_mid_pos: np.ndarray,
                         spectral_groups: list,
                         fiber1: str, fiber2: str,
-                        gain: Optional[float] = None,
-                        ron: Optional[float] = None,
-                        robust: Optional[bool] = None) -> ParamDict:
+                        gain: float = None,
+                        ron: float = None,
+                        robust: bool = None,
+                        ) -> ParamDict:
     """
     Fit both fibers and subtract their modelled background.
 
@@ -316,15 +317,15 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     :param order_bottom_pos: numpy array, bottom row of each straightened ribbon
     :param order_mid_pos: numpy array, midpoint row of each straightened ribbon
     :param geometry: ParamDict, inverse shape geometry products
-    :param order_map: numpy array or None, localisation order-label map
-    :param order_nearest: numpy array or None, nearest trace-label map
+    :param order_map: numpy array, localisation order-label map
+    :param order_nearest: numpy array, nearest trace-label map
     :param order_ranges: dict, fiber trace-label ranges from LOC_LOCO
     :param spectral_groups: list, instrument-owned extraction groupings
     :param fiber1: str, first fiber-set name
     :param fiber2: str, second fiber-set name
     :param gain: float or None, detector gain
     :param ron: float or None, readout noise
-    :param robust: bool, use robust profile fitting
+    :param robust: bool or None, use robust profile fitting
 
     :return: ParamDict, model-fit and background-subtraction products
     """
@@ -332,11 +333,11 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     shape_order = params['CAL.EXT.SPLINE_ORDER']
     spline_order = _spline_order_value(shape_order)
     # Read the two straightened profiles that are fitted simultaneously.
-    profile1 = np.asarray(order_profiles[fiber1], dtype=float)
-    profile2 = np.asarray(order_profiles[fiber2], dtype=float)
+    profile1 = np.array(order_profiles[fiber1], dtype=float)
+    profile2 = np.array(order_profiles[fiber2], dtype=float)
     # Use the localization-produced straightened ribbon bounds directly.
-    row1 = np.asarray(order_top_pos, dtype=int)
-    row2 = np.asarray(order_bottom_pos, dtype=int)
+    row1 = np.array(order_top_pos, dtype=int)
+    row2 = np.array(order_bottom_pos, dtype=int)
     # Fit the paired ribbon profiles and keep the image-sized diagnostics for
     #   the background and model products that follow.
     if robust is None:
@@ -349,7 +350,7 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
         profiles_noshape[fiber] = shape_core.ea_transform_reverse(
             profile, geometry['SHAPEL'], geometry['SHAPEX'], geometry['SHAPEY'],
             order=spline_order)
-    dxmap = np.asarray(geometry['DXMAP_NO_SHAPE'], dtype=float)
+    dxmap = np.array(geometry['DXMAP_NO_SHAPE'], dtype=float)
     xmap = np.arange(dxmap.shape[1], dtype=float)[None, :] - dxmap
     fit_props = extract_all_fibers(params, image_straight, profile1,
                                    profile2, row1, row2, gain=gain, ron=ron,
@@ -360,7 +361,7 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
             order_nearest, xmap, profiles_noshape, order_ranges,
             fibers=(fiber1, fiber2))
         full_model = fiber_model + zero_model
-        image_noshape_e = np.asarray(image_noshape, dtype=float)
+        image_noshape_e = np.array(image_noshape, dtype=float)
         ron_fit = extract_model_core.fit_ron(
             image_noshape_e - full_model, full_model,
             ron_start=fit_props['RON'], stride=params['CAL.EXT.RON_STRIDE'])
@@ -398,17 +399,6 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
                        weight_kind=params['CAL.EXT.SAVGOL_WEIGHT'])
     spectra = extract_model_core.extract_spectra(*spec_args, **spec_kwargs)
 
-    if params['CAL.EXT.MAKE_BLAZE']:
-        blaze_args = [order_map, xmap, profiles_noshape, order_ranges,
-                      xgrid, spectral_groups]
-        blaze_kwargs = dict(window=spec_kwargs['window'],
-                            cut=spec_kwargs['cut'],
-                            weight_kind=spec_kwargs['weight_kind'])
-        blaze = extract_model_core.extract_blaze(*blaze_args, **blaze_kwargs)
-    else:
-        blaze = dict()
-        for name, spectrum in spectra.items():
-            blaze[name] = np.ones_like(spectrum[0])
     # Combine the fit and background products into one APERO property bag.
     props = ParamDict()
     for key in fit_props:
@@ -422,14 +412,16 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     props['SCIENCE_FIBER_MODEL'] = fiber_model
     props['SCIENCE_ZERO_MODEL'] = zero_model
     props['SCIENCE_XMAP'] = xmap
+    # expose the science-frame profiles so the flat-response step can reuse
+    # them without re-running the shape transform
+    props['PROFILES_NOSHAPE'] = profiles_noshape
     props['SPECTRA'] = spectra
-    props['BLAZE'] = blaze
     props['SPECTRUM_GRID'] = xgrid
     props['FIBER1'] = fiber1
     props['FIBER2'] = fiber2
     props['ROW1'] = row1
     props['ROW2'] = row2
-    props['ORDER_MID'] = np.asarray(order_mid_pos, dtype=int)
+    props['ORDER_MID'] = np.array(order_mid_pos, dtype=int)
     props.set_all_sources(func_name)
     return props
 
@@ -452,10 +444,10 @@ def spectra_to_eprops(params: ParamDict, model_props: ParamDict,
     func_name = __NAME__ + '.spectra_to_eprops()'
     if 'SPECTRA' in model_props and fiber in model_props['SPECTRA']:
         spectrum, spectrum_error = model_props['SPECTRA'][fiber]
-        e2ds = np.asarray(spectrum, dtype=float)
-        e2ds_error = np.asarray(spectrum_error, dtype=float)
+        e2ds = np.array(spectrum, dtype=float)
+        e2ds_error = np.array(spectrum_error, dtype=float)
     else:
-        e2ds = np.asarray(model_props['MODEL_SPECTRA'][fiber], dtype=float)
+        e2ds = np.array(model_props['MODEL_SPECTRA'][fiber], dtype=float)
         e2ds_error = np.sqrt(np.abs(e2ds))
     ron = float(model_props['RON'])
     flat = np.ones_like(e2ds)

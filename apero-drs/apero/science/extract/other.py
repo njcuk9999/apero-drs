@@ -130,6 +130,55 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
     return thermal_files
 
 
+def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
+                       extname: str, flatfile: DrsFitsFile,
+                       logger: Optional[RecipeLog],
+                       **kwargs) -> dict:
+    """
+    Extract or read back the e2ds flat spectrum for all fibers.
+
+    Runs ``apero_extract`` as a sub-recipe if the expected output does not
+    already exist (controlled by ``CAL.FLAT.ALWAYS_EXTRACT``), then reads
+    each per-fiber e2ds file back from disk and returns them.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the calling recipe
+    :param extname: str, the name of the extraction recipe to call
+    :param flatfile: DrsFitsFile, the input flat fits file
+    :param logger: RecipeLog or None, the recipe log for this iteration
+    :param kwargs: additional keyword arguments forwarded to PCheck
+
+    :return: dict mapping fiber name (str) to DrsFitsFile containing
+             the extracted flat e2ds data for that fiber
+    """
+    func_name = __NAME__ + '.extract_flat_files()'
+    # announce sub-recipe launch so the user can track progress
+    WLOG(params, '', 'Running flat extraction sub-recipe '
+                     '({0})'.format(extname))
+    # read always_extract flag from params (can be overridden via kwargs)
+    flat_always_extract = pcheck(params, 'CAL.FLAT.ALWAYS_EXTRACT',
+                                 'always_extract', kwargs, func_name)
+    # locate the extraction recipe instance
+    extrecipe, _ = drs_startup.find_recipe(extname,
+                                           params['OBS.INSTRUMENT'],
+                                           mod=recipe.recipemod)
+    # the expected output file type mirrors what apero_extract produces
+    # for flat files (flat-fielded e2ds)
+    fileinst = recipe.outputs['FLAT_E2DS_FILE']
+    # run extraction (or skip if file exists and always_extract is False);
+    # extract_type='flat' triggers flat-response computation inside the recipe
+    flat_outputs = extract_files(params, recipe, flatfile, fileinst,
+                                 flat_always_extract, extrecipe,
+                                 kind='flat', func_name=func_name,
+                                 logger=logger, extract_type='flat')
+    # Also read back the per-fiber FLAT_RESPONSE_FILE written during extraction.
+    flat_response_outputs = _read_flat_response_files(
+        params, recipe, flatfile, flat_outputs)
+    WLOG(params, '', 'Flat extraction complete')
+    # Return both e2ds and flat-response products in a combined dict.
+    return {'e2ds': flat_outputs, 'flat_response': flat_response_outputs}
+
+
 def extract_leak_files(params, recipe, extname, darkfpfile, logger,
                        **kwargs):
     func_name = __NAME__ + '.extract_leak_files()'
@@ -205,6 +254,60 @@ def extract_wave_files(params, recipe, extname, hcfile,
 # =============================================================================
 # Define worker functions
 # =============================================================================
+def _read_flat_response_files(params: ParamDict,
+                              recipe: DrsRecipe,
+                              flatfile: DrsFitsFile,
+                              e2ds_outputs: dict) -> dict:
+    """
+    Read back the per-fiber FLAT_RESPONSE_FILE written during flat extraction.
+
+    The files are located using the same filename construction as the e2ds
+    outputs so that they align with the already-read e2ds files.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the calling recipe (used to look up the
+                   FLAT_RESPONSE_FILE output file definition)
+    :param flatfile: DrsFitsFile, the original input flat fits file
+    :param e2ds_outputs: dict, per-fiber e2ds DrsFitsFile already read back
+
+    :return: dict mapping fiber name (str) to DrsFitsFile or None when the
+             flat-response file does not exist on disk
+    """
+    func_name = __NAME__ + '._read_flat_response_files()'
+    # use the recipe's output definition to get the correct file type
+    resp_inst = recipe.outputs['FLAT_RESPONSE_FILE']
+    # determine the observation sub-directory from the input file path
+    inpath = params['INPATH']
+    outpath = params['OUTPATH']
+    if outpath in flatfile.filename:
+        obs_dir = (os.path.dirname(flatfile.filename)
+                   .split(outpath)[1])
+    elif inpath in flatfile.filename:
+        obs_dir = (os.path.dirname(flatfile.filename)
+                   .split(inpath)[1])
+    else:
+        obs_dir = ''
+    obs_dir = obs_dir.strip(os.sep)
+    flat_response_files = dict()
+    for fiber in e2ds_outputs:
+        # construct the expected filename for this fiber
+        tmp_params = params.copy()
+        tmp_params['OBS_DIR'] = obs_dir
+        resp_file = resp_inst.newcopy(params=tmp_params, fiber=fiber)
+        resp_file.construct_filename(infile=flatfile)
+        if os.path.exists(resp_file.filename):
+            # read the flat-response data from disk
+            resp_file.read_file()
+            flat_response_files[fiber] = resp_file
+        else:
+            # file not present (e.g. extraction was skipped)
+            WLOG(params, 'warning',
+                 'FLAT_RESPONSE_FILE not found for fiber {0}: {1}'.format(
+                     fiber, resp_file.filename))
+            flat_response_files[fiber] = None
+    return flat_response_files
+
+
 def extract_files(params: ParamDict, recipe: DrsRecipe,
                   infile: DrsFitsFile, outfile: DrsFitsFile,
                   always_extract: bool, extrecipe: Union[DrsRecipe, None],
@@ -213,7 +316,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                   leakcorr: Optional[bool] = None,
                   wavefile: Optional[str] = None,
                   logger: Optional[RecipeLog] = None,
-                  force_ref_wave: bool = False):
+                  force_ref_wave: bool = False,
+                  extract_type: str = 'standard'):
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
@@ -317,6 +421,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # add wave file correction argument if set
         if wavefile is not None and isinstance(wavefile, str):
             data_dict['WAVEFILE'] = wavefile
+        # pass extract_type so the extraction recipe can branch accordingly
+        data_dict['EXTRACT_TYPE'] = extract_type
 
         kwargs['DATA_DICT'] = data_dict
         # ------------------------------------------------------------------

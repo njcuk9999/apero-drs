@@ -8,7 +8,7 @@ Created on 2019-07-10 at 09:30
 @author: cook
 """
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -23,6 +23,9 @@ from aperocore.core import drs_log
 from apero.utils import drs_recipe
 from apero.science.calib import gen_calib
 from apero.base import base as apero_base
+
+# type alias for the fit_blaze_model return
+FitBlazeReturn = Tuple[np.ndarray, dict]
 
 # =============================================================================
 # Define variables
@@ -150,52 +153,76 @@ def get_flat(params: ParamDict, recipe: DrsRecipe,
 
 def get_blaze(params: ParamDict, recipe: DrsRecipe,
               header: Union[drs_file.Header, None],
-              fiber: str, filename: Optional[str] = None,
+              fiber: str, e2ds: np.ndarray,
+              filename: Optional[str] = None,
               database: Optional[drs_database.CalibrationDatabase] = None
-              ) -> Tuple[str, float, np.ndarray]:
+              ) -> ParamDict:
     """
-    Get the blaze calibration file from the calibration database
+    Get the blaze calibration and return a ParamDict with blaze properties.
+
+    For flat extractions (extract_type == 'flat') the blaze has not yet been
+    computed, so a unity blaze (ones) is returned with 'None' provenance.
+    For all other extract types the blaze is loaded from the calibration DB.
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the calling recipe
     :param header: fits Header, the fits header associated with the input
                    file (required to get closest in time) can be None if
                    filename is given
     :param fiber: str, the fiber name
+    :param e2ds: numpy (2D) array, the extracted spectrum for this fiber;
+                 used to create a unity blaze with the correct shape when
+                 extract_type == 'flat'
     :param filename: str or None, the filename of the blaze calibration to
-                     load, overrides getting it from calibration database
-                     header not require for this
+                     load, overrides getting it from calibration database;
+                     header not required for this
     :param database: CalibrationDatabase or None, if passed does not reload
                      the calibration database
-    :return: tuple, 1. the blaze file name used, 2. the MJD time of the blaze
-             file 3. numpy (2D) array, the loaded blaze file
+
+    :return: ParamDict with keys BLAZE (numpy 2D array), BLAZEFILE (str),
+             BLAZETIME (float)
     """
+    func_name = __NAME__ + '.get_blaze()'
+    # read the extract type so flat runs do not attempt a DB lookup
+    extract_type = params['INPUTS'].get('EXTRACT_TYPE', 'standard')
+    fbprops = ParamDict()
+    # ------------------------------------------------------------------------
+    # For flat extractions the blaze calibration does not yet exist;
+    # use a unity blaze so downstream steps receive a well-defined array.
+    if extract_type == 'flat':
+        fbprops['BLAZE'] = np.ones_like(e2ds)
+        fbprops['BLAZEFILE'] = 'None'
+        fbprops['BLAZETIME'] = np.nan
+        fbprops.set_sources(['BLAZE', 'BLAZEFILE', 'BLAZETIME'], func_name)
+        return fbprops
+    # ------------------------------------------------------------------------
+    # Standard path: load blaze from the calibration database
+    WLOG(params, '', 'Loading blaze calibration for fiber {0}'.format(fiber))
     # get file definition
     out_blaze = drs_file.get_file_definition(params, 'FF_BLAZE',
                                              block_kind='red')
-    # get key
+    # get calibration database key
     key = out_blaze.get_dbkey()
-    # load database
+    # load database if not already provided
     if database is None:
         calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
-    # ------------------------------------------------------------------------
-    # load blaze file
+    # load blaze file from the calibration database
     cfile = gen_calib.CalibFile()
     cfile.load_calib_file(params, recipe.shortname,
                           key, header, filename=filename,
                           userinputkey='BLAZEFILE', database=calibdbm,
                           fiber=fiber)
-    # get properties from calibration file
-    blaze = cfile.data
-    blaze_file = cfile.filename
-    blaze_time = cfile.mjdmid
-    # ------------------------------------------------------------------------
-    # log which fpref file we are using
-    WLOG(params, '', textentry('40-015-00007', args=[blaze_file]))
-    # return the reference image
-    return blaze_file, blaze_time, blaze
+    # log which blaze file we are using
+    WLOG(params, '', textentry('40-015-00007', args=[cfile.filename]))
+    # populate and return the properties dict
+    fbprops['BLAZE'] = cfile.data
+    fbprops['BLAZEFILE'] = cfile.filename
+    fbprops['BLAZETIME'] = cfile.mjdmid
+    fbprops.set_sources(['BLAZE', 'BLAZEFILE', 'BLAZETIME'], func_name)
+    return fbprops
 
 
 def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
@@ -242,65 +269,302 @@ def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
     return max_edge_flux, failed_orders_str
 
 
+def compute_flat_response(
+    params: ParamDict,
+    recipe: DrsRecipe,
+    model_props: ParamDict,
+    order_map: np.ndarray,
+    order_ranges: Dict[str, Tuple[int, int]],
+) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+    """
+    Compute per-order flat-field response profiles from a flat extraction.
+
+    Reads the extraction constants from ``params``, delegates the numerical
+    work to ``flat_blaze_core.compute_flat_response``, then emits debug and
+    summary plots via the standard ``recipe.plot`` system.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, the calling recipe (used for plot calls)
+    :param model_props: ParamDict, output of ``run_all_fiber_model``; must
+                        contain ``PROFILES_NOSHAPE``, ``SCIENCE_XMAP`` and
+                        ``RON``
+    :param order_map: numpy (2D) array, trace-label map (pixel → order index)
+    :param order_ranges: dict, fiber name → (lo_label, hi_label) trace range
+
+    :return: tuple (flat_response, flat_response_err) — each a dict mapping
+             fiber name to a 2D float array of shape (norders, ncols)
+    """
+    func_name = __NAME__ + '.compute_flat_response()'
+    # read convolution constants
+    os = pcheck(params, 'CAL.FLAT.RESPONSE_OVERSAMPLING', func=func_name)
+    max_hc = pcheck(params, 'CAL.FLAT.RESPONSE_MAX_HALF_CELL',
+                    func=func_name) * os
+    fwhm = pcheck(params, 'CAL.FLAT.RESPONSE_FWHM_PIX', func=func_name)
+    # extract computed products from model_props
+    xmap = np.array(model_props['SCIENCE_XMAP'], dtype=float)
+    profiles_noshape = model_props['PROFILES_NOSHAPE']
+    ron = float(model_props['RON'])
+    # single order used for the non-loop debug/summary plots
+    sorder = params['CAL.EXT.PLOT_ORDER']
+    # delegate the numerical heavy lifting to the core module
+    core_args = [order_map, xmap, profiles_noshape, order_ranges,
+                 ron, int(os), float(max_hc), float(fwhm)]
+    outs = flat_blaze_core.compute_flat_response(*core_args)
+    flat_response, flat_response_err = outs
+    # emit debug and summary plots for each fiber
+    for fiber, resp in flat_response.items():
+        resp_err = flat_response_err[fiber]
+        # loop over every order (debug, loop mode)
+        recipe.plot('FLAT_RESPONSE_ORDER1',
+                    flat_response=resp,
+                    flat_response_err=resp_err,
+                    order=None, fiber=fiber)
+        # single representative order (debug, non-loop)
+        recipe.plot('FLAT_RESPONSE_ORDER2',
+                    flat_response=resp,
+                    flat_response_err=resp_err,
+                    order=sorder, fiber=fiber)
+        # summary plot for the same representative order
+        recipe.plot('SUM_FLAT_RESPONSE_ORDER',
+                    flat_response=resp,
+                    flat_response_err=resp_err,
+                    order=sorder, fiber=fiber)
+    return flat_response, flat_response_err
+
+
+def fit_blaze_model(params: ParamDict, recipe: DrsRecipe,
+                    flat_response: np.ndarray,
+                    wave: np.ndarray, fiber: str
+                    ) -> FitBlazeReturn:
+    """
+    Fit the physical blaze model to a flat-response profile.
+
+    Reads fit parameters from ``params`` and delegates the numerical
+    work to ``flat_blaze_core.fit_blaze_model``.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, calling recipe (unused, reserved for logging)
+    :param flat_response: numpy (2D) array (norders, ncols), flat-response
+                          profile to fit
+    :param wave: numpy (2D) array (norders, ncols), wavelength solution [nm]
+    :param fiber: str, fiber name (used for logging only)
+
+    :return: tuple (blaze_model, fit_params) — blaze_model is a (norders,
+             ncols) float array, fit_params is a dict with keys: teff, c0,
+             c1, beta, asym, rms, wave_fit_max, lref
+    """
+    func_name = __NAME__ + '.fit_blaze_model()'
+    # read fit constants from params
+    teff = pcheck(params, 'CAL.FLAT.BLAZE_TEFF', func=func_name)
+    wave_fit_max = pcheck(params, 'CAL.FLAT.BLAZE_WAVE_FIT_MAX',
+                          func=func_name)
+    sigma_clip = pcheck(params, 'CAL.FLAT.BLAZE_SIGMA_CLIP',
+                        func=func_name)
+    peak_hw = pcheck(params, 'CAL.FLAT.BLAZE_PEAK_HW', func=func_name)
+    spline_k = pcheck(params, 'CAL.FLAT.BLAZE_SPLINE_K', func=func_name)
+    WLOG(params, 'info',
+         'Fitting physical blaze model for fiber {0}'.format(fiber))
+    # delegate numerical work to core module
+    core_args = [flat_response, wave]
+    core_kwargs = dict(teff=teff, wave_fit_max=wave_fit_max,
+                       sigma_clip=sigma_clip, peak_half_width=peak_hw,
+                       spline_k=spline_k)
+    outs = flat_blaze_core.fit_blaze_model(*core_args, **core_kwargs)
+    blaze_model, fit_params = outs
+    # log key fit results
+    WLOG(params, '',
+         '   c0={c0:.1f} nm  c1={c1:+.4f}  '
+         'beta={beta:.4f}  asym={asym:+.3f}  '
+         'rms={rms:.2%}'.format(**fit_params))
+    return blaze_model, fit_params
+
+
+def make_blaze(params: ParamDict, recipe: DrsRecipe,
+               flat_response_files: Dict[str, Optional[DrsFitsFile]],
+               e2ds_files: Dict[str, Optional[DrsFitsFile]],
+               wave_maps: Dict[str, np.ndarray],
+               fiber_types: List[str]
+               ) -> Dict[str, ParamDict]:
+    """
+    Compute per-fiber blaze models and flat fields from flat-response files.
+
+    For each fiber the flat-response profile (from the flat extraction) is
+    divided by the fitted physical blaze model to give the flat-field.  All
+    relevant eprops keys required by ``flat_blaze_write``, ``flat_blaze_qc``
+    and ``flat_blaze_summary`` are populated from the fit results and from
+    the e2ds file header (which carries full calibration provenance).
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, calling recipe
+    :param flat_response_files: dict mapping fiber name to DrsFitsFile
+                                containing the flat-response profile, or
+                                None if the file is not available
+    :param e2ds_files: dict mapping fiber name to DrsFitsFile containing
+                       the flat e2ds (used to read calibration provenance
+                       from its header)
+    :param wave_maps: dict mapping fiber name to (norders, ncols) float
+                      array with the wavelength solution in nm
+    :param fiber_types: list of str, fiber names to process
+
+    :return: dict mapping fiber name to a ParamDict (eprops) containing
+             BLAZE, FLAT, E2DS, RMS, SNR, and all calibration provenance
+             keys needed by flat_blaze_write/qc/summary
+    """
+    func_name = __NAME__ + '.make_blaze()'
+    nframes = 1
+    eprops_all: Dict[str, ParamDict] = dict()
+    # announce the overall blaze-fitting step before the per-fiber loop
+    WLOG(params, '', 'Fitting physical blaze model for fibers: '
+                     '{0}'.format(', '.join(fiber_types)))
+    for fiber in fiber_types:
+        resp_file = flat_response_files.get(fiber)
+        e2ds_file = e2ds_files.get(fiber)
+        if resp_file is None or e2ds_file is None:
+            WLOG(params, 'warning',
+                 'make_blaze: skipping fiber {0} '
+                 '(missing flat-response or e2ds file)'.format(fiber))
+            continue
+        wave_map = wave_maps[fiber]
+        flat_response = np.array(resp_file.data, dtype=float)
+        norders, ncols = flat_response.shape
+        # fit physical blaze model
+        fbout = fit_blaze_model(params, recipe, flat_response,
+                                wave_map, fiber)
+        blaze_model, fit_params = fbout
+        # flat field: flat_response / blaze_model
+        with np.errstate(invalid='ignore', divide='ignore'):
+            flat = flat_response / blaze_model
+        # per-order SNR: median signal / noise from flat_response
+        ron = float(e2ds_file.get_hkey('KW_EFF_RON', dtype=float,
+                                       required=False) or 0.0)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            snr = np.nanmedian(
+                flat_response / np.sqrt(
+                    np.abs(flat_response) + ron ** 2),
+                axis=1)
+        # per-order RMS of the fit residuals (obs/model - 1)
+        resid = flat_response / blaze_model - 1.0
+        rms = np.array([float(np.nanstd(resid[i]))
+                        for i in range(norders)])
+        # build eprops
+        eprops = ParamDict()
+        # spectra
+        eprops['E2DS'] = flat_response
+        eprops['E2DSFF'] = flat
+        eprops['BLAZE'] = blaze_model
+        eprops['FLAT'] = flat
+        eprops['E2DS_ERROR'] = np.sqrt(np.abs(flat_response) + ron ** 2)
+        # per-order statistics
+        eprops['SNR'] = snr
+        eprops['FLUX_VAL'] = np.nanmean(flat_response, axis=1)
+        eprops['N_COSMIC'] = np.zeros(norders)
+        eprops['RMS'] = rms
+        # fiber info
+        eprops['FIBER'] = fiber
+        # extraction order range (full range; no trimming)
+        eprops['START_ORDER'] = 0
+        eprops['END_ORDER'] = norders - 1
+        eprops['CAL.EXT.RANGE1'] = 0
+        eprops['CAL.EXT.RANGE2'] = 0
+        eprops['SKIP_ORDERS'] = []
+        # detector parameters (read from e2ds header)
+        eprops['EFF_RON'] = ron
+        eprops['SIGDET'] = ron
+        eprops['GAIN'] = params['IMAGE.EFFGAIN']
+        eprops['EFF_GAIN'] = params['IMAGE.EFFGAIN']
+        # saturation thresholds (carried from params)
+        eprops['SAT_QC'] = params['CAL.EXT.QC_FLUX_MAX']
+        eprops['SAT_LEVEL'] = params['CAL.EXT.QC_FLUX_MAX'] * nframes
+        # cosmic correction: not applied in the new model extraction
+        eprops['COSMIC'] = False
+        eprops['COSMIC_SIGCUT'] = params['CAL.EXT.COSMIC_SIGCUT']
+        eprops['COSMIC_THRESHOLD'] = params['CAL.EXT.COSMIC_THRES']
+        # sinc-fit legacy params: kept in header for backwards compatibility
+        eprops['BLAZE_SCUT'] = params['CAL.FLAT.BLAZE_SCUT']
+        eprops['BLAZE_BPERCENTILE'] = params['CAL.FLAT.BLAZE_BPTILE']
+        # physical model fit parameters
+        eprops['BLAZE_TEFF'] = fit_params['teff']
+        eprops['BLAZE_C0'] = fit_params['c0']
+        eprops['BLAZE_C1'] = fit_params['c1']
+        eprops['BLAZE_BETA'] = fit_params['beta']
+        eprops['BLAZE_ASYM'] = fit_params['asym']
+        eprops['BLAZE_FIT_RMS'] = fit_params['rms']
+        eprops.set_all_sources(func_name)
+        eprops_all[fiber] = eprops
+    WLOG(params, '', 'Blaze model fitting complete')
+    return eprops_all
+
+
 # =============================================================================
 # Define write and qc functions
 # =============================================================================
+def write_flat_response(params: ParamDict, recipe: DrsRecipe,
+                        infile: DrsFitsFile, flat_response_data: np.ndarray,
+                        fiber: str) -> None:
+    """
+    Write a per-fiber flat-response array to a FLAT_RESPONSE_FILE on disk.
+
+    Header keys are copied from ``infile`` and the fiber keyword is added.
+    The output file is registered with the recipe for downstream indexing.
+
+    :param params: ParamDict, APERO constants
+    :param recipe: DrsRecipe, the calling recipe (used to look up the output
+                   file definition and to register the written file)
+    :param infile: DrsFitsFile, the science frame used to construct the
+                   output filename and to supply the base header keys
+    :param flat_response_data: numpy (2D) array, the flat-response profile
+                               of shape (norders, ncols)
+    :param fiber: str, the fiber name for this flat-response slice
+
+    :return: None
+    """
+    # get a new copy of the flat-response file type from the recipe outputs
+    resp_file = recipe.outputs['FLAT_RESPONSE_FILE'].newcopy(
+        params=params, fiber=fiber)
+    # build the output filename from the input file
+    resp_file.construct_filename(infile=infile)
+    # copy standard header keys from the input file, excluding localization
+    resp_file.copy_original_keys(infile, exclude_groups=['loc'])
+    # add the core APERO header keys common to all output files
+    resp_file.add_core_hkeys(params)
+    # record the fiber this response array belongs to
+    resp_file.add_hkey('KW_FIBER', value=fiber)
+    # record the input file basename in the header
+    resp_file.infiles = [infile.basename]
+    # attach the 2D flat-response data
+    resp_file.data = flat_response_data
+    # write the file to disk
+    resp_file.write_file()
+    # register with the recipe for indexing and downstream use
+    recipe.add_output_file(resp_file)
+
+
 def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
                   eprops: ParamDict, fiber: str
                   ) -> Tuple[List[list], int]:
     """
-    Calculate the flat and blaze quality control criteria
+    Calculate the flat and blaze quality control criteria.
+
+    QC is based on the maximum per-order fit RMS across all orders that are
+    not listed in CAL.FLAT.RMS_SKIP_ORDERS.
 
     :param params: ParamDict, the parameter dictionary of constants
     :param recipe: DrsRecipe, the drs recipe object
-    :param eprops: dictionary, the extraction dictionary
+    :param eprops: ParamDict, the extraction dictionary; must contain 'RMS'
     :param fiber: str, the fiber name
 
     :return: tuple, 1. the qc lists, 2. int 1 if passed 0 if failed
     """
     # set passed variable and fail message list
-    fail_msg, qc_values, qc_names = [], [], [],
+    fail_msg, qc_values, qc_names = [], [], []
     qc_logic, qc_pass = [], []
     # -------------------------------------------------------------------------
-    # qc on the edges of the order
-    flux_edge, edge_bad_orders = flux_edge_trace(params, recipe, eprops, fiber)
-    # get limit
-    flux_edge_limit = params['CAl.FLAT.QC_FLUX_EDGE_LIMIT']
-    # if flux edge value is above limit we fail QC
-    if flux_edge > flux_edge_limit:
-        # add failed message to fail message list
-        fargs = [fiber, flux_edge, flux_edge_limit]
-        ftext = 'Fiber {0}: Edge flux too high ({1} > {2})'
-        fail_msg.append(ftext.format(*fargs))
-        qc_pass.append(0)
-    else:
-        qc_pass.append(1)
-        # add to qc header lists
-    qc_values.append(flux_edge)
-    qc_names.append('flux_edge')
-    qc_logic.append('flux_edge < {0:.2e}'.format(flux_edge_limit))
-    # -------------------------------------------------------------------------
-    # report failed orders as QC
-    if len(edge_bad_orders) > 0:
-        # add failed message to fail message list
-        fargs = [fiber, ','.join(edge_bad_orders)]
-        ftext = 'Fiber {0}: Flux edge bad orders = {1}'
-        fail_msg.append(ftext.format(*fargs))
-        qc_pass.append(0)
-        qc_values.append(','.join(edge_bad_orders))
-    else:
-        qc_pass.append(1)
-        qc_values.append('None')
-    qc_names.append('flux_edge_orders')
-    qc_logic.append('len(flux_edge_orders) > 0')
-    # --------------------------------------------------------------
     # check that rms values in required orders are below threshold
-
-    # get mask for removing certain values
+    # get mask for removing certain orders from the RMS check
     remove_orders = params['CAL.FLAT.RMS_SKIP_ORDERS']
     remove_orders = np.array(remove_orders)
     remove_mask = np.isin(np.arange(len(eprops['RMS'])), remove_orders)
-    # apply max and calculate the maximum of the rms values
+    # maximum per-order RMS excluding skipped orders
     max_rms = mp.nanmax(eprops['RMS'][~remove_mask])
     # apply the quality control based on the maximum rms
     if max_rms > params['CAL.FLAT.QC_MAX_RMS']:
@@ -314,7 +578,7 @@ def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
     qc_values.append(max_rms)
     qc_names.append('max_rms')
     qc_logic.append('max_rms < {0:.2f}'.format(params['CAL.FLAT.QC_MAX_RMS']))
-    # --------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
@@ -331,71 +595,63 @@ def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
     return qc_params, passed
 
 
-def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
-                     eprops: ParamDict, fiber: str, rawfiles: List[str],
-                     combine: bool, shapeprops: ParamDict, lprops: ParamDict,
-                     sprops: ParamDict, qc_params: List[list]
+def flat_blaze_write(params: ParamDict, recipe: DrsRecipe,
+                     infile: DrsFitsFile, eprops: ParamDict,
+                     fiber: str, rawfiles: List[str], combine: bool,
+                     source_file: DrsFitsFile, qc_params: List[list]
                      ) -> Tuple[DrsFitsFile, DrsFitsFile]:
     """
-    Write the flat and blaze calibration files to disk
+    Write the flat and blaze calibration files to disk.
+
+    Calibration provenance (shape, loco, wave, instrument header keys) is
+    copied verbatim from ``source_file`` (the flat e2ds DrsFitsFile), which
+    already carries a complete provenance header from the extraction step.
 
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe that called this function
-    :param infile: DrsFitsFile, the input fits file class
+    :param infile: DrsFitsFile, the raw input fits file (used for filename
+                   construction and the raw infile list)
     :param eprops: ParamDict, the extraction parameter dictionary
     :param fiber: str, the fiber name
     :param rawfiles: list of strings, the raw filenames
     :param combine: bool, if True input files were combined
-    :param shapeprops: ParamDict, the shape parameter dictionary
-    :param lprops: ParamDict, the localisation parameter dictionary
-    :param sprops: ParamDict, the s1d parameter dictionary
+    :param source_file: DrsFitsFile, the flat e2ds file; its header carries
+                        full calibration provenance that is copied into the
+                        blaze and flat output headers
     :param qc_params: list of lists, the quality control lists
 
     :return: tuple, 1. DrsFitsFile, the output blaze fits file class
              2. DrsFitsFile, the output flat fits file class
     """
     # --------------------------------------------------------------
-    # Store Blaze in file
+    # Build input file list (raw or combined)
     # --------------------------------------------------------------
-    # get a new copy of the blaze file
-    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(params=params,
-                                                     fiber=fiber)
-    # construct the filename from file instance
-    blazefile.construct_filename(infile=infile)
-    # define header keys for output file
-    # copy keys from input file
-    blazefile.copy_original_keys(infile)
-    # add core values (that should be in all headers)
-    blazefile.add_core_hkeys(params)
-    # add fiber
-    blazefile.add_hkey('KW_FIBER', value=fiber)
-    # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
     else:
         hfiles = [infile.basename]
-    blazefile.add_hkey_1d('KW_INFILE1', values=hfiles,
-                          dim1name='file')
-    # set in files
+    # --------------------------------------------------------------
+    # Store Blaze in file
+    # --------------------------------------------------------------
+    # get a new copy of the blaze file output definition
+    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(params=params,
+                                                     fiber=fiber)
+    # construct the output filename from the raw input file
+    blazefile.construct_filename(infile=infile)
+    # copy all calibration provenance from the flat e2ds file; this
+    # includes shape, loco, wave and instrument header keys already
+    # written during the extraction step
+    blazefile.copy_hdict(source_file)
+    # refresh core APERO header keys
+    blazefile.add_core_hkeys(params)
+    # record fiber
+    blazefile.add_hkey('KW_FIBER', value=fiber)
+    # record input files
+    blazefile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     blazefile.infiles = list(hfiles)
     # add qc parameters
     blazefile.add_qckeys(qc_params)
-    # add the calibration files use
-    blazefile = gen_calib.add_calibs_to_header(blazefile, shapeprops)
-    # --------------------------------------------------------------
-    # add the other calibration files used
-    blazefile.add_hkey('KW_CDBORDP', value=lprops['ORDERPFILE'])
-    blazefile.add_hkey('KW_CDTORDP', value=lprops['ORDERPTIME'])
-    blazefile.add_hkey('KW_CDBLOCO', value=lprops['LOCOFILE'])
-    blazefile.add_hkey('KW_CDTLOCO', value=lprops['LOCOTIME'])
-    blazefile.add_hkey('KW_CDBSHAPEL', value=sprops['SHAPELFILE'])
-    blazefile.add_hkey('KW_CDTSHAPEL', value=sprops['SHAPELTIME'])
-    blazefile.add_hkey('KW_CDBSHAPEDX', value=sprops['SHAPEXFILE'])
-    blazefile.add_hkey('KW_CDTSHAPEDX', value=sprops['SHAPEXTIME'])
-    blazefile.add_hkey('KW_CDBSHAPEDY', value=sprops['SHAPEYFILE'])
-    blazefile.add_hkey('KW_CDTSHAPEDY', value=sprops['SHAPEYTIME'])
-    # --------------------------------------------------------------
-    # add SNR parameters to header
+    # add SNR per order
     blazefile.add_hkey_1d('KW_EXT_SNR', values=eprops['SNR'],
                           dim1name='order')
     # add start and end extraction order used
@@ -404,24 +660,28 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # add extraction ranges used
     blazefile.add_hkey('KW_EXT_RANGE1', value=eprops['CAL.EXT.RANGE1'])
     blazefile.add_hkey('KW_EXT_RANGE2', value=eprops['CAL.EXT.RANGE2'])
-    # add cosmic parameters used
+    # add cosmic correction parameters (not applied for model extraction)
     blazefile.add_hkey('KW_COSMIC', value=eprops['COSMIC'])
     blazefile.add_hkey('KW_COSMIC_CUT', value=eprops['COSMIC_SIGCUT'])
-    blazefile.add_hkey('KW_COSMIC_THRES',
-                       value=eprops['COSMIC_THRESHOLD'])
-    # add blaze sinc parameters used
+    blazefile.add_hkey('KW_COSMIC_THRES', value=eprops['COSMIC_THRESHOLD'])
+    # add sinc-fit legacy parameters (filled from params, not used)
     blazefile.add_hkey('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'])
     blazefile.add_hkey('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'])
-    # add saturation parameters used
+    # add physical blaze model parameters from the fit
+    blazefile.add_hkey('KW_BLAZE_TEFF', value=eprops['BLAZE_TEFF'])
+    blazefile.add_hkey('KW_BLAZE_C0', value=eprops['BLAZE_C0'])
+    blazefile.add_hkey('KW_BLAZE_C1', value=eprops['BLAZE_C1'])
+    blazefile.add_hkey('KW_BLAZE_BETA', value=eprops['BLAZE_BETA'])
+    blazefile.add_hkey('KW_BLAZE_ASYM', value=eprops['BLAZE_ASYM'])
+    blazefile.add_hkey('KW_BLAZE_FIT_RMS', value=eprops['BLAZE_FIT_RMS'])
+    # add saturation parameters
     blazefile.add_hkey('KW_SAT_QC', value=eprops['SAT_LEVEL'])
     with warnings.catch_warnings(record=True) as _:
         max_sat_level = mp.nanmax(eprops['FLUX_VAL'])
     blazefile.add_hkey('KW_SAT_LEVEL', value=max_sat_level)
-    # --------------------------------------------------------------
-    # copy data
+    # attach blaze model data
     blazefile.data = eprops['BLAZE']
-    # --------------------------------------------------------------
-    # log that we are saving rotated image
+    # log that we are saving the blaze file
     WLOG(params, '', textentry('40-015-00003', args=[blazefile.filename]))
     # define multi lists
     data_list, name_list = [], []
@@ -429,7 +689,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
         name_list += ['PARAM_TABLE']
-    # write image to file
+    # write blaze file to disk
     blazefile.write_multi(data_list=data_list, name_list=name_list,
                           block_kind=recipe.out_block_str,
                           runstring=recipe.runstring)
@@ -438,71 +698,33 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # --------------------------------------------------------------
     # Store Flat-field in file
     # --------------------------------------------------------------
-    # get a new copy of the blaze file
+    # get a new copy of the flat file output definition
     flatfile = recipe.outputs['FLAT_FILE'].newcopy(params=params,
                                                    fiber=fiber)
-    # construct the filename from file instance
+    # construct the output filename from the raw input file
     flatfile.construct_filename(infile=infile)
-    # copy header from blaze file
+    # copy header from blaze file (includes all provenance keys set above)
     flatfile.copy_hdict(blazefile)
-    # set in files
     flatfile.infiles = list(hfiles)
-    # set output key
+    # set the output type keyword for the flat file
     flatfile.add_hkey('KW_OUTPUT', value=flatfile.name)
-    # copy data
+    # attach flat field data
     flatfile.data = eprops['FLAT']
-    # --------------------------------------------------------------
-    # log that we are saving rotated image
+    # log that we are saving the flat file
     WLOG(params, '', textentry('40-015-00004', args=[flatfile.filename]))
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
-        data_list += [params.snapshot_table(recipe, drsfitsfile=blazefile)]
+        data_list += [params.snapshot_table(recipe, drsfitsfile=flatfile)]
         name_list += ['PARAM_TABLE']
-    # write image to file
+    # write flat file to disk
     flatfile.write_multi(data_list=data_list, name_list=name_list,
                          block_kind=recipe.out_block_str,
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(flatfile)
-    # --------------------------------------------------------------
-    # Store E2DSLL in file
-    # --------------------------------------------------------------
-    if params['DEBUG.OUTFILE.E2DSLL_FILE']:
-        # get a new copy of the blaze file
-        e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
-                                                           fiber=fiber)
-        # construct the filename from file instance
-        e2dsllfile.construct_filename(infile=infile)
-        # copy header from blaze file
-        e2dsllfile.copy_hdict(blazefile)
-        # set in files
-        e2dsllfile.infiles = list(hfiles)
-        # set output key
-        e2dsllfile.add_hkey('KW_OUTPUT', value=e2dsllfile.name)
-        # copy data
-        e2dsllfile.data = eprops['E2DSLL']
-        # --------------------------------------------------------------
-        # log that we are saving rotated image
-        WLOG(params, '',
-             textentry('40-015-00005', args=[e2dsllfile.filename]))
-        # define multi lists
-        data_list, name_list = [eprops['E2DSCC']], ['E2DSLL', 'E2DSCC']
-        datatype_list = ['image']
-        # snapshot of parameters
-        if params['GLOBAL.PSNAPSHOT']:
-            data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsllfile)]
-            name_list += ['PARAM_TABLE']
-            datatype_list += ['table']
-        # write image to file
-        e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
-                               datatype_list=datatype_list,
-                               block_kind=recipe.out_block_str,
-                               runstring=recipe.runstring)
-        # add to output files (for indexing)
-        recipe.add_output_file(e2dsllfile)
-    # return out file
+    # return output files
     return blazefile, flatfile
 
 
@@ -537,10 +759,23 @@ def flat_blaze_summary(recipe: DrsRecipe, params: ParamDict,
                          fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
                          value=epp['COSMIC_THRESHOLD'])
-    # add blaze sinc parameters used
+    # add sinc-fit legacy parameters (filled from params)
     recipe.plot.add_stat('KW_BLAZE_SCUT', value=eprops['BLAZE_SCUT'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_BLAZE_BPRCNTL', value=eprops['BLAZE_BPERCENTILE'],
+                         fiber=fiber)
+    # add physical blaze model parameters from the fit
+    recipe.plot.add_stat('KW_BLAZE_TEFF', value=eprops['BLAZE_TEFF'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_C0', value=eprops['BLAZE_C0'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_C1', value=eprops['BLAZE_C1'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_BETA', value=eprops['BLAZE_BETA'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_ASYM', value=eprops['BLAZE_ASYM'],
+                         fiber=fiber)
+    recipe.plot.add_stat('KW_BLAZE_FIT_RMS', value=eprops['BLAZE_FIT_RMS'],
                          fiber=fiber)
 
 

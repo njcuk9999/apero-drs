@@ -326,21 +326,29 @@ def calculate_snr(e2ds, blaze_width, r1, r2, eff_ron):
     return extract_core.calculate_snr(e2ds, blaze_width, r1, r2, eff_ron)
 
 
-def measure_p2p_scat(params: ParamDict, wavemap: np.ndarray, e2ds: np.ndarray,
-                     blaze_width: Optional[int] = None) -> Dict[str, Any]:
+def measure_p2p_scat(params: ParamDict,
+                     wavemap: Optional[np.ndarray],
+                     e2ds: np.ndarray,
+                     blaze_width: Optional[int] = None
+                     ) -> Optional[Dict[str, Any]]:
     """
     Calculate an estimate of the measured peak-to-peak scatter for a given
-    e2ds per order and in some photometric bands
+    e2ds per order and in some photometric bands.
 
-    this is measured from the point to point scatter inside the blaze window
+    Returns None when the measurement should be skipped (wavemap is None,
+    which occurs in quick-look mode where the wave solution is not loaded).
 
-    :param wavemap: np.ndarray (2D)
-    :param e2ds: np.ndarray (2D), the extracted order
-    :param blaze_width: int, the width of the blaze window, if None taken from
-                        params['FF_BLAZE_HALF_WINDOW']
+    :param params: ParamDict, APERO constants
+    :param wavemap: numpy (2D) array or None, per-order wavelength solution
+    :param e2ds: numpy (2D) array, the extracted order
+    :param blaze_width: int or None, the width of the blaze window; if None
+                        taken from params['CAL.FLAT.HALF_WINDOW']
 
-    :return: float, the measure of the pixel to pixel scatter in this order
+    :return: dict with MP2P and BP2P scatter metrics, or None when skipped
     """
+    # skip measurement when wave solution is absent (e.g. quick-look mode)
+    if wavemap is None:
+        return None
     # deal with no blaze given
     if blaze_width is None:
         blaze_width = params['CAL.FLAT.HALF_WINDOW']

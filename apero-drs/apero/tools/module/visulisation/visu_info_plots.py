@@ -744,13 +744,13 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
     # set up dataset
     ccf_props = dict()
     # push columns from table into ccf_props
-    rv_vec = ccf_props['rv_vec'] = np.asarray(table['RV'], dtype=float)
+    rv_vec = ccf_props['rv_vec'] = np.array(table['RV'], dtype=float)
     # storage for the CCF vectors
     all_ccf = np.zeros((n_orders, len(rv_vec)))
     # loop around all other files, load them and load into all_ccf
     for row in range(n_orders):
         # get the combined CCF for this file
-        ccf_row = np.asarray(table['CCF{0:02d}'.format(row)], dtype=float)
+        ccf_row = np.array(table['CCF{0:02d}'.format(row)], dtype=float)
         # normalize ccf
         with warnings.catch_warnings(record=True) as _:
             ccf_row = ccf_row / np.nanmedian(ccf_row)

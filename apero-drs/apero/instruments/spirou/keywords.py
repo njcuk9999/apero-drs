@@ -831,6 +831,30 @@ KDict.set('KW_BLAZE_BPRCNTL', key='BLAZBPTL',
 # The number of iterations used in the blaze sinc fit
 KDict.set('KW_BLAZE_NITER', key='BLAZNITR', comment='Extract: Blaze sinc no. iters used')
 
+# Lamp blackbody temperature used in the physical blaze model [K]
+KDict.set('KW_BLAZE_TEFF', key='BLAZTEFF',
+          comment='Flat: lamp temp for blaze model [K]')
+
+# Physical blaze model grating constant C0 [nm]
+KDict.set('KW_BLAZE_C0', key='BLAZC0',
+          comment='Flat: blaze model grating constant C0 [nm]')
+
+# Physical blaze model grating constant slope dC/dlambda
+KDict.set('KW_BLAZE_C1', key='BLAZC1',
+          comment='Flat: blaze model grating constant slope dC/dlambda')
+
+# Physical blaze model width parameter beta
+KDict.set('KW_BLAZE_BETA', key='BLAZBETA',
+          comment='Flat: blaze model width parameter beta')
+
+# Physical blaze model asymmetry parameter
+KDict.set('KW_BLAZE_ASYM', key='BLAZASYM',
+          comment='Flat: blaze model asymmetry parameter')
+
+# Physical blaze model fit residual RMS
+KDict.set('KW_BLAZE_FIT_RMS', key='BLAZRMS',
+          comment='Flat: blaze model fit residual RMS')
+
 # the cosmic cut criteria
 KDict.set('KW_COSMIC_CUT', key='EXTCCUT', comment='Extract: cosmic cut criteria used')
 

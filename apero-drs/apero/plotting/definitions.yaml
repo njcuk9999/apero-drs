@@ -271,6 +271,30 @@ SUM_FLAT_BLAZE_ORDER:
   figsize:
   - 16
   - 10
+FLAT_RESPONSE_ORDER1:
+  kind: debug
+  func: plot_functions.plot_flat_response_order
+  dpi: 100
+  description: Per-order flat-field response profile (loop over all orders)
+  figsize:
+  - 6.4
+  - 4.8
+FLAT_RESPONSE_ORDER2:
+  kind: debug
+  func: plot_functions.plot_flat_response_order
+  dpi: 100
+  description: Flat-field response profile for a single order with error envelope
+  figsize:
+  - 6.4
+  - 4.8
+SUM_FLAT_RESPONSE_ORDER:
+  kind: summary
+  func: plot_functions.plot_flat_response_order
+  dpi: 150
+  description: Flat-field response profile (single order, with error envelope)
+  figsize:
+  - 16
+  - 10
 SUM_FLAT_EDGE_ORDERS:
   kind: summary
   func: plot_functions.plot_flat_edge_orders

@@ -1009,6 +1009,39 @@ KDict.add('KW_BLAZE_NITER', key='NULL', dtype=int, source=__NAME__,
           description=('The number of iterations used in the '
                        'blaze sinc fit'))
 
+# Flat lamp blackbody temperature used in the physical blaze model [K]
+KDict.add('KW_BLAZE_TEFF', key='NULL', dtype=float, source=__NAME__,
+          description=('Lamp blackbody temperature used in the '
+                       'physical blaze model fit [K]'))
+
+# Physical blaze model: grating constant C at the reference wavelength [nm]
+KDict.add('KW_BLAZE_C0', key='NULL', dtype=float, source=__NAME__,
+          description=('Physical blaze model grating constant C '
+                       'at the reference wavelength: C(lambda) = '
+                       'C0 + C1*(lambda - lref) [nm]'))
+
+# Physical blaze model: grating constant slope dC/dlambda
+KDict.add('KW_BLAZE_C1', key='NULL', dtype=float, source=__NAME__,
+          description=('Physical blaze model grating constant '
+                       'slope dC/dlambda'))
+
+# Physical blaze model: blaze width parameter beta
+KDict.add('KW_BLAZE_BETA', key='NULL', dtype=float, source=__NAME__,
+          description=('Physical blaze model width parameter beta; '
+                       '1 means the first sinc zeros are exactly '
+                       'one free spectral range from the peak'))
+
+# Physical blaze model: sinc^2 envelope asymmetry parameter
+KDict.add('KW_BLAZE_ASYM', key='NULL', dtype=float, source=__NAME__,
+          description=('Physical blaze model sinc^2 envelope '
+                       'asymmetry: arg = beta*m*(e + asym*e^2)'))
+
+# Physical blaze model: fit residual RMS over the fitted wavelength range
+KDict.add('KW_BLAZE_FIT_RMS', key='NULL', dtype=float, source=__NAME__,
+          description=('Physical blaze model fit residual RMS '
+                       '(obs/model - 1) over the fitted wavelength '
+                       'range'))
+
 # the saturation QC limit
 KDict.add('KW_SAT_QC', key='NULL', dtype=int, source=__NAME__,
           description='the saturation QC limit')
