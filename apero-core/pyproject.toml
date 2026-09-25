@@ -71,3 +71,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "perf: performance benchmarks; skipped by default (select with -m perf)",
+]

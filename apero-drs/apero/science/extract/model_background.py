@@ -396,6 +396,9 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     props['SCIENCE_FIBER_MODEL'] = fiber_model
     props['SCIENCE_ZERO_MODEL'] = zero_model
     props['SCIENCE_XMAP'] = xmap
+    # keep the extracted-spectrum grouping so downstream products, such as
+    # flat-response files, can mirror the same A/B/AB/C fiber layout
+    props['SPECTRAL_GROUPS'] = spectral_groups
     # expose the science-frame profiles so the flat-response step can reuse
     # them without re-running the shape transform
     props['PROFILES_NOSHAPE'] = profiles_noshape

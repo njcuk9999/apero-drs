@@ -359,13 +359,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 wfout = extract.write_extraction_files(*wfargs)
                 e2dsfile, e2dsfffile = wfout
             # ----------------------------------------------------------------
-            # Write flat-response file (flat extractions only)
+            # Write flat-response file and register in calibDB
+            # (flat extractions only)
             # ----------------------------------------------------------------
             if extract_type == 'flat':
                 resp_data = flat_response.get(fiber)
                 if resp_data is not None:
-                    flat_blaze.write_flat_response(
+                    resp_file = flat_blaze.write_flat_response(
                         params, recipe, infile, resp_data, fiber)
+                    # add to calibDB so get_flat_response can retrieve it
+                    if params['INPUTS']['DATABASE']:
+                        calibdbm.add_calib_file(resp_file)
             # ----------------------------------------------------------------
             # FP reference lines (ref_fplines returns None for quicklook/flat)
             # ----------------------------------------------------------------

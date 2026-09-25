@@ -64,3 +64,54 @@ def test_flux_edge_trace_ignores_requested_orders() -> None:
                                         flux_edge_limit=0.1)
     assert np.isnan(flux_edge[0])
     assert 0 not in failed_orders
+
+
+def test_compute_flat_response_uses_grouped_fibers() -> None:
+    """Grouped traces should yield A, B, AB, and C responses."""
+    ncols = 60
+    order_map = np.zeros((8, ncols), dtype=int)
+    order_map[1, :] = 1
+    order_map[2, :] = 2
+    order_map[3, :] = 3
+    order_map[4, :] = 4
+    order_map[6, :] = 5
+    order_map[7, :] = 6
+    xmap = np.tile(np.arange(ncols, dtype=float), (8, 1))
+    profile = np.zeros((8, ncols), dtype=float)
+    profile[1, :] = 10.0
+    profile[2, :] = 20.0
+    profile[3, :] = 11.0
+    profile[4, :] = 21.0
+    profile[6, :] = 7.0
+    profile[7, :] = 8.0
+    profiles_noshape = dict(AB=profile, C=profile)
+    order_ranges = dict(AB=(1, 4), C=(5, 6))
+    spectral_groups = [
+        ('A', [[1], [3]]),
+        ('B', [[2], [4]]),
+        ('AB', [[1, 2], [3, 4]]),
+        ('C', [[5], [6]])]
+
+    frout = flat_blaze_core.compute_flat_response(
+        order_map, xmap, profiles_noshape, order_ranges, ron=1.0,
+        oversampling=2, max_half_cell=4.0, fwhm_pix=2.0,
+        spectral_groups=spectral_groups)
+    flat_response, flat_response_err = frout
+
+    assert list(flat_response.keys()) == ['A', 'B', 'AB', 'C']
+    assert flat_response['A'].shape == (2, ncols)
+    assert flat_response['B'].shape == (2, ncols)
+    assert flat_response['AB'].shape == (2, ncols)
+    assert flat_response['C'].shape == (2, ncols)
+    assert flat_response_err['AB'].shape == (2, ncols)
+
+    med_a = np.nanmedian(flat_response['A'], axis=1)
+    med_b = np.nanmedian(flat_response['B'], axis=1)
+    med_ab = np.nanmedian(flat_response['AB'], axis=1)
+    med_c = np.nanmedian(flat_response['C'], axis=1)
+
+    assert np.allclose(med_a, [10.0, 11.0], atol=1e-5)
+    assert np.allclose(med_b, [20.0, 21.0], atol=1e-5)
+    assert np.allclose(med_ab, med_a + med_b, atol=1e-5)
+    assert np.allclose(med_c, [7.0, 8.0], atol=1e-5)
+

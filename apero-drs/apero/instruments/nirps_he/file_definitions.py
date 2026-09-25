@@ -1464,7 +1464,8 @@ out_ext_fplines = drs_finput('EXT_FPLIST', hkeys=dict(KW_OUTPUT='EXT_FPLIST'),
                              description='FP lines identified from extracted'
                                          ' FP fiber')
 
-# per-order flat-field response profile (from flat extraction)
+# per-order flat-field response profile (from flat extraction),
+# stored in the calibration database under key FLAT_RES
 out_flat_response = drs_finput('FLAT_RESPONSE',
                                hkeys=dict(KW_OUTPUT='FLAT_RESPONSE'),
                                fibers=valid_efibers,
@@ -1472,7 +1473,8 @@ out_flat_response = drs_finput('FLAT_RESPONSE',
                                intype=[out_ext_e2ds, out_ext_e2dsff,
                                        out_ql_e2ds, out_ql_e2dsff],
                                suffix='_flat_response',
-                               outclass=general_ofile,
+                               dbname='calibration', dbkey='FLAT_RES',
+                               outclass=calib_ofile,
                                description='Per-order flat-field response '
                                            'profile from the convolve_irregular'
                                            ' resampling algorithm')
@@ -1480,6 +1482,7 @@ out_flat_response = drs_finput('FLAT_RESPONSE',
 # add extract outputs to output fileset
 red_file.addset(out_ext_e2dsff)
 red_file.addset(out_flat_response)
+calib_file.addset(out_flat_response)
 red_file.addset(out_ext_loco)
 red_file.addset(out_ext_s1d_w)
 red_file.addset(out_ext_s1d_v)

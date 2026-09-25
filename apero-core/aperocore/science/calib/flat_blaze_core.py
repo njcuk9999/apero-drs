@@ -387,6 +387,47 @@ def _diffraction_orders(wave: np.ndarray) -> np.ndarray:
     return trial[int(np.argmin(scatter))] + step * index
 
 
+def _flat_response_groups(
+    order_ranges: Dict[str, Tuple[int, int]],
+    spectral_groups: Optional[List[Tuple[str, List[List[int]]]]] = None,
+    ) -> List[Tuple[str, List[List[int]]]]:
+    """
+    Return the trace groupings that define each flat-response spectrum.
+
+    :param order_ranges: dict, localisation-fiber name to trace-label range
+    :param spectral_groups: list or None, extracted-spectrum groupings as
+                            ``[(name, [[trace...], ...]), ...]``
+
+    :return: list, output fiber/group name and grouped trace labels
+    """
+    if spectral_groups is not None:
+        return spectral_groups
+    groups = []
+    for fiber, (lo_f, hi_f) in order_ranges.items():
+        trace_groups = [[trace] for trace in range(lo_f, hi_f + 1)]
+        groups.append((fiber, trace_groups))
+    return groups
+
+
+def _trace_owner(trace: int,
+                 order_ranges: Dict[str, Tuple[int, int]]) -> str:
+    """
+    Return the localisation fiber that owns a trace label.
+
+    :param trace: int, trace label from the localisation maps
+    :param order_ranges: dict, localisation-fiber name to trace-label range
+
+    :return: str, localisation fiber name that owns this trace
+
+    :raises ValueError: if the trace label is outside all fiber ranges
+    """
+    for fiber, (lo_f, hi_f) in order_ranges.items():
+        if lo_f <= trace <= hi_f:
+            return fiber
+    emsg = 'trace label {0} is outside all fiber ranges'
+    raise ValueError(emsg.format(trace))
+
+
 def compute_flat_response(
     order_map: np.ndarray,
     xmap: np.ndarray,
@@ -395,7 +436,8 @@ def compute_flat_response(
     ron: float,
     oversampling: int,
     max_half_cell: float,
-    fwhm_pix: float
+    fwhm_pix: float,
+    spectral_groups: Optional[List[Tuple[str, List[List[int]]]]] = None
     ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
     """
     Compute per-order flat-field response profiles using the
@@ -415,6 +457,11 @@ def compute_flat_response(
     :param max_half_cell: float, Voronoi cell half-width cap in oversampled
                           pixels (passed directly to convolve_irregular)
     :param fwhm_pix: float, Gaussian kernel FWHM in oversampled pixels
+    :param spectral_groups: list or None, extracted-spectrum groupings as
+                            ``[(fiber, [[trace...], ...]), ...]``. When
+                            provided, flat responses are built for these
+                            grouped outputs rather than for localisation
+                            fibers only.
 
     :return: tuple of two dicts (flat_response, flat_response_err), each
              mapping fiber name → 2D float array of shape (norders, ncols)
@@ -426,23 +473,32 @@ def compute_flat_response(
     x_det_cols = np.arange(ncols, dtype=float)
     flat_response: Dict[str, np.ndarray] = dict()
     flat_response_err: Dict[str, np.ndarray] = dict()
-    for fiber, (lo_f, hi_f) in order_ranges.items():
-        if fiber not in profiles_noshape:
+    for fiber, trace_groups in _flat_response_groups(order_ranges,
+                                                     spectral_groups):
+        if len(trace_groups) == 0:
             continue
-        norders_f = hi_f - lo_f + 1
+        owner_fiber = _trace_owner(trace_groups[0][0], order_ranges)
+        profile_key = owner_fiber
+        if profile_key not in profiles_noshape:
+            if fiber not in profiles_noshape:
+                continue
+            profile_key = fiber
+        norders_f = len(trace_groups)
         # pre-allocate output arrays with NaN (unfilled positions stay NaN)
-        resp = np.full((norders_f, ncols), np.nan)
-        resp_err = np.full((norders_f, ncols), np.nan)
-        for i_ord in range(norders_f):
-            # locate pixels belonging to this trace label
-            trace = lo_f + i_ord
-            in_order = order_map == trace
+        resp = np.full((norders_f, ncols * oversampling), np.nan)
+        resp_err = np.full((norders_f, ncols * oversampling), np.nan)
+        for order_num, traces in enumerate(trace_groups):
+            # locate pixels belonging to this grouped extracted order
+            if len(traces) == 1:
+                in_order = order_map == traces[0]
+            else:
+                in_order = np.isin(order_map, traces)
             if not in_order.any():
                 continue
             # detector row indices and per-pixel x coordinates
             row_idx, _ = np.where(in_order)
             x_det = xmap[in_order]
-            flux = profiles_noshape[fiber][in_order]
+            flux = profiles_noshape[profile_key][in_order]
             # per-pixel noise: photon noise + readout noise in quadrature
             yerr = np.sqrt(np.abs(flux) + ron ** 2)
             # row-by-row convolution; normalize=False gives the row sum
@@ -455,22 +511,10 @@ def compute_flat_response(
                 min_coverage=0.5)
             result = interpolate.convolve_irregular(
                 x_det * oversampling, flux, yerr, x2, **conv_kwargs)
-            y_vals = result['y']
-            y_err_vals = result['err']
-            # resample oversampled result to integer detector columns,
-            # using only finite values to avoid NaN propagation
-            ok_y = np.isfinite(y_vals)
-            ok_e = np.isfinite(y_err_vals)
-            if ok_y.sum() >= 2:
-                resp[i_ord] = np.interp(
-                    x_det_cols,
-                    (x2 / oversampling)[ok_y],
-                    y_vals[ok_y])
-            if ok_e.sum() >= 2:
-                resp_err[i_ord] = np.interp(
-                    x_det_cols,
-                    (x2 / oversampling)[ok_e],
-                    y_err_vals[ok_e])
+            # push into responce array
+            resp[order_num] = result['y']
+            resp_err[order_num] = result['err']
+        # puhs response into dictionary for return (per fiber)
         flat_response[fiber] = resp
         flat_response_err[fiber] = resp_err
     return flat_response, flat_response_err

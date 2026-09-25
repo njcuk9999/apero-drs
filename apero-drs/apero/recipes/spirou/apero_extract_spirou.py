@@ -262,6 +262,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                       eprops['E2DS']]
             fbkwargs = dict(database=calibdbm)
             fbprops = flat_blaze.get_blaze(*fbargs, **fbkwargs)
+
+            # ----------------------------------------------------------------
+            # Correct the e2ds with the blaze (to match original apero format)
+            # ----------------------------------------------------------------
+            eprops = flat_blaze.e2ds_correct(params, eprops, fbprops)
+
             # ----------------------------------------------------------------
             # Leak correction: remove reference-fiber contamination
             # ----------------------------------------------------------------
@@ -359,13 +365,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 wfout = extract.write_extraction_files(*wfargs)
                 e2dsfile, e2dsfffile = wfout
             # ----------------------------------------------------------------
-            # Write flat-response file (flat extractions only)
+            # Write flat-response file and register in calibDB
+            # (flat extractions only)
             # ----------------------------------------------------------------
             if extract_type == 'flat':
                 resp_data = flat_response.get(fiber)
                 if resp_data is not None:
-                    flat_blaze.write_flat_response(
+                    resp_file = flat_blaze.write_flat_response(
                         params, recipe, e2dsfile, resp_data, fiber)
+                    # add to calibDB so get_flat_response can retrieve it
+                    if params['INPUTS']['DATABASE']:
+                        calibdbm.add_calib_file(resp_file)
             # ----------------------------------------------------------------
             # FP reference lines (ref_fplines returns None for quicklook/flat)
             # ----------------------------------------------------------------

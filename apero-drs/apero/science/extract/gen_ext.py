@@ -114,8 +114,8 @@ def get_order_profiles(params: ParamDict, recipe: DrsRecipe,
     # load the LOC_LOCO provenance recorded in the SHAPEL header so downstream
     # header keys reflect where the profiles originally came from
     shapel_hdr = drs_fits.read_header(params, shapelfile)
-    locofile = shapel_hdr.get_hkey(params, 'KW_CDBLOCO', dtype=str)
-    locotime = shapel_hdr.get_hkey(params, 'KW_CDTLOCO', dtype=float)
+    locofile = shapel_hdr.get('KW_CDBLOCO', 'None')
+    locotime = shapel_hdr.get('KW_CDTLOCO', np.nan)
     # straight profiles and detector-frame profiles, keyed by fiber name
     orderprofiles = dict()
     profiles_noshape = dict()

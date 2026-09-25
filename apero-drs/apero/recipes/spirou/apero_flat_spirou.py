@@ -154,9 +154,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get the flat output e2ds filename and extract/read file
         # ------------------------------------------------------------------
+        # --forceext=True forces re-extraction even if output exists,
+        # taking precedence over the CAL.FLAT.ALWAYS_EXTRACT constant
+        force_ext = params['INPUTS'].get('FORCEEXT',
+                                         params['CAL.FLAT.ALWAYS_EXTRACT'])
         eargs = [params, recipe, EXTRACT_NAME, infile, log1]
         # returns {'e2ds': {fiber: DrsFitsFile}, 'flat_response': {fiber: ...}}
-        flat_outputs = extractother.extract_flat_files(*eargs)
+        flat_outputs = extractother.extract_flat_files(*eargs,
+                                                       always_extract=force_ext)
         # per-fiber extracted spectra
         flat_files = flat_outputs['e2ds']
         # per-fiber flat-response profiles (used by the blaze step below)

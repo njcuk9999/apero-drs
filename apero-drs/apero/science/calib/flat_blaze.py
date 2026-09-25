@@ -153,7 +153,8 @@ def get_flat(params: ParamDict, recipe: DrsRecipe,
 
 def get_blaze(params: ParamDict, recipe: DrsRecipe,
               header: Union[drs_file.Header, None],
-              fiber: str, e2ds: np.ndarray,
+              fiber: str,
+              e2ds: Optional[np.ndarray] = None,
               filename: Optional[str] = None,
               database: Optional[drs_database.CalibrationDatabase] = None
               ) -> ParamDict:
@@ -170,9 +171,9 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
                    file (required to get closest in time) can be None if
                    filename is given
     :param fiber: str, the fiber name
-    :param e2ds: numpy (2D) array, the extracted spectrum for this fiber;
-                 used to create a unity blaze with the correct shape when
-                 extract_type == 'flat'
+    :param e2ds: numpy (2D) array or None, the extracted spectrum for this
+                 fiber; required when extract_type == 'flat' to build a
+                 unity blaze with the correct shape; not needed otherwise
     :param filename: str or None, the filename of the blaze calibration to
                      load, overrides getting it from calibration database;
                      header not required for this
@@ -190,6 +191,10 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
     # For flat extractions the blaze calibration does not yet exist;
     # use a unity blaze so downstream steps receive a well-defined array.
     if extract_type == 'flat':
+        # e2ds must be supplied for flat runs so we know the output shape
+        if e2ds is None:
+            WLOG(params, 'error',
+                 'get_blaze: e2ds must be provided for flat extractions')
         fbprops['BLAZE'] = np.ones_like(e2ds)
         fbprops['BLAZEFILE'] = 'None'
         fbprops['BLAZETIME'] = np.nan
@@ -225,6 +230,29 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
     return fbprops
 
 
+def e2ds_correct(params, eprops: ParamDict, fbprops: ParamDict) -> ParamDict:
+    """
+    Correct the e2ds with the blaze (to match original apero format)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param eprops: ParamDict, the extracted properties for this fiber
+    :param fbprops: ParamDict, the flat/blaze properties for this fiber
+
+    :return: ParamDict, the updated extracted properties for this fiber
+    """
+    func_name = __NAME__ + '.e2ds_correct()'
+    # get the blaze and e2ds from the properties dicts
+    blaze = fbprops['BLAZE']
+    e2ds = eprops['E2DS']
+    # correct the e2ds by dividing by the blaze
+    with np.errstate(invalid='ignore', divide='ignore'):
+        e2ds_corr = e2ds / blaze
+    # update the extracted properties dict with the corrected e2ds
+    eprops['E2DS'] = e2ds_corr
+    eprops.set_sources(['E2DS'], func_name)
+    return eprops
+
+
 def compute_flat_response(
     params: ParamDict,
     recipe: DrsRecipe,
@@ -243,7 +271,8 @@ def compute_flat_response(
     :param recipe: DrsRecipe, the calling recipe (used for plot calls)
     :param model_props: ParamDict, output of ``run_all_fiber_model``; must
                         contain ``PROFILES_NOSHAPE``, ``SCIENCE_XMAP`` and
-                        ``RON``
+                        ``RON`` and may contain ``SPECTRAL_GROUPS`` to mirror
+                        the extracted-fiber layout
     :param order_map: numpy (2D) array, trace-label map (pixel → order index)
     :param order_ranges: dict, fiber name → (lo_label, hi_label) trace range
 
@@ -260,11 +289,13 @@ def compute_flat_response(
     xmap = np.array(model_props['SCIENCE_XMAP'], dtype=float)
     profiles_noshape = model_props['PROFILES_NOSHAPE']
     ron = float(model_props['RON'])
+    spectral_groups = model_props.get('SPECTRAL_GROUPS', None)
     # single order used for the non-loop debug/summary plots
     sorder = params['CAL.EXT.PLOT_ORDER']
     # delegate the numerical heavy lifting to the core module
     core_args = [order_map, xmap, profiles_noshape, order_ranges,
-                 ron, int(os), float(max_hc), float(fwhm)]
+                 ron, int(os), float(max_hc), float(fwhm),
+                 spectral_groups]
     outs = flat_blaze_core.compute_flat_response(*core_args)
     flat_response, flat_response_err = outs
     # emit debug and summary plots for each fiber
@@ -336,25 +367,26 @@ def fit_blaze_model(params: ParamDict, recipe: DrsRecipe,
 
 
 def make_blaze(params: ParamDict, recipe: DrsRecipe,
-               flat_response_files: Dict[str, Optional[DrsFitsFile]],
+               flat_response_files: Dict[str, Optional[np.ndarray]],
                e2ds_files: Dict[str, Optional[DrsFitsFile]],
                wave_maps: Dict[str, np.ndarray],
                fiber_types: List[str]
                ) -> Dict[str, ParamDict]:
     """
-    Compute per-fiber blaze models and flat fields from flat-response files.
+    Compute per-fiber blaze models and flat fields from flat-response arrays.
 
-    For each fiber the flat-response profile (from the flat extraction) is
-    divided by the fitted physical blaze model to give the flat-field.  All
-    relevant eprops keys required by ``flat_blaze_write``, ``flat_blaze_qc``
-    and ``flat_blaze_summary`` are populated from the fit results and from
-    the e2ds file header (which carries full calibration provenance).
+    For each fiber the flat-response profile (loaded from the calibration
+    database by ``get_flat_response``) is divided by the fitted physical
+    blaze model to give the flat-field.  All relevant eprops keys required
+    by ``flat_blaze_write``, ``flat_blaze_qc`` and ``flat_blaze_summary``
+    are populated from the fit results and from the e2ds file header (which
+    carries full calibration provenance).
 
     :param params: ParamDict, APERO constants
     :param recipe: DrsRecipe, calling recipe
-    :param flat_response_files: dict mapping fiber name to DrsFitsFile
+    :param flat_response_files: dict mapping fiber name to numpy (2D) array
                                 containing the flat-response profile, or
-                                None if the file is not available
+                                None if the calibration is not available
     :param e2ds_files: dict mapping fiber name to DrsFitsFile containing
                        the flat e2ds (used to read calibration provenance
                        from its header)
@@ -373,39 +405,32 @@ def make_blaze(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, '', 'Fitting physical blaze model for fibers: '
                      '{0}'.format(', '.join(fiber_types)))
     for fiber in fiber_types:
-        resp_file = flat_response_files.get(fiber)
+        resp_data = flat_response_files.get(fiber)
         e2ds_file = e2ds_files.get(fiber)
-        if resp_file is None or e2ds_file is None:
+        if resp_data is None or e2ds_file is None:
             WLOG(params, 'warning',
                  'make_blaze: skipping fiber {0} '
                  '(missing flat-response or e2ds file)'.format(fiber))
             continue
         wave_map = wave_maps[fiber]
-        flat_response = np.array(resp_file.data, dtype=float)
+        flat_response = np.array(resp_data, dtype=float)
         norders, ncols = flat_response.shape
         # fit physical blaze model
         fbout = fit_blaze_model(params, recipe, flat_response,
                                 wave_map, fiber)
         blaze_model, fit_params = fbout
-        # flat field: flat_response / blaze_model
-        with np.errstate(invalid='ignore', divide='ignore'):
-            flat = flat_response / blaze_model
+        # flat field: is just the extracted flat
+        flat = np.array(e2ds_file.data)
         # per-order SNR: median signal / noise from flat_response
         ron = float(e2ds_file.get_hkey('KW_EFF_RON', dtype=float,
                                        required=False) or 0.0)
         with np.errstate(invalid='ignore', divide='ignore'):
-            snr = np.nanmedian(
-                flat_response / np.sqrt(
-                    np.abs(flat_response) + ron ** 2),
-                axis=1)
-        # per-order RMS of the fit residuals (obs/model - 1)
-        resid = flat_response / blaze_model - 1.0
-        rms = np.array([float(np.nanstd(resid[i]))
-                        for i in range(norders)])
+            snr = np.nanmedian(flat / np.sqrt(np.abs(flat) + ron ** 2), axis=1)
+        rms = np.array([float(np.nanstd(flat[i])) for i in range(norders)])
         # build eprops
         eprops = ParamDict()
         # spectra
-        eprops['E2DS'] = flat_response
+        eprops['E2DS'] = flat
         eprops['E2DSFF'] = flat
         eprops['BLAZE'] = blaze_model
         eprops['FLAT'] = flat
@@ -454,14 +479,72 @@ def make_blaze(params: ParamDict, recipe: DrsRecipe,
 # =============================================================================
 # Define write and qc functions
 # =============================================================================
+def get_flat_response(params: ParamDict, recipe: DrsRecipe,
+                      header: Union[drs_file.Header, None],
+                      fiber: str, filename: Optional[str] = None,
+                      database: Optional[drs_database.CalibrationDatabase] = None
+                      ) -> ParamDict:
+    """
+    Get the flat-response calibration file from the calibration database.
+
+    The flat-response profile is written by ``apero_extract`` during flat
+    extraction and registered in the calibration database under key
+    ``FLAT_RES``.  This function loads the closest-in-time file for
+    ``fiber``.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the calling recipe
+    :param header: fits Header or None, used to find the closest-in-time
+                   calibration; not required when ``filename`` is given
+    :param fiber: str, the fiber name
+    :param filename: str or None, override the calibration database lookup
+                     and load this file directly
+    :param database: CalibrationDatabase or None, if passed does not reload
+                     the calibration database
+
+    :return: ParamDict with keys:
+             ``FLAT_RESPONSE``   – numpy (2D) array, the response profile
+             ``FLAT_RESP_FILE``  – str, path to the calibration file used
+             ``FLAT_RESP_TIME``  – float, MJD-MID of the calibration file
+    """
+    func_name = __NAME__ + '.get_flat_response()'
+    # get file definition and its calibration database key
+    out_flat_resp = drs_file.get_file_definition(
+        params, 'FLAT_RESPONSE', block_kind='red')
+    key = out_flat_resp.get_dbkey()
+    # load database if not already provided
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # load calibration file closest in time to the header observation
+    cfile = gen_calib.CalibFile()
+    cfile.load_calib_file(params, recipe.shortname,
+                          key, header, filename=filename,
+                          userinputkey='FLAT_RESP_FILE',
+                          database=calibdbm, fiber=fiber)
+    WLOG(params, '', 'Loading flat-response calibration for fiber '
+                     '{0}: {1}'.format(fiber, cfile.filename))
+    frprops = ParamDict()
+    frprops['FLAT_RESPONSE'] = cfile.data
+    frprops['FLAT_RESP_FILE'] = cfile.filename
+    frprops['FLAT_RESP_TIME'] = cfile.mjdmid
+    frprops.set_sources(
+        ['FLAT_RESPONSE', 'FLAT_RESP_FILE', 'FLAT_RESP_TIME'], func_name)
+    return frprops
+
+
 def write_flat_response(params: ParamDict, recipe: DrsRecipe,
                         infile: DrsFitsFile, flat_response_data: np.ndarray,
-                        fiber: str) -> None:
+                        fiber: str) -> DrsFitsFile:
     """
     Write a per-fiber flat-response array to a FLAT_RESPONSE_FILE on disk.
 
     Header keys are copied from ``infile`` and the fiber keyword is added.
     The output file is registered with the recipe for downstream indexing.
+    The caller is responsible for adding the returned file to the
+    calibration database.
 
     :param params: ParamDict, APERO constants
     :param recipe: DrsRecipe, the calling recipe (used to look up the output
@@ -472,7 +555,8 @@ def write_flat_response(params: ParamDict, recipe: DrsRecipe,
                                of shape (norders, ncols)
     :param fiber: str, the fiber name for this flat-response slice
 
-    :return: None
+    :return: DrsFitsFile, the written flat-response file (add to calibDB
+             to make it discoverable by ``get_flat_response``)
     """
     # get a new copy of the flat-response file type from the recipe outputs
     resp_file = recipe.outputs['FLAT_RESPONSE_FILE'].newcopy(
@@ -493,6 +577,7 @@ def write_flat_response(params: ParamDict, recipe: DrsRecipe,
     resp_file.write_file(block_kind=recipe.out_block_str)
     # register with the recipe for indexing and downstream use
     recipe.add_output_file(resp_file)
+    return resp_file
 
 
 def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
@@ -597,6 +682,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe,
     # copy all calibration provenance from the flat e2ds file; this
     # includes shape, loco, wave and instrument header keys already
     # written during the extraction step
+    blazefile.copy_header(source_file)
     blazefile.copy_hdict(source_file)
     # refresh core APERO header keys
     blazefile.add_core_hkeys(params)
@@ -660,6 +746,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe,
     # construct the output filename from the raw input file
     flatfile.construct_filename(infile=infile)
     # copy header from blaze file (includes all provenance keys set above)
+    flatfile.copy_header(blazefile)
     flatfile.copy_hdict(blazefile)
     flatfile.infiles = list(hfiles)
     # set the output type keyword for the flat file

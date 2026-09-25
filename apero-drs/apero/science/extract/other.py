@@ -24,6 +24,7 @@ from apero.utils import drs_utils
 from apero.io import drs_image
 from apero.base import base as apero_base
 from apero.core import drs_database
+from apero.science.calib import flat_blaze
 
 # =============================================================================
 # Define variables
@@ -171,9 +172,16 @@ def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
                                  flat_always_extract, extrecipe,
                                  kind='flat', func_name=func_name,
                                  logger=logger, extract_type='flat')
-    # Also read back the per-fiber FLAT_RESPONSE_FILE written during extraction.
-    flat_response_outputs = _read_flat_response_files(
-        params, recipe, flatfile, flat_outputs)
+    # Load the flat-response profile for each fiber from the calibration
+    # database.  apero_extract adds FLAT_RESPONSE_FILE to the calibDB (key
+    # FLAT_RES) during the sub-recipe run above, so a fresh CalibDB lookup
+    # (database=None inside get_flat_response) sees the newly written files.
+    flat_response_outputs = dict()
+    for fiber, e2ds_file in flat_outputs.items():
+        # use the extracted flat header for the closest-in-time lookup
+        hdr = e2ds_file.get_header()
+        frprops = flat_blaze.get_flat_response(params, recipe, hdr, fiber)
+        flat_response_outputs[fiber] = frprops['FLAT_RESPONSE']
     WLOG(params, '', 'Flat extraction complete')
     # Return both e2ds and flat-response products in a combined dict.
     return {'e2ds': flat_outputs, 'flat_response': flat_response_outputs}
@@ -249,63 +257,6 @@ def extract_wave_files(params, recipe, extname, hcfile,
     # ----------------------------------------------------------------------
     # return hc and fp outputs
     return hc_outputs, fp_outputs
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def _read_flat_response_files(params: ParamDict,
-                              recipe: DrsRecipe,
-                              flatfile: DrsFitsFile,
-                              e2ds_outputs: dict) -> dict:
-    """
-    Read back the per-fiber FLAT_RESPONSE_FILE written during flat extraction.
-
-    The files are located using the same filename construction as the e2ds
-    outputs so that they align with the already-read e2ds files.
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, the calling recipe (used to look up the
-                   FLAT_RESPONSE_FILE output file definition)
-    :param flatfile: DrsFitsFile, the original input flat fits file
-    :param e2ds_outputs: dict, per-fiber e2ds DrsFitsFile already read back
-
-    :return: dict mapping fiber name (str) to DrsFitsFile or None when the
-             flat-response file does not exist on disk
-    """
-    func_name = __NAME__ + '._read_flat_response_files()'
-    # use the recipe's output definition to get the correct file type
-    resp_inst = recipe.outputs['FLAT_RESPONSE_FILE']
-    # determine the observation sub-directory from the input file path
-    inpath = params['INPATH']
-    outpath = params['OUTPATH']
-    if outpath in flatfile.filename:
-        obs_dir = (os.path.dirname(flatfile.filename)
-                   .split(outpath)[1])
-    elif inpath in flatfile.filename:
-        obs_dir = (os.path.dirname(flatfile.filename)
-                   .split(inpath)[1])
-    else:
-        obs_dir = ''
-    obs_dir = obs_dir.strip(os.sep)
-    flat_response_files = dict()
-    for fiber in e2ds_outputs:
-        # construct the expected filename for this fiber
-        tmp_params = params.copy()
-        tmp_params['OBS_DIR'] = obs_dir
-        resp_file = resp_inst.newcopy(params=tmp_params, fiber=fiber)
-        resp_file.construct_filename(infile=flatfile)
-        if os.path.exists(resp_file.filename):
-            # read the flat-response data from disk
-            resp_file.read_file()
-            flat_response_files[fiber] = resp_file
-        else:
-            # file not present (e.g. extraction was skipped)
-            WLOG(params, 'warning',
-                 'FLAT_RESPONSE_FILE not found for fiber {0}: {1}'.format(
-                     fiber, resp_file.filename))
-            flat_response_files[fiber] = None
-    return flat_response_files
 
 
 def extract_files(params: ParamDict, recipe: DrsRecipe,

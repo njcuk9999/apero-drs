@@ -584,6 +584,11 @@ apero_flat.set_kwarg(**shapexfile)
 apero_flat.set_kwarg(**shapeyfile)
 apero_flat.set_kwarg(**shapelfile)
 apero_flat.set_kwarg(**no_in_qc)
+apero_flat.set_kwarg(name='--forceext', dtype='bool',
+                     default_ref='CAL.FLAT.ALWAYS_EXTRACT',
+                     helpstr='If True, always re-extract the flat even if the'
+                             ' output already exists (overrides '
+                             'CAL.FLAT.ALWAYS_EXTRACT)')
 apero_flat.set_min_nfiles('files', 5)
 # define the number of files we should use at maximum
 apero_flat.limit = 50
@@ -802,6 +807,7 @@ apero_extract.set_kwarg(**wavefile)
 apero_extract.set_kwarg(name='--force_ref_wave', dtype='switch',
                         helpstr='Force using the reference wave solution')
 apero_extract.set_kwarg(**no_in_qc)
+apero_extract.set_kwarg(**add_db)
 apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation

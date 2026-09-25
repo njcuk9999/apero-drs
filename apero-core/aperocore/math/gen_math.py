@@ -67,19 +67,33 @@ def measure_box_min_max(y: np.ndarray,
                        for maximum pixel defined by a box of pixel-size to
                        pixel+size for all columns
     """
-    # set function name
-    # _ = display_func('measure_box_min_max', __NAME__)
     # get length of rows
     ny = y.shape[0]
-    # Set up min and max arrays (length = number of rows)
+    # box width is 2*size (matches the original y[it-size:it+size] slice)
+    box = 2 * size
+    # set up min and max arrays (length = number of rows)
     min_image = np.zeros(ny, dtype=float)
     max_image = np.zeros(ny, dtype=float)
-    # loop around each pixel from "size" to length - "size" (non-edge pixels)
-    # and get the minimum and maximum of each box
-    for it in range(size, ny - size):
-        min_image[it] = fast.nanmin(y[it - size:it + size])
-        max_image[it] = fast.nanmax(y[it - size:it + size])
-
+    # fast path uses bottleneck's O(n) sliding-window primitives via
+    #   fast.HAS_BOTTLENECK; fall back to the original Python loop when
+    #   bottleneck is unavailable so behaviour is preserved either way
+    if fast.HAS_BOTTLENECK and ny >= box:
+        # move_min/max return, at index i, the reduction over the window
+        #   y[i - box + 1 : i + 1]; setting min_image[it] to the value at
+        #   index it + size - 1 therefore matches y[it - size : it + size]
+        yarr = np.array(y, dtype=float)
+        mv_min = fast.bn.move_min(yarr, window=box, min_count=1)
+        mv_max = fast.bn.move_max(yarr, window=box, min_count=1)
+        # slice [box - 1 : ny - 1] has length ny - box = ny - 2*size which
+        #   matches min_image[size : ny - size]
+        min_image[size:ny - size] = mv_min[box - 1:ny - 1]
+        max_image[size:ny - size] = mv_max[box - 1:ny - 1]
+    else:
+        # loop around each pixel from "size" to length - "size" (non-edge)
+        # and get the minimum and maximum of each box
+        for it in range(size, ny - size):
+            min_image[it] = fast.nanmin(y[it - size:it + size])
+            max_image[it] = fast.nanmax(y[it - size:it + size])
     # deal with leading edge --> set to value at size
     min_image[0:size] = min_image[size]
     max_image[0:size] = max_image[size]
