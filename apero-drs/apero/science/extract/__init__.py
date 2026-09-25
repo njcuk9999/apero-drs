@@ -35,7 +35,7 @@ measure_p2p_scat = extraction.measure_p2p_scat
 
 get_berv = berv.get_berv
 
-order_profiles = gen_ext.order_profiles
+get_order_profiles = gen_ext.get_order_profiles
 
 qc_extraction = gen_ext.qc_extraction
 
