@@ -25,7 +25,6 @@ import numpy as np
 import pandas as pd
 from astropy.table import Table, vstack
 from astropy import units as uu
-from scipy.stats import pearsonr
 
 from aperocore.base import base
 from aperocore.base import drs_base

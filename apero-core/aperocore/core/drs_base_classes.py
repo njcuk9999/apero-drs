@@ -24,7 +24,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 # import duckdb
 import numpy as np
 import pandas as pd
-from pandasql import sqldf
 
 from aperocore.base import base
 from aperocore.core import drs_exceptions
@@ -947,6 +946,9 @@ class PandasLikeDatabase:
         :param command: str, the sql command to run
         :return:
         """
+        # lazy import: pandasql is a heavy optional dependency (re-imports
+        # pandas + sqlite3) and only this method uses it
+        from pandasql import sqldf
         return sqldf(command, self.namespace)
 
     def count(self, condition: str = None) -> int:

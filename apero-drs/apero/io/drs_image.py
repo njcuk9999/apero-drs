@@ -20,7 +20,6 @@ import warnings
 from typing import Any, Dict, List, Optional, Union, Tuple
 
 import numpy as np
-from scipy.ndimage import binary_erosion, binary_dilation
 
 from aperocore.base import drs_base
 from aperocore.constants import param_functions
@@ -837,6 +836,9 @@ def expand_badpixelmap(params: ParamDict, bad_pixel_map1: np.ndarray
     # define circular masks for the erosion and dilation of the bad pixels
     erode_mask = mp.get_circular_mask(erode_size)
     dilate_mask = mp.get_circular_mask(dilate_size)
+    # lazy import: scipy.ndimage pulls ~90 ms of module init and is used
+    # only in this helper
+    from scipy.ndimage import binary_erosion, binary_dilation
     # remove small bad pixels (i.e. pixels with one of the dimensions of
     #    size = 1)
     bad_pixel_map2 = binary_erosion(bad_pixel_map1, structure=erode_mask)

@@ -1045,8 +1045,9 @@ class DrsRecipe(object):
         # name
         self.name = str(recipe.name)
         # path
-        # set the recipe path
-        self.path = copy.deepcopy(recipe.path)
+        # set the recipe path (immutable str — deepcopy would just return
+        # the same object via copy._deepcopy_atomic)
+        self.path = recipe.path
         # set drs file module related to this recipe
         if recipe.filemod is None:
             self.filemod = None
@@ -1061,9 +1062,9 @@ class DrsRecipe(object):
         self.template_required = bool(recipe.template_required)
         # shortname
         self.shortname = str(recipe.shortname)
-        # recipe type and kind (for logging)
-        self.recipe_kind = copy.deepcopy(recipe.recipe_kind)
-        self.recipe_type = copy.deepcopy(recipe.recipe_type)
+        # recipe type and kind (for logging) — immutable strings
+        self.recipe_kind = recipe.recipe_kind
+        self.recipe_type = recipe.recipe_type
         # import module
         self.module = self.module
         # input directory
@@ -1081,9 +1082,9 @@ class DrsRecipe(object):
             self.obs_dir = recipe.obs_dir.copy()
         else:
             self.obs_dir = None
-        # copy input and output block strings
-        self.in_block_str = copy.deepcopy(recipe.in_block_str)
-        self.out_block_str = copy.deepcopy(recipe.out_block_str)
+        # copy input and output block strings (immutable)
+        self.in_block_str = recipe.in_block_str
+        self.out_block_str = recipe.out_block_str
         # recipe description/epilog
         self.description = recipe.description
         self.epilog = recipe.epilog
@@ -1141,8 +1142,8 @@ class DrsRecipe(object):
         self.minimum_files = dict()
         for key in recipe.minimum_files:
             self.minimum_files[key] = int(recipe.minimum_files[key])
-        # copy the limit
-        self.limit = copy.deepcopy(recipe.limit)
+        # copy the limit (int or None — immutable)
+        self.limit = recipe.limit
         # copy file model
         self.file_model = dict()
         for key in recipe.file_model:
@@ -1151,11 +1152,11 @@ class DrsRecipe(object):
         self.input_validation = recipe.input_validation
         # whether calibration is required (used in precheck)
         self.calib_required = bool(recipe.calib_required)
-        # parameters for summary documentation
-        self.schematic = copy.deepcopy(recipe.schematic)
-        self.description_file = copy.deepcopy(recipe.description_file)
-        # parameter for forcing no skipping
-        self.never_skip = copy.deepcopy(recipe.never_skip)
+        # parameters for summary documentation (immutable str)
+        self.schematic = recipe.schematic
+        self.description_file = recipe.description_file
+        # parameter for forcing no skipping (immutable bool)
+        self.never_skip = recipe.never_skip
         # copy the binary flags
         self.flags = recipe.flags.copy()
         # define whether to not skip on qc failure (default is False)

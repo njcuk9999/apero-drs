@@ -2730,7 +2730,11 @@ def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
         # prepare argument tuples with only variable parameters
         args_list = [(r_it + 1, [group[r_it]]) for r_it in range(len(group))]
         # start parallel jobs with progress tracking
-        with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        #   note: workers are reused across recipes in a group. Every recipe
+        #   already calls drs_startup.setup() which resets per-recipe state,
+        #   so respawning a worker per task (maxtasksperchild=1) was pure
+        #   overhead (fresh interpreter + full apero import + pip freeze).
+        with get_context('spawn').Pool(cores) as pool:
             results = list(tqdm(
                 pool.starmap(process_func, args_list),
                 total=len(args_list),
@@ -3082,8 +3086,9 @@ def _multi_process_gen_ids_pool(params: ParamDict,
                           skiptable=skiptable, cores=cores)
     # prepare argument tuples with only variable parameters
     args_list = [[groupkey] for groupkey in groupkeys]
-    # start parallel jobs
-    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+    # start parallel jobs (workers are reused across tasks — per-task worker
+    # respawn was pure interpreter/import overhead)
+    with get_context('spawn').Pool(cores) as pool:
         pool.starmap(process_func, args_list)
 
 
@@ -3232,8 +3237,9 @@ def _multi_process_findex_pool(params: ParamDict, block_kind:str,
     # prepare argument tuples with only variable parameters
     args_list = [[grouped_raw_obs_dirs[i], i + 1]
                  for i in range(len(grouped_raw_obs_dirs))]
-    # start parallel jobs
-    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+    # start parallel jobs (workers are reused across tasks — per-task worker
+    # respawn was pure interpreter/import overhead)
+    with get_context('spawn').Pool(cores) as pool:
         pool.starmap(process_func, args_list)
 
 
@@ -3387,8 +3393,9 @@ def _multi_process_headerfix_pool(params: ParamDict, shortname: str,
     # prepare argument tuples with only variable parameters
     args_list = [[grouped_raw_obs_dirs[i], i + 1]
                  for i in range(len(grouped_raw_obs_dirs))]
-    # start parallel jobs
-    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+    # start parallel jobs (workers are reused across tasks — per-task worker
+    # respawn was pure interpreter/import overhead)
+    with get_context('spawn').Pool(cores) as pool:
         pool.starmap(process_func, args_list)
 
 

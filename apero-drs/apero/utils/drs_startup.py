@@ -2034,14 +2034,27 @@ def _display_python_modules() -> str:
             continue
         # try to get module from sys.modules first
         mod = sys.modules.get(package)
-        if mod is None:
+        version = getattr(mod, '__version__', None) if mod is not None else None
+        # if the module is not already imported, prefer distribution metadata
+        #   over a fresh import: importlib.metadata.version() reads the
+        #   installed dist without executing any package init code, which
+        #   can otherwise cost hundreds of ms per requirement at recipe
+        #   cold-start (git, pandasql, pathos, PyQt6, ...). Fall back to a
+        #   real import only when metadata is missing, preserving the
+        #   previous __version__-based value.
+        if version is None:
+            try:
+                import importlib.metadata as _md
+                version = _md.version(package)
+            except Exception:
+                version = None
+        if version is None:
             try:
                 with warnings.catch_warnings(record=True):
                     mod = importlib.import_module(package)
+                version = getattr(mod, '__version__', None)
             except Exception:
                 continue
-
-        version = getattr(mod, '__version__', None)
         if version is None:
             continue
         # get required version

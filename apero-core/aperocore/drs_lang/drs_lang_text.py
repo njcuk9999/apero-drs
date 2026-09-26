@@ -14,7 +14,13 @@ only from:
     - apero.base.drs_base
     - apero.base.drs_db
 """
-from typing import Any, Dict, List, Union
+import hashlib
+import importlib
+import importlib.util
+import os
+import pickle
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 from aperocore.base import base
 from aperocore.drs_lang import drs_lang
@@ -34,10 +40,137 @@ __release__ = base.__release__
 # =============================================================================
 # Define variables
 # =============================================================================
-# get arguments for this instrument
-lkwargs = drs_lang.get_instrument_args()
-# get the language lookup instance (for this instrument)
-LanguageLookup = drs_lang.LanguageLookup(**lkwargs)
+# Language compile is expensive (default_text.py alone is ~13k lines of
+#   langlist.create/item.value['ENG'] = ... statements that execute at
+#   module import). The compiled result is a plain dict of str -> str
+#   keyed by code (e.g. '40-001-00017') that only changes when the
+#   language table .py files change. Cache the compiled mode='value'
+#   dict under __pycache__ next to this module, keyed on a hash of the
+#   language module file paths + mtimes + selected language. On a warm
+#   cache this skips importing the table modules entirely.
+_LANG_CACHE_VERSION = 1
+
+
+def _lang_cache_path(cache_key: str) -> Path:
+    """
+    Location of the compiled-language-values pickle cache. Stored under
+    the module's __pycache__ so it lives with the installed package and
+    is naturally scoped per Python version.
+
+    :param cache_key: str, hash-derived cache identifier
+    :return: pathlib.Path to the cache file
+    """
+    cache_dir = Path(__file__).resolve().parent / '__pycache__'
+    return cache_dir / f'lang_values_v{_LANG_CACHE_VERSION}_{cache_key}.pkl'
+
+
+def _lang_cache_key(module_names: List[str], language: str) -> Optional[str]:
+    """
+    Compute a stable cache key from the language module file paths and
+    their mtimes plus the selected language. Returns None if any module
+    cannot be located (in which case we fall back to the slow path).
+
+    :param module_names: list of str, module names to import for language
+                         tables (from install.yaml DRS_LANG_MODULES)
+    :param language: str, selected language code (e.g. 'ENG')
+    :return: str hex digest, or None if a module file could not be found
+    """
+    hasher = hashlib.blake2b(digest_size=16)
+    hasher.update(language.encode('utf-8'))
+    for module_name in module_names:
+        try:
+            spec = importlib.util.find_spec(module_name)
+        except Exception:
+            return None
+        if spec is None or spec.origin is None:
+            return None
+        try:
+            mtime_ns = os.stat(spec.origin).st_mtime_ns
+        except OSError:
+            return None
+        hasher.update(module_name.encode('utf-8'))
+        hasher.update(spec.origin.encode('utf-8'))
+        hasher.update(str(mtime_ns).encode('utf-8'))
+    return hasher.hexdigest()
+
+
+def _try_load_lang_cache() -> Optional[str]:
+    """
+    Attempt to populate drs_lang.LANG_VALUES from the on-disk cache.
+
+    :return: str, the selected language code if the cache was used;
+             None if the cache was missing/stale (caller should fall
+             through to the full compile path).
+    """
+    iparams = base.load_install_yaml(required=False)
+    module_names = iparams['DRS_LANG_MODULES']
+    language = iparams['GLOBAL.LANGUAGE']
+    if not module_names or language is None:
+        return None
+    cache_key = _lang_cache_key(module_names, language)
+    if cache_key is None:
+        return None
+    cache_path = _lang_cache_path(cache_key)
+    if not cache_path.exists():
+        return None
+    try:
+        with cache_path.open('rb') as fhandle:
+            cached_values = pickle.load(fhandle)
+    except Exception:
+        # unreadable cache — treat as a miss and let the compile path
+        # rewrite it on success
+        return None
+    if not isinstance(cached_values, dict):
+        return None
+    drs_lang.LANG_VALUES.update(cached_values)
+    return language
+
+
+def _save_lang_cache(language: str) -> None:
+    """
+    Persist the freshly-compiled drs_lang.LANG_VALUES dict alongside a
+    hash of the source modules so the next process can skip the compile.
+
+    :param language: str, the language code that was compiled
+    :return: None
+    """
+    iparams = base.load_install_yaml(required=False)
+    module_names = iparams['DRS_LANG_MODULES']
+    cache_key = _lang_cache_key(module_names, language)
+    if cache_key is None:
+        return
+    cache_path = _lang_cache_path(cache_key)
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        # write via a temp file so partial writes never leave a corrupt
+        # cache in place
+        tmp_path = cache_path.with_suffix(cache_path.suffix + '.tmp')
+        with tmp_path.open('wb') as fhandle:
+            pickle.dump(dict(drs_lang.LANG_VALUES), fhandle,
+                        protocol=pickle.HIGHEST_PROTOCOL)
+        os.replace(tmp_path, cache_path)
+    except Exception:
+        # a failed cache write must never break language lookup
+        pass
+
+
+# Try the pickle cache first; on a hit LANG_VALUES is already populated
+# and we can build a no-op LanguageLookup (empty lang_insts short-circuits
+# the compile inside its __init__). Any unexpected failure inside the
+# cache path must fall through to the original compile path so language
+# lookup can never be broken by a bad cache file / stat error.
+try:
+    _cached_language = _try_load_lang_cache()
+except Exception:
+    _cached_language = None
+if _cached_language is not None:
+    LanguageLookup = drs_lang.LanguageLookup(lang_insts=[],
+                                             langauge=_cached_language)
+else:
+    # cold path: import every language table module and compile as before
+    lkwargs = drs_lang.get_instrument_args()
+    LanguageLookup = drs_lang.LanguageLookup(**lkwargs)
+    _save_lang_cache(lkwargs['langauge'])
 # -----------------------------------------------------------------------------
 
 # =============================================================================

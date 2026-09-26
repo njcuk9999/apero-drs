@@ -39,6 +39,8 @@ They are excluded from the default suite.
 | 8 | [08-extract-orders-parallel.md](08-extract-orders-parallel.md) | `extract_model_core.extract_orders` | linear in cores (~4-8x) | `apero-core/aperocore/science/extract/extract_model_core.py` |
 | 9 | [09-nanpercentile-fast.md](09-nanpercentile-fast.md) | project-wide `np.nanpercentile` axis reductions | ~5-10x on hot spots | callers throughout |
 | 10 | [10-io-and-caching.md](10-io-and-caching.md) | recipe-level FITS reads / DB lookups | pipeline wall-clock | `apero-drs/apero/recipes/*` and `apero-drs/apero/io/*` |
+| 11 | [11-recipe-startup.md](11-recipe-startup.md) | recipe / tool cold-start (import + `drs_startup.setup`) | ~6 - 8 s per invocation | `apero-drs/apero/utils/drs_startup.py`, `aperocore/math/*`, `aperocore/core/drs_misc.py`, `apero-drs/apero/science/extract/__init__.py` |
+| 12 | [12-recipe-startup-followup.md](12-recipe-startup-followup.md) | cold-start second-tier wins + `apero_processing` worker-pool multiplier | ~1 s per recipe + orders-of-magnitude at batch scale | `apero-drs/apero/core/drs_file.py`, `apero-drs/apero/io/drs_image.py`, `apero-drs/apero/tools/module/processing/drs_processing.py`, `apero-core/aperocore/drs_lang/tables/*` |
 
 ## Guiding principles used
 

@@ -37,7 +37,6 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 from astropy.table import Table, vstack
-from scipy.stats import pearsonr
 
 from apero.base import base as apero_base
 from apero.constants import path_definitions as pathdef
@@ -8893,6 +8892,9 @@ def combine_metric_1(params: ParamDict, row: int, image1: np.ndarray,
     # calculate the metric by which to grade input files
     image2 = image_row.ravel()
     good = np.isfinite(image1) * np.isfinite(image2)
+    # lazy import: scipy.stats pulls ~250 ms of module init and is used
+    # only in this one metric helper
+    from scipy.stats import pearsonr
     metric, _ = pearsonr(image1[good], image2[good])
     # get metric threshold
     metric_threshold = params['CAL.GEN.CMETRIC1_THRES']
