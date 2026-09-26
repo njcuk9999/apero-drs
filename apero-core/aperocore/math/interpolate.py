@@ -63,9 +63,29 @@ def finite_spline(xpos: np.ndarray, values: np.ndarray):
     return CubicSpline(xpos[good], values[good], extrapolate=True)
 
 
-def expand_bilinear(coarse: np.ndarray, ys: np.ndarray, xs: np.ndarray,
-                    ny: int, nx: int) -> np.ndarray:
-    """Bilinearly expand a coarse 2D grid to a full-resolution image."""
+def expand_bilinear(coarse: Union[np.ndarray, List[np.ndarray]],
+                    ys: np.ndarray, xs: np.ndarray, ny: int, nx: int
+                    ) -> Union[np.ndarray, List[np.ndarray]]:
+    """
+    Bilinearly expand one or more coarse 2D grids to a full-resolution image.
+
+    Accepting a list of coarse grids lets callers share the index/weight
+    computation across multiple grids sampled on the same (ys, xs)
+    coordinates (e.g. a background median and its error map), which is
+    where most of the wall-time in the single-grid path is spent.
+
+    :param coarse: numpy array (2D) or list of arrays sharing the same
+                   coarse grid shape (ys.size, xs.size)
+    :param ys: numpy array (1D), coarse-grid row positions (sorted)
+    :param xs: numpy array (1D), coarse-grid column positions (sorted)
+    :param ny: int, output row count
+    :param nx: int, output column count
+
+    :return: expanded array, or list of expanded arrays if ``coarse`` was
+             a list/tuple
+    """
+    single = not isinstance(coarse, (list, tuple))
+    maps = [coarse] if single else list(coarse)
     rows = np.arange(ny, dtype=float)
     cols = np.arange(nx, dtype=float)
     iy = np.clip(np.searchsorted(ys, rows, 'right') - 1, 0, ys.size - 2)
@@ -76,10 +96,19 @@ def expand_bilinear(coarse: np.ndarray, ys: np.ndarray, xs: np.ndarray,
                    out=np.zeros_like(rows, dtype=float), where=yden != 0)
     wx = np.divide(cols - xs[ix], xden,
                    out=np.zeros_like(cols, dtype=float), where=xden != 0)
-    row_values = (coarse[iy] * (1.0 - wy[:, None])
-                  + coarse[iy + 1] * wy[:, None])
-    return (row_values[:, ix] * (1.0 - wx)
-            + row_values[:, ix + 1] * wx)
+    # precompute row-slice views used by every map so the same indexing
+    #   into ys is only paid once even when several coarse maps are passed
+    one_minus_wy = (1.0 - wy)[:, None]
+    wy_col = wy[:, None]
+    one_minus_wx = 1.0 - wx
+    outs = []
+    for one_map in maps:
+        # interpolate along the row axis first, then the column axis; this
+        #   is a plain 2D bilinear expansion split into two 1D passes
+        row_values = one_map[iy] * one_minus_wy + one_map[iy + 1] * wy_col
+        outs.append(row_values[:, ix] * one_minus_wx
+                    + row_values[:, ix + 1] * wx)
+    return outs[0] if single else outs
 
 
 def sample_bilinear(coarse: Union[np.ndarray, List[np.ndarray]],

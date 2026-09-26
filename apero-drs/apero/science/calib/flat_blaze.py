@@ -281,7 +281,7 @@ def compute_flat_response(
     """
     func_name = __NAME__ + '.compute_flat_response()'
     # read convolution constants
-    os = pcheck(params, 'CAL.FLAT.RESPONSE_OVERSAMPLING', func=func_name)
+    os = pcheck(params, 'CAL.EXT.EXTRACTION_OVERSAMPLING', func=func_name)
     max_hc = pcheck(params, 'CAL.FLAT.RESPONSE_MAX_HALF_CELL',
                     func=func_name) * os
     fwhm = pcheck(params, 'CAL.FLAT.RESPONSE_FWHM_PIX', func=func_name)

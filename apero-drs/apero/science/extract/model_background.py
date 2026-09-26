@@ -371,7 +371,9 @@ def run_all_fiber_model(params: ParamDict, image_noshape: np.ndarray,
     # Extract each configured fiber grouping from the corrected science frame.
     corrected = bkg_props['SCI_BKGSUB']
     corrected_err = bkg_props['SCI_BKGSUB_ERR']
-    spectrum_step = params['CAL.EXT.SAVGOL_STEP']
+    # output grid step is the reciprocal of the oversampling factor
+    oversampling = params['CAL.EXT.EXTRACTION_OVERSAMPLING']
+    spectrum_step = 1.0 / oversampling
     xgrid = np.arange(0.0, corrected.shape[1], spectrum_step)
 
     spec_args = [corrected, corrected_err, order_map, xmap,

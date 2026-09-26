@@ -872,10 +872,6 @@ CDict.set('QC_FLUX_EDGE_IGNORE', value=[43, 44, 45, 46], source=__NAME__,
 # Define whether to always extract flat files (i.e. overwrite existing files)
 CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, group=cgroup)
 
-# Integer oversampling factor for the flat-response convolution grid
-CDict.set('RESPONSE_OVERSAMPLING', value=2,
-          source=__NAME__, group=cgroup)
-
 # Maximum Voronoi cell half-width in detector pixels for flat-response
 # convolution; caps cells that border detector gaps
 CDict.set('RESPONSE_MAX_HALF_CELL', value=0.75,
@@ -989,12 +985,15 @@ CDict.set('FIT_NSIG_CLIP', value=20.0, source=__NAME__, group=cgroup)
 CDict.set('FIT_ZP_MAD_CUT', value=10.0, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_WINDOW', value=0.45, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_POLYORDER', value=2, source=__NAME__, group=cgroup)
-CDict.set('SAVGOL_STEP', value=0.5, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_CUT', value=3.0, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_MINPTS', value=3, source=__NAME__, group=cgroup)
 CDict.set('SAVGOL_WEIGHT', value='gauss', source=__NAME__, group=cgroup)
 # Shape-transform spline order used by model extraction
 CDict.set('SPLINE_ORDER', value='spline3', source=__NAME__, group=cgroup)
+
+# Integer oversampling factor for the flat-response convolution grid
+CDict.set('EXTRACTION_OVERSAMPLING', value=2,
+          source=__NAME__, group=cgroup)
 
 # Start order of the extraction in apero_flat if None starts from 0
 CDict.set('START_ORDER', value=None, source=__NAME__, group=cgroup)

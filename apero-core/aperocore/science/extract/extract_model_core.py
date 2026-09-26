@@ -231,8 +231,10 @@ def background_model(image: np.ndarray, size: Tuple[int, int] = (31, 7),
     ys[-1], xs[-1] = float(ny - 1), float(nx - 1)
     if coarse:
         return median, error, ys, xs
-    expanded_median = interpolate.expand_bilinear(median, ys, xs, ny, nx)
-    expanded_error = interpolate.expand_bilinear(error, ys, xs, ny, nx)
+    # expand both grids in one call so the shared index/weight arrays are
+    #   only computed once
+    expanded_median, expanded_error = interpolate.expand_bilinear(
+        [median, error], ys, xs, ny, nx)
     return expanded_median, expanded_error
 
 

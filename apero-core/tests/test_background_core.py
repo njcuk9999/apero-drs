@@ -62,3 +62,47 @@ def test_iterative_box_background_shapes_and_finite() -> None:
     assert bfull.shape == image.shape
     assert bbinned.shape[0] == image.shape[0]
     assert np.all(np.isfinite(bfull))
+
+
+def _reference_create_background_map(image, badpixmask, width, percent,
+                                     csize, nbad):
+    """Reference implementation of create_background_map matching the
+    pre-vectorisation behaviour."""
+    import warnings
+    from scipy.signal import convolve2d
+    from aperocore import math as mp
+    image0 = np.array(image)
+    image0[np.array(badpixmask, dtype=bool)] = np.nan
+    backest = np.zeros_like(image0)
+    width2 = width // 4
+    for x_it in range(0, image0.shape[1], width2):
+        ribbon = mp.nanmedian(image0[:, x_it:x_it + width2], axis=1)
+        for y_it in range(image0.shape[0]):
+            ys = max(0, y_it - width // 2)
+            ye = min(image0.shape[0] - 1, y_it + width // 2)
+            backest[y_it, x_it:x_it + width2] = mp.nanpercentile(
+                ribbon[ys:ye], percent)
+    with warnings.catch_warnings(record=True) as _:
+        backmask = np.array(image0 < backest, dtype=float)
+    nribbon = convolve2d(backmask, np.ones([1, csize]), mode='same')
+    backmask[nribbon == 1] = 0
+    backmask[nribbon >= nbad] = 1
+    return backmask
+
+
+def test_create_background_map_matches_reference() -> None:
+    """The vectorised create_background_map must produce identical
+    output to the original per-row loop implementation, including on
+    frames sprinkled with NaN pixels."""
+    rng = np.random.default_rng(0)
+    image = rng.normal(0.0, 50.0, (256, 256)).astype(float)
+    image[100:105, :] += 500.0
+    # sprinkle NaN pixels to exercise the nan-handling branch
+    image[::17, ::19] = np.nan
+    badpix = np.zeros_like(image, dtype=bool)
+    badpix[10, 10] = True
+    new = background_core.create_background_map(
+        image, badpix, width=100, percent=5, csize=7, nbad=3)
+    ref = _reference_create_background_map(
+        image, badpix, width=100, percent=5, csize=7, nbad=3)
+    assert np.array_equal(new, ref)

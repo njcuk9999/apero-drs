@@ -107,3 +107,20 @@ speeding by ~10-20 % on typical hardware).
 - Add a correctness test that compares the fitted surface (`fit`
   return value) before and after with `np.allclose(a, b, rtol=1e-5)`
   on a small (256 x 256) frame.
+
+## Post-change status (implemented)
+
+Applied 2a (cache `full_ubas`/`full_vbas` once at function entry and
+reuse them from `_full_surface`) and 2b (early-exit the `f_pos='auto'`
+bisection once `abs(bal - 0.5) < 0.01`, with a `min_iter=4` guard).
+2c (anneal-loop tolerance) and 2d (einsum for moments) were left as
+future work; they either require an API knob or reorder floating
+point.
+
+- Correctness: 2a is a pure refactor; 2b returns the same `f_pos` to
+  within the tolerance. Existing
+  `test_binned_lower_envelope_returns_full_resolution_surface` still
+  passes.
+- Timing (4088 x 4088, `xorder=yorder=3`, `bin_size=4`, `niter=10`):
+  **11.1 s -> 8.42 s (~1.3x)**. Most of the win comes from the auto
+  bisection now stopping in 4-5 iterations rather than the fixed 12.

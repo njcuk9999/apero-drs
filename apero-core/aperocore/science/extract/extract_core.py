@@ -65,74 +65,68 @@ def extraction(simage: np.ndarray, orderp: np.ndarray, pos: np.ndarray,
              weights used for each pixel
     """
     dim1, dim2 = simage.shape
-    # create storage for extration
-    spe = np.zeros(dim2, dtype=float)
-    # create array of pixel values
-    ics = np.arange(dim2)
-    # get positions across the orders for each pixel value along the order
-    jcs = np.full(dim2, mp.val_cheby(pos, dim2 // 2, domain=[0, dim2]))
-    # get the lower bound of the order for each pixel value along the order
-    lim1s = jcs - r1
-    # get the upper bound of the order for each pixel value along the order
-    lim2s = jcs + r2
-    # TODO: Note we still miss the top and bottom
-    # get the integer pixel position of the lower bounds
-    j1s = np.array(np.round(lim1s), dtype=int)
-    # get the integer pixel position of the upper bounds
-    j2s = np.array(np.round(lim2s), dtype=int)
-    # make sure the pixel positions are within the image
-    mask = (j1s > 0) & (j2s < dim1)
-    # create a slice image
-    spelong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
-    coslong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
-    # define the number of cosmics found
-    cpt = 0
-    # loop around each pixel along the order
+    # get the (constant along the order) integer row bounds; the original
+    #   code broadcasts a single val_cheby evaluation to every column, so
+    #   j1 and j2 are the same for every column and we can slice the whole
+    #   ribbon in one go instead of column-by-column
+    jc = mp.val_cheby(pos, dim2 // 2, domain=[0, dim2])
+    j1 = int(round(jc - r1))
+    j2 = int(round(jc + r2))
+    # bounds check: if the order runs off the top or bottom of the frame
+    #   we cannot form a full ribbon; return the empty-shape defaults so
+    #   the outputs match what the loop would have produced (all-zero
+    #   spectrum, no cosmics)
+    if j1 <= 0 or j2 >= dim1:
+        h = max(j2 - j1 + 1, 1)
+        spe = np.zeros(dim2, dtype=float)
+        spelong = np.zeros((h, dim2), dtype=float)
+        coslong = np.zeros((h, dim2), dtype=float)
+        return spe, spelong, 0, coslong
+    # extract the ribbon; make a writable float copy of the profile
+    #   because we normalise it in place per column below
+    sx = np.array(simage[j1:j2 + 1], dtype=float)
+    fx = np.array(orderp[j1:j2 + 1], dtype=float)
+    # renormalise the order profile per column so each column sums to one
+    #   (matches the "sumfx > 0 -> fx / sumfx; else fx = ones" branch of
+    #   the original loop)
     with warnings.catch_warnings(record=True) as _:
-        for ic in ics:
-            if mask[ic]:
-                # get the image slice
-                sx = simage[j1s[ic]:j2s[ic] + 1, ic]
-                # get hte order profile slice
-                fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
-                # Renormalise the rotated order profile
-                sumfx = mp.nansum(fx)
-                if sumfx > 0:
-                    fx = fx / sumfx
-                else:
-                    fx = np.ones(fx.shape, dtype=float)
-                # get the amplitude (ratio between flux and flat)
-                amp = mp.nanmedian(sx / fx)
-                # residuals
-                res = sx - fx * amp
-                # work out number of sigma away from the median res
-                ares = np.abs(res)
-                nsig = ares / mp.nanmedian(ares)
-                # work out weights (0 or 1 based on number of sigma)
-                # TODO: Look at this later for the narrow NIRPS fiber
-                if (r1 + r2) > 10:
-                    weights = nsig < cosmic_sigcut
-                else:
-                    weights = np.isfinite(nsig)
-                # add to the number of rejected cosmics
-                cpt += np.sum(~weights)
-                # weights to floats
-                weights_float = np.array(weights).astype(float)
-                # some matrix manipulation
-                wsxfx = weights_float * sx * fx
-                wfxfx = weights_float * fx ** 2
-                sum_wfxfx = mp.nansum(wfxfx)
-                # set the value of this pixel to the weighted sum
-                spelong[:, ic] = wsxfx
-                # nan the cosmic rays (to keep it consistent with spe)
-                spelong[:, ic][~weights] = np.nan
-                # collapse spectrum
-                spe[ic] = mp.nansum(wsxfx)
-                # normalise spe
-                spe[ic] = spe[ic] / sum_wfxfx
-                spelong[:, ic] = spelong[:, ic] / sum_wfxfx
-                coslong[:, ic] = weights_float
-
+        sumfx = mp.nansum(fx, axis=0)
+        ok = sumfx > 0
+        # divide only the columns with positive sum; leave the others to
+        #   be replaced with ones on the next line
+        fx[:, ok] = fx[:, ok] / sumfx[ok]
+        fx[:, ~ok] = 1.0
+        # amp = median-ratio of science to profile per column
+        amp = mp.nanmedian(sx / fx, axis=0)
+        # residuals of the linear model amp*fx and the per-column MAD-like
+        #   scatter used for the cosmic-ray sigma test
+        res = sx - fx * amp
+        ares = np.abs(res)
+        med_ares = mp.nanmedian(ares, axis=0)
+        nsig = ares / med_ares
+    # cosmic-ray weights (0/1 mask); the narrow-fiber branch keeps every
+    #   finite pixel instead of applying the sigma cut (TODO in original)
+    if (r1 + r2) > 10:
+        weights = nsig < cosmic_sigcut
+    else:
+        weights = np.isfinite(nsig)
+    # promote to float for the weighted sums, matching the original code
+    weights_float = weights.astype(float)
+    # weighted sums used to collapse the ribbon to a 1D spectrum per column
+    wsxfx = weights_float * sx * fx
+    wfxfx = weights_float * fx * fx
+    with warnings.catch_warnings(record=True) as _:
+        sum_wfxfx = mp.nansum(wfxfx, axis=0)
+        spe = mp.nansum(wsxfx, axis=0) / sum_wfxfx
+        # per-pixel contribution, normalised the same way as the collapsed
+        #   spectrum so downstream code sees the same scaling as before
+        spelong = wsxfx / sum_wfxfx
+    # keep spelong NaN where the pixel was flagged as a cosmic ray
+    spelong = np.where(weights, spelong, np.nan)
+    # total cosmic-ray count across the whole ribbon
+    cpt = int((~weights).sum())
+    # cosmic-ray weight image (1.0 where kept, 0.0 where rejected)
+    coslong = weights_float
     return spe, spelong, cpt, coslong
 
 

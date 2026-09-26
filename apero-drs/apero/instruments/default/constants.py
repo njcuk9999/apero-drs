@@ -1898,13 +1898,6 @@ CDict.add('ALWAYS_EXTRACT', value=None, dtype=bool,
           description=('Define whether to always extract flat files '
                        '(i.e. overwrite existing files)'))
 
-# Oversampling factor for the flat-response convolution grid (integer >= 1)
-CDict.add('RESPONSE_OVERSAMPLING', value=None, dtype=int,
-          source=__NAME__, group=cgroup,
-          description=('Integer oversampling factor for the flat-response '
-                       'convolution grid; the output x-grid has '
-                       'ncols * RESPONSE_OVERSAMPLING points'))
-
 # Maximum Voronoi half-cell width for flat-response convolution, in detector
 # pixels.  Prevents a sample at a gap edge from claiming half the gap.
 CDict.add('RESPONSE_MAX_HALF_CELL', value=None, dtype=float,
@@ -2160,9 +2153,6 @@ CDict.add('SAVGOL_WINDOW', value=None, dtype=float,
 CDict.add('SAVGOL_POLYORDER', value=None, dtype=int,
           source=__NAME__, group=cgroup,
           description='Local polynomial degree for spectrum extraction')
-CDict.add('SAVGOL_STEP', value=None, dtype=float,
-          source=__NAME__, group=cgroup,
-          description='Output spectrum grid step in detector pixels')
 CDict.add('SAVGOL_CUT', value=None, dtype=float,
           source=__NAME__, group=cgroup,
           description='Local-fit support radius in window widths')
@@ -2176,6 +2166,16 @@ CDict.add('SAVGOL_WEIGHT', value=None, dtype=str,
 CDict.add('SPLINE_ORDER', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Shape-transform spline order for model extraction')
+
+# Oversampling factor for the flat-response convolution grid (integer >= 1)
+CDict.add('EXTRACTION_OVERSAMPLING', value=None, dtype=int,
+          source=__NAME__, group=cgroup,
+          description=('Integer oversampling factor for the extracted spectrum'
+                       ' and flat-response convolution grid; the output '
+                       'x-grid has ncols * EXTRACTION_OVERSAMPLING points.'
+                       'For example if the preprocessed e2ds has 4088 pixels,'
+                       ' and EXTRACTION_OVERSAMPLING=2, the output will have '
+                       '8176 pixels.'))
 
 #  Start order of the extraction in apero_flat if None starts from 0
 CDict.add('START_ORDER', value=None, dtype=int,

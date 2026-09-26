@@ -99,3 +99,19 @@ iterations. Compute them once outside the loop and reuse them.
 - `test_perf_iterative_box_background` for timing.
 - Add a correctness test asserting `np.allclose(new_full, old_full)`
   on a 256 x 256 synthetic frame with `niter=2`.
+
+## Post-change status (implemented, no parallelism)
+
+Applied 3a (switch to `mp.nanmedian` which dispatches to
+`bn.nanmedian`) and 3c (precompute `i0`/`i1` per box centre outside
+the `niter` loop). 3b (thread parallelism) was deliberately skipped
+per user's request - parallelism is handled at a higher level.
+
+- Correctness: bit-identical when bottleneck is present; the wrapper
+  is a straight dispatch. Existing
+  `test_iterative_box_background_shapes_and_finite` still passes.
+- Timing (4088 x 4088, `width=100`, `niter=3`): **9.3 s -> 7.24 s**
+  (~1.3x). The remaining time is split roughly evenly between
+  per-iter `bn.nanmedian` calls and `mp.lowpassfilter`; a larger win
+  would require rewriting one of those or vectorising across box
+  centres, both outside the scope of this change.

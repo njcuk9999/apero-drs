@@ -156,7 +156,8 @@ def test_run_all_fiber_model_uses_profiles_and_geometry(spirou_params) -> None:
     assert set(props['MODEL_SPECTRA']) == {'A', 'B', 'COMBINED'}
     assert set(props['BLAZE']) == {'A', 'B'}
     assert 'A' in props['SPECTRA']
-    expected_grid = int(np.ceil(10 / spirou_params['CAL.EXT.SAVGOL_STEP']))
+    expected_grid = int(np.ceil(
+        10 * spirou_params['CAL.EXT.EXTRACTION_OVERSAMPLING']))
     assert props['SPECTRUM_GRID'].shape == (expected_grid,)
 
 

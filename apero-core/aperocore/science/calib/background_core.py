@@ -14,6 +14,7 @@ import warnings
 from typing import Dict, Tuple, Union
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from scipy.ndimage import map_coordinates as mapc
 from scipy.ndimage import zoom
 from scipy.signal import convolve2d
@@ -35,6 +36,67 @@ __release__ = base.__release__
 
 # =============================================================================
 # Define functions
+def _ribbon_running_pct(ribbon: np.ndarray, hw: int, win: int,
+                        percent: float, ny: int) -> np.ndarray:
+    """
+    Running lower-percentile filter along a 1D ribbon.
+
+    Matches the exact slice bounds used by the original per-row loop in
+    ``create_background_map``: ``ribbon[max(0, y - hw) : min(ny - 1,
+    y + hw)]``. Interior rows (window of length ``win = 2 * hw``) are
+    computed in a single vectorised ``np.nanpercentile`` call via
+    ``sliding_window_view``. The (small) edge rows fall back to per-row
+    calls to preserve the truncated-window behaviour of the original.
+
+    :param ribbon: numpy (1D) array, the collapsed cross-dispersion
+                   ribbon
+    :param hw: int, half window size (``width // 2``)
+    :param win: int, full window length (``2 * hw``)
+    :param percent: float, percentile to evaluate (%)
+    :param ny: int, ribbon length
+
+    :return: numpy (1D) array of length ``ny`` with the running
+             percentile at each row
+    """
+    # output vector: one percentile per row of the ribbon
+    out = np.empty(ny, dtype=float)
+    # number of interior rows that see a full-length window
+    nmid = ny - win
+    with warnings.catch_warnings():
+        # nanpercentile on an all-NaN slice legitimately returns NaN
+        warnings.simplefilter('ignore', category=RuntimeWarning)
+        # interior: bulk of the work goes here, in one vector call
+        if nmid > 0:
+            # windows[k] = ribbon[k : k + win]; k=0 corresponds to y=hw
+            wins = sliding_window_view(ribbon, win)[:nmid]
+            # split fast (all-finite) vs slow (contains NaN) rows: NaN
+            # windows still need the exact nanpercentile behaviour, but
+            # in practice they are rare and this keeps the hot path in
+            # plain np.percentile (which uses O(n) partition rather
+            # than O(n log n) sort of nanpercentile)
+            nan_wins = np.isnan(wins).any(axis=1)
+            clean = ~nan_wins
+            mid_out = np.empty(nmid, dtype=float)
+            if clean.any():
+                mid_out[clean] = np.percentile(wins[clean], percent,
+                                               axis=1)
+            if nan_wins.any():
+                mid_out[nan_wins] = np.nanpercentile(wins[nan_wins],
+                                                    percent, axis=1)
+            out[hw:hw + nmid] = mid_out
+        # left edge: y in [0, hw-1] uses ribbon[0 : y + hw]
+        for y_it in range(min(hw, ny)):
+            end = min(ny - 1, y_it + hw)
+            out[y_it] = np.nanpercentile(ribbon[0:end], percent)
+        # right edge: y in [ny-hw, ny-1] uses ribbon[y - hw : ny - 1]
+        for y_it in range(max(hw, ny - hw), ny):
+            start = max(0, y_it - hw)
+            end = min(ny - 1, y_it + hw)
+            out[y_it] = np.nanpercentile(ribbon[start:end], percent)
+    # bottleneck's nanpercentile fallback returns a scalar; return array
+    return out
+
+
 def create_background_map(image: np.ndarray, badpixmask: np.ndarray,
                           width: int, percent: float, csize: int,
                           nbad: int) -> np.ndarray:
@@ -69,25 +131,21 @@ def create_background_map(image: np.ndarray, badpixmask: np.ndarray,
     # width in fast dispersion axis - smaller so there is no blur due to the
     # curvature of orders
     width2 = width // 4
+    ny = image0.shape[0]
+    # half-window used for the running lower-percentile filter
+    hw = width // 2
+    # full window length (matches the interior slice ribbon[y-hw : y+hw])
+    win = 2 * hw
     # loop around this regions (per region)
     for x_it in range(0, image0.shape[1], width2):
         # ribbon to find the order profile
         ribbon = mp.nanmedian(image0[:, x_it:x_it + width2], axis=1)
-        # loop around the columns (per pixel)
-        for y_it in range(image0.shape[0]):
-            # we perform a running Nth percentile filter along the
-            # order profile. The box of the filter is w. Note that it could
-            # differ in princile from w, its just the same for the sake of
-            # simplicity.
-            ystart = y_it - width // 2
-            yend = y_it + width // 2
-            if ystart < 0:
-                ystart = 0
-            if yend > image0.shape[0] - 1:
-                yend = image0.shape[0] - 1
-            # background estimate
-            backest_pix = mp.nanpercentile(ribbon[ystart:yend], percent)
-            backest[y_it, x_it: x_it + width2] = backest_pix
+        # vectorised running lower percentile along the ribbon; the
+        # original loop evaluated ribbon[max(0,y-hw) : min(ny-1,y+hw)]
+        # at every row - we preserve those exact slice bounds
+        col_backest = _ribbon_running_pct(ribbon, hw, win, percent, ny)
+        # assign the column result across the current ribbon columns
+        backest[:, x_it:x_it + width2] = col_backest[:, None]
     # the mask is the area that is below then Nth percentile threshold
     with warnings.catch_warnings(record=True) as _:
         backmask = np.array(image0 < backest, dtype=float)
@@ -226,16 +284,25 @@ def iterative_box_background(image2: np.ndarray, width: int,
     # coords for mapping
     coords = np.array([sypix, sxpix])
 
+    # precompute box index bounds once - they do not change across iters
+    hw = width // 2
+    nx = image2.shape[1]
+    box_i0 = np.maximum(yc - hw, 0)
+    box_i1 = np.minimum(yc + hw, nx)
+
     for _ in range(niter):
         image2b = np.array(image2 - background_image_full)
         #     # loop around all boxes with centers xc and yc
         #     # and find pixels within a given widths
         #     # around these centers in the full image
-        for ii, icol in enumerate(yc):
-            i0 = np.max([icol - width // 2, 0])
-            i1 = np.min([icol + width // 2, image2.shape[1]])
+        for ii in range(len(yc)):
+            i0 = int(box_i0[ii])
+            i1 = int(box_i1[ii])
             with warnings.catch_warnings(record=True) as _:
-                medcol = np.nanmedian(image2b[:, i0:i1], axis=1)
+                # mp.nanmedian dispatches to bottleneck (bn.nanmedian)
+                # when available, which is markedly faster than the
+                # bare numpy call used previously
+                medcol = mp.nanmedian(image2b[:, i0:i1], axis=1)
             background_image_offset[:, ii] = mp.lowpassfilter(medcol, width)
 
         background_image_full += mapc(background_image_offset, coords,
@@ -377,6 +444,13 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
     ii, jj = np.meshgrid(np.arange(yorder + 1), np.arange(xorder + 1),
                          indexing='ij')
     ii, jj = ii.ravel(), jj.ravel()
+    # cache the full-detector basis: these depend only on the grid
+    # sizes and polynomial order, and were previously rebuilt every
+    # call to _full_surface
+    full_ubas = np.stack([full_u ** p
+                          for p in range(yorder + 1)]).T
+    full_vbas = np.stack([full_v ** q
+                          for q in range(xorder + 1)]).T
 
     def _solve(w):
         """the normal equations, as moments of the weights"""
@@ -392,10 +466,7 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
 
     def _full_surface(coef):
         """evaluate the polynomial surface on the full detector grid"""
-        full_ubas = np.stack([full_u ** p
-                              for p in range(yorder + 1)]).T
-        full_vbas = np.stack([full_v ** q
-                              for q in range(xorder + 1)]).T
+        # basis arrays are precomputed once outside the fit loop
         return (full_ubas @ coef) @ full_vbas.T
 
     # -------------------------------------------------------------------
@@ -459,13 +530,22 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
     if isinstance(f_pos, str) and f_pos.lower().startswith('auto'):
         lo, hi = np.log10(1e-4), np.log10(0.95)
         used, best = None, None
-        for _ in range(12):
+        # early-exit tolerance on the balance being centred on 0.5 -
+        # in practice the bisection converges in 3-4 iterations for
+        # typical images, so bail out once we are within 1% of centre
+        bal_tol = 0.01
+        min_iter = 4
+        for it in range(12):
             mid = 0.5 * (lo + hi)
             trial = _run(10.0 ** mid)
             bal = _balance(trial[1])
             used, best = 10.0 ** mid, trial
             if verbose:
                 print('   f_pos {0:8.5f} -> {1:.3f} below'.format(used, bal))
+            # stop once the balance is close enough to 0.5, keeping
+            # a small minimum number of iterations for stability
+            if it + 1 >= min_iter and abs(bal - 0.5) < bal_tol:
+                break
             # more weight above the surface lifts it, so the balance rises
             if bal < 0.5:
                 lo = mid

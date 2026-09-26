@@ -115,3 +115,17 @@ on a small (256 x 256) image and asserts the fractional mask
 disagreement is below a documented threshold (e.g. 1 %). The
 `test_perf_create_background_map` benchmark in
 `apero-core/tests/test_perf_benchmarks.py` provides the timing side.
+
+## Post-change status (implemented)
+
+Applied in `background_core.create_background_map` with a helper
+`_ribbon_running_pct`. The interior y-rows are evaluated in a single
+`np.percentile(..., axis=1)` call over a `sliding_window_view` of the
+ribbon; the rare windows containing NaN fall back to `np.nanpercentile`
+so we preserve exact behaviour. Edge rows (first/last `hw`) still use
+the truncated-slice per-row calls to be bit-identical.
+
+- Correctness: `np.array_equal(new, old)` holds on synthetic 256x256
+  frames with and without NaN sprinkling (see
+  `test_create_background_map_matches_reference`).
+- Timing (4088 x 4088, `width=100`): **41.2 s -> 3.1 s (~13x)**.

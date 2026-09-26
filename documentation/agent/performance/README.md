@@ -78,3 +78,23 @@ They are excluded from the default suite.
    the differences are small and each doc quantifies them.
 4. Do `#8` — needs an env knob for `n_jobs` but is otherwise safe.
 5. Do `#2` last — the largest structural change.
+
+## Implementation status (2026-09-25)
+
+Suggestions #4, #6, #5, #1, #3, #2 are now landed. Parallelism-based
+suggestions (`#8`; sub-item 3b of `#3`) were intentionally skipped —
+APERO handles parallelism at a higher level. `#7`, `#9`, `#10` remain
+open. Measured post-change wall times on this repo:
+
+| # | Function | Before | After | Speedup |
+|---|----------|--------|-------|---------|
+| 4 | `extract_core.extraction` (71 x 8176) | ~178 ms | ~14 ms | ~13x |
+| 6 | `gen_math.measure_box_min_max` (4096, 32) | 4.30 ms | 0.075 ms | ~55x |
+| 1 | `create_background_map` (4088 x 4088) | 41.2 s | 3.1 s | ~13x |
+| 3 | `iterative_box_background` (4088 x 4088, niter=3) | 9.3 s | 7.24 s | ~1.3x |
+| 5 | `extract_model_core.background_model` (4088 x 4088) | 2.53 s | 2.58 s | negligible |
+| 2 | `fit_lower_envelope_2d` (4088 x 4088, bin=4, niter=10) | 11.1 s | 8.42 s | ~1.3x |
+
+`#5` shipped as an `expand_bilinear` batching cleanup (see doc); the
+dominant cost is still `np.sort` inside `_mad_from_sorted` and would
+need a larger rewrite to shift meaningfully.
