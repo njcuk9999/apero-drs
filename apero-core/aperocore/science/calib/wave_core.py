@@ -20,7 +20,6 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.ndimage import median_filter, zoom, binary_dilation
 from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
-import statsmodels.api as statsmodels
 
 from aperocore.base import base
 from aperocore import math as mp

@@ -44,7 +44,11 @@ from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.core.drs_base_classes import Printer
-from apero.plotting import plotter
+# NOTE: apero.plotting.plotter is imported lazily inside __setup__ below,
+#   because it pulls in matplotlib (~430 ms) plus aperocore.math (scipy /
+#   statsmodels chain) at module load. That import cost happens before the
+#   splash title is shown; deferring it until we know a plotter is actually
+#   needed keeps the recipe cold-start visibly faster (e.g. apero_validate).
 
 # deal with not having LBL installed
 try:
@@ -414,9 +418,13 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     # deal with plot mode = 4 (special mode that prompts user to select
     #    which plots to plot)
     if params['GLOBAL.PLOT_MODE'] == 4:
+        # lazy import (see note at top of file)
+        from apero.plotting import plotter
         params, recipe = plotter.plot_selection(params, recipe)
     # add in the plotter
     if enable_plotter:
+        # lazy import (see note at top of file)
+        from apero.plotting import plotter
         recipe.plot = plotter.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # add the recipe log

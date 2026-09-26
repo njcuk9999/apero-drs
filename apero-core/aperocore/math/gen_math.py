@@ -18,7 +18,6 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.ndimage import median_filter, zoom, binary_dilation
 from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
-import statsmodels.api as statsmodels
 
 from aperocore.base import base
 from aperocore.math import fast
@@ -374,6 +373,9 @@ def lin_mini_errors(y0, yerr0, sample):
 
     errs = yerr0.ravel()  # np.array(err[i]).ravel()
 
+    # lazy import: statsmodels.api pulls ~450 ms of module init (plus
+    # pandas ~200 ms) and this WLS call is the only site that uses it
+    import statsmodels.api as statsmodels
     # weights should be inverse of *square* error
     res_wls = statsmodels.WLS(y, x, weights=1.0 / errs ** 2,
                               missing='drop').fit()

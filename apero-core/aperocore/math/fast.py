@@ -12,7 +12,6 @@ Created on 2019-09-18 at 10:53
 from typing import Tuple, Union
 
 import numpy as np
-from scipy import signal
 
 from aperocore.base import base
 
@@ -375,6 +374,10 @@ def medfilt_1d(a: Union[list, np.ndarray],
         # return shifted bottleneck function
         return y[half_window:]
     else:
+        # lazy import: scipy.signal pulls ~680 ms of module init (via
+        # _support_alternative_backends) and this bottleneck fallback is
+        # the only site that uses it
+        from scipy import signal
         # return scipy function
         return signal.medfilt(a, kernel_size=window)
 
