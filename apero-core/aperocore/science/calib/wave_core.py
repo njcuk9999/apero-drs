@@ -135,7 +135,7 @@ def slinky_ewidth(wavegrid: np.ndarray, velocity_shifts: np.ndarray
     space_cov_dv = np.linspace(0, 2, 100) ** 2
     # mask out values that are too small (less than the smallest
     # wavelength step)
-    too_small = np.nanmedian(np.diff(wavegrid)) > space_cov_dv
+    too_small = mp.nanmedian(np.diff(wavegrid)) > space_cov_dv
     space_cov_dv = space_cov_dv[~too_small]
     # compute covariance vs distance
     cov_dv = mp.covariance_vs_distance(wavegrid, velocity_shifts, space_cov_dv)
@@ -148,7 +148,7 @@ def slinky_ewidth(wavegrid: np.ndarray, velocity_shifts: np.ndarray
         # noinspection PyTupleAssignmentBalance
         popt, pcov = curve_fit(mp.gauss_floor,
                                xdata=cov_dv[0], ydata=cov_dv[1],
-                               p0=[np.nanmax(cov_dv[1]), 1.0],
+                               p0=[mp.nanmax(cov_dv[1]), 1.0],
                                bounds=([0, 0], [np.inf, np.inf]))
     except RuntimeError:
         emsg = ('Could not fit Gaussian to covariance data '

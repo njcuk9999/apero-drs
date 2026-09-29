@@ -330,8 +330,8 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     # get the type of data for each fiber
     ref_type = pconst.FIBER_DATA_TYPE(dprtype, ref_fiber)
     # get vectors from eprops
-    uncorr_e2ds = np.array(eprops['E2DS'])
-    e2ds = np.array(eprops['E2DS'])
+    uncorr_e2ds = np.array(eprops['E2DSFF'])
+    e2ds = np.array(eprops['E2DSFF'])
     # ----------------------------------------------------------------------
     # set reason not corrected
     reason = ''
@@ -386,7 +386,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
         eprops.set_sources(keys, func_name)
         # add updated e2ds
         eprops['UNCORR_E2DS'] = uncorr_e2ds
-        eprops['E2DS'] = e2ds
+        eprops['E2DSFF'] = e2ds
         eprops['LEAKCORR'] = np.full_like(e2ds.shape, np.nan)
         # print progress
         WLOG(params, 'info', textentry('40-016-00034', args=[reason]))
@@ -404,7 +404,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
         eprops.set(key, props[key], source=props.sources[key])
     # add updated e2ds
     eprops['UNCORR_E2DS'] = uncorr_e2ds
-    eprops['E2DS'] = e2ds
+    eprops['E2DSFF'] = e2ds
     eprops['LEAKCORR'] = leakcorr
     eprops['LEAK_CORRECTED'] = True
 

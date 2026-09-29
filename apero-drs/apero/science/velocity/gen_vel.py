@@ -1061,7 +1061,7 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         for rv_element in range(len(rv_ccf)):
             valid2[rv_element] = spl_valid(omask_centers * wave_shifts[rv_element])
         # lines must be 99% valid
-        keep = np.nanmin(valid2, axis=0) > 0.99
+        keep = mp.nanmin(valid2, axis=0) > 0.99
         # ------------------------------------------------------------------
         # propagating the extreme wave shifts to see if any lines fall off
         #  the domain that is considered valid for the spline

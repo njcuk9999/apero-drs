@@ -192,7 +192,7 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
     # -------------------------------------------------------------------------
     # Take the median across the stack
     with warnings.catch_warnings(record=True) as _:
-        dark = np.nanmedian(cube_dark, axis=0)
+        dark = mp.nanmedian(cube_dark, axis=0)
     # -------------------------------------------------------------------------
     # get static file
     static_file = recipe.outputs['STATIC_DARK'].newcopy(params=params)
@@ -331,7 +331,7 @@ def create_median_led(params: ParamDict, recipe,
         # Normalize by median value and store in cube
         cube_led[it] = led_corr / mp.nanmedian(led_corr)
     # Take median across all LED frames
-    led = np.nanmedian(cube_led, axis=0)
+    led = mp.nanmedian(cube_led, axis=0)
     # add a header key for satif flat mode
     hdr_kwargs = dict(KW_STATIC_FLAT_SOURCE='LED FILES')
     # -------------------------------------------------------------------------
@@ -498,7 +498,7 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
             # Extract amplifier region
             slice = dark[:, i_amp * amp_size:(i_amp + 1) * amp_size]
             # Normalize by median
-            slice -= np.nanmedian(slice)
+            slice -= mp.nanmedian(slice)
             if i_amp % 2 == 0:
                 # Even amplifiers: no flip
                 slice2 = slice
@@ -625,7 +625,7 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
             cube.append(np.roll(dark0, (ddx, ddy), axis=(0, 1)))
     cube = np.array(cube).astype(float)
     # get the median value of each pixel and its neighbours
-    med_neighbours = np.nanmedian(cube, axis=0)
+    med_neighbours = mp.nanmedian(cube, axis=0)
 
     # Identify hot pixels: those with dark current above threshold and
     #    not NaN in the flat

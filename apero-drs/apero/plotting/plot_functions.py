@@ -643,7 +643,7 @@ def get_arr_limits(*arrays: np.ndarray, plow: float = 1,
 
     for array in arrays:
 
-        alow, ahigh = np.nanpercentile(array, [plow, phigh])
+        alow, ahigh = mp.nanpercentile(array, [plow, phigh])
 
         if alow < low:
             low = alow
@@ -1784,7 +1784,7 @@ def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
     plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    e2ds = kwargs['eprops']['E2DS']
+    e2ds = kwargs['eprops']['E2DSFF']
     blaze = kwargs['eprops']['BLAZE']
     flat = kwargs['eprops']['FLAT']
     fiber = kwargs['fiber']
@@ -1899,7 +1899,7 @@ def plot_flat_response_order(plotter: Plotter, graph: Graph,
         y = flat_response[order_num]
         err = flat_response_err[order_num]
         # normalise by median, ignoring NaNs
-        med = np.nanmedian(y)
+        med = mp.nanmedian(y)
         if med == 0 or not np.isfinite(med):
             med = 1.0
         y_norm = y / med
@@ -1924,7 +1924,7 @@ def plot_flat_response_order(plotter: Plotter, graph: Graph,
             _plot_response_profile(frames[0], xpix, y_norm, err_norm,
                                    ncols, panel='d')
             # (e) 120-column zoom centred on the order midpoint
-            mid = int(np.nanmedian(xpix[np.isfinite(y_norm)]))
+            mid = int(mp.nanmedian(xpix[np.isfinite(y_norm)]))
             lo = max(mid - zoom_half, 0)
             hi = min(mid + zoom_half, ncols)
             zoom = slice(lo, hi)
@@ -1971,8 +1971,8 @@ def _plot_response_profile(frame, xpix: np.ndarray,
     # axis limits: clip y to a sensible range around 1
     yfinite = y_norm[np.isfinite(y_norm)]
     if yfinite.size:
-        ylo = max(0, np.nanpercentile(yfinite, 0.5) - 0.05)
-        yhi = np.nanpercentile(yfinite, 99.5) + 0.05
+        ylo = max(0, mp.nanpercentile(yfinite, 0.5) - 0.05)
+        yhi = mp.nanpercentile(yfinite, 99.5) + 0.05
     else:
         ylo, yhi = 0.0, 1.5
     frame.set(xlabel='detector column', ylabel='response / median',
@@ -2186,8 +2186,7 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
     plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    e2ds = kwargs['eprops']['E2DS']
-    e2dsff = kwargs['eprops']['E2DSFF']
+    e2ds = kwargs['eprops']['E2DSFF']
     blaze = kwargs['eprops']['BLAZE']
     wavemap = kwargs['wave']
     fiber = kwargs['fiber']
@@ -2198,7 +2197,6 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
     # get blaze corrected values
     with warnings.catch_warnings(record=True) as _:
         e2dsb = e2ds / blaze
-        e2dsffb = e2dsff / blaze
     # ------------------------------------------------------------------
     # get order generator
     if order is None:
@@ -2214,15 +2212,15 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
         fig, frames = graph.set_figure(plotter, ncols=1, nrows=2, sharex=True)
         # get normalised values
         # e2dsn = e2ds[order_num] / mp.nanmedian(e2ds[order_num])
-        e2dsffn = e2dsff[order_num] / mp.nanmedian(e2ds[order_num])
+        e2dsn = e2ds[order_num] / mp.nanmedian(e2ds[order_num])
         blazen = blaze[order_num] / mp.nanmedian(blaze[order_num])
         # plot fits
         # frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
-        frames[0].plot(wavemap[order_num], e2dsffn, label='e2dsff')
+        frames[0].plot(wavemap[order_num], e2dsn, label='e2dsff')
         frames[0].plot(wavemap[order_num], blazen, label='blaze')
         # plot blaze corrected
         frames[1].plot(wavemap[order_num], e2dsb[order_num], label='e2ds')
-        frames[1].plot(wavemap[order_num], e2dsffb[order_num], label='e2dsff')
+        frames[1].plot(wavemap[order_num], e2ds[order_num], label='e2ds')
         # add legends
         frames[0].legend(loc=0)
         frames[1].legend(loc=0)
@@ -5776,7 +5774,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         pargs = [shortname, len(s_start)]
         print('\tAdding recipe {0} [{1} entries]'.format(*pargs))
 
-        smed = np.median([s_start, s_end], axis=0)
+        smed = mp.median([s_start, s_end], axis=0)
         # smin = smed - s_start
         # smax = s_end - smed
         counts = counter + np.linspace(0, 1, len(smed) + 2)[1:-1] - 0.5
@@ -6072,9 +6070,9 @@ def plot_static_wave_final_plot(plotter: Plotter, graph: Graph,
         mean_wave = np.mean(final_wave_sol[order_num])
         # get the mean log flux for HC and FP
         hc_ord = hc_image[order_num]
-        hc_mean_log_flux = np.log10(np.nanmedian(hc_ord[hc_ord > 0]))
+        hc_mean_log_flux = np.log10(mp.nanmedian(hc_ord[hc_ord > 0]))
         fp_ord = fp_image[order_num]
-        fp_mean_log_flux = np.log10(np.nanmedian(fp_ord[fp_ord > 0]))
+        fp_mean_log_flux = np.log10(mp.nanmedian(fp_ord[fp_ord > 0]))
         # colour based on odd/even
         if order_num % 2 == 0:
             color = 'orange'

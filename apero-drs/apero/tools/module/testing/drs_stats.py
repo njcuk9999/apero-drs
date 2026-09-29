@@ -1487,7 +1487,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         else:
             s_start = np.array(starttime[mask])
             s_end = np.array(endtime[mask])
-            smed = np.median(time0[mask])
+            smed = mp.median(time0[mask])
             r_start = np.array(ltable['RAM_USAGE_START'][mask])
             r_end = np.array(ltable['RAM_USAGE_END'][mask])
         smin = smed - np.min(s_start)
@@ -1585,16 +1585,16 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         sprop.add(outputs, smed + smax, func_name)
         # set ram start min
         sprop = StatProperty(f'{shortname}_RAMSTART_MIN', 'varying')
-        sprop.add(outputs, np.nanmin(r_start), func_name)
+        sprop.add(outputs, mp.nanmin(r_start), func_name)
         # set ram start max
         sprop = StatProperty(f'{shortname}_RAMSTART_MAX', 'varying')
-        sprop.add(outputs, np.nanmax(r_start), func_name)
+        sprop.add(outputs, mp.nanmax(r_start), func_name)
         # set ram end min
         sprop = StatProperty(f'{shortname}_RAMEND_MIN', 'varying')
-        sprop.add(outputs, np.nanmin(r_end), func_name)
+        sprop.add(outputs, mp.nanmin(r_end), func_name)
         # set ram end max
         sprop = StatProperty(f'{shortname}_RAMEND_MAX', 'varying')
-        sprop.add(outputs, np.nanmax(r_end), func_name)
+        sprop.add(outputs, mp.nanmax(r_end), func_name)
 
     # return outputs
     return outputs

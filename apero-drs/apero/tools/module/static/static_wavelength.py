@@ -175,7 +175,7 @@ def generate_hc_catagloue(params: ParamDict, recipe,
         # find all lines within our velocity window
         good = np.abs(dv) < hc_window
         # if the flux of this peak is the max in itself velocity window keep it
-        if flux[it] == np.nanmax(flux[good]):
+        if flux[it] == mp.nanmax(flux[good]):
             keep[it] = True
     # cut down out hc_table
     hc_table = hc_table[keep]
@@ -377,7 +377,7 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
         # deal with initial cavity fit (for first order)
         if fit_cavity is None:
             # rough guess for the cavity fit 
-            fit_cavity_ord = [np.nanmedian(fp_wave * fp_int)]
+            fit_cavity_ord = [mp.nanmedian(fp_wave * fp_int)]
             # update fp orders storage
             all_fp_wave += list(fp_wave)            
             all_fp_int += list(fp_int)
@@ -420,8 +420,8 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
                                                   all_fp_wave_arr * all_fp_int_arr,
                                                   cavity_deg, cavity_sigma)
             # update the order center and cavity for this order
-            ord_wave_center[it] = np.median(fp_wave)
-            ord_cavity_center[it] = np.median(fp_wave * fp_int)
+            ord_wave_center[it] = mp.median(fp_wave)
+            ord_cavity_center[it] = mp.median(fp_wave * fp_int)
     # -------------------------------------------------------------------------
     # fill in missing order values and robustly  filter orders for cavity fit
     # -------------------------------------------------------------------------
@@ -652,7 +652,7 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
                 continue
             # compute a normalized metric for plotting and selection
             with warnings.catch_warnings(record=True) as _:
-                nvalid2[it] = nvalid[it] - np.nanmedian(nvalid[it - 11:it])
+                nvalid2[it] = nvalid[it] - mp.nanmedian(nvalid[it - 11:it])
 
             # if this guess is promising, refine the alignment
             if (nvalid2[it] == 0) or np.isnan(nvalid2[it]):
@@ -730,17 +730,17 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         # report the max nvalid
         with warnings.catch_warnings(record=True) as _:
             msg = 'Order {0}: Nvalid[{1}]={2}'
-            margs = [order_num, np.nanargmax(nvalid2), np.nanmax(nvalid2)]
+            margs = [order_num, mp.nanargmax(nvalid2), mp.nanmax(nvalid2)]
             WLOG(params, '', msg.format(*margs))
         # ---------------------------------------------------------------------
         # deal with no solution
         with warnings.catch_warnings(record=True) as _:
-            cond1 = (iteration == 0) and (np.nanmax(nvalid2) < nsig_accept_fp)
+            cond1 = (iteration == 0) and (mp.nanmax(nvalid2) < nsig_accept_fp)
             cond2 = len(best_wave) == 0
             # if we are dealing with iteration 0 and we have no peaks above
             #  the acceptance threshold or we have no best wave solution
             #  then skip this order
-            if (iteration == 0) and (np.nanmax(nvalid2) < nsig_accept_fp):
+            if (iteration == 0) and (mp.nanmax(nvalid2) < nsig_accept_fp):
                 msg = ('Order {0}: No valid FP solution found '
                        '(iter=0 and Max(Nvalid)<{1}) - skipping order')
                 margs = [order_num, nsig_accept_fp]

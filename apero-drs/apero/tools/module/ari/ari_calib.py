@@ -25,6 +25,7 @@ from apero.tools.module.ari import ari_pages
 from apero.tools.module.ari import ari_plot
 from apero.tools.module.documentation import drs_markdown
 from apero.utils import drs_recipe
+from aperocore import math as mp
 from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
@@ -431,7 +432,7 @@ def get_wave_cent_x(params: ParamDict, calib_data: Dict[str, np.ndarray]):
         WLOG(params, 'warning', 'No WAVE_NIGHT files. Skipping WAVE_CENT_X')
         return calib_data
     # get the nbo
-    nbo = int(np.nanmean(calib_data['KW_EXT_NBO']))
+    nbo = int(mp.nanmean(calib_data['KW_EXT_NBO']))
     # loop around
     for it in tqdm(range(len(calib_data['BASENAME']))):
         # only do the rest for wave night files

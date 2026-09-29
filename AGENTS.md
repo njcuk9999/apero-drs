@@ -12,6 +12,21 @@
 - `apero-ri/apero_ri` is the Flask reduction interface. It may use `aperocore`
   and `apero`, but interface-specific code belongs in the RI package.
 
+## Changing a function's inputs or outputs
+
+- When you change a function's parameters (added/removed/reordered/retyped)
+  or its return type/shape (e.g. a tuple becomes a `ParamDict`, or the keys
+  of a returned dict change), grep the whole monorepo (`apero-core`,
+  `apero-drs`, `apero-ri`, and `tools/`) for every call site and update each
+  one in the same change. Do not update only the call sites you happen to be
+  working on. A `bout['KEY']` style access on what used to be a tuple return
+  will not raise at import time - it silently reassigns whatever the caller
+  unpacks it into, so an unrefactored caller is a correctness bug, not a
+  crash you can catch with a quick smoke test.
+- After changing a signature, search for the old call pattern (not just the
+  function name) to catch callers that unpack a return value positionally,
+  since those are the ones most likely to break silently.
+
 ## `aperocore.science` functions
 
 - Functions in `apero-core/aperocore/science/*_core.py` (e.g. `wave_core.py`,
@@ -36,6 +51,19 @@
   `x` is already an array, which can cause hard-to-trace mutations of the
   caller's data. Use `np.array(x)` (which always copies) unless you have
   explicitly profiled the allocation and determined that a view is safe.
+- Import `aperocore.math` as `from aperocore import math as mp` and use its
+  wrapped functions instead of the numpy equivalent whenever one exists,
+  e.g. `mp.nanmedian`, `mp.nanpercentile`, `mp.nanmean`, `mp.nanstd`,
+  `mp.nansum`, `mp.nanmax`, `mp.nanmin`, `mp.nanargmax`, `mp.nanargmin`,
+  `mp.median` in place of `np.nanmedian`, `np.nanpercentile`, `np.nanmean`,
+  `np.nanstd`, `np.nansum`, `np.nanmax`, `np.nanmin`, `np.nanargmax`,
+  `np.nanargmin`, `np.median`. These route through `bottleneck` when
+  available for speed, with numpy as the fallback. Exception: if the call
+  needs a tuple `axis` (e.g. `axis=(1, 3)`), keep the raw `np.*` call —
+  `bottleneck`'s implementations only accept an int or `None` axis, so
+  `mp.*` would break at runtime with `bottleneck` installed. This rule does
+  not apply inside `apero-core/aperocore/math/*` itself, where the raw
+  `np.*` calls are the actual implementation/fallback.
 
 ## APERO recipe structure: top-level principles
 

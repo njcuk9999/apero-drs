@@ -411,7 +411,8 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # load the blaze file
             bout = flat_blaze.get_blaze(params, recipe, expfile.header,
                                         expfile.fiber, database=calibdb)
-            blazefile, blazetime, blaze0 = bout
+            blazefile, blazetime, blaze0 = (bout['BLAZEFILE'],
+                                            bout['BLAZETIME'], bout['BLAZE'])
             # get the blaze header
             blazehdr = drs_fits.read_header(params, blazefile)
             # -----------------------------------------------------------------
@@ -501,7 +502,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # load the blaze file
             bout = flat_blaze.get_blaze(params, recipe, infile.header, fiber,
                                         database=calibdb)
-            _, _, blaze = bout
+            blaze = bout['BLAZE']
             # get normalized blaze data
             blaze = blaze / mp.nanmax(blaze)
             # -----------------------------------------------------------------

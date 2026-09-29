@@ -18,6 +18,7 @@ from aperocore.core import drs_log
 
 from apero.base import base as apero_base
 from apero.utils import drs_startup
+from apero.tools.module.documentation import ari_docs
 from apero.tools.module.documentation import drs_documentation
 from apero.instruments import select
 
@@ -69,6 +70,9 @@ def __main__(recipe, params):
 
     # get instruments parameter
     instruments = params['INPUTS']['INSTRUMENTS']
+    # --instruments is a List[str] so it may arrive as a list or a string
+    if isinstance(instruments, (list, tuple)):
+        instruments = ','.join([str(item) for item in instruments])
     # deal with instruments options
     if drs_text.null_text(instruments, ['None', 'Null', '']):
         instruments = [params['OBS.INSTRUMENT']]
@@ -79,6 +83,22 @@ def __main__(recipe, params):
 
     # add default to instruments
     instruments = ['default'] + instruments
+    # -------------------------------------------------------------------------
+    # Legacy rst description migration (one-off, safe to re-run)
+    # -------------------------------------------------------------------------
+    if params['INPUTS']['MIGRATE_DESC']:
+        ari_docs.migrate_descriptions(params)
+    # -------------------------------------------------------------------------
+    # APERO RI markdown documentation
+    # -------------------------------------------------------------------------
+    if params['INPUTS']['ARI']:
+        # resolve the documentation version directory to write into
+        docversion = params['INPUTS']['DOCVERSION']
+        if drs_text.null_text(docversion, ['None', 'Null', '']):
+            docversion = ari_docs.default_docversion()
+        # the ari docs generator handles the default instrument itself
+        ari_args = [params, recipe, instruments, docversion]
+        ari_docs.compile_ari_docs(*ari_args)
     # -------------------------------------------------------------------------
     # get inputs
     run_all = params['INPUTS']['ALL']

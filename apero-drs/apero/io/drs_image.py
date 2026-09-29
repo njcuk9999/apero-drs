@@ -400,7 +400,7 @@ def clean_hotpix(image: np.ndarray, badpix: np.ndarray) -> np.ndarray:
             image1[x[it], y[it]] = 2 * m1 - m2
         else:
 
-            image1[x[it], y[it]] = np.nanmean(box[keep])
+            image1[x[it], y[it]] = mp.nanmean(box[keep])
 
         # else:
         #     # fitting a 2D 2nd order polynomial surface. As the xx=0, yy=0

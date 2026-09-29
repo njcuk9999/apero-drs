@@ -9,6 +9,9 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
       crossorigin="anonymous" referrerpolicy="no-referrer"
       disabled />
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script>
 (function () {
     var t = document.documentElement.getAttribute('data-theme');
@@ -51,4 +54,36 @@ document.querySelectorAll('.ari-doc-content pre code').forEach(function(el) {
     }
 });
 </script>
+
+<!-- Mermaid flow diagrams (emitted as <div class="mermaid"> by docs.py) -->
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';
+// Match the diagram theme to the active ARI colour scheme.
+var docTheme = document.documentElement.getAttribute('data-theme');
+mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: 'strict',
+    theme: (docTheme === 'dark') ? 'dark' : 'default'
+});
+</script>
+
+<!-- KaTeX maths rendering for algorithm pages -->
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"
+        onload="renderMathInElement(document.querySelector('.ari-doc-content'), {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea',
+                          'pre', 'code', 'option'],
+            ignoredClasses: ['mermaid'],
+            throwOnError: false
+        });"></script>
 {% endblock %}

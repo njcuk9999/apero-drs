@@ -203,8 +203,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # extract the hc file and fp file
         # -----------------------------------------------------------------
         # set up parameters
+        force_ext = params['INPUTS'].get(
+            'FORCEEXT', params['CAL.WAVE.GEN.ALWAYS_EXTRACT'])
         eargs = [params, recipe, EXTRACT_NAME, hcfile, fpfile]
-        ekwargs = dict(wavefile=iwprops['WAVEFILE'], logger=log1)
+        ekwargs = dict(wavefile=iwprops['WAVEFILE'], logger=log1,
+                       always_extract=force_ext)
         # run extraction
         hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs,
                                                                  **ekwargs)
@@ -225,7 +228,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         # load the blaze file for this fiber
         bout = flat_blaze.get_blaze(params, recipe, hcheader, ref_fiber)
-        blaze_file, blaze_time, blaze = bout
+        blaze_file, blaze_time, blaze = (bout['BLAZEFILE'],
+                                         bout['BLAZETIME'], bout['BLAZE'])
 
         # =====================================================================
         # Construct HC + FP line reference files for ref_fiber

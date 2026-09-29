@@ -1060,7 +1060,7 @@ class AriObject:
         #   be different lengths)
         matched = False
         # get the median snr
-        med_snr = np.nanmedian(ext_h)
+        med_snr = mp.nanmedian(ext_h)
         n_ext_h = abs(ext_h - med_snr)
         # sort all snr by closest to the median
         all_snr_pos = list(np.argsort(n_ext_h))
@@ -1195,7 +1195,7 @@ class AriObject:
                 lbl_bervs.append(float(lbl_rv_hdr['BERV']))
             # calculate the vsys
             dv = np.array(lbl_systvel) - np.array(lbl_bervs) * 1000
-            spec_props['VSYS'] = np.nanmedian(dv)
+            spec_props['VSYS'] = mp.nanmedian(dv)
         else:
             spec_props['VSYS'] = None
         # ----------------------------------------------------------------
@@ -1598,7 +1598,7 @@ class AriObject:
             # get the combined CCF for this file
             ccf_row = table_row['CCF_STACK']
             # normalize ccf
-            ccf_row = ccf_row / np.nanmedian(ccf_row)
+            ccf_row = ccf_row / mp.nanmedian(ccf_row)
             # push into vector
             all_ccf[row] = ccf_row
         # -----------------------------------------------------------------
@@ -1609,15 +1609,15 @@ class AriObject:
         upper_sig2 = 100 * (0.5 + mp.normal_fraction(2) / 2)
         # -----------------------------------------------------------------
         # y1 1sig is the 15th percentile of all ccfs
-        ccf_props['y1_1sig'] = np.nanpercentile(all_ccf, lower_sig1, axis=0)
+        ccf_props['y1_1sig'] = mp.nanpercentile(all_ccf, lower_sig1, axis=0)
         # y2 1sig is the 84th percentile of all ccfs
-        ccf_props['y2_1sig'] = np.nanpercentile(all_ccf, upper_sig1, axis=0)
+        ccf_props['y2_1sig'] = mp.nanpercentile(all_ccf, upper_sig1, axis=0)
         # y1 1sig is the 15th percentile of all ccfs
-        ccf_props['y1_2sig'] = np.nanpercentile(all_ccf, lower_sig2, axis=0)
+        ccf_props['y1_2sig'] = mp.nanpercentile(all_ccf, lower_sig2, axis=0)
         # y2 1sig is the 84th percentile of all ccfs
-        ccf_props['y2_2sig'] = np.nanpercentile(all_ccf, upper_sig2, axis=0)
+        ccf_props['y2_2sig'] = mp.nanpercentile(all_ccf, upper_sig2, axis=0)
         # med ccf is the median ccf (50th percentile)
-        ccf_props['med_ccf'] = np.nanmedian(all_ccf, axis=0)
+        ccf_props['med_ccf'] = mp.nanmedian(all_ccf, axis=0)
         # delete all_ccf to save memeory
         del all_ccf
         # fit the median ccf
@@ -2268,8 +2268,8 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     # Calculate stats
     # --------------------------------------------------------------------------
     # average SNR
-    med_snr_y = np.nanmedian(ext_y)
-    med_snr_h = np.nanmedian(ext_h)
+    med_snr_y = mp.nanmedian(ext_y)
+    med_snr_h = mp.nanmedian(ext_h)
     # RMS of SNR
     rms_snr_y = mp.estimate_sigma(ext_y)
     rms_snr_h = mp.estimate_sigma(ext_h)
@@ -2511,14 +2511,14 @@ def lbl_stats_table(lbl_props: Dict[str, Any], stat_path: str, title: str):
     # compute the stats
     # --------------------------------------------------------------------------
     # get the 25, 50 and 75 percentile of the velocity uncertainty
-    p_sigma = np.nanpercentile(svrad, [25, 50, 75])
+    p_sigma = mp.nanpercentile(svrad, [25, 50, 75])
     # get the 25, 50 and 75 percentile of the velocity
-    v_sigma = np.nanpercentile(abs(vrad - np.nanmedian(vrad)),
+    v_sigma = mp.nanpercentile(abs(vrad - mp.nanmedian(vrad)),
                                [25, 50, 75])
     # calculate the number of nights
     n_nights = len(np.unique(np.floor(rjd)))
     # calculate the systemetic velocity
-    sys_vel = np.nanmedian(vrad)
+    sys_vel = mp.nanmedian(vrad)
     # --------------------------------------------------------------------------
     # construct the stats table
     # --------------------------------------------------------------------------
@@ -2663,11 +2663,11 @@ def ccf_stats_table(ccf_props: Dict[str, Any], stat_path: str, title: str):
     # compute the stats
     # --------------------------------------------------------------------------
     # get the systemic velocity
-    sys_vel = np.nanmedian(vrad)
+    sys_vel = mp.nanmedian(vrad)
     # get the error in systemic velocity
     err_sys_vel = mp.estimate_sigma(vrad)
     # get the fwhm
-    ccf_fwhm = np.nanmedian(fwhm)
+    ccf_fwhm = mp.nanmedian(fwhm)
     # get the error on fwhm
     err_ccf_fwhm = mp.estimate_sigma(fwhm)
     # --------------------------------------------------------------------------

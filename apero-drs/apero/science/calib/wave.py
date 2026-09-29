@@ -1666,7 +1666,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     diff_hc = np.zeros_like(hcl_wave_meas)
     hcsigma = np.zeros_like(hcl_wave_meas)
     # get the mean wavelength of the hc reference wave solution
-    hc_wave_ref_mean = np.nanmean(hcl_wave_ref)
+    hc_wave_ref_mean = mp.nanmean(hcl_wave_ref)
     # -------------------------------------------------------------------------
     # we change the achromatic cavity length term to force HC peaks to have a
     #    zero velocity error.
@@ -2339,7 +2339,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # load the blaze file for this fiber
     bout = flat_blaze.get_blaze(params, recipe, e2dsff_file.get_header(), fiber,
                                 database=calibdbm)
-    blaze_file, blaze_time, blaze = bout
+    blaze_file, blaze_time, blaze = (bout['BLAZEFILE'], bout['BLAZETIME'],
+                                     bout['BLAZE'])
     # calculate s1d file
     sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
     swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
@@ -2995,12 +2996,12 @@ def get_echelle_orders(params: ParamDict, wprops: ParamDict) -> ParamDict:
     # are slightly off integers due to non-perfect wave solution
     echelle_orders = np.round(echelle_orders).astype(int)
     # correction for "weird" orders
-    sign = np.median(np.sign(np.gradient(echelle_orders)))
+    sign = mp.median(np.sign(np.gradient(echelle_orders)))
     # get the deviation
     dev = sign * np.arange(len(echelle_orders))
     # recalculate the echelle orders using the median (assuming most orders
     #   are good)
-    echelle_orders = np.median(echelle_orders - dev) + dev
+    echelle_orders = mp.median(echelle_orders - dev) + dev
     # are slightly off integers due to non-perfect wave solution
     echelle_orders = np.round(echelle_orders).astype(int)
     # -------------------------------------------------------------------------
@@ -3308,9 +3309,9 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wave_vals.append(wprops['WAVEMAP'][:, cent_x])
     # add min wave and max wave
     wave_cols.append('WAVE_MIN')
-    wave_vals.append(np.nanmin(wprops['WAVEMAP'], axis=1))
+    wave_vals.append(mp.nanmin(wprops['WAVEMAP'], axis=1))
     wave_cols.append('WAVE_MAX')
-    wave_vals.append(np.nanmax(wprops['WAVEMAP'], axis=1))
+    wave_vals.append(mp.nanmax(wprops['WAVEMAP'], axis=1))
 
     # convert to table
     wave_table = drs_table.make_table(columns=wave_cols, values=wave_vals)

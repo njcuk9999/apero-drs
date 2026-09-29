@@ -184,7 +184,7 @@ def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
         flat_response_outputs[fiber] = frprops['FLAT_RESPONSE']
     WLOG(params, '', 'Flat extraction complete')
     # Return both e2ds and flat-response products in a combined dict.
-    return {'e2ds': flat_outputs, 'flat_response': flat_response_outputs}
+    return {'e2dsff': flat_outputs, 'flat_response': flat_response_outputs}
 
 
 def extract_leak_files(params, recipe, extname, darkfpfile, logger,

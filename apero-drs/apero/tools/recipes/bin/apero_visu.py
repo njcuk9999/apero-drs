@@ -98,7 +98,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # stop after this
         return locals()
     # deal with options
-    if mode == 'e2ds':
+    if mode == 'e2dsff':
         # create path for tmp py file
         path = visu_core.get_bokeh_plot_dir(params, 'e2ds_plot.py')
         # get bokeh plotter instance

@@ -163,7 +163,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         flat_outputs = extractother.extract_flat_files(*eargs,
                                                        always_extract=force_ext)
         # per-fiber extracted spectra
-        flat_files = flat_outputs['e2ds']
+        flat_files = flat_outputs['e2dsff']
         # per-fiber flat-response profiles (used by the blaze step below)
         flat_response_files = flat_outputs['flat_response']
 

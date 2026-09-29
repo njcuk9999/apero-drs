@@ -158,7 +158,8 @@ def get_blaze_props(params, recipe, header, fiber) -> ParamDict:
     func_name = display_func('get_blaze_props', __NAME__)
     # load the blaze file for this fiber
     bout = flat_blaze.get_blaze(params, recipe, header, fiber)
-    blaze_file, blaze_time, blaze = bout
+    blaze_file, blaze_time, blaze = (bout['BLAZEFILE'], bout['BLAZETIME'],
+                                     bout['BLAZE'])
     # ----------------------------------------------------------------------
     # parameter dictionary
     nprops = ParamDict()
@@ -185,7 +186,8 @@ def normalise_by_pblaze(params, recipe, image, header, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
     bout = flat_blaze.get_blaze(params, recipe, header, fiber)
-    blaze_file, blaze_time, blaze = bout
+    blaze_file, blaze_time, blaze = (bout['BLAZEFILE'], bout['BLAZETIME'],
+                                     bout['BLAZE'])
     # delegate numerical work to the profile-independent core module
     image1, blaze_norm = telluric_core.normalise_by_pblaze(
         image1, blaze, blaze_p, cut_blaze_norm)
@@ -867,7 +869,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # to avoid suspiciously small values we set the minimum to half the
         # median of valid log_spec_tmp_lowpass values
         stlpnanmask = np.isfinite(spectrum_tmp_lowpass)
-        min_sigma = np.nanmedian(running_sigma[stlpnanmask]) / 2
+        min_sigma = mp.nanmedian(running_sigma[stlpnanmask]) / 2
         running_sigma[running_sigma < min_sigma] = min_sigma
 
         # fitting the slope of residual amplitude of water
@@ -1099,11 +1101,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     #     No trimming done on the wave grid
     abso_e2ds = np.zeros_like(wave_e2ds)
     for order_num in range(wave_e2ds.shape[0]):
-        owavestep = np.nanmedian(np.gradient(wave_e2ds[order_num]))
+        owavestep = mp.nanmedian(np.gradient(wave_e2ds[order_num]))
         # wave start and end need to be extended a little bit to avoid
         #     edge effects
-        owavestart = np.nanmin(wave_e2ds[order_num]) - 10 * owavestep
-        owaveend = np.nanmax(wave_e2ds[order_num]) + 10 * owavestep
+        owavestart = mp.nanmin(wave_e2ds[order_num]) - 10 * owavestep
+        owaveend = mp.nanmax(wave_e2ds[order_num]) + 10 * owavestep
 
         abso_tmp = get_abso_expo(wave_e2ds[order_num], expo_others, expo_water,
                                  spl_others, spl_water,
@@ -1125,7 +1127,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     sky_cond2 = template_props['HAS_TEMPLATE']
     if sky_cond1 and sky_cond2:
         # load the blaze file for this fiber
-        _, _, blaze = flat_blaze.get_blaze(params, recipe, header, fiber)
+        blaze = flat_blaze.get_blaze(params, recipe, header, fiber)['BLAZE']
         # make the forward model
         fmodel = template_props['TEMP_S2D'] * abso_e2ds * blaze
         ratio_fmodel = image_e2ds_ini / fmodel
@@ -1139,7 +1141,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # The residuals may be under or over corrections. This is why
             # we allow for positive or negative amplitudes of line subtraction
             # within the correct_sky_no_ref function.
-            fmodel_fac = np.nanmedian(ratio_fmodel[order_num][blazepeak])
+            fmodel_fac = mp.nanmedian(ratio_fmodel[order_num][blazepeak])
             fmodel[order_num] = fmodel[order_num] *  fmodel_fac
         # correct sky using model and B fiber
         scprops = sky_corr.correct_sky_no_ref(params, recipe, infile,
@@ -1569,7 +1571,7 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     # -------------------------------------------------------------------------
     # get the width of the scanning of the kernel. Default is 3 FWHM
     scale1 = np.max(res_fwhm)
-    scale2 = np.median(np.gradient(wavemap) / wavemap) * speed_of_light
+    scale2 = mp.median(np.gradient(wavemap) / wavemap) * speed_of_light
     range_scan = 20 * (scale1 / scale2)
     # round scan range to pixel level
     range_scan = int(np.ceil(range_scan))
@@ -1671,7 +1673,7 @@ def finite_res_correction(params: ParamDict, template_props: ParamDict,
     s1d_deconv = template_props['TEMP_S1D_TABLE']['deconv']
     # get start and end of wavelength gvrid. We add 10 wavelength steps in
     #   either direction to avoid numerical problems
-    s1d_wave_step = np.nanmedian(np.gradient(s1d_wave))
+    s1d_wave_step = mp.nanmedian(np.gradient(s1d_wave))
     s1d_wavestart = np.min(s1d_wave) - 10 * s1d_wave_step
     s1d_waveend = np.max(s1d_wave) + 10 * s1d_wave_step
     # get the absorption spectrum prior to convolution
@@ -1802,11 +1804,11 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     #     No trimming done on the wave grid
     abso_e2ds = np.zeros_like(wavemap)
     for order_num in range(wavemap.shape[0]):
-        owavestep = np.nanmedian(np.gradient(wavemap[order_num]))
+        owavestep = mp.nanmedian(np.gradient(wavemap[order_num]))
         # wave start and end need to be extended a little bit to avoid
         #     edge effects
-        owavestart = np.nanmin(wavemap[order_num]) - 10 * owavestep
-        owaveend = np.nanmax(wavemap[order_num]) + 10 * owavestep
+        owavestart = mp.nanmin(wavemap[order_num]) - 10 * owavestep
+        owaveend = mp.nanmax(wavemap[order_num]) + 10 * owavestep
 
         abso_tmp = get_abso_expo(wavemap[order_num], expo_others, expo_water,
                                  spl_others, spl_water,

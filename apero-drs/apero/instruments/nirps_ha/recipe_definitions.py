@@ -626,6 +626,11 @@ apero_leak_ref.set_kwarg(name='--filetype', dtype='List[str]',
 apero_leak_ref.set_kwarg(**add_db)
 apero_leak_ref.set_kwarg(**plot)
 apero_leak_ref.set_kwarg(**no_in_qc)
+apero_leak_ref.set_kwarg(name='--forceext', dtype='bool',
+                         default_ref='CAL.LEAK.ALWAYS_EXTRACT',
+                         helpstr='If True, always re-extract the leak '
+                                 'reference even if the output already '
+                                 'exists (overrides CAL.LEAK.ALWAYS_EXTRACT)')
 apero_leak_ref.group_func = grouping.no_group
 apero_leak_ref.group_column = None
 # add to recipe

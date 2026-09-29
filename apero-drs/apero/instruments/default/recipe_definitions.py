@@ -286,6 +286,20 @@ remake_doc.set_kwarg(name='--recipeseq', dtype='switch',
 remake_doc.set_kwarg(name='--mode', dtype='options', default='both',
                      options=['both', 'html', 'latex'],
                      helpstr=textentry('REMAKE_MODE_HELP'))
+remake_doc.set_kwarg(name='--ari', dtype='switch',
+                     helpstr='Generate the apero-ri markdown documentation '
+                             'tree (documentation/ari/{docversion}/home/docs/'
+                             'apero) from the recipe and file definitions')
+remake_doc.set_kwarg(name='--docversion', dtype=str, default='None',
+                     helpstr='[STRING] Documentation version directory to '
+                             'write to with --ari (e.g. 0.8.XXX). Defaults '
+                             'to the major version of the running APERO.')
+remake_doc.set_kwarg(name='--migrate_desc', dtype='switch',
+                     helpstr='One-off migration of the legacy rst '
+                             'descriptions in documentation/working/resources '
+                             'to documentation/descriptions (markdown). '
+                             'Existing markdown fragments are never '
+                             'overwritten.')
 remake_doc.description_file = 'apero_documentation.rst'
 
 # -----------------------------------------------------------------------------

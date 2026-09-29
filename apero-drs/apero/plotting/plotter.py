@@ -182,21 +182,35 @@ class Plotter:
 
     def __call__(self, name: str, func: Union[Any, None] = None,
                  fiber: Union[str, None] = None,
-                 _force: bool = False, **kwargs):
+                 _force: bool = False,
+                 force_plot: bool = False,
+                 **kwargs):
         """
         Function used to plot a specific graph (name needs to be defined in
         plot functions), keyword arguments are passed to plotting function
 
         :param name: string, the name of the graph to plot
         :param func: if defined this is the function kwargs are passed to
+        :param fiber: str or None, fiber name (added to kwargs)
+        :param _force: bool, internal force flag; bypasses all plot-switch
+                       and plotoption guards and forces an interactive
+                       matplotlib backend
+        :param force_plot: bool, public alias for _force; set True from call
+                           sites to force the plot regardless of DEBUG.PLOT.*
+                           switches or the global plot mode
         :param kwargs: keyword arguments passed to graph function
 
         :type name: str
         :type func: function
+        :type fiber: str or None
+        :type _force: bool
+        :type force_plot: bool
 
         :return: Returns 1 if plot or 0 elsewise
         :rtype: int
         """
+        # force_plot is the public alias; either flag activates forced mode
+        _force = _force or force_plot
         # ------------------------------------------------------------------
         # set self.plot_switches via _get_plot_switches()
         self._get_plot_switches()

@@ -81,18 +81,18 @@ def _ribbon_running_pct(ribbon: np.ndarray, hw: int, win: int,
                 mid_out[clean] = np.percentile(wins[clean], percent,
                                                axis=1)
             if nan_wins.any():
-                mid_out[nan_wins] = np.nanpercentile(wins[nan_wins],
+                mid_out[nan_wins] = mp.nanpercentile(wins[nan_wins],
                                                     percent, axis=1)
             out[hw:hw + nmid] = mid_out
         # left edge: y in [0, hw-1] uses ribbon[0 : y + hw]
         for y_it in range(min(hw, ny)):
             end = min(ny - 1, y_it + hw)
-            out[y_it] = np.nanpercentile(ribbon[0:end], percent)
+            out[y_it] = mp.nanpercentile(ribbon[0:end], percent)
         # right edge: y in [ny-hw, ny-1] uses ribbon[y - hw : ny - 1]
         for y_it in range(max(hw, ny - hw), ny):
             start = max(0, y_it - hw)
             end = min(ny - 1, y_it + hw)
-            out[y_it] = np.nanpercentile(ribbon[start:end], percent)
+            out[y_it] = mp.nanpercentile(ribbon[start:end], percent)
     # bottleneck's nanpercentile fallback returns a scalar; return array
     return out
 

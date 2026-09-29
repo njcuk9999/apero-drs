@@ -882,7 +882,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # for case when bin
     if flag_bin:
         with warnings.catch_warnings(record=True) as _:
-            eflux = (1 / np.sqrt(np.nansum(1 / big_errors ** 2, axis=1)))
+            eflux = (1 / np.sqrt(mp.nansum(1 / big_errors ** 2, axis=1)))
             eflux[~np.isfinite(eflux)] = np.nan
             final_n = np.sum(big_n, axis=1)
     else:
@@ -902,7 +902,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     # deal with hot star low pass filter
     if flag_hotstar:
         # get the image pixel size
-        psize = np.median(np.gradient(rwavemap) / rwavemap) * speed_of_light
+        psize = mp.median(np.gradient(rwavemap) / rwavemap) * speed_of_light
         # calculate hot star kernel size
         hotstar_kernel_size = hotstar_kernel_velocity / psize
         # must be an odd integer
@@ -1172,7 +1172,7 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     #    Lucy-Richardson
     p99 = np.inf
     # window that is 1.5 resolution element.
-    savgol_window = int((np.ceil(np.nanmedian(res_fwhm) / 1.5) * 2) + 1)
+    savgol_window = int((np.ceil(mp.nanmedian(res_fwhm) / 1.5) * 2) + 1)
     # start a counter
     iteration = 0
     # loop around until we reach our iteration threshold
@@ -1188,7 +1188,7 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
         # convolve the difference
         corr = gen_tellu.variable_res_conv(wavemap, res, res_fwhm, res_expo)
         # find the amplitude of the feedback term
-        p99 = np.nanpercentile(corr[valid], 99)
+        p99 = mp.nanpercentile(corr[valid], 99)
         # update the deconvolved spectrum
         deconv = deconv - corr
         # update the iteration

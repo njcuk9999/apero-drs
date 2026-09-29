@@ -15,6 +15,7 @@ from typing import Optional, Tuple, cast
 
 import numpy as np
 
+from aperocore import math as mp
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.math import interpolate
@@ -173,6 +174,8 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
     # The science-frame residual is the ADU data minus the electron model, so
     #   the readout-noise estimate sees the same units as the fitted model.
     residual_noshape = image_noshape_e - model_noshape_array
+
+
     if fit_ron:
         ron = extract_model_core.fit_ron(
             residual_noshape, model_noshape_array,
@@ -183,13 +186,18 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
         err_noshape = np.sqrt(np.abs(image_noshape_e) + ron ** 2)
         err_noshape = np.sqrt(err_noshape ** 2
                               + np.nan_to_num(bkgerr_noshape) ** 2)
-        nsig_noshape = residual_noshape / np.sqrt(
-            np.abs(model_noshape_array) + ron ** 2)
-    mask = extract_model_core.hysteresis_mask(
-        nsig_noshape, mask_nsig1_value, mask_nsig2_value)
+        noise_model = np.sqrt(np.abs(model_noshape_array) + ron ** 2)
+        # Remove any DC from the residuals (they should be centered on zero)
+        med_res_noshape = mp.nanmedian(residual_noshape)
+        nsig_noshape = (residual_noshape - med_res_noshape) / noise_model
+
+    # TODO: Decide whether masking is needed
+    # mask = extract_model_core.hysteresis_mask(nsig_noshape, mask_nsig1_value,
+    #                                           mask_nsig2_value)
+    mask = np.zeros_like(image_noshape)
     corrected = np.array(image_noshape - bkg_noshape)
-    corrected[mask] = np.nan
-    err_noshape[mask] = np.nan
+    # corrected[mask] = np.nan
+    # err_noshape[mask] = np.nan
     # ----------------------------------------------------------------------
     # optional independent readout-noise check between orders
     if order_map is None:
@@ -433,26 +441,25 @@ def spectra_to_eprops(params: ParamDict, model_props: ParamDict,
     func_name = __NAME__ + '.spectra_to_eprops()'
     if 'SPECTRA' in model_props and fiber in model_props['SPECTRA']:
         spectrum, spectrum_error = model_props['SPECTRA'][fiber]
-        e2ds = np.array(spectrum, dtype=float)
-        e2ds_error = np.array(spectrum_error, dtype=float)
+        e2dsff = np.array(spectrum, dtype=float)
+        e2dsff_error = np.array(spectrum_error, dtype=float)
     else:
-        e2ds = np.array(model_props['MODEL_SPECTRA'][fiber], dtype=float)
-        e2ds_error = np.sqrt(np.abs(e2ds))
+        e2dsff = np.array(model_props['MODEL_SPECTRA'][fiber], dtype=float)
+        e2dsff_error = np.sqrt(np.abs(e2dsff))
     ron = float(model_props['RON'])
-    flat = np.ones_like(e2ds)
-    blaze = np.ones_like(e2ds)
+    flat = np.ones_like(e2dsff)
+    blaze = np.ones_like(e2dsff)
     with np.errstate(invalid='ignore', divide='ignore'):
-        snr = np.nanmedian(e2ds / np.sqrt(np.abs(e2ds) + ron ** 2), axis=1)
+        snr = mp.nanmedian(e2dsff / np.sqrt(np.abs(e2dsff) + ron ** 2), axis=1)
     props = ParamDict()
-    props['E2DS'] = e2ds
-    props['E2DSFF'] = np.array(e2ds)
-    props['E2DS_ERROR'] = e2ds_error
+    props['E2DSFF'] = np.array(e2dsff)
+    props['E2DSFF_ERROR'] = e2dsff_error
     props['SNR'] = snr
-    props['N_COSMIC'] = np.zeros(e2ds.shape[0])
-    props['FLUX_VAL'] = np.nanmean(e2ds, axis=1)
+    props['N_COSMIC'] = np.zeros(e2dsff.shape[0])
+    props['FLUX_VAL'] = mp.nanmean(e2dsff, axis=1)
     props['FIBER'] = fiber
     props['START_ORDER'] = 0
-    props['END_ORDER'] = e2ds.shape[0] - 1
+    props['END_ORDER'] = e2dsff.shape[0] - 1
     props['CAL.EXT.RANGE1'] = 0
     props['CAL.EXT.RANGE2'] = 0
     props['SKIP_ORDERS'] = []
@@ -467,13 +474,13 @@ def spectra_to_eprops(params: ParamDict, model_props: ParamDict,
     props['SAT_LEVEL'] = params['CAL.EXT.QC_FLUX_MAX'] * nframes
     props['FLAT'] = flat
     props['BLAZE'] = blaze
-    props['RMS'] = np.zeros(e2ds.shape[0])
+    props['RMS'] = np.zeros(e2dsff.shape[0])
     props['LEAK_CORRECTED'] = False
     props['LEAKREF_FILE'] = 'No leak'
     props['LEAKREF_TIME'] = 'No leak'
     props['LEAKREF_REFFILE'] = 'No leak'
     props['LEAKREF_REFTIME'] = 'No leak'
-    props['LEAKCORR'] = np.full_like(e2ds, np.nan)
+    props['LEAKCORR'] = np.full_like(e2dsff, np.nan)
     props.set_all_sources(func_name)
     return props
 

@@ -522,9 +522,9 @@ def plot_lbl_rdb_thumbnail(params: ParamDict, filename: str,
     plot_date = lbl_props['plot_date']
     vrad = lbl_props['vrad']
     # find percentile cuts that will be expanded by 150% for the ylim
-    pp = np.nanpercentile(vrad, [10, 90])
+    pp = mp.nanpercentile(vrad, [10, 90])
     diff = pp[1] - pp[0]
-    central_val = np.nanmean(pp)
+    central_val = mp.nanmean(pp)
     # used for plotting but also for the flagging of outliers
     ylim = [central_val - 1.5 * diff, central_val + 1.5 * diff]
     # set up figure
@@ -565,8 +565,8 @@ def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
                    label=mask_on_label, ls='None')
     # set limits to 5 sigma away from median
     with warnings.catch_warnings(record=True) as _:
-        median = np.nanmedian(y)
-        low, high = np.nanpercentile(y, [low_percentile, high_percentile])
+        median = mp.nanmedian(y)
+        low, high = mp.nanpercentile(y, [low_percentile, high_percentile])
     frame.set(ylim=[low, high])
     # plot the median line
     frame.axhline(median, color='red', ls='--',
@@ -753,7 +753,7 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
         ccf_row = np.array(table['CCF{0:02d}'.format(row)], dtype=float)
         # normalize ccf
         with warnings.catch_warnings(record=True) as _:
-            ccf_row = ccf_row / np.nanmedian(ccf_row)
+            ccf_row = ccf_row / mp.nanmedian(ccf_row)
         # push into vector
         all_ccf[row] = ccf_row
     # -----------------------------------------------------------------
@@ -766,16 +766,16 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
     # there will be some nan slices - just ignore warnings here
     with warnings.catch_warnings(record=True):
         # y1 1sig is the 15th percentile of all ccfs
-        ccf_props['y1_1sig'] = np.nanpercentile(all_ccf, lower_sig1, axis=0)
+        ccf_props['y1_1sig'] = mp.nanpercentile(all_ccf, lower_sig1, axis=0)
         # y2 1sig is the 84th percentile of all ccfs
-        ccf_props['y2_1sig'] = np.nanpercentile(all_ccf, upper_sig1, axis=0)
+        ccf_props['y2_1sig'] = mp.nanpercentile(all_ccf, upper_sig1, axis=0)
         # y1 1sig is the 15th percentile of all ccfs
-        ccf_props['y1_2sig'] = np.nanpercentile(all_ccf, lower_sig2, axis=0)
+        ccf_props['y1_2sig'] = mp.nanpercentile(all_ccf, lower_sig2, axis=0)
         # y2 1sig is the 84th percentile of all ccfs
-        ccf_props['y2_2sig'] = np.nanpercentile(all_ccf, upper_sig2, axis=0)
+        ccf_props['y2_2sig'] = mp.nanpercentile(all_ccf, upper_sig2, axis=0)
         # med ccf is the median ccf (50th percentile)
         with warnings.catch_warnings(record=True) as _:
-            ccf_props['med_ccf'] = np.nanmedian(all_ccf, axis=0)
+            ccf_props['med_ccf'] = mp.nanmedian(all_ccf, axis=0)
         # get other properties using the ari core function
         ccf_props = ari_core.fit_ccf(ccf_props)
     # plot ccf

@@ -551,11 +551,11 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     # combine each of the hotpixel boxes back into one box
     med_hotpix = mp.nanmedian(cube_hotpix, axis=2)
     # remove the per column offset in gradient
-    medx = np.nanmedian(med_hotpix,axis=1)
+    medx = mp.nanmedian(med_hotpix,axis=1)
     for i in range(med_size*2+1):
         med_hotpix[:,i] -= medx
     # remove the per row offset in gradient
-    medy = np.nanmedian(med_hotpix,axis=0)
+    medy = mp.nanmedian(med_hotpix,axis=0)
     for i in range(med_size*2+1):
         med_hotpix[i,:] -= medy
     # -------------------------------------------------------------------------
@@ -633,7 +633,7 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
         # ---------------------------------------------------------------------
         # flag pixel that have an inconsistent intercept with the rest of the
         #    array
-        med = np.nanmedian(intercept, axis=0)
+        med = mp.nanmedian(intercept, axis=0)
         # get the comman pattern
         common_pattern = np.tile(med, led_data.shape[0]).reshape(led_data.shape)
         # get the difference between the image and the common pattern
@@ -801,7 +801,7 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
     led[frac_valid < 0.9] = np.nan
     # normalizing the per column response
     for col in range(led.shape[1]):
-        led[:, col] = led[:, col] / np.nanmedian(led[:, col])
+        led[:, col] = led[:, col] / mp.nanmedian(led[:, col])
     # rms array
     rms = mp.nanstd(cube, axis=0) / np.sqrt(len(led_files) - 1)
     # snr array
@@ -1504,7 +1504,7 @@ def ilocater_order_mask(params: ParamDict, mask_image: np.ndarray,
     for iamp in range(namps):
         pix1 = (nbxpix // namps) * iamp
         pix2 = (nbxpix // namps) * (iamp + 1)
-        image[:, pix1:pix2] -= np.nanmedian(image[:, pix1:pix2])
+        image[:, pix1:pix2] -= mp.nanmedian(image[:, pix1:pix2])
 
     # find pixels that are more than nsig absolute deviations from the image
     # median

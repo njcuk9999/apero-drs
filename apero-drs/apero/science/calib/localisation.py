@@ -627,7 +627,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     #   measured centers of the labels (orders)
     # -------------------------------------------------------------------------
     # get the max offset to allow correction using order separation
-    max_measured_offset = np.median(abs(np.diff(center_full))) / 4
+    max_measured_offset = mp.median(abs(np.diff(center_full))) / 4
     # loop around each order
     for order_num in range(len(center_full)):
         # get the difference in final position and measure position
@@ -660,7 +660,7 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
         sumpixmap_x = np.sum(ordpixmap, axis=0)
         sumpixmap_y = np.sum(ordpixmap, axis=1)
         # get valid pixels within this order
-        thres = np.nanpercentile(sumpixmap_x, 90)
+        thres = mp.nanpercentile(sumpixmap_x, 90)
         validsumpixmap = np.where(sumpixmap_x > 0.5 * thres)[0]
         imin = np.min(validsumpixmap) + 15
         imax = np.max(validsumpixmap) - 15

@@ -948,7 +948,7 @@ def fit_gaussian_to_lsd_profile(params: ParamDict, velocities: np.ndarray,
     # obtain velocity at minimum
     min_velo = velocities[pos]
     # get median amplitude of velocity profile
-    med_profile = np.median(profile)
+    med_profile = mp.median(profile)
     # get the amplitude (median - minimum)
     amplitude = np.abs(med_profile - profile[pos])
     # work out the sigma (c/(R*2.35482))

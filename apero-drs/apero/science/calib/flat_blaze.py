@@ -243,13 +243,13 @@ def e2ds_correct(params, eprops: ParamDict, fbprops: ParamDict) -> ParamDict:
     func_name = __NAME__ + '.e2ds_correct()'
     # get the blaze and e2ds from the properties dicts
     blaze = fbprops['BLAZE']
-    e2ds = eprops['E2DS']
-    # correct the e2ds by dividing by the blaze
-    with np.errstate(invalid='ignore', divide='ignore'):
-        e2ds_corr = e2ds / blaze
+    e2ds = eprops['E2DSFF']
+    # un-correct the e2ds by multiplying by the blaze (this is to match
+    # previous apero versions where the blaze is not taken out)
+    e2ds_corr = e2ds * blaze
     # update the extracted properties dict with the corrected e2ds
-    eprops['E2DS'] = e2ds_corr
-    eprops.set_sources(['E2DS'], func_name)
+    eprops['E2DSFF'] = e2ds_corr
+    eprops.set_sources(['E2DSFF'], func_name)
     return eprops
 
 
@@ -425,19 +425,18 @@ def make_blaze(params: ParamDict, recipe: DrsRecipe,
         ron = float(e2ds_file.get_hkey('KW_EFF_RON', dtype=float,
                                        required=False) or 0.0)
         with np.errstate(invalid='ignore', divide='ignore'):
-            snr = np.nanmedian(flat / np.sqrt(np.abs(flat) + ron ** 2), axis=1)
-        rms = np.array([float(np.nanstd(flat[i])) for i in range(norders)])
+            snr = mp.nanmedian(flat / np.sqrt(np.abs(flat) + ron ** 2), axis=1)
+        rms = np.array([float(mp.nanstd(flat[i])) for i in range(norders)])
         # build eprops
         eprops = ParamDict()
         # spectra
-        eprops['E2DS'] = flat
         eprops['E2DSFF'] = flat
         eprops['BLAZE'] = blaze_model
         eprops['FLAT'] = flat
-        eprops['E2DS_ERROR'] = np.sqrt(np.abs(flat_response) + ron ** 2)
+        eprops['E2DSFF_ERROR'] = np.sqrt(np.abs(flat_response) + ron ** 2)
         # per-order statistics
         eprops['SNR'] = snr
-        eprops['FLUX_VAL'] = np.nanmean(flat_response, axis=1)
+        eprops['FLUX_VAL'] = mp.nanmean(flat_response, axis=1)
         eprops['N_COSMIC'] = np.zeros(norders)
         eprops['RMS'] = rms
         # fiber info

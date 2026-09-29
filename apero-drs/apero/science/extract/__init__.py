@@ -25,12 +25,6 @@ add_s1d_keys = gen_ext.add_s1d_keys
 
 e2ds_to_s1d = gen_ext.e2ds_to_s1d
 
-extract2d = extraction.extraction_twod
-
-extract_blaze_flat = extraction.extract_blaze_flat
-
-flat_blaze_correction = extraction.flat_blaze_correction
-
 measure_p2p_scat = extraction.measure_p2p_scat
 
 get_berv = berv.get_berv

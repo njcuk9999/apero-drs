@@ -845,7 +845,8 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     # load the blaze file for this fiber
     bout = flat_blaze.get_blaze(params, recipe, header, fiber)
-    blaze_file, blaze_time, blaze = bout
+    blaze_file, blaze_time, blaze = (bout['BLAZEFILE'], bout['BLAZETIME'],
+                                     bout['BLAZE'])
     # ------------------------------------------------------------------
     # Correct for sky
     # ------------------------------------------------------------------

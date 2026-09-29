@@ -358,7 +358,7 @@ def measure_p2p_scat(wavemap: np.ndarray, e2ds: np.ndarray, blaze_width: int,
     # storage in sprops
     sprops['BP2P'] = dict()
     # get the mean wavelength per order
-    waveord = np.nanmean(wavemap, axis=1)
+    waveord = mp.nanmean(wavemap, axis=1)
     # loop around bands
     for iband in bands.keys():
         # get the band limits
@@ -366,7 +366,7 @@ def measure_p2p_scat(wavemap: np.ndarray, e2ds: np.ndarray, blaze_width: int,
         # make a mask of the orders for this band
         band_mask = (waveord > band[0]) & (waveord < band[1])
         # get the mean snr for this band
-        band_snr = np.nanmean(snrs[band_mask])
+        band_snr = mp.nanmean(snrs[band_mask])
         # push into sprops
         sprops['BP2P'][iband] = band_snr
     # return the snr

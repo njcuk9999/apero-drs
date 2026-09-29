@@ -1096,7 +1096,7 @@ CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, group=cgroup)
 
 # Define the type of file to use for wave solution (currently allowed are
 # 'E2DS' or 'E2DSFF'
-CDict.set('EXTRACT_TYPE', value='E2DS', source=__NAME__, group=cgroup)
+CDict.set('EXTRACT_TYPE', value='E2DSFF', source=__NAME__, group=cgroup)
 
 # Define DPRTYPEs we need to correct thermal background using
 # telluric absorption (TAPAS)

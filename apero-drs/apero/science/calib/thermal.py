@@ -151,7 +151,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                         kwargs, func_name)
     thermal_limit = pcheck(params, 'CAL.THERM.MIN_WAVE_LIM', 'thermal_limit',
                            kwargs, func_name)
-    e2ds = pcheck(params, 'E2DS', 'e2ds', kwargs, func_name, paramdict=eprops)
     e2dsff = pcheck(params, 'E2DSFF', 'e2dsff', kwargs, func_name,
                     paramdict=eprops)
     flat = pcheck(params, 'FLAT', paramdict=eprops)
@@ -181,12 +180,11 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # deal with skipping thermal correction
     if not thermal_correct:
         # add / update eprops
-        eprops['E2DS'] = e2ds
         eprops['E2DSFF'] = e2dsff
         eprops['FIBERTYPE'] = fibertype
         eprops['THERMALFILE'] = 'None'
         # update source
-        keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE']
+        keys = ['E2DSFF', 'FIBERTYPE', 'THERMALFILE']
         eprops.set_sources(keys, func_name)
         # return eprops
         return eprops
@@ -234,7 +232,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         wargs = [fibertype, 1]
         WLOG(params, 'info', textentry('40-016-00012', args=wargs))
         # do thermal correction
-        e2ds, tprops = tcorrect1(params, recipe, e2ds, **tkwargs)
         e2dsff, tpropsff = tcorrect1(params, recipe, e2dsff, flat=flat,
                                      **tkwargs)
     elif fibertype in corrtype2:
@@ -242,7 +239,6 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         wargs = [fibertype, 1]
         WLOG(params, 'info', textentry('40-016-00012', args=wargs))
         # do thermal correction
-        e2ds, tprops = tcorrect2(params, recipe, e2ds, **tkwargs)
         e2dsff, tpropsff = tcorrect2(params, recipe, e2dsff, flat=flat,
                                      **tkwargs)
     else:
@@ -251,19 +247,17 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         thermalfile = 'None'
         thermaltime = np.nan
         # thermal ratios are set to NaN
-        tprops = dict(ratio=np.nan, ratio_used='None')
         tpropsff = dict(ratio=np.nan, ratio_used='None')
     # ----------------------------------------------------------------------
     # add / update eprops
-    eprops['E2DS'] = e2ds
     eprops['E2DSFF'] = e2dsff
     eprops['FIBERTYPE'] = fibertype
     eprops['THERMALFILE'] = thermalfile
     eprops['THERMALTIME'] = thermaltime
-    eprops['THERMAL_RATIO'] = tprops['ratio']
-    eprops['THERMAL_RATIO_USED'] = tprops['ratio_used']
+    eprops['THERMAL_RATIO'] = tpropsff['ratio']
+    eprops['THERMAL_RATIO_USED'] = tpropsff['ratio_used']
     # update source
-    keys = ['E2DS', 'E2DSFF', 'FIBERTYPE', 'THERMALFILE', 'THERMALTIME',
+    keys = ['E2DSFF', 'FIBERTYPE', 'THERMALFILE', 'THERMALTIME',
             'THERMAL_RATIO', 'THERMAL_RATIO_USED']
     eprops.set_sources(keys, func_name)
     # return eprops
@@ -401,13 +395,6 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
                            kind='THERMALT_E2DS', database=database)
         thermal_file, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
-    # if we have a flat we should apply it to the thermal
-    if flat is not None:
-        thermal = thermal / flat
-        kind = 'FF '
-    else:
-        kind = ''
-    # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
         # save parameters to param dict
@@ -449,8 +436,8 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
         wmsg = ('No valid pixels in wavemask.'
                 '\n\tBlue limit = {0}; Red limit = {1}'
                 '\n\tWave[{2}] = [{3:.3f}: {4:.3f}]\n\tFunction={5}')
-        wargs = [np.nanmin(wavemap[torder]), red_limit, torder,
-                 np.nanmax(wavemap[torder]), np.nanmin(wavemap[torder]),
+        wargs = [mp.nanmin(wavemap[torder]), red_limit, torder,
+                 mp.nanmax(wavemap[torder]), mp.nanmin(wavemap[torder]),
                  func_name]
         WLOG(params, 'warning', wmsg.format(*wargs))
     # ----------------------------------------------------------------------
@@ -472,7 +459,7 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     # plot thermal background plot
     recipe.plot('THERMAL_BACKGROUND', params=params, wavemap=wavemap,
                 image=image, thermal=thermal, torder=torder, tmask=torder_mask,
-                fiber=fiber, kind=kind)
+                fiber=fiber, kind='')
     # ----------------------------------------------------------------------
     # correct image
     corrected_image = np.array(image)
@@ -525,13 +512,6 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
                            kind='THERMALI_E2DS', database=database)
         thermal_file, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
-    # if we have a flat we should apply it to the thermal
-    if flat is not None:
-        thermal = thermal / flat
-        kind = 'FF '
-    else:
-        kind = ''
-    # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(thermal) == 0 or np.sum(np.isfinite(thermal)) == 0:
         # save parameters to param dict
@@ -575,7 +555,7 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
                 '\n\tBlue limit = {0}; Red limit = {1}'
                 '\n\tWave[{2}] = [{3:.3f}: {4:.3f}]\n\tFunction={5}')
         wargs = [blue_limit, red_limit, torder,
-                 np.nanmax(wavemap[torder]), np.nanmin(wavemap[torder]),
+                 mp.nanmax(wavemap[torder]), mp.nanmin(wavemap[torder]),
                  func_name]
         WLOG(params, 'warning', wmsg.format(*wargs))
     # ----------------------------------------------------------------------
@@ -593,7 +573,7 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # plot thermal background plot
     recipe.plot('THERMAL_BACKGROUND', params=params, wavemap=wavemap,
                 image=image, thermal=thermal, torder=torder, tmask=wavemask,
-                fiber=fiber, kind=kind)
+                fiber=fiber, kind='')
     # ----------------------------------------------------------------------
     # correct image
     corrected_image = np.array(image)

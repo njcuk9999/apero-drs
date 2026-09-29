@@ -461,11 +461,9 @@ def _extracted_image_key(eprops: ParamDict) -> str:
 
     :return: str, extracted-image key to use for image-level checks
     """
-    if 'E2DS' in eprops:
-        return 'E2DS'
     if 'E2DSFF' in eprops:
         return 'E2DSFF'
-    raise KeyError('Extraction properties contain no E2DS/E2DSFF image')
+    raise KeyError('Extraction properties contain no E2DSFF image')
 
 
 def qc_extraction(params, eprops=None, spectra=None):
@@ -549,7 +547,7 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     order_table['NCOSMIC'] = eprops['N_COSMIC']
     order_table['FLUXVAL'] = eprops['FLUX_VAL']
     # loop around available extraction frames
-    keys = ['E2DS', 'E2DSFF', 'FLAT', 'BLAZE']
+    keys = ['E2DSFF', 'FLAT', 'BLAZE']
     for key in keys:
         if key not in eprops:
             continue
@@ -1094,26 +1092,25 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     ron = float(model_props['RON'])
     eprops_all: Dict[str, ParamDict] = dict()
     for fiber in fibertypes:
-        e2ds, e2ds_err = model_props['SPECTRA'][fiber]
-        e2ds = np.array(e2ds, dtype=float)
-        e2ds_err = np.array(e2ds_err, dtype=float)
+        e2dsff, e2dsff_err = model_props['SPECTRA'][fiber]
+        e2dsff = np.array(e2dsff, dtype=float)
+        e2dsff_err = np.array(e2dsff_err, dtype=float)
         # per-order SNR: median signal-to-noise ratio per order
         with np.errstate(invalid='ignore', divide='ignore'):
-            snr = np.nanmedian(
-                e2ds / np.sqrt(np.abs(e2ds) + ron ** 2), axis=1)
+            snr = mp.nanmedian(
+                e2dsff / np.sqrt(np.abs(e2dsff) + ron ** 2), axis=1)
         eprops = ParamDict()
         # raw model spectrum and its uncertainty
-        eprops['E2DS'] = e2ds
-        eprops['E2DSFF'] = np.array(e2ds)
-        eprops['E2DS_ERROR'] = e2ds_err
+        eprops['E2DSFF'] = np.array(e2dsff)
+        eprops['E2DSFF_ERROR'] = e2dsff_err
         eprops['SNR'] = snr
         # per-order mean flux (used for saturation QC)
-        eprops['FLUX_VAL'] = np.nanmean(e2ds, axis=1)
-        eprops['N_COSMIC'] = np.zeros(e2ds.shape[0])
+        eprops['FLUX_VAL'] = mp.nanmean(e2dsff, axis=1)
+        eprops['N_COSMIC'] = np.zeros(e2dsff.shape[0])
         eprops['FIBER'] = fiber
         # extraction order range (full range; no order trimming here)
         eprops['START_ORDER'] = 0
-        eprops['END_ORDER'] = e2ds.shape[0] - 1
+        eprops['END_ORDER'] = e2dsff.shape[0] - 1
         eprops['CAL.EXT.RANGE1'] = 0
         eprops['CAL.EXT.RANGE2'] = 0
         eprops['SKIP_ORDERS'] = []
@@ -1126,10 +1123,10 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
         eprops['SAT_QC'] = params['CAL.EXT.QC_FLUX_MAX']
         eprops['SAT_LEVEL'] = params['CAL.EXT.QC_FLUX_MAX'] * nframes
         # placeholder flat and blaze (ones until calib files are applied)
-        eprops['FLAT'] = np.ones_like(e2ds)
-        eprops['BLAZE'] = np.ones_like(e2ds)
+        eprops['FLAT'] = np.ones_like(e2dsff)
+        eprops['BLAZE'] = np.ones_like(e2dsff)
         # per-order RMS (zero until blaze fit is run for flat extractions)
-        eprops['RMS'] = np.zeros(e2ds.shape[0])
+        eprops['RMS'] = np.zeros(e2dsff.shape[0])
         # cosmic correction: not applied in the model-based extraction
         eprops['COSMIC'] = False
         eprops['COSMIC_SIGCUT'] = params['CAL.EXT.COSMIC_SIGCUT']

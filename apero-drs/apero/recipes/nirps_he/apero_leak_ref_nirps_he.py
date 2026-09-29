@@ -145,8 +145,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get the dark_fp output e2ds filename and extract/read file
         # ------------------------------------------------------------------
+        force_ext = params['INPUTS'].get(
+            'FORCEEXT', params['CAL.LEAK.ALWAYS_EXTRACT'])
         eargs = [params, recipe, EXTRACT_NAME, infile, log1]
-        darkfp_extfiles = extother.extract_leak_files(*eargs)
+        darkfp_extfiles = extother.extract_leak_files(
+            *eargs, always_extract=force_ext)
         # get list of basename for dark fp extracted files
         darkfp_extnames = []
         for fiber in darkfp_extfiles:

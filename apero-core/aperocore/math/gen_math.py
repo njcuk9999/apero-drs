@@ -1454,8 +1454,14 @@ def fit_cheby(xvector: np.ndarray, yvector: np.ndarray, deg: int,
     # transform to a -1 to 1 domain
     domain_cheby = 2 * (xvector - domain[0]) / (domain[1] - domain[0]) - 1
     # calcualte the coefficients
-    coeffs = np.polynomial.chebyshev.chebfit(domain_cheby, yvector, deg,
-                                             w=weight)
+    # a poorly-conditioned fit (e.g. too few points for deg, or a near-
+    # singular domain) is expected on some noisy/edge inputs; the returned
+    # coefficients are still usable so we silence the RankWarning here
+    # rather than at every call site
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', np.polynomial.polyutils.RankWarning)
+        coeffs = np.polynomial.chebyshev.chebfit(domain_cheby, yvector, deg,
+                                                 w=weight)
     # return the coefficients
     return coeffs
 

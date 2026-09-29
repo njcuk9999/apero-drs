@@ -192,7 +192,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Get blaze
         # ------------------------------------------------------------------
         bout = flat_blaze.get_blaze(params, recipe, header, fiber)
-        blazefile, blazetime, blaze = bout
+        blazefile, blazetime, blaze = (bout['BLAZEFILE'], bout['BLAZETIME'],
+                                       bout['BLAZE'])
 
         # ------------------------------------------------------------------
         #   Remove domain with telluric > 50%

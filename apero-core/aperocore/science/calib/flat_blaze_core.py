@@ -196,7 +196,7 @@ def calculate_blaze_flat_sinc(e2ds_ini: np.ndarray, peak_cut: float,
     # If the blaze is below 0.25 we consider that the blaze and flat correction
     # are not reliable
     with warnings.catch_warnings(record=True) as _:
-        bad_mask3 = blaze < 0.25 * np.nanmax(blaze)
+        bad_mask3 = blaze < 0.25 * mp.nanmax(blaze)
         flat[bad_mask3] = np.nan
         blaze[bad_mask3] = np.nan
         e2ds_ini[bad_mask3] = np.nan
@@ -285,7 +285,7 @@ def fit_blaze_model(
     wmin = np.min(wave[valid])
     wmax = np.max(wave[valid])
     # reference wavelength to decorrelate c0 and c1
-    lref = float(np.median(wave[fitted]))
+    lref = float(mp.median(wave[fitted]))
     # pixel index of each order's observed peak
     index = np.arange(wave.shape[0])
     peaks = np.argmax(
@@ -314,8 +314,8 @@ def fit_blaze_model(
         yy = logobs - np.log(_backbone(c0, c1, beta, asym))
         win = window & use
         rows = np.where(win.any(axis=1))[0]
-        kx = np.array([np.median(wave[i][win[i]]) for i in rows])
-        ky = np.array([np.median(yy[i][win[i]]) for i in rows])
+        kx = np.array([mp.median(wave[i][win[i]]) for i in rows])
+        ky = np.array([mp.median(yy[i][win[i]]) for i in rows])
         srt = np.argsort(kx)
         spline = InterpolatedUnivariateSpline(
             kx[srt], ky[srt], k=spline_k, ext=0)
@@ -373,12 +373,12 @@ def _diffraction_orders(wave: np.ndarray) -> np.ndarray:
     # wavelength at the central column for each order
     lam = wave[:, wave.shape[1] // 2]
     # sign convention: +1 if order number grows with row index
-    step = int(-np.sign(np.median(np.diff(lam))))
+    step = int(-np.sign(mp.median(np.diff(lam))))
     index = np.arange(wave.shape[0])
     # rough estimate of the integer order from the dispersion
     guess = lam / np.abs(np.gradient(lam))
     # integer offset that makes m * lambda flattest across all orders
-    start = int(np.round(np.median(guess - step * index)))
+    start = int(np.round(mp.median(guess - step * index)))
     trial = start + np.arange(-2, 3)
     scatter = [
         np.std((t + step * index) * lam)

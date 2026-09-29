@@ -725,14 +725,14 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
             tmp_wid[f_it] = mp.val_cheby(awid[_fiber][order_num], xpix,
                                          domain=[0, dim2])
         # get the upper and lower extent of all fibers
-        ypix_min = np.nanmin(tmp_ypix - tmp_wid / 2, axis=0)
-        ypix_max = np.nanmax(tmp_ypix + tmp_wid / 2, axis=0)
+        ypix_min = mp.nanmin(tmp_ypix - tmp_wid / 2, axis=0)
+        ypix_max = mp.nanmax(tmp_ypix + tmp_wid / 2, axis=0)
         # get the pixel locations at the "center" of all fibers
         ypix[order_num] = 0.5 * (ypix_max + ypix_min)
         # store the width of this order
-        order_widths[order_num] = np.nanmax(ypix_max - ypix_min)
+        order_widths[order_num] = mp.nanmax(ypix_max - ypix_min)
      # get the largest width across all orders
-    width = int(np.ceil(np.nanmax(order_widths)))
+    width = int(np.ceil(mp.nanmax(order_widths)))
     # we need an even width (so add 1 pixel if we have an odd width)
     if width % 2 != 0:
         width += 1

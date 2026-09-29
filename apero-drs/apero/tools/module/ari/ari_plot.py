@@ -227,7 +227,7 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
     if tcorr_spec is not None:
         frame2.plot(wavemap[wavemask0], tcorr_spec[wavemask0],
                     color='r', label='Telluric Corrected', lw=0.5)
-        frame2.set_ylim((0, 1.5 * np.nanpercentile(tcorr_spec, 99)))
+        frame2.set_ylim((0, 1.5 * mp.nanpercentile(tcorr_spec, 99)))
     frame2.set(xlabel='Wavelength [nm]', ylabel='Flux', xlim=wavelim0)
     frame2.set_title(title, fontsize=10)
     frame2.legend(loc=0, ncol=2)
@@ -246,8 +246,8 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
         if tcorr_spec is not None:
             frame.plot(wavemap[mask], tcorr_spec[mask],
                        color='r', label='Telluric Corrected', lw=0.5)
-            ymin_mask = 0.5 * np.nanpercentile(tcorr_spec[mask], 1)
-            ymax_mask = 1.5 * np.nanpercentile(tcorr_spec[mask], 99)
+            ymin_mask = 0.5 * mp.nanpercentile(tcorr_spec[mask], 1)
+            ymax_mask = 1.5 * mp.nanpercentile(tcorr_spec[mask], 99)
             frame.set_ylim((ymin_mask, ymax_mask))
         if it == 0:
             frame.set_ylabel('Flux')
@@ -317,9 +317,9 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
                       marker='o', alpha=0.5, color='purple', ls='None',
                       label='Possibly bad (reset rv)')
     # find percentile cuts that will be expanded by 150% for the ylim
-    pp = np.nanpercentile(vrad, [10, 90])
+    pp = mp.nanpercentile(vrad, [10, 90])
     diff = pp[1] - pp[0]
-    central_val = np.nanmean(pp)
+    central_val = mp.nanmean(pp)
     # used for plotting but also for the flagging of outliers
     ylim = [central_val - 1.5 * diff, central_val + 1.5 * diff]
     # length of the arrow flagging outliers
@@ -415,14 +415,14 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     # Get the 'coolwarm' colormap for plotting
     cmap = plt.get_cmap('coolwarm')
     # Calculate the median of the 'svrad' column, which represents the RV errors
-    med_vrad_err = np.nanmedian(svrad)
-    med = np.nanmedian(vrad)
+    med_vrad_err = mp.nanmedian(svrad)
+    med = mp.nanmedian(vrad)
 
-    p5, p95 = np.nanpercentile(vrad, [5, 95])
+    p5, p95 = mp.nanpercentile(vrad, [5, 95])
     # frame 3: wave bin rv
     for ikey, key in enumerate(vrad_dict):
         # get the median error
-        med_svrad = np.nanmedian(svrad_dict[key])
+        med_svrad = mp.nanmedian(svrad_dict[key])
         # Skip the key if the median RV error is too high
         if med_svrad > (10 * med_vrad_err):
             continue
@@ -436,7 +436,7 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
                           label=key.replace('vrad_', ''),
                           alpha=0.5, fmt='.', color=color)
         # deal with p5 and p95 for limits
-        p5_key, p95_key = np.nanpercentile(vrad_dict[key], [5, 95])
+        p5_key, p95_key = mp.nanpercentile(vrad_dict[key], [5, 95])
         # update limits if they have widened
         if p5_key < p5:
             p5 = p5_key
@@ -505,9 +505,9 @@ def ccf_plot(ccf_props: Dict[str, Any], plot_path: str, plot_title: str):
     frame[0].errorbar(mjd.plot_date, vrad, yerr=svrad, fmt='o',
                       alpha=0.5, color='green')
     # find percentile cuts that will be expanded by 150% for the ylim
-    pp = np.nanpercentile(vrad, [10, 90])
+    pp = mp.nanpercentile(vrad, [10, 90])
     diff = pp[1] - pp[0]
-    central_val = np.nanmean(pp)
+    central_val = mp.nanmean(pp)
     # used for plotting but also for the flagging of outliers
     if diff == 0:
         ylim = [0, 1]
@@ -738,7 +738,7 @@ def calib_mjd_wcent_plot(calib_props: Dict[str, Any], plot_path: str,
     mjdmid = Time(hdict['KW_MID_OBS_TIME'], format='mjd')
     mjdmid_diff = np.diff(mjdmid.mjd)
     # we need dv not wavelength
-    dv = np.log(wave_cents / np.nanmedian(wave_cents, axis=0)) * cc.c.value
+    dv = np.log(wave_cents / mp.nanmedian(wave_cents, axis=0)) * cc.c.value
     # setup the figure
     fig, frames = plt.subplots(nrows=2, ncols=2, figsize=(24, 12))
     # loop around orders and plot
@@ -746,7 +746,7 @@ def calib_mjd_wcent_plot(calib_props: Dict[str, Any], plot_path: str,
         # get a mean across a few orders (if possible)
         start = np.max([0, order_num-5])
         end = np.min([wave_cents.shape[1], order_num+5])
-        dv_ord = np.nanmean(dv[:, start:end], axis=1)
+        dv_ord = mp.nanmean(dv[:, start:end], axis=1)
         with warnings.catch_warnings(record=True) as _:
             dv_ord_ratio = np.diff(dv_ord) / mjdmid_diff
         # plot arguments
@@ -1014,7 +1014,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     extent = [ref_wave.min(), ref_wave.max(), 0, len(sc1d_files)]
     # -------------------------------------------------------------------------
     # Calculate the plotting range for the original data
-    p10, p90 = np.nanpercentile(map2d, [10, 90])
+    p10, p90 = mp.nanpercentile(map2d, [10, 90])
     mid = 0.5 * (p10 + p90)
     width = 3 * (p90 - p10)
     range_plot = [mid - 0.5 * width, mid + 0.5 * width]
@@ -1047,7 +1047,7 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     qcc_1.xaxis.set_label_position('top')
     # -------------------------------------------------------------------------
     # Calculate the plotting range for the corrected data
-    p10, p90 = np.nanpercentile(map2d_star, [10, 90])
+    p10, p90 = mp.nanpercentile(map2d_star, [10, 90])
     mid = 0.5 * (p10 + p90)
     width = 3 * (p90 - p10)
     range_plot = [mid - 0.5 * width, mid + 0.5 * width]

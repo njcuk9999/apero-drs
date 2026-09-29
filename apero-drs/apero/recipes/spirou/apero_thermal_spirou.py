@@ -160,8 +160,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get the thermal output e2ds filename and extract/read file
         # ------------------------------------------------------------------
+        force_ext = params['INPUTS'].get(
+            'FORCEEXT', params['CAL.THERM.ALWAYS_EXTRACT'])
         eargs = [params, recipe, EXTRACT_NAME, infile, log1]
-        thermal_files = extractother.extract_thermal_files(*eargs)
+        thermal_files = extractother.extract_thermal_files(
+            *eargs, always_extract=force_ext)
 
         # ------------------------------------------------------------------
         # Multiple the thermal by excess emissivity

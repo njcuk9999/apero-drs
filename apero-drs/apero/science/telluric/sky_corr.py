@@ -369,7 +369,7 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
             # remove image and header
             del image, cimage, hdr
         # get median sky spectrum, only used for identification of lines
-        med = np.nanmedian(cube, axis=0)
+        med = mp.nanmedian(cube, axis=0)
         # set values for sky props
         sky_props['HAS_SKY'] = True
         sky_props['MED'] = med
@@ -478,7 +478,7 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
             tmp_sci = sci_cube[bin_it][region_mask]
             tmp_cal = cal_cube[bin_it][region_mask]
             # work out the amplitude of the science fiber
-            amp = np.nansum(tmp_sci)
+            amp = mp.nansum(tmp_sci)
             # add to list for this region
             all_sci.append(tmp_sci / amp)
             all_cal.append(tmp_cal / amp)
@@ -945,7 +945,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         grad1_ref = gradient[reg_maskf]
         # dot product of the gradients
         with warnings.catch_warnings(record=True) as _:
-            amp = np.nansum(grad1 * grad1_ref) / np.nansum(grad1_ref ** 2)
+            amp = mp.nansum(grad1 * grad1_ref) / mp.nansum(grad1_ref ** 2)
         # negative amps should be set to zero
         if amp < 0 and fmodel is None:
             amp = 0

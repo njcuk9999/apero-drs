@@ -259,19 +259,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # loads from the calibDB otherwise.
             # ----------------------------------------------------------------
             fbargs = [params, recipe, mprops['HEADER'], fiber,
-                      eprops['E2DS']]
+                      eprops['E2DSFF']]
             fbkwargs = dict(database=calibdbm)
             fbprops = flat_blaze.get_blaze(*fbargs, **fbkwargs)
             # ----------------------------------------------------------------
             # Leak correction: remove reference-fiber contamination
             # ----------------------------------------------------------------
-            lkargs = [params, recipe, eprops['E2DS'],
+            lkargs = [params, recipe, eprops['E2DSFF'],
                       ref_e2ds, infile, fiber]
             lkkwargs = dict(database=calibdbm)
             lkout = leak.correct_spectra_leak(*lkargs, **lkkwargs)
             corrected_spectrum, leakcorr, leak_props = lkout
             # store corrected spectrum and leak diagnostics in eprops
-            eprops['E2DS'] = corrected_spectrum
             eprops['E2DSFF'] = corrected_spectrum
             eprops['LEAKCORR'] = leakcorr
             for key, val in leak_props.items():
@@ -280,11 +279,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # Thermal correction (handled internally for quicklook/flat)
             # ----------------------------------------------------------------
             thargs = [params, recipe, mprops['HEADER'],
-                      mprops['CALIB_PROPS'], eprops['E2DS'], fiber]
+                      mprops['CALIB_PROPS'], eprops['E2DSFF'], fiber]
             thkwargs = dict(database=calibdbm)
             thout = thermal.correct_spectrum_thermal(*thargs, **thkwargs)
             thermal_spectrum, thermal_props = thout
-            eprops['E2DS'] = thermal_spectrum
             eprops['E2DSFF'] = thermal_spectrum
             for key, val in thermal_props.items():
                 eprops[key] = val
@@ -293,9 +291,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # e2ds_to_s1d returns None for quicklook, flat, or missing wave.
             # ----------------------------------------------------------------
             model_blaze = fbprops['BLAZE']
-            s1args = [wavemap, eprops['E2DS'], model_blaze]
+            s1args = [wavemap, eprops['E2DSFF'], model_blaze]
             s1kwargs = dict(fiber=fiber, s1dkind='SPECTRA',
-                            e2dserr=eprops['E2DS_ERROR'])
+                            e2dserr=eprops['E2DSFF_ERROR'])
             swprops = extract.e2ds_to_s1d(params, recipe, *s1args,
                                            wgrid='wave', **s1kwargs)
             svprops = extract.e2ds_to_s1d(params, recipe, *s1args,
@@ -303,11 +301,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             # Pixel-to-pixel scatter (returns None when wavemap is None)
             # ----------------------------------------------------------------
-            eprops['MP2P_E2DS'] = extract.measure_p2p_scat(
-                params, wavemap, eprops['E2DS'])
             eprops['MP2P_E2DSFF'] = extract.measure_p2p_scat(
                 params, wavemap, eprops['E2DSFF'])
-            eprops.set_sources(['MP2P_E2DS', 'MP2P_E2DSFF'], mainname)
+            eprops.set_sources(['MP2P_E2DSFF'], mainname)
             # ----------------------------------------------------------------
             # Plots
             # ----------------------------------------------------------------
@@ -388,10 +384,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # Register output files for downstream use (e.g. wave recipe)
             # ----------------------------------------------------------------
             if not quicklook:
-                for key, efile in zip(['E2DS', 'E2DSFF'],
-                                      [e2dsfile, e2dsfffile]):
-                    outkey = '{0}_{1}'.format(key, fiber)
-                    e2dsoutputs[outkey] = efile.completecopy(efile)
+                outkey = 'E2DSFF_{0}'.format(fiber)
+                e2dsoutputs[outkey] = e2dsfile.completecopy(e2dsfile)
             # ----------------------------------------------------------------
             # Summary plots
             # ----------------------------------------------------------------

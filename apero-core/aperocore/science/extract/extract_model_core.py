@@ -21,6 +21,7 @@ from scipy.ndimage import label
 from scipy.optimize import brentq
 
 from aperocore.base import base
+from aperocore import math as mp
 from aperocore.math import interpolate
 
 # =============================================================================
@@ -99,7 +100,7 @@ def ron_between_orders(image: np.ndarray, background: np.ndarray,
     diff = (image[:, lag:] - image[:, :-lag])[pair]
     grad = (background[:, lag:] - background[:, :-lag])[pair]
     flux = (0.5 * (background[:, lag:] + background[:, :-lag]))[pair]
-    mad = np.median(np.abs(diff - np.median(diff)))
+    mad = mp.median(np.abs(diff - mp.median(diff)))
     scatter = 1.4826 * mad / np.sqrt(2.0)
     # The variance estimate subtracts the mean photon term and the background
     #   gradient term so that the remaining floor is the readout noise.
@@ -568,8 +569,8 @@ def extract_orders(image: np.ndarray, profile1: np.ndarray,
             model = (amp1 * np.nan_to_num(rib1)
                      + amp2 * np.nan_to_num(rib2) + zero_point)
         zero_point[zero_point == 0] = np.nan
-        med = np.nanmedian(zero_point)
-        mad = np.nanmedian(np.abs(zero_point - med))
+        med = mp.nanmedian(zero_point)
+        mad = mp.nanmedian(np.abs(zero_point - med))
         with np.errstate(invalid='ignore', divide='ignore'):
             bad = np.abs(zero_point - med) / (mad + 1e-30) > zp_mad_cut
         flux1[order_num] = amp1
@@ -627,7 +628,7 @@ def model_spectra(flux1: np.ndarray, flux2: np.ndarray,
     spectra[fiber1] = np.array(flux1, dtype=float)
     spectra[fiber2] = np.array(flux2, dtype=float)
     with np.errstate(invalid='ignore'):
-        spectra['COMBINED'] = np.nansum(
+        spectra['COMBINED'] = mp.nansum(
             np.stack([spectra[fiber1], spectra[fiber2]]), axis=0)
     both_nan = ~np.isfinite(spectra[fiber1]) & ~np.isfinite(spectra[fiber2])
     spectra['COMBINED'][both_nan] = np.nan
@@ -725,7 +726,7 @@ def extract_spectra(image: np.ndarray, error: np.ndarray,
                 minpts=minpts)
             spec[order_num], espec[order_num] = fit_out
         # mask out any values with extremely high errors
-        bad = espec > 2 * np.nanpercentile(espec, 95)
+        bad = espec > 2 * mp.nanpercentile(espec, 95)
         spec[bad] = np.nan
         espec[bad] = np.nan
         # push into output dictionary

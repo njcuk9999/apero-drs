@@ -9125,12 +9125,12 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
         if method == 'noise':
             # if we want to sum the data
             if math in ['sum', 'add', '+']:
-                return np.sqrt(np.nansum(np.array(values) ** 2))
+                return np.sqrt(mp.nansum(np.array(values) ** 2))
             elif math in ['average', 'mean']:
-                return np.sqrt(np.nansum(np.array(values) ** 2)) / len(values)
+                return np.sqrt(mp.nansum(np.array(values) ** 2)) / len(values)
             # elif if median
             elif math in ['median', 'med']:
-                return np.sqrt(np.nansum(np.array(values) ** 2)) / len(values)
+                return np.sqrt(mp.nansum(np.array(values) ** 2)) / len(values)
             # deal with math == None
             elif math == 'None':
                 return values[0]

@@ -2377,13 +2377,13 @@ CDict.add('ALWAYS_EXTRACT', value=None,
                       'files)')
 
 # define the type of file to use for wave solution (currently allowed are
-#    'E2DS' or 'E2DSFF')
+#    'E2DSFF')
 CDict.add('EXTRACT_TYPE', value=None, dtype=str,
           source=__NAME__, user=True, active=False,
           group=cgroup,
           description='define the type of file to use for '
                       'wave solution (currently allowed '
-                      'are "E2DS" or "E2DSFF")')
+                      '"E2DSFF"')
 
 # define DPRTYPEs we need to correct thermal background using
 #  telluric absorption (TAPAS)
@@ -2677,13 +2677,13 @@ CDict.add('ALWAYS_EXTRACT', value=None, dtype=bool,
                       '(even if they')
 
 # define the type of file to use for wave solution (currently allowed are
-#    'E2DS' or 'E2DSFF'
+#   'E2DSFF'
 CDict.add('EXTRACT_TYPE', value=None, dtype=str,
-          source=__NAME__, options=['E2DS', 'E2DSFF'],
+          source=__NAME__, options=['E2DSFF'],
           user=True, active=False, group=cgroup,
           description='define the type of file to use for '
                       'wave solution (currently allowed '
-                      'are "E2DS" or "E2DSFF"')
+                      '"E2DSFF"')
 
 # Define intercept and slope for a pixel shift
 CDict.add('PIXEL_SHIFT_INTER', value=None,

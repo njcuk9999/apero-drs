@@ -197,7 +197,7 @@ def estimate_photon_noise(wavemap: np.ndarray, rv_ccf: np.ndarray,
     :return: tuple, 1. the CCF photon noise, 2. The CCF SNR
     """
     # some gradients
-    gradwave = np.nanmedian(wavemap / np.gradient(wavemap))
+    gradwave = mp.nanmedian(wavemap / np.gradient(wavemap))
     grad_dv = np.gradient(rv_ccf)
     med_grad_dv = mp.nanmedian(grad_dv)
     # estimate oversampling factor

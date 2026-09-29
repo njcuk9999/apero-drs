@@ -16,6 +16,7 @@ from typing import List, Tuple
 import numpy as np
 
 from aperocore.base import base
+from aperocore import math as mp
 
 # =============================================================================
 # Define variables
@@ -80,8 +81,8 @@ def build_order_position_map(shape: Tuple[int, int],
             cen = centers[itrace]
             half = widths[itrace] / 2.0
             # only the rows this trace can reach
-            ylo = int(max(np.floor(np.nanmin(cen) - half), 0))
-            yhi = int(min(np.ceil(np.nanmax(cen) + half) + 1, ny))
+            ylo = int(max(np.floor(mp.nanmin(cen) - half), 0))
+            yhi = int(min(np.ceil(mp.nanmax(cen) + half) + 1, ny))
             if yhi <= ylo:
                 continue
             rows = np.arange(ylo, yhi)[:, np.newaxis]

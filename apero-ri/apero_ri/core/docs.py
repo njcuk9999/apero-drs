@@ -501,8 +501,60 @@ def get_doc_last_modified(
     return mtime.strftime('%Y-%m-%d %H:%M:%S')
 
 
+def _extract_mermaid(text: str) -> Tuple[str, List[str]]:
+    """Replace ```mermaid fences with placeholders markdown will not touch.
+
+    The fenced-code/codehilite extensions would otherwise syntax-highlight
+    the diagram source and destroy the language marker, so mermaid.js could
+    never find it. We pull the blocks out first and re-insert them as
+    ``<div class="mermaid">`` after rendering.
+
+    :param text: str, the raw markdown body
+
+    :return: tuple, 1. the markdown with placeholders, 2. the diagram sources
+    """
+    blocks: List[str] = []
+
+    def _replace(match: 're.Match') -> str:
+        """Store one diagram and return its placeholder."""
+        blocks.append(match.group(1))
+        # Placeholder must survive markdown as its own paragraph.
+        return '\n\nAPEROMERMAIDBLOCK{0}\n\n'.format(len(blocks) - 1)
+
+    pattern = r'^[ \t]*```+[ \t]*mermaid[ \t]*\r?\n(.*?)\r?\n[ \t]*```+[ \t]*$'
+    out = re.sub(pattern, _replace, text, flags=re.DOTALL | re.MULTILINE)
+    return out, blocks
+
+
+def _restore_mermaid(html: str, blocks: List[str]) -> str:
+    """Swap mermaid placeholders in rendered HTML for mermaid containers.
+
+    :param html: str, the rendered HTML containing placeholders
+    :param blocks: list of str, the diagram sources in placeholder order
+
+    :return: str, the HTML with ``<div class="mermaid">`` containers
+    """
+    for index, source in enumerate(blocks):
+        # Escape so the diagram source cannot inject markup.
+        safe = (
+            source.replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+        )
+        container = '<div class="mermaid">\n{0}\n</div>'.format(safe)
+        # markdown may have wrapped the bare placeholder in a paragraph.
+        for candidate in (
+            '<p>APEROMERMAIDBLOCK{0}</p>'.format(index),
+            'APEROMERMAIDBLOCK{0}'.format(index),
+        ):
+            html = html.replace(candidate, container)
+    return html
+
+
 def render_markdown(text: str) -> str:
     """Render markdown text to HTML without allowing raw HTML injection."""
+    # Pull mermaid diagrams out before the code extensions mangle them.
+    body, mermaid_blocks = _extract_mermaid(str(text or ''))
     md = markdown.Markdown(
         extensions=MD_EXTENSIONS,
         extension_configs=MD_EXTENSION_CONFIGS,
@@ -513,7 +565,9 @@ def render_markdown(text: str) -> str:
         md.enable_attributes = False
     except Exception:
         pass
-    return md.convert(text)
+    html = md.convert(body)
+    # Put the diagrams back as mermaid.js containers.
+    return _restore_mermaid(html, mermaid_blocks)
 
 
 def save_doc_content(doc_ref: str, version: str, content: str) -> None:
