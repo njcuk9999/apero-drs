@@ -12,6 +12,68 @@
 - `apero-ri/apero_ri` is the Flask reduction interface. It may use `aperocore`
   and `apero`, but interface-specific code belongs in the RI package.
 
+## Git commit messages
+
+Every commit (whether authored by Claude, GitHub Copilot, or a human) must
+start with a bracketed tag naming the package(s) and project(s) touched,
+followed by a short imperative summary:
+
+```
+[PACKAGE.PROJECT] Short imperative summary of the change
+```
+
+- `PACKAGE` is `APERO` (apero-drs), `APEROCORE` (apero-core), or
+  `APERO+APEROCORE` when a single commit spans both packages. Use `ARI` for
+  `apero-ri` changes.
+- `PROJECT` is one of the project tags below, upper-case. Combine multiple
+  projects touched by the same commit with `+`, e.g.
+  `[APERO.LOC+SHAPE]` or `[APERO.PP+CAL+EXT+POL]`.
+- Do not invent ad-hoc spellings of an existing tag (e.g. `EXTRACTION` vs
+  `EXTRACT`, `LOCALISATION` vs `LOC`) - past commits were inconsistent here;
+  use the exact tag from the list below so tags stay greppable.
+- If a change genuinely doesn't fit an existing project, add the new tag to
+  the list below in the same commit rather than leaving it undocumented.
+
+Current project tags (not exhaustive - extend this list as needed):
+
+- `CORE` - shared/base functionality in `aperocore` not tied to one project
+- `SETUP` - installation, environment, packaging, `pip`/`setup.py`
+- `DEV` - `apero.dev` / developer-only tooling and test scaffolding
+- `PREPROCESS` - `apero_preprocess`
+- `LOC` - localisation (`apero_loc`)
+- `SHAPE` - shape calibration (`apero_shape`)
+- `EXTRACT` - extraction (`apero_extract`, `apero_flat`, `apero_thermal`)
+- `WAVE` - wavelength solution (`apero_wave_ref`, `apero_wave_night`)
+- `TELLURIC` - telluric correction (`apero_mk_tellu`, `apero_fit_tellu`)
+- `TEMPLATE` - template creation (`apero_mk_template`)
+- `CCF` - cross-correlation function (`apero_ccf`)
+- `LBL` - line-by-line integration
+- `POL` - polarimetry
+- `TOOLS` - `apero.tools` scripts and utilities
+- `ASTROMETRICS` - astrometric database / gaia crossmatch
+- `RESET` - `apero_reset` and profile reset logic
+- `DATABASE` - calibration/telluric/index database code
+- `PROCESSING` - `apero_processing` / recipe sequencing
+- `STARTUP` - `drs_startup`, recipe/module initialization and import speed
+- `CHECKS` - `apero_checks` / data-quality checks
+- `REJECT` - manual/auto rejection of files
+- `QUEUE` - job queue management
+- `VISU` - visualisation tools (`apero.tools.module.visulisation`)
+- `KEYWORDS` - FITS header keyword definitions
+- `PSEUDO_CONST` - instrument pseudo-constants
+- `VERSION` - version bump / release metadata
+- `RI` - `apero-ri` specific changes (usually paired with the `ARI` package
+  tag instead, but use this project tag if `PACKAGE` is `APERO+APEROCORE`)
+
+Examples:
+
+```
+[APERO.EXTRACT] Vectorize background-map percentile filtering
+[APEROCORE.CORE] Route nan-aware stats through math wrapper
+[APERO.LOC+SHAPE] Move order-profile straightening into apero_shape
+[APERO+APEROCORE.EXTRACT] Add flat-response calibDB round trip
+```
+
 ## Changing a function's inputs or outputs
 
 - When you change a function's parameters (added/removed/reordered/retyped)
