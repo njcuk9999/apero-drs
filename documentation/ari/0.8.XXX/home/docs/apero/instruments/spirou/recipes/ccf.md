@@ -101,8 +101,8 @@ apero_ccf_spirou.py {obs_dir}[STRING] [FILE:EXT_E2DS_FF,TELLU_OBJ] {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `CCF_RV_FIT`, `CCF_RV_FIT_LOOP`, `CCF_SWAVE_REF`, `CCF_PHOTON_UNCERT`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_CCF_PHOTON_UNCERT`, `SUM_CCF_RV_FIT`

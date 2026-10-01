@@ -1,18 +1,10 @@
 ---
-# Related algorithm pages (docs refs under apero/algorithms)
 algorithms: []
-# Literature references rendered at the bottom of the page
 references: []
 ---
+apero_go is used to to find current paths set by current profile.
 
-Use this tool to find current paths set by current profile
+The paths are set via the user_config.py files (in the :term:`DRS_UCONFIG` directory).
 
-## Flow
-
-<!-- Replace the diagram below with the real steps. -->
-
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+Available paths (reffered to :term:`block_kind`) are:
+raw, tmp, red, calib, tellu, out, assets, plot, run and log.

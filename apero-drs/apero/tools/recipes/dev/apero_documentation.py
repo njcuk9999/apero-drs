@@ -87,7 +87,8 @@ def __main__(recipe, params):
     # Legacy rst description migration (one-off, safe to re-run)
     # -------------------------------------------------------------------------
     if params['INPUTS']['MIGRATE_DESC']:
-        ari_docs.migrate_descriptions(params)
+        migration_args = [params, recipe, instruments]
+        ari_docs.migrate_descriptions(*migration_args)
     # -------------------------------------------------------------------------
     # APERO RI markdown documentation
     # -------------------------------------------------------------------------

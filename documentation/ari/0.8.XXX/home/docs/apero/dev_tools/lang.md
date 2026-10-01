@@ -7,17 +7,21 @@ card_icon: fa-solid fa-code
 
 **Short name:** LANG  **Type:** nolog-tool  **Kind:** admin  **Instrument:** default
 
-Language database tools
+apero_langdb is used to view, update or reload the language database.
 
-## Flow
+The view option (--find) loads a GUI that provides a search of all
+message codes in APERO.
 
-<!-- Replace the diagram below with the real steps. -->
+Message codes have the form XX-XXX-XXXXX  where each X is a digit.
 
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+One can search a code and find all python files which have that message code
+and locate some other information about that message code.
+
+The update option (--update or --upgrade) takes the current database.xsl file
+and writes various csv files and update the local language database.
+
+Similarly the reload optoin (--reload) just updates the local language database
+(with the current csv files) this option is useful if updating APEROs version.
 
 ## Usage
 

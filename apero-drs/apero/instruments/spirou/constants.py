@@ -803,7 +803,8 @@ CDict.set('LOCAL_PZOOM2', value=[1844, 2244, 2700, 3100], source=__NAME__, group
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
 cgroup = 'CAL.FLAT'
-# Half size blaze smoothing window
+# Half size blaze smoothing window (expressed in native pixels) also used for
+# SNR calculation (half width from center to calculate SNR=flux/error)
 CDict.set('HALF_WINDOW', value=50, source=__NAME__, group=cgroup)
 
 # Minimum relative e2ds flux for the blaze computation

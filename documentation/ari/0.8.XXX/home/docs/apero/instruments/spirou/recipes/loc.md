@@ -140,8 +140,16 @@ apero_loc_spirou.py {obs_dir}[STRING] [FILE:DARK_FLAT,FLAT_DARK] {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `LOC_WIDTH_REGIONS`, `LOC_FIBER_DOUBLET_PARITY`, `LOC_GAP_ORDERS`, `LOC_IMAGE_FIT`, `LOC_IM_CORNER`, `LOC_IM_REGIONS`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_LOC_IM_FIT`, `SUM_LOC_IM_CORNER`
+
+## Algorithms used
+
+- [order localisation](/docs/algorithms/order_localisation)
+
+## References
+
+- [Cook et al. (2022)](https://arxiv.org/abs/2211.01358)

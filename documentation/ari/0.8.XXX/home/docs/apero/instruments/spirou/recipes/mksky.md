@@ -62,5 +62,5 @@ apero_mk_skymodel_spirou.py {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `TELLU_SKYMODEL_REGION_PLOT`, `TELLU_SKYMODEL_MED`, `TELLU_SKYMODEL_LINEFIT`

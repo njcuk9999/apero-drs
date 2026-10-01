@@ -294,8 +294,8 @@ apero_pol_spirou.py {obs_dir}[STRING] {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `POLAR_FIT_CONT`, `POLAR_CONTINUUM`, `POLAR_RESULTS`, `POLAR_STOKES_I`, `POLAR_LSD`, `EXTRACT_S1D_WEIGHT`, `EXTRACT_S1D`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_EXTRACT_S1D`

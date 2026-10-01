@@ -138,8 +138,8 @@ apero_shape_ref_spirou.py {obs_dir}[STRING] --fpfiles[FILE:FP_FP] --hcfiles[FILE
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `SHAPE_DX`, `SHAPE_ANGLE_OFFSET_ALL`, `SHAPE_ANGLE_OFFSET`, `SHAPE_LINEAR_TPARAMS`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_SHAPE_ANGLE_OFFSET`

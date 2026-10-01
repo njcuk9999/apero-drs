@@ -1,18 +1,10 @@
 ---
-# Related algorithm pages (docs refs under apero/algorithms)
 algorithms: []
-# Literature references rendered at the bottom of the page
 references: []
 ---
+The apero_update_run_config re-generates all :term:`run-ini-files` for all
+instruments using the current file_definitions and recipe_definitions for each
+instrument.
 
-Create default run.ini files for APERO instrument(s)
-
-## Flow
-
-<!-- Replace the diagram below with the real steps. -->
-
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+This does not update the users run.ini files only the ones within the package.
+Run apero_reset to update user run.ini files.

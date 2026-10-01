@@ -14,6 +14,13 @@
 
 ## Git commit messages
 
+For the full developer-facing commit workflow and the current package/project
+tag list, see [Best practices for APERO Git commits][git-commit-guide].
+The tag list is non-exhaustive; keep both copies synchronized when either is
+updated.
+
+[git-commit-guide]: documentation/ari/0.8.XXX/home/docs/developer/how_to/git_commits.md
+
 Every commit (whether authored by Claude, GitHub Copilot, or a human) must
 start with a bracketed tag naming the package(s) and project(s) touched,
 followed by a short imperative summary:

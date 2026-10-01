@@ -26,6 +26,7 @@ Created on 2026-09-29
 
 @author: cook
 """
+import ast
 import os
 import re
 import shutil
@@ -112,6 +113,17 @@ FILE_REMOVE_COLS['red_file'] = ['dbname', 'dbkey']
 DESC_ALGO_KEY = 'algorithms'
 # the description file front matter key holding literature references
 DESC_REF_KEY = 'references'
+# short summaries for command scripts without recipe-definition metadata
+UNREGISTERED_TOOL_SUMMARIES = dict()
+UNREGISTERED_TOOL_SUMMARIES['apero_database_kill'] = (
+    'Stops APERO database process entries that exceed the configured '
+    '60-minute timeout.')
+UNREGISTERED_TOOL_SUMMARIES['apero_assets'] = (
+    'Checks, updates, and synchronizes APERO data-asset checksums.')
+UNREGISTERED_TOOL_SUMMARIES['apero_constants'] = (
+    'Generates or cleans constant modules and creates the constants glossary.')
+UNREGISTERED_TOOL_SUMMARIES['apero_optimize'] = (
+    'Checks Python source files for missing docstrings and unused functions.')
 
 
 # =============================================================================
@@ -232,7 +244,8 @@ def write_page(path: Path, label: str, icon: str, lines: List[str]):
     :return: None, writes to "path"
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    content = '\n'.join(front_matter(label, icon) + lines).rstrip() + '\n'
+    page_lines = front_matter(label, icon) + lines
+    content = '\n'.join(line.rstrip() for line in page_lines).rstrip() + '\n'
     path.write_text(content, encoding='utf-8')
 
 
@@ -425,9 +438,13 @@ def build_recipe_page(params: ParamDict, pconst: Instrument,
     summary = srecipe.summary(params)
     name = str(summary['NAME']).replace('.py', '')
     shortname = str(summary['SHORTNAME'])
+    fallback = str(srecipe.description or '')
+    if instrument.lower() in ['nirps_ha', 'nirps_he']:
+        fallback = fallback.replace('SPIRou @ CFHT',
+                                    instrument.replace('_', ' ').upper())
     # make sure an editable description fragment exists for this recipe
     ensure_description_stub(instrument, kind, name, name,
-                            str(srecipe.description or ''))
+                            fallback)
     meta, body = read_description(instrument, kind, name)
     # -------------------------------------------------------------------------
     # Header: identity of the recipe at a glance
@@ -810,7 +827,55 @@ def compile_global_tools(params: ParamDict, recipe: DrsRecipe,
                               kind_dir)
             items.append((srecipe.shortname.lower(),
                           str(srecipe.name).replace('.py', '')))
+        source_kind = 'bin' if kind == KIND_USER_TOOLS else 'dev'
+        source_dir = (REPO_ROOT / 'apero-drs' / 'apero' / 'tools' /
+                      'recipes' / source_kind)
+        known_names = {Path(str(item.name)).stem for item in selected}
+        build_unregistered_tool_pages(kind_dir, kind, source_dir,
+                                      source_kind, known_names, items)
         build_index(kind_dir, label, ICONS[kind], label, [blurb], items)
+
+
+def build_unregistered_tool_pages(outdir: Path, kind: str,
+                                  source_dir: Path, source_kind: str,
+                                  known_names: set,
+                                  items: List[Tuple[str, str]]):
+    """
+    Add command scripts that have no DrsRecipe definition to the tool index.
+
+    :param outdir: Path, output directory for user or developer tool pages
+    :param kind: str, KIND_USER_TOOLS or KIND_DEV_TOOLS
+    :param source_dir: Path, directory containing tool Python modules
+    :param source_kind: str, ``bin`` or ``dev`` source directory name
+    :param known_names: set of str, script stems already documented from defs
+    :param items: list of (link target, label) pairs (modified in place)
+
+    :return: None, writes pages and appends their index entries
+    """
+    if not source_dir.is_dir():
+        return
+    icon = ICONS[kind]
+    for source in sorted(source_dir.glob('*.py')):
+        if source.stem in known_names or source.stem.startswith('_'):
+            continue
+        module_doc = ast.get_docstring(ast.parse(
+            source.read_text(encoding='utf-8')))
+        description = UNREGISTERED_TOOL_SUMMARIES.get(source.stem)
+        if not description and module_doc:
+            description = module_doc.strip()
+        if not description or 'CODE DESCRIPTION HERE' in description:
+            description = ('This script has no DrsRecipe metadata yet. '
+                           'See the source module for its current behavior.')
+        source_ref = 'apero-drs/apero/tools/recipes/{0}/{1}'
+        source_ref = source_ref.format(source_kind, source.name)
+        lines = ['# {0}'.format(source.stem), '', description, '',
+                 '**Source:** `{0}`'.format(source_ref), '',
+                 'This script is catalogued from its source file because it '
+                 'does not have a `DrsRecipe` entry. Add recipe metadata '
+                 'when it needs generated usage, argument, or output tables.']
+        write_page(outdir / '{0}.md'.format(source.stem), source.stem,
+                   icon, lines)
+        items.append((source.stem, source.stem))
 
 
 def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
@@ -825,6 +890,16 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
 
     :return: None, writes the markdown documentation tree
     """
+    docversion = str(docversion).strip()
+    if re.fullmatch(r'\d+\.\d+\.(?:XXX|\d+)', docversion) is None:
+        raise ValueError('Invalid APERO documentation version: {0}'
+                         ''.format(docversion))
+    # A version selector must never label pages generated from another release.
+    running_major = '.'.join(default_docversion().split('.')[:2])
+    target_major = '.'.join(docversion.split('.')[:2])
+    if target_major != running_major:
+        raise ValueError('Cannot generate {0} documentation from APERO {1}'
+                         ''.format(docversion, __version__))
     version_dir = ARI_ROOT / docversion / DOCS_PREFIX
     apero_dir = version_dir / APERO_REF
     # the generated sub-tree is disposable - rebuild it from scratch so that
@@ -938,7 +1013,7 @@ def rst_to_markdown(text: str) -> str:
             continue
         output.append(_convert_rst_inline(line))
         index += 1
-    return '\n'.join(output)
+    return '\n'.join(line.rstrip() for line in output)
 
 
 def _is_rule(line: str, underlines: List[str]) -> bool:
@@ -1017,16 +1092,19 @@ def _convert_rst_inline(line: str) -> str:
     return line
 
 
-def migrate_descriptions(params: ParamDict):
+def migrate_descriptions(params: ParamDict, recipe: DrsRecipe,
+                         instruments: List[str]):
     """
     Convert the legacy rst description fragments into the markdown tree.
 
     Reads ``documentation/working/resources/{instrument}/descriptions/*.rst``
-    and writes ``documentation/descriptions/{instrument}/{kind}/*.md``. Files
-    that already exist in the new tree are skipped so the migration can be
-    re-run safely.
+    and writes ``documentation/descriptions/{instrument}/{kind}/*.md``.
+    Authored pages are preserved; only generated placeholder stubs are
+    replaced, so the migration can be re-run safely.
 
     :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the running recipe used to load definitions
+    :param instruments: list of str, instruments to migrate
 
     :return: None, writes markdown files
     """
@@ -1035,26 +1113,51 @@ def migrate_descriptions(params: ParamDict):
         WLOG(params, 'warning', 'No legacy descriptions at: {0}'
                                 ''.format(legacy_root))
         return
+    selected = {str(item).lower() for item in instruments}
     count = 0
     for inst_dir in sorted(legacy_root.iterdir()):
         desc_dir = inst_dir / 'descriptions'
         if not desc_dir.is_dir():
             continue
+        instrument = ('default' if inst_dir.name.lower() == 'default'
+                      else inst_dir.name.upper())
+        if instrument.lower() not in selected:
+            continue
+        # The live definitions distinguish recipes, tools, and sequences.
+        reload_for(recipe, instrument)
+        recipemod = as_module(recipe.recipemod)
+        file_kinds = dict()
+        for srecipe in getattr(recipemod, 'recipes', []):
+            descfile = getattr(srecipe, 'description_file', None)
+            if not descfile:
+                continue
+            if srecipe.recipe_type == 'recipe':
+                kind = KIND_RECIPES
+            elif srecipe.recipe_kind in ['user', 'processing']:
+                kind = KIND_USER_TOOLS
+            else:
+                kind = KIND_DEV_TOOLS
+            file_kinds[Path(descfile).stem] = (
+                kind, Path(str(srecipe.name)).stem)
+        for sequence in getattr(recipemod, 'sequences', []):
+            descfile = getattr(sequence, 'description_file', None)
+            if descfile:
+                file_kinds[Path(descfile).stem] = (
+                    KIND_SEQUENCES, sequence.name)
         for rst_file in sorted(desc_dir.glob('*.rst')):
-            name = rst_file.stem
-            # sequences are named "*_seq_{instrument}" in the legacy tree but
-            # the sequence itself is just "*_seq"
-            if '_seq' in name:
-                kind = KIND_SEQUENCES
-                suffix = '_{0}'.format(inst_dir.name.lower())
-                if name.endswith(suffix):
-                    name = name[:-len(suffix)]
+            if rst_file.stem in file_kinds:
+                kind, name = file_kinds[rst_file.stem]
             else:
                 kind = KIND_RECIPES
+                name = rst_file.stem
             outpath = description_path(inst_dir.name, kind, name)
-            # never clobber a fragment already migrated and edited
+            # Replace only a placeholder created by the docs generator.
             if outpath.exists():
-                continue
+                current = outpath.read_text(encoding='utf-8')
+                placeholder = '<!-- Replace the diagram below with the real '
+                placeholder += 'steps. -->'
+                if placeholder not in current:
+                    continue
             outpath.parent.mkdir(parents=True, exist_ok=True)
             body = rst_to_markdown(rst_file.read_text(encoding='utf-8'))
             header = ['---', '{0}: []'.format(DESC_ALGO_KEY),

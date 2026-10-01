@@ -75,5 +75,6 @@ lives next to the higher-level APERO function it supports, for example
 - [Add a new plot](developer/how_to/add_a_plot)
 - [Add a new instrument](developer/how_to/add_an_instrument)
 - [Write documentation](developer/how_to/write_documentation)
+- [Best practices for Git commits](developer/how_to/git_commits)
 - [Python style and conventions](developer/how_to/python_style)
 - [Run the tests](developer/how_to/run_the_tests)

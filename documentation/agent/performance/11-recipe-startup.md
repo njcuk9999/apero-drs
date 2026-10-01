@@ -370,6 +370,7 @@ def test_recipe_import_time():
 ```
 
 Pair it with a `setup()` wall-time regression check that uses
-`apero.dev` (per AGENTS.md) so it does not need a full profile.
+`apero.dev` to provide default parameters and load `DRS_UCONFIG` without a
+full APERO profile.
 Baseline the numbers here after each of 11a - 11h lands and log
 them into this file, mirroring the table in `README.md`.

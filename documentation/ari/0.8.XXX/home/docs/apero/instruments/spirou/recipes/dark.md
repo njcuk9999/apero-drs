@@ -80,8 +80,8 @@ apero_dark_spirou.py {obs_dir}[STRING] [FILE:DARK_DARK_INT,DARK_DARK_TEL,DARK_DA
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `DARK_IMAGE_REGIONS`, `DARK_HISTOGRAM`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_DARK_IMAGE_REGIONS`, `SUM_DARK_HISTOGRAM`

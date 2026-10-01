@@ -106,8 +106,8 @@ apero_shape_spirou.py {obs_dir}[STRING] [FILE:FP_FP] {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `SHAPEL_ZOOM_SHIFT`, `SHAPE_LINEAR_TPARAMS`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_SHAPEL_ZOOM_SHIFT`

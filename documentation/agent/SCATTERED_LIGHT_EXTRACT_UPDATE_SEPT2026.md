@@ -235,8 +235,9 @@ Remaining work:
 
 1. Replace the temporary `spectra_to_eprops()` adapter with a new extraction
   metadata/output contract for QC, headers, and order tables.
-2. Complete the comment and function-placement review requested in
-  `AGENTS.md`.
+2. Complete the review of comments and function placement across the migrated
+  extraction/math modules, APERO wrappers, fiber descriptors, and recipe
+  hooks.
 
 The flat/blaze calibration recipes still use the established `extract2d()`
 calibration algorithm. Those calls operate on flat calibration frames and do

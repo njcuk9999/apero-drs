@@ -128,8 +128,8 @@ apero_badpix_spirou.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `BADPIX_MAP`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_BADPIX_MAP`

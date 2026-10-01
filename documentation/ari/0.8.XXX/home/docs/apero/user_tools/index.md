@@ -23,3 +23,5 @@ Tools you run yourself to set up, inspect, query and manage an APERO reduction.
 - [apero_trigger](trigger)
 - [apero_validate](valid)
 - [apero_visu](visu)
+- [apero_database](apero_database)
+- [apero_database_kill](apero_database_kill)

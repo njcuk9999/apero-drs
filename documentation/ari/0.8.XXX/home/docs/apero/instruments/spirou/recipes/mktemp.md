@@ -87,8 +87,8 @@ apero_mk_template_spirou.py {objname}[STRING] {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `EXTRACT_S1D`, `MKTEMP_BERV_COV`, `MKTEMP_S1D_DECONV`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_EXTRACT_S1D`, `SUM_MKTEMP_BERV_COV`

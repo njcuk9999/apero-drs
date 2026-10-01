@@ -128,7 +128,7 @@ CDict.set('FWHM_PIXEL_LSF', value=3.0, source=__NAME__, group=cgroup)
 CDict.set('SATURATION', value=60000, source=__NAME__, group=cgroup)
 
 # Define the frame time for an image
-CDict.set('FRAME_TIME', value=5.57192, source=__NAME__, gruop=cgroup, group=cgroup)
+CDict.set('FRAME_TIME', value=5.57192, source=__NAME__, group=cgroup)
 
 # =========================================================================
 # GENERAL REFERENCE FILE SETTINGS
@@ -204,15 +204,15 @@ CDict.set('FORCE_WAVESOL', value=False, source=__NAME__, group=cgroup)
 # =============================================================================
 cgroup = 'CAL.FIBER'
 # Number of orders to skip at start of image
-CDict.set('FIRST_ORDER_JUMP', value=dict(A=0, B=0, group=cgroup),
+CDict.set('FIRST_ORDER_JUMP', value=dict(A=0, B=0),
           source=__NAME__, group=cgroup)
 
 # Maximum number of order to use
-CDict.set('FIBER_MAX_NUM_ORDERS', value=dict(A=75, B=75),
+CDict.set('MAX_NUM_ORDERS', value=dict(A=75, B=75),
           source=__NAME__, group=cgroup)
 
 # Number of fibers
-CDict.set('FIBER_SET_NUM_FIBERS', value=dict(A=1, B=1),
+CDict.set('SET_NUM_FIBERS', value=dict(A=1, B=1),
           source=__NAME__, group=cgroup)
 
 # Get the science and reference fiber to use in the CCF process
@@ -818,7 +818,8 @@ CDict.set('LOCAL_PZOOM2', value=[1844, 2244, 2700, 3100], source=__NAME__, group
 # CALIBRATION: FLAT SETTINGS
 # =============================================================================
 cgroup = 'CAL.FLAT'
-# Half size blaze smoothing window
+# Half size blaze smoothing window (expressed in native pixels) also used for
+# SNR calculation (half width from center to calculate SNR=flux/error)
 CDict.set('HALF_WINDOW', value=50, source=__NAME__, group=cgroup)
 
 # Minimum relative e2ds flux for the blaze computation
@@ -1389,7 +1390,8 @@ cgroup = 'CAL.WAVE.HC'
 # Define the mode to calculate the hc wave solution
 # Should be one of the following:
 # 0 - Etienne method
-CDict.set('MODE', value=0, source=__NAME__, author='EA')
+CDict.set('MODE', value=0, source=__NAME__, author='EA',
+          group=cgroup)
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 # so a 2*W+1 window

@@ -124,8 +124,8 @@ apero_wave_night_spirou.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfil
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `WAVE_WL_CAV`, `WAVE_FIBER_COMPARISON`, `WAVE_FIBER_COMP`, `WAVE_HC_DIFF_HIST`, `WAVEREF_EXPECTED`, `EXTRACT_S1D`, `EXTRACT_S1D_WEIGHT`, `WAVE_RESMAP`, `WAVE_SLINKY_EW_COV`, `WAVE_SLINKY_FIT`, `CCF_PHOTON_UNCERT`, `CCF_RV_FIT`, `CCF_RV_FIT_LOOP`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_WAVE_FIBER_COMP`, `SUM_CCF_RV_FIT`, `SUM_CCF_PHOTON_UNCERT`

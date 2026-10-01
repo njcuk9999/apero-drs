@@ -1019,6 +1019,16 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
         calibdbm.load_db()
     else:
         calibdbm = database
+
+    # ------------------------------------------------------------------
+    # Get parameters from parameter dictionary
+    # ------------------------------------------------------------------
+    # get the oversampling factor from params
+    oversampling_factor = params['CAl.EXT.EXTRACTION_OVERSAMPLING']
+
+    # get the blaze width from params
+    blaze_width = params['CAL.FLAT.HALF_WINDOW'] * oversampling_factor
+
     # ------------------------------------------------------------------
     # Determine fiber topology from instrument pseudo-constants
     # ------------------------------------------------------------------
@@ -1095,10 +1105,10 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
         e2dsff, e2dsff_err = model_props['SPECTRA'][fiber]
         e2dsff = np.array(e2dsff, dtype=float)
         e2dsff_err = np.array(e2dsff_err, dtype=float)
-        # per-order SNR: median signal-to-noise ratio per order
-        with np.errstate(invalid='ignore', divide='ignore'):
-            snr = mp.nanmedian(
-                e2dsff / np.sqrt(np.abs(e2dsff) + ron ** 2), axis=1)
+        # calculate the SNR per-order at the center of the blaze function
+        # (using the blaze width)
+        snr = calculate_snr(e2dsff, e2dsff_err, blaze_width)
+
         eprops = ParamDict()
         # raw model spectrum and its uncertainty
         eprops['E2DSFF'] = np.array(e2dsff)
@@ -1150,6 +1160,31 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     mprops['REF_FIBER'] = ref_fiber
     mprops.set_all_sources(func_name)
     return mprops
+
+
+def calculate_snr(e2dsff: np.ndarray, e2dsff_err: np.ndarray,
+                  blaze_width: int):
+    """
+    Calculate the per-order SNR from the extracted spectrum and its error.
+
+    :param e2dsff: 2D array of extracted spectrum (orders x pixels)
+    :param e2dsff_err: 2D array of extracted spectrum errors (orders x pixels)
+
+    :return: 1D array of per-order SNR
+    """
+    # get the central pixel position
+    cent_pos = int(len(e2dsff) / 2)
+    # get the blaze window size
+    blaze_lower = cent_pos - blaze_width
+    blaze_upper = cent_pos + blaze_width
+    # Avoid division by zero
+    with np.errstate(divide='ignore', invalid='ignore'):
+
+        e2dsff_cent = e2dsff[blaze_lower:blaze_upper]
+        e2dsff_err_cent = e2dsff_err[blaze_lower:blaze_upper]
+        snr = np.nanmedian(e2dsff_cent / e2dsff_err_cent, axis=1)
+    return snr
+
 
 
 # =============================================================================

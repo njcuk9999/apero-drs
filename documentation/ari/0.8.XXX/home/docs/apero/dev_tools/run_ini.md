@@ -7,17 +7,12 @@ card_icon: fa-solid fa-code
 
 **Short name:** RUN_INI  **Type:** nolog-tool  **Kind:** admin  **Instrument:** default
 
-Create default run.ini files for APERO instrument(s)
+The apero_update_run_config re-generates all :term:`run-ini-files` for all
+instruments using the current file_definitions and recipe_definitions for each
+instrument.
 
-## Flow
-
-<!-- Replace the diagram below with the real steps. -->
-
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+This does not update the users run.ini files only the ones within the package.
+Run apero_reset to update user run.ini files.
 
 ## Usage
 

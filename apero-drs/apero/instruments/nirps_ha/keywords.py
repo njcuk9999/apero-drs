@@ -1430,7 +1430,7 @@ KDict.set('KW_WNT_NITER1', key='WNTNITER', comment='wave night hc n iterations u
           parent='CAL.WAVE.NIGHT.NIGHT_NITER1', group='wave')
 
 # number of iterations for convergence used in wave night (fp)
-KDict.set('KW_WNT_NITER21', key='WNTNITER',
+KDict.set('KW_WNT_NITER2', key='WNTNITER',
                   comment='wave night fp n iterations used',
                   parent='CAL.WAVE.NIGHT.NIGHT_NITER2', group='wave')
 

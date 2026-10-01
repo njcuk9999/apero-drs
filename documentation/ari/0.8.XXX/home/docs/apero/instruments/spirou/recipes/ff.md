@@ -137,8 +137,8 @@ apero_flat_spirou.py {obs_dir}[STRING] [FILE:FLAT_FLAT,DARK_FLAT,FLAT_DARK] {opt
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `FLAT_ORDER_FIT_EDGES1`, `FLAT_ORDER_FIT_EDGES2`, `FLAT_BLAZE_ORDER1`, `FLAT_BLAZE_ORDER2`, `FLAT_EDGE_ORDERS`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_FLAT_ORDER_FIT_EDGES`, `SUM_FLAT_BLAZE_ORDER`, `SUM_FLAT_EDGE_ORDERS`

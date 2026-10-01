@@ -1797,10 +1797,13 @@ CDict.add_group(cgroup, description='CALIBRATION.FLAT: '
                                     'CALIBRATION: FLAT SETTINGS')
 
 # TODO: is blaze_size needed with sinc function?
-# Half size blaze smoothing window
+# Half size blaze smoothing window (expressed in native pixels) also used for
+# SNR calculation (half width from center to calculate SNR=flux/error)
 CDict.add('HALF_WINDOW', value=None, dtype=int,
           source=__NAME__, group=cgroup,
-          description='Half size blaze smoothing window')
+          description='Half size blaze smoothing window (expressed in native '
+                      'pixels)  also used for SNR calculation '
+                      '(half width from center to calculate SNR=flux/error)')
 
 # TODO: is blaze_cut needed with sinc function?
 # Minimum relative e2ds flux for the blaze computation

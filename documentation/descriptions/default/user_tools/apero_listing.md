@@ -1,18 +1,13 @@
 ---
-# Related algorithm pages (docs refs under apero/algorithms)
 algorithms: []
-# Literature references rendered at the bottom of the page
 references: []
 ---
+The apero_listing recipe re-builds the index database.
+It has various ways of doing this:
 
-Rebuilds index files
-
-## Flow
-
-<!-- Replace the diagram below with the real steps. -->
-
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+ - :term:`observation-directory` (using the --obs_dir argument) to select one observation-directory
+ - :term:`block_kind` (using the --block_kind argument) to select either "raw", "tmp" or "red" data directory
+ - excluding observation directories: these directories will be ignored
+   (multiple observation-directories should be comma separated)
+ - including observation directories: these directories will be included and everything else ignored
+   (multiple observation-directories should be comma separated)

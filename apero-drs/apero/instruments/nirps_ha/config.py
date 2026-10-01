@@ -123,7 +123,7 @@ CDict.set('LBL', value='/drs/nirps_ha/data/lbldata', source=__NAME__,
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
-group = 'DB'
+cgroup = 'DB'
 # Define database directory (relative to assets directory)
 CDict.set('DIR', value='databases/', source=__NAME__, author='NJC',
           group=cgroup)

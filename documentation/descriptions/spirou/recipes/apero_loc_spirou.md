@@ -1,6 +1,8 @@
 ---
-algorithms: []
-references: []
+algorithms:
+  - order_localisation
+references:
+  - '[Cook et al. (2022)](https://arxiv.org/abs/2211.01358)'
 ---
 ## Localization calibration
 

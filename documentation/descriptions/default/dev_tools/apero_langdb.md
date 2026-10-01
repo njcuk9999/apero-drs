@@ -1,18 +1,19 @@
 ---
-# Related algorithm pages (docs refs under apero/algorithms)
 algorithms: []
-# Literature references rendered at the bottom of the page
 references: []
 ---
+apero_langdb is used to view, update or reload the language database.
 
-Language database tools
+The view option (--find) loads a GUI that provides a search of all
+message codes in APERO.
 
-## Flow
+Message codes have the form XX-XXX-XXXXX  where each X is a digit.
 
-<!-- Replace the diagram below with the real steps. -->
+One can search a code and find all python files which have that message code
+and locate some other information about that message code.
 
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+The update option (--update or --upgrade) takes the current database.xsl file
+and writes various csv files and update the local language database.
+
+Similarly the reload optoin (--reload) just updates the local language database
+(with the current csv files) this option is useful if updating APEROs version.

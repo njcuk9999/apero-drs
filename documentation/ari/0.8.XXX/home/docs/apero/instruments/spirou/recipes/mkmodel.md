@@ -70,8 +70,8 @@ apero_mk_model_spirou.py {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `MKTELLU_MODEL`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_MKTELLU_MODEL`

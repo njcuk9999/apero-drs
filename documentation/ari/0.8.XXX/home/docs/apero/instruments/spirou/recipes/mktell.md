@@ -87,8 +87,8 @@ apero_mk_tellu_spirou.py {obs_dir}[STRING] [FILE:EXT_E2DS_FF] {options}
 
 ## Plots
 
-**Debug plots:** 
+**Debug plots:**
 `TELLU_SKY_CORR_PLOT`, `MKTELLU_WAVE_FLUX1`, `MKTELLU_WAVE_FLUX2`, `TELLUP_MEAN_RES`, `TELLUP_ABSO_SPEC`, `TELLUP_CLEAN_OH`, `FTELLU_RECON_SPLINE2`, `TELLU_FINITE_RES_CORR`
 
-**Summary plots:** 
+**Summary plots:**
 `SUM_MKTELLU_WAVE_FLUX`, `SUM_TELLUP_MEAN_RES`, `SUM_TELLUP_ABSO_SPEC`

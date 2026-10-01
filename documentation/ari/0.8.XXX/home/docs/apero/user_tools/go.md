@@ -7,17 +7,12 @@ card_icon: fa-solid fa-screwdriver-wrench
 
 **Short name:** GO  **Type:** nolog-tool  **Kind:** user  **Instrument:** default
 
-Use this tool to find current paths set by current profile
+apero_go is used to to find current paths set by current profile.
 
-## Flow
+The paths are set via the user_config.py files (in the :term:`DRS_UCONFIG` directory).
 
-<!-- Replace the diagram below with the real steps. -->
-
-```mermaid
-flowchart TD
-    A[Inputs] --> B[TODO: describe the steps]
-    B --> C[Outputs]
-```
+Available paths (reffered to :term:`block_kind`) are:
+raw, tmp, red, calib, tellu, out, assets, plot, run and log.
 
 ## Usage
 
