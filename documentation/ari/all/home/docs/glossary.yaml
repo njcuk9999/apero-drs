@@ -1,0 +1,43 @@
+APERO: >
+  The Algorithmic Pipeline for Extracting Reduced Observations - the
+  data-reduction pipeline that turns raw SPIRou/NIRPS exposures into
+  calibrated, science-ready spectra.
+ARI: >
+  The APERO Reduction Interface - this web application. Lets users
+  browse documentation, monitor reductions, and manage profiles
+  without using the command line.
+Recipe: >
+  A single APERO program (e.g. apero_extract) that performs one step
+  of the reduction, such as localisation, shape correction, or
+  extraction. Recipes are the building blocks run by a sequence.
+Sequence: >
+  An ordered list of recipes that apero_processing (or apero_queue in
+  v0.8) runs for a given instrument, e.g. the nightly calibration
+  sequence or the full science-extraction sequence.
+Fiber: >
+  One of the optical channels a SPIRou/NIRPS exposure is split into
+  (e.g. science fiber A, reference fiber B/C). Most extraction and
+  calibration steps are repeated once per fiber.
+e2ds: >
+  "Extracted 2D Spectrum" - the per-order, per-fiber extracted flux
+  array produced by the extraction recipe, before it is flattened
+  into a 1D spectrum.
+Telluric: >
+  Absorption/emission features from Earth's own atmosphere that
+  contaminate a stellar spectrum. The telluric-correction recipes
+  model and remove these features.
+CalibDB: >
+  The calibration database: a table of calibration files (dark, flat,
+  localisation, shape, wavelength solution, etc.) that recipes look up
+  by instrument, fiber, and observation date.
+Profile: >
+  A named APERO configuration (paths, database connection, instrument)
+  that points at one reduction's working directories. Users and tools
+  switch between profiles to work on different reductions.
+DRS: >
+  Data Reduction Software - a general term for the pipeline software
+  (APERO is SPIRou/NIRPS's DRS).
+Preprocessing: >
+  The first stage of the reduction (apero_preprocess), which corrects
+  raw exposures for detector-level effects before any science recipe
+  runs on them.
