@@ -1180,6 +1180,9 @@ def make_page_view(app, page_id: str, package_dir: Path):
     )
 
     def view_func():
+        if page_id == 'home.docs':
+            return app._doc_dynamic_view('')
+
         user_info = get_effective_user(session)
         if user_info:
             perms = resolve_user_permissions(
