@@ -26,6 +26,7 @@ from typing import Any, List, Optional
 
 import yaml
 from apero_ri.application import (
+    admin_assets_api_helpers,
     admin_backup_api_helpers,
     admin_cache_helpers,
     admin_health_helpers,
@@ -1017,6 +1018,9 @@ class ARIApp(Flask):
 
     def _doc_upload_image(self):
         return _impls.ariapp_doc_upload_image(self)
+
+    def _doc_search_index(self):
+        return doc_views_helpers.doc_search_index_view(self)
 
     @staticmethod
     def _doc_image_view(filename: str):
@@ -2816,6 +2820,28 @@ class ARIApp(Flask):
 
     def _api_admin_uploads_quota_get(self):
         return _impls.ariapp_api_admin_uploads_quota_get(self)
+
+    # -----------------------------------------------------------------
+    # Asset management — Admin API (also used by apero_assets.py)
+    # -----------------------------------------------------------------
+    def _api_admin_assets_status(self):
+        return admin_assets_api_helpers.api_admin_assets_status(self)
+
+    def _api_admin_assets_config(self):
+        return admin_assets_api_helpers.api_admin_assets_config(self)
+
+    def _api_admin_assets_delete(self):
+        return admin_assets_api_helpers.api_admin_assets_delete(self)
+
+    def _api_admin_assets_upload(self):
+        return admin_assets_api_helpers.api_admin_assets_upload(self)
+
+    def _public_assets_download(self, filename):
+        return admin_assets_api_helpers.public_assets_download(
+            self, filename)
+
+    def _api_assets_download(self, filename):
+        return admin_assets_api_helpers.api_assets_download(self, filename)
 
     # -----------------------------------------------------------------
     # Upload management — User API

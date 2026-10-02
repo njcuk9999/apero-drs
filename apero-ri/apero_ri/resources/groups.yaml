@@ -54,6 +54,8 @@ admin:
     - manage.admin.sshfs_setup
     - manage.admin.database_setup
     - manage.admin.user_db_access
+    # host APERO asset tars (Assets Management page + upload API)
+    - manage.admin.asset_management
     # astrometric history (read + restore) is admin/mod/dev only
     - manage.astrometrics.history
     # rejection-list history (read-only global audit log)

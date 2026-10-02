@@ -1,0 +1,72 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Assets Management{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Host APERO asset tar files on this server.
+        <code>apero_assets.py update-remote</code> (with
+        <code>AURLS.UPLOAD_MODE = ari</code>) pushes new tars here using an
+        admin API token.
+    </p>
+</div>
+
+<div id="am-unset" class="ari-flash ari-flash--warning" style="display:none;">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    No assets directory is set. Uploads from <code>apero_assets.py</code>
+    will be rejected until a directory is saved below.
+</div>
+
+<div class="ari-form-group">
+    <label for="am-path">Assets directory on this server</label>
+    <div class="ari-ap-path-row">
+        <input type="text" id="am-path"
+               class="ari-ap-input ari-ap-input--path"
+               placeholder="/absolute/path/to/apero/assets"
+               autocomplete="off">
+        <button type="button" id="am-save"
+                class="ari-btn ari-btn--primary ari-btn--sm">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+    </div>
+    <small class="ari-form-hint">
+        Absolute path, created if missing.
+    </small>
+    <label class="ari-form-hint">
+        <input type="checkbox" id="am-public" checked>
+        Allow public (no login) downloads at
+        <code id="am-public-url"></code>&lt;filename&gt;
+        (add this url to <code>AURLS.URLS</code>). Token users can
+        always download via <code>/api/assets/download/&lt;filename&gt;</code>.
+    </label>
+    <div id="am-status" class="at-muted-hint"></div>
+</div>
+
+<div class="ari-table-wrap">
+    <table class="ari-table" id="am-table">
+        <thead>
+        <tr>
+            <th>File</th>
+            <th>Size</th>
+            <th>Age</th>
+            <th>Modified (UTC)</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="am-body">
+        <tr><td colspan="5" class="at-muted-hint">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+window.ARI_ADMIN_ASSETS = {
+    statusUrl: {{ url_for('api_admin_assets_status')|tojson }},
+    configUrl: {{ url_for('api_admin_assets_config')|tojson }},
+    deleteUrl: {{ url_for('api_admin_assets_delete')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_assets.js', v='20261001b')
+}}"></script>
+{% endblock %}

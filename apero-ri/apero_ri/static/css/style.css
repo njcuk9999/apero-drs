@@ -1735,6 +1735,137 @@ body.ari-up-wide-page .ari-doc-main {
 }
 
 /* =================================================================
+   Related-topics row (front-matter `related:` on docs pages)
+   ================================================================= */
+.ari-related-topics {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.6rem 0 0 0;
+}
+
+.ari-related-topics__label {
+    color: var(--ari-text-muted);
+    font-size: 0.82rem;
+}
+
+.ari-related-topics__pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 999px;
+    background: var(--ari-surface-muted, #f8fafc);
+    color: var(--ari-text);
+    text-decoration: none;
+    font-size: 0.82rem;
+}
+
+.ari-related-topics__pill:hover {
+    border-color: var(--ari-primary);
+    color: var(--ari-primary);
+}
+
+[data-theme="dark"] .ari-related-topics__pill {
+    background: #1c2128;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .ari-related-topics__pill:hover {
+    border-color: #58a6ff;
+    color: #58a6ff;
+}
+
+/* =================================================================
+   Glossary term tooltips (inline links injected in rendered doc HTML)
+   ================================================================= */
+.ari-doc-content .ari-glossary-term {
+    color: var(--ari-text);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--ari-text-muted);
+    cursor: help;
+}
+
+.ari-doc-content .ari-glossary-term:hover {
+    color: var(--ari-primary);
+    border-bottom-color: var(--ari-primary);
+}
+
+[data-theme="dark"] .ari-doc-content .ari-glossary-term {
+    color: #e6edf3;
+    border-bottom-color: #8b949e;
+}
+
+[data-theme="dark"] .ari-doc-content .ari-glossary-term:hover {
+    color: #58a6ff;
+    border-bottom-color: #58a6ff;
+}
+
+/* =================================================================
+   Recently-visited trail (client-side, separate from the sidebar
+   "where you are" tree)
+   ================================================================= */
+.ari-recent-trail {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0 0 0.9rem 0;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.5rem;
+    background: var(--ari-surface-muted, #f8fafc);
+    font-size: 0.82rem;
+}
+
+.ari-recent-trail:empty {
+    display: none;
+}
+
+.ari-recent-trail__label {
+    color: var(--ari-text-muted);
+    white-space: nowrap;
+}
+
+.ari-recent-trail__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--ari-text);
+    text-decoration: none;
+}
+
+.ari-recent-trail__link:hover {
+    color: var(--ari-primary);
+}
+
+.ari-recent-trail__link--active {
+    color: var(--ari-primary);
+    font-weight: 600;
+}
+
+.ari-recent-trail__sep {
+    color: var(--ari-text-muted);
+    font-size: 0.65rem;
+}
+
+[data-theme="dark"] .ari-recent-trail {
+    background: #1c2128;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ari-recent-trail__link {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .ari-recent-trail__link:hover,
+[data-theme="dark"] .ari-recent-trail__link--active {
+    color: #58a6ff;
+}
+
+/* =================================================================
    Quick Todo (OLN-style)
    ================================================================= */
 .ari-qt-toolbar {
@@ -2765,6 +2896,88 @@ body.ari-up-wide-page .ari-doc-main {
 .ari-sidebar__version-select option {
     background: #252a3a;
     color: #cfd4de;
+}
+
+/* Docs search box (sidebar) */
+.ari-doc-search {
+    position: relative;
+}
+
+.ari-sidebar__search-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #8b93a6;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.ari-doc-search__input {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #3a4058;
+    border-radius: 4px;
+    background: #252a3a;
+    color: #cfd4de;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.ari-doc-search__input:focus {
+    outline: none;
+    border-color: var(--ari-primary);
+}
+
+.ari-doc-search__results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 0.25rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid #3a4058;
+    border-radius: 6px;
+    background: #1b1f2d;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.ari-doc-search__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.45rem 0.6rem;
+    text-decoration: none;
+    border-bottom: 1px solid #2c3142;
+}
+
+.ari-doc-search__item:last-child {
+    border-bottom: none;
+}
+
+.ari-doc-search__item:hover {
+    background: #252a3a;
+}
+
+.ari-doc-search__item-label {
+    color: #e5e9f0;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.ari-doc-search__item-url {
+    color: #8b93a6;
+    font-size: 0.72rem;
+}
+
+.ari-doc-search__empty {
+    padding: 0.5rem 0.6rem;
+    color: #8b93a6;
+    font-size: 0.82rem;
 }
 
 /* Edit button in sidebar */
@@ -10282,6 +10495,38 @@ button.ari-rp-section-card:hover {
     color: #2b3a50;
 }
 
+[data-theme="light"] .ari-sidebar__search-label {
+    color: #5a7a9a;
+}
+
+[data-theme="light"] .ari-doc-search__input {
+    background: #f0f5fb;
+    color: #2b3a50;
+    border-color: #ccd8e4;
+}
+
+[data-theme="light"] .ari-doc-search__results {
+    background: #ffffff;
+    border-color: #ccd8e4;
+}
+
+[data-theme="light"] .ari-doc-search__item {
+    border-bottom-color: #e3eaf1;
+}
+
+[data-theme="light"] .ari-doc-search__item:hover {
+    background: #e8f0f8;
+}
+
+[data-theme="light"] .ari-doc-search__item-label {
+    color: #1a3a5c;
+}
+
+[data-theme="light"] .ari-doc-search__item-url,
+[data-theme="light"] .ari-doc-search__empty {
+    color: #5a7a9a;
+}
+
 /* ==========================================================================
    THEMES — Dark
    ========================================================================== */
@@ -10329,6 +10574,19 @@ button.ari-rp-section-card:hover {
 [data-theme="dark"] .ari-sidebar__link--active {
     background: #21262d;
     color: #e6edf3;
+}
+
+[data-theme="dark"] .ari-doc-search__results {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ari-doc-search__item {
+    border-bottom-color: #21262d;
+}
+
+[data-theme="dark"] .ari-doc-search__item:hover {
+    background: #21262d;
 }
 
 /* Cards and surfaces */

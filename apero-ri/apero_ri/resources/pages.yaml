@@ -675,6 +675,17 @@ home.admin_portal.manage_uploads:
     top-level: False
     show: True
 
+home.admin_portal.asset_management:
+  label: Assets Management
+  parent: home.admin_portal
+  view-permission: manage.admin.asset_management
+  icon: fa-solid fa-box-archive
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.vault:
   label: Vault
   parent: home.admin_portal

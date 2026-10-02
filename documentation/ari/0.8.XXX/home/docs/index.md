@@ -1,6 +1,15 @@
 ---
 card_label: APERO documentation
 card_icon: fa-brands fa-readme
+related:
+  - install
+  - developer
+  - reference
+  - algorithms
+  - api
+  - monitor
+  - known_errors
+  - glossary
 ---
 
 # APERO documentation
@@ -16,3 +25,4 @@ are selected from the version menu.
 - [ARI API guide](api)
 - [Monitoring documentation](monitor)
 - [Known errors](known_errors)
+- [Glossary](glossary)

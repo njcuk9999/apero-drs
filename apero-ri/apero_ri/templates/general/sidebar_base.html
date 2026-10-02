@@ -26,6 +26,22 @@
         </div>
         {% endif %}
 
+        <!-- Docs search — only shown for doc pages -->
+        {% if doc_versions is defined and doc_versions|length > 0 %}
+        <div class="ari-sidebar__section ari-doc-search">
+            <label for="ari-doc-search-input" class="ari-sidebar__search-label">
+                <i class="fa-solid fa-magnifying-glass"></i> Search docs
+            </label>
+            <input type="text" id="ari-doc-search-input"
+                   class="ari-doc-search__input"
+                   placeholder="Search pages…"
+                   autocomplete="off">
+            <div id="ari-doc-search-results"
+                 class="ari-doc-search__results" hidden></div>
+        </div>
+        <script src="{{ url_for('static', filename='js/doc_search.js', v='20261001a') }}"></script>
+        {% endif %}
+
         <!-- Version selector — only shown for doc pages -->
         {% if doc_versions is defined and doc_versions|length > 0 %}
         <div class="ari-sidebar__section">
@@ -217,6 +233,78 @@
                 {% endif %}
             </div>
         </details>
+        {% endif %}
+
+        {% if doc_self_url is defined %}
+        <nav class="ari-recent-trail" id="ari-recent-trail"
+             aria-label="Recently visited pages"></nav>
+        <script>
+        (function () {
+            'use strict';
+            var current = {
+                url: {{ (doc_self_url ~ (doc_query_suffix|default(''))) | tojson }},
+                label: {{ (page_label|default('Documentation')) | tojson }},
+                icon: {{ (page_icon|default('fa-solid fa-file-lines')) | tojson }}
+            };
+            var KEY = 'ari_recent_docs';
+            var MAX = 5;
+
+            function load() {
+                try {
+                    var list = JSON.parse(localStorage.getItem(KEY) || '[]');
+                    return Array.isArray(list) ? list : [];
+                } catch (e) { return []; }
+            }
+
+            function save(list) {
+                try { localStorage.setItem(KEY, JSON.stringify(list)); }
+                catch (e) { /* storage unavailable/full; skip */ }
+            }
+
+            function render(list) {
+                var nav = document.getElementById('ari-recent-trail');
+                if (!nav || list.length < 2) {
+                    // Nothing to show until there is real history.
+                    if (nav) nav.innerHTML = '';
+                    return;
+                }
+                var parts = [
+                    '<span class="ari-recent-trail__label">' +
+                    'Recently viewed:</span>'
+                ];
+                list.forEach(function (item, idx) {
+                    if (idx > 0) {
+                        parts.push(
+                            '<i class="fa-solid fa-chevron-right ' +
+                            'ari-recent-trail__sep"></i>'
+                        );
+                    }
+                    var active = item.url === current.url;
+                    var cls = 'ari-recent-trail__link' +
+                        (active ? ' ari-recent-trail__link--active' : '');
+                    var safeLabel = String(item.label || '')
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                    var safeUrl = String(item.url || '')
+                        .replace(/"/g, '&quot;');
+                    parts.push(
+                        '<a class="' + cls + '" href="' + safeUrl + '">' +
+                        '<i class="' + item.icon + '"></i> ' +
+                        safeLabel + '</a>'
+                    );
+                });
+                nav.innerHTML = parts.join('');
+            }
+
+            // Record this page, most-recent-first, de-duplicated, capped.
+            var list = load().filter(function (item) {
+                return item && item.url !== current.url;
+            });
+            list.unshift(current);
+            list = list.slice(0, MAX);
+            save(list);
+            render(list);
+        }());
+        </script>
         {% endif %}
 
         {% block doc_content %}{% endblock %}

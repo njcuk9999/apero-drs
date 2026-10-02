@@ -426,6 +426,46 @@ CDict.add('SSH_ASSETSPATH',
           description='Define the ssh assets path',
           output=False)
 
+# Define how apero_assets.py update-remote uploads the assets tar file
+#   'ssh' = legacy rsync over ssh (uses SSH_* constants)
+#   'ari' = push through the APERO RI API (uses ARI_URL and an admin
+#           API token in the APERO_ARI_TOKEN environment variable)
+CDict.add('UPLOAD_MODE', value='ssh', dtype=str, options=['ssh', 'ari'],
+          source=__NAME__, group=cgroup,
+          description=('Define how apero_assets.py update-remote uploads '
+                       'the assets tar file: "ssh" = legacy rsync over ssh '
+                       '(uses SSH_* constants), "ari" = push through the '
+                       'APERO RI API (uses ARI_URL and an admin API token '
+                       'in the APERO_ARI_TOKEN environment variable)'),
+          output=False)
+
+# Define how apero_assets.py update-local downloads the assets tar file
+#   'url' = public urls listed in the checksum yaml (AURLS.URLS plus the
+#           APERO RI public url when uploaded with UPLOAD_MODE = 'ari')
+#   'ari' = through the APERO RI API (uses ARI_URL and an API token in the
+#           APERO_ARI_TOKEN environment variable)
+CDict.add('DOWNLOAD_MODE', value='url', dtype=str, options=['url', 'ari'],
+          source=__NAME__, group=cgroup,
+          description=('Define how apero_assets.py update-local downloads '
+                       'the assets tar file: "url" = public urls listed in '
+                       'the checksum yaml (AURLS.URLS plus the APERO RI '
+                       'public url when uploaded with UPLOAD_MODE = "ari"), '
+                       '"ari" = through the APERO RI API (uses ARI_URL and '
+                       'an API token in the APERO_ARI_TOKEN environment '
+                       'variable)'),
+          output=False)
+
+# Define the base url/domain of the APERO RI server that hosts the assets
+#   (e.g. https://ari.example.com) - used when UPLOAD_MODE or
+#   DOWNLOAD_MODE = 'ari'
+CDict.add('ARI_URL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description=('Define the base url/domain of the APERO RI server '
+                       'that hosts the assets (e.g. '
+                       'https://ari.example.com) - used when UPLOAD_MODE '
+                       'or DOWNLOAD_MODE = "ari"'),
+          output=False)
+
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================

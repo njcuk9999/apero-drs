@@ -219,20 +219,29 @@ def split_arg_lines(arglines: List[str]) -> List[Tuple[str, str]]:
     return rows
 
 
-def front_matter(label: str, icon: str) -> List[str]:
+def front_matter(label: str, icon: str,
+                 related: Optional[List[str]] = None) -> List[str]:
     """
     Build the YAML front matter block used by the apero-ri docs renderer.
 
     :param label: str, the card label shown in the docs index/sidebar
     :param icon: str, the FontAwesome icon class
+    :param related: list of str or None, doc refs for the apero-ri
+                    "related topics" row shown at the top of the page
 
     :return: list of str, the front matter lines
     """
-    return ['---', 'card_label: {0}'.format(label),
-            'card_icon: {0}'.format(icon), '---', '']
+    lines = ['---', 'card_label: {0}'.format(label),
+             'card_icon: {0}'.format(icon)]
+    if related:
+        lines.append('related:')
+        lines += ['  - {0}'.format(ref) for ref in related]
+    lines += ['---', '']
+    return lines
 
 
-def write_page(path: Path, label: str, icon: str, lines: List[str]):
+def write_page(path: Path, label: str, icon: str, lines: List[str],
+               related: Optional[List[str]] = None):
     """
     Write a markdown documentation page (front matter + body).
 
@@ -240,13 +249,156 @@ def write_page(path: Path, label: str, icon: str, lines: List[str]):
     :param label: str, the card label for this page
     :param icon: str, the FontAwesome icon class for this page
     :param lines: list of str, the markdown body lines
+    :param related: list of str or None, doc refs for the "related
+                    topics" row (see "front_matter")
 
     :return: None, writes to "path"
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    page_lines = front_matter(label, icon) + lines
+    page_lines = front_matter(label, icon, related) + lines
     content = '\n'.join(line.rstrip() for line in page_lines).rstrip() + '\n'
     path.write_text(content, encoding='utf-8')
+
+
+def summary_sentence(description: str) -> str:
+    """
+    Take the first sentence (or line) of a recipe/tool description.
+
+    Used for the one-line blurb in the cross-instrument summary tables,
+    where the full multi-paragraph description would be unreadable.
+
+    :param description: str, the full recipe/tool description
+
+    :return: str, a single short sentence ending in a period, or an
+        empty string if "description" has no usable text
+    """
+    text = str(description or '').strip()
+    if len(text) == 0:
+        return ''
+    first_line = text.split('\n')[0].strip()
+    first_sentence = first_line.split('. ')[0].strip().rstrip('.')
+    if len(first_sentence) == 0:
+        return ''
+    return first_sentence + '.'
+
+
+def md_table_from_rows(rows: List[Dict[str, str]],
+                       columns: List[Tuple[str, str]]) -> List[str]:
+    """
+    Build a markdown table from a list of dict rows (not an astropy Table).
+
+    Used for the cross-instrument recipe/tool summary tables, where the
+    rows are assembled by hand (one row per recipe/tool name, merged
+    across instruments) rather than read straight off a definition object.
+
+    :param rows: list of dict, one dict per table row
+    :param columns: list of (row key, column header) tuples, column order
+
+    :return: list of str, the markdown lines (empty if "rows" is empty)
+    """
+    if len(rows) == 0:
+        return []
+    headers = [header for _key, header in columns]
+    lines = ['| ' + ' | '.join(headers) + ' |']
+    lines += ['| ' + ' | '.join(['---'] * len(headers)) + ' |']
+    for row in rows:
+        # cell text is built by the caller (already markdown-safe); only
+        # guard against a stray newline breaking the table row here
+        cells = [str(row.get(key, '')).replace('\n', ' ')
+                 for key, _header in columns]
+        lines += ['| ' + ' | '.join(cells) + ' |']
+    return lines
+
+
+def merge_catalog_rows(catalog_rows: List[dict]) -> List[dict]:
+    """
+    Merge per-instrument catalog rows into one row per recipe/tool name.
+
+    Several instruments documenting the same recipe/tool contribute one
+    row each (see "catalog_rows" built in ``compile_instrument``/
+    ``compile_global_tools``); this collapses them into a single row
+    with a comma-joined "Instruments" column, in first-seen order.
+
+    :param catalog_rows: list of dict, each with ``shortname``, ``name``,
+        ``link``, ``instrument``, ``category``, and ``summary`` keys
+
+    :return: list of dict, one merged row per distinct ``shortname``
+    """
+    merged: Dict[str, dict] = dict()
+    order: List[str] = []
+    for row in catalog_rows:
+        key = str(row['shortname'])
+        if key not in merged:
+            merged[key] = dict(row)
+            merged[key]['instruments'] = []
+            order.append(key)
+        instrument = str(row.get('instrument') or '')
+        if instrument.lower() not in ['default', 'none', '']:
+            if instrument not in merged[key]['instruments']:
+                merged[key]['instruments'].append(instrument)
+    return [merged[key] for key in order]
+
+
+def catalog_table_rows(catalog_rows: List[dict],
+                       show_category: bool = False) -> List[Dict[str, str]]:
+    """
+    Convert merged catalog rows into markdown-table-ready dict rows.
+
+    :param catalog_rows: list of dict, as built by "merge_catalog_rows"
+    :param show_category: bool, include a "category" column (used by the
+        tools table to distinguish user tools from developer tools)
+
+    :return: list of dict with ``name``, ``instruments`` (and optionally
+        ``category``), and ``summary`` string values ready for
+        ``md_table_from_rows``
+    """
+    table_rows = []
+    for item in catalog_rows:
+        instruments = item.get('instruments') or []
+        instrument_text = (', '.join(sorted(i.upper() for i in instruments))
+                           if len(instruments) > 0 else 'All')
+        summary = item.get('summary') or 'No description yet.'
+        row = dict(
+            name='[{0}]({1})'.format(item['name'], item['link']),
+            instruments=instrument_text,
+            # a literal pipe would end the markdown table cell early
+            summary=summary.replace('|', r'\|'),
+        )
+        if show_category:
+            row['category'] = item.get('category', '')
+        table_rows.append(row)
+    return table_rows
+
+
+def build_catalog_index(catalog_rows: List[dict], outdir: Path, label: str,
+                        icon: str, title: str, intro: List[str],
+                        show_category: bool = False):
+    """
+    Write a consolidated, cross-instrument recipe/tool summary page.
+
+    :param catalog_rows: list of dict, raw per-instrument catalog rows
+    :param outdir: Path, the directory to write ``index.md`` into
+    :param label: str, the card label for this page
+    :param icon: str, the FontAwesome icon class for this page
+    :param title: str, the page title
+    :param intro: list of str, introductory markdown lines
+    :param show_category: bool, include a "category" column (tools table)
+
+    :return: None, writes ``index.md`` into "outdir"
+    """
+    merged = merge_catalog_rows(catalog_rows)
+    table_rows = catalog_table_rows(merged, show_category=show_category)
+    columns = [('name', 'Name')]
+    if show_category:
+        columns += [('category', 'Type')]
+    columns += [('instruments', 'Instruments'), ('summary', 'Description')]
+    lines = ['# {0}'.format(title), ''] + intro + ['']
+    table_lines = md_table_from_rows(table_rows, columns)
+    if len(table_lines) > 0:
+        lines += table_lines + ['']
+    else:
+        lines += ['Nothing is currently documented here.', '']
+    write_page(outdir / 'index.md', label, icon, lines)
 
 
 def card_list(items: List[Tuple[str, str]]) -> List[str]:
@@ -621,7 +773,8 @@ def build_file_definition_pages(params: ParamDict, pconst: Instrument,
 
 
 def build_index(outdir: Path, label: str, icon: str, title: str,
-                intro: List[str], items: List[Tuple[str, str]]):
+                intro: List[str], items: List[Tuple[str, str]],
+                related: Optional[List[str]] = None):
     """
     Write an ``index.md`` giving a directory its card label and contents list.
 
@@ -631,6 +784,8 @@ def build_index(outdir: Path, label: str, icon: str, title: str,
     :param title: str, the page title
     :param intro: list of str, introductory markdown lines
     :param items: list of (link target, display label) tuples
+    :param related: list of str or None, doc refs for the "related
+                    topics" row (see "front_matter")
 
     :return: None, writes ``index.md`` into "outdir"
     """
@@ -639,7 +794,7 @@ def build_index(outdir: Path, label: str, icon: str, title: str,
         lines += card_list(items)
     else:
         lines += ['Nothing is currently documented here.', '']
-    write_page(outdir / 'index.md', label, icon, lines)
+    write_page(outdir / 'index.md', label, icon, lines, related=related)
 
 
 # =============================================================================
@@ -708,7 +863,8 @@ def filter_recipes(srecipes: List[DrsRecipe], kind: str) -> List[DrsRecipe]:
 
 
 def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
-                       apero_dir: Path) -> List[Tuple[str, str]]:
+                       apero_dir: Path,
+                       recipe_rows: List[dict]) -> List[Tuple[str, str]]:
     """
     Generate every page belonging to a single instrument.
 
@@ -718,6 +874,9 @@ def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
                    modules, already reloaded for "instrument")
     :param instrument: str, the instrument name
     :param apero_dir: Path, the root of the generated apero docs tree
+    :param recipe_rows: list of dict, appended in place with one row per
+                        recipe documented for "instrument" so the caller
+                        can build the cross-instrument summary table
 
     :return: list of (link target, display label) tuples for the parent index
     """
@@ -738,9 +897,12 @@ def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
             WLOG(params, '', '\tSequence: {0}'.format(sequence.name))
             build_sequence_page(params, sequence, instrument, seq_dir)
             items.append((sequence.name.lower(), sequence.name))
-        intro = ['A sequence is an ordered set of recipes run together by '
-                 '`apero_processing.py`. Use these pages to see what APERO '
-                 'actually does to your data, and in what order.']
+        intro = ['`apero_processing` (and `apero_queue` in APERO 0.8) reads '
+                 'a sequence and runs its recipes, for this instrument, in '
+                 'the order listed below - that ordering, not anything '
+                 'implicit in the recipe code, is what defines a reduction '
+                 'run. Use these pages to see what APERO actually does to '
+                 'your data, and in what order.']
         build_index(seq_dir, 'Sequences', ICONS[KIND_SEQUENCES],
                     'Sequences ({0})'.format(instrument), intro, items)
         sections.append((KIND_SEQUENCES + '/', 'Sequences'))
@@ -763,8 +925,21 @@ def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
             WLOG(params, '', '\t{0}: {1}'.format(label, srecipe.name))
             build_recipe_page(params, pconst, srecipe, instrument, kind,
                               kind_dir)
-            items.append((srecipe.shortname.lower(),
-                          str(srecipe.name).replace('.py', '')))
+            name = str(srecipe.name).replace('.py', '')
+            items.append((srecipe.shortname.lower(), name))
+            # Only recipes (not instrument-specific tools) feed the
+            # cross-instrument "apero/recipes" summary table; tools stay
+            # scoped to each instrument's own tools page.
+            if kind == KIND_RECIPES:
+                # Absolute ref (matches link_section()'s convention) so
+                # this is safe to reuse from any consolidated page,
+                # regardless of that page's own directory depth.
+                link = '/docs/apero/instruments/{0}/{1}/{2}'.format(
+                    instrument.lower(), kind, srecipe.shortname.lower())
+                recipe_rows.append(dict(
+                    shortname=name, name=name, link=link,
+                    instrument=instrument,
+                    summary=summary_sentence(srecipe.description)))
         build_index(kind_dir, label, ICONS[kind],
                     '{0} ({1})'.format(label, instrument), [blurb], items)
         sections.append((kind + '/', label))
@@ -793,7 +968,7 @@ def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
 
 
 def compile_global_tools(params: ParamDict, recipe: DrsRecipe,
-                         apero_dir: Path):
+                         apero_dir: Path, tool_rows: List[dict]):
     """
     Generate the instrument-independent user and developer tool pages.
 
@@ -802,6 +977,8 @@ def compile_global_tools(params: ParamDict, recipe: DrsRecipe,
     :param recipe: DrsRecipe, the running recipe (already reloaded for the
                    default instrument)
     :param apero_dir: Path, the root of the generated apero docs tree
+    :param tool_rows: list of dict, appended in place with one row per
+                      tool documented, for the "apero/tools" summary table
 
     :return: None, writes markdown pages
     """
@@ -809,13 +986,13 @@ def compile_global_tools(params: ParamDict, recipe: DrsRecipe,
                                          instrument='default')
     recipemod = as_module(recipe.recipemod)
     srecipes = list(getattr(recipemod, 'recipes', []))
-    tool_kinds = [(KIND_USER_TOOLS, 'User tools',
+    tool_kinds = [(KIND_USER_TOOLS, 'User tools', 'User tool',
                    'Tools you run yourself to set up, inspect, query and '
                    'manage an APERO reduction.'),
-                  (KIND_DEV_TOOLS, 'Developer tools',
+                  (KIND_DEV_TOOLS, 'Developer tools', 'Developer tool',
                    'Tools used to maintain APERO itself. Most users will '
                    'never need these.')]
-    for kind, label, blurb in tool_kinds:
+    for kind, label, category, blurb in tool_kinds:
         selected = filter_recipes(srecipes, kind)
         if len(selected) == 0:
             continue
@@ -825,30 +1002,43 @@ def compile_global_tools(params: ParamDict, recipe: DrsRecipe,
             WLOG(params, '', '\t{0}: {1}'.format(label, srecipe.name))
             build_recipe_page(params, pconst, srecipe, 'default', kind,
                               kind_dir)
-            items.append((srecipe.shortname.lower(),
-                          str(srecipe.name).replace('.py', '')))
+            name = str(srecipe.name).replace('.py', '')
+            items.append((srecipe.shortname.lower(), name))
+            tool_rows.append(dict(
+                shortname=name, name=name, instrument='default',
+                category=category, summary=summary_sentence(
+                    srecipe.description),
+                link='/docs/apero/{0}/{1}'.format(
+                    kind, srecipe.shortname.lower())))
         source_kind = 'bin' if kind == KIND_USER_TOOLS else 'dev'
         source_dir = (REPO_ROOT / 'apero-drs' / 'apero' / 'tools' /
                       'recipes' / source_kind)
         known_names = {Path(str(item.name)).stem for item in selected}
-        build_unregistered_tool_pages(kind_dir, kind, source_dir,
-                                      source_kind, known_names, items)
+        build_unregistered_tool_pages(kind_dir, kind, category, source_dir,
+                                      source_kind, known_names, items,
+                                      tool_rows)
         build_index(kind_dir, label, ICONS[kind], label, [blurb], items)
 
 
-def build_unregistered_tool_pages(outdir: Path, kind: str,
+def build_unregistered_tool_pages(outdir: Path, kind: str, category: str,
                                   source_dir: Path, source_kind: str,
                                   known_names: set,
-                                  items: List[Tuple[str, str]]):
+                                  items: List[Tuple[str, str]],
+                                  tool_rows: List[dict]):
     """
     Add command scripts that have no DrsRecipe definition to the tool index.
 
     :param outdir: Path, output directory for user or developer tool pages
     :param kind: str, KIND_USER_TOOLS or KIND_DEV_TOOLS
+    :param category: str, "User tool" or "Developer tool", for the
+                     cross-instrument tools summary table
     :param source_dir: Path, directory containing tool Python modules
     :param source_kind: str, ``bin`` or ``dev`` source directory name
     :param known_names: set of str, script stems already documented from defs
     :param items: list of (link target, label) pairs (modified in place)
+    :param tool_rows: list of dict, appended in place for the tools
+                      summary table (same shape as the rows appended in
+                      "compile_global_tools")
 
     :return: None, writes pages and appends their index entries
     """
@@ -876,6 +1066,10 @@ def build_unregistered_tool_pages(outdir: Path, kind: str,
         write_page(outdir / '{0}.md'.format(source.stem), source.stem,
                    icon, lines)
         items.append((source.stem, source.stem))
+        tool_rows.append(dict(
+            shortname=source.stem, name=source.stem, instrument='default',
+            category=category, summary=summary_sentence(description),
+            link='/docs/apero/{0}/{1}'.format(kind, source.stem)))
 
 
 def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
@@ -912,10 +1106,12 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     WLOG(params, 'info', 'Compiling APERO tool documentation')
     iparams = reload_for(recipe, 'default')
-    compile_global_tools(iparams, recipe, apero_dir)
+    tool_rows: List[dict] = []
+    compile_global_tools(iparams, recipe, apero_dir, tool_rows)
     # -------------------------------------------------------------------------
     # Per instrument pages
     # -------------------------------------------------------------------------
+    recipe_rows: List[dict] = []
     inst_items = []
     for instrument in instruments:
         # "None"/"default" is the pseudo instrument handled above
@@ -923,7 +1119,8 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
             continue
         WLOG(params, 'info', 'Compiling {0} documentation'.format(instrument))
         iparams = reload_for(recipe, instrument)
-        compile_instrument(iparams, recipe, instrument, apero_dir)
+        compile_instrument(iparams, recipe, instrument, apero_dir,
+                           recipe_rows)
         inst_items.append((instrument.lower() + '/', instrument))
     if len(inst_items) > 0:
         intro = ['Select an instrument to see its sequences, recipes, tools '
@@ -931,13 +1128,51 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
         build_index(apero_dir / 'instruments', 'Instruments',
                     ICONS['instruments'], 'Instruments', intro, inst_items)
     # -------------------------------------------------------------------------
+    # Cross-instrument summary tables: "what recipes/tools exist, where"
+    # -------------------------------------------------------------------------
+    recipes_intro = [
+        'Every APERO recipe, across all instruments, at a glance. A '
+        'recipe is one processing step (e.g. extraction, or '
+        'localisation); `apero_processing`/`apero_queue` chain recipes '
+        'together into a sequence (see each instrument\'s Sequences '
+        'page). Click a recipe for its full usage, arguments, and '
+        'outputs for a specific instrument.']
+    build_catalog_index(recipe_rows, apero_dir / KIND_RECIPES, 'Recipes',
+                        ICONS[KIND_RECIPES], 'Recipes', recipes_intro)
+    tools_intro = [
+        'Every APERO tool, user-facing and developer-only, at a '
+        'glance. Tools are run directly rather than as part of a '
+        'processing sequence - use this table to find the one you '
+        'need, then click through for its full usage.']
+    build_catalog_index(tool_rows, apero_dir / 'tools', 'Tools',
+                        ICONS[KIND_USER_TOOLS], 'Tools', tools_intro,
+                        show_category=True)
+    # -------------------------------------------------------------------------
     # Top level index for the generated tree
     # -------------------------------------------------------------------------
-    items = [('user_tools/', 'User tools'), ('dev_tools/', 'Developer tools'),
-             ('instruments/', 'Instruments')]
-    intro = ['Reference documentation for APERO {0}, generated from the '
-             'recipe and file definitions.'.format(docversion)]
-    build_index(apero_dir, 'APERO', ICONS[APERO_REF], 'APERO', intro, items)
+    items = [(KIND_RECIPES + '/', 'Recipes'), ('tools/', 'Tools'),
+             ('instruments/', 'Instruments (sequences, file definitions)')]
+    intro = [
+        'APERO is the data-reduction pipeline for SPIRou and NIRPS: it '
+        'turns raw exposures into calibrated, science-ready spectra.',
+        '',
+        'Most reductions are run as a single YAML-driven batch: '
+        '`apero_processing` (and `apero_queue` in APERO 0.8) reads a '
+        '**sequence** - an ordered list of recipes for one instrument '
+        '- and runs every recipe it names, in order, for a whole '
+        'night or object. You can also call any **recipe** directly '
+        'for a single step, which is useful for reprocessing one file '
+        'or debugging a stage in isolation.',
+        '',
+        'Alongside recipes, APERO ships a wide range of **tools** for '
+        'setup, inspection, and maintenance - see Tools below.',
+        '',
+        'This section is generated from APERO {0}\'s recipe and file '
+        'definitions; it is always in sync with the running '
+        'code.'.format(docversion),
+    ]
+    build_index(apero_dir, 'APERO', ICONS[APERO_REF], 'APERO', intro, items,
+               related=['developer', 'reference', 'algorithms', 'glossary'])
     WLOG(params, '', 'Wrote APERO docs to: {0}'.format(apero_dir))
 
 

@@ -37,6 +37,11 @@ DOC_ROOT = REPO_ROOT / "documentation" / "ari"
 DOC_STATIC = DOC_ROOT / "static"
 DOC_IMAGES = DOC_STATIC / "images"
 VERSIONS_FILE = DOC_ROOT / "versions.yaml"
+# Doc ref (post-normalize_doc_ref) whose body is generated from
+# GLOSSARY_REL_PATH at request time, rather than read from disk, so the
+# page and the inline-tooltip term list can never drift apart.
+GLOSSARY_DOC_REF = 'home/docs/glossary'
+GLOSSARY_REL_PATH = 'home/docs/glossary.yaml'
 
 # Markdown extensions for rendering
 MD_EXTENSIONS = [
@@ -63,8 +68,21 @@ MD_EXTENSION_CONFIGS = {
 _DOC_CACHE_LOCK = threading.Lock()
 _DOC_CACHE_TTL_S = 30.0
 _DOC_VERSIONS_CACHE: dict = dict()
+# Child/sidebar caches are invalidated by directory signature rather than
+# a blind TTL: docs only change when someone edits/saves a page or the
+# apero_documentation tool rebuilds the tree, so a correctness-based
+# cache can be kept indefinitely between those events instead of
+# re-scanning + re-parsing front matter every 30s.
 _DOC_CHILDREN_CACHE: dict = dict()
+# Bumped per-version every time _get_doc_children actually recomputes
+# (cache miss), so get_doc_sidebar_tree can tell whether any directory
+# it walked has changed since its own result was cached.
+_DOC_CHILDREN_GENERATION: dict = dict()
 _DOC_SIDEBAR_CACHE: dict = dict()
+# Rendered-HTML cache keyed by the source file's mtime, so the
+# markdown -> HTML conversion (codehilite/toc/mermaid regex pass) only
+# re-runs when the page content actually changes, not on every request.
+_DOC_RENDER_CACHE: dict = dict()
 
 
 def _cache_get(cache: dict, key):
@@ -90,6 +108,29 @@ def _cache_set(cache: dict, key, value):
             'expires': now + _DOC_CACHE_TTL_S,
             'value': value,
         }
+
+
+def _dir_signature(path: Path) -> tuple:
+    """Return a cheap (name, mtime_ns) signature for a directory's entries.
+
+    Only stats the listing (no file reads), so it can be checked on
+    every request to detect added/removed/edited entries without
+    paying the cost of re-parsing front matter for unchanged ones.
+
+    :param path: Path, directory to fingerprint
+
+    :return: tuple of (name, mtime_ns) pairs, sorted by name; empty
+        tuple when the directory does not exist
+    """
+    try:
+        entries = sorted(
+            (entry.name, entry.stat().st_mtime_ns)
+            for entry in os.scandir(path)
+            if not entry.name.startswith('.')
+        )
+    except OSError:
+        return ()
+    return tuple(entries)
 
 
 def _clone_list_of_dict(rows: List[dict]) -> List[dict]:
@@ -183,16 +224,21 @@ def _get_doc_children(
         return []
 
     rel_dir = normalize_doc_ref(rel_doc_dir)
-    cache_key = (str(version or ''), rel_dir)
-    cached = _cache_get(_DOC_CHILDREN_CACHE, cache_key)
-    if isinstance(cached, list):
-        return _clone_list_of_dict(cached)
-
-    items_map: Dict[str, dict] = dict()
+    version_key = str(version or '')
+    cache_key = (version_key, rel_dir)
     scan_dirs = [
         (DOC_ROOT / 'all' / rel_dir, True),
         (DOC_ROOT / version / rel_dir, False),
     ]
+    # Cheap listing fingerprint; reuse the (expensive) parsed result
+    # below for as long as neither scan dir's contents have changed.
+    signature = tuple(_dir_signature(base_dir) for base_dir, _ in scan_dirs)
+    with _DOC_CACHE_LOCK:
+        entry = _DOC_CHILDREN_CACHE.get(cache_key)
+    if entry is not None and entry.get('sig') == signature:
+        return _clone_list_of_dict(entry['value'])
+
+    items_map: Dict[str, dict] = dict()
 
     for base_dir, is_all_dir in scan_dirs:
         if not base_dir.exists() or not base_dir.is_dir():
@@ -263,7 +309,19 @@ def _get_doc_children(
     children = []
     for key in sorted(items_map.keys()):
         children.append(items_map[key])
-    _cache_set(_DOC_CHILDREN_CACHE, cache_key, _clone_list_of_dict(children))
+
+    with _DOC_CACHE_LOCK:
+        if len(_DOC_CHILDREN_CACHE) > 512:
+            _DOC_CHILDREN_CACHE.clear()
+        _DOC_CHILDREN_CACHE[cache_key] = dict(
+            sig=signature,
+            value=_clone_list_of_dict(children),
+        )
+        # Tell any sidebar-tree cache keyed on this version that this
+        # directory's content changed, so it knows to rebuild too.
+        _DOC_CHILDREN_GENERATION[version_key] = (
+            _DOC_CHILDREN_GENERATION.get(version_key, 0) + 1
+        )
     return children
 
 
@@ -278,10 +336,16 @@ def get_doc_sidebar_tree(
         return []
 
     current_ref = normalize_doc_ref(doc_ref)
-    cache_key = (str(version or ''), current_ref)
-    cached = _cache_get(_DOC_SIDEBAR_CACHE, cache_key)
-    if isinstance(cached, list):
-        return _clone_list_of_dict(cached)
+    version_key = str(version or '')
+    cache_key = (version_key, current_ref)
+    # Reuse the cached tree as long as no directory it was built from
+    # has changed (tracked via _DOC_CHILDREN_GENERATION), rather than a
+    # blind TTL that still re-walks all 190+ files every 30s.
+    generation = _DOC_CHILDREN_GENERATION.get(version_key, 0)
+    with _DOC_CACHE_LOCK:
+        entry = _DOC_SIDEBAR_CACHE.get(cache_key)
+    if entry is not None and entry.get('gen') == generation:
+        return _clone_list_of_dict(entry['value'])
 
     tree: List[dict] = []
 
@@ -332,8 +396,54 @@ def get_doc_sidebar_tree(
             continue
         if tree[next_idx].get('depth', 0) > item.get('depth', 0):
             tree[idx]['has_children'] = True
-    _cache_set(_DOC_SIDEBAR_CACHE, cache_key, _clone_list_of_dict(tree))
+
+    # The walk above may have triggered _get_doc_children cache misses
+    # (bumping the generation counter); store the tree keyed to the
+    # generation actually observed while building it, not the one read
+    # before the walk started.
+    generation = _DOC_CHILDREN_GENERATION.get(version_key, 0)
+    with _DOC_CACHE_LOCK:
+        if len(_DOC_SIDEBAR_CACHE) > 512:
+            _DOC_SIDEBAR_CACHE.clear()
+        _DOC_SIDEBAR_CACHE[cache_key] = dict(
+            gen=generation,
+            value=_clone_list_of_dict(tree),
+        )
     return tree
+
+
+def get_search_index(version: Optional[str] = None) -> List[dict]:
+    """Return a flat, searchable index of every doc page for one version.
+
+    Deliberately piggybacks on ``get_doc_sidebar_tree`` (titles/urls
+    only, already cached and generation-invalidated) rather than
+    re-reading every markdown file's body on each request: that would
+    reintroduce the same per-click cost Phase 1 removed. Autocomplete
+    only needs to match page titles and URL path segments, not full
+    page text.
+
+    :param version: str or None, documentation version
+
+    :return: list of dict, each ``{label, url, keywords}`` where
+        ``keywords`` is a lowercased, space-joined string of the label
+        and its URL path segments for simple client-side filtering
+    """
+    if not version:
+        version = get_default_version()
+    if not version:
+        return []
+
+    tree = get_doc_sidebar_tree('home/docs', version)
+    index: List[dict] = []
+    for item in tree:
+        label = str(item.get('label') or '').strip()
+        url = str(item.get('url') or '').strip()
+        if not label or not url:
+            continue
+        slug_tokens = [tok for tok in re.split(r'[/_\-]+', url) if tok]
+        keywords = ' '.join([label] + slug_tokens).lower()
+        index.append(dict(label=label, url=url, keywords=keywords))
+    return index
 
 
 def normalize_doc_ref(doc_ref: str) -> str:
@@ -449,9 +559,135 @@ def get_default_version() -> Optional[str]:
     return versions[0]["id"] if versions else None
 
 
+def _resolve_glossary_path(version: Optional[str]) -> Optional[Path]:
+    """Resolve ``glossary.yaml`` using version then ``all`` fallback."""
+    if not version:
+        version = get_default_version()
+    if not version:
+        return None
+    for base_dir in (DOC_ROOT / version, DOC_ROOT / 'all'):
+        path = base_dir / GLOSSARY_REL_PATH
+        if path.exists() and path.is_file():
+            return path
+    return None
+
+
+def get_glossary_terms(version: Optional[str] = None) -> List[dict]:
+    """Return glossary terms sorted alphabetically by term.
+
+    :param version: str or None, documentation version
+
+    :return: list of dict, each ``{term, definition}``
+    """
+    path = _resolve_glossary_path(version)
+    if path is None:
+        return []
+    with open(path, 'r', encoding='utf-8') as f:
+        data = yaml.safe_load(f) or {}
+    if not isinstance(data, dict):
+        return []
+    terms = [
+        dict(term=str(term), definition=str(definition or '').strip())
+        for term, definition in data.items()
+    ]
+    terms.sort(key=lambda item: item['term'].lower())
+    return terms
+
+
+def _build_glossary_markdown(version: Optional[str]) -> str:
+    """Render the glossary page body from ``glossary.yaml``."""
+    terms = get_glossary_terms(version)
+    if not terms:
+        return '# Glossary\n\nNo glossary terms are defined yet.\n'
+
+    lines = [
+        '# Glossary',
+        '',
+        'APERO and science terms used throughout this documentation.',
+        '',
+    ]
+    for item in terms:
+        lines.append('### {0}'.format(item['term']))
+        lines.append('')
+        lines.append(item['definition'])
+        lines.append('')
+    return '\n'.join(lines)
+
+
+# Protect code blocks and headings from term-wrapping: code samples
+# shouldn't get tooltip spans injected, and a heading that happens to
+# equal a term (e.g. "Sequence" as a page title) shouldn't self-link.
+_GLOSSARY_SKIP_HTML = re.compile(
+    r'<(pre|code|h[1-6])\b[^>]*>.*?</\1>',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _wrap_glossary_terms(html: str, terms: List[dict]) -> str:
+    """Wrap the first mention of each glossary term on a page.
+
+    Each match becomes a link to the glossary page with the
+    definition in its ``title`` attribute (a native browser tooltip
+    on hover/focus - no extra JS needed). Only the first occurrence of
+    a term per page is wrapped, so a page that says e.g. "recipe"
+    forty times isn't cluttered with forty links.
+
+    :param html: str, already-rendered page HTML
+    :param terms: list of dict, each ``{term, definition}``
+
+    :return: str, HTML with glossary links inserted
+    """
+    if not terms or not html:
+        return html
+
+    # Split into (text, is_protected) segments so the term search below
+    # only ever runs against plain content, never markup internals.
+    segments: List[Tuple[str, bool]] = []
+    last_end = 0
+    for match in _GLOSSARY_SKIP_HTML.finditer(html):
+        segments.append((html[last_end:match.start()], False))
+        segments.append((html[match.start():match.end()], True))
+        last_end = match.end()
+    segments.append((html[last_end:], False))
+
+    wrapped_terms = set()
+    out_parts: List[str] = []
+    for text, protected in segments:
+        if protected:
+            out_parts.append(text)
+            continue
+        for item in terms:
+            term = item['term']
+            term_key = term.lower()
+            if not term or term_key in wrapped_terms:
+                continue
+            pattern = re.compile(
+                r'(?<![\w-])(' + re.escape(term) + r')(?![\w-])',
+                re.IGNORECASE,
+            )
+            found = pattern.search(text)
+            if not found:
+                continue
+            safe_def = (
+                item['definition']
+                .replace('&', '&amp;')
+                .replace('"', '&quot;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+            )
+            link = (
+                '<a class="ari-glossary-term" href="/docs/glossary" '
+                'title="{0}">{1}</a>'
+            ).format(safe_def, found.group(1))
+            text = text[:found.start()] + link + text[found.end():]
+            wrapped_terms.add(term_key)
+        out_parts.append(text)
+    return ''.join(out_parts)
+
+
 def get_doc_content(
     doc_ref: str, version: Optional[str] = None
-) -> Tuple[str, str, Optional[str]]:
+) -> Tuple[str, str, Optional[str], dict]:
     """
     Get markdown content for a doc page.
 
@@ -462,13 +698,15 @@ def get_doc_content(
     :param doc_ref: str, slash path under home/docs/ matching the markdown
     :param version: str or None, documentation version to look up
 
-    :return: tuple of (raw_markdown, rendered_html, version_id)
+    :return: tuple of (raw_markdown, rendered_html, version_id, meta),
+        where meta is the page's parsed YAML front matter (e.g. its
+        ``related:`` topics list), or an empty dict if there is none
     :rtype: tuple
     """
     if not version:
         version = get_default_version()
     if not version:
-        return "", "<p>No documentation versions configured.</p>", None
+        return "", "<p>No documentation versions configured.</p>", None, {}
 
     rel_doc_path = normalize_doc_ref(doc_ref)
     md_file, version = _resolve_markdown_path(rel_doc_path, version)
@@ -477,12 +715,121 @@ def get_doc_content(
             '',
             '<p>No documentation available for this version.</p>',
             version,
+            {},
         )
 
+    # The markdown parse (codehilite/toc/mermaid extraction) is the
+    # expensive part of serving a page; skip it whenever the file's
+    # mtime matches the last render, instead of redoing it on every
+    # click as before.
+    mtime_ns = md_file.stat().st_mtime_ns
+    is_glossary = rel_doc_path == GLOSSARY_DOC_REF
+    # Every page's cached HTML may include glossary tooltip spans, so
+    # editing glossary.yaml must bust every page's cache, not just the
+    # glossary page's own.
+    glossary_path = _resolve_glossary_path(version)
+    if glossary_path is not None:
+        mtime_ns = max(mtime_ns, glossary_path.stat().st_mtime_ns)
+
+    cache_key = (str(version or ''), rel_doc_path)
+    with _DOC_CACHE_LOCK:
+        entry = _DOC_RENDER_CACHE.get(cache_key)
+    if entry is not None and entry.get('mtime') == mtime_ns:
+        raw, html, meta = entry['value']
+        return raw, html, version, meta
+
     raw = md_file.read_text(encoding='utf-8')
-    _meta, body = _split_front_matter(raw)
+    meta, body = _split_front_matter(raw)
+    if is_glossary:
+        body = _build_glossary_markdown(version)
     html = render_markdown(body)
-    return raw, html, version
+    if not is_glossary:
+        # Skip tagging the glossary page itself, or every term's own
+        # heading would immediately self-wrap.
+        html = _wrap_glossary_terms(html, get_glossary_terms(version))
+
+    with _DOC_CACHE_LOCK:
+        if len(_DOC_RENDER_CACHE) > 512:
+            _DOC_RENDER_CACHE.clear()
+        _DOC_RENDER_CACHE[cache_key] = dict(
+            mtime=mtime_ns,
+            value=(raw, html, meta),
+        )
+    return raw, html, version, meta
+
+
+def get_doc_dir_meta(rel_doc_dir: str, version: Optional[str] = None) -> dict:
+    """Return front matter for a docs directory's own ``index.md``.
+
+    Directory listing pages (card grids) can declare ``related:``
+    topics in their own ``index.md`` front matter, same as leaf pages;
+    this is not covered by ``get_doc_cards``, which only reads the
+    *children's* front matter for card labels/icons.
+
+    :param rel_doc_dir: str, doc ref for the directory (e.g. ``apero``)
+    :param version: str or None, documentation version
+
+    :return: dict, parsed front matter, or empty dict if no index.md
+    """
+    rel_dir = normalize_doc_ref(rel_doc_dir)
+    md_file, _ = _resolve_markdown_path(rel_dir + '/index', version)
+    if md_file is None:
+        return dict()
+    return _card_meta_from_markdown(md_file)
+
+
+def build_related_topics(meta: dict, version: Optional[str]) -> List[dict]:
+    """Build related-topics links from a page's ``related:`` front matter.
+
+    Accepts either plain doc refs (label auto-derived from the target
+    page's own card metadata) or ``{ref, label}`` dicts for a custom
+    label, e.g.::
+
+        related:
+          - developer
+          - {ref: reference, label: Reference guides}
+
+    :param meta: dict, the page's parsed front matter
+    :param version: str or None, documentation version to resolve
+        target labels against
+
+    :return: list of dict, each ``{label, url}``
+    """
+    raw_items = meta.get('related') if isinstance(meta, dict) else None
+    if not isinstance(raw_items, list):
+        return []
+
+    topics = []
+    for raw_item in raw_items:
+        if isinstance(raw_item, dict):
+            ref = str(raw_item.get('ref') or '').strip()
+            label = str(raw_item.get('label') or '').strip()
+        else:
+            ref = str(raw_item or '').strip()
+            label = ''
+        if not ref:
+            continue
+
+        normalized = normalize_doc_ref(ref)
+        short_ref = (
+            normalized[len('home/docs/'):]
+            if normalized != 'home/docs' else ''
+        )
+        if not label:
+            md_file, _ = _resolve_markdown_path(ref, version)
+            target_meta = (
+                _card_meta_from_markdown(md_file) if md_file else {}
+            )
+            fallback_name = short_ref.split('/')[-1] if short_ref else 'home'
+            label = str(
+                target_meta.get('card_label')
+                or target_meta.get('title')
+                or _slug_to_label(fallback_name)
+            ).strip()
+
+        url = '/docs' if not short_ref else '/docs/' + short_ref
+        topics.append(dict(label=label, url=url))
+    return topics
 
 
 def get_doc_last_modified(

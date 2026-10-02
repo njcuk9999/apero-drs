@@ -5,7 +5,15 @@ from apero_ri.core.permissions import (
     has_view_permission,
     resolve_user_permissions,
 )
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import (
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 
 def _pretty_label(page_ref: str) -> str:
@@ -178,7 +186,7 @@ def doc_dynamic_view(app, page_ref: str = ''):
     context['sidebar_tree'] = pinned + docs_sidebar
 
     if exists:
-        raw, html, _ = docs.get_doc_content(raw_ref, current_ver)
+        raw, html, _, meta = docs.get_doc_content(raw_ref, current_ver)
         modified = docs.get_doc_last_modified(raw_ref, current_ver)
         context.update(
             {
@@ -187,11 +195,20 @@ def doc_dynamic_view(app, page_ref: str = ''):
                 'doc_ref': short_ref,
                 'doc_last_modified': modified,
                 'can_edit': _doc_edit_allowed(perms, short_ref),
+                'related_topics': docs.build_related_topics(
+                    meta, current_ver,
+                ),
             }
         )
         return render_template('docs/doc_page.html', **context)
 
     context['cards'] = cards
+    # Directory listing pages (card grids) can declare related topics
+    # in their own index.md front matter too.
+    dir_meta = docs.get_doc_dir_meta(raw_ref, current_ver)
+    context['related_topics'] = docs.build_related_topics(
+        dir_meta, current_ver,
+    )
     return render_template('docs/index.html', **context)
 
 
@@ -220,7 +237,9 @@ def doc_edit_view(app, page_ref: str):
     page_icon = root_def.get('icon', 'fa-brands fa-readme')
 
     version = request.args.get("v") or docs.get_default_version()
-    raw, _html, current_ver = docs.get_doc_content(clean_ref, version)
+    raw, _html, current_ver, _meta = docs.get_doc_content(
+        clean_ref, version,
+    )
 
     version_name = current_ver or "New"
     for ver in docs.get_versions():
@@ -248,3 +267,24 @@ def doc_edit_view(app, page_ref: str):
     context["current_version"] = current_ver
 
     return render_template("docs/doc_editor.html", **context)
+
+
+def doc_search_index_view(app):
+    """Serve the client-side search index as JSON for one doc version.
+
+    Backed by the same cached sidebar-tree walk used for navigation
+    (see ``docs.get_search_index``), so repeated requests are cheap
+    and the autocomplete box never re-reads the doc tree from disk.
+    """
+    user_info = auth.get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
+    else:
+        perms = auth.get_public_permissions()
+
+    if not has_view_permission('view.doc', perms):
+        return jsonify(items=[]), 403
+
+    version = request.args.get('v') or docs.get_default_version()
+    items = docs.get_search_index(version)
+    return jsonify(items=items)

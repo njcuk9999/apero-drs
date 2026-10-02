@@ -624,6 +624,11 @@ def register_static_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/docs/_search_index.json",
+        "doc_search_index",
+        app._doc_search_index,
+    )
+    app.add_url_rule(
         "/docs/<path:page_ref>",
         "doc_dynamic_view",
         app._doc_dynamic_view,
@@ -2423,6 +2428,42 @@ def register_data_portal_routes(app):
         "/api/admin/uploads/quota",
         "api_admin_uploads_quota_get",
         app._api_admin_uploads_quota_get,
+    )
+
+    # Asset management — Admin routes (upload used by apero_assets.py)
+    app.add_url_rule(
+        "/api/admin/assets/status",
+        "api_admin_assets_status",
+        app._api_admin_assets_status,
+    )
+    app.add_url_rule(
+        "/api/admin/assets/config",
+        "api_admin_assets_config",
+        app._api_admin_assets_config,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/assets/delete",
+        "api_admin_assets_delete",
+        app._api_admin_assets_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/assets/upload",
+        "api_admin_assets_upload",
+        app._api_admin_assets_upload,
+        methods=["POST"],
+    )
+    # asset downloads: public url (admin toggle) or API token
+    app.add_url_rule(
+        "/apero-assets/<filename>",
+        "public_assets_download",
+        app._public_assets_download,
+    )
+    app.add_url_rule(
+        "/api/assets/download/<filename>",
+        "api_assets_download",
+        app._api_assets_download,
     )
 
     # Upload management — User routes

@@ -4,6 +4,17 @@
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    {% if related_topics %}
+    <div class="ari-related-topics">
+        <span class="ari-related-topics__label">Related:</span>
+        {% for topic in related_topics %}
+        <a class="ari-related-topics__pill"
+           href="{{ topic.url }}{{ doc_query_suffix|default('') }}">
+            {{ topic.label }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 
 <div class="ari-doc-view-toggle" role="group" aria-label="Docs view mode">
