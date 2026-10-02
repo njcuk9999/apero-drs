@@ -1,0 +1,13 @@
+{% extends "docs/doc_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<article class="ari-doc-content">
+    <p>{{ unavailable_reason }}</p>
+    <p><a href="/docs">Return to documentation home</a></p>
+</article>
+{% endblock %}

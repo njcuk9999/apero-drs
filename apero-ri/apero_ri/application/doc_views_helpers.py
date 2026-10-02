@@ -83,8 +83,8 @@ def _cards_to_sidebar_items(cards: list, raw_ref: str, depth: int) -> list:
 
 
 def _resolve_docs_level(raw_ref: str, version: str):
-    """Resolve cards and branch-expanded sidebar for docs pages."""
-    cards, current_ver, _ = docs.get_doc_cards(raw_ref, version)
+    """Resolve existence and the branch-expanded documentation sidebar."""
+    _cards, current_ver, _ = docs.get_doc_cards(raw_ref, version)
     exists = docs.doc_exists(raw_ref, version)
 
     nav_version = current_ver or version
@@ -108,21 +108,11 @@ def _resolve_docs_level(raw_ref: str, version: str):
         )
         sidebar_items.extend(branch_items)
 
-    if exists and not cards:
-        normalized = docs.normalize_doc_ref(raw_ref)
-        parts = normalized.split('/')
-        if len(parts) > 2:
-            parent_norm = '/'.join(parts[:-1])
-        else:
-            parent_norm = 'home/docs'
-        parent_short = _short_ref_from_norm(parent_norm)
-        cards, current_ver, _ = docs.get_doc_cards(parent_short, version)
-
-    return cards, current_ver, sidebar_items, exists
+    return current_ver, sidebar_items, exists
 
 
 def doc_dynamic_view(app, page_ref: str = ''):
-    """Render a docs page or docs directory listing from path refs."""
+    """Render one documentation page from its path ref."""
     user_info = auth.get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
@@ -130,8 +120,21 @@ def doc_dynamic_view(app, page_ref: str = ''):
         perms = auth.get_public_permissions()
 
     if not has_view_permission('view.doc', perms):
-        flash('You do not have permission to view this page.', 'warning')
-        return redirect(url_for('login'))
+        context = {
+            'page_id': 'home.docs',
+            'page_label': 'Documentation unavailable',
+            'page_icon': 'fa-solid fa-file-circle-question',
+            'unavailable_reason': (
+                'This page does not exist yet, or you do not have permission '
+                'to view it.'
+            ),
+        }
+        context.update(app._build_sidebar_context('home.docs', perms,
+                                                  user_info))
+        return render_template(
+            'docs/doc_unavailable.html',
+            **context,
+        ), 403
 
     raw_ref = str(page_ref or '').strip('/')
     normalized = docs.normalize_doc_ref(raw_ref)
@@ -145,11 +148,7 @@ def doc_dynamic_view(app, page_ref: str = ''):
     page_icon = root_def.get('icon', 'fa-brands fa-readme')
 
     version = request.args.get('v') or docs.get_default_version()
-    view_mode = str(request.args.get('view', 'cards') or 'cards').strip()
-    if view_mode not in {'cards', 'list'}:
-        view_mode = 'cards'
-
-    cards, current_ver, docs_sidebar, exists = _resolve_docs_level(
+    current_ver, docs_sidebar, exists = _resolve_docs_level(
         raw_ref,
         version,
     )
@@ -157,8 +156,6 @@ def doc_dynamic_view(app, page_ref: str = ''):
     query_parts = []
     if current_ver:
         query_parts.append(f'v={current_ver}')
-    if view_mode == 'list':
-        query_parts.append('view=list')
 
     query_suffix = ''
     if query_parts:
@@ -176,7 +173,6 @@ def doc_dynamic_view(app, page_ref: str = ''):
         'current_version': current_ver,
         'doc_ref': short_ref,
         'docs_sidebar_tree': docs_sidebar,
-        'view_mode': view_mode,
         'doc_query_suffix': query_suffix,
         'doc_self_url': self_url,
     }
@@ -202,14 +198,27 @@ def doc_dynamic_view(app, page_ref: str = ''):
         )
         return render_template('docs/doc_page.html', **context)
 
-    context['cards'] = cards
-    # Directory listing pages (card grids) can declare related topics
-    # in their own index.md front matter too.
-    dir_meta = docs.get_doc_dir_meta(raw_ref, current_ver)
-    context['related_topics'] = docs.build_related_topics(
-        dir_meta, current_ver,
-    )
-    return render_template('docs/index.html', **context)
+    unavailable_context = {
+        'page_id': page_id,
+        'page_label': 'Documentation unavailable',
+        'page_icon': 'fa-solid fa-file-circle-question',
+        'unavailable_reason': (
+            'This page does not exist yet, or you do not have permission '
+            'to view it.'
+        ),
+        'current_version': current_ver,
+        'doc_versions': docs.get_versions(),
+        'doc_ref': short_ref,
+        'docs_sidebar_tree': docs_sidebar,
+    }
+    unavailable_context.update(
+        app._build_sidebar_context(page_id, perms, user_info))
+    base_sidebar = list(unavailable_context.get('sidebar_tree', []))
+    pinned = [item for item in base_sidebar if item.get('pinned', False)]
+    unavailable_context['sidebar_tree'] = pinned + docs_sidebar
+    return render_template(
+        'docs/doc_unavailable.html', **unavailable_context,
+    ), 404
 
 
 def doc_edit_view(app, page_ref: str):
@@ -256,7 +265,7 @@ def doc_edit_view(app, page_ref: str):
         "version_id": current_ver,
         "version_name": version_name,
         "view_url": view_url,
-        'docs_sidebar_tree': _resolve_docs_level(clean_ref, current_ver)[2],
+        'docs_sidebar_tree': _resolve_docs_level(clean_ref, current_ver)[1],
     }
     context.update(app._build_sidebar_context('home.docs', perms, user_info))
     docs_sidebar = list(context.get('docs_sidebar_tree', []))

@@ -487,6 +487,12 @@ def get_search_index(version: Optional[str] = None) -> List[dict]:
 def normalize_doc_ref(doc_ref: str) -> str:
     """Normalize external doc refs to ``home/docs/...`` style paths."""
     ref = str(doc_ref or '').strip().strip('/')
+    if ref.lower().endswith('.md'):
+        ref = ref[:-3]
+    if ref.lower().endswith('/index'):
+        ref = ref[:-len('/index')]
+    elif ref.lower() == 'index':
+        ref = ''
     if not ref:
         return 'home/docs'
     if ref.startswith('home/docs'):
@@ -726,6 +732,8 @@ def _wrap_glossary_terms(html: str, terms: List[dict]) -> str:
 
 
 _MARKDOWN_LINK_RE = re.compile(r'(?<!!)\[([^\]]+)\]\(([^)]+)\)')
+_FENCED_CODE_RE = re.compile(r'^```.*?^```\s*$', re.MULTILINE | re.DOTALL)
+_INLINE_CODE_RE = re.compile(r'`([^`\n]+)`')
 
 
 def _normalize_relative_doc_links(text: str, doc_ref: str,
@@ -795,6 +803,56 @@ def _normalize_relative_doc_links(text: str, doc_ref: str,
     return _MARKDOWN_LINK_RE.sub(replace_link, text)
 
 
+def _linkify_apero_commands(text: str, version: Optional[str]) -> str:
+    """Link known APERO recipe/tool names to their generated detail pages.
+
+    Only command-like labels beginning with ``apero_`` are linked. Existing
+    Markdown links and fenced code are left intact; inline-code command names
+    become normal links so they remain clickable in rendered prose and tables.
+
+    :param text: str, Markdown body text
+    :param version: str or None, documentation version
+
+    :return: str, body with known APERO command names linked
+    """
+    commands = {}
+    for item in get_search_index(version):
+        label = str(item.get('label') or '').strip()
+        url = str(item.get('url') or '').strip()
+        if label.lower().startswith('apero_') and url.startswith('/docs/'):
+            commands[label.lower()] = (label, url)
+    if not commands:
+        return text
+
+    placeholders = []
+
+    def protect(value: str) -> str:
+        placeholders.append(value)
+        return 'APERO_LINK_BLOCK_{0}'.format(len(placeholders) - 1)
+
+    body = _FENCED_CODE_RE.sub(lambda match: protect(match.group(0)), text)
+
+    def link_inline_code(match: re.Match) -> str:
+        token = match.group(1).strip()
+        command = commands.get(token.lower())
+        if command is None:
+            return match.group(0)
+        label, url = command
+        return '[{0}]({1})'.format(label, url)
+
+    body = _INLINE_CODE_RE.sub(link_inline_code, body)
+    body = _MARKDOWN_LINK_RE.sub(lambda match: protect(match.group(0)), body)
+    for name, (label, url) in sorted(
+        commands.items(), key=lambda item: len(item[0]), reverse=True
+    ):
+        pattern = re.compile(r'(?<![A-Za-z0-9_]){0}(?![A-Za-z0-9_])'
+                             .format(re.escape(name)), re.IGNORECASE)
+        body = pattern.sub('[{0}]({1})'.format(label, url), body)
+    for index, original in enumerate(placeholders):
+        body = body.replace('APERO_LINK_BLOCK_{0}'.format(index), original)
+    return body
+
+
 def get_doc_content(
     doc_ref: str, version: Optional[str] = None
 ) -> Tuple[str, str, Optional[str], dict]:
@@ -852,6 +910,7 @@ def get_doc_content(
     meta, body = _split_front_matter(raw)
     if is_glossary:
         body = _build_glossary_markdown(version)
+    body = _linkify_apero_commands(body, version)
     body = _normalize_relative_doc_links(body, rel_doc_path, md_file,
                                          version)
     html = render_markdown(body)
