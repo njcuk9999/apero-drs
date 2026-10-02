@@ -1,6 +1,11 @@
 ---
 card_label: apero_update_run_config
 card_icon: fa-solid fa-code
+related:
+  - apero/tools/
+  - developer/
+  - reference/
+  - glossary
 ---
 
 # apero_update_run_config

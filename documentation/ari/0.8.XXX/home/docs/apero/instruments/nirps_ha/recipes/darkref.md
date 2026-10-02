@@ -1,6 +1,11 @@
 ---
 card_label: apero_dark_ref_nirps_ha
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/nirps_ha
+  - apero/instruments/nirps_ha/sequences/
+  - apero/instruments/nirps_ha/file_definitions/
+  - glossary
 ---
 
 # apero_dark_ref_nirps_ha
@@ -64,6 +69,8 @@ apero_dark_ref_nirps_ha.py {options}
 ## Outputs
 
 **Output directory:** `PATH.RED // Default: "red" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/nirps_ha/file_definitions) for the full file catalogue.
 
 | name | description | HDR[DRSOUTID] | file type | suffix | dbname | dbkey | input file |
 | --- | --- | --- | --- | --- | --- | --- | --- |

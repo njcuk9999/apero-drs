@@ -1,6 +1,11 @@
 ---
 card_label: apero_postprocess_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # apero_postprocess_spirou
@@ -128,5 +133,7 @@ apero_postprocess_spirou.py {obs_dir}[STRING] [FILE:DRS_PP] {options}
 ## Outputs
 
 **Output directory:** `PATH.OUT // Default: "out" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 This recipe produces no registered output files.

@@ -1,6 +1,11 @@
 ---
 card_label: apero_mk_skymodel_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # apero_mk_skymodel_spirou
@@ -55,6 +60,8 @@ apero_mk_skymodel_spirou.py {options}
 ## Outputs
 
 **Output directory:** `PATH.RED // Default: "red" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 | name | description | HDR[DRSOUTID] | file type | suffix | dbname | dbkey | input file |
 | --- | --- | --- | --- | --- | --- | --- | --- |

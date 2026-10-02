@@ -1,6 +1,11 @@
 ---
 card_label: apero_changelog
 card_icon: fa-solid fa-code
+related:
+  - apero/tools/
+  - developer/
+  - reference/
+  - glossary
 ---
 
 # apero_changelog

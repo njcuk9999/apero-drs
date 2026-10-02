@@ -1,6 +1,11 @@
 ---
 card_label: lbl_seq
 card_icon: fa-solid fa-diagram-project
+related:
+  - apero/instruments/nirps_he
+  - apero/instruments/nirps_he/recipes/
+  - apero/instruments/nirps_he/file_definitions/
+  - glossary
 ---
 
 # lbl_seq

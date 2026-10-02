@@ -10,7 +10,7 @@ Read-the-Docs build. Do not edit compiled pages or the legacy Sphinx output.
 | --- | --- | --- |
 | Hand-written recipe and tool descriptions | `documentation/descriptions/<instrument>/<kind>/<entry-point>.md` | Included in generated APERO recipe/tool pages. |
 | Hand-written sequence descriptions | `documentation/descriptions/<instrument>/sequences/<sequence>.md` | Included in generated sequence pages. |
-| Hand-written file-definition explanations | `documentation/descriptions/<instrument>/files/<category>.md` | Included in generated file-definition pages. |
+| Hand-written file-definition explanation | `documentation/descriptions/<instrument>/files/index.md` | Included above the consolidated instrument file-definition table. |
 | Developer guides and reference material | `documentation/ari/<version>/home/docs/developer/` and `reference/` | Served as authored pages; not regenerated from recipe definitions. |
 | Scientific algorithm explanations | `documentation/ari/<version>/home/docs/algorithms/` | Served as authored pages; recipes can link to them. |
 | Version-independent pages | `documentation/ari/all/home/docs/` | Shared across versions unless overridden by a version-specific page. |
@@ -24,8 +24,9 @@ Descriptions use these kinds:
 - `user_tools`: general or instrument-specific user tools.
 - `dev_tools`: developer/admin tools.
 - `sequences`: instrument recipe sequences.
-- `files`: file-definition categories (`raw`, `preprocessed`, `reduced`,
-  `calibration`, `telluric`, or `post_processed`).
+- `files`: the consolidated file catalogue for an instrument. Optional
+  explanatory prose belongs in `files/index.md`; the generated table includes
+  every non-empty category and labels rows by processing `Stage`.
 
 For a recipe or tool, name the Markdown file after its Python entry point,
 without `.py`, for example:

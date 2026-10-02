@@ -1,6 +1,11 @@
 ---
 card_label: apero_badpix_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # apero_badpix_spirou
@@ -120,6 +125,8 @@ apero_badpix_spirou.py {obs_dir}[STRING] --flatfiles[FILE:FLAT_FLAT] --darkfiles
 ## Outputs
 
 **Output directory:** `PATH.RED // Default: "red" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 | name | description | HDR[DRSOUTID] | file type | suffix | dbname | dbkey | input file |
 | --- | --- | --- | --- | --- | --- | --- | --- |

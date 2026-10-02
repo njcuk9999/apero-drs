@@ -1,6 +1,11 @@
 ---
 card_label: apero_fit_tellu_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # apero_fit_tellu_spirou
@@ -75,6 +80,8 @@ apero_fit_tellu_spirou.py {obs_dir}[STRING] [FILE:EXT_E2DS_FF] {options}
 ## Outputs
 
 **Output directory:** `PATH.RED // Default: "red" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 | name | description | HDR[DRSOUTID] | file type | suffix | basename | fibers | dbname | dbkey | input file |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

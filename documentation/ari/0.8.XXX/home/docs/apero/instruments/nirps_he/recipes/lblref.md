@@ -1,6 +1,11 @@
 ---
 card_label: apero_lbl_ref_nirps_he
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/nirps_he
+  - apero/instruments/nirps_he/sequences/
+  - apero/instruments/nirps_he/file_definitions/
+  - glossary
 ---
 
 # apero_lbl_ref_nirps_he
@@ -62,5 +67,7 @@ apero_lbl_ref_nirps_he.py {options}
 ## Outputs
 
 **Output directory:** `PATH.LBL // Default: "lbl" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/nirps_he/file_definitions) for the full file catalogue.
 
 This recipe produces no registered output files.

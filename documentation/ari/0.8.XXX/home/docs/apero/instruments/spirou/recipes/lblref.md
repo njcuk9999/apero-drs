@@ -1,6 +1,11 @@
 ---
 card_label: apero_lbl_ref_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # apero_lbl_ref_spirou
@@ -62,5 +67,7 @@ apero_lbl_ref_spirou.py {options}
 ## Outputs
 
 **Output directory:** `PATH.LBL // Default: "lbl" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 This recipe produces no registered output files.

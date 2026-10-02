@@ -1,6 +1,11 @@
 ---
 card_label: apero_preprocess_nirps_ha
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/nirps_ha
+  - apero/instruments/nirps_ha/sequences/
+  - apero/instruments/nirps_ha/file_definitions/
+  - glossary
 ---
 
 # apero_preprocess_nirps_ha
@@ -68,6 +73,8 @@ apero_preprocess_nirps_ha.py {obs_dir}[STRING] [FILE:DRS_RAW] {options}
 ## Outputs
 
 **Output directory:** `PATH.PP // Default: "tmp" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/nirps_ha/file_definitions) for the full file catalogue.
 
 | name | description | file type | suffix | input file |
 | --- | --- | --- | --- | --- |

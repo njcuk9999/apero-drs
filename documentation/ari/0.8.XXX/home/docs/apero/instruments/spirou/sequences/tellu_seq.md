@@ -1,6 +1,11 @@
 ---
 card_label: tellu_seq
 card_icon: fa-solid fa-diagram-project
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/recipes/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # tellu_seq

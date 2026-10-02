@@ -1,6 +1,12 @@
 ---
 card_label: apero_loc_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
+  - algorithms/order_localisation
 ---
 
 # apero_loc_spirou
@@ -132,6 +138,8 @@ apero_loc_spirou.py {obs_dir}[STRING] [FILE:DARK_FLAT,FLAT_DARK] {options}
 ## Outputs
 
 **Output directory:** `PATH.RED // Default: "red" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 | name | description | HDR[DRSOUTID] | file type | suffix | dbname | dbkey | input file |
 | --- | --- | --- | --- | --- | --- | --- | --- |

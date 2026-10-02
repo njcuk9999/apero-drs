@@ -1,6 +1,11 @@
 ---
 card_label: apero_precheck
 card_icon: fa-solid fa-screwdriver-wrench
+related:
+  - apero/tools/
+  - developer/
+  - reference/
+  - glossary
 ---
 
 # apero_precheck

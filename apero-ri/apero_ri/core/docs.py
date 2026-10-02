@@ -17,12 +17,15 @@ Version applies globally to all doc pages (like ReadTheDocs).
 # Imports
 # =============================================================================
 import os
+import posixpath
 import re
 import threading
 import time
+from html import unescape
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from urllib.parse import urlsplit, urlunsplit
 
 import markdown
 import yaml
@@ -79,6 +82,7 @@ _DOC_CHILDREN_CACHE: dict = dict()
 # it walked has changed since its own result was cached.
 _DOC_CHILDREN_GENERATION: dict = dict()
 _DOC_SIDEBAR_CACHE: dict = dict()
+_DOC_SEARCH_CACHE: dict = dict()
 # Rendered-HTML cache keyed by the source file's mtime, so the
 # markdown -> HTML conversion (codehilite/toc/mermaid regex pass) only
 # re-runs when the page content actually changes, not on every request.
@@ -377,6 +381,7 @@ def get_doc_sidebar_tree(
                     label=child.get('label') or child.get('name') or suffix,
                     icon=icon,
                     url=url,
+                    rel_path=rel_path,
                     depth=depth,
                     kind=child.get('kind', 'file'),
                     has_children=bool(child.get('has_children')),
@@ -415,12 +420,11 @@ def get_doc_sidebar_tree(
 def get_search_index(version: Optional[str] = None) -> List[dict]:
     """Return a flat, searchable index of every doc page for one version.
 
-    Deliberately piggybacks on ``get_doc_sidebar_tree`` (titles/urls
-    only, already cached and generation-invalidated) rather than
-    re-reading every markdown file's body on each request: that would
-    reintroduce the same per-click cost Phase 1 removed. Autocomplete
-    only needs to match page titles and URL path segments, not full
-    page text.
+    Piggybacks on the cached sidebar tree and caches extracted page text by
+    its generation. The first index request reads page bodies once; later
+    requests only reuse the cached list. This lets autocomplete find science
+    terms and recipe descriptions without putting disk reads in the
+    per-keystroke path.
 
     :param version: str or None, documentation version
 
@@ -434,6 +438,14 @@ def get_search_index(version: Optional[str] = None) -> List[dict]:
         return []
 
     tree = get_doc_sidebar_tree('home/docs', version)
+    version_key = str(version)
+    generation = _DOC_CHILDREN_GENERATION.get(version_key, 0)
+    cache_key = (version_key, generation)
+    with _DOC_CACHE_LOCK:
+        cached = _DOC_SEARCH_CACHE.get(cache_key)
+    if cached is not None:
+        return _clone_list_of_dict(cached)
+
     index: List[dict] = []
     for item in tree:
         label = str(item.get('label') or '').strip()
@@ -441,8 +453,34 @@ def get_search_index(version: Optional[str] = None) -> List[dict]:
         if not label or not url:
             continue
         slug_tokens = [tok for tok in re.split(r'[/_\-]+', url) if tok]
-        keywords = ' '.join([label] + slug_tokens).lower()
+        doc_ref = str(item.get('rel_path') or '')
+        if doc_ref.endswith('/index'):
+            content_ref = doc_ref
+        elif item.get('kind') == 'dir':
+            content_ref = doc_ref + '/index'
+        else:
+            content_ref = doc_ref
+        md_file, _ = _resolve_markdown_path(content_ref, version)
+        body_text = ''
+        if normalize_doc_ref(content_ref) == GLOSSARY_DOC_REF:
+            body_text = _build_glossary_markdown(version)
+        elif md_file is not None:
+            source = md_file.read_text(encoding='utf-8')
+            _meta, body_text = _split_front_matter(source)
+            body_text = re.sub(r'```.*?```', ' ', body_text,
+                               flags=re.DOTALL)
+            body_text = re.sub(r'`[^`]*`', ' ', body_text)
+            body_text = re.sub(r'!\[[^\]]*\]\([^)]*\)', ' ', body_text)
+            body_text = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1',
+                               body_text)
+            body_text = re.sub(r'[#>*_|~`]', ' ', body_text)
+            body_text = unescape(body_text)
+        keywords = ' '.join([label] + slug_tokens + [body_text]).lower()
         index.append(dict(label=label, url=url, keywords=keywords))
+    with _DOC_CACHE_LOCK:
+        if len(_DOC_SEARCH_CACHE) > 32:
+            _DOC_SEARCH_CACHE.clear()
+        _DOC_SEARCH_CACHE[cache_key] = _clone_list_of_dict(index)
     return index
 
 
@@ -480,7 +518,9 @@ def _resolve_markdown_path(
 
     candidates = [
         (DOC_ROOT / version / f'{rel_doc_path}.md', version),
+        (DOC_ROOT / version / rel_doc_path / 'index.md', version),
         (DOC_ROOT / 'all' / f'{rel_doc_path}.md', version),
+        (DOC_ROOT / 'all' / rel_doc_path / 'index.md', version),
     ]
     for md_file, ver in candidates:
         if md_file.exists() and md_file.is_file():
@@ -685,6 +725,76 @@ def _wrap_glossary_terms(html: str, terms: List[dict]) -> str:
     return ''.join(out_parts)
 
 
+_MARKDOWN_LINK_RE = re.compile(r'(?<!!)\[([^\]]+)\]\(([^)]+)\)')
+
+
+def _normalize_relative_doc_links(text: str, doc_ref: str,
+                                  md_file: Path,
+                                  version: Optional[str]) -> str:
+    """Resolve relative Markdown page links into canonical ARI doc URLs.
+
+    Markdown files are stored as ordinary files, while ARI routes use
+    extensionless page refs and do not require a trailing slash. Browsers
+    therefore resolve a link such as ``recipes/bad`` incorrectly when it
+    appears on ``/docs/apero/instruments/spirou/recipes``. Resolve relative
+    targets using the source file's directory, then rewrite only targets
+    that correspond to an actual documentation page.
+
+    :param text: str, Markdown body text
+    :param doc_ref: str, normalized source page ref
+    :param md_file: Path, resolved source Markdown file
+    :param version: str or None, documentation version
+
+    :return: str, Markdown with resolved local documentation links
+    """
+    normalized_ref = normalize_doc_ref(doc_ref)
+    if md_file.name == 'index.md':
+        base_ref = normalized_ref
+    else:
+        base_ref = posixpath.dirname(normalized_ref)
+
+    def replace_link(match: re.Match) -> str:
+        label = match.group(1)
+        raw_target = match.group(2).strip()
+        target_part = raw_target.split(maxsplit=1)[0]
+        if target_part.startswith('<') and target_part.endswith('>'):
+            target_part = target_part[1:-1]
+        parsed = urlsplit(target_part)
+        if (parsed.scheme or parsed.netloc or not parsed.path
+                or parsed.path.startswith('/')):
+            return match.group(0)
+
+        target_path = parsed.path
+        suffix = Path(target_path).suffix.lower()
+        if suffix in ['.md', '.html']:
+            target_path = target_path[:-len(suffix)]
+        target_ref = None
+        search_base = base_ref
+        while search_base == 'home/docs' or search_base.startswith(
+            'home/docs/'
+        ):
+            candidate = posixpath.normpath(
+                posixpath.join(search_base, target_path)
+            ).strip('/')
+            in_docs = (candidate == 'home/docs'
+                       or candidate.startswith('home/docs/'))
+            if in_docs and doc_exists(candidate, version):
+                target_ref = candidate
+                break
+            if search_base == 'home/docs':
+                break
+            search_base = posixpath.dirname(search_base)
+        if target_ref is None:
+            return match.group(0)
+
+        short_ref = target_ref[len('home/docs'):].strip('/')
+        route = '/docs' if not short_ref else '/docs/' + short_ref
+        route = urlunsplit(('', '', route, parsed.query, parsed.fragment))
+        return '[{0}]({1})'.format(label, route)
+
+    return _MARKDOWN_LINK_RE.sub(replace_link, text)
+
+
 def get_doc_content(
     doc_ref: str, version: Optional[str] = None
 ) -> Tuple[str, str, Optional[str], dict]:
@@ -742,6 +852,8 @@ def get_doc_content(
     meta, body = _split_front_matter(raw)
     if is_glossary:
         body = _build_glossary_markdown(version)
+    body = _normalize_relative_doc_links(body, rel_doc_path, md_file,
+                                         version)
     html = render_markdown(body)
     if not is_glossary:
         # Skip tagging the glossary page itself, or every term's own
@@ -920,9 +1032,12 @@ def render_markdown(text: str) -> str:
 def save_doc_content(doc_ref: str, version: str, content: str) -> None:
     """Save markdown content for a doc page version."""
     rel_doc_path = normalize_doc_ref(doc_ref)
-    ver_dir = DOC_ROOT / version
-    ver_dir.mkdir(parents=True, exist_ok=True)
-    md_file = ver_dir / f'{rel_doc_path}.md'
+    current_file, _ = _resolve_markdown_path(rel_doc_path, version)
+    if current_file is not None and current_file.name == 'index.md':
+        md_file = current_file
+    else:
+        ver_dir = DOC_ROOT / version
+        md_file = ver_dir / f'{rel_doc_path}.md'
     md_file.parent.mkdir(parents=True, exist_ok=True)
     md_file.write_text(content, encoding='utf-8')
 

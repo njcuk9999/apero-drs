@@ -1,6 +1,10 @@
 ---
 card_label: Core algorithms
 card_icon: fa-solid fa-square-root-variable
+related:
+  - apero/recipes/
+  - developer/how_to/add_a_recipe
+  - reference/
 ---
 
 # APERO core algorithms
@@ -12,8 +16,14 @@ to the implementation and are versioned with the reduction release.
 The APERO paper is a useful overview, but it describes an earlier pipeline
 state. For v0.8 behavior, the current source code and tests are authoritative.
 
-- [Order localisation and profile fitting](order_localisation)
+Each page explains a scientific method rather than recipe usage. It identifies
+inputs and assumptions, follows the mathematics, and connects the method to
+the current implementation and its quality checks.
 
-More algorithms should be added here as their implementation and test behavior
-are documented. Each page should distinguish implemented behavior from
-scientific motivation, state its constants, and cite primary literature.
+| Algorithm | Scope |
+| --- | --- |
+| [Order localisation and profile fitting](order_localisation) | Detects illuminated order regions and fits smooth order-center and width models across the detector. |
+
+As algorithms are added, distinguish implemented behavior from scientific
+motivation, identify constants that affect the method, and cite primary
+literature where it supports the explanation.

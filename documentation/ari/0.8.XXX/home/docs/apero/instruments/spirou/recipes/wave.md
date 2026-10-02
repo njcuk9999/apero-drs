@@ -1,6 +1,11 @@
 ---
 card_label: apero_wave_night_spirou
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/spirou
+  - apero/instruments/spirou/sequences/
+  - apero/instruments/spirou/file_definitions/
+  - glossary
 ---
 
 # apero_wave_night_spirou
@@ -113,6 +118,8 @@ apero_wave_night_spirou.py {obs_dir}[STRING] --hcfiles[FILE:HCONE_HCONE] --fpfil
 ## Outputs
 
 **Output directory:** `PATH.RED // Default: "red" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/spirou/file_definitions) for the full file catalogue.
 
 | name | description | HDR[DRSOUTID] | file type | suffix | fibers | dbname | dbkey | input file |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

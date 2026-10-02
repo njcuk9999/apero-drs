@@ -1,6 +1,11 @@
 ---
 card_label: science_seq
 card_icon: fa-solid fa-diagram-project
+related:
+  - apero/instruments/nirps_ha
+  - apero/instruments/nirps_ha/recipes/
+  - apero/instruments/nirps_ha/file_definitions/
+  - glossary
 ---
 
 # science_seq

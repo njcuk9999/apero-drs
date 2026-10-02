@@ -1,6 +1,11 @@
 ---
 card_label: apero_postprocess_nirps_ha
 card_icon: fa-solid fa-flask
+related:
+  - apero/instruments/nirps_ha
+  - apero/instruments/nirps_ha/sequences/
+  - apero/instruments/nirps_ha/file_definitions/
+  - glossary
 ---
 
 # apero_postprocess_nirps_ha
@@ -70,5 +75,7 @@ apero_postprocess_nirps_ha.py {obs_dir}[STRING] [FILE:DRS_PP] {options}
 ## Outputs
 
 **Output directory:** `PATH.OUT // Default: "out" directory`
+
+See the instrument [file definitions](/docs/apero/instruments/nirps_ha/file_definitions) for the full file catalogue.
 
 This recipe produces no registered output files.
