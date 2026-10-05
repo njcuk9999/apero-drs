@@ -10,6 +10,8 @@ mode). The main argument is "mode":
            crossing a group boundary)
     - batch: create (and optionally submit) sbatch scripts for the next
              unfinished group in the queue
+    - chain: create a chain of Slurm array jobs with dependencies so
+             queue groups run strictly in order on cluster schedulers
     - status: interactive terminal (cli) view of the queue (pending/
               running/complete/failed) - for use without a browser
     - gui: browser dashboard with the queue status (coloured by state,
@@ -56,8 +58,8 @@ QUEUE_RUNNING_DIR = 'running'
 QUEUE_COMPLETE_DIR = 'complete'
 QUEUE_FAILED_DIR = 'failed'
 # define the valid queue modes
-QUEUE_MODES = ['run', 'batch', 'status', 'gui', 'reset', 'init',
-               'action', 'system']
+QUEUE_MODES = ['run', 'batch', 'chain', 'status', 'gui', 'reset',
+               'init', 'action', 'system']
 
 
 # =============================================================================
@@ -245,6 +247,9 @@ def __main__(recipe, params):
     # batch mode: create (and optionally submit) sbatch scripts
     elif qmode == 'batch':
         drs_queue.queue_batch(params)
+    # chain mode: create dependency-chained Slurm array scripts
+    elif qmode == 'chain':
+        drs_queue.queue_chain(params)
     # status mode: interactive terminal (cli) view of the queue
     elif qmode == 'status':
         drs_queue.queue_status(params)

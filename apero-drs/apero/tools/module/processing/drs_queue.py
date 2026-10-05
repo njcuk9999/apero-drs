@@ -72,6 +72,10 @@ QUEUE_OUTPUT_DIR = 'output'
 QUEUE_LOGS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'logs')
 QUEUE_ERRORS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'errors')
 QUEUE_SCRIPTS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'scripts')
+# define the chain output base directory (relative to PATH.OTHER)
+QUEUE_CHAIN_BASE_DIR = os.path.join('batch', 'chain')
+# define the chain name prefix
+QUEUE_CHAIN_PREFIX = 'APERO-CHAIN'
 # define the queue lock file name (stops multiple apero_queues clashing)
 QUEUE_LOCK_FILE = 'apero_queue.lock'
 # define the legacy (pre-named-templates) single batch template file name
@@ -448,6 +452,46 @@ def setup_output_directories(params: ParamDict) -> Dict[str, str]:
             os.makedirs(out_dirs[key])
     # return the output directory paths
     return out_dirs
+
+
+def get_chain_root(params: ParamDict) -> str:
+    """
+    Get the root directory used for queue chain output
+
+    Chain scripts are written under PATH.OTHER/batch/chain so they are
+    easy to archive and submit manually from shared storage.
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: str, absolute path to the chain output root
+    """
+    return os.path.join(str(params['PATH.OTHER']), QUEUE_CHAIN_BASE_DIR)
+
+
+def _get_input_bool(params: ParamDict, key: str,
+                    default: Optional[bool] = None) -> Optional[bool]:
+    """
+    Parse a boolean queue input from params['INPUTS']
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param key: str, the uppercase input key (e.g. 'SUBMIT')
+    :param default: bool or None, fallback value when key is unset
+
+    :return: bool or None, parsed value
+    """
+    # deal with no inputs block
+    if 'INPUTS' not in params:
+        return default
+    # deal with missing key
+    if key not in params['INPUTS']:
+        return default
+    # get the raw value
+    value = params['INPUTS'][key]
+    # treat null values as unset
+    if drs_text.null_text(value, ['', 'None']):
+        return default
+    # parse all true/false style text values
+    return drs_text.true_text(value)
 
 
 def sanitize_template_name(name: Optional[str]) -> str:
@@ -1082,7 +1126,8 @@ def queue_status(params: ParamDict):
                 position = position + rows
 
 
-def reset_queue(params: ParamDict, states: List[str]) -> int:
+def reset_queue(params: ParamDict, states: List[str],
+                dry_run: bool = False) -> int:
     """
     Reset the queue (non-interactive core): remove all run yaml files
     (and group directories) from the given queue state directories
@@ -1094,7 +1139,9 @@ def reset_queue(params: ParamDict, states: List[str]) -> int:
     :param params: ParamDict, the parameter dictionary of constants
     :param states: list of strings, the queue states to reset
 
-    :return: int, the number of entries removed
+    :param dry_run: bool, if True report how many entries would be removed
+
+    :return: int, the number of entries removed (or that would be removed)
     """
     # get the queue path
     queue_path = get_queue_path(params)
@@ -1103,6 +1150,9 @@ def reset_queue(params: ParamDict, states: List[str]) -> int:
     # deal with nothing to reset
     if len(entries) == 0:
         return 0
+    # dry-run only reports counts and leaves queue untouched
+    if dry_run:
+        return len(entries)
     # -------------------------------------------------------------------------
     # remove the group directories in the selected states
     with QueueLock(params):
@@ -1140,6 +1190,8 @@ def queue_reset(params: ParamDict):
     """
     # get the state filter from user inputs (default all states)
     states = _get_state_filter(params)
+    # dry-run mode only reports what would be removed
+    dry_run = bool(_get_input_bool(params, 'DRY_RUN', default=False))
     # -------------------------------------------------------------------------
     # warn the user if there are running entries (things may be running!)
     running_entries = list_queue_entries(params,
@@ -1157,16 +1209,20 @@ def queue_reset(params: ParamDict):
         WLOG(params, '', 'Queue: Nothing to reset')
         return
     # ask the user to confirm the reset
-    question = ('Queue: Remove {0} entries from state(s) {1}? [y/N]: ')
-    user_input = _ask(question.format(len(entries), ', '.join(states)))
-    if not user_input.lower().startswith('y'):
-        WLOG(params, '', 'Queue: Reset cancelled')
-        return
+    if not dry_run:
+        question = ('Queue: Remove {0} entries from state(s) {1}? [y/N]: ')
+        user_input = _ask(question.format(len(entries), ', '.join(states)))
+        if not user_input.lower().startswith('y'):
+            WLOG(params, '', 'Queue: Reset cancelled')
+            return
     # -------------------------------------------------------------------------
     # do the reset (non-interactive core)
-    n_removed = reset_queue(params, states)
+    n_removed = reset_queue(params, states, dry_run=dry_run)
     # log that the reset is done
-    msg = 'Queue: Reset complete ({0} entries removed from {1})'
+    if dry_run:
+        msg = 'Queue: Dry-run reset ({0} entries would be removed from {1})'
+    else:
+        msg = 'Queue: Reset complete ({0} entries removed from {1})'
     WLOG(params, 'info', msg.format(n_removed, ', '.join(states)))
 
 
@@ -1268,7 +1324,8 @@ def queue_init(params: ParamDict):
 def batch_queue(params: ParamDict, per_batch: int,
                 n_batches: Optional[int] = None,
                 submit: bool = False,
-                template_name: Optional[str] = None) -> Dict[str, Any]:
+                template_name: Optional[str] = None,
+                dry_run: bool = False) -> Dict[str, Any]:
     """
     Batch the queue (non-interactive core): create (and optionally
     submit) sbatch scripts for the next unfinished group in the queue
@@ -1290,6 +1347,8 @@ def batch_queue(params: ParamDict, per_batch: int,
     :param submit: bool, if True submit the scripts via sbatch
     :param template_name: str or None, the named batch template to use
                           (default template used if None/blank)
+    :param dry_run: bool, if True scripts only print commands and queue
+                    state is not modified
 
     :return: dictionary, summary of what was done (keys: 'group',
              'scripts', 'n_claimed', 'n_submitted', 'message')
@@ -1299,6 +1358,7 @@ def batch_queue(params: ParamDict, per_batch: int,
                    message='')
     # make sure the queue (and output) directories exist
     setup_queue_directories(params)
+    queue_path = get_queue_path(params)
     out_dirs = setup_output_directories(params)
     # -------------------------------------------------------------------------
     # load the named batch template (created by init mode)
@@ -1338,9 +1398,10 @@ def batch_queue(params: ParamDict, per_batch: int,
         n_claim = min(len(pending_runs), n_batches * per_batch)
         claimed_runs = pending_runs[:n_claim]
         # move the claimed tasks from pending to running
-        for run_file in claimed_runs:
-            move_run_file(queue_path, group, run_file,
-                          QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
+        if not dry_run:
+            for run_file in claimed_runs:
+                move_run_file(queue_path, group, run_file,
+                              QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
     # store the number of claimed tasks
     summary['n_claimed'] = len(claimed_runs)
     # -------------------------------------------------------------------------
@@ -1353,7 +1414,8 @@ def batch_queue(params: ParamDict, per_batch: int,
             continue
         # generate the batch script for these tasks
         script_path = _write_batch_script(params, template, group,
-                                          batch_runs, b_it, out_dirs)
+                                          batch_runs, b_it, out_dirs,
+                                          dry_run=dry_run)
         summary['scripts'].append(script_path)
         # log the script creation
         msg = 'Queue: \t Created batch script {0} ({1} tasks)'
@@ -1361,6 +1423,9 @@ def batch_queue(params: ParamDict, per_batch: int,
     # -------------------------------------------------------------------------
     # submit the batch scripts via sbatch (if requested)
     if submit:
+        if dry_run:
+            wmsg = 'Queue: dry-run scripts can still be submitted'
+            WLOG(params, 'warning', wmsg, sublevel=1)
         # check that sbatch is available
         if shutil.which('sbatch') is None:
             summary['message'] = ('"sbatch" not found on this machine - '
@@ -1387,7 +1452,12 @@ def batch_queue(params: ParamDict, per_batch: int,
                                  output.stderr.strip()), sublevel=2)
     # -------------------------------------------------------------------------
     # construct the summary message
-    msg = 'Created {0} batch script(s) ({1} tasks claimed, {2} submitted)'
+    if dry_run:
+        msg = ('Created {0} dry-run batch script(s) '
+               '({1} tasks selected, {2} submitted)')
+    else:
+        msg = ('Created {0} batch script(s) '
+               '({1} tasks claimed, {2} submitted)')
     summary['message'] = msg.format(len(summary['scripts']),
                                     summary['n_claimed'],
                                     summary['n_submitted'])
@@ -1488,9 +1558,12 @@ def queue_batch(params: ParamDict):
     else:
         user_input = _ask('Submit batch script(s) via sbatch? [y/N]: ')
         submit = user_input.lower().startswith('y')
+    # whether to write dry-run scripts (print instead of execute)
+    dry_run = bool(_get_input_bool(params, 'DRY_RUN', default=False))
     # -------------------------------------------------------------------------
     # do the batching (non-interactive core - claims tasks under lock)
-    summary = batch_queue(params, per_batch, n_batches, submit, name)
+    summary = batch_queue(params, per_batch, n_batches, submit, name,
+                          dry_run=dry_run)
     # log the summary message
     WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
     # tell the user where the scripts are (if not submitted)
@@ -1499,6 +1572,458 @@ def queue_batch(params: ParamDict):
                'sbatch)')
         WLOG(params, '',
              msg.format(os.path.dirname(summary['scripts'][0])))
+
+
+def _group_queue_entries(params: ParamDict) -> Dict[str, Dict[str, List[str]]]:
+    """
+    Group pending/running queue entries by group directory name
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dict, mapping group name to pending/running run file lists
+    """
+    states = [QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR]
+    entries = list_queue_entries(params, states=states)
+    grouped = dict()
+    for entry in entries:
+        group = entry['group']
+        if group not in grouped:
+            grouped[group] = dict(pending=[], running=[])
+        grouped[group][entry['state']].append(entry['run'])
+    for group in grouped:
+        grouped[group][QUEUE_PENDING_DIR].sort()
+        grouped[group][QUEUE_RUNNING_DIR].sort()
+    return grouped
+
+
+def _sanitize_chain_name(name: str) -> str:
+    """
+    Sanitize a group name for use in generated file names
+
+    :param name: str, unsanitized name
+
+    :return: str, sanitized file-name-safe name
+    """
+    safe_chars = [char if (char.isalnum() or char in '-_') else '_'
+                  for char in str(name)]
+    return ''.join(safe_chars)
+
+
+def _template_parallel_limit(template: Dict[str, Any]) -> int:
+    """
+    Parse the maximum concurrent array workers from the template
+
+    Uses cpus_per_task as the user-requested parallelism cap per queue
+    group in chain mode.
+
+    :param template: dict, loaded queue batch template
+
+    :return: int, max concurrent array workers (>=1)
+    """
+    try:
+        return max(1, int(template['cpus_per_task']))
+    except (TypeError, ValueError, KeyError):
+        return 1
+
+
+def _template_mem_lines(template: Dict[str, Any]) -> List[str]:
+    """
+    Build memory-related sbatch header line(s) for chain workers
+
+    Chain mode treats template.mem as memory per core/task when non-zero.
+
+    :param template: dict, loaded queue batch template
+
+    :return: list of strings, zero or more #SBATCH memory lines
+    """
+    lines = []
+    mem_value = str(template.get('mem', '')).strip()
+    if len(mem_value) == 0:
+        return lines
+    if mem_value == '0':
+        lines.append('#SBATCH --mem=0')
+        return lines
+    lines.append('#SBATCH --mem-per-cpu={0}'.format(mem_value))
+    return lines
+
+
+def _chunk_list(values: List[str], size: int) -> List[List[str]]:
+    """
+    Split a list into fixed-size chunks
+
+    :param values: list of strings, values to chunk
+    :param size: int, max chunk size
+
+    :return: list of chunks
+    """
+    size = max(1, int(size))
+    chunks = []
+    for start in range(0, len(values), size):
+        chunks.append(values[start:start + size])
+    return chunks
+
+
+def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
+                              dry_run: bool):
+    """
+    Write one executable shell script for one queue chunk
+
+    :param task_path: str, absolute path to write task script
+    :param tasks: list of dictionaries with command/shortname/qid/qpath
+    :param dry_run: bool, whether to print command instead of executing
+
+    :return: None
+    """
+    lines = ['#!/bin/bash', 'set -u']
+    lines.append('fail_count=0')
+    if dry_run:
+        for task in tasks:
+            lines.append('echo "Running: {0}"'.format(task['shortname']))
+            ecmd = str(task['command']).replace('"', '\\"')
+            lines.append('echo "Would have run: {0}"'.format(ecmd))
+        lines.append('exit 0')
+    else:
+        for task in tasks:
+            lines.append('echo "Running: {0}"'.format(task['shortname']))
+            lines.append(str(task['command']))
+            lines.append('task_status=$?')
+            lines.append('if [ $task_status -eq 0 ]; then')
+            lines.append('    apero_queue.py system --qpath="{0}" '
+                         '--qid="{1}" --qresult=success'.format(
+                             task['qpath'], task['qid']))
+            lines.append('else')
+            lines.append('    apero_queue.py system --qpath="{0}" '
+                         '--qid="{1}" --qresult=failed'.format(
+                             task['qpath'], task['qid']))
+            lines.append('    fail_count=$((fail_count + 1))')
+            lines.append('fi')
+        lines.append('if [ $fail_count -eq 0 ]; then')
+        lines.append('    exit 0')
+        lines.append('fi')
+        lines.append('exit 1')
+    with open(task_path, 'w') as tfile:
+        tfile.write('\n'.join(lines))
+    os.chmod(task_path, 0o755)
+
+
+def _write_chain_worker_script(worker_path: str, template: Dict[str, Any],
+                               group: str, task_index_path: str,
+                               n_tasks: int, parallel: int,
+                               logs_dir: str, errors_dir: str):
+    """
+    Write one Slurm array worker script for one queue group
+
+    :param worker_path: str, absolute path to worker script
+    :param template: dict, loaded queue batch template
+    :param group: str, queue group name
+    :param task_index_path: str, one task-script path per line
+    :param n_tasks: int, number of tasks in the group
+    :param parallel: int, max concurrent array tasks
+    :param logs_dir: str, chain logs directory
+    :param errors_dir: str, chain errors directory
+
+    :return: None
+    """
+    safe_group = _sanitize_chain_name(group)
+    job_name = '{0}_{1}'.format(template['job_name'], safe_group)
+    lines = ['#!/bin/bash']
+    lines.append('#SBATCH --time={0}'.format(template['time']))
+    lines.append('#SBATCH --nodes={0}'.format(template['nodes']))
+    lines.append('#SBATCH --cpus-per-task=1')
+    lines.extend(_template_mem_lines(template))
+    if len(str(template['account'])) > 0:
+        lines.append('#SBATCH --account={0}'.format(template['account']))
+    lines.append('#SBATCH --job-name={0}'.format(job_name))
+    alines = [n_tasks, parallel]
+    lines.append('#SBATCH --array=1-{0}%{1}'.format(*alines))
+    lines.append('#SBATCH --output={0}'.format(
+        os.path.join(logs_dir, '%A_%a_%x.out')))
+    lines.append('#SBATCH --error={0}'.format(
+        os.path.join(errors_dir, '%A_%a_%x.err')))
+    if len(str(template['mail_user'])) > 0:
+        lines.append('#SBATCH --mail-user={0}'.format(template['mail_user']))
+        lines.append('#SBATCH --mail-type={0}'.format(template['mail_type']))
+    lines.append('')
+    lines.append('echo "RUNNING: activation scripts"')
+    for act_line in template['activation']:
+        lines.append('echo "{0}"'.format(act_line.replace('"', '\\"')))
+        lines.append(act_line)
+    lines.append('')
+    lines.append('TASK_FILE=$(sed -n "${{SLURM_ARRAY_TASK_ID}}p" "{0}")'
+                 ''.format(task_index_path))
+    lines.append('if [ -z "$TASK_FILE" ]; then')
+    lines.append('    echo "No task found for index '
+                 '${SLURM_ARRAY_TASK_ID}"')
+    lines.append('    exit 1')
+    lines.append('fi')
+    lines.append('bash "$TASK_FILE"')
+    lines.append('exit $?')
+    with open(worker_path, 'w') as wfile:
+        wfile.write('\n'.join(lines))
+    os.chmod(worker_path, 0o755)
+
+
+def _write_chain_submit_script(submit_path: str,
+                               worker_meta: List[Dict[str, Any]],
+                               chain_name: str):
+    """
+    Write the top-level chain submission script
+
+    :param submit_path: str, absolute path to submission script
+    :param worker_meta: list of dicts with group/script metadata
+    :param chain_name: str, chain identifier
+
+    :return: None
+    """
+    lines = ['#!/bin/bash', 'set -e']
+    lines.append('echo "Submitting APERO chain: {0}"'.format(chain_name))
+    lines.append('PREV_JOB_ID=""')
+    for meta in worker_meta:
+        group = str(meta['group'])
+        script_path = str(meta['worker'])
+        lines.append('if [ -z "$PREV_JOB_ID" ]; then')
+        lines.append('    JOB_ID=$(sbatch --parsable "{0}")'
+                     ''.format(script_path))
+        lines.append('else')
+        lines.append('    JOB_ID=$(sbatch --parsable --dependency=afterok:'
+                     '${{PREV_JOB_ID}} "{0}")'.format(script_path))
+        lines.append('fi')
+        lines.append('echo "Submitted {0}: $JOB_ID"'.format(group))
+        lines.append('PREV_JOB_ID="$JOB_ID"')
+        lines.append('')
+    lines.append('echo "Chain submission complete"')
+    with open(submit_path, 'w') as sfile:
+        sfile.write('\n'.join(lines))
+    os.chmod(submit_path, 0o755)
+
+
+def chain_queue(params: ParamDict, template_name: Optional[str] = None,
+                submit: bool = False,
+                per_batch: Optional[int] = None,
+                dry_run: bool = False) -> Dict[str, Any]:
+    """
+    Build a Slurm chain of array jobs across queue groups
+
+    One Slurm array worker script is written per queue group. The top-level
+    submit script chains groups with --dependency=afterok so the next group
+    only starts if the previous one succeeds.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param template_name: str or None, named batch template to use
+    :param submit: bool, whether to run the generated submit script
+    :param per_batch: int or None, queue runs per array task
+    :param dry_run: bool, whether worker tasks only print commands
+
+    :return: dict, summary of generated scripts and optional submission
+    """
+    summary = dict()
+    summary['chain_dir'] = None
+    summary['submit_script'] = None
+    summary['workers'] = []
+    summary['n_groups'] = 0
+    summary['n_tasks'] = 0
+    summary['submitted'] = False
+    summary['message'] = ''
+    summary['dry_run'] = bool(dry_run)
+    # make sure queue directories exist
+    setup_queue_directories(params)
+    # load and validate template name
+    safe_name = sanitize_template_name(template_name)
+    templates = list_templates(params)
+    if safe_name not in templates:
+        msg = ('No batch template "{0}" found - please run '
+               '"apero_queue.py init" first')
+        summary['message'] = msg.format(safe_name)
+        return summary
+    template = load_template(params, safe_name)
+    queue_path = get_queue_path(params)
+    # claim queue work inside the lock
+    with QueueLock(params):
+        grouped = _group_queue_entries(params)
+        if len(grouped) == 0:
+            summary['message'] = 'Nothing to chain (queue is empty)'
+            return summary
+        running_total = 0
+        for group in grouped:
+            running_total += len(grouped[group][QUEUE_RUNNING_DIR])
+        if running_total > 0:
+            msg = ('Cannot create chain while {0} task(s) are running - '
+                   'wait for current group to finish first')
+            summary['message'] = msg.format(running_total)
+            return summary
+        grouped_runs = dict()
+        for group in sorted(grouped):
+            pending_runs = grouped[group][QUEUE_PENDING_DIR]
+            if len(pending_runs) == 0:
+                continue
+            grouped_runs[group] = list(pending_runs)
+            summary['n_tasks'] += len(pending_runs)
+            if not dry_run:
+                for run_file in pending_runs:
+                    move_run_file(queue_path, group, run_file,
+                                  QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
+        if len(grouped_runs) == 0:
+            summary['message'] = 'Nothing to chain (no pending tasks)'
+            return summary
+    # set up output directories for this chain
+    chain_root = get_chain_root(params)
+    os.makedirs(chain_root, exist_ok=True)
+    chain_name = '{0}-{1}'.format(QUEUE_CHAIN_PREFIX, os.getpid())
+    chain_dir = os.path.join(chain_root, chain_name)
+    if os.path.exists(chain_dir):
+        chain_name = '{0}-{1}-{2:011.0f}'.format(QUEUE_CHAIN_PREFIX,
+                                                 os.getpid(), time.time())
+        chain_dir = os.path.join(chain_root, chain_name)
+    scripts_dir = os.path.join(chain_dir, 'scripts')
+    tasks_dir = os.path.join(chain_dir, 'tasks')
+    logs_dir = os.path.join(chain_dir, 'logs')
+    errors_dir = os.path.join(chain_dir, 'errors')
+    for path in [chain_dir, scripts_dir, tasks_dir, logs_dir, errors_dir]:
+        os.makedirs(path, exist_ok=True)
+    summary['chain_dir'] = chain_dir
+    # one worker array script per queue group
+    max_parallel = _template_parallel_limit(template)
+    worker_meta = []
+    for g_it, group in enumerate(sorted(grouped_runs)):
+        group_runs = grouped_runs[group]
+        safe_group = _sanitize_chain_name(group)
+        group_task_dir = os.path.join(tasks_dir, safe_group)
+        os.makedirs(group_task_dir, exist_ok=True)
+        task_index_path = os.path.join(group_task_dir, 'task_index.txt')
+        task_paths = []
+        source_state = QUEUE_PENDING_DIR if dry_run else QUEUE_RUNNING_DIR
+        # default chunk size targets one array wave per template core cap
+        if per_batch is None:
+            g_per_batch = (len(group_runs) + max_parallel - 1) // max_parallel
+            g_per_batch = max(1, g_per_batch)
+        else:
+            g_per_batch = max(1, int(per_batch))
+        run_chunks = _chunk_list(group_runs, g_per_batch)
+        for c_it, run_chunk in enumerate(run_chunks):
+            chunk_tasks = []
+            for run_file in run_chunk:
+                run_path = os.path.join(queue_path, source_state, group,
+                                        run_file)
+                run_dict = base.load_yaml(run_path)
+                task_cmd = dict(runstring=str(run_dict['runstring']))
+                command = _build_task_command(task_cmd)
+                qid = '{0}/{1}'.format(group, run_file)
+                item = dict(shortname=str(run_dict['shortname']),
+                            command=command, qid=qid, qpath=queue_path)
+                chunk_tasks.append(item)
+            task_name = 'chunk_{0:06d}.sh'.format(c_it + 1)
+            task_path = os.path.join(group_task_dir, task_name)
+            _write_chain_chunk_script(task_path, chunk_tasks, dry_run)
+            task_paths.append(task_path)
+        with open(task_index_path, 'w') as ifile:
+            ifile.write('\n'.join(task_paths))
+        worker_name = 'group_{0:04d}_{1}.sbatch'.format(g_it + 1,
+                                                        safe_group)
+        worker_path = os.path.join(scripts_dir, worker_name)
+        parallel = min(max_parallel, len(task_paths))
+        _write_chain_worker_script(worker_path, template, group,
+                                   task_index_path, len(task_paths),
+                                   parallel, logs_dir, errors_dir)
+        meta = dict(group=group, worker=worker_path,
+                    n_tasks=len(task_paths), parallel=parallel)
+        worker_meta.append(meta)
+        summary['workers'].append(worker_path)
+    summary['n_groups'] = len(worker_meta)
+    # write the top-level submit script
+    submit_path = os.path.join(chain_dir, 'submit_chain.sh')
+    _write_chain_submit_script(submit_path, worker_meta, chain_name)
+    summary['submit_script'] = submit_path
+    # optionally submit immediately
+    if submit:
+        if shutil.which('sbatch') is None:
+            summary['message'] = ('"sbatch" not found on this machine - '
+                                  'scripts written but not submitted')
+            return summary
+        cmd = ['bash', submit_path]
+        output = subprocess.run(cmd, capture_output=True, text=True)
+        if output.returncode == 0:
+            summary['submitted'] = True
+            summary['message'] = ('Chain created and submitted: {0} '
+                                  'group(s), {1} task(s)')
+            summary['message'] = summary['message'].format(
+                summary['n_groups'], summary['n_tasks'])
+        else:
+            summary['message'] = ('Chain scripts written, but submit failed: '
+                                  '{0}')
+            summary['message'] = summary['message'].format(
+                output.stderr.strip())
+            WLOG(params, 'warning', summary['message'], sublevel=2)
+    else:
+        summary['message'] = ('Chain scripts written: {0} group(s), {1} '
+                              'task(s)')
+        summary['message'] = summary['message'].format(summary['n_groups'],
+                                                       summary['n_tasks'])
+    return summary
+
+
+def queue_chain(params: ParamDict):
+    """
+    Chain mode: build a dependency-chained set of Slurm array jobs
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None
+    """
+    inputs = params['INPUTS'] if 'INPUTS' in params else dict()
+
+    def _input_text(key: str) -> Optional[str]:
+        """Get a plain text --kwarg value (None if unset)."""
+        if key in inputs and not drs_text.null_text(inputs[key],
+                                                     ['', 'None']):
+            return str(inputs[key])
+        return None
+
+    # get template name from --template, otherwise ask user
+    name = _input_text('TEMPLATE')
+    existing = list_templates(params)
+    if len(existing) == 0:
+        emsg = ('Queue: No batch template found - please run '
+                '"apero_queue.py init" first')
+        WLOG(params, 'error', emsg)
+        return
+    if name is None:
+        default_name = (QUEUE_DEFAULT_TEMPLATE if
+                        QUEUE_DEFAULT_TEMPLATE in existing else existing[0])
+        prompt = 'Which template? {0} [{1}]: '.format(existing, default_name)
+        user_input = _ask(prompt).strip()
+        name = user_input if len(user_input) > 0 else default_name
+    name = sanitize_template_name(name)
+    if name not in existing:
+        emsg = 'Queue: No batch template "{0}" found (available: {1})'
+        WLOG(params, 'error', emsg.format(name, ', '.join(existing)))
+        return
+    # dry-run can be set by --dry_run, otherwise defaults to False
+    dry_run_value = _get_input_bool(params, 'DRY_RUN', default=False)
+    dry_run = bool(dry_run_value)
+    # per_batch controls runs per array task (None = auto chunking)
+    per_batch = None
+    if 'PER_BATCH' in inputs:
+        value = inputs['PER_BATCH']
+        if not drs_text.null_text(value, ['', 'None']):
+            try:
+                per_batch = max(1, int(value))
+            except (TypeError, ValueError):
+                per_batch = None
+    # submit can be set by --submit, otherwise ask user
+    submit_value = _get_input_bool(params, 'SUBMIT', default=None)
+    if submit_value is None:
+        user_input = _ask('Submit chain now via sbatch? [y/N]: ')
+        submit = user_input.lower().startswith('y')
+    else:
+        submit = bool(submit_value)
+    # generate chain scripts and optionally submit
+    summary = chain_queue(params, name, submit=submit,
+                          per_batch=per_batch,
+                          dry_run=dry_run)
+    WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
+    if summary['submit_script'] is not None:
+        WLOG(params, '', 'Queue: Submit script: {0}'
+             ''.format(summary['submit_script']))
 
 
 def queue_system(params: ParamDict):
@@ -2200,7 +2725,8 @@ def _build_task_command(task: Dict[str, str]) -> str:
 
 def _write_batch_script(params: ParamDict, template: Dict[str, Any],
                         group: str, batch_runs: List[str], batch_it: int,
-                        out_dirs: Dict[str, str]) -> str:
+                        out_dirs: Dict[str, str],
+                        dry_run: bool = False) -> str:
     """
     Write a single sbatch script for a set of queue tasks
 
@@ -2217,6 +2743,7 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
                      script/job name)
     :param out_dirs: dictionary, the output directory paths (from
                      setup_output_directories)
+    :param dry_run: bool, if True print commands and do not execute
 
     :return: str, the absolute path to the written batch script
     """
@@ -2259,29 +2786,34 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
         lines.append(act_line)
     lines.append('')
     # -------------------------------------------------------------------------
-    # add the runstrings (each followed by an apero_queue system call to
-    #   move the task from running to complete/failed when it finishes)
+    # add the runstrings (or dry-run echoes)
+    state_dir = QUEUE_PENDING_DIR if dry_run else QUEUE_RUNNING_DIR
     for r_it, run_file in enumerate(batch_runs):
-        # read the running yaml to get the runstring and shortname
-        run_path = os.path.join(queue_path, QUEUE_RUNNING_DIR, group,
-                                run_file)
+        # read the queue yaml to get the runstring and shortname
+        run_path = os.path.join(queue_path, state_dir, group, run_file)
         run_dict = base.load_yaml(run_path)
         # construct the queue id for this task (group/run_file)
         qid = '{0}/{1}'.format(group, run_file)
         # add the echo line (shows progress in the batch log)
         eargs = [run_dict['shortname'], r_it + 1, len(batch_runs)]
         lines.append('echo "Running: {0} [{1}/{2}]"'.format(*eargs))
-        # add the runstring itself
-        lines.append(str(run_dict['runstring']))
-        # add the apero_queue system call (moves the task to
-        #   complete/failed based on the exit code of the runstring)
-        lines.append('if [ $? -eq 0 ]; then')
-        lines.append('    apero_queue.py system --qpath={0} --qid={1} '
-                     '--qresult=success'.format(queue_path, qid))
-        lines.append('else')
-        lines.append('    apero_queue.py system --qpath={0} --qid={1} '
-                     '--qresult=failed'.format(queue_path, qid))
-        lines.append('fi')
+        # in dry-run mode we only show what command would be executed
+        if dry_run:
+            command = _build_task_command(run_dict)
+            command = command.replace('"', '\\"')
+            lines.append('echo "Would have run: {0}"'.format(command))
+        else:
+            # add the runstring itself
+            lines.append(str(run_dict['runstring']))
+            # add the apero_queue system call (moves the task to
+            #   complete/failed based on the exit code of the runstring)
+            lines.append('if [ $? -eq 0 ]; then')
+            lines.append('    apero_queue.py system --qpath={0} --qid={1} '
+                         '--qresult=success'.format(queue_path, qid))
+            lines.append('else')
+            lines.append('    apero_queue.py system --qpath={0} --qid={1} '
+                         '--qresult=failed'.format(queue_path, qid))
+            lines.append('fi')
         lines.append('')
     # -------------------------------------------------------------------------
     # write the batch script to disk

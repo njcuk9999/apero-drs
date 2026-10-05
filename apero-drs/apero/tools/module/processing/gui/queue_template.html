@@ -4,42 +4,57 @@
 <meta charset="utf-8">
 <title>APERO Queue</title>
 <style>
-body { font-family: sans-serif; margin: 20px; background: #fafafa; }
-h1 { color: #333; margin-bottom: 4px; }
-h2 { color: #444; font-size: 16px; margin: 8px 0; }
-.meta { color: #666; margin-bottom: 10px; font-size: 13px; }
-.summary { margin: 8px 0 10px 0; }
-.summary span { display: inline-block; padding: 4px 12px;
-                margin-right: 8px; border-radius: 4px; color: #fff;
-                font-weight: bold; }
-.s-pending { background: #e6a817; }
-.s-running { background: #2a7de1; }
-.s-complete { background: #2e9e4f; }
-.s-failed { background: #d33c3c; }
-#tabbar { margin: 10px 0; }
-#tabbar button { padding: 6px 14px; margin-right: 6px; font-size: 14px;
-                 border: 1px solid #bbb; border-radius: 4px;
-                 background: #f0f0f0; color: #333; cursor: pointer; }
-#tabbar button.active { background: #2a7de1; color: #fff;
-                        border-color: #2a7de1; }
+body { font-family: sans-serif; margin: 0; background: #f1f4f8;
+       color: #253045; }
+.navbar { background: #1f2f46; color: #fff; padding: 12px 20px;
+          border-bottom: 1px solid #122033;
+          box-shadow: 0 2px 8px rgba(10, 20, 40, 0.18); }
+.nav-left { display: flex; flex-direction: column; gap: 8px;
+            min-width: 0; }
+.brand { font-size: 18px; font-weight: 700; letter-spacing: 0.2px; }
+.meta { color: #c7d3e5; font-size: 12px; margin: 0; }
+.main-wrap { padding: 16px 20px 24px 20px; }
+#topbar { display: flex; align-items: flex-end;
+          justify-content: space-between; gap: 12px; margin: 0; }
+#tabbar { margin: 0; }
+#tabbar button { padding: 7px 14px; margin-right: 6px;
+                 font-size: 14px; border: 1px solid #415674;
+                 border-radius: 6px; background: #2a3f5c;
+                 color: #dbe6f5; cursor: pointer; }
+#tabbar button:hover { background: #324b6d; }
+#tabbar button.active { background: #3c88ea; color: #fff;
+                        border-color: #3c88ea; }
+#global-actions { display: flex; align-items: center; gap: 8px; }
 .tabpage { display: none; }
-.tabpage.active { display: block; }
-.panelrow { display: flex; gap: 16px; flex-wrap: wrap;
-            margin: 12px 0; }
-.panel { background: #fff; border: 1px solid #ddd; border-radius: 6px;
-         padding: 12px 16px; flex: 1; min-width: 300px; }
-.panel input, .panel select { padding: 5px 6px; margin: 3px 0;
-                              width: 95%; }
-.panel label { font-size: 13px; color: #444; }
-.panel button, #status-controls button, #toolbar button {
-    padding: 6px 14px; margin-top: 8px; font-size: 14px;
-    border: none; border-radius: 4px; color: #fff;
-    background: #2a7de1; cursor: pointer; }
-.panel button:hover { background: #1b5cad; }
-button.danger { background: #d33c3c; }
-button.danger:hover { background: #a82525; }
-#toolbar { margin: 10px 0; }
-#busy { display: none; color: #d37f00; font-weight: bold; }
+.tabpage.active { display: block; background: #fff;
+                  border: 1px solid #d5deeb; border-radius: 10px;
+                  padding: 16px;
+                  box-shadow: 0 2px 8px rgba(25, 40, 70, 0.07); }
+.summary { margin: 0; }
+.summary .summary-btn { border: none; border-radius: 4px;
+                       padding: 4px 12px; font-weight: bold;
+                       color: #fff; cursor: pointer;
+                       margin-right: 8px; }
+.summary .summary-btn:hover { filter: brightness(0.95); }
+.summary .s-pending { background: #e6a817; color: #fff; }
+.summary .s-running { background: #2a7de1; color: #fff; }
+.summary .s-complete { background: #2e9e4f; color: #fff; }
+.summary .s-failed { background: #d33c3c; color: #fff; }
+.section-card { background: #fff; border: 1px solid #dbe3ef;
+                border-radius: 8px; padding: 10px 12px;
+                box-shadow: 0 1px 3px rgba(26, 36, 54, 0.04); }
+.controltabbar { margin: 0; padding-bottom: 10px;
+                 border-bottom: 1px solid #dbe3ef; }
+.controlpage { display: none; }
+.controlpage.active { display: block; background: #f8fbff;
+                      border: 1px solid #d8e3f1; border-radius: 8px;
+                      padding: 12px 14px; margin-top: 12px; }
+.section-divider { display: none; }
+#status-controls { padding-bottom: 12px;
+                   border-bottom: 1px solid #dbe3ef;
+                   margin-bottom: 14px; }
+#activity { margin-top: 14px; }
+#busy { display: none; color: #ffcc75; font-weight: bold; }
 .cli-title { font-size: 12px; color: #666; margin-top: 8px; }
 .cli-wrap { display: flex; align-items: stretch; gap: 8px; }
 .cli-box { flex: 1; min-height: 58px; font-family: monospace;
@@ -55,6 +70,21 @@ button.danger:hover { background: #a82525; }
             display: none; }
 .info-box pre { margin: 6px 0 0 0; white-space: pre-wrap;
                 font-family: monospace; }
+#template-fields .template-row { margin-bottom: 8px; }
+.template-preview { margin-top: 10px; border: 1px solid #d7e0ee;
+                    border-radius: 6px; background: #f6f8fc;
+                    padding: 8px; }
+.template-preview pre { margin: 0; white-space: pre-wrap;
+                        font-family: monospace; font-size: 12px;
+                        color: #1f2f46; }
+#tpl-activation { width: 100%; min-height: 160px; box-sizing: border-box; }
+#action-table { width: 100%; border-collapse: collapse; }
+#action-table th, #action-table td { border: 1px solid #ddd;
+                                     padding: 8px; vertical-align: top; }
+#action-table th { background: #f0f0f0; color: #333; }
+.action-cli { width: 100%; min-height: 48px; }
+.action-cell-run button { margin-top: 0; }
+.action-copy { margin-top: 4px; }
 #status-controls { margin: 12px 0; }
 #status-controls input, #status-controls select {
     padding: 6px 8px; margin-right: 8px; font-size: 14px; }
@@ -65,10 +95,10 @@ button.danger:hover { background: #a82525; }
                    background: #eee; color: #333; cursor: pointer;
                    opacity: 0.5; }
 .statefilter-btn.active { opacity: 1; color: #fff; border-color: transparent; }
-.statefilter-btn.pending.active { background: #e6a817; }
-.statefilter-btn.running.active { background: #2a7de1; }
-.statefilter-btn.complete.active { background: #2e9e4f; }
-.statefilter-btn.failed.active { background: #d33c3c; }
+.statefilter-btn.pending.active { background: #e6a817; color: #fff; }
+.statefilter-btn.running.active { background: #2a7de1; color: #fff; }
+.statefilter-btn.complete.active { background: #2e9e4f; color: #fff; }
+.statefilter-btn.failed.active { background: #d33c3c; color: #fff; }
 table { border-collapse: collapse; width: 100%; background: #fff; }
 th { cursor: pointer; background: #333; color: #fff; padding: 8px;
      text-align: left; user-select: none; white-space: nowrap; }
@@ -87,29 +117,70 @@ tr.failed { background: #fadddd; }
 .action-buttons button { margin-right: 8px; margin-bottom: 8px; }
 #log { background: #222; color: #ddd; font-family: monospace;
        font-size: 12px; padding: 10px; border-radius: 6px;
-       max-height: 220px; overflow-y: auto; margin-top: 12px; }
+       max-height: 220px; overflow-y: auto; margin-top: 12px;
+       white-space: pre-wrap; }
+.section-divider { height: 1px; background: #d8d8d8;
+                   margin: 14px 0 16px 0; }
+.content-block { margin-top: 12px; }
+#control-content { margin-top: 14px; }
+#status-content { margin-top: 14px; }
+#status-controls { padding-bottom: 12px; border-bottom: 1px solid #e2e2e2;
+                   margin-bottom: 14px; }
+#activity { margin-top: 18px; }
 </style>
 </head>
 <body>
-<h1>APERO Queue</h1>
-<div class="meta">Queue path: XX_QPATH_XX</div>
-
-<div id="tabbar">
-<button id="tab-btn-control" class="active"
-        onclick="setTab('control')">Control</button>
-<button id="tab-btn-status" onclick="setTab('status')">Status</button>
+<div class="navbar">
+<div id="topbar">
+<div class="nav-left">
+    <div class="brand">APERO Queue</div>
+    <div class="meta">Queue path: XX_QPATH_XX</div>
+    <div id="tabbar">
+        <button id="tab-btn-control" class="active"
+                onclick="setTab('control')">Control</button>
+        <button id="tab-btn-status" onclick="setTab('status')">
+            Status
+        </button>
+    </div>
 </div>
+<div id="global-actions">
+    <button onclick="refreshAll()">&#8635; Refresh</button>
+    <button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
+    <span id="busy">&#9203; action running...</span>
+</div>
+</div>
+</div>
+
+<div class="main-wrap">
 
 <div id="tab-control" class="tabpage active">
-<div class="summary" id="summary-control"></div>
-<div id="toolbar">
-<button onclick="refreshAll()">&#8635; Refresh</button>
-<button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
-<span id="busy">&#9203; action running...</span>
+<div class="tabdesc">
+Control queue execution, script generation, and operational actions.
 </div>
+<div class="section-card summary-card">
+<div class="summary" id="summary-control"></div>
+</div>
+<div id="control-content" class="content-block">
 
-<div class="panelrow">
-<div class="panel">
+<div class="controltabbar">
+<button id="ctab-btn-run" class="active"
+        onclick="setControlTab('run')">Run</button>
+<button id="ctab-btn-batch" onclick="setControlTab('batch')">Batch</button>
+<button id="ctab-btn-chain" onclick="setControlTab('chain')">Chain</button>
+<button id="ctab-btn-action" onclick="setControlTab('action')">
+    Actions
+</button>
+<button id="ctab-btn-template" onclick="setControlTab('template')">
+    Template
+</button>
+</div>
+<div class="section-divider"></div>
+
+<div id="ctab-run" class="controlpage active">
+<div class="tabdesc">
+Run queued recipes directly from this machine using APERO multiprocessing.
+</div>
+<div class="panelrow"><div class="panel">
 <h2>Run next task(s)</h2>
 <div class="cli-title">CLI equivalent</div>
 <div class="cli-wrap">
@@ -127,9 +198,13 @@ tr.failed { background: #fadddd; }
 <option value="process">process</option>
 </select>
 <br><button onclick="doRun()">&#9654; Run</button>
-</div>
+</div></div></div>
 
-<div class="panel">
+<div id="ctab-batch" class="controlpage">
+<div class="tabdesc">
+Build classic sbatch scripts from the next queue group.
+</div>
+<div class="panelrow"><div class="panel">
 <h2>Batch (sbatch)</h2>
 <div class="cli-title">CLI equivalent</div>
 <div class="cli-wrap">
@@ -138,23 +213,124 @@ tr.failed { background: #fadddd; }
 </div>
 <label>Batch template</label>
 <select id="batch-template"></select>
+<div id="batch-template-preview" class="template-preview">
+<pre>Loading template preview...</pre>
+</div>
 <label>Tasks per batch script</label>
 <input id="batch-per" type="number" min="1" value="24">
 <label>Number of batch scripts (blank = as needed)</label>
 <input id="batch-n" type="number" min="1">
 <label><input id="batch-submit" type="checkbox"
  style="width:auto"> Submit via sbatch</label>
+<label><input id="batch-dry" type="checkbox"
+ style="width:auto"> Dry run (print commands only)</label>
 <br><button onclick="doBatch()">&#9654; Create batches</button>
-</div>
+</div></div></div>
 
-<div class="panel">
-<h2>Reset</h2>
+<div id="ctab-chain" class="controlpage">
+<div class="tabdesc">
+Build dependency-chained Slurm arrays so queue groups run strictly in order.
+</div>
+<div class="panelrow"><div class="panel">
+<h2>Chain (Slurm arrays + dependencies)</h2>
 <div class="cli-title">CLI equivalent</div>
 <div class="cli-wrap">
-<textarea id="cli-reset" class="cli-box" readonly></textarea>
-<button class="copy-btn" onclick="copyCli('cli-reset')">Copy</button>
+<textarea id="cli-chain" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-chain')">Copy</button>
 </div>
-<label>State to reset</label>
+<label>Batch template</label>
+<select id="chain-template"></select>
+<div id="chain-template-preview" class="template-preview">
+<pre>Loading template preview...</pre>
+</div>
+<label>Runs per array task (blank = auto chunking)</label>
+<input id="chain-per" type="number" min="1">
+<label><input id="chain-submit" type="checkbox"
+ style="width:auto"> Submit via sbatch</label>
+<label><input id="chain-dry" type="checkbox"
+ style="width:auto"> Dry run (print commands only)</label>
+<br><button onclick="doChain()">&#9654; Create chain</button>
+</div></div></div>
+
+<div id="ctab-action" class="controlpage">
+<div class="tabdesc">
+Run queue management actions, including resets, from a single action table.
+</div>
+<div class="panelrow"><div class="panel">
+<h2>Action table</h2>
+<table id="action-table">
+<thead>
+<tr>
+<th>Action</th>
+<th>Options</th>
+<th>Description</th>
+<th>Run</th>
+<th>CLI equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retry all failed</td>
+<td>-</td>
+<td>Move all failed tasks back to pending.</td>
+<td class="action-cell-run">
+<button onclick="runPresetAction('move_all_failed_to_pending')">Run</button>
+</td>
+<td>
+<textarea id="cli-act-failed" class="action-cli" readonly></textarea>
+<button class="copy-btn action-copy"
+        onclick="copyCli('cli-act-failed')">Copy</button>
+</td>
+</tr>
+<tr>
+<td>Move all complete to pending</td>
+<td>-</td>
+<td>Re-open all complete tasks for rerun.</td>
+<td class="action-cell-run">
+<button onclick="runPresetAction('move_all_complete_to_pending')">
+    Run
+</button>
+</td>
+<td>
+<textarea id="cli-act-complete" class="action-cli" readonly></textarea>
+<button class="copy-btn action-copy"
+        onclick="copyCli('cli-act-complete')">Copy</button>
+</td>
+</tr>
+<tr>
+<td>Stop all running</td>
+<td>-</td>
+<td>Attempt to stop running jobs and move them to pending.</td>
+<td class="action-cell-run">
+<button class="danger" onclick="runPresetAction('stop_all_running')">
+    Run
+</button>
+</td>
+<td>
+<textarea id="cli-act-stop" class="action-cli" readonly></textarea>
+<button class="copy-btn action-copy"
+        onclick="copyCli('cli-act-stop')">Copy</button>
+</td>
+</tr>
+<tr>
+<td>Clear all pending</td>
+<td>-</td>
+<td>Delete all pending queue entries.</td>
+<td class="action-cell-run">
+<button class="danger" onclick="runPresetAction('clear_all_pending')">
+    Run
+</button>
+</td>
+<td>
+<textarea id="cli-act-clear" class="action-cli" readonly></textarea>
+<button class="copy-btn action-copy"
+        onclick="copyCli('cli-act-clear')">Copy</button>
+</td>
+</tr>
+<tr>
+<td>Reset queue state(s)</td>
+<td>
+<label>State</label>
 <select id="reset-state">
 <option value="all">all states</option>
 <option value="pending">pending</option>
@@ -162,33 +338,28 @@ tr.failed { background: #fadddd; }
 <option value="complete">complete</option>
 <option value="failed">failed</option>
 </select>
-<br><button class="danger" onclick="doReset()">&#10006; Reset</button>
-</div>
+<label><input id="reset-dry" type="checkbox" style="width:auto">
+Dry run</label>
+</td>
+<td>Remove queue entries from selected state(s).</td>
+<td class="action-cell-run">
+<button class="danger" onclick="doReset()">Run</button>
+</td>
+<td>
+<textarea id="cli-reset" class="action-cli" readonly></textarea>
+<button class="copy-btn action-copy"
+        onclick="copyCli('cli-reset')">Copy</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div></div></div>
 
-<div class="panel">
-<h2>Queue actions</h2>
-<div class="cli-title">CLI equivalent</div>
-<div class="cli-wrap">
-<textarea id="cli-action" class="cli-box" readonly></textarea>
-<button class="copy-btn" onclick="copyCli('cli-action')">Copy</button>
+<div id="ctab-template" class="controlpage">
+<div class="tabdesc">
+Edit and save sbatch template values used by Batch and Chain pages.
 </div>
-<div class="action-buttons">
-<button onclick="doAction('move_all_failed_to_pending')">
-    Retry all failed
-</button>
-<button onclick="doAction('move_all_complete_to_pending')">
-    Move all complete to pending
-</button>
-<button class="danger" onclick="doAction('stop_all_running')">
-    Stop all running
-</button>
-<button class="danger" onclick="doAction('clear_all_pending')">
-    Clear all pending
-</button>
-</div>
-</div>
-
-<div class="panel">
+<div class="panelrow"><div class="panel">
 <h2>Batch template settings</h2>
 <div class="cli-title">CLI equivalent</div>
 <div class="cli-wrap">
@@ -219,15 +390,25 @@ source apero_profile.sh my_profile</pre>
 <textarea id="tpl-activation" class="cli-box"></textarea>
 <br><button onclick="saveTemplate()">&#128190; Save template</button>
 <div id="tpl-saved-path" class="cli-title"></div>
-</div>
+</div></div></div>
+
 </div>
 
+<div class="section-divider"></div>
+<div id="activity">
 <h2>Activity log</h2>
 <div id="log"></div>
 </div>
+</div>
 
 <div id="tab-status" class="tabpage">
+<div class="tabdesc">
+Inspect queue state, filter entries, and run per-row state transitions.
+</div>
+<div class="section-card summary-card">
 <div class="summary" id="summary-status"></div>
+</div>
+<div id="status-content" class="content-block section-card">
 <div id="status-controls">
 <input id="filter" placeholder="Filter (any column)...">
 <span id="statefilter-group" class="statefilter-group">
@@ -265,6 +446,7 @@ source apero_profile.sh my_profile</pre>
 </tr></thead>
 <tbody id="qbody"></tbody>
 </table>
+</div>
 </div>
 
 <script>
@@ -318,6 +500,45 @@ function setTab(tabName) {
         controlBtn.classList.add('active');
         statusBtn.classList.remove('active');
     }
+}
+
+function setControlTab(tabName) {
+    var tabs = ['run', 'batch', 'chain', 'action', 'template'];
+    tabs.forEach(function (name) {
+        var page = document.getElementById('ctab-' + name);
+        var btn = document.getElementById('ctab-btn-' + name);
+        var active = (name === tabName);
+        if (active) {
+            page.classList.add('active');
+            btn.classList.add('active');
+        } else {
+            page.classList.remove('active');
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function setSingleStateFilter(state) {
+    var states = ['pending', 'running', 'complete', 'failed'];
+    states.forEach(function (name) {
+        activeStates[name] = (name === state);
+    });
+    states.forEach(function (name) {
+        var btn = document.querySelector(
+            '.statefilter-btn[data-state="' + name + '"]');
+        if (!btn) { return; }
+        if (activeStates[name]) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function gotoStatusFilter(state) {
+    setTab('status');
+    setSingleStateFilter(state);
+    applyFilter();
 }
 
 function sortView() {
@@ -426,12 +647,66 @@ function renderSummary(counts) {
     var states = ['pending', 'running', 'complete', 'failed'];
     var html = '';
     states.forEach(function (state) {
-        html += '<span class="s-' + state + '">' +
-                state.toUpperCase() + ': ' +
-                (counts[state] || 0) + '</span>';
+        html += '<button type="button" class="summary-btn s-' +
+                state + '" onclick="gotoStatusFilter(\'' + state +
+                '\')">' + state.toUpperCase() + ': ' +
+                (counts[state] || 0) + '</button>';
     });
     document.getElementById('summary-control').innerHTML = html;
     document.getElementById('summary-status').innerHTML = html;
+}
+
+function buildTemplatePreviewText(name, data, modeName) {
+    var lines = [];
+    lines.push('# Template: ' + name + ' (' + modeName + ')');
+    lines.push('# Generated preview only');
+    lines.push('#!/bin/bash');
+    lines.push('#SBATCH --time=' + String(data.time || ''));
+    lines.push('#SBATCH --nodes=' + String(data.nodes || ''));
+    lines.push('#SBATCH --cpus-per-task=' + String(data.cpus_per_task || ''));
+    lines.push('#SBATCH --mem=' + String(data.mem || ''));
+    if (String(data.account || '') !== '') {
+        lines.push('#SBATCH --account=' + String(data.account));
+    }
+    lines.push('#SBATCH --job-name=' + String(data.job_name || 'apero_queue'));
+    lines.push('#SBATCH --output=logs/%j_%x.out');
+    lines.push('#SBATCH --error=errors/%j_%x.err');
+    if (String(data.mail_user || '') !== '') {
+        lines.push('#SBATCH --mail-user=' + String(data.mail_user));
+        lines.push('#SBATCH --mail-type=' + String(data.mail_type || ''));
+    }
+    lines.push('');
+    lines.push('echo "RUNNING: activation scripts"');
+    var activation = data.activation || [];
+    if (activation.length === 0) {
+        lines.push('# <no activation lines>');
+    } else {
+        activation.forEach(function (line) {
+            lines.push(String(line));
+        });
+    }
+    lines.push('');
+    lines.push('echo "Running: <placeholder-task>"');
+    lines.push('echo "<placeholder command goes here>"');
+    return lines.join('\n');
+}
+
+function renderTemplatePreview(selectId, previewId, modeName) {
+    var select = document.getElementById(selectId);
+    var preview = document.getElementById(previewId);
+    var name = select.value || 'default';
+    var url = '/api/template?name=' + encodeURIComponent(name);
+    apiGet(url, function (data) {
+        var previewText = buildTemplatePreviewText(name, data, modeName);
+        preview.innerHTML = '<pre>' + escapeHtml(previewText) + '</pre>';
+    });
+}
+
+function refreshAllTemplatePreviews() {
+    renderTemplatePreview('batch-template', 'batch-template-preview',
+                          'batch');
+    renderTemplatePreview('chain-template', 'chain-template-preview',
+                          'chain');
 }
 
 function buildRunCli() {
@@ -451,22 +726,52 @@ function buildBatchCli() {
     var per = document.getElementById('batch-per').value || '24';
     var num = document.getElementById('batch-n').value;
     var submit = document.getElementById('batch-submit').checked;
+    var dryRun = document.getElementById('batch-dry').checked;
     var cmd = 'apero_queue.py batch --template ' + tpl +
               ' --per_batch ' + per;
     if (num !== '') {
         cmd += ' --n_batches ' + num;
     }
     cmd += ' --submit ' + (submit ? 'True' : 'False');
+    cmd += ' --dry_run ' + (dryRun ? 'True' : 'False');
+    return cmd;
+}
+
+function buildChainCli() {
+    var tpl = document.getElementById('chain-template').value || 'default';
+    var per = document.getElementById('chain-per').value;
+    var submit = document.getElementById('chain-submit').checked;
+    var dryRun = document.getElementById('chain-dry').checked;
+    var cmd = 'apero_queue.py chain --template ' + tpl;
+    if (per !== '') {
+        cmd += ' --per_batch ' + per;
+    }
+    cmd += ' --submit ' + (submit ? 'True' : 'False');
+    cmd += ' --dry_run ' + (dryRun ? 'True' : 'False');
     return cmd;
 }
 
 function buildResetCli() {
     var qstate = document.getElementById('reset-state').value || 'all';
-    return 'apero_queue.py reset --qstate ' + qstate;
+    var dryRun = document.getElementById('reset-dry').checked;
+    var cmd = 'apero_queue.py reset --qstate ' + qstate;
+    cmd += ' --dry_run ' + (dryRun ? 'True' : 'False');
+    return cmd;
 }
 
 function buildActionCli() {
     return 'apero_queue.py action --qaction move_all_failed_to_pending';
+}
+
+function updateActionTableCli() {
+    document.getElementById('cli-act-failed').value =
+        'apero_queue.py action --qaction move_all_failed_to_pending';
+    document.getElementById('cli-act-complete').value =
+        'apero_queue.py action --qaction move_all_complete_to_pending';
+    document.getElementById('cli-act-stop').value =
+        'apero_queue.py action --qaction stop_all_running';
+    document.getElementById('cli-act-clear').value =
+        'apero_queue.py action --qaction clear_all_pending';
 }
 
 function buildTemplateCli() {
@@ -488,9 +793,10 @@ function buildTemplateCli() {
 function updateCliCommands() {
     document.getElementById('cli-run').value = buildRunCli();
     document.getElementById('cli-batch').value = buildBatchCli();
+    document.getElementById('cli-chain').value = buildChainCli();
     document.getElementById('cli-reset').value = buildResetCli();
-    document.getElementById('cli-action').value = buildActionCli();
     document.getElementById('cli-template').value = buildTemplateCli();
+    updateActionTableCli();
 }
 
 function setActionCli(qaction, qid) {
@@ -498,7 +804,10 @@ function setActionCli(qaction, qid) {
     if (qid) {
         cmd += ' --qid ' + qid;
     }
-    document.getElementById('cli-action').value = cmd;
+    var box = document.getElementById('cli-act-failed');
+    if (box) {
+        box.value = cmd;
+    }
 }
 
 function copyCli(idValue) {
@@ -539,9 +848,11 @@ function refreshTemplate(name) {
         box.innerHTML = '';
         tplFields.forEach(function (key) {
             box.innerHTML +=
+                '<div class="template-row">' +
                 '<label>' + key + '</label>' +
                 '<input id="tpl-' + key + '" value="' +
-                escapeHtml(data[key] || '') + '">';
+                escapeHtml(data[key] || '') + '">' +
+                '</div>';
         });
         var act = data.activation || [];
         document.getElementById('tpl-activation').value = act.join('\n');
@@ -570,8 +881,10 @@ function refreshTemplateNames() {
             }
         };
         fillSelect(document.getElementById('batch-template'), false);
+        fillSelect(document.getElementById('chain-template'), false);
         fillSelect(document.getElementById('tpl-load'), true);
         updateCliCommands();
+        refreshAllTemplatePreviews();
     });
 }
 
@@ -586,8 +899,21 @@ function refreshState() {
         var busy = document.getElementById('busy');
         busy.style.display = data.busy ? 'inline' : 'none';
         var log = document.getElementById('log');
-        log.innerHTML = data.messages.map(escapeHtml).join('<br>');
-        log.scrollTop = log.scrollHeight;
+        var selection = window.getSelection();
+        var hasSelection = selection && selection.toString().length > 0;
+        var isInLog = false;
+        if (hasSelection && selection.anchorNode) {
+            isInLog = log.contains(selection.anchorNode);
+        }
+        // Do not overwrite while user is selecting/copying log text
+        if (isInLog) {
+            return;
+        }
+        var newText = data.messages.join('\n');
+        if (log.textContent !== newText) {
+            log.textContent = newText;
+            log.scrollTop = log.scrollHeight;
+        }
     });
 }
 
@@ -609,19 +935,40 @@ function doBatch() {
     var per = document.getElementById('batch-per').value;
     var num = document.getElementById('batch-n').value;
     var submit = document.getElementById('batch-submit').checked;
+    var dryRun = document.getElementById('batch-dry').checked;
     apiPost('/api/batch',
             {template: tpl, per_batch: per, n_batches: num,
-             submit: submit},
+             submit: submit, dry_run: dryRun},
+            function (data) { refreshState(); });
+}
+
+function doChain() {
+    var tpl = document.getElementById('chain-template').value;
+    var per = document.getElementById('chain-per').value;
+    var submit = document.getElementById('chain-submit').checked;
+    var dryRun = document.getElementById('chain-dry').checked;
+    apiPost('/api/chain',
+            {template: tpl, per_batch: per,
+             submit: submit, dry_run: dryRun},
             function (data) { refreshState(); });
 }
 
 function doReset() {
     var state = document.getElementById('reset-state').value;
+    var dryRun = document.getElementById('reset-dry').checked;
     var msg = 'Really reset "' + state + '" queue entries?';
+    if (dryRun) {
+        msg = 'Run dry-run reset for "' + state + '" queue entries?';
+    }
     if (!confirm(msg)) { return; }
-    apiPost('/api/reset', {qstate: state}, function (data) {
+    apiPost('/api/reset', {qstate: state, dry_run: dryRun}, function (data) {
         refreshAll();
     });
+}
+
+function runPresetAction(qaction) {
+    var msg = 'Run queue action "' + qaction + '"?';
+    doAction(qaction, '', msg);
 }
 
 function doAction(qaction, qid, message) {
@@ -681,14 +1028,34 @@ document.getElementById('run-ntasks')
 document.getElementById('run-mpmode')
     .addEventListener('change', updateCliCommands);
 document.getElementById('batch-template')
-    .addEventListener('change', updateCliCommands);
+    .addEventListener('change', function () {
+        updateCliCommands();
+        renderTemplatePreview('batch-template',
+                              'batch-template-preview', 'batch');
+    });
 document.getElementById('batch-per')
     .addEventListener('input', updateCliCommands);
 document.getElementById('batch-n')
     .addEventListener('input', updateCliCommands);
 document.getElementById('batch-submit')
     .addEventListener('change', updateCliCommands);
+document.getElementById('batch-dry')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('chain-template')
+    .addEventListener('change', function () {
+        updateCliCommands();
+        renderTemplatePreview('chain-template',
+                              'chain-template-preview', 'chain');
+    });
+document.getElementById('chain-per')
+    .addEventListener('input', updateCliCommands);
+document.getElementById('chain-submit')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('chain-dry')
+    .addEventListener('change', updateCliCommands);
 document.getElementById('reset-state')
+    .addEventListener('change', updateCliCommands);
+document.getElementById('reset-dry')
     .addEventListener('change', updateCliCommands);
 document.getElementById('tpl-load')
     .addEventListener('change', loadTemplate);

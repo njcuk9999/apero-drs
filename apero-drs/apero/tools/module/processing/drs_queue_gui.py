@@ -375,6 +375,7 @@ def action_batch(params: ParamDict, state: GuiState,
                  per_batch: Optional[Any] = None,
                  n_batches: Optional[Any] = None,
                  submit: bool = False,
+                 dry_run: bool = False,
                  template_name: Optional[str] = None) -> Dict[str, Any]:
     """
     Start a queue batch action in the background (create and optionally
@@ -387,6 +388,7 @@ def action_batch(params: ParamDict, state: GuiState,
     :param n_batches: int/str or None, the number of batch scripts
                       (None means as many as needed)
     :param submit: bool, if True submit the scripts via sbatch
+    :param dry_run: bool, if True print commands instead of executing
     :param template_name: str or None, the named batch template to use
                           (default template used if None/blank)
 
@@ -411,15 +413,23 @@ def action_batch(params: ParamDict, state: GuiState,
         n_batches = None
     # sanitize the submit value
     submit = bool(submit)
+    # sanitize the dry-run value
+    dry_run = bool(dry_run)
 
     # define the batch action (executed in the worker thread)
     def _do_batch():
         state.add_message('Batch started (template={0}, per_batch={1}, '
-                          'n_batches={2}, submit={3})'.format(
-                              template_name, per_batch, n_batches, submit))
+                          'n_batches={2}, submit={3}, dry_run={4})'
+                          ''.format(template_name, per_batch,
+                                    n_batches, submit, dry_run))
         summary = drs_queue.batch_queue(params, per_batch, n_batches,
-                                        submit, template_name)
+                                        submit, template_name,
+                                        dry_run=dry_run)
         state.add_message('Batch: {0}'.format(summary['message']))
+        scripts = summary.get('scripts', [])
+        if len(scripts) > 0:
+            out_dir = os.path.dirname(str(scripts[0]))
+            state.add_message('Batch scripts path:\n{0}'.format(out_dir))
     # start the action in the background (if not busy)
     started = state.start_action('Batch', _do_batch, tuple())
     # construct the response
@@ -428,8 +438,57 @@ def action_batch(params: ParamDict, state: GuiState,
     return dict(started=False, message='busy - action already running')
 
 
+def action_chain(params: ParamDict, state: GuiState,
+                 per_batch: Optional[Any] = None,
+                 submit: bool = False,
+                 dry_run: bool = False,
+                 template_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Start a queue chain action in the background
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param state: GuiState, the shared gui state (busy flag/log)
+    :param per_batch: int/str or None, queue runs per array task
+    :param submit: bool, if True submit generated chain script
+    :param dry_run: bool, if True print commands instead of executing
+    :param template_name: str or None, named batch template to use
+
+    :return: dictionary with keys 'started' (bool) and 'message' (str)
+    """
+    template_name = drs_queue.sanitize_template_name(template_name)
+    try:
+        per_batch = max(1, int(per_batch))
+    except (TypeError, ValueError):
+        per_batch = None
+    submit = bool(submit)
+    dry_run = bool(dry_run)
+
+    def _do_chain():
+        state.add_message('Chain started (template={0}, per_batch={1}, '
+                          'submit={2}, dry_run={3})'.format(
+                              template_name, per_batch, submit, dry_run))
+        summary = drs_queue.chain_queue(params, template_name,
+                                        submit=submit,
+                                        per_batch=per_batch,
+                                        dry_run=dry_run)
+        state.add_message('Chain: {0}'.format(summary['message']))
+        chain_dir = summary.get('chain_dir')
+        if chain_dir is not None:
+            state.add_message('Chain output path:\n{0}'.format(chain_dir))
+        submit_script = summary.get('submit_script')
+        if submit_script is not None:
+            state.add_message('Chain submit script:\n{0}'
+                              ''.format(submit_script))
+
+    started = state.start_action('Chain', _do_chain, tuple())
+    if started:
+        return dict(started=True, message='chain started')
+    return dict(started=False, message='busy - action already running')
+
+
 def action_reset(params: ParamDict, state: GuiState,
-                 qstate: str = 'all') -> Dict[str, Any]:
+                 qstate: str = 'all',
+                 dry_run: bool = False) -> Dict[str, Any]:
     """
     Reset the queue (synchronous - reset is fast). Confirmation must be
     done by the caller (e.g. a browser confirm dialog)
@@ -438,6 +497,7 @@ def action_reset(params: ParamDict, state: GuiState,
     :param state: GuiState, the shared gui state (busy flag/log)
     :param qstate: str, the queue state to reset ('all' or one of
                    pending/running/complete/failed)
+    :param dry_run: bool, if True only report what would be removed
 
     :return: dictionary with keys 'removed' (int) and 'message' (str)
     """
@@ -451,9 +511,12 @@ def action_reset(params: ParamDict, state: GuiState,
     else:
         states = list(drs_queue.QUEUE_SUB_DIRS)
     # do the reset (non-interactive core)
-    n_removed = drs_queue.reset_queue(params, states)
+    n_removed = drs_queue.reset_queue(params, states, dry_run=dry_run)
     # log the reset in the activity log
-    message = 'Reset: removed {0} entries from {1}'
+    if dry_run:
+        message = 'Reset dry-run: would remove {0} entries from {1}'
+    else:
+        message = 'Reset: removed {0} entries from {1}'
     message = message.format(n_removed, ', '.join(states))
     state.add_message(message)
     # construct the response
@@ -592,13 +655,24 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
                     params, state, per_batch=form.get('per_batch'),
                     n_batches=form.get('n_batches'),
                     submit=form.get('submit', False),
+                    dry_run=form.get('dry_run', False),
+                    template_name=form.get('template'))
+                self._send(json.dumps(response))
+            # create (and optionally submit) dependency-chained arrays
+            elif route == '/api/chain':
+                response = action_chain(
+                    params, state, per_batch=form.get('per_batch'),
+                    submit=form.get('submit', False),
+                    dry_run=form.get('dry_run', False),
                     template_name=form.get('template'))
                 self._send(json.dumps(response))
             # reset the queue
             elif route == '/api/reset':
                 response = action_reset(params, state,
                                         qstate=form.get('qstate',
-                                                        'all'))
+                                                        'all'),
+                                        dry_run=form.get('dry_run',
+                                                         False))
                 self._send(json.dumps(response))
             # run queue action(s) from the status page
             elif route == '/api/action':
