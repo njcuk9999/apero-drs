@@ -660,13 +660,14 @@ def _build_glossary_markdown(version: Optional[str]) -> str:
     return '\n'.join(lines)
 
 
-# Protect code blocks and headings from term-wrapping: code samples
-# shouldn't get tooltip spans injected, and a heading that happens to
-# equal a term (e.g. "Sequence" as a page title) shouldn't self-link.
-_GLOSSARY_SKIP_HTML = re.compile(
-    r'<(pre|code|h[1-6])\b[^>]*>.*?</\1>',
-    re.IGNORECASE | re.DOTALL,
-)
+# Glossary substitutions apply only to plain HTML text, never markup or attrs.
+_HTML_TAG_RE = re.compile(r'(<[^>]+>)')
+_HTML_TAG_NAME_RE = re.compile(r'^<(\/?)\s*([A-Za-z][\w:-]*)\b')
+_GLOSSARY_PROTECTED_TAGS = {'a', 'pre', 'code', 'h1', 'h2', 'h3',
+                            'h4', 'h5', 'h6'}
+_HTML_VOID_TAGS = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
+                   'input', 'link', 'meta', 'param', 'source', 'track',
+                   'wbr'}
 
 
 def _wrap_glossary_terms(html: str, terms: List[dict]) -> str:
@@ -686,49 +687,83 @@ def _wrap_glossary_terms(html: str, terms: List[dict]) -> str:
     if not terms or not html:
         return html
 
-    # Split into (text, is_protected) segments so the term search below
-    # only ever runs against plain content, never markup internals.
-    segments: List[Tuple[str, bool]] = []
-    last_end = 0
-    for match in _GLOSSARY_SKIP_HTML.finditer(html):
-        segments.append((html[last_end:match.start()], False))
-        segments.append((html[match.start():match.end()], True))
-        last_end = match.end()
-    segments.append((html[last_end:], False))
-
-    wrapped_terms = set()
-    out_parts: List[str] = []
-    for text, protected in segments:
-        if protected:
-            out_parts.append(text)
+    patterns = []
+    sorted_terms = sorted(
+        terms, key=lambda item: len(str(item.get('term') or '')), reverse=True
+    )
+    for item in sorted_terms:
+        term = str(item.get('term') or '').strip()
+        if not term:
             continue
-        for item in terms:
-            term = item['term']
-            term_key = term.lower()
-            if not term or term_key in wrapped_terms:
+        pattern = re.compile(
+            r'(?<![\w-])(' + re.escape(term) + r')(?![\w-])',
+            re.IGNORECASE,
+        )
+        safe_def = (
+            str(item.get('definition') or '')
+            .replace('&', '&amp;')
+            .replace('"', '&quot;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+        )
+        patterns.append((pattern, safe_def))
+
+    protected_stack: List[str] = []
+    output_parts: List[str] = []
+    wrapped_terms = set()
+    for part in _HTML_TAG_RE.split(html):
+        if not part:
+            continue
+        if part.startswith('<'):
+            tag_match = _HTML_TAG_NAME_RE.match(part)
+            if tag_match is not None:
+                closing, tag_name = tag_match.groups()
+                tag_name = tag_name.lower()
+                if closing:
+                    if tag_name in protected_stack:
+                        reverse_index = protected_stack[::-1].index(tag_name)
+                        stack_index = len(protected_stack) - 1 - reverse_index
+                        del protected_stack[stack_index:]
+                elif tag_name in _GLOSSARY_PROTECTED_TAGS:
+                    if not part.rstrip().endswith('/>'):
+                        protected_stack.append(tag_name)
+                elif (protected_stack
+                      and tag_name not in _HTML_VOID_TAGS
+                      and not part.rstrip().endswith('/>')):
+                    protected_stack.append(tag_name)
+            output_parts.append(part)
+            continue
+        if protected_stack:
+            output_parts.append(part)
+            continue
+
+        candidates = []
+        for pattern, safe_def in patterns:
+            match = pattern.search(part)
+            if match is None:
                 continue
-            pattern = re.compile(
-                r'(?<![\w-])(' + re.escape(term) + r')(?![\w-])',
-                re.IGNORECASE,
-            )
-            found = pattern.search(text)
-            if not found:
+            term_key = match.group(1).lower()
+            if term_key not in wrapped_terms:
+                candidates.append((match.start(), match.end(), term_key,
+                                   safe_def, match.group(1)))
+        candidates.sort(key=lambda candidate: (
+            candidate[0], -(candidate[1] - candidate[0])
+        ))
+        cursor = 0
+        text_parts = []
+        for start, end, term_key, safe_def, label in candidates:
+            if start < cursor or term_key in wrapped_terms:
                 continue
-            safe_def = (
-                item['definition']
-                .replace('&', '&amp;')
-                .replace('"', '&quot;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;')
-            )
-            link = (
+            text_parts.append(part[cursor:start])
+            text_parts.append(
                 '<a class="ari-glossary-term" href="/docs/glossary" '
-                'title="{0}">{1}</a>'
-            ).format(safe_def, found.group(1))
-            text = text[:found.start()] + link + text[found.end():]
+                'title="{0}">{1}</a>'.format(safe_def, label)
+            )
+            cursor = end
             wrapped_terms.add(term_key)
-        out_parts.append(text)
-    return ''.join(out_parts)
+        text_parts.append(part[cursor:])
+        output_parts.append(''.join(text_parts))
+    return ''.join(output_parts)
 
 
 _MARKDOWN_LINK_RE = re.compile(r'(?<!!)\[([^\]]+)\]\(([^)]+)\)')
@@ -828,7 +863,8 @@ def _linkify_apero_commands(text: str, version: Optional[str]) -> str:
 
     def protect(value: str) -> str:
         placeholders.append(value)
-        return 'APERO_LINK_BLOCK_{0}'.format(len(placeholders) - 1)
+        return '\x00APERO_LINK_BLOCK_{0}\x00'.format(
+            len(placeholders) - 1)
 
     body = _FENCED_CODE_RE.sub(lambda match: protect(match.group(0)), text)
 
@@ -849,7 +885,8 @@ def _linkify_apero_commands(text: str, version: Optional[str]) -> str:
                              .format(re.escape(name)), re.IGNORECASE)
         body = pattern.sub('[{0}]({1})'.format(label, url), body)
     for index, original in enumerate(placeholders):
-        body = body.replace('APERO_LINK_BLOCK_{0}'.format(index), original)
+        marker = '\x00APERO_LINK_BLOCK_{0}\x00'.format(index)
+        body = body.replace(marker, original)
     return body
 
 

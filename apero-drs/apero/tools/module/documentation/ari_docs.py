@@ -827,7 +827,8 @@ def build_file_definition_pages(params: ParamDict, pconst: Instrument,
 def build_index(outdir: Path, label: str, icon: str, title: str,
                 intro: List[str], items: List[Tuple[str, str]],
                 related: Optional[List[str]] = None,
-                table_rows: Optional[List[Dict[str, str]]] = None):
+                table_rows: Optional[List[Dict[str, str]]] = None,
+                table_columns: Optional[List[Tuple[str, str]]] = None):
     """
     Write an ``index.md`` giving a directory its card label and contents list.
 
@@ -840,6 +841,7 @@ def build_index(outdir: Path, label: str, icon: str, title: str,
     :param related: list of str or None, doc refs for the "related
                     topics" row (see "front_matter")
     :param table_rows: list of dict or None, rows for a linked summary table
+    :param table_columns: list of (row key, column label) tuples
 
     :return: None, writes ``index.md`` into "outdir"
     """
@@ -847,7 +849,7 @@ def build_index(outdir: Path, label: str, icon: str, title: str,
     if table_rows:
         lines += md_table_from_rows(
             table_rows,
-            [('name', 'Name'), ('summary', 'Description')],
+            table_columns or [('name', 'Name'), ('summary', 'Description')],
         ) + ['']
     elif len(items) > 0:
         lines += card_list(items)
@@ -1256,30 +1258,46 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
     # Per instrument pages
     # -------------------------------------------------------------------------
     recipe_rows: List[dict] = []
-    inst_items = []
-    instrument_rows = []
+    overview_rows = []
+    overview_rows.append(dict(
+        scope='All instruments',
+        reference='[User tools](/docs/apero/user_tools)',
+        summary='Commands for setting up, inspecting, and processing APERO '
+                'reductions.',
+    ))
+    overview_rows.append(dict(
+        scope='All instruments',
+        reference='[Developer tools](/docs/apero/dev_tools)',
+        summary='Commands for maintaining APERO configurations, definitions, '
+                'and language resources.',
+    ))
     for instrument in instruments:
         # "None"/"default" is the pseudo instrument handled above
         if instrument.upper() in ['NONE', 'DEFAULT']:
             continue
         WLOG(params, 'info', 'Compiling {0} documentation'.format(instrument))
         iparams = reload_for(recipe, instrument)
-        compile_instrument(iparams, recipe, instrument, apero_dir,
-                           recipe_rows)
-        inst_slug = instrument.lower() + '/'
-        inst_items.append((inst_slug, instrument))
-        instrument_rows.append(dict(
-            name='[{0}]({1})'.format(instrument, inst_slug),
-            summary='Sequences, recipes, instrument tools, and a consolidated '
-                    'file-definition table for {0}.'.format(instrument),
-        ))
-    if len(inst_items) > 0:
-        intro = ['Select an instrument to see its sequences, recipes, tools '
-                 'and file definitions.']
-        build_index(apero_dir / 'instruments', 'Instruments',
-                    ICONS['instruments'], 'Instruments', intro, inst_items,
-                    related=['apero/recipes/', 'apero/tools/', 'glossary'],
-                    table_rows=instrument_rows)
+        sections = compile_instrument(iparams, recipe, instrument, apero_dir,
+                                      recipe_rows)
+        instrument_ref = 'apero/instruments/{0}'.format(instrument.lower())
+        section_descriptions = {
+            KIND_SEQUENCES: 'Ordered workflows that processing runs for this '
+                            'instrument.',
+            KIND_RECIPES: 'Instrument-specific processing steps and their '
+                          'arguments, outputs, and plots.',
+            KIND_USER_TOOLS: 'Commands specific to operating this instrument.',
+            'file_definitions': 'One searchable table of the instrument\'s '
+                                'raw, intermediate, and output files.',
+        }
+        for target, label in sections:
+            section = target.rstrip('/')
+            destination = '{0}/{1}'.format(instrument_ref, section)
+            overview_rows.append(dict(
+                scope=instrument.replace('_', '-'),
+                reference='[{0}](/docs/{1})'.format(label, destination),
+                summary=section_descriptions.get(
+                    section, 'APERO {0} reference.'.format(label.lower())),
+            ))
     # -------------------------------------------------------------------------
     # Cross-instrument summary tables: "what recipes/tools exist, where"
     # -------------------------------------------------------------------------
@@ -1307,8 +1325,6 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Top level index for the generated tree
     # -------------------------------------------------------------------------
-    items = [(KIND_RECIPES + '/', 'Recipes'), ('tools/', 'Tools'),
-             ('instruments/', 'Instruments (sequences, file definitions)')]
     intro = [
         'APERO is the data-reduction pipeline for SPIRou and NIRPS: it '
         'turns raw exposures into calibrated, science-ready spectra.',
@@ -1321,28 +1337,21 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
         'for a single step, which is useful for reprocessing one file '
         'or debugging a stage in isolation.',
         '',
-        'Alongside recipes, APERO ships a wide range of **tools** for '
-        'setup, inspection, and maintenance - see Tools below.',
+        'Alongside recipes, APERO ships user and developer tools for setup, '
+        'inspection, processing, and maintenance. Use the reference table '
+        'below to open the topic and instrument section directly, without an '
+        'intermediate instrument landing page.',
         '',
         'This section is generated from APERO {0}\'s recipe and file '
         'definitions; it is always in sync with the running '
         'code.'.format(docversion),
     ]
-    overview_rows = [
-        dict(name='[Recipes](recipes/)',
-             summary='Individual reduction steps. Compare availability by '
-                 'instrument, then open the instrument-specific recipe '
-                 'page for arguments, outputs, and plots.'),
-        dict(name='[Tools](tools/)',
-             summary='User and developer commands for setup, inspection, '
-                 'processing, and maintenance.'),
-        dict(name='[Instruments](instruments/)',
-             summary='Instrument-specific sequences, recipes, tools, and '
-                 'the complete file-definition tables.'),
-    ]
-    build_index(apero_dir, 'APERO', ICONS[APERO_REF], 'APERO', intro, items,
+    overview_columns = [('scope', 'Instrument'),
+                        ('reference', 'Reference'),
+                        ('summary', 'What you will find')]
+    build_index(apero_dir, 'APERO', ICONS[APERO_REF], 'APERO', intro, [],
                 related=['developer', 'reference', 'algorithms', 'glossary'],
-                table_rows=overview_rows)
+                table_rows=overview_rows, table_columns=overview_columns)
     WLOG(params, '', 'Wrote APERO docs to: {0}'.format(apero_dir))
 
 

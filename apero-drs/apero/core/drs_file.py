@@ -4367,7 +4367,14 @@ class DrsFitsFile(DrsInputFile):
                 # if we do not require this keyword don't generate an error
                 #   just return None
                 if not required:
-                    return None
+                    if dtype == bool:
+                        return False
+                    elif dtype == str:
+                        return 'None'
+                    elif dtype == float:
+                        return np.nan
+                    else:
+                        return None
                 # else generate an error
                 else:
                     if key == drskey:
@@ -7036,8 +7043,16 @@ class DrsOutFile(DrsInputFile):
         new.instrument = deepcopy(self.instrument)
         # copy description
         new.description = deepcopy(self.description)
-        # copy params
-        new.params = deepcopy(self.params)
+        # copy params (preserve lock state without mutating original params)
+        if isinstance(self.params, ParamDict):
+            params_locked = bool(self.params.locked)
+            new.params = self.params.copy()
+            if params_locked:
+                new.params.lock()
+            else:
+                new.params.unlock()
+        else:
+            new.params = deepcopy(self.params)
         # copy header
         new.header = deepcopy(self.header)
         # copy filename
