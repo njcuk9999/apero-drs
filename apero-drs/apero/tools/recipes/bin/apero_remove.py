@@ -108,31 +108,18 @@ def __main__(recipe, params):
         else:
             params['INPUTS'].set('test', value=False)
     # ---------------------------------------------------------------------
-    # make sure we don't have a list of observation directories
-    if rawobsdir == 'None':
+    # make sure we do not have null-like or mixed obsdir inputs
+    obsdir_values = drs_reset.normalise_cli_csv_input(rawobsdir)
+    if len(obsdir_values) == 0:
         obsdir = None
-    elif ',' in rawobsdir:
-        obsdir = []
-        # loop around object names
-        for rawobsdir_it in rawobsdir.split(','):
-            # get object name
-            obsdir_it = rawobsdir_it.strip()
-            # append to objnames
-            obsdir.append(obsdir_it)
-    elif isinstance(rawobsdir, str):
-        obsdir = str(rawobsdir)
+    elif len(obsdir_values) == 1:
+        obsdir = obsdir_values[0]
     else:
-        obsdir = None
+        obsdir = obsdir_values
     # ---------------------------------------------------------------------
     # deal with blocks
-    blocks = []
-    if blockstr not in [None, 'None', 'Null', '']:
-        # loop around blocks
-        for raw_block in blockstr.split(','):
-            # get block name
-            block_name = raw_block.strip()
-            # append to blocks
-            blocks.append(block_name)
+    blocks = drs_reset.normalise_cli_csv_input(blockstr)
+    if len(blocks) > 0:
         # get valid blocks from instance
         valid_blocks = list(map(lambda block: block.name,
                                 path_definitions.BLOCKS))
@@ -152,14 +139,7 @@ def __main__(recipe, params):
                 raise AperoCodedException(params, message=emsg)
     # ----------------------------------------------------------------------
     # object names
-    objnames = []
-    if objnamestr not in [None, 'None', 'Null', '']:
-        # loop around object names
-        for objname in objnamestr.split(','):
-            # get object name
-            obj_name = objname.strip()
-            # append to objnames
-            objnames.append(obj_name)
+    objnames = drs_reset.normalise_cli_csv_input(objnamestr)
     # ----------------------------------------------------------------------
     # Must check that we are not inside an apero directory (for safety)
     drs_reset.check_cwd(params)

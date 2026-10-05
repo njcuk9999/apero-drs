@@ -980,6 +980,47 @@ def remove_files(params, path, log=True, skipfiles=None):
 # =============================================================================
 # Define remove functions
 # =============================================================================
+def normalise_cli_csv_input(value) -> List[str]:
+    """
+    Normalise a CLI input that may be empty, a comma-separated string,
+    or an already-parsed list of strings.
+
+    :param value: object, the raw input value from recipe inputs
+
+    :returns: list of strings, the cleaned values with empty entries removed
+    :rtype: list[str]
+    """
+    # store cleaned values here
+    cleaned_values = []
+    # deal with null-like values early
+    if value in [None, 'None', 'Null', '']:
+        return cleaned_values
+    # if we already have a list or tuple iterate over each item
+    if isinstance(value, (list, tuple)):
+        raw_values = value
+    else:
+        # for scalar values treat the whole value as one raw entry
+        raw_values = [value]
+    # loop around raw values and split comma-delimited strings if needed
+    for raw_value in raw_values:
+        # skip null-like items inside a list
+        if raw_value in [None, 'None', 'Null', '']:
+            continue
+        # strings may still contain comma-separated items
+        if isinstance(raw_value, str):
+            split_values = raw_value.split(',')
+        else:
+            # convert non-strings for consistent downstream usage
+            split_values = [str(raw_value)]
+        # clean and keep non-empty entries only
+        for split_value in split_values:
+            clean_value = split_value.strip()
+            if clean_value not in ['', 'None', 'Null']:
+                cleaned_values.append(clean_value)
+    # return all cleaned values
+    return cleaned_values
+
+
 def get_filelist(params: ParamDict, recipe: DrsRecipe,
                  obsdir: Optional[Union[str, List[str]]] = None,
                  blocks: Optional[List[str]] = None,
