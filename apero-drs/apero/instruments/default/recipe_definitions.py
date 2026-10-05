@@ -622,18 +622,21 @@ queue_recipe.description = ('The APERO queue management tool - run, batch, '
                             '(created by apero_processing in queue mode)')
 queue_recipe.recipe_type = 'nolog-tool'
 queue_recipe.recipe_kind = 'processing'
-queue_recipe.set_arg(pos=0, name='mode', dtype=str,
+queue_recipe.set_arg(pos=0, name='mode', dtype='options',
+                     options=['run', 'batch', 'chain', 'status', 'gui',
+                              'reset', 'init', 'action', 'system'],
                      helpstr='The queue mode: "run" runs the next task(s) '
                              'in the queue, "batch" creates (and submits) '
-                             'sbatch scripts for the next group, "status" '
-                             'shows an interactive terminal view of the '
-                             'queue, "gui" starts a browser dashboard '
-                             '(status view + action buttons), "reset" '
-                             'removes entries from the queue, "init" '
-                             'creates the batch template, "action" runs '
-                             'an explicit queue action and "system" '
-                             '(internal) moves a task from running to '
-                             'complete/failed')
+                              'sbatch scripts for the next group, "chain" '
+                              'creates dependency-chained Slurm arrays, '
+                              '"status" shows an interactive terminal view '
+                              'of the queue, "gui" starts a browser '
+                              'dashboard (status view + action buttons), '
+                              '"reset" removes entries from the queue, '
+                              '"init" creates the batch template, "action" '
+                              'runs an explicit queue action and "system" '
+                              '(internal) moves a task from running to '
+                              'complete/failed')
 queue_recipe.set_kwarg(name='--cores', dtype=str, default='None',
                        helpstr='Number of tasks to run at once in run '
                                'mode (same rules as apero_processing '
@@ -705,6 +708,11 @@ queue_recipe.set_kwarg(name='--submit', dtype='options', default='None',
                        helpstr='Whether to submit the batch script(s) via '
                                'sbatch (batch mode) - if given, skips the '
                                'interactive question')
+queue_recipe.set_kwarg(name='--dry_run', dtype='switch',
+                       helpstr='Dry-run behavior by mode: batch/chain write '
+                               'scripts that print "Would have run ..." '
+                               'instead of executing recipes; reset reports '
+                               'what would be removed without deleting')
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py

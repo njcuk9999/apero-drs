@@ -3619,7 +3619,7 @@ def write_fplines(params: ParamDict, recipe: DrsRecipe, rfpl: Table,
     # copy keys from hfile
     fplfile.copy_hdict(hfile)
     # set output key
-    fplfile.add_hkey('KW_OUTPUT', value=infile.name)
+    fplfile.add_hkey('KW_OUTPUT', value=fplfile.name)
     # set data
     fplfile.data = rfpl
     fplfile.datatype = 'table'

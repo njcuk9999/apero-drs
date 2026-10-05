@@ -473,11 +473,11 @@ def template_bcols0(params: ParamDict):
     b_cols['MidObsHuman'], b_cols['MidObsMJD'] = [], []
     b_cols['VERSION'], b_cols['Process_Date'], b_cols['DRS_Date'] = [], [], []
     b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
-    b_cols['LOCOFILE'], b_cols['BLAZEFILE'], b_cols['FLATFILE'] = [], [], []
+    b_cols['LOCOFILE'], b_cols['BLAZEFILE'] = [], []
     b_cols['SHAPEXFILE'], b_cols['SHAPEYFILE'] = [], []
     b_cols['SHAPELFILE'], b_cols['THERMFILE'], b_cols['WAVEFILE'] = [], [], []
     b_cols['DARKTIME'], b_cols['BADTIME'], b_cols['BACKTIME'] = [], [], []
-    b_cols['LOCOTIME'], b_cols['BLAZETIME'], b_cols['FLATTIME'] = [], [], []
+    b_cols['LOCOTIME'], b_cols['BLAZETIME'] = [], []
     b_cols['SHAPEXTIME'], b_cols['SHAPEYTIME'] = [], []
     b_cols['SHAPELTIME'], b_cols['THERMTIME'], b_cols['WAVETIME'] = [], [], []
     b_cols['USED'], b_cols['TEMPLATE_BIN'] = [], []
@@ -550,9 +550,6 @@ def template_bcols(params: ParamDict, b_cols: Dict[str, list],
     # add blaze file and time
     b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
     b_cols['BLAZETIME'].append(infile.get_hkey('KW_CDTBLAZE', **bkwargs))
-    # add flat file and time
-    b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
-    b_cols['FLATTIME'].append(infile.get_hkey('KW_CDTFLAT', **bkwargs))
     # add shape x file and time
     b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
     b_cols['SHAPEXTIME'].append(infile.get_hkey('KW_CDTSHAPEDX', **bkwargs))
