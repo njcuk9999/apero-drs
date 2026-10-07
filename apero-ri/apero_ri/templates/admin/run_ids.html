@@ -1,0 +1,78 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Manage RUN IDs{% endblock %}
+{% block body_class %}ari-has-sidebar ari-run-ids-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_run_ids.css', v='20261007a') }}">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label }}</h1>
+</div>
+<section id="rid-root" class="rid-workspace" aria-label="RUN IDs">
+    <div id="rid-tabs" class="ari-sg-tabs" role="tablist" aria-label="Instrument"></div>
+    <div id="rid-notice" class="rid-notice" role="status" aria-live="polite" hidden></div>
+    <div id="rid-panel" role="tabpanel" aria-label="Instrument RUN IDs" hidden>
+        <div class="ot-toolbar rid-toolbar">
+            <div class="ot-toolbar__left rid-toolbar-group">
+                <button id="rid-add" type="button" class="ari-btn ari-btn--primary ari-btn--sm" disabled>
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Add RUN ID
+                </button>
+                <button id="rid-refresh" type="button" class="ari-btn ari-btn--secondary ari-btn--sm rid-icon-button" title="Reload RUN IDs" aria-label="Reload RUN IDs">
+                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                </button>
+                <button id="rid-clear" type="button" class="ari-btn ari-btn--secondary ari-btn--sm rid-icon-button" title="Clear filters" aria-label="Clear filters">
+                    <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i>
+                </button>
+                <label class="rid-search-label" for="rid-search">Search
+                    <input id="rid-search" class="ot-filter-input" type="search" autocomplete="off">
+                </label>
+            </div>
+            <div class="ot-toolbar__right">
+                <label class="ot-perpage-label" for="rid-perpage">Rows per page
+                    <select id="rid-perpage" class="ot-perpage-select">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                        <option value="0">All</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+        <div class="ot-table-wrap rid-table-wrap" tabindex="0" aria-label="RUN ID table">
+            <table class="ot-table rid-table" aria-label="RUN IDs">
+                <thead>
+                    <tr id="rid-headers" class="ot-header-row"></tr>
+                    <tr id="rid-filters" class="ot-filter-row"></tr>
+                </thead>
+                <tbody id="rid-body"></tbody>
+            </table>
+        </div>
+        <div class="ot-pagination">
+            <div id="rid-page-info" class="ot-page-info" role="status" aria-live="polite"></div>
+            <div class="ot-page-controls rid-page-controls">
+                <button id="rid-first" type="button" class="ari-btn ari-btn--sm ari-btn--secondary rid-icon-button" title="First page" aria-label="First page" disabled><i class="fa-solid fa-angles-left" aria-hidden="true"></i></button>
+                <button id="rid-prev" type="button" class="ari-btn ari-btn--sm ari-btn--secondary rid-icon-button" title="Previous page" aria-label="Previous page" disabled><i class="fa-solid fa-angle-left" aria-hidden="true"></i></button>
+                <span class="ot-page-num"><label for="rid-page">Page</label> <input id="rid-page" class="ot-page-input" type="number" min="1" value="1" aria-label="Jump to page"> of <span id="rid-page-total">1</span></span>
+                <button id="rid-next" type="button" class="ari-btn ari-btn--sm ari-btn--secondary rid-icon-button" title="Next page" aria-label="Next page" disabled><i class="fa-solid fa-angle-right" aria-hidden="true"></i></button>
+                <button id="rid-last" type="button" class="ari-btn ari-btn--sm ari-btn--secondary rid-icon-button" title="Last page" aria-label="Last page" disabled><i class="fa-solid fa-angles-right" aria-hidden="true"></i></button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+window.ARI_RUN_IDS = {
+    listUrl: {{ url_for('api_run_ids_list') | tojson }},
+    saveUrl: {{ url_for('api_run_ids_save') | tojson }},
+    instruments: {{ instruments | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_run_ids.js', v='20261007a') }}"></script>
+{% endblock %}
