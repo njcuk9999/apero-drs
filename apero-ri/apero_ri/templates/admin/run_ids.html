@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_run_ids.css', v='20261007a') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_run_ids.css', v='20261007b') }}">
 {% endblock %}
 
 {% block doc_content %}
@@ -12,6 +12,10 @@
     <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label }}</h1>
 </div>
 <section id="rid-root" class="rid-workspace" aria-label="RUN IDs">
+    <div id="rid-health" class="ari-ap-status ari-ap-status--info" role="status" aria-live="polite">
+        <div id="rid-health-headline" class="ari-ap-status__headline">Loading RUN ID health...</div>
+        <ul id="rid-health-details"></ul>
+    </div>
     <div id="rid-tabs" class="ari-sg-tabs" role="tablist" aria-label="Instrument"></div>
     <div id="rid-notice" class="rid-notice" role="status" aria-live="polite" hidden></div>
     <div id="rid-panel" role="tabpanel" aria-label="Instrument RUN IDs" hidden>
@@ -19,6 +23,9 @@
             <div class="ot-toolbar__left rid-toolbar-group">
                 <button id="rid-add" type="button" class="ari-btn ari-btn--primary ari-btn--sm" disabled>
                     <i class="fa-solid fa-plus" aria-hidden="true"></i> Add RUN ID
+                </button>
+                <button id="rid-save-all" type="button" class="ari-btn ari-btn--primary ari-btn--sm" title="Save all pending edits for this instrument" disabled>
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> <span>Save All</span>
                 </button>
                 <button id="rid-refresh" type="button" class="ari-btn ari-btn--secondary ari-btn--sm rid-icon-button" title="Reload RUN IDs" aria-label="Reload RUN IDs">
                     <i class="fa-solid fa-rotate" aria-hidden="true"></i>
@@ -28,6 +35,9 @@
                 </button>
                 <label class="rid-search-label" for="rid-search">Search
                     <input id="rid-search" class="ot-filter-input" type="search" autocomplete="off">
+                </label>
+                <label class="rid-missing-pi-label" for="rid-missing-pi">
+                    <input id="rid-missing-pi" type="checkbox"> Missing PI
                 </label>
             </div>
             <div class="ot-toolbar__right">
@@ -74,5 +84,5 @@ window.ARI_RUN_IDS = {
     instruments: {{ instruments | tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_run_ids.js', v='20261007a') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_run_ids.js', v='20261007d') }}"></script>
 {% endblock %}

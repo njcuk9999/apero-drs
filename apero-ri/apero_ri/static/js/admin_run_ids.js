@@ -11,7 +11,8 @@
         const labels = {run_id: "RUN ID", pi: "PI", comment: "COMMENT"};
         const state = {
             instrument: null, rows: [], draft: null, loading: false,
-            loaded: false, request: 0, filters: {}, search: "",
+            loaded: false, request: 0, filters: {}, search: "", missingPI: false,
+            savingAll: false,
             sort: "run_id", direction: "asc", page: 1, perPage: 50,
             pages: 1, url: window.location.href
         };
@@ -21,8 +22,15 @@
             (column) => row[column] !== row.original[column]
         );
         const allRows = () => state.draft ? [state.draft, ...state.rows] : state.rows;
-        const saving = () => allRows().some((row) => row.busy);
+        const saving = () => state.savingAll || allRows().some((row) => row.busy);
         const unsaved = () => allRows().some(dirty);
+
+        function updateSaveAll() {
+            const button = element("save-all");
+            button.disabled = !state.loaded || state.loading || saving() || !unsaved();
+            button.querySelector("i").className = "fa-solid " + (state.savingAll ? "fa-spinner fa-spin" : "fa-floppy-disk");
+            button.querySelector("span").textContent = state.savingAll ? "Saving..." : "Save All";
+        }
 
         function notice(message, error = false) {
             const target = element("notice");
@@ -30,6 +38,23 @@
             target.hidden = !message;
             target.classList.toggle("rid-notice--error", error);
             target.setAttribute("role", error ? "alert" : "status");
+        }
+
+        function renderHealth(health) {
+            if (!health) return;
+            const status = ["ok", "warning", "error"].includes(health.status) ? health.status : "error";
+            element("health").className = "ari-ap-status ari-ap-status--" + status;
+            const headline = element("health-headline");
+            const icon = document.createElement("i");
+            icon.className = "fa-solid " + ({ok: "fa-circle-check", warning: "fa-triangle-exclamation", error: "fa-circle-xmark"}[status]);
+            icon.setAttribute("aria-hidden", "true");
+            headline.replaceChildren(icon, document.createTextNode(" " + text(health.message)));
+            element("health-details").replaceChildren();
+            (health.details || []).forEach((detail) => {
+                const item = document.createElement("li");
+                item.textContent = text(detail);
+                element("health-details").append(item);
+            });
         }
 
         function updateUrl() {
@@ -108,9 +133,11 @@
                 if (request !== state.request) return;
                 state.rows = data.rows.map((row) => makeRow(row));
                 state.loaded = true;
+                renderHealth(data.health);
             } catch (error) {
                 if (request !== state.request) return;
                 notice(error.message, true);
+                renderHealth({status: "error", message: "RUN ID health could not be loaded.", details: []});
             } finally {
                 if (request === state.request) {
                     state.loading = false;
@@ -197,6 +224,7 @@
             const query = state.search.toLocaleLowerCase();
             return state.rows.filter((row) => {
                 const values = row.original;
+                if (state.missingPI && values.pi.trim()) return false;
                 if (query && !columns.some((column) => values[column].toLocaleLowerCase().includes(query))) return false;
                 return columns.every((column) => {
                     const filter = state.filters[column];
@@ -233,11 +261,12 @@
             const updateActions = () => {
                 const changed = dirty(row);
                 target.classList.toggle("rid-row--dirty", changed);
-                saveButton.disabled = !changed || row.busy;
+                saveButton.disabled = !changed || row.busy || state.savingAll;
                 cancelButton.hidden = !changed;
-                cancelButton.disabled = row.busy;
+                cancelButton.disabled = row.busy || state.savingAll;
                 saveButton.firstChild.className = "fa-solid " + (row.busy ? "fa-spinner fa-spin" : "fa-floppy-disk");
                 saveButton.setAttribute("aria-label", row.busy ? "Saving RUN ID" : "Save RUN ID " + row.run_id);
+                updateSaveAll();
             };
             columns.forEach((column) => {
                 const cell = document.createElement("td");
@@ -248,9 +277,9 @@
                     const input = document.createElement(column === "comment" ? "textarea" : "input");
                     input.className = "rid-edit";
                     input.value = row[column];
-                    input.disabled = row.busy;
+                    input.disabled = row.busy || state.savingAll;
                     input.setAttribute("aria-label", labels[column] + " for " + (row.create ? "new RUN ID" : row.run_id));
-                    if (column === "comment") input.rows = 2;
+                    if (column === "comment") input.rows = 1;
                     else input.type = "text";
                     input.addEventListener("input", () => {
                         row[column] = input.value;
@@ -291,8 +320,9 @@
             const body = element("body");
             body.replaceChildren();
             element("panel").setAttribute("aria-busy", String(state.loading));
-            element("add").disabled = !state.loaded || state.loading;
+            element("add").disabled = !state.loaded || state.loading || state.savingAll;
             element("refresh").disabled = state.loading || saving();
+            updateSaveAll();
             const rows = filteredRows();
             state.pages = Math.max(1, state.perPage ? Math.ceil(rows.length / state.perPage) : 1);
             state.page = Math.max(1, Math.min(state.pages, state.page));
@@ -321,17 +351,17 @@
         }
 
         async function save(row) {
-            if (row.busy || !dirty(row)) return;
+            if (row.busy || !dirty(row)) return false;
             const runId = row.create ? row.run_id.trim() : row.original.run_id;
             if (!runId) {
                 row.error = "RUN ID is required.";
                 render();
-                return;
+                return false;
             }
             if (row.create && state.rows.some((existing) => existing.original.run_id === runId)) {
                 row.error = "This RUN ID already exists for this instrument.";
                 render();
-                return;
+                return false;
             }
             row.busy = true;
             row.error = "";
@@ -343,17 +373,41 @@
                 });
                 if (!data.row || text(data.row.run_id) !== runId) throw new Error("The server returned an unexpected RUN ID. Reload to verify the save.");
                 const saved = makeRow(data.row);
+                renderHealth(data.health);
                 if (row.create) {
                     state.rows.unshift(saved);
                     state.draft = null;
                 } else state.rows[state.rows.indexOf(row)] = saved;
                 notice("Saved RUN ID " + runId + ".");
                 buildHeaders();
+                return true;
             } catch (error) {
                 row.error = error.message;
                 notice("RUN ID " + runId + " was not saved.", true);
+                return false;
             } finally {
                 row.busy = false;
+                render();
+            }
+        }
+
+        async function saveAll() {
+            if (state.loading || saving()) return;
+            const pending = allRows().filter(dirty);
+            if (!pending.length) return;
+            state.savingAll = true;
+            render();
+            let saved = 0;
+            const failed = [];
+            try {
+                for (const row of pending) {
+                    if (await save(row)) saved += 1;
+                    else failed.push(row.run_id.trim() || "new RUN ID");
+                }
+                const summary = "Saved " + saved + " RUN ID(s).";
+                notice(failed.length ? summary + " Not saved: " + failed.join(", ") + ". Edits retained for retry." : summary, failed.length > 0);
+            } finally {
+                state.savingAll = false;
                 render();
             }
         }
@@ -390,6 +444,7 @@
             render();
             element("body").querySelector("input").focus();
         });
+        element("save-all").addEventListener("click", saveAll);
         element("refresh").addEventListener("click", () => {
             if (!canDiscard()) return;
             const filter = state.filters.run_id;
@@ -400,9 +455,16 @@
             state.page = 1;
             render();
         });
+        element("missing-pi").addEventListener("change", () => {
+            state.missingPI = element("missing-pi").checked;
+            state.page = 1;
+            render();
+        });
         element("clear").addEventListener("click", () => {
             state.filters = {};
             state.search = "";
+            state.missingPI = false;
+            element("missing-pi").checked = false;
             element("search").value = "";
             state.page = 1;
             updateUrl();
@@ -446,6 +508,7 @@
         });
         if (!instruments.length) {
             notice("You don't have access to any instruments.");
+            element("health").hidden = true;
             return;
         }
         const params = new URL(window.location.href).searchParams;

@@ -8,6 +8,7 @@
 .rid-toolbar { margin-bottom: 0.75rem; justify-content: space-between; }
 .rid-search-label { display: flex; align-items: center; gap: 0.5rem; }
 .rid-search-label input { width: 15rem; max-width: 100%; }
+.rid-missing-pi-label { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
 .rid-table-wrap { max-width: 100%; }
 .rid-table { table-layout: fixed; min-width: 650px; }
 .rid-table th:nth-child(1) { width: 25%; }
@@ -18,17 +19,18 @@
 .rid-table .ot-th { padding: 0; }
 .rid-sort { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; width: 100%; min-height: 44px; padding: 0.5rem 0.75rem; border: 0; background: var(--ari-primary-light); color: var(--ari-text); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
 .rid-sort:hover { background: var(--ari-surface-alt); }
-.rid-table .ot-cell { vertical-align: top; overflow-wrap: anywhere; }
+.rid-table .ot-cell { vertical-align: middle; overflow-wrap: anywhere; padding: 0 0.4rem; line-height: 1.2; }
 .rid-table .ot-row:nth-child(odd) td { background: var(--ari-card-bg); }
 .rid-table .ot-row:nth-child(even) td { background: var(--ari-surface-muted); }
 .rid-table .ot-row:hover td { background: var(--ari-surface-alt); }
 .rid-table .rid-row--dirty td:first-child { box-shadow: inset 3px 0 var(--ari-warning); }
-.rid-edit { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 0.5rem; border: 1px solid var(--ari-border); border-radius: 4px; background: var(--ari-card-bg); color: var(--ari-text); font: inherit; }
+.rid-edit { box-sizing: border-box; width: 100%; min-width: 0; min-height: 0; height: calc(1.2em + 2px); padding: 0 0.3rem; border: 1px solid var(--ari-border); border-radius: 4px; background: var(--ari-card-bg); color: var(--ari-text); font: inherit; line-height: 1.2; }
 textarea.rid-edit { resize: vertical; }
 .rid-edit:disabled { opacity: 0.7; }
-.rid-comment-editor { display: flex; align-items: flex-start; gap: 0.5rem; }
-.rid-row-actions { display: flex; flex: 0 0 44px; flex-direction: column; gap: 0.25rem; }
+.rid-comment-editor { display: flex; align-items: center; gap: 0.25rem; }
+.rid-row-actions { display: flex; flex: 0 0 auto; gap: 0.25rem; }
 .rid-icon-button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+.rid-row-actions .rid-icon-button { min-width: 22px; min-height: 0; height: calc(1.2em + 2px); padding: 0; line-height: 1.2; }
 .rid-row-error { margin-top: 0.4rem; color: var(--ari-danger); overflow-wrap: anywhere; }
 .rid-workspace :is(button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--ari-primary); outline-offset: 2px; }
 .rid-workspace .ot-page-input { min-width: 60px; min-height: 44px; }
@@ -56,6 +58,9 @@ textarea.rid-edit { resize: vertical; }
     .rid-search-label { flex-direction: column; align-items: stretch; width: 100%; }
     .rid-search-label input { width: 100%; }
     .rid-workspace :is(button, input, select, textarea) { min-height: 44px; }
+    .rid-missing-pi-label { min-height: 44px; }
+    .rid-edit { height: auto; }
+    .rid-row-actions .rid-icon-button { min-width: 44px; min-height: 44px; height: 44px; }
     .rid-table-wrap { overflow-x: auto; }
     .rid-workspace .ot-pagination { flex-wrap: wrap; gap: 0.75rem; }
     .rid-page-controls { width: 100%; }
