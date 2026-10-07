@@ -26,6 +26,15 @@ general:
   # Default DB-query preset filename.
   db-query-preset-file: nirps_he_v7.txt
 
+search-examples:
+  name: 'Proxima or Proxima Centauri'
+  coords: 'RA 217.429 deg, Dec -62.680 deg, radius 60 arcsec'
+  date: '2026-01-01 to 2026-01-31'
+  run_id: '112. matches accessible RUN IDs starting with 112.'
+  header: 'OBJECT contains Proxima'
+  target_info: 'OBJNAME contains Proxima'
+  spectrum_info: 'KW_RUN_ID contains 112.'
+
 # Observatory site metadata.
 observatory:
 
