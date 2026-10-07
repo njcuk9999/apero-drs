@@ -33,7 +33,7 @@
     gspread-pandas==3.3.0
     gspread==5.12.4
     matplotlib==3.10.8
-    Pillow==12.1.1
+    Pillow==12.3.0
     scikit-image==0.26.0
     Sphinx==9.1.0
     sphinx-toolbox==3.9.0

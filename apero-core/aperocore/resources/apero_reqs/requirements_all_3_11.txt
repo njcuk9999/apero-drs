@@ -39,7 +39,7 @@ pastasoss                       # Current version: 1.2.2
 pandas                          # Current version: 2.2.3
 pandastable                     # Current version: 0.13.1
 pandasql                        # Current version: 0.7.3
-Pillow                          # Current version: 11.1.0
+Pillow                          # Current version: 12.3.0
 psutil                          # Current version: 7.0.0
 PyYAML                          # Current version: 6.0.2
 PyMySQL                         # Current version: 1.1.1
