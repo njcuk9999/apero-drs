@@ -39,6 +39,8 @@
     <div id="fo-panel-name"
          class="ot-find-tab-panel ot-find-tab-panel--active"
          role="tabpanel" aria-labelledby="fo-tab-name">
+        <p id="fo-description-name" class="fo-description">Find an object by its name or a known alias.</p>
+        <p id="fo-examples-name" class="fo-examples">Examples: An object name or alias</p>
         <div class="ot-find-panel__grid">
             <label class="ot-find-field">
                 <span class="ot-find-field__label">Object / alias</span>
@@ -58,6 +60,8 @@
 
     <div id="fo-panel-coords" class="ot-find-tab-panel" role="tabpanel"
          aria-labelledby="fo-tab-coords" hidden>
+        <p id="fo-description-coords" class="fo-description">Find objects within a separation of sky coordinates.</p>
+        <p id="fo-examples-coords" class="fo-examples">Examples: RA 180 deg, Dec 30 deg, separation 30 arcsec</p>
         <div class="ot-find-panel__grid">
             <label class="ot-find-field ot-find-field--unit">
                 <span class="ot-find-field__label">Coordinate format</span>
@@ -102,6 +106,8 @@
 
     <div id="fo-panel-date" class="ot-find-tab-panel" role="tabpanel"
          aria-labelledby="fo-tab-date" hidden>
+        <p id="fo-description-date" class="fo-description">Find objects observed on a date or within a date range.</p>
+        <p id="fo-examples-date" class="fo-examples">Examples: 2026-01-01 to 2026-01-31</p>
         <div class="ot-find-panel__grid">
             <label class="ot-find-field">
                 <span class="ot-find-field__label">First observed (from)</span>
@@ -124,6 +130,8 @@
 
     <div id="fo-panel-run-id" class="ot-find-tab-panel" role="tabpanel"
          aria-labelledby="fo-tab-run-id" hidden>
+        <p id="fo-description-run-id" class="fo-description">Find observations whose RUN ID starts with the supplied text.</p>
+        <p id="fo-examples-run-id" class="fo-examples">Examples: A full RUN ID or its prefix</p>
         <div class="ot-find-panel__grid">
             <label class="ot-find-field">
                 <span class="ot-find-field__label">RUN ID</span>
@@ -143,13 +151,19 @@
     <div id="fo-panel-advanced" class="ot-find-tab-panel" role="tabpanel"
          aria-labelledby="fo-tab-header-key" hidden>
         <input id="fo-adv-source" type="hidden" value="header">
+        <p id="fo-description-advanced" class="fo-description">Find observations by a FITS header keyword and its value.</p>
+        <p id="fo-examples-advanced" class="fo-examples">Examples: An exposure-time keyword greater than 300</p>
+        <p id="fo-advanced-scope" class="fo-examples" role="status">Search scope: All instruments</p>
         <div class="ot-find-panel__grid">
-            <label class="ot-find-field">
-                <span class="ot-find-field__label">Property</span>
+            <div class="ot-find-field">
+                <label for="fo-adv-property" class="ot-find-field__label">Property</label>
                 <input id="fo-adv-property" class="ot-find-input" type="text"
-                       list="fo-adv-property-list">
-                <datalist id="fo-adv-property-list"></datalist>
-            </label>
+                       readonly aria-describedby="fo-advanced-scope">
+                <button id="fo-property-open" class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="button" aria-haspopup="dialog" aria-controls="fo-property-dialog">
+                    <i class="fa-solid fa-list" aria-hidden="true"></i> Select property
+                </button>
+            </div>
             <label class="ot-find-field">
                 <span class="ot-find-field__label">Value mode</span>
                 <select id="fo-adv-match-mode" class="ot-find-input">
@@ -177,6 +191,34 @@
             </div>
         </div>
     </div>
+
+    <dialog id="fo-property-dialog" class="fo-property-dialog"
+            aria-labelledby="fo-property-title" aria-describedby="fo-property-status">
+        <div class="fo-property-dialog__header">
+            <h2 id="fo-property-title">Select property</h2>
+            <button id="fo-property-close" class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button" aria-label="Close property picker" title="Close property picker">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="fo-property-dialog__filters">
+            <label class="ot-find-field" for="fo-property-search">
+                <span class="ot-find-field__label">Search properties</span>
+                <input id="fo-property-search" class="ot-find-input" type="search" autocomplete="off" autofocus>
+            </label>
+            <label class="ot-find-field" for="fo-property-instrument">
+                <span class="ot-find-field__label">Instrument</span>
+                <select id="fo-property-instrument" class="ot-find-select">
+                    <option value="">All instruments</option>
+                </select>
+            </label>
+        </div>
+        <p id="fo-property-status" class="fo-examples" role="status" aria-live="polite">Loading properties...</p>
+        <button id="fo-property-retry" class="ari-btn ari-btn--sm ari-btn--secondary" type="button" hidden>
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Retry
+        </button>
+        <div id="fo-adv-property-list" class="fo-property-list" role="group" aria-label="Available properties"></div>
+    </dialog>
 
     <div id="fo-results" class="ari-astro-results" style="display:none;">
         <div id="fo-results-content"></div>

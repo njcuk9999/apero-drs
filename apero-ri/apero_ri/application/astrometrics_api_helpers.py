@@ -90,12 +90,19 @@ def _advanced_match_in_rows(rows, prop, mode, value, value2):
 
 
 def _advanced_property_catalog(
-    app,
+    app: Any,
     base_dir: Path,
-    accessible,
-    user_info,
-):
-    """Build source -> property catalog for find-object advanced mode."""
+    accessible: list,
+    user_info: Any,
+) -> dict:
+    """Build instrument-aware properties from accessible object data.
+
+    :param app: ARI application with RUN ID access checks.
+    :param base_dir: ARI data root.
+    :param accessible: Authorized profile descriptors.
+    :param user_info: Current user descriptor.
+    :return: Properties with source-specific instrument availability.
+    """
     sources = {
         'target_info': 'Target information',
         'spectrum_info': 'Spectrum information',
@@ -106,6 +113,21 @@ def _advanced_property_catalog(
         'spectrum_info': set(),
         'header': set(),
     }
+    availability = dict()
+    instruments = set()
+
+    def add_properties(source: str, row: dict, instrument: str) -> None:
+        """Track property availability for one source and instrument.
+
+        :param source: Property source.
+        :param row: Accessible data row.
+        :param instrument: Instrument name.
+        :return: None.
+        """
+        for key in row:
+            key = str(key)
+            props[source].add(key)
+            availability.setdefault((source, key), set()).add(instrument)
 
     for profile in accessible:
         profile_id = str(profile.get('profile_id', '') or '').strip()
@@ -114,6 +136,8 @@ def _advanced_property_catalog(
             continue
 
         run_ids = app._get_user_accessible_run_ids(user_info, instrument)
+        if not run_ids:
+            continue
         tasks_dir = base_dir / 'tasks' / instrument
         object_table_path = tasks_dir / profile_id / 'object_table.json'
         if not object_table_path.exists():
@@ -129,11 +153,12 @@ def _advanced_property_catalog(
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            props['target_info'].update(str(k) for k in row.keys())
             raw = str(row.get('RUN_ID', '') or '')
             row_rids = {r.strip() for r in raw.split(',') if r.strip()}
-            if run_ids and not (row_rids & run_ids):
+            if not (row_rids & run_ids):
                 continue
+            instruments.add(instrument)
+            add_properties('target_info', row, instrument)
             name = str(row.get('OBJNAME', '') or '').strip()
             if name:
                 accessible_objnames.append(name)
@@ -144,16 +169,15 @@ def _advanced_property_catalog(
             hrows = _load_json_rows(objects_dir / f'htable_{objname}.json')
             for hrow in hrows:
                 if isinstance(hrow, dict):
-                    props['header'].update(str(k) for k in hrow.keys())
+                    add_properties('header', hrow, instrument)
 
             for fkind in _FTABLE_KINDS:
                 fpath = objects_dir / f'ftable_{fkind}_{objname}.json'
                 frows = _load_json_rows(fpath)
                 for frow in frows:
                     if isinstance(frow, dict):
-                        props['spectrum_info'].update(
-                            str(k) for k in frow.keys()
-                        )
+                        if str(frow.get('KW_RUN_ID', '')).strip() in run_ids:
+                            add_properties('spectrum_info', frow, instrument)
 
     property_rows = []
     all_props = set().union(*props.values())
@@ -162,12 +186,14 @@ def _advanced_property_catalog(
         for skey in ('target_info', 'spectrum_info', 'header'):
             if prop in props[skey]:
                 srcs.append(skey)
-        property_rows.append(
-            {
-                'property': prop,
-                'sources': srcs,
-            }
-        )
+        source_instruments = {
+            source: sorted(availability.get((source, prop), set()))
+            for source in srcs
+        }
+        prop_instruments = set().union(*source_instruments.values())
+        property_rows.append(dict(property=prop, sources=srcs,
+                                  instruments=sorted(prop_instruments),
+                                  source_instruments=source_instruments))
 
     return {
         'sources': [
@@ -175,6 +201,7 @@ def _advanced_property_catalog(
             for key, label in sources.items()
         ],
         'properties': property_rows,
+        'instruments': sorted(instruments),
     }
 
 
@@ -297,7 +324,11 @@ def api_astrometrics_find_object(app: Any) -> Any:
         if not accessible_run_ids:
             continue
         if search_type == 'run_id':
-            if requested_run_id not in accessible_run_ids:
+            matching_run_ids = {
+                run_id for run_id in accessible_run_ids
+                if run_id.lower().startswith(requested_run_id.lower())
+            }
+            if not matching_run_ids:
                 continue
 
         # Load object table
@@ -325,7 +356,7 @@ def api_astrometrics_find_object(app: Any) -> Any:
         for row in all_rows:
             raw = str(row.get("RUN_ID", "") or "")
             row_rids = {r.strip() for r in raw.split(",") if r.strip()}
-            if search_type == 'run_id' and requested_run_id not in row_rids:
+            if search_type == 'run_id' and not (row_rids & matching_run_ids):
                 continue
             if row_rids & accessible_run_ids:
                 row["Run ID"] = raw

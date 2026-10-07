@@ -49,6 +49,14 @@
     var foAdvSource = document.getElementById('fo-adv-source');
     var foAdvProperty = document.getElementById('fo-adv-property');
     var foAdvPropertyList = document.getElementById('fo-adv-property-list');
+    var foPropertyDialog = document.getElementById('fo-property-dialog');
+    var foPropertyOpen = document.getElementById('fo-property-open');
+    var foPropertyClose = document.getElementById('fo-property-close');
+    var foPropertySearch = document.getElementById('fo-property-search');
+    var foPropertyInstrument = document.getElementById('fo-property-instrument');
+    var foPropertyStatus = document.getElementById('fo-property-status');
+    var foPropertyRetry = document.getElementById('fo-property-retry');
+    var foAdvancedScope = document.getElementById('fo-advanced-scope');
     var foAdvMatchMode = document.getElementById('fo-adv-match-mode');
     var foAdvValue = document.getElementById('fo-adv-value');
     var foAdvValue2Wrap = document.getElementById('fo-adv-value2-wrap');
@@ -66,6 +74,11 @@
     var currentSearchTab = 'name';
     var lastQuery = null;
     var findObjectPropertyCatalog = [];
+    var catalogInstruments = [];
+    var catalogState = 'loading';
+    var catalogError = '';
+    var advancedInstrument = finderInstrument;
+    var propertyReturnFocus = null;
 
     /* -----------------------------------------------------------------------
        Tab switching
@@ -105,6 +118,7 @@
                 rebuildFindAdvancedPropertyList();
                 foAdvProperty.value = '';
             }
+            renderFinderExamples();
         });
     });
 
@@ -278,8 +292,9 @@
                 
                 if (!data.results || Object.keys(data.results).length === 0) {
                     showError(
-                        'Object ' + query + ' not found or user does not '
-                        + 'have permission to view this object'
+                        isRunId
+                            ? 'No accessible observations have a RUN ID starting with ' + query
+                            : 'Object ' + query + ' not found or user does not have permission to view this object'
                     );
                     return;
                 }
@@ -437,7 +452,7 @@
             value: value,
             value2: value2
         };
-        if (finderInstrument) params.set('instrument', finderInstrument);
+        if (advancedInstrument) params.set('instrument', advancedInstrument);
         
         fetch('/api/astrometrics/find-object?' + params.toString())
             .then(parseResponseJson)
@@ -472,53 +487,148 @@
 
     function loadFindAdvancedProperties() {
         if (!foAdvPropertyList) return;
+        catalogState = 'loading';
+        rebuildFindAdvancedPropertyList();
         fetch('/api/astrometrics/columns')
             .then(parseResponseJson)
             .then(function (data) {
-                if (!data || !data.success) return;
+                if (!data || !data.success) {
+                    throw new Error(data && data.error || 'Catalog unavailable');
+                }
+                var catalog = data.catalog || data;
                 findObjectPropertyCatalog =
-                    Array.isArray(data.find_object_properties)
+                    Array.isArray(catalog.properties)
+                        ? catalog.properties
+                        : Array.isArray(data.find_object_properties)
                         ? data.find_object_properties
                         : [];
-                if (!findObjectPropertyCatalog.length) {
-                    findObjectPropertyCatalog = (data.columns || [])
-                        .map(function (col) {
-                            var prop = String(col || '').trim();
-                            if (!prop) return null;
-                            return {
-                                property: prop,
-                                sources: [
-                                    'target_info',
-                                    'spectrum_info',
-                                    'header'
-                                ]
-                            };
-                        })
-                        .filter(Boolean);
-                }
+                var instruments = catalog.instruments || data.find_object_instruments;
+                catalogInstruments = Array.isArray(instruments)
+                    ? instruments.filter(function (instrument) {
+                        return typeof instrument === 'string' && instrument;
+                    }) : [];
+                catalogState = 'ready';
                 rebuildFindAdvancedPropertyList();
             })
-            .catch(function () {
-                // Leave free-text input usable if column load fails.
+            .catch(function (error) {
+                catalogState = 'error';
+                catalogError = 'Unable to load properties: ' + error.message;
+                rebuildFindAdvancedPropertyList();
             });
     }
 
     function rebuildFindAdvancedPropertyList() {
         if (!foAdvPropertyList) return;
-        var source = (foAdvSource && foAdvSource.value)
-            ? String(foAdvSource.value).trim()
-            : 'target_info';
-        foAdvPropertyList.innerHTML = '';
-        findObjectPropertyCatalog.forEach(function (entry) {
-            if (!entry || typeof entry !== 'object') return;
-            var prop = String(entry.property || '').trim();
-            if (!prop) return;
-            var srcs = Array.isArray(entry.sources) ? entry.sources : [];
-            if (srcs.indexOf(source) === -1) return;
-            var opt = document.createElement('option');
-            opt.value = prop;
-            foAdvPropertyList.appendChild(opt);
+        var source = foAdvSource.value;
+        var sourceEntries = findObjectPropertyCatalog.filter(function (entry) {
+            return entry && typeof entry.property === 'string'
+                && entry.property.trim() && Array.isArray(entry.sources)
+                && entry.sources.indexOf(source) !== -1;
         });
+        var instruments = catalogInstruments.filter(function (instrument) {
+            return sourceEntries.some(function (entry) {
+                var available = (entry.source_instruments || {})[source] || [];
+                return available.indexOf(instrument) !== -1;
+            });
+        });
+        if (catalogState === 'ready' && advancedInstrument
+                && instruments.indexOf(advancedInstrument) === -1) {
+            advancedInstrument = '';
+            foAdvProperty.value = '';
+        }
+        if (foPropertyInstrument) {
+            foPropertyInstrument.replaceChildren();
+            var allOption = document.createElement('option');
+            allOption.value = '';
+            allOption.textContent = 'All instruments';
+            foPropertyInstrument.appendChild(allOption);
+            catalogInstruments.forEach(function (instrument) {
+                var option = document.createElement('option');
+                option.value = instrument;
+                option.textContent = instrument;
+                foPropertyInstrument.appendChild(option);
+            });
+            foPropertyInstrument.value = advancedInstrument;
+        }
+        if (foAdvancedScope) {
+            foAdvancedScope.textContent = 'Search scope: '
+                + (advancedInstrument || 'All instruments');
+        }
+        foAdvPropertyList.replaceChildren();
+        if (foPropertyRetry) foPropertyRetry.hidden = catalogState !== 'error';
+        foAdvPropertyList.setAttribute('aria-busy', catalogState === 'loading');
+        if (catalogState !== 'ready') {
+            if (foPropertyStatus) foPropertyStatus.textContent =
+                catalogState === 'loading' ? 'Loading properties...' : catalogError;
+            renderFinderExamples();
+            return;
+        }
+        var query = foPropertySearch ? foPropertySearch.value.trim().toLowerCase() : '';
+        var entries = sourceEntries.filter(function (entry) {
+            var available = (entry.source_instruments || {})[source] || [];
+            return (!advancedInstrument || available.indexOf(advancedInstrument) !== -1)
+                && entry.property.toLowerCase().indexOf(query) !== -1;
+        }).sort(function (left, right) {
+            return left.property.localeCompare(right.property);
+        });
+        if (foPropertyStatus) foPropertyStatus.textContent = entries.length
+            ? entries.length + ' properties' : 'No matching properties.';
+        entries.forEach(function (entry) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'fo-property-key';
+            button.textContent = entry.property;
+            button.addEventListener('click', function () {
+                foAdvProperty.value = entry.property;
+                closePropertyDialog();
+            });
+            foAdvPropertyList.appendChild(button);
+        });
+        renderFinderExamples();
+    }
+
+    function closePropertyDialog() {
+        if (foPropertyDialog && foPropertyDialog.open) foPropertyDialog.close();
+    }
+
+    function renderFinderExamples() {
+        var mode = currentSearchTab === 'advanced'
+            ? foAdvSource.value : currentSearchTab === 'run-id'
+            ? 'run_id' : currentSearchTab;
+        var descriptions = {
+            name: 'Find an object by its name or a known alias.',
+            coords: 'Find objects within a separation of sky coordinates.',
+            date: 'Find objects observed on a date or within a date range.',
+            run_id: 'Find observations whose RUN ID starts with the supplied text.',
+            header: 'Find observations by a FITS header keyword and its value.',
+            target_info: 'Find objects by a target metadata property and its value.',
+            spectrum_info: 'Find observations by a spectrum metadata property and its value.'
+        };
+        var genericExamples = {
+            name: 'An object name or alias',
+            coords: 'RA 180 deg, Dec 30 deg, separation 30 arcsec',
+            date: '2026-01-01 to 2026-01-31',
+            run_id: 'A full RUN ID or its prefix',
+            header: 'An exposure-time keyword greater than 300',
+            target_info: 'A target-name property matching an alias',
+            spectrum_info: 'A signal-to-noise property greater than 50'
+        };
+        var panel = currentSearchTab === 'advanced' ? 'advanced' : currentSearchTab;
+        var description = document.getElementById('fo-description-' + panel);
+        var examples = document.getElementById('fo-examples-' + panel);
+        if (description) description.textContent = descriptions[mode];
+        if (!examples) return;
+        var scope = currentSearchTab === 'advanced' ? advancedInstrument : finderInstrument;
+        var configured = Array.isArray(window.ARI_SEARCH_EXAMPLES)
+            ? window.ARI_SEARCH_EXAMPLES : [];
+        var texts = configured.filter(function (entry) {
+            return entry && (!scope || entry.instrument === scope)
+                && typeof entry[mode] === 'string' && entry[mode].trim();
+        }).map(function (entry) {
+            return (entry.instrument ? entry.instrument + ': ' : '') + entry[mode];
+        });
+        examples.textContent = 'Examples: ' + (texts.length
+            ? texts.join('; ') : genericExamples[mode]);
     }
 
     function syncFindAdvancedModeUi() {
@@ -625,6 +735,49 @@
         foAdvMatchMode.addEventListener('change', syncFindAdvancedModeUi);
     }
 
+    if (foPropertyDialog && foPropertyOpen) {
+        foPropertyOpen.addEventListener('click', function () {
+            propertyReturnFocus = document.activeElement;
+            rebuildFindAdvancedPropertyList();
+            foPropertyDialog.showModal();
+            foPropertySearch.focus();
+        });
+        foPropertyClose.addEventListener('click', closePropertyDialog);
+        foPropertyDialog.addEventListener('close', function () {
+            if (propertyReturnFocus && propertyReturnFocus.isConnected) {
+                propertyReturnFocus.focus();
+            }
+        });
+        foPropertyDialog.addEventListener('click', function (event) {
+            if (event.target !== foPropertyDialog) return;
+            var bounds = foPropertyDialog.getBoundingClientRect();
+            if (event.clientX < bounds.left || event.clientX > bounds.right
+                    || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+                closePropertyDialog();
+            }
+        });
+        foPropertySearch.addEventListener('input', rebuildFindAdvancedPropertyList);
+        foPropertyInstrument.addEventListener('change', function () {
+            advancedInstrument = this.value;
+            foAdvProperty.value = '';
+            rebuildFindAdvancedPropertyList();
+        });
+        foPropertyRetry.addEventListener('click', loadFindAdvancedProperties);
+        foAdvPropertyList.addEventListener('keydown', function (event) {
+            var buttons = Array.from(foAdvPropertyList.querySelectorAll('button'));
+            var index = buttons.indexOf(document.activeElement);
+            if (index === -1) return;
+            var next = index;
+            if (event.key === 'ArrowDown') next = Math.min(index + 1, buttons.length - 1);
+            else if (event.key === 'ArrowUp') next = Math.max(index - 1, 0);
+            else if (event.key === 'Home') next = 0;
+            else if (event.key === 'End') next = buttons.length - 1;
+            else return;
+            event.preventDefault();
+            buttons[next].focus();
+        });
+    }
+
     function applyFindObjectQueryParams() {
         var params = new URLSearchParams(window.location.search || '');
         var requestedTab = (params.get('fo_tab') || '').trim();
@@ -677,6 +830,7 @@
     applyFindObjectQueryParams();
     loadFindAdvancedProperties();
     syncFindAdvancedModeUi();
+    renderFinderExamples();
 
     /* -----------------------------------------------------------------------
        Section minimize/expand and pin functionality
