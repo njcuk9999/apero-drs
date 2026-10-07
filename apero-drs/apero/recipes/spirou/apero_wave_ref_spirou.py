@@ -225,6 +225,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         fp_e2ds_file.read_file()
         # define the header as being from the hc e2ds file
         hcheader = hc_e2ds_file.get_header()
+        # -----------------------------------------------------------------
+        # check that initial wavemap shape matches e2ds shape
+        wave.check_wavemap_e2ds_shape(params, iwprops['WAVEMAP'],
+                                           hc_e2ds_file)
         # ---------------------------------------------------------------------
         # load the blaze file for this fiber
         bout = flat_blaze.get_blaze(params, recipe, hcheader, ref_fiber)

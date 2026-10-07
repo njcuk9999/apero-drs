@@ -89,6 +89,46 @@ HeaderType = Union[drs_fits.Header, drs_fits.fits.Header, None]
 # =============================================================================
 # Define getting file functions
 # =============================================================================
+
+def check_wavemap_e2ds_shape(params: ParamDict,
+                             wavemap: np.ndarray,
+                             e2ds_file) -> None:
+    """
+    Check that initial wavemap shape matches extracted E2DS shape.
+
+    Compares both dimensions of the wavemap against the E2DS file.
+    Logs warnings if there are mismatches, which can cause line
+    fitting to fail, especially at order edges.
+
+    :param params: ParamDict, parameter dictionary
+    :param wavemap: np.ndarray, the wavemap array
+    :param e2ds_file: DrsFitsFile, the extracted E2DS file
+    :return: None
+    """
+    # Get dimensions
+    wavemap_shape = wavemap.shape
+    e2ds_shape = e2ds_file.shape
+    # Check shape[0] (number of orders)
+    if wavemap_shape[0] != e2ds_shape[0]:
+        emsg = ('Initial wave solution order count ({0}) does not '
+                'match extracted E2DS order count ({1}). This '
+                'mismatch can cause line fitting to fail. Check '
+                'that the reference wave file matches the current '
+                'instrument configuration.')
+        eargs = [wavemap_shape[0], e2ds_shape[0]]
+        WLOG(params, 'warning', emsg.format(*eargs))
+    # Check shape[1] (pixels per order)
+    if wavemap_shape[1] != e2ds_shape[1]:
+        emsg = ('Initial wave solution pixel count ({0}) does not '
+                'match extracted E2DS pixel count ({1}). This '
+                'mismatch can cause line fitting to fail, '
+                'especially at order edges. Check that the '
+                'reference wave file matches the extraction '
+                'oversampling setting.')
+        eargs = [wavemap_shape[1], e2ds_shape[1]]
+        WLOG(params, 'warning', emsg.format(*eargs))
+
+
 def get_waveref_filename(params: ParamDict, recipe: DrsRecipe, fiber: str,
                          database: Union[CalibDB, None] = None
                          ) -> Tuple[str, Union[DrsFitsFile, None]]:
@@ -3038,18 +3078,18 @@ def wave_meas_diff(params: ParamDict, ref_fiber: str,
     """
     # set function name
     func_name = display_func('wave_meas_diff', __NAME__)
-    # set for consistency
-    ref_wmeas, ref_peakn, ref_orders = [], [], []
+    # get the reference fiber wave properties
+    ref_wprops = wprops_all[ref_fiber]
+    # get wave meas for fplines
+    ref_wmeas = np.array(ref_wprops['FPLINES']['WAVE_MEAS'])
+    ref_peakn = np.array(ref_wprops['FPLINES']['PEAK_NUMBER'])
+    ref_orders = np.array(ref_wprops['FPLINES']['ORDER'])
     # loop around each fiber
     for fiber in rvs_all:
         # choose which wprops to use
         wprops = wprops_all[fiber]
         # deal with reference fiber
         if fiber == ref_fiber:
-            # get wave meas for fplines
-            ref_wmeas = np.array(wprops['FPLINES']['WAVE_MEAS'])
-            ref_peakn = np.array(wprops['FPLINES']['PEAK_NUMBER'])
-            ref_orders = np.array(wprops['FPLINES']['ORDER'])
             # dv of reference fiber is zero by definition
             wm_dv = 0.0
         else:

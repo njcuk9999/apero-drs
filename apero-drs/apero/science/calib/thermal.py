@@ -171,7 +171,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
     # ----------------------------------------------------------------------
     # get reference wave map
-    wprops = wave.get_wavesolution(params, recipe, ref=True,
+    wprops = wave.get_wavesolution(params, recipe, ref=True, fiber=fiber,
                                    database=database)
     # get the wave solution
     wavemap = wprops['WAVEMAP']
@@ -325,7 +325,7 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
         return np.array(spectrum, dtype=float), tprops
     WLOG(params, '', 'Applying thermal correction for '
                      'fiber {0}'.format(fiber))
-    wprops = wave.get_wavesolution(params, recipe, ref=True,
+    wprops = wave.get_wavesolution(params, recipe, ref=True, fiber=fiber,
                                    database=database)
     wavemap = wprops['WAVEMAP']
     thermal_file = None

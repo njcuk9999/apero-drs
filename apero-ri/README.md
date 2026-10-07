@@ -32,6 +32,30 @@ Then you just need to forward the port you select, and it should work.
 
 The web-server will only work while `apero_ri_run` is running.
 
+## Manage RUN IDs
+
+The Admin Portal's **Manage RUN IDs** page keeps one catalog per instrument
+at `/admin_portal/run_ids`. It supports column filters, search, sorting,
+pagination, inline PI/comment edits, and adding new RUN IDs. Save a row with
+its disk icon; duplicate RUN IDs within an instrument are rejected.
+
+Catalogs are stored in
+`<ARI data directory>/apero-assets/run_ids/<instrument>.json`. Writes use
+an exclusive filesystem lock and atomic replacement. Profile object tables
+and existing science groups seed new records; rescanning never overwrites
+saved metadata or removes IDs when profiles disappear. Empty PI/comment
+edits are saved too.
+
+Science groups use these catalogs for available RUN IDs and labels such as
+`RUN_ID (PI) [Comment]`. Clicking a label opens the appropriate instrument
+tab with that exact RUN ID filtered. The `manage.run_id.<INSTRUMENT>`
+permission controls access, inherited by admins through instrument
+moderator groups.
+
+Include `apero-assets/run_ids` in your backup policy. The standard ARI
+backup task excludes `apero-assets` by default; persistent catalog storage
+does not itself protect against disk loss or deletion of the data directory.
+
 
 ## Production deployment
 
