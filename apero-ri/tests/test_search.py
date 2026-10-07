@@ -24,6 +24,9 @@ def test_search_page(client: Any) -> None:
     assert b'fo-tab-run-id' in response.data
     assert b'search-page-query' in response.data
     assert b'search-version' in response.data
+    assert b'fo-property-dialog' in response.data
+    assert b'ARI_SEARCH_EXAMPLES' in response.data
+    assert b'112. matches' in response.data
     pages = permissions.load_pages()
     definition = pages['home.search']
     assert definition['quick-nav']
@@ -59,10 +62,10 @@ def test_search_permissions(
     assert not any('script src' in item['keywords'] for item in items)
 
 
-def test_run_id_exact_and_authorized(
+def test_run_id_prefix_and_authorized(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """RUN ID lookup matches whole IDs and denies shared-row leakage."""
+    """Prefixes match authorized IDs, without shared-row leakage."""
     from flask import Flask
 
     flask_app = Flask(__name__)
@@ -73,17 +76,59 @@ def test_run_id_exact_and_authorized(
     stub = SimpleNamespace(args=SimpleNamespace(data_dir=str(tmp_path)),
                            ari_groups=permissions.load_groups(),
                            _get_api_user=lambda: user,
-                           _get_user_accessible_run_ids=lambda *values: {'R1'})
+                           _get_user_accessible_run_ids=lambda *values:
+                           {'R1', '112.A', '112.B'})
     directory = tmp_path / 'tasks/SPIROU/test'
     directory.mkdir(parents=True)
     rows = [dict(OBJNAME='Visible', RUN_ID='R1, PRIVATE'),
-            dict(OBJNAME='Prefix', RUN_ID='R10')]
+            dict(OBJNAME='Prefix', RUN_ID='R10'),
+            dict(OBJNAME='First run', RUN_ID='112.A'),
+            dict(OBJNAME='Second run', RUN_ID='112.B'),
+            dict(OBJNAME='Private run', RUN_ID='R1, 112.PRIVATE')]
     (directory / 'object_table.json').write_text(json.dumps(dict(rows=rows)))
     url = '/api/astrometrics/find-object?search_type=run_id&query='
     with flask_app.test_request_context(url + 'R1'):
         response = astrometrics_api_helpers.api_astrometrics_find_object(stub)
         data = response.get_json()
-        assert [item['name'] for item in data['results']['test']] == ['Visible']
+        names = [item['name'] for item in data['results']['test']]
+        assert names == ['Visible', 'Private run']
+    with flask_app.test_request_context(url + '112.'):
+        response = astrometrics_api_helpers.api_astrometrics_find_object(stub)
+        data = response.get_json()
+        names = [item['name'] for item in data['results']['test']]
+        assert names == ['First run', 'Second run']
     with flask_app.test_request_context(url + 'PRIVATE'):
         response = astrometrics_api_helpers.api_astrometrics_find_object(stub)
         assert response.get_json()['results'] == dict()
+
+
+def test_property_instruments(tmp_path: Path) -> None:
+    """Property instrument filters are specific to their source."""
+    profiles = []
+    for instrument in ['SPIROU', 'NIRPS']:
+        profiles.append(dict(profile_id='test', instrument=instrument))
+        directory = tmp_path / 'tasks' / instrument / 'test'
+        objects = directory / 'objects'
+        objects.mkdir(parents=True)
+        rows = [dict(OBJNAME='Star', RUN_ID='R1', TARGET_KEY='value')]
+        payload = json.dumps(dict(rows=rows))
+        (directory / 'object_table.json').write_text(payload)
+        source = 'htable' if instrument == 'SPIROU' else 'ftable_ext'
+        rows = [dict(KW_RUN_ID='R1', SHARED_KEY='value')]
+        payload = json.dumps(dict(rows=rows))
+        (objects / f'{source}_Star.json').write_text(payload)
+    stub = SimpleNamespace(_get_user_accessible_run_ids=lambda *values: {'R1'})
+    catalog_args = [stub, tmp_path, profiles, None]
+    catalog = astrometrics_api_helpers._advanced_property_catalog(*catalog_args)
+    assert catalog['instruments'] == ['NIRPS', 'SPIROU']
+    shared = next(row for row in catalog['properties']
+                  if row['property'] == 'SHARED_KEY')
+    assert shared['source_instruments'] == dict(header=['SPIROU'],
+                                              spectrum_info=['NIRPS'])
+    examples = search_helpers.search_examples()
+    assert {row['instrument'] for row in examples} == {
+        'SPIROU', 'NIRPS_HA', 'NIRPS_HE',
+    }
+    keys = {'name', 'coords', 'date', 'run_id', 'header',
+            'target_info', 'spectrum_info'}
+    assert all(keys <= set(row) for row in examples)

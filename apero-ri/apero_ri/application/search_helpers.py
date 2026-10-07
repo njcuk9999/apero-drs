@@ -3,8 +3,10 @@
 """Permission-aware search index for documentation and site pages."""
 
 from html.parser import HTMLParser
+from pathlib import Path
 from typing import Any
 
+import yaml
 from flask import jsonify, request, session
 from jinja2 import nodes
 
@@ -76,6 +78,23 @@ def _template_text(app: Any, template: str, seen: set) -> str:
     except Exception:
         pass
     return ' '.join(content)
+
+
+def search_examples() -> list:
+    """Read per-instrument search examples from instrument resources.
+
+    :return: One example mapping per configured instrument.
+    """
+    directory = Path(__file__).parents[1] / 'resources/aprofile_instruments'
+    examples = dict()
+    for path in sorted(directory.glob('*.yaml')):
+        with path.open(encoding='utf-8') as handle:
+            config = yaml.safe_load(handle) or dict()
+        instrument = config.get('general', dict()).get('instrument')
+        values = config.get('search-examples', dict())
+        if instrument and values:
+            examples[instrument] = dict(values, instrument=instrument)
+    return list(examples.values())
 
 
 def search_index(app: Any) -> Any:

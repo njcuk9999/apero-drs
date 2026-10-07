@@ -25,6 +25,15 @@ general:
   # Default DB-query preset filename.
   db-query-preset-file: spirou_v7.txt
 
+search-examples:
+  name: 'Gl 699 or Barnard'
+  coords: 'RA 269.452 deg, Dec 4.693 deg, radius 60 arcsec'
+  date: '2026-01-01 to 2026-01-31'
+  run_id: '24A or 24A followed by the rest of the RUN ID'
+  header: 'OBJECT contains Gl699'
+  target_info: 'OBJNAME contains Gl699'
+  spectrum_info: 'KW_RUN_ID contains 24A'
+
 # Observatory site metadata.
 observatory:
 

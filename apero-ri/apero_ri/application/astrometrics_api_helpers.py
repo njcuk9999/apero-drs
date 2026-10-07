@@ -889,6 +889,7 @@ def api_astrometrics_columns(app):
         columns=cols,
         find_object_sources=catalog.get('sources', []),
         find_object_properties=catalog.get('properties', []),
+        find_object_instruments=catalog.get('instruments', []),
     )
 
 

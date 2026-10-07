@@ -8,6 +8,9 @@
     let shown = 0;
     let request = 0;
     function activate(category) {
+        element("description").textContent = category === "objects"
+            ? "Find an astrophysical object or observation across all data you have access to."
+            : "Find documentation and site pages you have access to by word or phrase.";
         ["objects", "pages"].forEach((name) => {
             const active = name === category;
             element(name).hidden = !active;

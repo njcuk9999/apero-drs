@@ -3,17 +3,17 @@
 {% block body_class %}ari-has-sidebar ari-search-page{% endblock %}
 {% block extra_head %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css', v='20261007a') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css', v='20261007picker') }}">
 {% endblock %}
 {% block doc_content %}
 <div class="ari-page-header"><h1><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</h1></div>
+<p id="search-description" class="fo-description">Find an astrophysical object or observation across all data you have access to.</p>
 <div id="search-root">
     <div class="ari-sg-tabs search-tabs" role="tablist" aria-label="Search category">
         <button id="search-tab-objects" class="ari-sg-tab ari-sg-tab--active" type="button" role="tab" aria-selected="true" aria-controls="search-objects"><i class="fa-solid fa-star" aria-hidden="true"></i> Object / Observation</button>
         <button id="search-tab-pages" class="ari-sg-tab" type="button" role="tab" aria-selected="false" aria-controls="search-pages"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Documentation / Site</button>
     </div>
     <section id="search-objects" role="tabpanel" aria-labelledby="search-tab-objects">
-        <p class="fo-description">Find an astrophysical object or observation across all data you have access to.</p>
         {% include 'search/object_finder.html' %}
     </section>
     <section id="search-pages" role="tabpanel" aria-labelledby="search-tab-pages" hidden>
@@ -37,7 +37,8 @@
 {% endblock %}
 {% block extra_scripts %}
 {{ super() }}
+<script>window.ARI_SEARCH_EXAMPLES = {{ search_examples|tojson }};</script>
 <script src="{{ url_for('static', filename='js/search_match.js', v='20261007a') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20261007search') }}"></script>
-<script src="{{ url_for('static', filename='js/search.js', v='20261007b') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20261007picker') }}"></script>
+<script src="{{ url_for('static', filename='js/search.js', v='20261007picker') }}"></script>
 {% endblock %}

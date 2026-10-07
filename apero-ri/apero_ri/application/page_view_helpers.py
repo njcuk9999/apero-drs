@@ -1264,7 +1264,10 @@ def make_page_view(app, page_id: str, package_dir: Path):
             context.update(app._build_home_page_context(user_info, perms))
 
         if page_id == 'home.search':
+            from apero_ri.application import search_helpers
+
             context['search_versions'] = get_versions()
+            context['search_examples'] = search_helpers.search_examples()
             context['search_version'] = (
                 request.args.get('v') or get_default_version()
             )

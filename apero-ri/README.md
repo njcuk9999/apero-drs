@@ -38,11 +38,18 @@ The top-level **Search** page at `/search` is available from the home page,
 top navigation, and sidebar, immediately after Astrometrics.
 
 **Object / Observation** finds objects across accessible profiles by name
-or alias, coordinates, observation date, exact RUN ID, header key, target
+or alias, coordinates, observation date, RUN ID prefix, header key, target
 information, or spectrum information. Results are grouped by profile and
 link to the data portal. Clicking a RUN ID in Manage RUN IDs opens the
 RUN ID search automatically. Astrometrics retains its catalogue and target
 resolution tools and links to Search for data-portal lookups.
+
+RUN ID searches match accessible IDs starting with the supplied text, so
+`112.` finds observations from accessible `112.*` programs. Header, target,
+and spectrum searches use **Select property** to open a scrollable key
+picker with text and instrument filters. Selecting an instrument also
+scopes that property search. Each mode includes a description and examples
+from the instrument configuration files.
 
 **Documentation / Site** searches documentation for the selected version,
 or documentation plus the labels and static content of permitted site
