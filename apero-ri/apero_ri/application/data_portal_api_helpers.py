@@ -2006,7 +2006,7 @@ def _build_rejected_section(
             continue
         out = dict(row)
         out['ASTROMETRICS_URL'] = (
-            '/astrometrics?fo_tab=advanced'
+            '/search?fo_tab=header-key'
             '&fo_source=header'
             f'&fo_property=IDENTIFIER&fo_value={quote(identifier)}'
             '&fo_search=1'

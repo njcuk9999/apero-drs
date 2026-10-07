@@ -32,6 +32,25 @@ Then you just need to forward the port you select, and it should work.
 
 The web-server will only work while `apero_ri_run` is running.
 
+## Search
+
+The top-level **Search** page at `/search` is available from the home page,
+top navigation, and sidebar, immediately after Astrometrics.
+
+**Object / Observation** finds objects across accessible profiles by name
+or alias, coordinates, observation date, exact RUN ID, header key, target
+information, or spectrum information. Results are grouped by profile and
+link to the data portal. Clicking a RUN ID in Manage RUN IDs opens the
+RUN ID search automatically. Astrometrics retains its catalogue and target
+resolution tools and links to Search for data-portal lookups.
+
+**Documentation / Site** searches documentation for the selected version,
+or documentation plus the labels and static content of permitted site
+pages. Shared template content is included; live private records are not
+indexed here. Words must all match; use double quotes for an exact phrase.
+The documentation sidebar uses the same matching rules, while `/search`
+provides full-page results with excerpts and more-results pagination.
+
 ## Manage RUN IDs
 
 The Admin Portal's **Manage RUN IDs** page keeps one catalog per instrument

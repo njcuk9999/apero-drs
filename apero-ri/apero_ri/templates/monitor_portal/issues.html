@@ -279,7 +279,7 @@
                 && String(it.type || '') === 'verify'
                 && it.apero_name) {
             const name = encodeURIComponent(String(it.apero_name));
-            return '/astrometrics?fo_tab=advanced'
+            return '/search?fo_tab=target-information'
                 + '&fo_source=target_info'
                 + '&fo_property=APERO_NAME'
                 + '&fo_value=' + name

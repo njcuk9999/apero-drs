@@ -2518,7 +2518,7 @@
     function _buildAstrometricsLink(row, identifier) {
         var url = String(row.ASTROMETRICS_URL || '').trim();
         if (url) return url;
-        return '/astrometrics?fo_tab=advanced&fo_source=header'
+        return '/search?fo_tab=header-key&fo_source=header'
             + '&fo_property=IDENTIFIER'
             + '&fo_value=' + encodeURIComponent(identifier)
             + '&fo_search=1';

@@ -78,6 +78,17 @@ home.astrometrics:
     top-level: True
     show: True
 
+home.search:
+  label: Search
+  parent: home
+  view-permission: view.home
+  icon: fa-solid fa-magnifying-glass
+  quick-nav: True
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
+
 home.user_portal:
   label: User Portal
   parent: home

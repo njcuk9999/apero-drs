@@ -1,0 +1,24 @@
+#search-root { min-width: 0; }
+#search-root [hidden] { display: none !important; }
+.search-tabs { flex-wrap: wrap; margin-bottom: 1rem; }
+.search-form { display: flex; align-items: end; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 0; border-bottom: 1px solid var(--ari-border); }
+.search-form label { display: flex; flex-direction: column; gap: 0.4rem; color: var(--ari-text); font-weight: 600; }
+.search-form label:first-child { flex: 1 1 320px; }
+.search-form input, .search-form select { min-height: 44px; width: 100%; }
+.search-status { padding: 1rem 0; color: var(--ari-text-muted); }
+.search-result { display: block; padding: 1rem 0; border-bottom: 1px solid var(--ari-border); color: var(--ari-text); text-decoration: none; overflow-wrap: anywhere; }
+.search-result:hover .search-result-title { text-decoration: underline; }
+.search-result-title { color: var(--ari-primary); font-size: 1.05rem; font-weight: 600; }
+.search-result-meta { color: var(--ari-text-muted); font-size: 0.8rem; margin: 0.35rem 0; }
+.search-result-excerpt { line-height: 1.5; }
+#search-root .at-section-card { border: 0; background: transparent; box-shadow: none; }
+#search-root .ari-astro-profile-card { margin-top: 1rem; border-radius: 4px; }
+[data-theme="dark"] .search-form, [data-theme="dark"] .search-result { border-color: var(--ari-border); color: var(--ari-text); }
+[data-theme="dark"] .search-status, [data-theme="dark"] .search-result-meta { color: var(--ari-text-muted); }
+[data-theme="dark"] .search-result-title { color: var(--ari-primary); }
+@media (max-width: 768px) {
+    .search-form { align-items: stretch; }
+    .search-form label { width: 100%; }
+    .search-form label:first-child { flex-basis: auto; }
+    #search-root button { min-height: 44px; }
+}

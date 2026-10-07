@@ -43,12 +43,7 @@
     function matchItems(items, query) {
         var q = query.trim().toLowerCase();
         if (!q) return [];
-        var terms = q.split(/\s+/).filter(Boolean);
-        return items.filter(function (item) {
-            return terms.every(function (term) {
-                return item.keywords.indexOf(term) !== -1;
-            });
-        }).slice(0, 15);
+        return window.ARI_SEARCH_MATCH(items, q).slice(0, 15);
     }
 
     function render(box, items, query) {
@@ -59,8 +54,10 @@
             return;
         }
         box.innerHTML = items.map(function (item) {
+            var resultUrl = new URL(item.url, window.location.origin);
+            if (currentVersion()) resultUrl.searchParams.set('v', currentVersion());
             return '<a class="ari-doc-search__item" href="' +
-                escapeHtml(item.url) + '">' +
+                escapeHtml(resultUrl.pathname + resultUrl.search) + '">' +
                 '<span class="ari-doc-search__item-label">' +
                 escapeHtml(item.label) + '</span>' +
                 '<span class="ari-doc-search__item-url">' +

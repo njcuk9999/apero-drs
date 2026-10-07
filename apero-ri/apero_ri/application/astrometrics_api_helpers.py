@@ -3,6 +3,7 @@ import json as _json
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -177,8 +178,12 @@ def _advanced_property_catalog(
     }
 
 
-def api_astrometrics_find_object(app):
-    """Find objects across accessible profiles by name, coordinates, or date."""
+def api_astrometrics_find_object(app: Any) -> Any:
+    """Find objects across authorized profiles and RUN IDs.
+
+    :param app: ARI application providing user and profile access checks.
+    :return: Flask JSON response with grouped objects and profile metadata.
+    """
     base_dir = Path(app.args.data_dir or str(Path.home() / ".ari"))
 
     # Authentication
@@ -195,6 +200,10 @@ def api_astrometrics_find_object(app):
     search_type = request.args.get("search_type", "").strip().lower()
     if not search_type:
         return jsonify(success=False, error="Missing search_type"), 400
+    requested_run_id = request.args.get('query', '').strip()
+    requested_instrument = request.args.get('instrument', '').strip().upper()
+    if search_type == 'run_id' and not requested_run_id:
+        return jsonify(success=False, error='Missing RUN ID query'), 400
 
     # Get accessible profiles
     accessible = get_accessible_profiles(user_info, app.ari_groups)
@@ -268,6 +277,9 @@ def api_astrometrics_find_object(app):
     for profile in accessible:
         profile_id = profile["profile_id"]
         instrument = profile["instrument"]
+        if requested_instrument:
+            if str(instrument).upper() != requested_instrument:
+                continue
         pdata = profile.get("data", {}) or {}
         profiles[profile_id] = {
             "profile_id": profile_id,
@@ -284,6 +296,9 @@ def api_astrometrics_find_object(app):
         )
         if not accessible_run_ids:
             continue
+        if search_type == 'run_id':
+            if requested_run_id not in accessible_run_ids:
+                continue
 
         # Load object table
         tasks_dir = base_dir / "tasks" / instrument
@@ -310,6 +325,8 @@ def api_astrometrics_find_object(app):
         for row in all_rows:
             raw = str(row.get("RUN_ID", "") or "")
             row_rids = {r.strip() for r in raw.split(",") if r.strip()}
+            if search_type == 'run_id' and requested_run_id not in row_rids:
+                continue
             if row_rids & accessible_run_ids:
                 row["Run ID"] = raw
                 filtered.append(row)
@@ -338,6 +355,9 @@ def api_astrometrics_find_object(app):
                     if any(qv in nv for qv in qvars for nv in nvars):
                         matching_rows.append(row)
                         break
+
+        elif search_type == 'run_id':
+            matching_rows = filtered
 
         elif search_type == "coords":
             ra_str = request.args.get("ra", "").strip()

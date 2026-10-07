@@ -4,6 +4,9 @@
 (function () {
     'use strict';
 
+    var finderRoot = document.getElementById('object-finder');
+    if (!finderRoot) return;
+
     /* -----------------------------------------------------------------------
        DOM references
     ----------------------------------------------------------------------- */
@@ -12,8 +15,8 @@
     var pinButtons = document.querySelectorAll('.ari-astro-section__pin-btn');
     
     // Find object tab/panel elements
-    var findTabs = document.querySelectorAll('.ot-find-tab');
-    var findPanels = document.querySelectorAll('.ot-find-tab-panel');
+    var findTabs = finderRoot.querySelectorAll('.ot-find-tab');
+    var findPanels = finderRoot.querySelectorAll('.ot-find-tab-panel');
     
     // Find by name
     var foNameQuery = document.getElementById('fo-name-query');
@@ -36,6 +39,11 @@
     var foLastDate = document.getElementById('fo-last-date');
     var foFindDate = document.getElementById('fo-find-date');
     var foClearDate = document.getElementById('fo-clear-find-date');
+    var foRunIdQuery = document.getElementById('fo-run-id-query');
+    var foFindRunId = document.getElementById('fo-find-run-id');
+    var foClearRunId = document.getElementById('fo-clear-find-run-id');
+    var finderInstrument = new URLSearchParams(window.location.search || '')
+        .get('instrument') || '';
     
     // Advanced search
     var foAdvSource = document.getElementById('fo-adv-source');
@@ -89,7 +97,14 @@
             if (tabId === 'fo-tab-name') currentSearchTab = 'name';
             else if (tabId === 'fo-tab-coords') currentSearchTab = 'coords';
             else if (tabId === 'fo-tab-date') currentSearchTab = 'date';
-            else if (tabId === 'fo-tab-advanced') currentSearchTab = 'advanced';
+            else if (tabId === 'fo-tab-run-id') currentSearchTab = 'run-id';
+            else if (this.dataset.source) {
+                currentSearchTab = 'advanced';
+                foAdvSource.value = this.dataset.source;
+                activePanel.setAttribute('aria-labelledby', tabId);
+                rebuildFindAdvancedPropertyList();
+                foAdvProperty.value = '';
+            }
         });
     });
 
@@ -238,19 +253,23 @@
         attachCardClickHandlers();
     }
 
-    function findByName() {
-        var query = (foNameQuery.value || '').trim();
+    function findByName(isRunId) {
+        isRunId = isRunId === true;
+        var queryInput = isRunId ? foRunIdQuery : foNameQuery;
+        var query = (queryInput.value || '').trim();
         if (!query) {
-            showError('Please enter an object name');
+            showError(isRunId ? 'Please enter a RUN ID' : 'Please enter an object name');
             return;
         }
         
         showLoading();
-        lastQuery = { type: 'name', query: query };
-        
-                fetch('/api/astrometrics/find-object?search_type=name&query=' + 
-              encodeURIComponent(query))
-                        .then(parseResponseJson)
+        var searchType = isRunId ? 'run_id' : 'name';
+        lastQuery = { type: searchType, query: query };
+        var params = new URLSearchParams({search_type: searchType, query: query});
+        if (finderInstrument) params.set('instrument', finderInstrument);
+
+        fetch('/api/astrometrics/find-object?' + params.toString())
+            .then(parseResponseJson)
             .then(function (data) {
                 if (!data.success) {
                     showError('Error: ' + (data.error || 'Search failed'));
@@ -297,6 +316,7 @@
         });
         
         lastQuery = { type: 'coords', ra: ra, dec: dec, sep: sep };
+        if (finderInstrument) params.set('instrument', finderInstrument);
         
         fetch('/api/astrometrics/find-object?' + params.toString())
             .then(parseResponseJson)
@@ -346,6 +366,7 @@
         if (lastDate) params.append('last_observed', lastDate);
         
         lastQuery = { type: 'date', firstDate: firstDate, lastDate: lastDate };
+        if (finderInstrument) params.set('instrument', finderInstrument);
         
         fetch('/api/astrometrics/find-object?' + params.toString())
             .then(parseResponseJson)
@@ -416,6 +437,7 @@
             value: value,
             value2: value2
         };
+        if (finderInstrument) params.set('instrument', finderInstrument);
         
         fetch('/api/astrometrics/find-object?' + params.toString())
             .then(parseResponseJson)
@@ -473,29 +495,6 @@
                             };
                         })
                         .filter(Boolean);
-                }
-                if (
-                    foAdvSource
-                    && Array.isArray(data.find_object_sources)
-                    && data.find_object_sources.length
-                ) {
-                    var selectedSource = String(
-                        foAdvSource.value || 'target_info'
-                    );
-                    foAdvSource.innerHTML = '';
-                    data.find_object_sources.forEach(function (src) {
-                        var key = String(src.key || '').trim();
-                        if (!key) return;
-                        var label = String(src.label || key).trim();
-                        var opt = document.createElement('option');
-                        opt.value = key;
-                        opt.textContent = label;
-                        foAdvSource.appendChild(opt);
-                    });
-                    foAdvSource.value = selectedSource;
-                    if (!foAdvSource.value && foAdvSource.options.length) {
-                        foAdvSource.value = foAdvSource.options[0].value;
-                    }
                 }
                 rebuildFindAdvancedPropertyList();
             })
@@ -588,6 +587,19 @@
             clearResults();
         });
     }
+
+    if (foFindRunId && foRunIdQuery) {
+        foFindRunId.addEventListener('click', function () { findByName(true); });
+        foRunIdQuery.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') findByName(true);
+        });
+    }
+    if (foClearRunId) {
+        foClearRunId.addEventListener('click', function () {
+            foRunIdQuery.value = '';
+            clearResults();
+        });
+    }
     
     if (foFindAdvanced) {
         foFindAdvanced.addEventListener('click', findAdvanced);
@@ -623,17 +635,16 @@
         var value2 = (params.get('fo_value2') || '').trim();
         var runSearch = (params.get('fo_search') || '').trim();
 
-        if (requestedTab.toLowerCase() === 'advanced') {
-            var advTabBtn = document.getElementById('fo-tab-advanced');
-            if (advTabBtn) {
-                advTabBtn.click();
-            }
+        requestedTab = requestedTab.toLowerCase();
+        if (requestedTab === 'advanced') {
+            requestedTab = {header: 'header-key', target_info: 'target-information',
+                spectrum_info: 'spectrum-information'}[source || 'target_info']
+                || 'target-information';
         }
-
-        if (source && foAdvSource) {
-            foAdvSource.value = source;
-            rebuildFindAdvancedPropertyList();
-        }
+        var requestedButton = document.getElementById('fo-tab-' + requestedTab);
+        if (requestedButton) requestedButton.click();
+        if (currentSearchTab === 'run-id' && foRunIdQuery) foRunIdQuery.value = value;
+        if (currentSearchTab === 'name' && foNameQuery) foNameQuery.value = value;
         if (prop && foAdvProperty) {
             foAdvProperty.value = prop;
         }
@@ -651,7 +662,12 @@
         var shouldRun = runSearch === '1'
             || runSearch.toLowerCase() === 'true'
             || runSearch.toLowerCase() === 'yes';
-        if (shouldRun && foFindAdvanced && foAdvProperty && foAdvValue) {
+        if (shouldRun && currentSearchTab === 'run-id' && foRunIdQuery.value.trim()) {
+            findByName(true);
+        } else if (shouldRun && currentSearchTab === 'name' && foNameQuery.value.trim()) {
+            findByName();
+        } else if (shouldRun && currentSearchTab === 'advanced'
+                && foFindAdvanced && foAdvProperty && foAdvValue) {
             if (foAdvProperty.value.trim() && foAdvValue.value.trim()) {
                 findAdvanced();
             }
@@ -1270,9 +1286,11 @@
             });
     }
 
+    var rtColumnsLoaded = false;
     function _populateColumns() {
         var sel = document.getElementById('rt-adv-column');
-        if (!sel) return;
+        if (!sel || rtColumnsLoaded) return;
+        rtColumnsLoaded = true;
         _fetchJson('/api/astrometrics/columns')
             .then(function (data) {
                 if (!data.success) return;
@@ -1285,6 +1303,7 @@
                 });
             })
             .catch(function () {
+                rtColumnsLoaded = false;
                 sel.innerHTML = '<option value="">'
                     + '(failed to load columns)</option>';
             });
@@ -1491,13 +1510,7 @@
        activation */
     var advTab = document.getElementById('rt-tab-advanced');
     if (advTab) {
-        var loaded = false;
-        advTab.addEventListener('click', function () {
-            if (!loaded) {
-                _populateColumns();
-                loaded = true;
-            }
-        });
+        advTab.addEventListener('click', _populateColumns);
     }
 }());
 
@@ -1531,7 +1544,7 @@
         if (tab) tab.click();
         var subTab = document.querySelector(
             '#astro-tab-resolve-target '
-            + '.ot-find-tab[aria-controls="rt-tab-name"]');
+            + '.ot-find-tab[aria-controls="rt-panel-name"]');
         if (subTab) subTab.click();
         var input = document.getElementById('rt-name-query');
         if (input) {

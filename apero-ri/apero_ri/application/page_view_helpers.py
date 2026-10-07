@@ -1263,6 +1263,12 @@ def make_page_view(app, page_id: str, package_dir: Path):
         if page_id == "home":
             context.update(app._build_home_page_context(user_info, perms))
 
+        if page_id == 'home.search':
+            context['search_versions'] = get_versions()
+            context['search_version'] = (
+                request.args.get('v') or get_default_version()
+            )
+
         if page_id == "home.admin_portal.science_groups" and user_info:
             params = load_parameters()
             all_instr = params.get("instruments", {}).get(

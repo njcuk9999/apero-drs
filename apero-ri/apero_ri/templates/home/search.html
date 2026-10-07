@@ -1,0 +1,42 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Search{% endblock %}
+{% block body_class %}ari-has-sidebar ari-search-page{% endblock %}
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css', v='20261007a') }}">
+{% endblock %}
+{% block doc_content %}
+<div class="ari-page-header"><h1><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</h1></div>
+<div id="search-root">
+    <div class="ari-sg-tabs search-tabs" role="tablist" aria-label="Search category">
+        <button id="search-tab-objects" class="ari-sg-tab ari-sg-tab--active" type="button" role="tab" aria-selected="true" aria-controls="search-objects"><i class="fa-solid fa-star" aria-hidden="true"></i> Object / Observation</button>
+        <button id="search-tab-pages" class="ari-sg-tab" type="button" role="tab" aria-selected="false" aria-controls="search-pages"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Documentation / Site</button>
+    </div>
+    <section id="search-objects" role="tabpanel" aria-labelledby="search-tab-objects">
+        {% include 'search/object_finder.html' %}
+    </section>
+    <section id="search-pages" role="tabpanel" aria-labelledby="search-tab-pages" hidden>
+        <form id="search-page-form" class="search-form">
+            <label for="search-page-query">Word or phrase
+                <input id="search-page-query" class="ot-find-input" type="search" placeholder="Search documentation and pages" autocomplete="off" required>
+            </label>
+            <label for="search-scope">Search in
+                <select id="search-scope" class="ot-find-select"><option value="docs">Documentation</option><option value="site">Entire site</option></select>
+            </label>
+            <label for="search-version">Documentation version
+                <select id="search-version" class="ot-find-select">{% for version in search_versions %}<option value="{{ version.id }}" {% if version.id == search_version %}selected{% endif %}>{{ version.name }}</option>{% endfor %}</select>
+            </label>
+            <button type="submit" class="ari-btn ari-btn--primary"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+        </form>
+        <div id="search-page-status" class="search-status" role="status" aria-live="polite"></div>
+        <div id="search-page-results" class="search-results"></div>
+        <button id="search-more" type="button" class="ari-btn ari-btn--secondary" hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> More results</button>
+    </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/search_match.js', v='20261007a') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20261007search') }}"></script>
+<script src="{{ url_for('static', filename='js/search.js', v='20261007b') }}"></script>
+{% endblock %}

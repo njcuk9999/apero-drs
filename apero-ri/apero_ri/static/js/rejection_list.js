@@ -101,7 +101,7 @@
     }
 
     function astrometricsIdentifierUrl(identifier) {
-        return '/astrometrics?fo_tab=advanced&fo_source=header'
+        return '/search?fo_tab=header-key&fo_source=header'
             + '&fo_property=IDENTIFIER'
             + '&fo_value=' + encodeURIComponent(String(identifier || ''))
             + '&fo_search=1';

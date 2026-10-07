@@ -681,6 +681,9 @@ def register_static_routes(app):
         '/api/admin/run-ids/list', 'api_run_ids_list', app._api_run_ids_list,
     )
     app.add_url_rule(
+        '/api/search/index', 'api_search_index', app._api_search_index,
+    )
+    app.add_url_rule(
         '/api/admin/run-ids/save', 'api_run_ids_save', app._api_run_ids_save,
         methods=['POST'],
     )

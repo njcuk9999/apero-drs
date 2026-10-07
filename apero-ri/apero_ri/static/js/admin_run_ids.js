@@ -273,7 +273,16 @@
                 const cell = document.createElement("td");
                 cell.className = "ot-cell";
                 if (column === "run_id" && !row.create) {
-                    cell.textContent = row.run_id;
+                    const link = document.createElement("a");
+                    const query = new URLSearchParams({
+                        fo_tab: "run-id", fo_value: row.run_id,
+                        instrument: state.instrument, fo_search: "1"
+                    });
+                    link.href = "/search?" + query.toString();
+                    link.className = "ari-link";
+                    link.textContent = row.run_id;
+                    link.title = "Find objects for RUN ID " + row.run_id;
+                    cell.append(link);
                 } else {
                     const input = document.createElement(column === "comment" ? "textarea" : "input");
                     input.className = "rid-edit";

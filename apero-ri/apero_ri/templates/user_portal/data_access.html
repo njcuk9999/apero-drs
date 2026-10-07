@@ -83,8 +83,8 @@
                         <div class="ari-up-token-grid ari-up-group-card__body">
                             {% for rid in gitem.run_ids %}
                             <a class="ari-toggle-card ari-toggle-card--disabled ari-up-run-id"
-                               href="/astrometrics?fo_tab=advanced&fo_property=RUN_ID&fo_value={{ rid|urlencode }}&fo_search=1"
-                               title="Open astrometrics advanced search for RUN_ID={{ rid }}">{{ rid }}</a>
+                                         href="/search?fo_tab=run-id&fo_value={{ rid|urlencode }}&instrument={{ item.instrument|urlencode }}&fo_search=1"
+                                         title="Find objects for RUN ID {{ rid }}">{{ rid }}</a>
                             {% endfor %}
                         </div>
                         {% else %}
