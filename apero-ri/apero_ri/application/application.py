@@ -53,6 +53,7 @@ from apero_ri.application import (
 )
 from apero_ri.application import routes as app_routes
 from apero_ri.application import sci_groups_api_helpers
+from apero_ri.application import run_ids_api_helpers
 from apero_ri.application import (
     object_comments_api_helpers,
     object_download_helpers,
@@ -2075,6 +2076,12 @@ class ARIApp(Flask):
 
     def _api_sci_groups_list(self):
         return sci_groups_api_helpers.api_sci_groups_list(self)
+
+    def _api_run_ids_list(self):
+        return run_ids_api_helpers.catalog_api(self)
+
+    def _api_run_ids_save(self):
+        return run_ids_api_helpers.catalog_api(self, save=True)
 
     def _api_sci_groups_get(self):
         return _impls.ariapp_api_sci_groups_get(self)

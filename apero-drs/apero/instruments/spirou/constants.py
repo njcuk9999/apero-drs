@@ -1151,7 +1151,7 @@ cgroup = 'CAL.WAVE.GEN'
 CDict.set('CAVITY_LL_FILE', value='cavity_length_ll_fit.dat', source=__NAME__, group=cgroup)
 
 # Define wave reference fiber (controller fiber)
-CDict.set('REF_FIBER', value='AB', source=__NAME__, group=cgroup)
+CDict.set('REF_FIBER', value='A', source=__NAME__, group=cgroup)
 
 # Define the initial value of FP effective cavity width 2xd in nm
 CDict.set('GUESS_CAVITY_WID', value=2.4e7, source=__NAME__, author='EA', group=cgroup)
@@ -1188,7 +1188,8 @@ CDict.set('CAVITY_FIT_ITRS1', value=3, source=__NAME__, author='EA', group=cgrou
 CDict.set('ORDER_OFFSET_ITRS', value=2, source=__NAME__, author='EA', group=cgroup)
 
 # Define the maximum bulk offset of lines in an order can have
-CDict.set('MAX_ORDER_BULKOFFSET', value=10, source=__NAME__, author='EA', group=cgroup)
+# Note: was 10
+CDict.set('MAX_ORDER_BULKOFFSET', value=20, source=__NAME__, author='EA', group=cgroup)
 
 # Define the required precision that the cavity width change must converge
 # to (will be a fraction of the error)
@@ -1266,10 +1267,12 @@ CDict.set('NSIG_MIN_HC', value=15, source=__NAME__, author='EA', group=cgroup)
 CDict.set('NSIG_MIN_FP', value=15, source=__NAME__, author='EA', group=cgroup)
 
 # minimum distance to the edge of the array to consider a line
-CDict.set('REF_EDGE_WMAX', value=20, source=__NAME__, author='EA', group=cgroup)
+# Note: was 20
+CDict.set('REF_EDGE_WMAX', value=40, source=__NAME__, author='EA', group=cgroup)
 
 # value in pixel (+/-) for the box size around each HC line to perform fit
-CDict.set('REF_HC_BOXSIZE', value=5, source=__NAME__, author='EA', group=cgroup)
+# Note: was 5
+CDict.set('REF_HC_BOXSIZE', value=10, source=__NAME__, author='EA', group=cgroup)
 
 # get valid hc dprtypes
 CDict.set('REF_HC_FIBTYPES', value=['HCONE', 'HCTWO'], source=__NAME__, group=cgroup)
@@ -1294,12 +1297,12 @@ CDict.set('REF_HC_GUESS_EWID', value=1, source=__NAME__, author='EA', group=cgro
 
 # Define the fiber offset (in pixels) away from reference fiber
 CDict.set('FIBER_OFFSET_MOD',
-          value={"A": 0.0, "B": 0.0, "C": 0.0},
+          value={"AB": 0.0, "A": 0.0, "B": 0.0, "C": 0.0},
           source=__NAME__, author='EA', group=cgroup)
 
 # Define the fiber scale factor from reference fiber
 CDict.set('FIBER_SCALE_MOD',
-          value={"A": 1.0, "B": 1.0, "C": 1.0},
+          value={"AB": 1.0, "A": 1.0, "B": 1.0, "C": 1.0},
           source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================

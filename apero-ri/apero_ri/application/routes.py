@@ -677,6 +677,14 @@ def register_static_routes(app):
         methods=["POST"],
     )
 
+    app.add_url_rule(
+        '/api/admin/run-ids/list', 'api_run_ids_list', app._api_run_ids_list,
+    )
+    app.add_url_rule(
+        '/api/admin/run-ids/save', 'api_run_ids_save', app._api_run_ids_save,
+        methods=['POST'],
+    )
+
     # Admin science groups API routes
     app.add_url_rule(
         "/api/admin/sci-groups/list",

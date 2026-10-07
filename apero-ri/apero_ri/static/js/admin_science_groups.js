@@ -593,6 +593,22 @@
                 '<i class="fa-solid ' + actionIcon + '"></i>' +
             '</button>';
 
+        if (type === 'runid') {
+            var nameNode = card.querySelector('.ari-sg-transfer-card__name');
+            var link = document.createElement('a');
+            link.href = '/admin_portal/run_ids?instrument=' +
+                encodeURIComponent(currentInstrument) + '&run_id=' +
+                encodeURIComponent(item);
+            link.textContent = displayName;
+            link.title = 'Manage RUN ID ' + item;
+            link.draggable = false;
+            link.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+            nameNode.textContent = '';
+            nameNode.appendChild(link);
+        }
+
         // Click action button
         card.querySelector('.ari-sg-transfer-card__action').addEventListener('click', function (e) {
             e.stopPropagation();

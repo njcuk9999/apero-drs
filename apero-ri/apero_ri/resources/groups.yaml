@@ -74,6 +74,7 @@ moderator.SPIROU:
   permissions:
     # can they manage science groups
     - manage.sci_group.SPIROU
+    - manage.run_id.SPIROU
     # can they view the admin section
     - view.admin
     # which groups can they manage
@@ -107,6 +108,7 @@ moderator.NIRPS:
   permissions:
     # can they manage science groups
     - manage.sci_group.NIRPS
+    - manage.run_id.NIRPS
     # can they view the admin section
     - view.admin
     # which groups can they manage

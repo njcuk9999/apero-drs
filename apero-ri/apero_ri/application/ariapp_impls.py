@@ -45,6 +45,7 @@ from apero_ri.application import (
 )
 from apero_ri.application import routes as app_routes
 from apero_ri.application import sci_groups_api_helpers
+from apero_ri.core import run_ids as run_id_catalog
 from apero_ri.application import sidebar as app_sidebar
 from apero_ri.application import (
     user_account_api_helpers,
@@ -786,7 +787,14 @@ def ariapp_get_instrument_run_ids(instrument):
                                 run_ids.add(rid)
                 except Exception:
                     pass
-    return sorted(run_ids)
+    for entry in auth.load_science_groups(instrument).values():
+        for group_id in entry.get('run_ids', []):
+            if str(group_id).strip():
+                run_ids.add(str(group_id).strip())
+    pi_names = ariapp_get_instrument_run_id_pi_names(instrument)
+    seeds = {run_id: pi_names.get(run_id, '') for run_id in run_ids}
+    records = run_id_catalog.update_catalog(auth.ARI_DIR, instrument, seeds)
+    return sorted(records)
 
 
 def ariapp_get_instrument_run_id_pi_names(instrument):

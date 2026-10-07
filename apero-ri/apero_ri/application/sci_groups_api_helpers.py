@@ -11,6 +11,8 @@ from apero_ri.core.auth import (
     save_science_groups,
 )
 from apero_ri.core.permissions import load_parameters
+from apero_ri.core import auth
+from apero_ri.core import run_ids as run_id_catalog
 from flask import Response, jsonify, request
 
 
@@ -36,7 +38,7 @@ def api_sci_groups_list(app):
         return jsonify(success=False, error="Invalid instrument"), 400
 
     run_ids = app._get_instrument_run_ids(instrument)
-    run_id_pi_names = app._get_instrument_run_id_pi_names(instrument)
+    records = run_id_catalog.update_catalog(auth.ARI_DIR, instrument)
     groups = load_science_groups(instrument)
     groups, run_ids = app._sync_all_science_group(
         instrument,
@@ -138,13 +140,8 @@ def api_sci_groups_list(app):
 
     run_id_labels = dict()
     for run_id in run_ids:
-        label = str(run_id)
-        pi_name = str(run_id_pi_names.get(run_id, "") or "").strip()
-        if pi_name:
-            low_pi = pi_name.lower()
-            if low_pi not in {"none", "null", "unknown"}:
-                label = f"{run_id} ({pi_name})"
-        run_id_labels[run_id] = label
+        record = records.get(run_id, dict())
+        run_id_labels[run_id] = run_id_catalog.record_label(run_id, record)
 
     return jsonify(
         success=True,

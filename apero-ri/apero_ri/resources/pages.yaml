@@ -455,6 +455,17 @@ home.admin_portal.science_groups:
     top-level: False
     show: True
 
+home.admin_portal.run_ids:
+  label: Manage RUN IDs
+  parent: home.admin_portal
+  view-permission: manage.run_id
+  icon: fa-solid fa-list
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.apero_profiles:
   label: Manage APERO Profiles
   parent: home.admin_portal

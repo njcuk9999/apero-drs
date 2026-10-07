@@ -137,6 +137,8 @@ class Plotter:
         self.plt = None
         self.matplotlib = None
         self.axes_grid1 = None
+        # track whether the current plot call is forced
+        self.force_plot_active = False
 
     def set_location(self, iteration: int = 0):
         """
@@ -215,7 +217,7 @@ class Plotter:
         # set self.plot_switches via _get_plot_switches()
         self._get_plot_switches()
         # set matplotlib via _get_matplotlib()
-        self._get_matplotlib()
+        self._get_matplotlib(force=_force)
         # ------------------------------------------------------------------
         # deal with location not set
         if self.recipe is None:
@@ -225,12 +227,15 @@ class Plotter:
                                       targs=[str(func)])
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if self.plotoption == 0:
+        if self.plotoption == 0 and not _force:
             WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # deal with no plot needed
-        if (self.plotoption == 1) and (name in self.debug_graphs):
+        cond_debug_done = ((self.plotoption == 1)
+                           and (name in self.debug_graphs)
+                           and not _force)
+        if cond_debug_done:
             WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
@@ -288,8 +293,15 @@ class Plotter:
         plot_inst = plot_obj.copy()
         # set output file name
         plot_inst.set_filename(self.params, self.location, fiber)
-        # execute the plotting function
-        plot_inst.func(self, plot_inst, kwargs)
+        # record whether this call is running in forced plotting mode
+        prev_force = self.force_plot_active
+        self.force_plot_active = _force
+        try:
+            # execute the plotting function
+            plot_inst.func(self, plot_inst, kwargs)
+        finally:
+            # restore the previous forced plotting state after this plot
+            self.force_plot_active = prev_force
         # ------------------------------------------------------------------
         # if successful return 1
         return 1
@@ -307,6 +319,9 @@ class Plotter:
             # must make sure we are not asking user to see plot in
             #   summary mode
             self.loop_allowed = True
+            # a forced plot bypasses the global plot mode guard entirely
+            if self.force_plot_active:
+                return True
             # if we are in interactive mode turn it on
             if self.plotoption == 2:
                 self.interactive(True)
@@ -344,8 +359,14 @@ class Plotter:
         """
         # deal with debug plots
         if graph.kind == 'debug':
+            # a forced debug plot must always be shown immediately
+            if self.force_plot_active:
+                # only show if backend is interactive
+                if self._backend_can_show():
+                    self.plt.show(block=True)
+                self.plt.close()
             # we shouldn't have got here but if plot=0 do not plot
-            if self.plotoption == 1:
+            elif self.plotoption == 1:
                 pass
             # if plot = 1 we are in interactive mode
             elif self.plotoption == 2:
@@ -1289,7 +1310,7 @@ class Plotter:
         #    and can just use Agg. However if plotoption >= 2 (show
         #    plots), we need an interactive backend regardless of
         #    has_debugs
-        cond0 = self.plotoption == 0
+        cond0 = self.plotoption == 0 and not force
         cond1 = (not self.has_debugs or self.plotoption == 1) and (
                  self.plotoption < 2)
         cond2 = not force

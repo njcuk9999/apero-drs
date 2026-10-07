@@ -1273,6 +1273,14 @@ def make_page_view(app, page_id: str, package_dir: Path):
                 if f"manage.sci_group.{i}" in perms
             ]
 
+        if page_id == 'home.admin_portal.run_ids' and user_info:
+            params = load_parameters()
+            all_instr = params.get('instruments', dict()).get('value', [])
+            context['instruments'] = [
+                inst for inst in all_instr
+                if f'manage.run_id.{inst}' in perms
+            ]
+
         if page_id == "home.admin_portal.async_tasks" and user_info:
             params = load_parameters()
             instruments_entry = params.get("instruments", {})
