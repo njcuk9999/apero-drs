@@ -13,6 +13,7 @@
             instrument: null, rows: [], draft: null, loading: false,
             loaded: false, request: 0, filters: {}, search: "", missingPI: false,
             savingAll: false,
+            importing: false, exporting: false,
             sort: "run_id", direction: "asc", page: 1, perPage: 50,
             pages: 1, url: window.location.href
         };
@@ -22,7 +23,7 @@
             (column) => row[column] !== row.original[column]
         );
         const allRows = () => state.draft ? [state.draft, ...state.rows] : state.rows;
-        const saving = () => state.savingAll || allRows().some((row) => row.busy);
+        const saving = () => state.savingAll || state.importing || allRows().some((row) => row.busy);
         const unsaved = () => allRows().some(dirty);
 
         function updateSaveAll() {
@@ -261,9 +262,9 @@
             const updateActions = () => {
                 const changed = dirty(row);
                 target.classList.toggle("rid-row--dirty", changed);
-                saveButton.disabled = !changed || row.busy || state.savingAll;
+                saveButton.disabled = !changed || row.busy || state.savingAll || state.importing;
                 cancelButton.hidden = !changed;
-                cancelButton.disabled = row.busy || state.savingAll;
+                cancelButton.disabled = row.busy || state.savingAll || state.importing;
                 saveButton.firstChild.className = "fa-solid " + (row.busy ? "fa-spinner fa-spin" : "fa-floppy-disk");
                 saveButton.setAttribute("aria-label", row.busy ? "Saving RUN ID" : "Save RUN ID " + row.run_id);
                 updateSaveAll();
@@ -277,7 +278,7 @@
                     const input = document.createElement(column === "comment" ? "textarea" : "input");
                     input.className = "rid-edit";
                     input.value = row[column];
-                    input.disabled = row.busy || state.savingAll;
+                    input.disabled = row.busy || state.savingAll || state.importing;
                     input.setAttribute("aria-label", labels[column] + " for " + (row.create ? "new RUN ID" : row.run_id));
                     if (column === "comment") input.rows = 1;
                     else input.type = "text";
@@ -320,8 +321,13 @@
             const body = element("body");
             body.replaceChildren();
             element("panel").setAttribute("aria-busy", String(state.loading));
-            element("add").disabled = !state.loaded || state.loading || state.savingAll;
+            element("add").disabled = !state.loaded || state.loading || state.savingAll || state.importing;
             element("refresh").disabled = state.loading || saving();
+            element("export").disabled = !state.loaded || state.loading || saving() || state.exporting;
+            element("import-toggle").disabled = !state.loaded || state.loading || saving();
+            element("import").disabled = !state.loaded || state.loading || saving();
+            element("import-file").disabled = state.importing;
+            element("duplicates").disabled = state.importing;
             updateSaveAll();
             const rows = filteredRows();
             state.pages = Math.max(1, state.perPage ? Math.ceil(rows.length / state.perPage) : 1);
@@ -411,6 +417,85 @@
                 render();
             }
         }
+
+        async function exportCsv() {
+            if (!state.loaded || state.loading || saving() || state.exporting) return;
+            if (unsaved() && !window.confirm("Export saved values only? Pending edits are not included.")) return;
+            const instrument = state.instrument;
+            const runIds = filteredRows().map((row) => row.original.run_id);
+            state.exporting = true;
+            render();
+            try {
+                const response = await fetch(config.exportUrl, {
+                    method: "POST", headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({instrument, run_ids: runIds})
+                });
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || "CSV export failed.");
+                }
+                const url = URL.createObjectURL(await response.blob());
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = instrument.toLowerCase() + "_run_ids.csv";
+                document.body.append(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                notice("Exported " + runIds.length + " filtered RUN ID(s).");
+            } catch (error) {
+                notice(error.message, true);
+            } finally {
+                state.exporting = false;
+                render();
+            }
+        }
+
+        async function importCsv(event) {
+            event.preventDefault();
+            if (!state.loaded || state.loading || saving()) return;
+            if (unsaved()) {
+                notice("Save or revert pending edits before importing CSV.", true);
+                return;
+            }
+            const file = element("import-file").files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                notice("CSV exceeds 5 MB.", true);
+                return;
+            }
+            const policy = element("duplicates").value;
+            if (policy === "overwrite" && !window.confirm("Overwrite duplicate PI and comment values, including blanks? The last duplicate CSV row wins.")) return;
+            state.importing = true;
+            render();
+            try {
+                const content = await file.text();
+                const data = await requestJson(config.importUrl, {
+                    method: "POST", headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({instrument: state.instrument, csv: content, duplicate_policy: policy})
+                });
+                state.rows = data.rows.map((row) => makeRow(row));
+                state.page = 1;
+                renderHealth(data.health);
+                buildHeaders();
+                const summary = data.summary;
+                notice("Imported CSV: " + summary.added + " added, " + summary.updated + " updated, " + summary.skipped + " skipped." + (summary.duplicates.length ? " Duplicate RUN IDs: " + summary.duplicates.join(", ") + "." : ""));
+                element("import-file").value = "";
+            } catch (error) {
+                notice(error.message, true);
+            } finally {
+                state.importing = false;
+                render();
+            }
+        }
+
+        element("export").addEventListener("click", exportCsv);
+        element("import-toggle").addEventListener("click", () => {
+            const panel = element("import-panel");
+            panel.hidden = !panel.hidden;
+            element("import-toggle").setAttribute("aria-expanded", String(!panel.hidden));
+        });
+        element("import-panel").addEventListener("submit", importCsv);
 
         instruments.forEach((instrument, index) => {
             const button = document.createElement("button");

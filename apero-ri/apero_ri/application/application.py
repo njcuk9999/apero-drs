@@ -2083,6 +2083,12 @@ class ARIApp(Flask):
     def _api_run_ids_save(self):
         return run_ids_api_helpers.catalog_api(self, save=True)
 
+    def _api_run_ids_import(self):
+        return run_ids_api_helpers.import_api(self)
+
+    def _api_run_ids_export(self):
+        return run_ids_api_helpers.export_api(self)
+
     def _api_sci_groups_get(self):
         return _impls.ariapp_api_sci_groups_get(self)
 

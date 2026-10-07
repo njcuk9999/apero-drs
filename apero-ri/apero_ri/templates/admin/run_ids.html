@@ -27,6 +27,12 @@
                 <button id="rid-save-all" type="button" class="ari-btn ari-btn--primary ari-btn--sm" title="Save all pending edits for this instrument" disabled>
                     <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> <span>Save All</span>
                 </button>
+                <button id="rid-export" type="button" class="ari-btn ari-btn--secondary ari-btn--sm" title="Export all filtered saved rows as CSV" disabled>
+                    <i class="fa-solid fa-file-export" aria-hidden="true"></i> Export CSV
+                </button>
+                <button id="rid-import-toggle" type="button" class="ari-btn ari-btn--secondary ari-btn--sm" aria-expanded="false" aria-controls="rid-import-panel" disabled>
+                    <i class="fa-solid fa-file-import" aria-hidden="true"></i> Import CSV
+                </button>
                 <button id="rid-refresh" type="button" class="ari-btn ari-btn--secondary ari-btn--sm rid-icon-button" title="Reload RUN IDs" aria-label="Reload RUN IDs">
                     <i class="fa-solid fa-rotate" aria-hidden="true"></i>
                 </button>
@@ -52,6 +58,21 @@
                 </label>
             </div>
         </div>
+        <form id="rid-import-panel" class="ot-toolbar rid-toolbar" hidden>
+            <label class="rid-search-label" for="rid-import-file">CSV file
+                <input id="rid-import-file" type="file" accept=".csv,text/csv" required>
+            </label>
+            <label class="ot-perpage-label" for="rid-duplicates">Duplicates
+                <select id="rid-duplicates" class="ot-perpage-select">
+                    <option value="reject">Reject import</option>
+                    <option value="skip">Keep existing / first CSV row</option>
+                    <option value="overwrite">Overwrite / last CSV row</option>
+                </select>
+            </label>
+            <button id="rid-import" type="submit" class="ari-btn ari-btn--primary ari-btn--sm">
+                <i class="fa-solid fa-file-import" aria-hidden="true"></i> Import
+            </button>
+        </form>
         <div class="ot-table-wrap rid-table-wrap" tabindex="0" aria-label="RUN ID table">
             <table class="ot-table rid-table" aria-label="RUN IDs">
                 <thead>
@@ -81,8 +102,10 @@
 window.ARI_RUN_IDS = {
     listUrl: {{ url_for('api_run_ids_list') | tojson }},
     saveUrl: {{ url_for('api_run_ids_save') | tojson }},
+    importUrl: {{ url_for('api_run_ids_import') | tojson }},
+    exportUrl: {{ url_for('api_run_ids_export') | tojson }},
     instruments: {{ instruments | tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_run_ids.js', v='20261007d') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_run_ids.js', v='20261007e') }}"></script>
 {% endblock %}

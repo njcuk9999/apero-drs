@@ -684,6 +684,14 @@ def register_static_routes(app):
         '/api/admin/run-ids/save', 'api_run_ids_save', app._api_run_ids_save,
         methods=['POST'],
     )
+    app.add_url_rule(
+        '/api/admin/run-ids/import', 'api_run_ids_import',
+        app._api_run_ids_import, methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/admin/run-ids/export', 'api_run_ids_export',
+        app._api_run_ids_export, methods=['POST'],
+    )
 
     # Admin science groups API routes
     app.add_url_rule(

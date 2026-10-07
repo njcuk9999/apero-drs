@@ -3,12 +3,15 @@
 """Focused coverage for the durable RUN ID catalog."""
 
 import json
+import csv
 import sys
+from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
+import yaml
 
 from apero import dev
 from apero_ri.core import run_ids
@@ -228,3 +231,110 @@ def test_run_id_global_health(
     assert row['url'] == '/admin_portal/run_ids'
     assert row['details'] == ['SPIROU: 1 of 1 RUN ID(s) missing a PI name.']
     assert 'missing a PI name' in row['rule_message']
+
+
+def test_admin_yaml_mirror(tmp_path: Path) -> None:
+    """Asset edits synchronize to YAML and YAML restores absent assets."""
+    run_ids.update_catalog(tmp_path, 'SPIROU', dict(R1='Seed PI'))
+    edit_kwargs = dict(run_id='R1', pi='Edited PI', comment='Persistent')
+    records = run_ids.update_catalog(tmp_path, 'SPIROU', **edit_kwargs)
+    mirror = tmp_path / 'admin/run_ids/spirou_run_ids.yaml'
+    assert yaml.safe_load(mirror.read_text()) == records
+    assets = tmp_path / 'apero-assets/run_ids/spirou.json'
+    assets.unlink()
+    assert run_ids.update_catalog(tmp_path, 'SPIROU') == records
+    assert json.loads(assets.read_text()) == records
+
+
+def test_csv_duplicate_policies(tmp_path: Path) -> None:
+    """Reject is atomic, keep uses first row, overwrite uses last row."""
+    run_ids.update_catalog(tmp_path, 'SPIROU', dict(R1='Existing'))
+    content = ('RUN ID,PI,COMMENT\r\n'
+               'R1,Replacement,Note\r\n'
+               'R2,First,First note\r\n'
+               'R2,Last,Last note\r\n')
+    assets = tmp_path / 'apero-assets/run_ids/spirou.json'
+    mirror = tmp_path / 'admin/run_ids/spirou_run_ids.yaml'
+    before_assets = assets.read_bytes()
+    before_mirror = mirror.read_bytes()
+    with pytest.raises(ValueError, match='Duplicate RUN IDs: R1, R2'):
+        run_ids.import_csv(tmp_path, 'SPIROU', content, 'reject')
+    assert assets.read_bytes() == before_assets
+    assert mirror.read_bytes() == before_mirror
+    report = run_ids.import_csv(tmp_path, 'SPIROU', content, 'skip')
+    assert report == dict(added=1, updated=0, skipped=2,
+                          duplicates=['R1', 'R2'])
+    records = run_ids.update_catalog(tmp_path, 'SPIROU')
+    assert records['R1']['pi'] == 'Existing'
+    assert records['R2']['pi'] == 'First'
+    report = run_ids.import_csv(tmp_path, 'SPIROU', content, 'overwrite')
+    assert report['updated'] == 2
+    records = run_ids.update_catalog(tmp_path, 'SPIROU')
+    assert records['R1']['pi'] == 'Replacement'
+    assert records['R2']['pi'] == 'Last'
+    assert yaml.safe_load(mirror.read_text()) == records
+
+
+def test_csv_validation_and_quoted_values(tmp_path: Path) -> None:
+    """Quoted multiline values round trip; malformed imports change nothing."""
+    content = ('\ufeffRUN_ID,PI,COMMENT\r\n'
+               'R1,"Name, PI","Line one\nLine ""two"""\r\n')
+    report = run_ids.import_csv(tmp_path, 'SPIROU', content, 'reject')
+    assert report['added'] == 1
+    records = run_ids.update_catalog(tmp_path, 'SPIROU')
+    assert records['R1'] == dict(pi='Name, PI',
+                                comment='Line one\nLine "two"')
+    invalid = ['RUN ID,PI\nR2,PI\n',
+               'RUN ID,PI,COMMENT\nR2,PI,Note,Extra\n',
+               'RUN ID,PI,COMMENT\nR2,PI\n',
+               'RUN ID,PI,COMMENT\n,PI,Note\n',
+               'RUN ID,PI,COMMENT\nR2,"Unclosed\n',
+               'RUN ID,PI,COMMENT\n']
+    for text in invalid:
+        with pytest.raises(ValueError):
+            run_ids.import_csv(tmp_path, 'SPIROU', text, 'reject')
+        assert run_ids.update_catalog(tmp_path, 'SPIROU') == records
+
+
+def test_csv_endpoints(
+    client: Any, admin_user: tuple, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Import/export enforce authorization and preserve selected CSV order."""
+    import_url = '/api/admin/run-ids/import'
+    export_url = '/api/admin/run-ids/export'
+    payload = dict(instrument='SPIROU', duplicate_policy='reject',
+                   csv='RUN ID,PI,COMMENT\nR1,,Missing\nR2,PI,"A, B"\n')
+    assert client.post(import_url, json=payload).status_code == 401
+    assert client.post(export_url, json=payload).status_code == 401
+    with client.session_transaction() as session:
+        session['user'] = admin_user[0]
+    monkeypatch.setattr(client.application,
+                        '_refresh_admin_health_after_change',
+                        lambda *values: None)
+    response = client.post(import_url, json=payload)
+    assert response.status_code == 200
+    assert response.get_json()['summary']['added'] == 2
+    assert response.get_json()['health']['missing_pi'] == 1
+    assert client.post(import_url, json=payload).status_code == 400
+    payload['duplicate_policy'] = 'skip'
+    response = client.post(import_url, json=payload)
+    assert response.get_json()['summary']['skipped'] == 2
+    selection = dict(instrument='SPIROU', run_ids=['R2', 'R1'])
+    response = client.post(export_url, json=selection)
+    assert response.status_code == 200
+    assert 'attachment' in response.headers['Content-Disposition']
+    content = response.data.decode('utf-8-sig')
+    rows = list(csv.reader(StringIO(content)))
+    assert rows == [['RUN ID', 'PI', 'COMMENT'],
+                    ['R2', 'PI', 'A, B'], ['R1', '', 'Missing']]
+    selection['run_ids'] = ['R1']
+    response = client.post(export_url, json=selection)
+    rows = list(csv.reader(StringIO(response.data.decode('utf-8-sig'))))
+    assert rows == [['RUN ID', 'PI', 'COMMENT'], ['R1', '', 'Missing']]
+    selection['run_ids'] = ['UNKNOWN']
+    assert client.post(export_url, json=selection).status_code == 400
+    user = dict(username='moderator', groups=['moderator.SPIROU'])
+    monkeypatch.setattr(auth, 'get_effective_user', lambda session: user)
+    payload['instrument'] = selection['instrument'] = 'NIRPS'
+    assert client.post(import_url, json=payload).status_code == 403
+    assert client.post(export_url, json=selection).status_code == 403
