@@ -5,6 +5,7 @@
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -172,3 +173,58 @@ def test_page_registration() -> None:
     perms = permissions.resolve_user_permissions(['admin'], groups)
     assert 'manage.run_id.SPIROU' in perms
     assert 'manage.run_id.NIRPS' in perms
+
+
+def test_run_id_health_breakdown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Count blank PIs per instrument, excluding unauthorized catalogs."""
+    from apero_ri.application import run_ids_api_helpers
+
+    monkeypatch.setattr(auth, 'ARI_DIR', tmp_path)
+    seeds = dict(R1='', R2='  ', R3='Named PI')
+    run_ids.update_catalog(tmp_path, 'SPIROU', seeds)
+    run_ids.update_catalog(tmp_path, 'NIRPS', dict(R1=''))
+    app_stub = SimpleNamespace(_get_instrument_run_ids=lambda inst: [])
+    perms = {'manage.run_id.SPIROU', 'manage.run_id.NIRPS'}
+    report = run_ids_api_helpers.build_run_id_health(app_stub, perms)
+    assert report['status'] == 'warning'
+    assert report['total'] == 4
+    assert report['missing_pi'] == 3
+    counts = {row['instrument']: row['missing_pi']
+              for row in report['instruments']}
+    assert counts == dict(SPIROU=2, NIRPS=1)
+    perms = {'manage.run_id.SPIROU'}
+    report = run_ids_api_helpers.build_run_id_health(app_stub, perms)
+    assert report['missing_pi'] == 2
+    assert report['total'] == 3
+    assert len(report['instruments']) == 1
+    for run_id in ['R1', 'R2']:
+        edit_kwargs = dict(run_id=run_id, pi='Filled PI')
+        run_ids.update_catalog(tmp_path, 'SPIROU', **edit_kwargs)
+    report = run_ids_api_helpers.build_run_id_health(app_stub, perms)
+    assert report['status'] == 'ok'
+    assert report['missing_pi'] == 0
+
+
+def test_run_id_global_health(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Global health includes the RUN ID report and instrument details."""
+    from apero_ri.application import admin_health_helpers
+
+    monkeypatch.setattr(auth, 'ARI_DIR', tmp_path)
+    run_ids.update_catalog(tmp_path, 'SPIROU', dict(R1=''))
+    app_stub = SimpleNamespace(_get_instrument_run_ids=lambda inst: [],
+                               ari_pages=permissions.load_pages())
+    perms = {'manage.run_id.SPIROU'}
+    health_args = [app_stub, dict(), perms]
+    health = admin_health_helpers.build_admin_card_health_uncached(*health_args)
+    page_id = 'home.admin_portal.run_ids'
+    assert health[page_id]['status'] == 'warning'
+    assert health[page_id]['missing_pi'] == 1
+    rows = admin_health_helpers.build_admin_health_rows(app_stub, health)
+    row = next(item for item in rows if item['page_id'] == page_id)
+    assert row['url'] == '/admin_portal/run_ids'
+    assert row['details'] == ['SPIROU: 1 of 1 RUN ID(s) missing a PI name.']
+    assert 'missing a PI name' in row['rule_message']

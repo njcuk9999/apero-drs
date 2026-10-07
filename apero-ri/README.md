@@ -52,6 +52,12 @@ tab with that exact RUN ID filtered. The `manage.run_id.<INSTRUMENT>`
 permission controls access, inherited by admins through instrument
 moderator groups.
 
+The RUN ID health banner reports how many saved records lack a PI name,
+with a breakdown for each manageable instrument. The same check appears
+on the Admin Portal cards and global Health Status page. Counts update
+after saving a row or using Save All; blank or whitespace-only PI values
+are considered missing.
+
 Include `apero-assets/run_ids` in your backup policy. The standard ARI
 backup task excludes `apero-assets` by default; persistent catalog storage
 does not itself protect against disk loss or deletion of the data directory.

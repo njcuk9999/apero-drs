@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict
 
+from apero_ri.application import run_ids_api_helpers
 from apero_ri.core import backup_backend as bb
 from apero_ri.core import email_backend as eb
 from apero_ri.core import sshfs_backend as sb
@@ -515,6 +516,16 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
         )
 
     _t0 = time.monotonic()
+    if any(perm.startswith('manage.run_id.') for perm in perms):
+        page_id = 'home.admin_portal.run_ids'
+        try:
+            health[page_id] = run_ids_api_helpers.build_run_id_health(app, perms)
+        except Exception as exc:
+            health[page_id] = dict(status='error',
+                                   message=f'RUN ID health check failed: {exc}')
+        health[page_id]['duration_s'] = round(time.monotonic() - _t0, 2)
+
+    _t0 = time.monotonic()
     if "manage.admin.user_db_access" in perms:
         try:
             report = app._build_user_db_access_health_report(user_info)
@@ -569,6 +580,11 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
 def build_admin_health_rows(app, health: dict) -> list:
     """Build ordered health rows for the Admin Portal health panel."""
     checks = {
+        'home.admin_portal.run_ids': dict(
+            ok='All RUN IDs have a PI name.',
+            warning='At least one RUN ID is missing a PI name.',
+            error='RUN ID PI-name checks failed.',
+        ),
         "home.admin_portal.users": {
             "ok": "All users have at least one non-public group assignment.",
             "warning": "Some users still only have public access"

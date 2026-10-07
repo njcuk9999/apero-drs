@@ -11,6 +11,47 @@ from apero_ri.core import permissions
 from apero_ri.core import run_ids
 
 
+def build_run_id_health(app: Any, perms: set) -> dict:
+    """Report missing PI names for instruments the user can manage.
+
+    :param app: ARI application providing RUN ID discovery.
+    :param perms: Resolved user permissions.
+    :return: Health status, totals, and per-instrument breakdown.
+    """
+    params = permissions.load_parameters()
+    instruments = params.get('instruments', dict()).get('value', [])
+    breakdown = []
+    details = []
+    total = 0
+    missing = 0
+    errors = []
+    for instrument in instruments:
+        if f'manage.run_id.{instrument}' not in perms:
+            continue
+        try:
+            app._get_instrument_run_ids(instrument)
+            records = run_ids.update_catalog(auth.ARI_DIR, instrument)
+            count = sum(not str(row.get('pi') or '').strip()
+                        for row in records.values())
+            total += len(records)
+            missing += count
+            breakdown.append(dict(instrument=instrument, total=len(records),
+                                  missing_pi=count))
+            details.append(f'{instrument}: {count} of {len(records)} '
+                           'RUN ID(s) missing a PI name.')
+        except Exception as exc:
+            errors.append(instrument)
+            details.append(f'{instrument}: health check failed: {exc}')
+    status = 'warning' if missing else 'ok'
+    message = (f'{missing} of {total} RUN ID(s) missing a PI name.'
+               if missing else f'All {total} RUN ID(s) have a PI name.')
+    if errors:
+        status = 'error'
+        message += ' Health check failed for: ' + ', '.join(errors) + '.'
+    return dict(status=status, message=message, details=details,
+                instruments=breakdown, total=total, missing_pi=missing)
+
+
 def catalog_api(app: Any, save: bool = False) -> Any:
     """List or save RUN IDs for a permitted instrument.
 
@@ -39,7 +80,8 @@ def catalog_api(app: Any, save: bool = False) -> Any:
     if not save:
         records = run_ids.update_catalog(auth.ARI_DIR, instrument)
         rows = [dict(run_id=rid, **records[rid]) for rid in sorted(records)]
-        return jsonify(success=True, rows=rows)
+        health = build_run_id_health(app, perms)
+        return jsonify(success=True, rows=rows, health=health)
     fields = ['run_id', 'pi', 'comment']
     if any(not isinstance(body.get(key, ''), str) for key in fields):
         return jsonify(success=False, error='Fields must be text'), 400
@@ -56,4 +98,6 @@ def catalog_api(app: Any, save: bool = False) -> Any:
     rid = str(body.get('run_id', '')).strip()
     app._sync_all_science_group(instrument, None, sorted(records), True)
     app._refresh_admin_health_after_change(user, perms)
-    return jsonify(success=True, row=dict(run_id=rid, **records[rid]))
+    health = build_run_id_health(app, perms)
+    return jsonify(success=True, row=dict(run_id=rid, **records[rid]),
+                   health=health)
