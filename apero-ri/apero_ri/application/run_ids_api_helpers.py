@@ -107,7 +107,8 @@ def _catalog_api(app: Any, operation: str) -> Any:
     valid = params.get('instruments', dict()).get('value', [])
     if instrument not in valid:
         return jsonify(success=False, error='Invalid instrument'), 400
-    app._get_instrument_run_ids(instrument)
+    if operation != 'import':
+        app._get_instrument_run_ids(instrument)
     if operation == 'list':
         records = run_ids.update_catalog(auth.ARI_DIR, instrument)
         rows = [dict(run_id=rid, **records[rid]) for rid in sorted(records)]

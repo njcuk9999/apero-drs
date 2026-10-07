@@ -46,6 +46,31 @@ and existing science groups seed new records; rescanning never overwrites
 saved metadata or removes IDs when profiles disappear. Empty PI/comment
 edits are saved too.
 
+Each catalog is also mirrored to
+`<ARI data directory>/admin/run_ids/<instrument>_run_ids.yaml`, with RUN IDs
+as top-level keys and `pi`/`comment` fields underneath. Existing catalogs
+are mirrored the next time they are loaded. Asset JSON is authoritative;
+the YAML copy can restore it if the JSON file is missing.
+
+**Export CSV** downloads every saved row matching the current search,
+column filters, and Missing PI checkbox, across all pages and in the current
+sort order. Pending edits are excluded. CSV columns are `RUN ID`, `PI`, and
+`COMMENT`; `RUN_ID` is also accepted on import.
+
+**Import CSV** applies to the selected instrument and requires pending
+edits to be saved or reverted first. Choose a duplicate policy:
+
+- **Reject import**: reject the entire file if any ID already exists or
+    occurs more than once in the CSV.
+- **Keep existing / first CSV row**: preserve saved metadata and use the
+    first occurrence of each new ID.
+- **Overwrite / last CSV row**: replace PI and comment, including blanks,
+    using the last occurrence of each ID.
+
+Imports report added, updated, and skipped counts and list duplicate IDs.
+Malformed CSV files are rejected without applying any imported records.
+The file size limit is 5 MB.
+
 Science groups use these catalogs for available RUN IDs and labels such as
 `RUN_ID (PI) [Comment]`. Clicking a label opens the appropriate instrument
 tab with that exact RUN ID filtered. The `manage.run_id.<INSTRUMENT>`
@@ -58,9 +83,10 @@ on the Admin Portal cards and global Health Status page. Counts update
 after saving a row or using Save All; blank or whitespace-only PI values
 are considered missing.
 
-Include `apero-assets/run_ids` in your backup policy. The standard ARI
-backup task excludes `apero-assets` by default; persistent catalog storage
-does not itself protect against disk loss or deletion of the data directory.
+The YAML mirror is included by the standard ARI backup policy under `admin`;
+that policy excludes `apero-assets` by default. Keep either catalog copy in
+your backups. Persistent storage does not itself protect against disk loss
+or deletion of the data directory.
 
 
 ## Production deployment

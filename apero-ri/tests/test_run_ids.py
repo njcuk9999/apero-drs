@@ -244,6 +244,9 @@ def test_admin_yaml_mirror(tmp_path: Path) -> None:
     assets.unlink()
     assert run_ids.update_catalog(tmp_path, 'SPIROU') == records
     assert json.loads(assets.read_text()) == records
+    mirror.write_text('broken: [', encoding='utf-8')
+    assert run_ids.update_catalog(tmp_path, 'SPIROU') == records
+    assert yaml.safe_load(mirror.read_text()) == records
 
 
 def test_csv_duplicate_policies(tmp_path: Path) -> None:
@@ -315,7 +318,19 @@ def test_csv_endpoints(
     assert response.status_code == 200
     assert response.get_json()['summary']['added'] == 2
     assert response.get_json()['health']['missing_pi'] == 1
-    assert client.post(import_url, json=payload).status_code == 400
+    with monkeypatch.context() as rejection_patch:
+        def unexpected_discovery(instrument: str) -> list:
+            """Reject discovery during failed imports.
+
+            :param instrument: Requested instrument.
+            :return: Never returns.
+            """
+            raise AssertionError('Rejected import must not run discovery')
+
+        rejection_patch.setattr(client.application,
+                                '_get_instrument_run_ids',
+                                unexpected_discovery)
+        assert client.post(import_url, json=payload).status_code == 400
     payload['duplicate_policy'] = 'skip'
     response = client.post(import_url, json=payload)
     assert response.get_json()['summary']['skipped'] == 2

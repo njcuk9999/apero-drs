@@ -70,13 +70,16 @@ def _catalog_transaction(root: Path, instrument: str) -> Iterator[dict]:
             records = dict()
         original = json.dumps(records, sort_keys=True)
         yield records
-        if not path.exists() or json.dumps(records, sort_keys=True) != original:
-            _write_catalog(path, records)
         if admin_path.exists():
-            with admin_path.open(encoding='utf-8') as handle:
-                mirrored = yaml.safe_load(handle)
+            try:
+                with admin_path.open(encoding='utf-8') as handle:
+                    mirrored = yaml.safe_load(handle)
+            except yaml.YAMLError:
+                mirrored = None
         else:
             mirrored = None
+        if not path.exists() or json.dumps(records, sort_keys=True) != original:
+            _write_catalog(path, records)
         if mirrored != records:
             _write_catalog(admin_path, records, use_yaml=True)
 
@@ -140,8 +143,10 @@ def import_csv(
         rows = []
         for row in reader:
             if None in row or any(value is None for value in row.values()):
-                raise ValueError(f'Invalid column count on line {reader.line_num}')
-            values = {name: row[key].strip() for name, key in column_map.items()}
+                message = f'Invalid column count on line {reader.line_num}'
+                raise ValueError(message)
+            values = {name: row[key].strip()
+                      for name, key in column_map.items()}
             run_id = values['RUN ID']
             if not run_id or ',' in run_id or ';' in run_id:
                 raise ValueError(f'Invalid RUN ID on line {reader.line_num}')
