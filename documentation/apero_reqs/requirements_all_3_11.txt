@@ -18,7 +18,7 @@ duckdb                          # Current version: 1.2.0
 dynesty                         # Current version: 2.1.5
 emcee                           # Current version: 3.1.6
 exotic-ld                       # Current version: 3.2.0
-GitPython                       # Current version: 3.1.44
+GitPython                       # Current version: 3.1.62
 gitchangelog                    # Current version: 3.0.4
 gspread-pandas                  # Current version: 3.3.0
 gspread                         # Current version: 5.12.4
@@ -39,7 +39,7 @@ pastasoss                       # Current version: 1.2.2
 pandas                          # Current version: 2.2.3
 pandastable                     # Current version: 0.13.1
 pandasql                        # Current version: 0.7.3
-Pillow                          # Current version: 11.1.0
+Pillow                          # Current version: 12.3.0
 psutil                          # Current version: 7.0.0
 PyYAML                          # Current version: 6.0.2
 PyMySQL                         # Current version: 1.1.1
