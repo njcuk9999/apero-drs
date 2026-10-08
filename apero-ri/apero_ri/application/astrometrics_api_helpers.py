@@ -95,7 +95,7 @@ def _advanced_property_catalog(
     accessible: list,
     user_info: Any,
 ) -> dict:
-    """Build instrument-aware properties from accessible object data.
+    """Merge indexed properties from currently accessible object data.
 
     :param app: ARI application with RUN ID access checks.
     :param base_dir: ARI data root.
@@ -103,106 +103,19 @@ def _advanced_property_catalog(
     :param user_info: Current user descriptor.
     :return: Properties with source-specific instrument availability.
     """
-    sources = {
-        'target_info': 'Target information',
-        'spectrum_info': 'Spectrum information',
-        'header': 'Header',
-    }
-    props = {
-        'target_info': set(),
-        'spectrum_info': set(),
-        'header': set(),
-    }
-    availability = dict()
-    instruments = set()
+    from flask import has_request_context
+    from apero_ri.core import search_index
 
-    def add_properties(source: str, row: dict, instrument: str) -> None:
-        """Track property availability for one source and instrument.
-
-        :param source: Property source.
-        :param row: Accessible data row.
-        :param instrument: Instrument name.
-        :return: None.
-        """
-        for key in row:
-            key = str(key)
-            props[source].add(key)
-            availability.setdefault((source, key), set()).add(instrument)
-
+    run_access = dict()
     for profile in accessible:
-        profile_id = str(profile.get('profile_id', '') or '').strip()
         instrument = str(profile.get('instrument', '') or '').strip()
-        if not profile_id or not instrument:
-            continue
-
-        run_ids = app._get_user_accessible_run_ids(user_info, instrument)
-        if not run_ids:
-            continue
-        tasks_dir = base_dir / 'tasks' / instrument
-        object_table_path = tasks_dir / profile_id / 'object_table.json'
-        if not object_table_path.exists():
-            legacy = tasks_dir / f'object_table_{profile_id}.json'
-            if legacy.exists():
-                object_table_path = legacy
-
-        rows = _load_json_rows(object_table_path)
-        if not rows:
-            continue
-
-        accessible_objnames = []
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            raw = str(row.get('RUN_ID', '') or '')
-            row_rids = {r.strip() for r in raw.split(',') if r.strip()}
-            if not (row_rids & run_ids):
-                continue
-            instruments.add(instrument)
-            add_properties('target_info', row, instrument)
-            name = str(row.get('OBJNAME', '') or '').strip()
-            if name:
-                accessible_objnames.append(name)
-
-        objects_dir = tasks_dir / profile_id / 'objects'
-        scan_names = accessible_objnames[:50]
-        for objname in scan_names:
-            hrows = _load_json_rows(objects_dir / f'htable_{objname}.json')
-            for hrow in hrows:
-                if isinstance(hrow, dict):
-                    add_properties('header', hrow, instrument)
-
-            for fkind in _FTABLE_KINDS:
-                fpath = objects_dir / f'ftable_{fkind}_{objname}.json'
-                frows = _load_json_rows(fpath)
-                for frow in frows:
-                    if isinstance(frow, dict):
-                        if str(frow.get('KW_RUN_ID', '')).strip() in run_ids:
-                            add_properties('spectrum_info', frow, instrument)
-
-    property_rows = []
-    all_props = set().union(*props.values())
-    for prop in sorted(all_props):
-        srcs = []
-        for skey in ('target_info', 'spectrum_info', 'header'):
-            if prop in props[skey]:
-                srcs.append(skey)
-        source_instruments = {
-            source: sorted(availability.get((source, prop), set()))
-            for source in srcs
-        }
-        prop_instruments = set().union(*source_instruments.values())
-        property_rows.append(dict(property=prop, sources=srcs,
-                                  instruments=sorted(prop_instruments),
-                                  source_instruments=source_instruments))
-
-    return {
-        'sources': [
-            {'key': key, 'label': label}
-            for key, label in sources.items()
-        ],
-        'properties': property_rows,
-        'instruments': sorted(instruments),
-    }
+        if instrument and instrument not in run_access:
+            access_args = [user_info, instrument]
+            run_access[instrument] = app._get_user_accessible_run_ids(
+                *access_args)
+    background = has_request_context()
+    catalog_args = [base_dir, accessible, run_access]
+    return search_index.catalog(*catalog_args, background=background)
 
 
 def api_astrometrics_find_object(app: Any) -> Any:
@@ -364,6 +277,7 @@ def api_astrometrics_find_object(app: Any) -> Any:
 
         # Apply search filter
         matching_rows = []
+        matched_values = dict()
 
         if search_type == "name":
             query = request.args.get("query", "").strip()
@@ -385,10 +299,19 @@ def api_astrometrics_find_object(app: Any) -> Any:
                     nvars = _norm_variants(name)
                     if any(qv in nv for qv in qvars for nv in nvars):
                         matching_rows.append(row)
+                        matched_values[id(row)] = [dict(property='name',
+                                                        value=name)]
                         break
 
         elif search_type == 'run_id':
             matching_rows = filtered
+            for row in filtered:
+                row_ids = {part.strip() for part in
+                           str(row.get('RUN_ID', '')).split(',')}
+                matched_values[id(row)] = [
+                    dict(property='run id', value=run_id)
+                    for run_id in sorted(row_ids & matching_run_ids)
+                ]
 
         elif search_type == "coords":
             ra_str = request.args.get("ra", "").strip()
@@ -444,6 +367,9 @@ def api_astrometrics_find_object(app: Any) -> Any:
 
                 if dist_deg <= sep_deg:
                     matching_rows.append(row)
+                    coordinate_value = f'{row_ra}, {row_dec}'
+                    matched_values[id(row)] = [dict(property='coords',
+                                                    value=coordinate_value)]
 
         elif search_type == "date":
             first_obs = request.args.get("first_observed", "").strip()
@@ -471,6 +397,7 @@ def api_astrometrics_find_object(app: Any) -> Any:
                     continue
 
                 matching_rows.append(row)
+                matched_values[id(row)] = [dict(property='date', value=row_date)]
 
         elif search_type == "advanced":
             prop = request.args.get("property", "").strip()
@@ -538,19 +465,24 @@ def api_astrometrics_find_object(app: Any) -> Any:
                         continue
                     rows_to_check = _accessible_ftable_rows(obj)
 
-                if _advanced_match_in_rows(
-                    rows_to_check,
-                    prop,
-                    match_mode,
-                    val,
-                    val2,
-                ):
+                values = []
+                for candidate in rows_to_check:
+                    if prop not in candidate:
+                        continue
+                    match_args = [candidate[prop], match_mode, val, val2]
+                    if _matches_advanced_value(*match_args):
+                        value = str(candidate[prop])
+                        if value not in values:
+                            values.append(value)
+                if values:
                     matching_rows.append(row)
+                    matched_values[id(row)] = [dict(property=prop, value=value)
+                                              for value in values]
 
         # Format results
         if matching_rows:
             objects = []
-            seen_names = set()
+            seen_names = dict()
             for row in matching_rows:
                 obj_name = str(row.get("OBJNAME", "") or "").strip()
                 if not obj_name:
@@ -558,15 +490,20 @@ def api_astrometrics_find_object(app: Any) -> Any:
 
                 name_key = obj_name.lower()
                 if name_key in seen_names:
+                    existing = seen_names[name_key]['matches']
+                    for match in matched_values.get(id(row), []):
+                        if match not in existing:
+                            existing.append(match)
                     continue
-                seen_names.add(name_key)
 
                 obj_record = {
                     "name": obj_name,
                     "aliases": [],
                     "ra": None,
                     "dec": None,
+                    'matches': matched_values.get(id(row), []),
                 }
+                seen_names[name_key] = obj_record
 
                 # Get aliases
                 aliases = row.get("ALIASES", "")
@@ -853,26 +790,37 @@ def api_astrometrics_resolve_by_filter(app):
                    column=column, value=value, match=match_mode)
 
 
-def api_astrometrics_columns(app):
+def api_astrometrics_columns(app: Any) -> Any:
     """List the union of YAML keys across all astrometric entries.
 
     Used to populate the column dropdown of the advanced (filter)
     resolve form on the astrometrics page.
 
     :param app: the ARI application object
-    :return: Flask JSON response with ``success`` and ``columns``
-             (sorted list of strings).
+    :return: Flask JSON with columns, finder catalog, and index status.
+             ``purpose=search`` bypasses astrometrics assets entirely.
     """
-    from apero.core import drs_astrometrics as dra
+    search_only = request.args.get('purpose', '').strip() == 'search'
+    if search_only:
+        user_info = app._get_api_user()
+        if user_info:
+            perms = resolve_user_permissions(user_info['groups'],
+                                             app.ari_groups)
+        else:
+            perms = get_public_permissions()
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+        cols = []
+    else:
+        from apero.core import drs_astrometrics as dra
 
-    _, err = _check_view_perm(app)
-    if err is not None:
-        return err
-
-    try:
-        cols = dra.list_columns(str(_astrom_dir(app)))
-    except Exception as exc:  # noqa: BLE001
-        return jsonify(success=False, error=str(exc)), 500
+        _, err = _check_view_perm(app)
+        if err is not None:
+            return err
+        try:
+            cols = dra.list_columns(str(_astrom_dir(app)))
+        except Exception as exc:  # noqa: BLE001
+            return jsonify(success=False, error=str(exc)), 500
 
     base_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
     user_info = app._get_api_user()
@@ -890,6 +838,7 @@ def api_astrometrics_columns(app):
         find_object_sources=catalog.get('sources', []),
         find_object_properties=catalog.get('properties', []),
         find_object_instruments=catalog.get('instruments', []),
+        find_object_index_status=catalog.get('status', 'ready'),
     )
 
 

@@ -138,6 +138,20 @@ MULTI_PROCESS = dict()
 LOCAL_TASK = dict()
 FILTERS = dict()
 
+# SEARCH_INDEXING
+_entry = _register_task('SEARCH_INDEXING', 'search_indexing',
+                        'SearchIndexingTask', 'GLOBAL')
+TASK_LIST['SEARCH_INDEXING'] = _entry['task_cls']
+P_LIST['SEARCH_INDEXING'] = _entry['param_list']
+AP_LIST['SEARCH_INDEXING'] = _entry['ap_list']
+FREQ['SEARCH_INDEXING'] = _entry['frequency']
+ENABLED['SEARCH_INDEXING'] = _entry['enabled']
+TYPE['SEARCH_INDEXING'] = _entry['task_type']
+USE_SUBPROCESS['SEARCH_INDEXING'] = _entry['use_subprocess']
+MULTI_PROCESS['SEARCH_INDEXING'] = _entry['multi_process']
+LOCAL_TASK['SEARCH_INDEXING'] = _entry['local_task']
+FILTERS['SEARCH_INDEXING'] = _entry['filters']
+
 # APERO_SYNC_ASSETS
 _entry = _register_task(
     "APERO_SYNC_ASSETS",

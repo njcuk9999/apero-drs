@@ -132,3 +132,59 @@ def test_property_instruments(tmp_path: Path) -> None:
     keys = {'name', 'coords', 'date', 'run_id', 'header',
             'target_info', 'spectrum_info'}
     assert all(keys <= set(row) for row in examples)
+
+
+@pytest.mark.parametrize('query, expected', [
+    ('search_type=name&query=alias', [('name', 'Full Alias')]),
+    ('search_type=run_id&query=112.', [('run id', '112.A')]),
+    ('search_type=coords&ra=30&dec=10&separation=1', [('coords', '30.0, 10.0')]),
+    ('search_type=date&first_observed=2026-01-01', [('date', '2026-10-07')]),
+    ('search_type=advanced&source=target_info&property=TEFF&value=320',
+     [('TEFF', '3200')]),
+    ('search_type=advanced&source=header&property=EXPTIME&value=60',
+     [('EXPTIME', '600')]),
+    ('search_type=advanced&source=spectrum_info&property=SNR&value=50',
+     [('SNR', '150')]),
+])
+def test_actual_match_values(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    query: str, expected: list,
+) -> None:
+    """Return the data value that matched for each search mode.
+
+    :param tmp_path: Isolated table directory.
+    :param monkeypatch: Fixture replacing profile access.
+    :param query: Search request arguments.
+    :param expected: Matched property/value pairs.
+    :return: None.
+    """
+    from flask import Flask
+
+    profile = dict(instrument='SPIROU', profile_id='test')
+    monkeypatch.setattr(astrometrics_api_helpers, 'get_accessible_profiles',
+                        lambda *values: [profile])
+    stub = SimpleNamespace(args=SimpleNamespace(data_dir=str(tmp_path)),
+                           ari_groups=permissions.load_groups(),
+                           _get_api_user=lambda: dict(groups=['public']),
+                           _get_user_accessible_run_ids=lambda *values:
+                           {'112.A'})
+    directory = tmp_path / 'tasks/SPIROU/test'
+    objects = directory / 'objects'
+    objects.mkdir(parents=True)
+    row = dict(OBJNAME='Canonical', ALIASES='Full Alias', RUN_ID='112.A',
+               RA=30, DEC=10, OBS_DATE='2026-10-07', TEFF=3200)
+    payload = json.dumps(dict(rows=[row]))
+    (directory / 'object_table.json').write_text(payload)
+    spectrum = dict(KW_RUN_ID='112.A', IDENTIFIER='exposure', SNR=150)
+    (objects / 'ftable_ext_Canonical.json').write_text(
+        json.dumps(dict(rows=[spectrum])))
+    header = dict(IDENTIFIER='exposure', EXPTIME=600)
+    (objects / 'htable_Canonical.json').write_text(
+        json.dumps(dict(rows=[header])))
+    flask_app = Flask(__name__)
+    with flask_app.test_request_context('/?' + query):
+        response = astrometrics_api_helpers.api_astrometrics_find_object(stub)
+    result = response.get_json()['results']['test'][0]
+    assert result['name'] == 'Canonical'
+    assert result['matches'] == [dict(property=key, value=value)
+                                 for key, value in expected]

@@ -51,6 +51,14 @@ picker with text and instrument filters. Selecting an instrument also
 scopes that property search. Each mode includes a description and examples
 from the instrument configuration files.
 
+Result cards show the canonical object name followed by the actual matched
+data, for example `OBJECT (run id = 112.A)` or `OBJECT (EXPTIME = 600)`.
+Multiple matching values are retained, and each profile shows its object
+count. Property keys are cached under `admin/search_index`; the enabled
+global **Search Indexing** async task refreshes them every 24 hours by
+default. Missing indexes build in the background and the picker retries;
+existing keys remain available during stale-index refreshes.
+
 **Documentation / Site** searches documentation for the selected version,
 or documentation plus the labels and static content of permitted site
 pages. Shared template content is included; live private records are not

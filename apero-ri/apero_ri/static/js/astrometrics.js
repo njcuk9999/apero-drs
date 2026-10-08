@@ -188,14 +188,9 @@
     }
 
     function formatObjectCard(obj, profile) {
-        var hasRa = (obj.ra !== null && obj.ra !== undefined)
-            && !isNaN(Number(obj.ra));
-        var hasDec = (obj.dec !== null && obj.dec !== undefined)
-            && !isNaN(Number(obj.dec));
-                var coordsText = (hasRa && hasDec)
-                        ? ' (' + Number(obj.ra).toFixed(4)
-                            + ', ' + Number(obj.dec).toFixed(4) + ')'
-                        : '';
+        var matchText = (obj.matches || []).map(function (match) {
+            return ' (' + match.property + ' = ' + match.value + ')';
+        }).join('');
 
         return '<div class="ari-astro-result-card" data-objname="'
                + escapeHtml(obj.name) + '" data-profile="'
@@ -204,12 +199,12 @@
                              + '<span class="ari-astro-result__name">'
                              + escapeHtml(obj.name) + '</span>'
                              + '<span class="ari-astro-result__coords">'
-                             + escapeHtml(coordsText) + '</span>'
+                             + escapeHtml(matchText) + '</span>'
                              + '</div>'
                + '</div>';
     }
 
-    function formatProfileCard(profileId, profileMeta, objectsHtml) {
+    function formatProfileCard(profileId, profileMeta, objectsHtml, count) {
         var meta = profileMeta || {};
         var instrument = meta.instrument || 'Profile';
         var version = meta.apero_version || '';
@@ -233,7 +228,7 @@
             + '<div class="ari-astro-profile-card__header">'
             + '<span class="ari-astro-profile-card__title">['
             + escapeHtml(instrument) + ': ' + escapeHtml(profileId)
-            + ']</span>'
+            + '] Found ' + count + ' objects</span>'
             + '<span class="ari-astro-profile-card__meta">'
             + badges
             + '</span>'
@@ -259,7 +254,8 @@
             html += formatProfileCard(
                 profileId,
                 profiles[profileId] || {},
-                cardsHtml
+                cardsHtml,
+                objects.length
             );
         }
 
@@ -489,7 +485,7 @@
         if (!foAdvPropertyList) return;
         catalogState = 'loading';
         rebuildFindAdvancedPropertyList();
-        fetch('/api/astrometrics/columns')
+        fetch('/api/astrometrics/columns?purpose=search')
             .then(parseResponseJson)
             .then(function (data) {
                 if (!data || !data.success) {
@@ -507,8 +503,12 @@
                     ? instruments.filter(function (instrument) {
                         return typeof instrument === 'string' && instrument;
                     }) : [];
-                catalogState = 'ready';
+                var indexStatus = data.find_object_index_status || 'ready';
+                catalogState = indexStatus === 'loading' ? 'loading' : 'ready';
                 rebuildFindAdvancedPropertyList();
+                if (indexStatus === 'loading') {
+                    window.setTimeout(loadFindAdvancedProperties, 2000);
+                }
             })
             .catch(function (error) {
                 catalogState = 'error';
