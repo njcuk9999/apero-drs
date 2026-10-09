@@ -332,6 +332,36 @@ class ParamDict(CaseInDict):
             self.sources[key] = None
             return default
 
+    def rget(self, key: str, override: Any = None, required: bool = False,
+             func: Union[str, None] = None) -> Any:
+        """
+        Return a parameter or override, checking its instance data type.
+
+        :param key: str, case-insensitive parameter key
+        :param override: Any, non-None value to return instead of self[key];
+                         does not change the stored parameter
+        :param required: bool, raise if the key is missing without an override
+        :param func: str or None, function name to include in type errors
+        :return: Any, selected value, or None for an optional missing key
+        :raises AperoCodedException: if required and missing, or the selected
+                                    value has the wrong data type
+        """
+        key = drs_text.capitalise_key(key)
+        if override is not None:
+            value = override
+        elif key in self or required:
+            value = self[key]
+        else:
+            return None
+
+        instance = self.instances.get(key, None)
+        dtype = getattr(instance, 'dtype', None)
+        if dtype is not None and not isinstance(value, dtype):
+            function_text = '' if func is None else f'\nFunction: {func}'
+            eargs = [key, dtype, function_text]
+            raise AperoCodedException(None, '00-000-00015', targs=eargs)
+        return value
+
     def set_source(self, key: str, source: str):
         """
         Set a key to have sources[key] = source
