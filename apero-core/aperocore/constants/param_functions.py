@@ -1266,6 +1266,22 @@ class SubParamDict():
     def __getitem__(self, item):
         return self.param_dict.data[f'{self.path}{item}']
 
+    def rget(self, key: str, override: Any = None, required: bool = False,
+             func: Union[str, None] = None) -> Any:
+        """
+        Return a typed value from the parent using this view's prefix.
+
+        :param key: str, case-insensitive key relative to this view
+        :param override: Any, non-None value to return without storing it
+        :param required: bool, raise if missing without an override
+        :param func: str or None, function name included in type errors
+        :return: Any, selected value, or None for an optional missing key
+        :raises AperoCodedException: if required and missing, or mistyped
+        """
+        full_key = f'{self.path}{key}'
+        rget_kwargs = dict(override=override, required=required, func=func)
+        return self.param_dict.rget(full_key, **rget_kwargs)
+
     def __setitem__(self, key, value):
         self.param_dict.data[f'{self.path}{key}'] = value
 
