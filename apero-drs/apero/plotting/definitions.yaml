@@ -576,6 +576,14 @@ WAVEREF_EXPECTED:
   figsize:
   - 6.4
   - 4.8
+WAVE_FP_COUNT_CORR:
+  kind: debug
+  func: plot_functions.plot_wave_fp_count_corr
+  dpi: 100
+  description: WAVE_FP_COUNT_CORR
+  figsize:
+  - 6.4
+  - 4.8
 WAVENIGHT_ITERPLOT:
   kind: debug
   func: plot_functions.plot_wavenight_iterplot

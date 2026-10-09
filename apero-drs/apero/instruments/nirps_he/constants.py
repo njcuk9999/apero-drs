@@ -1119,6 +1119,18 @@ CDict.set('CAVITY_FIT_DEG', value=5, source=__NAME__, author='EA', group=cgroup)
 # Define the number of sigmas to use in wave sol robust fits
 CDict.set('NSIG_CUT', value=5, source=__NAME__, author='EA', group=cgroup)
 
+# Define the sigma cut used when correcting FP peak numbers order-to-order
+CDict.set('FP_COUNT_CORR_NSIGCUT', value=3.0, source=__NAME__,
+          author='EA', group=cgroup)
+
+# Define the polynomial degree used when correcting FP peak numbers
+CDict.set('FP_COUNT_CORR_FIT_DEG', value=11, source=__NAME__,
+          author='EA', group=cgroup)
+
+# Define the maximum correction attempts for FP peak-number correction
+CDict.set('FP_COUNT_CORR_MAX_TRIES', value=100, source=__NAME__,
+          author='EA', group=cgroup)
+
 # Define the minimum number of HC lines in an order to try to find
 # absolute numbering
 CDict.set('MIN_HC_LINES', value=5, source=__NAME__, author='EA', group=cgroup)
@@ -2374,6 +2386,9 @@ CDict.set('WAVE_SLINKY_FIT', value=True, source=__NAME__, group=cgroup)
 # turn on the wave lines hc/fp expected vs measured debug plot
 # (will plot once for hc once for fp)
 CDict.set('WAVEREF_EXPECTED', value=True, source=__NAME__, group=cgroup)
+
+# turn on the FP peak-number correction residual debug plot
+CDict.set('WAVE_FP_COUNT_CORR', value=True, source=__NAME__, group=cgroup)
 
 # turn on the wave solution hc guess debug plot (in loop)
 CDict.set('WAVE_HC_GUESS', value=True, source=__NAME__, group=cgroup)

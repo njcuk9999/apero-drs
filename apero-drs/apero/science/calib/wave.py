@@ -798,6 +798,16 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     #  (second time this is done)
     cavity_fit_iterations2 = pcheck(params, 'CAL.WAVE.GEN.CAVITY_FIT_ITRS2',
                                     func=func_name)
+    # Define the sigma cut used for FP peak-count corrections.
+    fp_count_nsigcut = pcheck(params, 'CAL.WAVE.GEN.FP_COUNT_CORR_NSIGCUT',
+                              func=func_name)
+    # Define the polynomial degree used for FP peak-count corrections.
+    fp_count_fit_deg = pcheck(params, 'CAL.WAVE.GEN.FP_COUNT_CORR_FIT_DEG',
+                              func=func_name)
+    # Define the maximum number of FP peak-count correction attempts.
+    fp_count_max_tries = pcheck(params,
+                                'CAL.WAVE.GEN.FP_COUNT_CORR_MAX_TRIES',
+                                func=func_name)
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS, 
@@ -829,6 +839,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         list_pixels = np.array(hclines['PIXEL_REF'])
         list_wfit = np.array(hclines['WFIT'])
         peak_number = np.array(hclines['PEAK_NUMBER'])
+        # don't need cavity length poly for HC lines but here for consistency
+        cavity_length_poly = np.array([np.nan])
     # ----------------------------------------------------------------------
     # get the lines for HC files from fplines input
     # ----------------------------------------------------------------------
@@ -850,6 +862,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     'cavity polynomial. Please provide a cavity polynomial '
                     'when supplying a previous fplines table.')
             raise AperoCodedException(params, None, message=emsg)
+        else:
+            cavity_length_poly = np.array(cavity_poly)
         # get the proper cavity length from the cavity polynomial
         # update wave_ref now we have a good cavity length
         for _ in range(cavity_fit_iterations2):
@@ -886,7 +900,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             if np.sum(good) != 0:
                 # fit wave --> pix
                 with warnings.catch_warnings(record=True) as _:
-                    # we cannot use a cheby fit as we do not kno the domain
+                    # we cannot use a cheby fit as we do not know the domain
                     # precisely in wavelength yet
                     fit_reverse = np.polyfit(owave, xpix, fitdeg)
                 # get the pixels positions based on out owave fit
@@ -912,6 +926,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # FP cavity number to HC peaks. This ensures that the table saved at
         # then end of this code has the same format as for FPs.
         peak_number = np.repeat(np.nan, len(list_pixels))
+        # don't need cavity length poly for HC lines but here for consistency
+        cavity_length_poly = np.array([np.nan])
+
     # ----------------------------------------------------------------------
     # get the lines for FP files
     # ----------------------------------------------------------------------
@@ -940,15 +957,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         wave0 = np.ones_like(nth_peak, dtype=float)
         # start the wave inversion of the polynomial at a sensible value
         wave0 = wave0 * mp.nanmean(wavemap)
-        # need a few iterations to invert polynomial relations
-        for _ in range(fp_inv_itr):
-            #
-            tmp_cavity = mp.val_cheby(cavity_length_poly, wave0,
-                                      domain=[inst_wavestart, inst_waveend])
-            tmp_cavity = tmp_cavity + cavity_pedestal
-            # recalculate the initial guess at wavelength using the cavity
-            #   width polynomial guess
-            wave0 = tmp_cavity / nth_peak
+        # need to update wave0 given our cavity and new peak counts
+        wave0 = wave_core.update_wave_with_npeak(wave0, nth_peak,
+                                                 cavity_length_poly,
+                                                 cavity_pedestal,
+                                                 fp_inv_itr, inst_wavestart,
+                                                 inst_waveend)
         # keep lines within the ref_wavelength domain
         keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
         wave0 = wave0[keep]
@@ -1186,6 +1200,61 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     period_meas, shape_meas, offset_meas, bad]
     # make table
     table = drs_table.make_table(columnnames, columnvalues)
+
+    # ----------------------------------------------------------------------
+    # Check the FP peak numbers from order to order and correct the orders
+    # where the peaks were miscounted.
+    # ----------------------------------------------------------------------
+    if fibtype in fpfibtypes:
+        # print progress: Running FP peak-number corrections
+        msg = 'Running FP peak-number corrections for fiber {0} iteration {1}'
+        margs = [fiber, str_itr]
+        WLOG(params, '', msg.format(*margs))
+        # Collect the FP-count inputs for the aperocore helper.
+        fp_count_args = [table['ORDER'], table['PIXEL_MEAS'],
+                         table['PEAK_NUMBER']]
+        # Collect the tunable controls for the robust order fit.
+        fp_count_kwargs = dict(nsigcut=fp_count_nsigcut,
+                               fit_degree=fp_count_fit_deg,
+                               max_tries=fp_count_max_tries)
+        # Adjust the FP peak numbers and keep the residual history.
+        outs = wave_core.table_adjust_fp_peak_number(*fp_count_args,
+                                                     **fp_count_kwargs)
+        adjusted_peaks, res_dict = outs
+        # Log any order-level FP peak-number corrections that were applied.
+        order_corrections = np.array(res_dict['order_corrections'], dtype=int)
+        fixed_orders = np.where(order_corrections != 0)[0]
+        if len(fixed_orders) > 0:
+            fix_lines = []
+            for fixed_order in fixed_orders:
+                msg = '\tOrder {0}: PEAK_NUMBER offset = {1}'
+                margs = [fixed_order, order_corrections[fixed_order]]
+                fix_lines.append(msg.format(*margs))
+            msg = ('FP peak-number corrections for fiber {0} iteration {1}: '
+                   'number of orders fixed = {2}\n{3}')
+            margs = [fiber, str_itr, len(fixed_orders), '\n'.join(fix_lines)]
+            WLOG(params, '', msg.format(*margs))
+        else:
+            msg = ('No FP peak-number corrections were applied for fiber {0} '
+                   'iteration {1}.')
+            margs = [fiber, str_itr]
+            WLOG(params, '', msg.format(*margs))
+        # Push the corrected peak numbers back into the table.
+        table['PEAK_NUMBER'] = np.array(adjusted_peaks)
+        # need to update WAVE_REF now we have a new PEAK_NUMBER
+        wave_ref = wave_core.update_wave_with_npeak(np.array(table['WAVE_REF']),
+                                                    table['PEAK_NUMBER'],
+                                                    cavity_length_poly,
+                                                    cavity_pedestal,
+                                                    fp_inv_itr,
+                                                    inst_wavestart,
+                                                    inst_waveend)
+        table['WAVE_REF'] = np.array(wave_ref)
+        # Plot the residual history of the FP peak-number corrections.
+        plot_kwargs = dict(resdict=res_dict, fiber=fiber,
+                           iteration=str_itr)
+        recipe.plot('WAVE_FP_COUNT_CORR', **plot_kwargs)
+
     # return table
     return table
 
@@ -2530,7 +2599,9 @@ def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
     # calculate the correction factor
     wave_corr = (1 - wave_spline(wavemap) / speed_of_light_ms)
     # apply the correction factor to the wavemap
-    wavemap1 = wavemap * wave_corr
+    wavemap1 = np.array(wavemap, dtype=float)
+    for order_num in range(wavemap.shape[0]):
+        wavemap[order_num] = wavemap[order_num] * wave_corr[order_num]
 
     # -------------------------------------------------------------------------
     # Step 3: Update HClines and FPlines accordingly

@@ -3791,6 +3791,77 @@ def plot_waveref_expected(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
+def plot_wave_fp_count_corr(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+    """
+    Graph: FP peak-number correction residual history.
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the plotting inputs
+    resdict = kwargs['resdict']
+    fiber = kwargs.get('fiber', 'None')
+    iteration = kwargs.get('iteration', None)
+    # extract the residual history and metadata
+    order_num = np.array(resdict.get('order_num', []))
+    residuals = list(resdict.get('residuals', []))
+    accepted = list(resdict.get('accepted', []))
+    corrections = np.array(resdict.get('order_corrections', []))
+    stop_reason = resdict.get('stop_reason', 'unknown')
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # deal with the case where there is nothing to plot
+    if len(order_num) == 0 or len(residuals) == 0:
+        frame.text(0.5, 0.5,
+                   'No FP peak-number corrections attempted',
+                   ha='center', va='center', transform=frame.transAxes)
+    else:
+        # plot each attempted residual vector separately
+        for it, res in enumerate(residuals):
+            label = 'Correction loop {0}'.format(it)
+            if it < len(accepted) and accepted[it]:
+                label += ' [accepted]'
+            else:
+                label += ' [stopped]'
+            frame.plot(order_num, res, marker='o', linestyle='-',
+                       label=label)
+        # mark orders that received a net correction
+        for order_it in np.where(corrections != 0)[0]:
+            frame.axvline(order_it, color='r', linestyle='--', alpha=0.3)
+        # add a legend when we have plotted at least one iteration
+        frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # construct the title, including the stop reason for debugging
+    title = 'FP peak-count residuals Fiber {0}'
+    if iteration is not None:
+        title += ' Calc iteration {1}'
+    title += ' [stopped after  {2}]'
+    # set labels and title
+    frame.set(xlabel='Order number', ylabel='Residual [FP peaks]',
+              title=title.format(fiber, iteration, stop_reason))
+    # ------------------------------------------------------------------
+    # update filename using the fiber and iteration when available
+    suffix = 'fiber{0}'.format(fiber)
+    if iteration is not None:
+        itr_str = str(iteration).replace(' ', '_')
+        suffix += '_{0}'.format(itr_str)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_wavenight_iterplot(plotter: Plotter, graph: Graph,
                             kwargs: Dict[str, Any]):
     """

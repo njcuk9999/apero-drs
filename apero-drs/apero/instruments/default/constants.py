@@ -2522,6 +2522,24 @@ CDict.add('NSIG_CUT', value=None, dtype=int, source=__NAME__,
           description='Define the number of sigmas to use in wave '
                       'sol robust fits')
 
+# Define the sigma cut used when correcting FP peak numbers order-to-order
+CDict.add('FP_COUNT_CORR_NSIGCUT', value=None, dtype=float,
+          source=__NAME__, group=cgroup, minimum=0,
+          description='Define the sigma cut used when correcting FP '
+                      'peak numbers order-to-order')
+
+# Define the polynomial degree used when correcting FP peak numbers
+CDict.add('FP_COUNT_CORR_FIT_DEG', value=None, dtype=int,
+          source=__NAME__, group=cgroup, minimum=1, maximum=20,
+          description='Define the polynomial degree used when '
+                      'correcting FP peak numbers order-to-order')
+
+# Define the maximum correction attempts for FP peak-number correction
+CDict.add('FP_COUNT_CORR_MAX_TRIES', value=None, dtype=int,
+          source=__NAME__, group=cgroup, minimum=1,
+          description='Define the maximum number of attempts when '
+                      'correcting FP peak numbers order-to-order')
+
 # Define the minimum number of HC lines in an order to try to find
 #   absolute numbering
 CDict.add('MIN_HC_LINES', value=None, dtype=int,
@@ -5481,6 +5499,13 @@ CDict.add('WAVEREF_EXPECTED', value=False,
           description='turn on the wave lines hc/fp '
                       'expected vs measured debug plot'
                       '(will plot once for hc once for fp)')
+
+# turn on the FP peak-number correction residual debug plot
+CDict.add('WAVE_FP_COUNT_CORR', value=False,
+          dtype=bool, source=__NAME__, user=True,
+          active=False, group=cgroup,
+          description='turn on the FP peak-number correction '
+                      'residual debug plot')
 
 # turn on the wave per night iteration debug plot
 CDict.add('WAVENIGHT_ITERPLOT', value=False,

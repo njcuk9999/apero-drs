@@ -11,7 +11,7 @@ Created on 2025-11-25 at 09:40
 """
 import copy
 import warnings
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -110,6 +110,41 @@ def wave_to_wave(spectrum, wave1, wave2, reshape=False, splinek=5):
             output_spectrum[iord, bad] = np.nan
     # return the filled output spectrum
     return output_spectrum
+
+
+def update_wave_with_npeak(wave: np.ndarray, npeak: np.ndarray,
+                           cavity_length_poly: np.ndarray,
+                           cavity_pedestal: float,
+                           fp_inv_itr: int ,
+                           inst_wavestart: float,
+                           inst_waveend: float) -> np.ndarray:
+    """
+    Update the wavelength solution using the nth peak and the cavity length
+    polynomial
+
+    :param wave: numpy array (2D), wavelength solution to update
+    :param npeak: numpy array (2D), nth peak for each pixel
+    :param cavity_length_poly: numpy array (1D), polynomial coefficients for
+                               the cavity length as a function of order
+    :param cavity_pedestal: float, pedestal value for the cavity length
+    :param fp_inv_itr: int, define the number of iterations required to do the
+                       FP polynomial inversion
+    :param inst_wavestart: float, starting wavelength of the instrument
+    :param inst_waveend: float, ending wavelength of the instrument
+
+    :return: numpy array (2D), updated wavelength solution
+    """
+    # need a few iterations to invert polynomial relations
+    for _ in range(fp_inv_itr):
+        # invert the cavity vs wave
+        tmp_cavity = mp.val_cheby(cavity_length_poly, wave,
+                                  domain=[inst_wavestart, inst_waveend])
+        tmp_cavity = tmp_cavity + cavity_pedestal
+        # recalculate the initial guess at wavelength using the cavity
+        #   width polynomial guess
+        wave = tmp_cavity / npeak
+    # return the updated wavelength solution
+    return wave
 
 
 def slinky_ewidth(wavegrid: np.ndarray, velocity_shifts: np.ndarray
@@ -218,6 +253,170 @@ def slinky_fit(xvector: np.ndarray, yvector: np.ndarray, yerr: np.ndarray,
     grid_y /= weights
     # return the grid x and y values
     return grid_x, grid_y
+
+
+def table_adjust_fp_peak_number(
+        order_num: np.ndarray,
+        pixel_meas: np.ndarray,
+        peak_number: np.ndarray,
+        nsigcut: float = 3.0,
+        fit_degree: int = 11,
+        max_tries: int = 100) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """
+    Correct FP peak numbers that are offset by an integer order-to-order.
+
+    The FP peak number at a fixed reference pixel varies smoothly with order.
+    This function measures that trend, identifies the order with the largest
+    residual to a robust polynomial fit, and applies an integer shift if that
+    shift reduces the residual dispersion. The process repeats until no
+    improvement is found or the iteration limit is reached.
+
+    :param order_num: np.ndarray, the order number for each FP line
+    :param pixel_meas: np.ndarray, the measured pixel position for each FP line
+    :param peak_number: np.ndarray, the FP peak number for each FP line
+    :param nsigcut: float, sigma threshold for the robust polynomial fit
+    :param fit_degree: int, polynomial degree used in the robust fit
+    :param max_tries: int, maximum number of correction attempts
+
+    :return: tuple, 1. adjusted peak-number vector, 2. residual history dict
+    """
+    # Copy all inputs so we never mutate caller-owned arrays in place.
+    orders = np.array(order_num, dtype=int)
+    pixels = np.array(pixel_meas, dtype=float)
+    peaks = np.array(peak_number, dtype=float)
+    # Keep track of the original dtype for the returned peak numbers.
+    peak_dtype = np.array(peak_number).dtype
+    # Work out the reference pixel near the middle of the detector.
+    pixref = 0.5 * (mp.nanmax(pixels) + mp.nanmin(pixels))
+    # Define the per-order storage size from the maximum valid order.
+    max_order = int(mp.nanmax(orders))
+    # Store the interpolated peak number at the reference pixel for each order.
+    midcount = np.full(max_order + 1, np.nan)
+    # Store the integer correction eventually applied to each order.
+    corrections = np.zeros(max_order + 1, dtype=int)
+    # Set up plotting/debug information for every attempted iteration.
+    res_dict = dict()
+    res_dict['pixref'] = float(pixref)
+    res_dict['order_num'] = np.arange(max_order + 1)
+    res_dict['midcount_start'] = np.array(midcount)
+    res_dict['midcount_end'] = np.array(midcount)
+    res_dict['residuals'] = []
+    res_dict['trial_residuals'] = []
+    res_dict['fit_coeffs'] = []
+    res_dict['worst_order'] = []
+    res_dict['worst_shift'] = []
+    res_dict['accepted'] = []
+    res_dict['dispersion'] = []
+    res_dict['trial_dispersion'] = []
+    res_dict['order_corrections'] = np.array(corrections)
+    res_dict['n_iterations'] = 0
+    res_dict['stop_reason'] = 'not_run'
+    # Loop around each order and estimate the peak number at pixref.
+    for current_order in np.unique(orders):
+        # Isolate the lines that belong to this order.
+        omask = orders == current_order
+        opixels = np.array(pixels[omask], dtype=float)
+        opeaks = np.array(peaks[omask], dtype=float)
+        # Keep only finite measurements.
+        valid = np.isfinite(opixels) & np.isfinite(opeaks)
+        opixels = opixels[valid]
+        opeaks = opeaks[valid]
+        # We need at least five points for the local line fit.
+        if len(opixels) < 5:
+            continue
+        # Sort by pixel so the nearest-point selection is deterministic.
+        sortmask = np.argsort(opixels)
+        opixels = opixels[sortmask]
+        opeaks = opeaks[sortmask]
+        # Fit only the five lines closest to the reference pixel.
+        near = np.argsort(np.abs(opixels - pixref))[:5]
+        near = np.sort(near)
+        # Fit a straight line between peak number and pixel position.
+        fit = np.polyfit(opixels[near], opeaks[near], deg=1)
+        # Evaluate the fitted line at the reference pixel.
+        midcount[current_order] = np.polyval(fit, pixref)
+    # Save the measured starting state for plotting.
+    res_dict['midcount_start'] = np.array(midcount)
+    # Stop early if there are not enough orders to fit a trend.
+    finite_midcount = np.isfinite(midcount)
+    if mp.nansum(finite_midcount) < 2:
+        res_dict['midcount_end'] = np.array(midcount)
+        res_dict['stop_reason'] = 'too_few_orders'
+        if peak_dtype.kind in ['i', 'u']:
+            peaks = peaks.astype(peak_dtype)
+        return peaks, res_dict
+    # Try iterative order-by-order integer corrections.
+    for it in range(max_tries):
+        # Use only finite orders when constructing the robust fit.
+        valid_orders = np.where(np.isfinite(midcount))[0]
+        # Downgrade the fit degree if too few orders are available.
+        use_degree = min(int(fit_degree), len(valid_orders) - 1)
+        # Stop if we cannot form a meaningful trend.
+        if use_degree < 1:
+            res_dict['stop_reason'] = 'fit_degree_too_small'
+            break
+        # Fit a smooth trend of the peak number at the reference pixel.
+        fit, _ = mp.robust_polyfit(valid_orders, midcount[valid_orders],
+                                   degree=use_degree,
+                                   nsigcut=nsigcut)
+        # Evaluate the fitted trend for all orders.
+        model = np.polyval(fit, np.arange(len(midcount)))
+        # Work out the residuals in units of FP peaks.
+        res = midcount - model
+        # Identify the order with the largest absolute residual.
+        worst = int(mp.nanargmax(np.abs(res)))
+        # The candidate correction is the nearest integer peak offset.
+        shift = int(np.round(res[worst]))
+        # Keep a trial version so we can compare dispersions.
+        midcount_trial = np.array(midcount)
+        midcount_trial[worst] -= shift
+        # Keep the residuals to the same fit for the trial correction.
+        trial_res = midcount_trial - model
+        # Compare the residual dispersions before and after the shift.
+        disp_before = float(mp.nanstd(res))
+        disp_after = float(mp.nanstd(trial_res))
+        # Save this attempted iteration for plotting.
+        res_dict['residuals'].append(np.array(res))
+        res_dict['trial_residuals'].append(np.array(trial_res))
+        res_dict['fit_coeffs'].append(np.array(fit))
+        res_dict['worst_order'].append(worst)
+        res_dict['worst_shift'].append(shift)
+        res_dict['dispersion'].append(disp_before)
+        res_dict['trial_dispersion'].append(disp_after)
+        # If the residual is not close to an integer, we are done.
+        if shift == 0:
+            res_dict['accepted'].append(False)
+            res_dict['stop_reason'] = 'zero_shift on loop {0}'.format(it)
+            break
+        # Keep the correction only if it reduces the residual dispersion.
+        if disp_after < disp_before:
+            midcount = np.array(midcount_trial)
+            corrections[worst] -= shift
+            res_dict['accepted'].append(True)
+            res_dict['n_iterations'] += 1
+            res_dict['order_corrections'] = np.array(corrections)
+            continue
+        # Otherwise nothing useful is left to correct.
+        res_dict['accepted'].append(False)
+        res_dict['stop_reason'] = 'no_improvement'
+        break
+    else:
+        res_dict['stop_reason'] = 'max_tries'
+    # Apply the final per-order integer corrections to the peak numbers.
+    adjusted_peaks = np.array(peaks)
+    for current_order in np.unique(orders):
+        if corrections[current_order] == 0:
+            continue
+        omask = orders == current_order
+        adjusted_peaks[omask] = (adjusted_peaks[omask]
+                                 + corrections[current_order])
+    # Store the final state for plotting/inspection.
+    res_dict['midcount_end'] = np.array(midcount)
+    # Cast back to the original dtype when that is safe.
+    if peak_dtype.kind in ['i', 'u']:
+        adjusted_peaks = adjusted_peaks.astype(peak_dtype)
+    # Return the corrected peak numbers and plotting history.
+    return adjusted_peaks, res_dict
 
 
 # =============================================================================
