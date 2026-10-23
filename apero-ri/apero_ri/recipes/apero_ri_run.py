@@ -9,6 +9,7 @@ import os
 import sys
 
 from apero_ri.setup.bootstrap import can_start_main_app, resolve_local_data_dir
+from apero_ri.setup.bootstrap import free_port
 
 # =============================================================================
 # Define variables
@@ -22,6 +23,8 @@ def _get_arguments() -> argparse.Namespace:
     """Parse enough arguments to resolve the data directory before startup."""
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--data-dir", type=str)
+    parser.add_argument("--port", type=int, default=6666)
+    parser.add_argument("--kill", action="store_true")
     args, _ = parser.parse_known_args()
     return args
 
@@ -29,6 +32,9 @@ def _get_arguments() -> argparse.Namespace:
 def main():
     """Entry point for apero_ri_run."""
     args = _get_arguments()
+    if args.kill and not free_port(args.port):
+        print(f"Could not free port {args.port}.", file=sys.stderr)
+        raise SystemExit(1)
     data_dir = resolve_local_data_dir(args.data_dir)
     os.environ["ARI_DIR"] = str(data_dir)
     # Keep apero-assets clean: redirect drs_astrometrics' on-disk

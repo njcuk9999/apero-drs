@@ -3,10 +3,13 @@
 """Bootstrap helpers for first-run APERO RI setup."""
 
 import os
+import socket
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+import psutil
 import yaml
 
 # =============================================================================
@@ -186,6 +189,106 @@ def ensure_directory_layout(local_data_dir: Path) -> None:
     with open(probe, "w", encoding="utf-8") as fobj:
         fobj.write("ok")
     probe.unlink()
+
+
+def _port_pids(port: int) -> List[int]:
+    """
+    Return pids of processes with a socket on a TCP port.
+
+    :param port: int, TCP port
+
+    :return: sorted list of pids (excluding this process)
+    :rtype: list
+    """
+    pids = set()
+    try:
+        conns = psutil.net_connections(kind="tcp")
+    except psutil.AccessDenied:
+        conns = []
+        # without system-wide access, only our own processes are visible
+        for proc in psutil.process_iter():
+            try:
+                for conn in proc.net_connections(kind="tcp"):
+                    if conn.laddr and conn.laddr.port == port:
+                        pids.add(proc.pid)
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                continue
+    for conn in conns:
+        if conn.laddr and conn.laddr.port == port and conn.pid:
+            pids.add(conn.pid)
+    pids.discard(os.getpid())
+    return sorted(pids)
+
+
+def _port_free(port: int) -> bool:
+    """
+    Return True if a TCP port can be bound on all interfaces.
+
+    :param port: int, TCP port
+
+    :return: bool
+    :rtype: bool
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        # match the server: TIME_WAIT leftovers do not block a restart
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind(("0.0.0.0", port))
+        except OSError:
+            return False
+    return True
+
+
+def free_port(port: int, timeout: float = 10.0) -> bool:
+    """
+    Terminate (then kill) processes holding a TCP port.
+
+    Only processes owned by the current user are touched; others are
+    reported so they can be stopped manually.
+
+    :param port: int, TCP port to release
+    :param timeout: float, seconds to wait for processes / the port
+
+    :return: bool, True if the port is free afterwards
+    :rtype: bool
+    """
+    me = psutil.Process().username()
+    procs = []
+    for pid in _port_pids(port):
+        try:
+            proc = psutil.Process(pid)
+            cmd = " ".join(proc.cmdline()) or proc.name()
+            owner = proc.username()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+        if owner != me:
+            print(f"Port {port}: pid {pid} belongs to {owner}, not "
+                  f"killing it: {cmd}")
+            continue
+        print(f"Port {port}: stopping pid {pid}: {cmd}")
+        procs.append(proc)
+    for proc in procs:
+        try:
+            proc.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    _, alive = psutil.wait_procs(procs, timeout=timeout / 2)
+    for proc in alive:
+        print(f"Port {port}: pid {proc.pid} ignored SIGTERM, killing it")
+        try:
+            proc.kill()
+        except psutil.NoSuchProcess:
+            pass
+    psutil.wait_procs(alive, timeout=timeout / 2)
+    if not procs:
+        print(f"Port {port}: no process of yours is using it")
+    deadline = time.time() + timeout
+    while not _port_free(port):
+        if time.time() > deadline:
+            print(f"Port {port}: still in use")
+            return False
+        time.sleep(0.25)
+    return True
 
 
 # =============================================================================

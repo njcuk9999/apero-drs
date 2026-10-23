@@ -4407,6 +4407,14 @@ def ariapp_get_arguments():
         help="Port to run the server on (default: 6666)",
     )
     parser.add_argument(
+        "--kill",
+        action="store_true",
+        help=(
+            "Stop any of your processes holding --port before starting "
+            "(handled by apero_ri_run)"
+        ),
+    )
+    parser.add_argument(
         "--host",
         type=str,
         default="auto",
