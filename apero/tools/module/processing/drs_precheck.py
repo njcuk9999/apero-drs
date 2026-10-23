@@ -170,14 +170,18 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
                     # loop around drs files
                     for drsfile in calib_files[recipe_name][argname]:
                         drsfiles.append(drsfile.name)
+                        # find mapping key for this file type
+                        logic_type_key = _resolve_date_logic_type_key(
+                            drsfile, logic_map
+                        )
                         # skip types not configured for this date map
-                        if drsfile.name not in logic_map:
+                        if logic_type_key is None:
                             continue
                         # mask of current files
                         cmask = (drsfile.name == drsoutids)
                         # keep only files in valid MJD range for this type
-                        drange = logic_map[drsfile.name]
-                        margs = [params, logic_key, drsfile.name, drange]
+                        drange = logic_map[logic_type_key]
+                        margs = [params, logic_key, logic_type_key, drange]
                         mrange = _get_date_range_mask(mjdmids, *margs)
                         dmask |= (cmask & mrange)
                     # combine drs file names
@@ -267,6 +271,20 @@ def _get_date_range_mask(mjdmids: np.ndarray, params: ParamDict,
     mjd_max = float(drange[1])
     mjd_arr = np.array(mjdmids, dtype=float)
     return (mjd_arr >= mjd_min) & (mjd_arr <= mjd_max)
+
+
+def _resolve_date_logic_type_key(drsfile: DrsInputFile,
+                                 logic_map: dict) -> Optional[str]:
+    """Resolve mapping key for a file against a date-logic dictionary."""
+    candidates = [drsfile.name]
+    if drsfile.name.startswith('RAW_'):
+        candidates.append(drsfile.name[4:])
+    if drsfile.name.startswith('PP_'):
+        candidates.append(drsfile.name[3:])
+    for candidate in candidates:
+        if candidate in logic_map:
+            return str(candidate)
+    return None
 
 
 SciTelluCheckReturn = Tuple[Dict[str, dict], Dict[str, dict],
