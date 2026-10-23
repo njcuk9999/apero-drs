@@ -1,0 +1,379 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Server Sync{% endblock %}
+{% block body_class %}ari-has-sidebar ari-server-sync-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_server_sync.css', v='20261022a') }}">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label }}</h1>
+</div>
+
+<section id="ss-root" class="ss-workspace" aria-label="Server sync">
+    <div id="ss-status" class="ari-ap-status ari-ap-status--info" role="status" aria-live="polite">
+        <div id="ss-status-headline" class="ari-ap-status__headline">
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Loading server sync state...
+        </div>
+        <ul id="ss-status-details" class="ari-ap-status__details"></ul>
+    </div>
+
+    <div class="ari-ab-tabs ss-tabs" role="tablist" aria-label="Server sync tabs">
+        <button type="button" class="ari-ab-tab ari-ab-tab--active" role="tab" data-ss-tab="guide" aria-selected="true">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i> Guide
+        </button>
+        <button type="button" class="ari-ab-tab" role="tab" data-ss-tab="setup" aria-selected="false">
+            <i class="fa-solid fa-plug" aria-hidden="true"></i> Setup
+        </button>
+        <button type="button" class="ari-ab-tab" role="tab" data-ss-tab="generate" aria-selected="false">
+            <i class="fa-solid fa-key" aria-hidden="true"></i> Generate
+        </button>
+        <button type="button" class="ari-ab-tab" role="tab" data-ss-tab="run" aria-selected="false">
+            <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Run
+        </button>
+        <button type="button" class="ari-ab-tab" role="tab" data-ss-tab="local" aria-selected="false">
+            <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> Local setup
+            <span id="ss-local-badge" class="ss-badge" hidden></span>
+        </button>
+        <button type="button" class="ari-ab-tab" role="tab" data-ss-tab="history" aria-selected="false">
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> History
+        </button>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Guide                                                            -->
+    <!-- ================================================================ -->
+    <div class="ari-ab-panel ss-panel" data-ss-panel="guide" role="tabpanel">
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> What this does</h3>
+            <p>
+                Server Sync keeps two (or more) ARI servers in step: users, per-user data,
+                science groups, APERO profiles, comments, issues and the other categories
+                listed in the Run tab. Each record is compared individually, deletions are
+                propagated, and the newest change wins.
+            </p>
+            <ul class="ss-list">
+                <li><strong>Complete mirror</strong>: changes flow both ways; when both servers
+                    changed the same record, the newest change wins.</li>
+                <li><strong>Copy</strong>: this server only takes changes from the other server
+                    (the host). Local edits are kept until the host changes the same record.</li>
+            </ul>
+            <p class="ss-muted">
+                Never synced: the root (setup) admin account
+                (<code id="ss-root-name">-</code>) and everything it owns, the Flask session key,
+                backups, logs, caches, download links and every disk path. SSH aliases, mount
+                points and local ports stay local and must be set in <em>Local setup</em>.
+            </p>
+        </div>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-list-ol" aria-hidden="true"></i> Step by step (needs a super admin on both servers)</h3>
+            <ol class="ss-list ss-steps">
+                <li><strong>On server B</strong> (the one you want to reach): open
+                    <em>Admin Portal &rarr; Server Sync &rarr; Generate</em>, give the token a label
+                    (e.g. the name of server A) and choose
+                    <em>Read + write</em> for a complete mirror or <em>Read only</em> for copy mode.
+                    Copy the token and B's URL. The token is shown only once.</li>
+                <li><strong>On server A</strong>: open <em>Setup</em>, paste B's URL and the token,
+                    pick the mode and click <em>Test &amp; add</em>. The connection, token scope and
+                    clocks are checked (more than 5 minutes difference blocks syncing).</li>
+                <li><strong>On server A</strong>: open <em>Run</em>, choose the categories to sync and
+                    click <em>Analyse</em>. Nothing is written. Review what will be pulled, pushed,
+                    merged and the conflicts (records that differ with no shared history, or a new
+                    account whose email already belongs to another account).</li>
+                <li>Resolve conflicts (take remote, keep local, skip always or allow the duplicate).
+                    You can also skip individual records. Then click <em>Run sync now</em>.</li>
+                <li>After a successful run, switch on <em>Automatic sync</em> for the peer and make
+                    sure the <em>Server Sync</em> async task is active (default every 15 minutes).
+                    New conflicts found later are skipped and super admins are notified.</li>
+                <li>Open <em>Local setup</em> on each server to finish records that need
+                    host-specific values (profile data paths, SSH aliases, mount points, ports).</li>
+                <li>Optional: if server B should also run its own automatic sync with A, repeat the
+                    steps the other way round (generate on A, set up on B). This is not needed for
+                    a mirror: A pulls and pushes in one run.</li>
+            </ol>
+        </div>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Security</h3>
+            <ul class="ss-list">
+                <li>The token itself never travels over the network. Each request is signed
+                    (HMAC-SHA256, with a timestamp and a one-time nonce) and every payload is
+                    encrypted and authenticated with a key derived from the token, so plain
+                    <code>http://</code> links are acceptable. HTTPS is still preferable.</li>
+                <li>A token gives the other server read (and optionally write) access to all
+                    synced data, including password hashes, database credentials and SSH keys.
+                    Revoke tokens you no longer use in <em>Generate</em>.</li>
+                <li>Only super admins can see this page.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Setup                                                            -->
+    <!-- ================================================================ -->
+    <div class="ari-ab-panel ss-panel" data-ss-panel="setup" role="tabpanel" hidden>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-server" aria-hidden="true"></i> This server</h3>
+            <div class="ss-grid">
+                <label class="ss-field">Display name
+                    <input id="ss-server-name" class="ari-ap-input" type="text" maxlength="80">
+                </label>
+                <div class="ss-field">Server id
+                    <code id="ss-server-id" class="ss-code">-</code>
+                </div>
+                <div class="ss-field">URL (as seen by your browser)
+                    <code id="ss-this-url" class="ss-code">-</code>
+                </div>
+            </div>
+            <div class="ss-actions">
+                <button id="ss-save-name" type="button" class="ari-btn ari-btn--secondary ari-btn--sm">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save name
+                </button>
+            </div>
+        </div>
+
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-network-wired" aria-hidden="true"></i> Peers</h3>
+            <div id="ss-peer-list" class="ss-cards"></div>
+        </div>
+
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add a peer</h3>
+            <p class="ss-muted">Use a token generated on the other server (its <em>Generate</em> tab).</p>
+            <form id="ss-add-form" class="ss-grid" autocomplete="off">
+                <label class="ss-field">Label
+                    <input id="ss-add-label" class="ari-ap-input" type="text" maxlength="120" placeholder="e.g. maestria">
+                </label>
+                <label class="ss-field">Server URL
+                    <input id="ss-add-url" class="ari-ap-input" type="url" required placeholder="http://other-host:5000">
+                </label>
+                <label class="ss-field ss-field--wide">Token
+                    <input id="ss-add-token" class="ari-ap-input" type="password" required placeholder="ARISYNC1....">
+                </label>
+                <fieldset class="ss-field ss-field--wide ss-radio">
+                    <legend>Mode</legend>
+                    <label><input type="radio" name="ss-add-mode" value="mirror" checked>
+                        Complete mirror (both ways, newest wins; needs a read + write token)</label>
+                    <label><input type="radio" name="ss-add-mode" value="copy">
+                        Copy (take changes from that server only)</label>
+                </fieldset>
+                <div class="ss-actions ss-field--wide">
+                    <button type="submit" class="ari-btn ari-btn--primary ari-btn--sm">
+                        <i class="fa-solid fa-plug-circle-check" aria-hidden="true"></i> Test &amp; add
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Generate                                                         -->
+    <!-- ================================================================ -->
+    <div class="ari-ab-panel ss-panel" data-ss-panel="generate" role="tabpanel" hidden>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-key" aria-hidden="true"></i> Generate a token for another server</h3>
+            <form id="ss-gen-form" class="ss-grid" autocomplete="off">
+                <label class="ss-field">Label (which server will use it)
+                    <input id="ss-gen-label" class="ari-ap-input" type="text" maxlength="120" required>
+                </label>
+                <fieldset class="ss-field ss-radio">
+                    <legend>Access</legend>
+                    <label><input type="radio" name="ss-gen-scope" value="readwrite" checked>
+                        Read + write (complete mirror)</label>
+                    <label><input type="radio" name="ss-gen-scope" value="read">
+                        Read only (the other server copies from here)</label>
+                </fieldset>
+                <div class="ss-actions ss-field--wide">
+                    <button type="submit" class="ari-btn ari-btn--primary ari-btn--sm">
+                        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Generate
+                    </button>
+                </div>
+            </form>
+            <div id="ss-gen-result" class="ss-token-box" hidden>
+                <p><strong>Copy now - this token is shown only once.</strong>
+                    Paste it with this server's URL into the other server's <em>Setup</em> tab.</p>
+                <div class="ss-copy-row">
+                    <span class="ss-copy-label">URL</span>
+                    <code id="ss-gen-url" class="ss-code"></code>
+                    <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm" data-ss-copy="ss-gen-url">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i> Copy
+                    </button>
+                </div>
+                <div class="ss-copy-row">
+                    <span class="ss-copy-label">Token</span>
+                    <code id="ss-gen-token" class="ss-code"></code>
+                    <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm" data-ss-copy="ss-gen-token">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i> Copy
+                    </button>
+                </div>
+                <p class="ss-muted">If the other server reaches this one through a different
+                    host name, proxy or port, use that address instead of the URL above.</p>
+            </div>
+        </div>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-list" aria-hidden="true"></i> Issued tokens</h3>
+            <div class="ot-table-wrap">
+                <table class="ot-table ss-table">
+                    <thead><tr>
+                        <th>Label</th><th>Access</th><th>Created</th><th>Last used</th><th></th>
+                    </tr></thead>
+                    <tbody id="ss-issued-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Run                                                              -->
+    <!-- ================================================================ -->
+    <div class="ari-ab-panel ss-panel" data-ss-panel="run" role="tabpanel" hidden>
+        <div id="ss-run-peers" class="ari-sg-tabs ss-peer-tabs" role="tablist" aria-label="Peer"></div>
+        <div id="ss-run-empty" class="ss-muted" hidden>Add a peer in the Setup tab first.</div>
+
+        <div id="ss-run-body" hidden>
+            <div class="ari-sg-section">
+                <h3 class="ss-h3"><i class="fa-solid fa-circle-nodes" aria-hidden="true"></i> Peer</h3>
+                <dl id="ss-run-peer-info" class="ss-dl"></dl>
+                <div class="ss-actions">
+                    <label class="ss-switch">
+                        <input id="ss-auto-sync" type="checkbox">
+                        Automatic sync (async task) for this peer
+                    </label>
+                </div>
+                <p id="ss-auto-hint" class="ss-muted"></p>
+            </div>
+
+            <div class="ari-sg-section">
+                <h3 class="ss-h3"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> What to sync</h3>
+                <div id="ss-categories" class="ss-categories"></div>
+                <div class="ss-actions">
+                    <button id="ss-save-cats" type="button" class="ari-btn ari-btn--secondary ari-btn--sm">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save categories
+                    </button>
+                </div>
+            </div>
+
+            <div class="ari-sg-section">
+                <h3 class="ss-h3"><i class="fa-solid fa-play" aria-hidden="true"></i> Analyse and run</h3>
+                <div class="ss-actions">
+                    <label class="ss-inline">Include
+                        <select id="ss-run-kind" class="ari-ap-input">
+                            <option value="records">Records only</option>
+                            <option value="task_files">Task outputs only</option>
+                            <option value="all" selected>Everything enabled</option>
+                        </select>
+                    </label>
+                    <button id="ss-analyse" type="button" class="ari-btn ari-btn--secondary ari-btn--sm">
+                        <i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> Analyse (dry run)
+                    </button>
+                    <button id="ss-run-now" type="button" class="ari-btn ari-btn--primary ari-btn--sm">
+                        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Run sync now
+                    </button>
+                </div>
+                <div id="ss-run-status" class="ss-run-status" role="status" aria-live="polite"></div>
+                <div id="ss-plan" class="ss-plan"></div>
+            </div>
+
+            <div class="ari-sg-section">
+                <h3 class="ss-h3"><i class="fa-solid fa-gears" aria-hidden="true"></i> Async tasks</h3>
+                <p class="ss-muted">These tasks sync every peer that has automatic sync switched on.
+                    They can also be managed on the
+                    <a href="{{ url_for('home_admin_portal_async_tasks') }}">Async Tasks</a> page.</p>
+                <div id="ss-tasks" class="ss-tasks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Local setup                                                      -->
+    <!-- ================================================================ -->
+    <div class="ari-ab-panel ss-panel" data-ss-panel="local" role="tabpanel" hidden>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Records needing local values</h3>
+            <p class="ss-muted">
+                Items arrived from another server and use resources that are specific to this
+                machine. Profiles: set data paths on the
+                <a href="{{ url_for('home_admin_portal_apero_profiles') }}">APERO Profiles</a> page.
+                Tunnels and local databases: also editable on
+                <a href="{{ url_for('home_admin_portal_database_setup') }}">Database Setup</a>.
+                Mounts: <a href="{{ url_for('home_admin_portal_sshfs_management') }}">SSHFS Management</a>.
+            </p>
+            <div id="ss-local-items" class="ss-cards"></div>
+        </div>
+        <div class="ari-sg-section">
+            <h3 class="ss-h3"><i class="fa-solid fa-terminal" aria-hidden="true"></i> SSH config on this server</h3>
+            <p class="ss-muted">Aliases in <code id="ss-ssh-path">~/.ssh/config</code>:</p>
+            <div id="ss-ssh-hosts" class="ss-chips"></div>
+            <form id="ss-ssh-form" class="ss-grid" autocomplete="off">
+                <label class="ss-field">Alias (Host)
+                    <input name="alias" class="ari-ap-input" type="text" required>
+                </label>
+                <label class="ss-field">HostName
+                    <input name="hostname" class="ari-ap-input" type="text" required>
+                </label>
+                <label class="ss-field">User
+                    <input name="user" class="ari-ap-input" type="text">
+                </label>
+                <label class="ss-field">Port
+                    <input name="port" class="ari-ap-input" type="text" inputmode="numeric">
+                </label>
+                <label class="ss-field">IdentityFile
+                    <input name="identity_file" class="ari-ap-input" type="text" placeholder="~/.ssh/id_ed25519">
+                </label>
+                <label class="ss-field">ProxyJump
+                    <input name="proxy_jump" class="ari-ap-input" type="text" placeholder="user@gateway">
+                </label>
+                <div class="ss-actions ss-field--wide">
+                    <button id="ss-ssh-preview" type="button" class="ari-btn ari-btn--secondary ari-btn--sm">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i> Preview
+                    </button>
+                    <button id="ss-ssh-append" type="button" class="ari-btn ari-btn--primary ari-btn--sm" disabled>
+                        <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i> Append to ~/.ssh/config
+                    </button>
+                </div>
+            </form>
+            <p class="ss-muted">Or add it yourself on the server:</p>
+            <pre id="ss-ssh-block" class="ss-pre">(fill the form and click Preview)</pre>
+            <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm" data-ss-copy="ss-ssh-command">
+                <i class="fa-solid fa-copy" aria-hidden="true"></i> Copy shell command
+            </button>
+            <pre id="ss-ssh-command" class="ss-pre" hidden></pre>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- History                                                          -->
+    <!-- ================================================================ -->
+    <div class="ari-ab-panel ss-panel" data-ss-panel="history" role="tabpanel" hidden>
+        <div class="ari-sg-section">
+            <div class="ss-actions">
+                <button id="ss-history-refresh" type="button" class="ari-btn ari-btn--secondary ari-btn--sm">
+                    <i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh
+                </button>
+            </div>
+            <div class="ot-table-wrap">
+                <table class="ot-table ss-table">
+                    <thead><tr>
+                        <th>When</th><th>Event</th><th>Peer / caller</th><th>Result</th><th>Details</th>
+                    </tr></thead>
+                    <tbody id="ss-history-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="ss-toast" class="ari-toast" style="display:none;" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+window.ARI_SERVER_SYNC = {
+    apiUrl: {{ url_for('api_server_sync_admin', action='__ACTION__') | tojson }},
+    asyncTasksUrl: {{ url_for('home_admin_portal_async_tasks') | tojson }},
+    profilesUrl: {{ url_for('home_admin_portal_apero_profiles') | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_server_sync.js', v='20261022b') }}"></script>
+{% endblock %}
