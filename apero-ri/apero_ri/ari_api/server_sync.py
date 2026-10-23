@@ -15,6 +15,7 @@ Created on 2026-10-22
 @author: cook
 """
 import secrets
+import threading
 import time
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urlparse
@@ -29,6 +30,8 @@ __NAME__ = 'apero_ri.ari_api.server_sync'
 PEER_PREFIX = '/api/server-sync/peer'
 # default request timeout in seconds
 DEFAULT_TIMEOUT = 120.0
+MANIFEST_TIMEOUT = 1800.0
+POLL_INTERVAL = 1.0
 
 
 class PeerError(RuntimeError):
@@ -119,8 +122,17 @@ class PeerClient:
         try:
             resp = requests.post(full_url, data=body, headers=headers,
                                  timeout=self.timeout, allow_redirects=False)
+        except requests.ReadTimeout as exc:
+            detail = ''
+            if isinstance(payload, dict) and payload.get('category'):
+                detail = f" ({payload['category']})"
+            raise PeerError(
+                f'{action}{detail}: {self.url} accepted the connection but '
+                f'did not reply within {self.timeout:g}s. Check the peer '
+                'server log and reverse-proxy timeouts.') from exc
         except requests.RequestException as exc:
-            raise PeerError(f'Cannot reach {self.url}: {exc}') from exc
+            message = f'{action}: cannot reach {self.url}: {exc}'
+            raise PeerError(message) from exc
         if resp.status_code != 200:
             # errors before authentication are plain JSON
             try:
@@ -166,7 +178,28 @@ class PeerClient:
         :return: dict category -> {key: entry}
         :rtype: dict
         """
-        return self.call('manifest', dict(categories=list(categories)))
+        names = list(categories)
+        if not names:
+            return dict()
+        job = self.call('manifest_start', dict(categories=names))
+        deadline = time.monotonic() + MANIFEST_TIMEOUT
+        waiter = threading.Event()
+        while job['status'] == 'running':
+            if time.monotonic() >= deadline:
+                category = job.get('category') or 'starting'
+                raise PeerError(f'Manifest scan exceeded 30 minutes on '
+                                f'{self.url}; scanning {category}')
+            waiter.wait(POLL_INTERVAL)
+            job = self.call('manifest_status', dict(job_id=job['job_id']))
+        if job['status'] != 'done':
+            category = job.get('category') or 'starting'
+            raise PeerError(f'Manifest scan failed in {category} on '
+                            f'{self.url}: {job.get("error", "unknown error")}')
+        result = dict()
+        for category in names:
+            payload = dict(job_id=job['job_id'], category=category)
+            result[category] = self.call('manifest_status', payload)
+        return result
 
     def fetch(self, category: str, keys: List[str]) -> Dict[str, Any]:
         """

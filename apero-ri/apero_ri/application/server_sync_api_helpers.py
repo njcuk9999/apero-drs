@@ -25,6 +25,7 @@ from apero_ri.core.server_sync import adapters
 from apero_ri.core.server_sync import crypto
 from apero_ri.core.server_sync import engine
 from apero_ri.core.server_sync import local_setup
+from apero_ri.core.server_sync import manifest_jobs
 from apero_ri.core.server_sync import store
 
 # =============================================================================
@@ -468,7 +469,8 @@ def peer_api_view(app: Any, action: str) -> Any:
 
     :return: Flask response (encrypted on success)
     """
-    if action not in ('hello', 'manifest', 'fetch', 'apply'):
+    if action not in ('hello', 'manifest', 'fetch', 'apply',
+                       'manifest_start', 'manifest_status'):
         return _fail('Unknown action', 404)
     request.max_content_length = PEER_MAX_BODY
     key_id = request.headers.get(crypto.HDR_KEY_ID, '')
@@ -504,9 +506,17 @@ def peer_api_view(app: Any, action: str) -> Any:
     store.touch_issued(key_id, caller)
     reply = dict(nonce=nonce)
     try:
-        handle_args = [action, envelope.get('payload'), issued['scope'],
-                       caller]
-        reply['payload'] = engine.handle_peer(*handle_args)
+        payload = envelope.get('payload') or dict()
+        if action == 'manifest_start':
+            categories = payload.get('categories') or []
+            reply['payload'] = manifest_jobs.start(categories, key_id)
+        elif action == 'manifest_status':
+            job_args = [payload.get('job_id', ''), key_id,
+                        payload.get('category', '')]
+            reply['payload'] = manifest_jobs.read(*job_args)
+        else:
+            handle_args = [action, payload, issued['scope'], caller]
+            reply['payload'] = engine.handle_peer(*handle_args)
     except (PermissionError, ValueError) as exc:
         reply['error'] = str(exc)
     except Exception as exc:
