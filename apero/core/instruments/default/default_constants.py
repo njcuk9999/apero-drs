@@ -404,6 +404,8 @@ __all__ = [
     # visualization constants
     'INFO_VISU_Z1', 'INFO_VISU_Z2', 'INFO_VISU_Z3',
     'INFO_VISU_EXT_ORDER', 'VISU_MP_MODE',
+    # file date logic constants
+    'FILES_DATES_HCFILES',
 ]
 
 # set name
@@ -5937,6 +5939,13 @@ DRIFT_DPR_FIBER_TYPE = Const('DRIFT_DPR_FIBER_TYPE', value=None, dtype=str,
                              source=__NAME__, group=cgroup,
                              description=('Define the fiber dprtype allowed '
                                           'for drift measurement (only FP)'))
+
+# Date ranges (MJD) for allowed HC DPRTYPES when filelogic='date'
+FILES_DATES_HCFILES = Const('FILES_DATES_HCFILES', value=None, dtype=dict,
+                            source=__NAME__,
+                            group='FILE DATE-BASED LOGIC SETTINGS',
+                            description=('Date ranges (MJD) for allowed HC '
+                                         'DPRTYPES when filelogic="date"'))
 
 # =============================================================================
 # ARI SETTINGS

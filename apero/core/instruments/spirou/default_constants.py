@@ -3499,6 +3499,10 @@ INFO_VISU_Z3.value = '2164, 2169'
 INFO_VISU_EXT_ORDER = INFO_VISU_EXT_ORDER.copy(__NAME__)
 INFO_VISU_EXT_ORDER.value = 35
 
+# Date ranges (MJD) for allowed HC DPRTYPES when filelogic='date'
+FILES_DATES_HCFILES = FILES_DATES_HCFILES.copy(__NAME__)
+FILES_DATES_HCFILES.value = dict(HCONE_HCONE=[0, 99999])
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

@@ -798,6 +798,9 @@ class DrsInputFile:
             self.required = True
         else:
             self.required = required
+        # file selection metadata for combine logic (set from recipe arguments)
+        self.filelogic = 'inclusive'
+        self.filelogictag = None
 
     def __getstate__(self) -> dict:
         """
@@ -3959,28 +3962,46 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # check that data is read
         self.check_read()
+        # get file logic from the input argument metadata
+        filelogic = getattr(self, 'filelogic', 'inclusive')
+        filelogictag = getattr(self, 'filelogictag', None)
+        filelogic_date_key = None
+        filelogic_date_map = None
+        if filelogic == 'date':
+            fargs = [params, filelogictag]
+            filelogic_date_key, filelogic_date_map = self._date_filelogic_setup(
+                *fargs
+            )
         # get combine metric types
         comb_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
                                               dtype=str)
-        # set new data to this files data
-        data = np.array(self.data)
         # --------------------------------------------------------------------
         # cube
-        datacube0 = [data]
-        headers0 = [Header.from_fits_header(self.header)]
-        basenames0 = [self.basename]
+        datacube0, headers0, basenames0 = [], [], []
         # combine data into cube
-        for infile in infiles:
+        for infile in [self] + infiles:
             # check data is read for infile
             infile.check_read()
             # check that infile matches in name to self
             if (self.name != infile.name) and same_type:
                 eargs = [func_name]
                 WLOG(params, 'error', textentry('00-001-00021', args=eargs))
+            # in date mode, keep only dprtypes valid for this file MJD
+            if filelogic == 'date':
+                fargs = [params, infile, filelogic_date_key,
+                         filelogic_date_map]
+                keep_file = self._date_filelogic_keep(*fargs)
+                if not keep_file:
+                    continue
             # add to cube
             datacube0.append(infile.data)
             basenames0.append(infile.basename)
             headers0.append(Header.from_fits_header(infile.header))
+        # no files left after date filtering
+        if len(datacube0) == 0:
+            emsg = ('DrsFitsFile.combine: filelogic="{0}" with '
+                    'filelogictag="{1}" has no valid files to combine')
+            WLOG(params, 'error', emsg.format(filelogic, filelogictag))
         # --------------------------------------------------------------------
         # Quality control on data
         # --------------------------------------------------------------------
@@ -4145,6 +4166,54 @@ class DrsFitsFile(DrsInputFile):
 
         # return newinfile and table
         return newinfile, combinetable
+
+    def _date_filelogic_setup(self, params: ParamDict,
+                              filelogictag: Union[str, None]
+                              ) -> Tuple[str, dict]:
+        """Resolve and validate date-based filelogic mapping."""
+        if drs_text.null_text(filelogictag, ['None', '']):
+            emsg = ('DrsFitsFile.combine: filelogic="date" requires '
+                    'filelogictag to be set')
+            WLOG(params, 'error', emsg)
+        map_key = 'FILES_DATES_{0}'.format(filelogictag)
+        if map_key in params:
+            date_map = params[map_key]
+        else:
+            emsg = ('DrsFitsFile.combine: filelogic="date" could not find '
+                    '{0} in params')
+            WLOG(params, 'error', emsg.format(map_key))
+        if (date_map is None) or (len(date_map) == 0):
+            emsg = ('DrsFitsFile.combine: filelogic="date" found empty '
+                    'mapping for {0}')
+            WLOG(params, 'error', emsg.format(map_key))
+        return str(map_key), date_map
+
+    def _date_filelogic_keep(self, params: ParamDict,
+                             infile: 'DrsFitsFile', map_key: str,
+                             date_map: dict) -> bool:
+        """Check whether infile passes date-based filelogic filtering."""
+        dprtype = infile.get_hkey('KW_DPRTYPE', required=False, dtype=str)
+        mjdate = infile.get_hkey('KW_MJDATE', required=False, dtype=float)
+        if drs_text.null_text(dprtype, ['None', '']):
+            emsg = ('DrsFitsFile.combine: filelogic="date" requires '
+                    'KW_DPRTYPE in all inputs ({0})')
+            WLOG(params, 'error', emsg.format(infile.basename))
+        if (mjdate is None) or (not np.isfinite(mjdate)):
+            emsg = ('DrsFitsFile.combine: filelogic="date" requires '
+                    'KW_MJDATE in all inputs ({0})')
+            WLOG(params, 'error', emsg.format(infile.basename))
+        if dprtype not in date_map:
+            return False
+        date_range = date_map[dprtype]
+        cond1 = not hasattr(date_range, '__len__')
+        cond2 = len(date_range) != 2
+        if cond1 or cond2:
+            emsg = ('DrsFitsFile.combine: invalid range for {0} in {1} '
+                    '(expected [start_mjd, end_mjd])')
+            WLOG(params, 'error', emsg.format(dprtype, map_key))
+        mjd_min = float(date_range[0])
+        mjd_max = float(date_range[1])
+        return mjd_min <= mjdate <= mjd_max
 
     # -------------------------------------------------------------------------
     # fits file header methods
@@ -8530,6 +8599,8 @@ def combine(params: ParamDict, recipe: Any,
         basenames.append(infile.basename)
     # make new infile using math
     infile0 = infiles[0].newcopy(params=params)
+    infile0.filelogic = getattr(infiles[0], 'filelogic', 'inclusive')
+    infile0.filelogictag = getattr(infiles[0], 'filelogictag', None)
     outfile, outtable = infile0.combine(infiles[1:], math, same_type,
                                         path=abspath,
                                         test_similarity=test_similarity)

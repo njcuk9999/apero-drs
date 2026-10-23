@@ -466,7 +466,12 @@ def legend_no_alpha(legend: Any):
      
     :return: None, updates legend instance
     """
-    for handle in legend.legendHandles:
+    # matplotlib renamed legendHandles -> legend_handles in newer versions
+    handles = getattr(legend, 'legend_handles', None)
+    if handles is None:
+        handles = getattr(legend, 'legendHandles', [])
+
+    for handle in handles:
         if hasattr(handle, 'set_alpha'):
             handle.set_alpha(1)
         if hasattr(handle, '_legmarker'):

@@ -159,6 +159,42 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
                                 wmsg = textentry('10-503-00025', args=wargs)
                                 WLOG(params, 'warning', wmsg, sublevel=2)
                             missing = True
+                # deal with date logic files
+                elif arg.filelogic == 'date':
+                    # get mapping for this file logic tag
+                    logic_key, logic_map = _get_date_filelogic_map(params, arg)
+                    # store drs file names (for reporting)
+                    drsfiles = []
+                    # set up mask (added via OR statement)
+                    dmask = np.zeros(len(drsoutids), dtype=bool)
+                    # loop around drs files
+                    for drsfile in calib_files[recipe_name][argname]:
+                        drsfiles.append(drsfile.name)
+                        # skip types not configured for this date map
+                        if drsfile.name not in logic_map:
+                            continue
+                        # mask of current files
+                        cmask = (drsfile.name == drsoutids)
+                        # keep only files in valid MJD range for this type
+                        drange = logic_map[drsfile.name]
+                        margs = [params, logic_key, drsfile.name, drange]
+                        mrange = _get_date_range_mask(mjdmids, *margs)
+                        dmask |= (cmask & mrange)
+                    # combine drs file names
+                    drsfilenames = ','.join(drsfiles)
+                    # count the number of files
+                    count = np.sum(dmask)
+                    # add to count
+                    calib_count[uobsdir][recipe_name][drsfilenames] = count
+                    # get the time for this drs file
+                    calib_times[uobsdir] += list(np.unique(mjdmids[dmask]))
+                    # print if missing
+                    if count == 0 and srecipe.calib_required:
+                        if log:
+                            wargs = [drsfilenames, uobsdir, recipe_name]
+                            wmsg = textentry('10-503-00025', args=wargs)
+                            WLOG(params, 'warning', wmsg, sublevel=2)
+                        missing = True
                 # deal with inclusive files (combine drsfiles)
                 else:
                     # store drs file names (for reporting)
@@ -195,6 +231,42 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
             bad_calib_nights.append(uobsdir)
     # -------------------------------------------------------------------------
     return calib_count, calib_times, bad_calib_nights
+
+
+def _get_date_filelogic_map(params: ParamDict,
+                            arg: DrsArgument) -> Tuple[str, dict]:
+    """Get and validate the date-filelogic mapping for an argument."""
+    if drs_text.null_text(arg.filelogictag, ['None', '']):
+        emsg = ('drs_precheck.calib_check: filelogic="date" requires '
+                'filelogictag to be set for argument {0}')
+        WLOG(params, 'error', emsg.format(arg.name))
+    map_key = 'FILES_DATES_{0}'.format(arg.filelogictag)
+    if map_key not in params:
+        emsg = ('drs_precheck.calib_check: filelogic="date" could not '
+                'find {0} in params')
+        WLOG(params, 'error', emsg.format(map_key))
+    date_map = params[map_key]
+    if (date_map is None) or (len(date_map) == 0):
+        emsg = ('drs_precheck.calib_check: filelogic="date" found empty '
+                'mapping for {0}')
+        WLOG(params, 'error', emsg.format(map_key))
+    return map_key, date_map
+
+
+def _get_date_range_mask(mjdmids: np.ndarray, params: ParamDict,
+                         map_key: str, dprtype: str,
+                         drange: list) -> np.ndarray:
+    """Return mask selecting rows within the configured MJD range."""
+    cond1 = not hasattr(drange, '__len__')
+    cond2 = len(drange) != 2
+    if cond1 or cond2:
+        emsg = ('drs_precheck.calib_check: invalid range for {0} in {1} '
+                '(expected [start_mjd, end_mjd])')
+        WLOG(params, 'error', emsg.format(dprtype, map_key))
+    mjd_min = float(drange[0])
+    mjd_max = float(drange[1])
+    mjd_arr = np.array(mjdmids, dtype=float)
+    return (mjd_arr >= mjd_min) & (mjd_arr <= mjd_max)
 
 
 SciTelluCheckReturn = Tuple[Dict[str, dict], Dict[str, dict],

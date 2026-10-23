@@ -571,6 +571,8 @@ class _CheckFiles(DrsAction):
         # get recipe args and kwargs
         rargs = self.recipe.args
         rkwargs = self.recipe.kwargs
+        # get argument for filelogic metadata propagation
+        arg = _get_arg(rargs, rkwargs, argname)
         # ---------------------------------------------------------------------
         # storage of files and types
         files, types = [], []
@@ -586,6 +588,10 @@ class _CheckFiles(DrsAction):
             # append to storage
             files += out[0]
             types += out[1]
+        # propagate file logic metadata to all resolved file instances
+        for dtype in types:
+            dtype.filelogic = arg.filelogic
+            dtype.filelogictag = arg.filelogictag
         # if they are return files
         return files, types
 
@@ -2600,7 +2606,9 @@ class DrsArgument(object):
                  limit: Union[int, None] = None,
                  minimum: Union[int, float, None] = None,
                  maximum: Union[int, float, None] = None,
-                 filelogic: str = 'inclusive', default: Union[Any, None] = None,
+                 filelogic: str = 'inclusive',
+                 filelogictag: Union[str, None] = None,
+                 default: Union[Any, None] = None,
                  default_ref: Union[str, None] = None,
                  required: bool = None, reprocess: bool = False):
         """
@@ -2656,6 +2664,9 @@ class DrsArgument(object):
                            the input files may all be A or all be B
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
+
+        :param filelogictag: str or None, optional tag used by custom
+                             filelogic modes
 
         :param default: the default value to give the argument if unset,
                         either this or defaulf_ref must be set for kwargs
@@ -2784,10 +2795,12 @@ class DrsArgument(object):
         self.maximum = maximum
         # get file logic
         self.filelogic = filelogic
-        if self.filelogic not in ['inclusive', 'exclusive']:
+        if self.filelogic not in ['inclusive', 'exclusive', 'date']:
             # get entry to log error
             ee = textentry('00-006-00008', args=[self.filelogic])
             self.exception(None, errorstr=[ee])
+        # get file logic tag
+        self.filelogictag = filelogictag
         # deal with no default/default_ref for kwarg
         if kind == 'kwarg':
             # get entry
@@ -3027,6 +3040,8 @@ class DrsArgument(object):
         self.maximum = copy.deepcopy(argument.maximum)
         # get file logic
         self.filelogic = str(argument.filelogic)
+        # get file logic tag
+        self.filelogictag = copy.deepcopy(argument.filelogictag)
         # get default
         self.default = copy.deepcopy(argument.default)
         # get default_ref

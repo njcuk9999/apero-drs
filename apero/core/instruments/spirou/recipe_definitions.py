@@ -445,8 +445,9 @@ apero_shape_ref.set_kwarg(name='--fpfiles', dtype='files',
                           filelogic='exclusive', required=True,
                           helpstr=textentry('SHAPE_FPFILES_HELP'), default=[])
 apero_shape_ref.set_kwarg(name='--hcfiles', dtype='files',
-                          files=[files.pp_hc1_hc1],
-                          filelogic='exclusive', required=True,
+                          files=[files.pp_hc1_hc1, files.pp_hc2_hc2],
+                          filelogic='date', filelogictag='HCFILES',
+                          required=True,
                           helpstr=textentry('SHAPE_HCFILES_HELP'), default=[])
 apero_shape_ref.set_kwarg(**add_db)
 apero_shape_ref.set_kwarg(**badfile)
@@ -844,8 +845,9 @@ apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
                                  'SUM_CCF_PHOTON_UNCERT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
 apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
-                         files=[files.pp_hc1_hc1],
-                         filelogic='exclusive', required=True,
+                         files=[files.pp_hc1_hc1, files.pp_hc2_hc2],
+                         filelogic='date', filelogictag='HCFILES',
+                         required=True,
                          helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_ref.set_kwarg(name='--fpfiles', dtype='files',
                          files=[files.pp_fp_fp],
@@ -927,8 +929,9 @@ apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
                                  'SUM_CCF_PHOTON_UNCERT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
 apero_wave_night.set_kwarg(name='--hcfiles', dtype='files',
-                           files=[files.pp_hc1_hc1],
-                           filelogic='exclusive', required=True,
+                           files=[files.pp_hc1_hc1, files.pp_hc2_hc2],
+                           filelogic='date', filelogictag='HCFILES',
+                           required=True,
                            helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_night.set_kwarg(name='--fpfiles', dtype='files',
                            files=[files.pp_fp_fp],
@@ -1538,7 +1541,8 @@ full_seq.add(apero_thermal, name='THERM_REFI', ref=True,
              recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
 full_seq.add(apero_leak_ref, ref=True)
 full_seq.add(apero_wave_ref, ref=True,
-             rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+             rkwargs=dict(hcfiles=[files.pp_hc1_hc1,
+                                   files.pp_hc2_hc2],
                           fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 full_seq.add(apero_thermal, name='THERM_REFT', ref=True,
@@ -1695,7 +1699,8 @@ limited_seq.add(apero_thermal, name='THERM_REFI', ref=True,
                 recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
 limited_seq.add(apero_leak_ref, ref=True)
 limited_seq.add(apero_wave_ref, ref=True,
-                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+                rkwargs=dict(hcfiles=[files.pp_hc1_hc1,
+                                      files.pp_hc2_hc2],
                              fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 limited_seq.add(apero_thermal, name='THERM_REFT', ref=True,
@@ -1899,7 +1904,8 @@ ref_seq.add(apero_thermal, name='THERM_REFI', ref=True,
             recipe_kind='calib-reference-I', files=[files.pp_dark_dark_int])
 ref_seq.add(apero_leak_ref, ref=True)
 ref_seq.add(apero_wave_ref, ref=True,
-            rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+            rkwargs=dict(hcfiles=[files.pp_hc1_hc1,
+                                  files.pp_hc2_hc2],
                          fpfiles=[files.pp_fp_fp]))
 # thermal for everything else (requires a wave solution)
 ref_seq.add(apero_thermal, name='THERM_REFT', ref=True,
