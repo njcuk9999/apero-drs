@@ -1305,7 +1305,8 @@ CDict.set('REF_FP_NHIGH', value=30000, source=__NAME__, author='EA', group=cgrou
 CDict.set('REF_FP_POLYINV', value=10, source=__NAME__, author='EA', group=cgroup)
 
 # Define the guess HC exponential width [pixels]
-CDict.set('REF_HC_GUESS_EWID', value=1, source=__NAME__, author='EA', group=cgroup)
+# was 1
+CDict.set('REF_HC_GUESS_EWID', value=2, source=__NAME__, author='EA', group=cgroup)
 
 # Define the fiber offset (in pixels) away from reference fiber
 CDict.set('FIBER_OFFSET_MOD',
@@ -1449,7 +1450,8 @@ CDict.set('MODE', value=0, source=__NAME__, author='EA',
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 # so a 2*W+1 window
-CDict.set('HC_FITBOX_SIZE', value=6, source=__NAME__, author='EA',
+# was 6
+CDict.set('HC_FITBOX_SIZE', value=12, source=__NAME__, author='EA',
           group=cgroup)
 
 # number of sigma above local RMS for a line to be flagged as such
@@ -1468,9 +1470,11 @@ CDict.set('FITBOX_RMS_DEVMAX', value=0.2, source=__NAME__,
           author='EA', group=cgroup)
 
 # the e-width of the line expressed in pixels.
-CDict.set('FITBOX_EWMIN', value=0.7, source=__NAME__,
+# was 0.7
+CDict.set('FITBOX_EWMIN', value=1.4, source=__NAME__,
           author='EA', group=cgroup)  # 0.7
-CDict.set('FITBOX_EWMAX', value=1.1, source=__NAME__,
+# was 1.1
+CDict.set('FITBOX_EWMAX', value=2.2, source=__NAME__,
           author='EA', group=cgroup)  # 1.1
 
 # Define the file type for saving the initial guess at the hc peak list
@@ -1634,7 +1638,8 @@ CDict.set('DOPD0', value=24498000, source=__NAME__, group=cgroup)
 CDict.set('CAVFIT_DEG', value=9, source=__NAME__, group=cgroup)
 
 # Define the FP jump size that is too large
-CDict.set('LARGE_JUMP', value=250, source=__NAME__, group=cgroup)
+# was 250
+CDict.set('LARGE_JUMP', value=500, source=__NAME__, group=cgroup)
 
 # Index of FP line to start order cross-matching from
 CDict.set('CROSSM_INDEX', value=-2, source=__NAME__, group=cgroup)
@@ -1648,7 +1653,8 @@ CDict.set('NORM_PTILE', value=95, source=__NAME__, group=cgroup)
 CDict.set('PEAK_LIM', value=0.1, source=__NAME__, group=cgroup)
 
 # Define pixel to pixel width that is too large (removed from FP peaks)
-CDict.set('P2P_WID_CUT', value=15, source=__NAME__, group=cgroup)
+# was 15
+CDict.set('P2P_WID_CUT', value=30, source=__NAME__, group=cgroup)
 
 # Define the minimum instrumental error
 CDict.set('ERR_XMIN', value=0.01, source=__NAME__,
@@ -2956,6 +2962,16 @@ CDict.set('Z3', value=[2164.0, 2169.0], source=__NAME__, group=cgroup)
 # plot order for LBL etc in info plots
 CDict.set('EXT_ORDER', value=60, source=__NAME__, group=cgroup)
 
+
+# =============================================================================
+# FILE DATE-BASED LOGIC SETTINGS
+# =============================================================================
+cgroup = 'FILES.DATES'
+
+# Date ranges (MJD) for allowed HC DPRTYPES when filelogic='date'
+hcfiles_date_dict = dict()
+hcfiles_date_dict['HCONE_HCONE'] = [0, 99999]
+CDict.set('HCFILES', value=hcfiles_date_dict, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # End of configuration file

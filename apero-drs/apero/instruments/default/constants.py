@@ -5896,6 +5896,18 @@ CDict.add('OBJ_SCI_SQL', value='', dtype=str,
 
 
 # =============================================================================
+# FILE DATE-BASED LOGIC SETTINGS
+# =============================================================================
+cgroup = 'FILES.DATES'
+CDict.add_group(cgroup,
+                description='FILES.DATES: DATE-BASED FILE LOGIC SETTINGS')
+
+# Date ranges (MJD) for allowed HC DPRTYPES when filelogic='date'
+CDict.add('HCFILES', value=None, dtype=dict, source=__NAME__, group=cgroup,
+          description=('Date ranges (MJD) for allowed HC DPRTYPES when '
+                       'filelogic="date"'))
+
+# =============================================================================
 # TOOLS: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'TOOLS.GEN'

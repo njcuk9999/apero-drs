@@ -2648,5 +2648,16 @@ CDict.set('Z3', value=[1666.0, 1668.0], source=__NAME__, group=cgroup)
 CDict.set('EXT_ORDER', value=60, source=__NAME__, group=cgroup)
 
 # =============================================================================
+# FILE DATE-BASED LOGIC SETTINGS
+# =============================================================================
+cgroup = 'FILES.DATES'
+
+# Date ranges (MJD) for allowed HC DPRTYPES when filelogic='date'
+hcfiles_date_dict = dict()
+hcfiles_date_dict['HCONE_HCONE'] = [0, 61319]
+hcfiles_date_dict['HCTWO_HCTWO'] = [61320, 99999]
+CDict.set('HCFILES', value=hcfiles_date_dict, source=__NAME__, group=cgroup)
+
+# =============================================================================
 # End of configuration file
 # =============================================================================

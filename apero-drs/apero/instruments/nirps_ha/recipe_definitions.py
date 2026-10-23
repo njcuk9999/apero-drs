@@ -789,8 +789,9 @@ apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
                                  'SUM_CCF_PHOTON_UNCERT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
 apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
-                         files=[files.pp_hc1_hc1],
-                         filelogic='exclusive', required=True,
+                         files=[files.pp_hc1_hc1, files.pp_hc2_hc2],
+                         filelogic='date', filelogictag='HCFILES',
+                         required=True,
                          helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_ref.set_kwarg(name='--fpfiles', dtype='files',
                          files=[files.pp_fp_fp],
@@ -874,8 +875,9 @@ apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
                                   'SUM_CCF_PHOTON_UNCERT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
 apero_wave_night.set_kwarg(name='--hcfiles', dtype='files',
-                           files=[files.pp_hc1_hc1],
-                           filelogic='exclusive', required=True,
+                           files=[files.pp_hc1_hc1, files.pp_hc2_hc2],
+                           filelogic='date', filelogictag='HCFILES',
+                           required=True,
                            helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 apero_wave_night.set_kwarg(name='--fpfiles', dtype='files',
                            files=[files.pp_fp_fp],
@@ -1440,7 +1442,8 @@ full_seq.add(apero_flat, name='FLATREF', ref=True,
              recipe_kind='calib-reference')
 full_seq.add(apero_leak_ref, ref=True)
 full_seq.add(apero_wave_ref, ref=True,
-             rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+             rkwargs=dict(hcfiles=[files.pp_hc1_hc1,
+                                   files.pp_hc2_hc2],
                           fpfiles=[files.pp_fp_fp]))
 # night runs
 full_seq.add(apero_badpix)
@@ -1577,7 +1580,8 @@ limited_seq.add(apero_flat, name='FLATREF', ref=True,
                 recipe_kind='calib-reference')
 limited_seq.add(apero_leak_ref, ref=True)
 limited_seq.add(apero_wave_ref, ref=True,
-                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+                rkwargs=dict(hcfiles=[files.pp_hc1_hc1,
+                                      files.pp_hc2_hc2],
                              fpfiles=[files.pp_fp_fp]))
 # night runs
 limited_seq.add(apero_badpix)
@@ -1755,7 +1759,8 @@ ref_seq.add(apero_flat, name='FLATREF', ref=True,
             recipe_kind='calib-reference')
 ref_seq.add(apero_leak_ref, ref=True)
 ref_seq.add(apero_wave_ref, ref=True,
-            rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
+            rkwargs=dict(hcfiles=[files.pp_hc1_hc1,
+                                  files.pp_hc2_hc2],
                          fpfiles=[files.pp_fp_fp]))
 
 # -----------------------------------------------------------------------------

@@ -576,7 +576,9 @@ class DrsRecipe(object):
                 path: Union[str, None] = None, limit: Union[int, None] = None,
                 minimum: Union[int, float, None] = None,
                 maximum: Union[int, float, None] = None,
-                filelogic: str = 'inclusive', default: Union[Any, None] = None,
+                filelogic: str = 'inclusive',
+                filelogictag: Union[str, None] = None,
+                default: Union[Any, None] = None,
                 default_ref: Union[Any, None] = None,
                 required: bool = None, reprocess: bool = False,
                 optional: bool = False, single_call: bool = False):
@@ -632,6 +634,9 @@ class DrsRecipe(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
 
+        :param filelogictag: str or None, optional tag used by custom file
+                            logic modes (e.g. date-based filtering)
+
         :param default: the default value to give the argument if unset,
                         either this or defaulf_ref must be set for kwargs
 
@@ -663,6 +668,7 @@ class DrsRecipe(object):
                                helpstr=helpstr, files=files, path=path,
                                limit=limit, minimum=minimum,
                                maximum=maximum, filelogic=filelogic,
+                               filelogictag=filelogictag,
                                default=default, default_ref=default_ref,
                                required=required, reprocess=reprocess,
                                optional=optional, single_call=single_call)
@@ -693,6 +699,7 @@ class DrsRecipe(object):
                   minimum: Union[int, float, None] = None,
                   maximum: Union[int, float, None] = None,
                   filelogic: str = 'inclusive',
+                  filelogictag: Union[str, None] = None,
                   default: Union[Any, None] = None,
                   default_ref: Union[Any, None] = None,
                   required: bool = None, reprocess: bool = False,
@@ -746,6 +753,9 @@ class DrsRecipe(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
 
+        :param filelogictag: str or None, optional tag used by custom file
+                            logic modes (e.g. date-based filtering)
+
         :param default: the default value to give the argument if unset,
                         either this or defaulf_ref must be set for kwargs
 
@@ -796,7 +806,9 @@ class DrsRecipe(object):
                                           options=options, helpstr=helpstr,
                                           files=files, path=path,
                                           limit=limit, minimum=minimum,
-                                          maximum=maximum, filelogic=filelogic,
+                                          maximum=maximum,
+                                          filelogic=filelogic,
+                                          filelogictag=filelogictag,
                                           default=default,
                                           default_ref=default_ref,
                                           required=required,

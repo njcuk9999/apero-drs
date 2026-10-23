@@ -745,7 +745,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     cavity_poly: Union[np.ndarray, None] = None,
                     hclines: Union[Table, None] = None,
                     fplines: Union[Table, None] = None,
-                    iteration: Union[str, int, None] = None):
+                    iteration: Union[str, int, None] = None,
+                    fp_count_correction: bool = True):
     # set the function name
     func_name = display_func('calc_wave_lines', __NAME__)
     # -------------------------------------------------------------------------
@@ -1205,7 +1206,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # Check the FP peak numbers from order to order and correct the orders
     # where the peaks were miscounted.
     # ----------------------------------------------------------------------
-    if fibtype in fpfibtypes:
+    if fibtype in fpfibtypes and fp_count_correction:
         # print progress: Running FP peak-number corrections
         msg = 'Running FP peak-number corrections for fiber {0} iteration {1}'
         margs = [fiber, str_itr]

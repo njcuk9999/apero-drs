@@ -220,7 +220,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
     # ----------------------------------------------------------------------
     # generate the fp reference lines
     fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap, fplines=mfplines,
-                  cavity_poly=cavity_poly)
+                  cavity_poly=cavity_poly, fp_count_correction=False)
     rfpl = wave.calc_wave_lines(params, recipe, **fpargs)
     # ----------------------------------------------------------------------
     # return fp lines for e2ds file
