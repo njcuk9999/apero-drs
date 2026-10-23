@@ -15,6 +15,7 @@ import csv as _csv
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from apero_ri.core import secret_store
 from apero_ri.application import profile_utils
 from apero_ri.apero_monitoring.core import raw_common
 
@@ -158,8 +159,8 @@ def check_manual_trigger_status(aparams: dict,
 # Rejection list (ARI / APERO sourced)
 # =============================================================================
 def _ari_data_dir() -> Path:
-    """Return the ARI local data directory (defaults to ``~/.ari``)."""
-    return Path.home() / '.ari'
+    """Return the configured ARI local data directory."""
+    return secret_store.get_ari_dir()
 
 
 def get_reject_identifiers(aparams: dict, instrument: str) -> set:

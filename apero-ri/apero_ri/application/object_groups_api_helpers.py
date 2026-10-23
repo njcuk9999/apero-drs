@@ -43,6 +43,7 @@ from apero_ri.application.user_favourites_api_helpers import (
     _name_match_row,
     _resolve_objname,
 )
+from apero_ri.core import secret_store
 from apero_ri.core import object_groups as og
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -3963,7 +3964,7 @@ def _filter_group_objects(
     import json as _json
     from pathlib import Path
 
-    base_dir = Path.home() / '.ari'
+    base_dir = secret_store.get_ari_dir()
     # Need object_table to map objname -> run_ids
     objs_raw = group.get('objects', [])
     if not objs_raw:
@@ -4002,7 +4003,7 @@ def _load_run_id_map(app, profile_id):
     if profile_id in app._obj_group_rid_cache:
         return app._obj_group_rid_cache[profile_id]
 
-    base = Path.home() / '.ari'
+    base = secret_store.get_ari_dir()
     accessible = get_accessible_profiles(None, app.ari_groups)
     # find instrument for this profile
     instrument = None

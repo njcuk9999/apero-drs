@@ -26,12 +26,15 @@ from typing import Dict, List, Optional
 
 import yaml
 
+from apero_ri.core import secret_store
+
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-_ARI_DIR = Path.home() / ".ari"
-_ADMIN_GENERAL_DIR = _ARI_DIR / "admin" / "general"
-_VAULT_FILE = _ADMIN_GENERAL_DIR / "vault.yaml"
+def vault_file() -> Path:
+    """Return the vault YAML path in the configured ARI data dir."""
+    return secret_store.get_ari_dir() / "admin" / "general" / "vault.yaml"
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -67,10 +70,11 @@ VAULT_LEVEL_PERM: Dict[str, str] = {
 # Raw I/O
 # ---------------------------------------------------------------------------
 def _load_raw() -> dict:
-    if not _VAULT_FILE.exists():
+    path = vault_file()
+    if not path.exists():
         return {"entries": []}
     try:
-        with open(_VAULT_FILE, "r", encoding="utf-8") as fio:
+        with open(path, "r", encoding="utf-8") as fio:
             data = yaml.safe_load(fio) or {}
         if not isinstance(data.get("entries"), list):
             data["entries"] = []
@@ -80,8 +84,9 @@ def _load_raw() -> dict:
 
 
 def _save_raw(data: dict) -> None:
-    _ADMIN_GENERAL_DIR.mkdir(parents=True, exist_ok=True)
-    with open(_VAULT_FILE, "w", encoding="utf-8") as fio:
+    path = vault_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fio:
         yaml.dump(
             data,
             fio,

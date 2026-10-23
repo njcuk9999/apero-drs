@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from apero_ri.base.base import BLOCK_KIND
+from apero_ri.core import secret_store
 from apero_ri.tasks import apero_async
 from astropy.io import fits
 
@@ -27,7 +28,6 @@ from astropy.io import fits
 # Define variables
 # =============================================================================
 __NAME__ = "apero_ri.tasks.apero_object_query"
-ARI_DIR = Path.home() / ".ari"
 
 # list of parameters needed for this task (for checking in run_job)
 PARAM_LIST = []
@@ -553,7 +553,8 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 resolve_cache_root,
             )
 
-            local_data = aparams.get("LOCAL_DATA_DIR", str(ARI_DIR))
+            local_data = aparams.get("LOCAL_DATA_DIR",
+                                     str(secret_store.get_ari_dir()))
             cache_cfg = load_cache_config(Path(local_data))
             if cache_cfg.get("enabled"):
                 cache_root = resolve_cache_root(Path(local_data), cache_cfg)
@@ -676,7 +677,7 @@ def _resolve_objects_dir(aparams: Dict[str, Any], profile_name: str) -> Path:
         "INSTRUMENT", aparams.get("INSTRUMENT", "unknown")
     )
     return (
-        Path(aparams.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+        Path(aparams.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
         / "tasks"
         / instrument
         / profile_name
@@ -892,7 +893,7 @@ def _run_single_object_job(
 
     instrument = aparams.get("INSTRUMENT", "unknown")
     local_dir = (
-        Path(aparams.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+        Path(aparams.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
         / "tasks"
         / instrument
         / apero_profile_name
@@ -1176,7 +1177,7 @@ def object_query_headers(aparams, objname, apero_profile_name, outputs):
     # construct filename
     instrument = aparams.get("INSTRUMENT", "unknown")
     local_dir = (
-        Path(aparams.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+        Path(aparams.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
         / "tasks"
         / instrument
         / apero_profile_name
@@ -1312,7 +1313,7 @@ def _file_col_cmd(aparams, rquery, apero_profile_name, objname, fkind, outputs):
         # construct filename
         instrument = aparams.get("INSTRUMENT", "unknown")
         local_dir = (
-            Path(aparams.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+            Path(aparams.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
             / "tasks"
             / instrument
             / apero_profile_name
@@ -1486,7 +1487,7 @@ if __name__ == "__main__":
 
     task = AperoObjectQueryTask()
     run_params = {
-        "LOCAL_DATA_DIR": str(ARI_DIR),
+        "LOCAL_DATA_DIR": str(secret_store.get_ari_dir()),
         "INSTRUMENT": _TEST_INSTRUMENT.lower(),
         "APERO_PROFILE_NAMES": [_TEST_PROFILE],
         "APERO_PROFILES": {_TEST_PROFILE: _profile},

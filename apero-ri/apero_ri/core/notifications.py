@@ -3,7 +3,7 @@
 """ARI notification + messaging persistence.
 
 SQLite-backed notification, message and per-user preference store.
-The DB lives at ``~/.ari/admin/notifications/notifications.db``.
+The DB lives at ``<ARI data dir>/admin/notifications/notifications.db``.
 
 Schema (kept intentionally minimal):
 
@@ -26,9 +26,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-ARI_DIR = Path.home() / ".ari"
-NOTIF_DIR = ARI_DIR / "admin" / "notifications"
-NOTIF_DB = NOTIF_DIR / "notifications.db"
+from apero_ri.core import secret_store
+
+
+def notif_dir() -> Path:
+    """Return the notifications directory in the configured ARI data dir."""
+    return secret_store.get_ari_dir() / "admin" / "notifications"
+
+
+def notif_db() -> Path:
+    """Return the notifications SQLite database path."""
+    return notif_dir() / "notifications.db"
 
 # Channels users can opt out of. Keep in sync with the prefs UI.
 CHANNELS = (
@@ -42,15 +50,16 @@ CHANNELS = (
 DISABLEABLE = tuple(c for c in CHANNELS if c != "system")
 
 _db_lock = threading.Lock()
-_initialised = False
+# database paths whose schema has been created in this process
+_initialised = set()
 
 
 # ---------------------------------------------------------------------------
 # Connection management
 # ---------------------------------------------------------------------------
 def _connect() -> sqlite3.Connection:
-    NOTIF_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(NOTIF_DB), timeout=30.0)
+    notif_dir().mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(notif_db()), timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
@@ -58,11 +67,11 @@ def _connect() -> sqlite3.Connection:
 
 
 def _init_schema() -> None:
-    global _initialised
-    if _initialised:
+    db_key = str(notif_db())
+    if db_key in _initialised:
         return
     with _db_lock:
-        if _initialised:
+        if db_key in _initialised:
             return
         conn = _connect()
         try:
@@ -118,7 +127,7 @@ def _init_schema() -> None:
             conn.commit()
         finally:
             conn.close()
-        _initialised = True
+        _initialised.add(db_key)
 
 
 def _now() -> float:

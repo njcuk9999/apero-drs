@@ -29,6 +29,7 @@ try:
 except ImportError:
     _HAS_YAML = False
 
+from apero_ri.core import secret_store
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -36,7 +37,6 @@ from apero_ri.tasks import apero_async
 # =============================================================================
 __NAME__ = 'apero_ri.tasks.fav_object_watcher'
 
-ARI_DIR = Path.home() / '.ari'
 
 # Fields inside .state_<OBJ>.json we care about
 WATCH_FIELDS: Tuple[str, ...] = (
@@ -192,7 +192,7 @@ class FavObjectWatcherTask(apero_async.AperoAsyncTask):
         for any change in WATCH_FIELDS since the last snapshot.
         """
         local_data_dir = Path(
-            params.get('LOCAL_DATA_DIR', str(ARI_DIR))
+            params.get('LOCAL_DATA_DIR', str(secret_store.get_ari_dir()))
         ).expanduser().resolve()
 
         task_logger = params.get('TASK_LOGGER')

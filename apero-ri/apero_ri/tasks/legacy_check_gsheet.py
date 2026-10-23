@@ -39,7 +39,6 @@ from apero_ri.tasks import apero_async
 # Module constants
 # =============================================================================
 __NAME__ = 'apero_ri.tasks.legacy_check_gsheet'
-ARI_DIR = Path.home() / '.ari'
 
 PARAM_LIST = ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG']
 APERO_PROFILE_PARAM_LIST: List[str] = []
@@ -512,7 +511,7 @@ class LegacyCheckGSheetTask(apero_async.AperoAsyncTask):
             task_cfg.get('DRY_RUN', task_cfg.get('dry_run'))
         )
         local_data_dir = Path(
-            params.get('LOCAL_DATA_DIR', str(ARI_DIR))
+            params.get('LOCAL_DATA_DIR', str(get_ari_dir()))
         ).expanduser().resolve()
 
         task_logger = params.get('TASK_LOGGER')

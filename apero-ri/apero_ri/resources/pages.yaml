@@ -477,6 +477,17 @@ home.admin_portal.run_ids:
     top-level: False
     show: True
 
+home.admin_portal.server_sync:
+  label: Server Sync
+  parent: home.admin_portal
+  view-permission: manage.admin.server_sync
+  icon: fa-solid fa-arrows-rotate
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.apero_profiles:
   label: Manage APERO Profiles
   parent: home.admin_portal

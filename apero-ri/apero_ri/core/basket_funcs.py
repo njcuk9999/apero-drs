@@ -16,7 +16,6 @@ Security:
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 import tarfile
@@ -34,9 +33,6 @@ from apero_ri.core import secret_store as ss
 # Define variables
 # =============================================================================
 __NAME__ = "apero_ri.core.basket_funcs"
-ARI_DIR = Path.home() / ".ari"
-USERS_DIR = ARI_DIR / "users"
-DOWNLOADS_DIR = ARI_DIR / "download"
 
 _DOWNLOAD_EXPIRY_HOURS = 24
 _DOWNLOAD_EXPIRY_OPTIONS = {24, 48, 168}
@@ -55,24 +51,20 @@ _share_tokens_lock = threading.Lock()
 # =============================================================================
 # Define functions
 # =============================================================================
-def set_ari_dir(path: Path) -> None:
-    """Re-point module-level path globals (mirrors auth.set_ari_dir)."""
-    global ARI_DIR, USERS_DIR, DOWNLOADS_DIR
-    ARI_DIR = Path(path)
-    USERS_DIR = ARI_DIR / "users"
-    DOWNLOADS_DIR = ARI_DIR / "download"
+def users_dir() -> Path:
+    """Return the per-user data directory in the configured ARI data dir."""
+    return ss.get_ari_dir() / "users"
+
+
+def downloads_dir() -> Path:
+    """Return the download-job directory in the configured ARI data dir."""
+    return ss.get_ari_dir() / "download"
 
 
 def _share_tokens_path() -> Path:
-    env_ari_dir = (
-        Path(os.environ.get("ARI_DIR", str(ARI_DIR))).expanduser().resolve()
-    )
     return ss.resolve_secret_file(
         "share_tokens.json",
-        legacy_paths=[
-            env_ari_dir / "share_tokens.json",
-            ARI_DIR / "share_tokens.json",
-        ],
+        legacy_paths=[ss.get_ari_dir() / "share_tokens.json"],
     )
 
 
@@ -162,7 +154,7 @@ def get_share_job(token: str) -> Optional[Dict[str, Any]]:
 
 
 def _basket_path(username: str) -> Path:
-    return USERS_DIR / username / "basket.json"
+    return users_dir() / username / "basket.json"
 
 
 def load_basket(username: str) -> List[Dict[str, Any]]:
@@ -346,8 +338,8 @@ def basket_summary(
 
 
 def _jobs_dir(username: str) -> Path:
-    new_dir = DOWNLOADS_DIR / username
-    legacy_dir = USERS_DIR / username / "downloads"
+    new_dir = downloads_dir() / username
+    legacy_dir = users_dir() / username / "downloads"
 
     # One-way migration to keep existing jobs visible after path move.
     if legacy_dir.exists():

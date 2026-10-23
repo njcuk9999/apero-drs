@@ -5,6 +5,7 @@ import os
 import traceback
 from pathlib import Path
 
+from apero_ri.core import secret_store
 from apero_ri.core import task_runner
 from apero_ri.core.auth import (
     load_apero_profiles,
@@ -961,7 +962,8 @@ def api_async_tasks_run_now(app):
     instrument = data.get("instrument", "").strip()
     task_id = data.get("id", "").strip()
     force_run = bool(data.get("force_run", False))
-    local_data_dir = data.get("local_data_dir", "") or str(Path.home() / ".ari")
+    local_data_dir = (data.get("local_data_dir", "")
+                      or str(secret_store.get_ari_dir()))
     if not instrument or not task_id:
         return jsonify(success=False, error="Missing fields"), 400
 
@@ -1100,7 +1102,8 @@ def api_async_tasks_run_all(app):
     instrument = data.get("instrument", "").strip()
     action = data.get("action", "add")
     force_run = bool(data.get("force_run", False))
-    local_data_dir = data.get("local_data_dir", "") or str(Path.home() / ".ari")
+    local_data_dir = (data.get("local_data_dir", "")
+                      or str(secret_store.get_ari_dir()))
     if not instrument:
         return jsonify(success=False, error="Missing instrument"), 400
 

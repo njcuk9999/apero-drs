@@ -2419,6 +2419,20 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
 
+    # Server sync - admin page API (super admin) and peer protocol
+    app.add_url_rule(
+        '/api/admin/server-sync/<action>',
+        'api_server_sync_admin',
+        app._api_server_sync_admin,
+        methods=['GET', 'POST'],
+    )
+    app.add_url_rule(
+        '/api/server-sync/peer/<action>',
+        'api_server_sync_peer',
+        app._limiter.limit('600 per minute')(app._api_server_sync_peer),
+        methods=['POST'],
+    )
+
     # Upload management — Admin routes
     app.add_url_rule(
         "/api/admin/uploads/config",

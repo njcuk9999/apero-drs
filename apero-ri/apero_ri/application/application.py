@@ -55,6 +55,7 @@ from apero_ri.application import routes as app_routes
 from apero_ri.application import sci_groups_api_helpers
 from apero_ri.application import run_ids_api_helpers
 from apero_ri.application import search_helpers
+from apero_ri.application import server_sync_api_helpers
 from apero_ri.application import (
     object_comments_api_helpers,
     object_download_helpers,
@@ -391,6 +392,15 @@ class ARIApp(Flask):
 
     def _api_admin_vault_import(self):
         return _impls.ariapp_api_vault_import(self)
+
+    # -----------------------------------------------------------------
+    # Server sync API (admin page + peer protocol)
+    # -----------------------------------------------------------------
+    def _api_server_sync_admin(self, action):
+        return server_sync_api_helpers.admin_api(self, action)
+
+    def _api_server_sync_peer(self, action):
+        return server_sync_api_helpers.peer_api_view(self, action)
 
     @staticmethod
     def _normalize_db_source(value: str) -> str:

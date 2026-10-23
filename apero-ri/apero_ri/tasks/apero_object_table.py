@@ -10,13 +10,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from apero_ri.core import secret_store
 from apero_ri.tasks import apero_async
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = "apero_ri.tasks.apero_object_table"
-ARI_DIR = Path.home() / ".ari"
 
 # list of parameters needed for this task (for checking in run_job)
 PARAM_LIST = []
@@ -207,7 +207,8 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
                 instrument = aparams.get("general", {}).get(
                     "INSTRUMENT", "unknown")
                 local_dir = (
-                    Path(params.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+                    Path(params.get("LOCAL_DATA_DIR",
+                                    str(secret_store.get_ari_dir())))
                     / "tasks"
                     / instrument
                     / apero_profile
@@ -619,7 +620,7 @@ if __name__ == "__main__":
 
     task = AperoObjectTableTask()
     run_params = {
-        "LOCAL_DATA_DIR": str(ARI_DIR),
+        "LOCAL_DATA_DIR": str(secret_store.get_ari_dir()),
         "INSTRUMENT": _TEST_INSTRUMENT.lower(),
         "APERO_PROFILE_NAMES": [_TEST_PROFILE],
         "APERO_PROFILES": {_TEST_PROFILE: _profile},

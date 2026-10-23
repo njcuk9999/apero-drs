@@ -61,6 +61,7 @@ try:
 except ImportError:
     _HAS_YAML = False
 
+from apero_ri.core import secret_store
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -68,7 +69,6 @@ from apero_ri.tasks import apero_async
 # =============================================================================
 __NAME__ = 'apero_ri.tasks.apero_assets_sync'
 # Default home .ari directory
-ARI_DIR = Path.home() / '.ari'
 # Name of the apero-assets sub-directory within LOCAL_DATA_DIR
 ASSETS_SUBDIR = 'apero-assets'
 # Default name of the checksum YAML on both local disk and remote server
@@ -696,7 +696,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         :return: None
         """
         local_data_dir = Path(
-            params.get('LOCAL_DATA_DIR', str(ARI_DIR))
+            params.get('LOCAL_DATA_DIR', str(secret_store.get_ari_dir()))
         ).expanduser().resolve()
 
         task_cfg = dict(params.get('TASK_CONFIG') or {})

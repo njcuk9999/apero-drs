@@ -28,6 +28,8 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from apero_ri.core import secret_store
+
 # ================================================================
 # Module name
 # ================================================================
@@ -42,7 +44,7 @@ _ARI_DIR: Optional[Path] = None
 def _ari_dir() -> Path:
     if _ARI_DIR is not None:
         return _ARI_DIR
-    return Path.home() / '.ari'
+    return secret_store.get_ari_dir()
 
 
 def set_ari_dir(path: Optional[str]) -> None:

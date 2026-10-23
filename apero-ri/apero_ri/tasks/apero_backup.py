@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from apero_ri.core import backup_backend as bb
+from apero_ri.core import secret_store
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -16,7 +17,6 @@ from apero_ri.tasks import apero_async
 # =============================================================================
 __NAME__ = "apero_ri.tasks.apero_backup"
 # Set AIR local data directory
-ARI_DIR = Path.home() / ".ari"
 # Set the list of parameters required for this task
 PARAM_LIST = ["LOCAL_DATA_DIR", "INSTRUMENT", "TASK_CONFIG"]
 # Set the list of APERO profile parameters that this task depends on (if any)
@@ -76,7 +76,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
     def run_job(self, params: Dict[str, Any]):
         local_data_dir = (
-            Path(params.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+            Path(params.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
             .expanduser()
             .resolve()
         )

@@ -23,6 +23,8 @@ super_admin:
     - manage.instrument.admin
     - login_as.super_admin
     - login_as.admin
+    # server-to-server sync (users, profiles, secrets): super admin only
+    - manage.admin.server_sync
   groups:
     - admin
 

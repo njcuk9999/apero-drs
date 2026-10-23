@@ -437,7 +437,7 @@ def format_duration(seconds: Optional[float]) -> str:
 # Report storage + share tokens
 # =============================================================================
 def set_ari_dir(path: Path) -> None:
-    """Re-point the module-level ARI dir (mirrors basket_funcs.set_ari_dir)."""
+    """Re-point the module-level ARI dir (fallback when ARI_DIR is unset)."""
     global ARI_DIR
     ARI_DIR = Path(path)
 

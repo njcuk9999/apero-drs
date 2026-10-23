@@ -30,7 +30,6 @@ from apero_ri.tasks import apero_async
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_ri.tasks.legacy_reject_gsheet'
-ARI_DIR = Path.home() / '.ari'
 
 PARAM_LIST = ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG']
 APERO_PROFILE_PARAM_LIST: List[str] = []
@@ -355,7 +354,7 @@ class LegacyRejectGSheetTask(apero_async.AperoAsyncTask):
         task_cfg = dict(params.get('TASK_CONFIG') or {})
         dry_run = _as_bool(task_cfg.get('DRY_RUN', task_cfg.get('dry_run')))
         local_data_dir = Path(
-            params.get('LOCAL_DATA_DIR', str(ARI_DIR))
+            params.get('LOCAL_DATA_DIR', str(get_ari_dir()))
         ).expanduser().resolve()
         assets_dir = local_data_dir / 'apero-assets'
 

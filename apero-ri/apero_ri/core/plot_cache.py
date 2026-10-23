@@ -35,6 +35,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from apero_ri.core import secret_store
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -60,14 +62,12 @@ CACHE_SECTIONS = [
     "qc_graphs",
 ]
 
-ARI_DIR = Path(os.environ.get("ARI_DIR", str(Path.home() / ".ari")))
-
 
 # =========================================================================
 # Configuration helpers
 # =========================================================================
 def _config_path(data_dir: Optional[Path] = None) -> Path:
-    base = Path(data_dir) if data_dir else ARI_DIR
+    base = Path(data_dir) if data_dir else secret_store.get_ari_dir()
     return base / _DEFAULT_CACHE_DIR_NAME / _CONFIG_FILENAME
 
 
@@ -126,7 +126,7 @@ def resolve_cache_root(
     custom = str(cfg.get("cache_dir", "") or "").strip()
     if custom:
         return Path(custom).expanduser().resolve()
-    base = Path(data_dir) if data_dir else ARI_DIR
+    base = Path(data_dir) if data_dir else secret_store.get_ari_dir()
     return base / _DEFAULT_CACHE_DIR_NAME
 
 

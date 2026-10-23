@@ -21,6 +21,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from apero_ri.core import secret_store
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -721,7 +723,8 @@ def _run_sync_source_override(
         )
 
     local_data_dir = (
-        Path(run_params.get("LOCAL_DATA_DIR") or str(Path.home() / ".ari"))
+        Path(run_params.get("LOCAL_DATA_DIR")
+             or str(secret_store.get_ari_dir()))
         .expanduser()
         .resolve()
     )
@@ -827,7 +830,8 @@ def _copy_sync_profile_override(
         profile_name,
     )
     local_data_dir = (
-        Path(run_params.get("LOCAL_DATA_DIR") or str(Path.home() / ".ari"))
+        Path(run_params.get("LOCAL_DATA_DIR")
+             or str(secret_store.get_ari_dir()))
         .expanduser()
         .resolve()
     )

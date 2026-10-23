@@ -64,6 +64,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from apero_ri.core import secret_store
+
 
 # =============================================================================
 # Define variables
@@ -327,7 +329,7 @@ def run_for_profile(task_key: str,
         )
     # Default output directory is ~/.ari, matching the server convention.
     if not local_data_dir:
-        local_data_dir = str(Path.home() / '.ari')
+        local_data_dir = str(secret_store.get_ari_dir())
 
     # Build the full params dict that run() expects, wrapping the single
     # profile in the same structure the server builds from

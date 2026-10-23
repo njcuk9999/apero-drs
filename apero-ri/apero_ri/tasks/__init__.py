@@ -311,6 +311,23 @@ MULTI_PROCESS["FAV_OBJECT_WATCHER"] = _entry["multi_process"]
 LOCAL_TASK["FAV_OBJECT_WATCHER"] = _entry["local_task"]
 FILTERS["FAV_OBJECT_WATCHER"] = _entry["filters"]
 
+# SERVER_SYNC (records) and SERVER_SYNC_TASK_DATA (derived tasks/ files)
+for _key, _cls in (('SERVER_SYNC', 'ServerSyncTask'),
+                   ('SERVER_SYNC_TASK_DATA', 'ServerSyncTaskDataTask')):
+    _entry = _register_task(_key, 'server_sync', _cls, 'GLOBAL')
+    TASK_LIST[_key] = _entry['task_cls']
+    P_LIST[_key] = _entry['param_list']
+    AP_LIST[_key] = _entry['ap_list']
+    FREQ[_key] = _entry['frequency']
+    ENABLED[_key] = _entry['enabled']
+    TYPE[_key] = _entry['task_type']
+    USE_SUBPROCESS[_key] = _entry['use_subprocess']
+    MULTI_PROCESS[_key] = _entry['multi_process']
+    LOCAL_TASK[_key] = _entry['local_task']
+    FILTERS[_key] = _entry['filters']
+# task outputs are large: sync them every 6 hours by default
+FREQ['SERVER_SYNC_TASK_DATA'] = 6.0
+
 # LEGACY_ASTROM_GSHEET
 _entry = _register_task(
     'LEGACY_ASTROM_GSHEET',

@@ -7,6 +7,7 @@ import threading
 import time as _time
 
 import yaml
+from apero_ri.core import secret_store
 from apero_ri.core import apero_checks as checks_core
 from apero_ri.core import user_data as ud
 from apero_ri.core.auth import (
@@ -75,7 +76,7 @@ def _build_apero_checks_setup_status(data_dir=None) -> dict:
     """Return completion state for the server-side APERO checks setup."""
     local_data_dir = Path(data_dir or "").expanduser()
     if not str(local_data_dir):
-        local_data_dir = Path.home() / ".ari"
+        local_data_dir = secret_store.get_ari_dir()
 
     astrom_dir = local_data_dir / "apero-assets" / "astrometrics"
     config_path = local_data_dir / "api_config.json"
@@ -1534,7 +1535,7 @@ def make_page_view(app, page_id: str, package_dir: Path):
             try:
                 resolved_data_dir = app._resolve_local_data_dir()
             except Exception:  # noqa: BLE001
-                resolved_data_dir = Path.home() / ".ari"
+                resolved_data_dir = secret_store.get_ari_dir()
             resolved_data_dir = Path(resolved_data_dir).expanduser()
             api_config_path = resolved_data_dir / "api_config.json"
             context["resolved_data_dir"] = str(resolved_data_dir)

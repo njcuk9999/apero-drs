@@ -38,7 +38,6 @@ from apero_ri.tasks import apero_async
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_ri.tasks.legacy_known_errors_gsheet'
-ARI_DIR = Path.home() / '.ari'
 
 PARAM_LIST = ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG']
 APERO_PROFILE_PARAM_LIST: List[str] = []
