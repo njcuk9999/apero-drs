@@ -178,6 +178,16 @@ item.comment = 'Means that we do not have the language entry given'
 langlist.add(item)
 
 # =============================================================================
+# 00-000-00015
+# =============================================================================
+item = langlist.create('00-000-00015', kind='error-code')
+item.value['ENG'] = ('Parameter {0}={1} does not have data-type {2}{3}\n'
+					 'Please check the input yaml files.')
+item.arguments = 'key, value, dtype, optional function text (empty if omitted)'
+item.comment = 'Parameter value does not match its declared data type'
+langlist.add(item)
+
+# =============================================================================
 # 00-001-00000 
 # =============================================================================
 item = langlist.create('00-001-00000', kind='error-code')
