@@ -105,6 +105,9 @@ class PeerClient:
         """
         import requests
 
+        check = getattr(self, 'cancel_check', None)
+        if callable(check):
+            check()
         path = f'{self._base_path}{PEER_PREFIX}/{action}'
         nonce = secrets.token_hex(16)
         timestamp = str(int(time.time()))

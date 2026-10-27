@@ -520,10 +520,24 @@
 
     function renderRunStatus(run) {
         var el = $('ss-run-status');
-        var busy = run.status === 'running';
+        var busy = run.status === 'running' || run.status === 'cancelling';
         $('ss-analyse').disabled = busy;
         $('ss-run-now').disabled = busy;
+        $('ss-stop').disabled = run.status === 'cancelling';
         if (!run.status) { el.innerHTML = ''; return; }
+        if (run.status === 'cancelling') {
+            el.textContent = 'Stopping safely. Waiting for the current ' +
+                'operation to finish; automatic sync is off.';
+            return;
+        }
+        if (run.status === 'cancelled' || run.status === 'interrupted') {
+            el.textContent = run.status === 'cancelled' ?
+                'Sync stopped. Completed changes are kept. Automatic ' +
+                'sync is off; analyse again before restarting.' :
+                'Sync interrupted: its server process exited. ' +
+                'Analyse again before restarting.';
+            return;
+        }
         if (busy) {
             el.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' +
                 (run.dry_run ? 'Analysing' : 'Syncing') + ' since ' +
@@ -541,6 +555,16 @@
         (s.errors || []).slice(0, 20).forEach(function (e) {
             lines.push('Error: ' + e);
         });
+        if (state.resolutionPeerId === state.peerId) {
+            if (s.ok) {
+                lines.push(s.conflicts ? s.conflicts +
+                    ' conflict(s) still need a decision.' :
+                    'Conflicts resolved. Run sync now to apply the changes.');
+            } else {
+                lines.push('Decisions saved, but conflict analysis failed. ' +
+                           'Retry Analyse to refresh the list.');
+            }
+        }
         el.innerHTML = '<div class="' + cls + '">' + lines.map(esc)
             .join('<br>') + '</div>';
     }
@@ -551,7 +575,8 @@
             api('overview').then(function (data) {
                 state.overview = data;
                 var peer = currentPeer();
-                if (peer && peer.run && peer.run.status === 'running') {
+                if (peer && peer.run && ['running', 'cancelling'].includes(
+                    peer.run.status)) {
                     renderRunStatus(peer.run);
                     poll();
                 } else {
@@ -691,11 +716,20 @@
             keys: keys,
             resolution: details.querySelector('[data-bulk-res]').value
         };
-        api('resolve', body).then(function () {
-            toast('Decision saved for ' + keys.length + ' record(s). ' +
-                  'Analyse again to see the result.');
-            loadPlan();
-        }).catch(fail);
+        btn.disabled = true;
+        return api('resolve', body).then(function () {
+            toast('Decisions saved. Refreshing conflict analysis...');
+            var request = { peer_id: body.peer_id, dry_run: true,
+                            kind: $('ss-run-kind').value };
+            return api('run', request);
+        }).then(function (data) {
+            state.resolutionPeerId = body.peer_id;
+            renderRunStatus(data.run);
+            poll();
+        }).catch(function (err) {
+            btn.disabled = false;
+            fail(err);
+        });
     }
 
     // ------------------------------------------------------------------
@@ -869,6 +903,14 @@
     $('ss-run-now').addEventListener('click', function () {
         startRun(false);
     });
+    $('ss-stop').addEventListener('click', function () {
+        api('stop', { peer_id: state.peerId }).then(function (data) {
+            state.resolutionPeerId = null;
+            renderRunStatus(data.run);
+            toast('Stop requested. Automatic sync disabled for this peer.');
+            poll();
+        }).catch(fail);
+    });
     $('ss-plan').addEventListener('click', onPlanClick);
     $('ss-local-items').addEventListener('click', onLocalSave);
     $('ss-ssh-preview').addEventListener('click', onSshPreview);
@@ -880,6 +922,7 @@
 
     loadOverview().then(function () {
         var peer = currentPeer();
-        if (peer && peer.run && peer.run.status === 'running') { poll(); }
+        if (peer && peer.run && ['running', 'cancelling'].includes(
+            peer.run.status)) { poll(); }
     });
 }());

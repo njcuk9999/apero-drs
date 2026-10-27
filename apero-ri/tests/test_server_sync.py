@@ -172,6 +172,52 @@ def test_crypto_round_trip_and_tamper() -> None:
         crypto.parse_token('nope')
 
 
+def test_stop_prevents_next_push(pair: Any,
+                               monkeypatch: pytest.MonkeyPatch) -> None:
+    """Stopping after reading data prevents the next remote mutation."""
+    server_a, server_b, peer_id, _ = pair
+    _add_user(server_a, 'alice', 'alice@x')
+    original = engine.load_records
+
+    def load(category: str, keys: Any) -> dict:
+        records = original(category, keys)
+        store.request_stop(peer_id, 'tester')
+        return records
+
+    monkeypatch.setattr(engine, 'load_records', load)
+    summary = _run(server_a, peer_id)
+    assert summary.get('cancelled') is True
+    assert summary['ok'] is False
+    assert 'alice' not in _users(server_b)
+    with server_a.active():
+        assert store.run_status(peer_id)['status'] == 'cancelled'
+        assert store.get_peer(peer_id)['auto_sync'] is False
+        assert 'last_sync_at' not in store.get_peer(peer_id)
+        with pytest.raises(store.SyncCancelled):
+            store.check_cancelled(peer_id)
+
+
+def test_stop_clears_legacy_stale_marker(pair: Any) -> None:
+    """A stale running marker can be stopped when no worker holds the lock."""
+    server_a, _, peer_id, _ = pair
+    with server_a.active():
+        path = store.peer_dir(peer_id) / 'run.json'
+        store.write_json(path, dict(status='running'))
+        result = store.request_stop(peer_id, 'tester')
+        assert result['status'] == 'cancelled'
+        assert store.run_status(peer_id)['status'] == 'cancelled'
+
+
+def test_exited_process_marker_is_interrupted(pair: Any) -> None:
+    """PID reuse cannot leave a previous process's run marked active."""
+    server_a, _, peer_id, _ = pair
+    with server_a.active():
+        state = store.running_status()
+        state['process_started'] -= 1
+        store.write_json(store.peer_dir(peer_id) / 'run.json', state)
+        assert store.run_status(peer_id)['status'] == 'interrupted'
+
+
 def test_mirror_users_root_excluded_and_deletions(pair: Any) -> None:
     """Mirror exchanges users both ways, never roots, and propagates deletes."""
     server_a, server_b, peer_id, _ = pair
@@ -497,6 +543,13 @@ def test_peer_endpoint_authentication(tmp_path: Path,
         resp = client.post('/api/admin/server-sync/issue_token',
                            json=dict(label='x', scope='bad'))
         assert resp.status_code == 400
+        _, _, peer_token = crypto.new_token()
+        peer = store.add_peer(dict(label='test', auto_sync=True), peer_token)
+        resp = client.post('/api/admin/server-sync/stop',
+                   json=dict(peer_id=peer['peer_id']))
+        assert resp.status_code == 200
+        assert resp.get_json()['run']['status'] == 'cancelled'
+        assert store.get_peer(peer['peer_id'])['auto_sync'] is False
     finally:
         auth.set_ari_dir(str(original_root))
         user_data.set_ari_dir(str(original_user_root))

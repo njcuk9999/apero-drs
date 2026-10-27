@@ -503,12 +503,26 @@ def run_peer(peer_id: str, dry_run: bool = True, kind: str = 'all',
                    warnings=[], conflicts=0, ok=False)
     with store.sync_lock():
         try:
+            store.check_cancelled(peer_id)
+            status = store.running_status()
+            status.update(dry_run=dry_run, kind=kind, actor=actor,
+                          started_at=store.now_iso(), started_ts=started)
+            store.write_json(store.peer_dir(peer_id) / 'run.json', status)
             _run_locked(peer, dry_run, kind, summary, log)
+            store.check_cancelled(peer_id)
             summary['ok'] = not summary['errors']
+        except store.SyncCancelled as exc:
+            summary['cancelled'] = True
+            summary['warnings'].append(str(exc))
+            log(str(exc))
         except Exception as exc:
             summary['errors'].append(f'{type(exc).__name__}: {exc}')
             log(f'ERROR {exc}')
     summary['seconds'] = round(time.time() - started, 2)
+    status = 'cancelled' if summary.get('cancelled') else 'done'
+    run = dict(status=status, dry_run=dry_run, kind=kind, summary=summary,
+               finished_at=store.now_iso())
+    store.write_json(store.peer_dir(peer_id) / 'run.json', run)
     _record_run(peer, summary, dry_run, auto, actor)
     return summary
 
@@ -527,14 +541,17 @@ def _run_locked(peer: Dict[str, Any], dry_run: bool, kind: str,
         summary['errors'] += info['blocking']
         return
     client = make_client(peer)
+    client.cancel_check = lambda: store.check_cancelled(peer['peer_id'])
     categories = categories_for(peer, kind)
     log(f'Categories: {", ".join(categories) or "(none)"}')
     remote_all = client.manifest(categories)
     state = store.load_state(peer['peer_id'])
     plans = dict()
     for category in categories:
+        store.check_cancelled(peer['peer_id'])
         log(f'Scanning {category}')
         local = scan(category)
+        store.check_cancelled(peer['peer_id'])
         remote = remote_all.get(category) or dict()
         base_hashes = store.load_base(peer['peer_id'], category)
         resolutions = state['resolutions'].get(category, dict())
@@ -612,6 +629,7 @@ def _execute(client: peer_api.PeerClient, peer: Dict[str, Any],
     # --- pull: fetch data for live records, delete tombstoned ones
     pulls = plan['pull']
     for chunk in _batches(pulls, batch):
+        store.check_cancelled(peer['peer_id'])
         live = [i['key'] for i in chunk if _live(i['remote'])]
         fetched = client.fetch(category, live) if live else dict()
         upserts = dict()
@@ -626,12 +644,15 @@ def _execute(client: peer_api.PeerClient, peer: Dict[str, Any],
             else:
                 deletes[key] = dict(ts=rent.get('ts') if rent else None,
                                     l=item['label'])
+        store.check_cancelled(peer['peer_id'])
         errors.update(apply_records(category, upserts, deletes))
         for key in list(upserts) + list(deletes):
             if key not in errors:
                 base_hashes[key] = remote.get(key, dict()).get('h', DELETED)
+            store.save_base(peer['peer_id'], category, base_hashes)
     # --- push (mirror only): send our data / tombstones
     for chunk in _batches(plan['push'], batch):
+        store.check_cancelled(peer['peer_id'])
         live = [i['key'] for i in chunk if _live(i['local'])]
         data = load_records(category, live)
         upserts = dict()
@@ -646,13 +667,16 @@ def _execute(client: peer_api.PeerClient, peer: Dict[str, Any],
             else:
                 deletes[key] = dict(ts=lent.get('ts') if lent else None,
                                     l=item['label'])
+        store.check_cancelled(peer['peer_id'])
         remote_errors = client.apply(category, upserts, deletes)
         errors.update({k: f'remote: {v}' for k, v in remote_errors.items()})
         for key in list(upserts) + list(deletes):
             if key not in remote_errors:
                 base_hashes[key] = local.get(key, dict()).get('h', DELETED)
+            store.save_base(peer['peer_id'], category, base_hashes)
     # --- merge: combine both versions and write to both sides
     for item in plan['merge']:
+        store.check_cancelled(peer['peer_id'])
         key = item['key']
         rdata = client.fetch(category, [key]).get(key)
         ldata = load_records(category, [key]).get(key)
@@ -660,13 +684,16 @@ def _execute(client: peer_api.PeerClient, peer: Dict[str, Any],
         entry = dict(data=merged, h=record_hash(merged), ts=time.time(),
                      i=(item['local'] or dict()).get('i') or [],
                      l=item['label'])
+        store.check_cancelled(peer['peer_id'])
         errors.update(apply_records(category, {key: entry}, dict()))
         if peer.get('mode') == 'mirror':
+            store.check_cancelled(peer['peer_id'])
             remote_errors = client.apply(category, {key: entry}, dict())
             if remote_errors:
                 errors[key] = f'remote: {remote_errors.get(key)}'
                 continue
         base_hashes[key] = entry['h']
+        store.save_base(peer['peer_id'], category, base_hashes)
     # --- agreed records (and resolved 'keep' in copy mode)
     for item in plan['agree']:
         base_hashes[item['key']] = (item['local'] or dict()).get('h')
@@ -691,7 +718,7 @@ def _record_run(peer: Dict[str, Any], summary: Dict[str, Any],
     """
     changes = dict(last_run_at=store.now_iso(), last_run_ok=summary['ok'],
                    last_run_dry=dry_run, last_conflicts=summary['conflicts'])
-    if not dry_run:
+    if not dry_run and summary['ok']:
         changes['last_sync_at'] = changes['last_run_at']
     store.update_peer(peer['peer_id'], **changes)
     store.append_history(summary)

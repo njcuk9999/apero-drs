@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 import yaml
+import psutil
 
 from apero_ri.core import auth
 from apero_ri.core import secret_store
@@ -57,6 +58,75 @@ HISTORY_LIMIT = 500
 
 class SyncBusy(RuntimeError):
     """Raised when another sync already holds the sync lock."""
+
+
+class SyncCancelled(RuntimeError):
+    """Raised at a safe checkpoint after an administrator requests stop."""
+
+
+def check_cancelled(peer_id: str) -> None:
+    """Reject further work for a stopped peer.
+
+    :param peer_id: Local peer identifier.
+    :return: None; raises SyncCancelled when stopped.
+    """
+    if (peer_dir(peer_id) / 'cancel.json').exists():
+        raise SyncCancelled('Sync stopped by administrator')
+
+
+def request_stop(peer_id: str, actor: str) -> dict:
+    """Persist cancellation and disable automatic runs for this peer.
+
+    :param peer_id: Local peer identifier.
+    :param actor: Administrator requesting cancellation.
+    :return: Updated run status.
+    """
+    directory = peer_dir(peer_id)
+    write_json(directory / 'cancel.json', dict(actor=actor, at=now_iso()))
+    update_peer(peer_id, auto_sync=False)
+    path = directory / 'run.json'
+    run = read_json(path, dict())
+    try:
+        with sync_lock():
+            run.update(status='cancelled', finished_at=now_iso())
+    except SyncBusy:
+        run['status'] = 'cancelling'
+    write_json(path, run)
+    return run
+
+
+def run_status(peer_id: str) -> dict:
+    """Recover a running marker whose owning process has exited.
+
+    :param peer_id: Local peer identifier.
+    :return: Current run status.
+    """
+    path = peer_dir(peer_id) / 'run.json'
+    state = read_json(path, dict())
+    if state.get('status') not in ('running', 'cancelling'):
+        return state
+    pid = state.get('pid')
+    if pid:
+        try:
+            process = psutil.Process(pid)
+            if process.create_time() == state.get('process_started'):
+                return state
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.AccessDenied:
+            return state
+        state.update(status='interrupted', finished_at=now_iso())
+        write_json(path, state)
+    return state
+
+
+def running_status() -> dict:
+    """Return process identity for a newly running sync.
+
+    :return: Status and process identity fields.
+    """
+    return dict(status='running', pid=os.getpid(),
+                process_started=psutil.Process().create_time())
 
 
 # =============================================================================

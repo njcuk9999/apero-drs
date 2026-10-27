@@ -270,6 +270,9 @@
                     <button id="ss-run-now" type="button" class="ari-btn ari-btn--primary ari-btn--sm">
                         <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Run sync now
                     </button>
+                    <button id="ss-stop" type="button" class="ari-btn ari-btn--danger ari-btn--sm" title="Stop this peer's sync safely and disable automatic sync">
+                        <i class="fa-solid fa-stop" aria-hidden="true"></i> Stop sync
+                    </button>
                 </div>
                 <div id="ss-run-status" class="ss-run-status" role="status" aria-live="polite"></div>
                 <div id="ss-plan" class="ss-plan"></div>
@@ -375,5 +378,5 @@ window.ARI_SERVER_SYNC = {
     profilesUrl: {{ url_for('home_admin_portal_apero_profiles') | tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_server_sync.js', v='20261022b') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_server_sync.js', v='20261027b') }}"></script>
 {% endblock %}

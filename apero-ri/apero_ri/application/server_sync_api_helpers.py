@@ -105,8 +105,7 @@ def _peer_view(peer: Dict[str, Any]) -> Dict[str, Any]:
     view = dict(peer)
     view['categories'] = dict(adapters.default_categories(),
                               **(peer.get('categories') or dict()))
-    view['run'] = store.read_json(store.peer_dir(peer['peer_id'])
-                                  / 'run.json', dict())
+    view['run'] = store.run_status(peer['peer_id'])
     view['has_token'] = bool(store.get_peer_token(peer['peer_id']))
     return view
 
@@ -258,7 +257,8 @@ def _run_thread(peer_id: str, dry_run: bool, kind: str, actor: str) -> None:
     except Exception as exc:
         summary = dict(ok=False, errors=[f'{type(exc).__name__}: {exc}'],
                        conflicts=0)
-    status = dict(status='done', dry_run=dry_run, kind=kind,
+    outcome = 'cancelled' if summary.get('cancelled') else 'done'
+    status = dict(status=outcome, dry_run=dry_run, kind=kind,
                   finished_at=store.now_iso(), summary=summary)
     store.write_json(path, status)
     # a successful reviewed (non-dry) manual run unlocks automatic sync
@@ -278,19 +278,38 @@ def run(app: Any, user: dict) -> Any:
         return _fail(f'kind must be one of {engine.RUN_KINDS}')
     dry_run = bool(body.get('dry_run', True))
     path = store.peer_dir(peer['peer_id']) / 'run.json'
-    current = store.read_json(path, dict())
-    # a 'running' marker older than 6h is from a crashed worker
-    started = float(current.get('started_ts') or 0)
-    if current.get('status') == 'running' and time.time() - started < 21600:
+    current = store.run_status(peer['peer_id'])
+    if current.get('status') in ('running', 'cancelling'):
         return _fail('A run is already in progress for this peer', 409)
-    status = dict(status='running', dry_run=dry_run, kind=kind,
+    status = dict(dry_run=dry_run, kind=kind,
                   started_at=store.now_iso(), started_ts=time.time(),
                   actor=user['username'])
-    store.write_json(path, status)
+    status.update(store.running_status())
+    try:
+        with store.sync_lock():
+            (store.peer_dir(peer['peer_id']) / 'cancel.json').unlink(
+                missing_ok=True)
+            store.write_json(path, status)
+    except store.SyncBusy as exc:
+        return _fail(str(exc), 409)
     thread_args = (peer['peer_id'], dry_run, kind, user['username'])
     thread = threading.Thread(target=_run_thread, args=thread_args,
                               daemon=True, name='ari-server-sync')
     thread.start()
+    return jsonify(success=True, run=status)
+
+
+def stop(app: Any, user: dict) -> Any:
+    """Request a safe stop and disable this peer's automatic sync.
+
+    :param app: ARI application.
+    :param user: Authenticated super administrator.
+    :return: JSON cancellation status.
+    """
+    peer_id = str(_body().get('peer_id', ''))
+    if store.get_peer(peer_id) is None:
+        return _fail('Unknown peer', 404)
+    status = store.request_stop(peer_id, user['username'])
     return jsonify(success=True, run=status)
 
 
@@ -425,6 +444,7 @@ ADMIN_ACTIONS = dict(
     delete_peer=(delete_peer, 'POST'),
     test_peer=(test_peer, 'POST'),
     run=(run, 'POST'),
+    stop=(stop, 'POST'),
     plan=(plan, 'GET'),
     resolve=(resolve, 'POST'),
     history=(history, 'GET'),
