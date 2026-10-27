@@ -335,16 +335,20 @@ class ParamDict(CaseInDict):
     def rget(self, key: str, override: Any = None, required: bool = False,
              func: Union[str, None] = None) -> Any:
         """
-        Return a parameter or override, checking its instance data type.
+        Return a parameter or override, casting to its instance data type.
+
+        Casting does not change the stored value. Numeric conversions use
+        Python's casting rules (including truncation for float to int).
+        Booleans accept 0/1 and the strings "false"/"true" or "0"/"1".
 
         :param key: str, case-insensitive parameter key
         :param override: Any, non-None value to return instead of self[key];
                          does not change the stored parameter
         :param required: bool, raise if the key is missing without an override
         :param func: str or None, function name to include in type errors
-        :return: Any, selected value, or None for an optional missing key
+        :return: Any, cast value, or None for an optional missing key
         :raises AperoCodedException: if required and missing, or the selected
-                                    value has the wrong data type
+                                    value is None or cannot be cast
         """
         key = drs_text.capitalise_key(key)
         if override is not None:
@@ -356,10 +360,30 @@ class ParamDict(CaseInDict):
 
         instance = self.instances.get(key, None)
         dtype = getattr(instance, 'dtype', None)
-        if dtype is not None and not isinstance(value, dtype):
-            function_text = '' if func is None else f'\nFunction: {func}'
-            eargs = [key, dtype, function_text]
-            raise AperoCodedException(None, '00-000-00015', targs=eargs)
+        if dtype is not None:
+            try:
+                if value is None:
+                    raise TypeError('Cannot cast a None parameter')
+                cast_value = value
+                if dtype is bool:
+                    if isinstance(cast_value, str):
+                        cast_value = cast_value.lower()
+                        if cast_value in ('1', 'true'):
+                            cast_value = True
+                        elif cast_value in ('0', 'false'):
+                            cast_value = False
+                    if cast_value not in (True, 1, False, 0):
+                        raise ValueError('Boolean parameters require '
+                                         'true/false or 0/1')
+                if (dtype in (int, float, bool)
+                        or not isinstance(cast_value, dtype)):
+                    cast_value = dtype(cast_value)
+            except (TypeError, ValueError, OverflowError) as error:
+                function_text = '' if func is None else f'\nFunction: {func}'
+                eargs = [key, value, dtype, function_text]
+                raise AperoCodedException(None, '00-000-00015',
+                                          targs=eargs) from error
+            return cast_value
         return value
 
     def set_source(self, key: str, source: str):
@@ -1275,8 +1299,8 @@ class SubParamDict():
         :param override: Any, non-None value to return without storing it
         :param required: bool, raise if missing without an override
         :param func: str or None, function name included in type errors
-        :return: Any, selected value, or None for an optional missing key
-        :raises AperoCodedException: if required and missing, or mistyped
+        :return: Any, cast value, or None for an optional missing key
+        :raises AperoCodedException: if required and missing, or uncastable
         """
         full_key = f'{self.path}{key}'
         rget_kwargs = dict(override=override, required=required, func=func)

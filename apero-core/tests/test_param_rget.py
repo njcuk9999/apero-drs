@@ -13,7 +13,8 @@ from aperocore.drs_lang import drs_lang_text
 def params():
     """Return a parameter dictionary with typed and untyped values."""
     result = param_functions.ParamDict()
-    for key, value, dtype in [('COUNT', 3, int), ('FLAG', True, bool),
+    for key, value, dtype in [('COUNT', 3, int), ('RATIO', 1.5, float),
+                              ('TEXT', 'text', str), ('FLAG', True, bool),
                               ('VALUES', [1], list), ('UNTYPED', 'any', None)]:
         instance = constant_functions.Const(key, dtype=dtype, source=__file__)
         result.set(key, value, instance=instance)
@@ -42,6 +43,71 @@ def test_rget_override_does_not_mutate(params, key, override):
 def test_rget_none_override_uses_stored_value(params):
     """A None override means that the stored parameter is selected."""
     assert params.rget('COUNT', override=None) == 3
+
+
+@pytest.mark.parametrize('view', ['params', 'sub_params'])
+@pytest.mark.parametrize('use_override', [False, True])
+@pytest.mark.parametrize('key, value, expected, dtype', [
+    ('COUNT', 40.0, 40, int),
+    ('COUNT', 40.9, 40, int),
+    ('COUNT', '40', 40, int),
+    ('COUNT', True, 1, int),
+    ('COUNT', False, 0, int),
+    ('RATIO', 40, 40.0, float),
+    ('RATIO', '1.5', 1.5, float),
+    ('RATIO', True, 1.0, float),
+    ('FLAG', 1, True, bool),
+    ('FLAG', 0, False, bool),
+    ('FLAG', 1.0, True, bool),
+    ('FLAG', 0.0, False, bool),
+    ('FLAG', 'TRUE', True, bool),
+    ('FLAG', 'False', False, bool),
+    ('FLAG', '1', True, bool),
+    ('FLAG', '0', False, bool),
+    ('TEXT', 40, '40', str),
+    ('VALUES', (1, 2), [1, 2], list),
+])
+def test_rget_casts_without_mutation(request, view, use_override,
+                                    key, value, expected, dtype):
+    """Cast stored values and overrides through either view without writes."""
+    params = request.getfixturevalue(view)
+    if not use_override:
+        params[key] = value
+    stored = params[key]
+    parent = getattr(params, 'param_dict', params)
+    parent.lock()
+    result = params.rget(key, override=value if use_override else None)
+    assert result == expected
+    assert type(result) is dtype
+    assert params[key] is stored
+
+
+@pytest.mark.parametrize('view', ['params', 'sub_params'])
+@pytest.mark.parametrize('key, value', [
+    ('COUNT', None),
+    ('COUNT', 'wrong'),
+    ('COUNT', float('inf')),
+    ('COUNT', float('nan')),
+    ('COUNT', []),
+    ('RATIO', None),
+    ('RATIO', 'wrong'),
+    ('TEXT', None),
+    ('FLAG', None),
+    ('FLAG', 2),
+    ('FLAG', 'wrong'),
+    ('FLAG', ''),
+    ('VALUES', None),
+    ('VALUES', 1),
+])
+def test_rget_rejects_uncastable_values(request, view, key, value):
+    """Keep coded errors for None and failed or invalid conversions."""
+    params = request.getfixturevalue(view)
+    params[key] = value
+    with pytest.raises(param_functions.AperoCodedException) as caught:
+        params.rget(key, func='extract')
+    assert caught.value.code == '00-000-00015'
+    assert caught.value.targs[1] is value
+    assert '\nFunction: extract' in caught.value.message.get_text()
 
 
 def test_rget_missing_optional(params):
@@ -77,7 +143,7 @@ def test_rget_type_error(params, func, use_override):
     assert error.code == '00-000-00015'
     assert isinstance(error.message, drs_lang_text.Text)
     message = error.message.get_text()
-    assert f'Parameter COUNT does not have data-type {int}' in message
+    assert f'Parameter COUNT=wrong does not have data-type {int}' in message
     assert 'Please check the input yaml files.' in message
     if func is None:
         assert 'Function:' not in message
@@ -150,5 +216,6 @@ def test_sub_rget_type_error(sub_params, func, use_override):
     assert caught.value.code == '00-000-00015'
     assert isinstance(caught.value.message, drs_lang_text.Text)
     message = caught.value.message.get_text()
-    assert 'Parameter SECTION.COUNT does not have data-type' in message
+    assert 'Parameter SECTION.COUNT=' in message
+    assert f'does not have data-type {int}' in message
     assert ('Function:' in message) == (func is not None)
