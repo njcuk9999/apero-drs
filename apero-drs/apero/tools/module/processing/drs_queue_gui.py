@@ -27,6 +27,7 @@ Created on 2026-08-31
 """
 import json
 import os
+import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler
@@ -69,6 +70,9 @@ GUI_DEFAULT_ROWS = 25
 GUI_DETAIL_LIMIT = 10000
 # define the maximum number of activity log messages kept in memory
 GUI_MAX_MESSAGES = 200
+# define the maximum number of task log bytes sent in one response (the
+#    first request for a large log only gets the tail)
+GUI_LOG_MAX_BYTES = 5 * 1024 * 1024
 # define the fields of the batch template shown in the settings panel
 GUI_TEMPLATE_FIELDS = ['time', 'nodes', 'cpus_per_task', 'mem',
                        'account', 'job_name', 'mail_user', 'mail_type']
@@ -120,6 +124,8 @@ class GuiState:
         self.messages: List[str] = []
         # the worker thread for the current action
         self.worker: Optional[threading.Thread] = None
+        # set by "stop all running" so an active queue run starts nothing new
+        self.cancel = threading.Event()
         # lock protecting the state
         self._lock = threading.Lock()
 
@@ -153,6 +159,7 @@ class GuiState:
                 return False
             # mark as busy
             self.busy = True
+            self.cancel.clear()
 
         # define the worker wrapper (clears busy when done)
         def _worker():
@@ -231,6 +238,133 @@ def get_status_data(params: ParamDict,
     status['entries'] = data
     status['details'] = details
     return status
+
+
+def _split_qid(qid: str) -> Optional[List[str]]:
+    """
+    Split and validate a queue id "{group}/{run_file}"
+
+    :param qid: str, the queue id from the client
+
+    :return: list [group, run_file] or None if the qid is not valid (we
+             only accept plain queue names so no path can escape the
+             queue directory)
+    """
+    parts = str(qid).split('/')
+    if len(parts) != 2:
+        return None
+    group, run_file = parts
+    if not group.startswith('APERO-QUEUE-GROUP-'):
+        return None
+    if not run_file.startswith('APERO-QUEUE-RUN-'):
+        return None
+    if not run_file.endswith('.yaml'):
+        return None
+    for part in parts:
+        if '..' in part or '\\' in part or '\x00' in part:
+            return None
+    return [group, run_file]
+
+
+def _pid_alive(pid: Any) -> bool:
+    """
+    Check whether a process id is still alive
+
+    :param pid: Any, the pid (from the run yaml file)
+
+    :return: bool, True if the process exists
+    """
+    try:
+        os.kill(int(pid), 0)
+    except (TypeError, ValueError, ProcessLookupError):
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def get_task_log(params: ParamDict, qid: str,
+                 offset: int = -1) -> Dict[str, Any]:
+    """
+    Get (part of) the log of one queue task as a plain dictionary
+
+    The log is read from byte "offset" onward. offset < 0 means a first
+    read (only the last GUI_LOG_MAX_BYTES are sent for large logs). While
+    a task is running only complete lines are sent so the client never
+    receives half a line (or half an ANSI colour code).
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param qid: str, the queue id "{group}/{run_file}"
+    :param offset: int, the byte offset to read from (-1 = first read)
+
+    :return: dictionary with keys 'qid', 'state', 'pid', 'pid_host',
+             'local', 'alive', 'exists', 'path', 'size', 'start',
+             'offset', 'text', 'truncated', 'reset' and 'error'
+    """
+    out = dict(qid=qid, state=None, pid=None, pid_host=None, local=True,
+               alive=False, exists=False, path='', size=0, start=0,
+               offset=0, text='', truncated=False, reset=False,
+               error=None)
+    parts = _split_qid(qid)
+    if parts is None:
+        out['error'] = 'invalid queue id'
+        return out
+    group, run_file = parts
+    queue_path = drs_queue.get_queue_path(params)
+    # -------------------------------------------------------------------------
+    # find the current state of the task (and its pid if running)
+    for qstate in drs_queue.QUEUE_SUB_DIRS:
+        run_path = os.path.join(queue_path, qstate, group, run_file)
+        if os.path.exists(run_path):
+            out['state'] = qstate
+            break
+    if out['state'] == drs_queue.QUEUE_RUNNING_DIR:
+        try:
+            run_dict = base.load_yaml(run_path, default=dict())
+            out['pid'] = run_dict.get('pid')
+            out['pid_host'] = run_dict.get('pid_host')
+        except Exception as _:
+            out['pid'] = None
+        # a pid from another machine cannot be checked from here
+        out['local'] = out['pid_host'] in [None, socket.gethostname()]
+        if out['pid'] is not None and out['local']:
+            out['alive'] = _pid_alive(out['pid'])
+    # -------------------------------------------------------------------------
+    # read the requested part of the log
+    log_path = drs_queue.get_task_log_path(queue_path, group, run_file)
+    out['path'] = log_path
+    if not os.path.exists(log_path):
+        return out
+    out['exists'] = True
+    size = os.path.getsize(log_path)
+    out['size'] = size
+    # the log was rewritten (e.g. task re-run) - start again
+    if offset > size:
+        out['reset'] = True
+        offset = -1
+    if offset < 0:
+        start = max(0, size - GUI_LOG_MAX_BYTES)
+        out['truncated'] = start > 0
+    else:
+        start = offset
+    end = min(size, start + GUI_LOG_MAX_BYTES)
+    with open(log_path, 'rb') as logfile:
+        logfile.seek(start)
+        data = logfile.read(end - start)
+    # a truncated first read starts at the next full line
+    if out['truncated']:
+        cut = data.find(b'\n')
+        if cut >= 0:
+            data = data[cut + 1:]
+            start = start + cut + 1
+    # while running only send complete lines (rest comes next poll)
+    if out['state'] == drs_queue.QUEUE_RUNNING_DIR:
+        cut = data.rfind(b'\n')
+        data = data[:cut + 1] if cut >= 0 else b''
+    out['start'] = start
+    out['offset'] = start + len(data)
+    out['text'] = data.decode('utf-8', errors='replace')
+    return out
 
 
 def list_template_names(params: ParamDict) -> List[str]:
@@ -316,6 +450,8 @@ def render_dashboard(params: ParamDict,
     html = html.replace('XX_ROWS_XX', str(rows))
     html = html.replace('XX_TPLFIELDS_XX',
                         json.dumps(GUI_TEMPLATE_FIELDS))
+    html = html.replace('XX_MPMODE_XX',
+                        json.dumps(drs_queue.get_queue_mpmode(params)))
     # return the rendered html
     return html
 
@@ -345,9 +481,9 @@ def action_run(params: ParamDict, state: GuiState,
         cores = max(1, int(cores))
     except (TypeError, ValueError):
         cores = 1
-    # sanitize the mpmode value
+    # sanitize the mpmode value (default from TOOLS.REPROCESS.MP_TYPE)
     if mpmode not in drs_queue.QUEUE_MP_MODES:
-        mpmode = 'linear'
+        mpmode = drs_queue.get_queue_mpmode(params)
     # sanitize ntasks text from the form
     if ntasks is None:
         ntasks = ''
@@ -361,7 +497,9 @@ def action_run(params: ParamDict, state: GuiState,
                           'ntasks={2})'.format(cores, mpmode, ntasks))
         summary = drs_queue.queue_run(params, cores=cores,
                                       mpmode=mpmode,
-                                      ntasks=ntasks)
+                                      ntasks=ntasks,
+                                      progress=state.add_message,
+                                      cancel=state.cancel)
         state.add_message('Run: {0}'.format(summary['message']))
     # start the action in the background (if not busy)
     started = state.start_action('Run', _do_run, tuple())
@@ -547,6 +685,9 @@ def action_queue(params: ParamDict, state: GuiState,
     if state.busy and qaction not in stop_actions:
         return dict(success=False, moved=0, stopped=0, failed=0,
                     message='busy - action already running')
+    # stop the active queue run first so it cannot claim new tasks
+    if qaction == 'stop_all_running':
+        state.cancel.set()
     # run action core
     result = drs_queue.queue_action_core(params, qaction, qid)
     # log it for the activity panel
@@ -578,12 +719,16 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
                   code: int = 200):
             """Send a response with the given content and type"""
             body = content.encode('utf-8')
-            self.send_response(code)
-            self.send_header('Content-Type',
-                             '{0}; charset=utf-8'.format(ctype))
-            self.send_header('Content-Length', str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            # the browser may abandon a request (reload, closed tab)
+            try:
+                self.send_response(code)
+                self.send_header('Content-Type',
+                                 '{0}; charset=utf-8'.format(ctype))
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
         def _read_json(self) -> Dict[str, Any]:
             """Read the request body as a json dictionary"""
@@ -617,6 +762,16 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
                 else:
                     states = None
                 data = get_status_data(params, states=states)
+                self._send(json.dumps(data))
+            # the (incremental) log of one queue task
+            elif route == '/api/log':
+                query = parse_qs(parsed.query)
+                qid = query.get('qid', [''])[0]
+                try:
+                    offset = int(query.get('offset', ['-1'])[0])
+                except (TypeError, ValueError):
+                    offset = -1
+                data = get_task_log(params, qid, offset)
                 self._send(json.dumps(data))
             # the gui state (busy flag + activity log)
             elif route == '/api/state':
@@ -799,6 +954,7 @@ def queue_gui(params: ParamDict):
             except (EOFError, KeyboardInterrupt):
                 user_input = ''
             if user_input.startswith('y'):
+                state.cancel.set()
                 result = drs_queue.queue_action_core(params,
                                                      'stop_all_running')
                 if result['success']:

@@ -97,8 +97,6 @@ DEV_TOOL_LIST_FILE = 'dev_tools.rst'
 # -----------------------------------------------------------------------------
 # Define the path to schematics
 SCHEMATIC_PATH = '../documentation/working/_static/yed/{instrument}/'
-# Define the path to the description files
-DESC_PATH = '../documentation/working/resources/{instrument}/descriptions/'
 # using apero reference
 USING_APERO_REF = 'using_apero_default'
 # -----------------------------------------------------------------------------
@@ -504,16 +502,6 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
     else:
         schem_path = rel_path_from_current(outpath, abs_schem_path)
     # -------------------------------------------------------------------------
-    # get the absolute path of the description files
-    descfile_path = DESC_PATH.format(instrument=instrument.lower())
-    abs_desc_path = drs_misc.get_relative_folder(__PACKAGE__, descfile_path,
-                                                 required=False)
-    # get description path relative to current path
-    if len(abs_desc_path) == 0:
-        desc_path = None
-    else:
-        desc_path = rel_path_from_current(outpath, abs_desc_path)
-    # -------------------------------------------------------------------------
     # loop around recipes
     for srecipe in srecipes:
         # print we are analysing recipe
@@ -554,13 +542,7 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
         # add shortname
         markdown.add_text('SHORTNAME: {0}'.format(summary['SHORTNAME']))
         # add description
-        if summary['DESCRIPTION_FILE'] is not None and desc_path is not None:
-            # combine relative path with description file
-            dfile = os.path.join(desc_path, summary['DESCRIPTION_FILE'])
-            # include a file
-            markdown.include_file(dfile)
-        else:
-            markdown.add_text('No description set')
+        markdown.add_text(str(srecipe.description or 'No description set'))
         # ---------------------------------------------------------------------
         # add section: schematic
         markdown.add_section(names[1])
@@ -743,16 +725,6 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
     else:
         schem_path = rel_path_from_current(outpath, abs_schem_path)
     # -------------------------------------------------------------------------
-    # get the absolute path of the description files
-    descfile_path = DESC_PATH.format(instrument=instrument.lower())
-    abs_desc_path = drs_misc.get_relative_folder(__PACKAGE__, descfile_path,
-                                                 required=False)
-    # get description path relative to current path
-    if len(abs_desc_path) == 0:
-        desc_path = None
-    else:
-        desc_path = rel_path_from_current(outpath, abs_desc_path)
-    # -------------------------------------------------------------------------
     # loop around recipes
     for sequence in sequences:
         # print we are analysing recipe
@@ -782,13 +754,7 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
         # add reference
         markdown.add_reference(refnames[0])
         # add description
-        if summary['DESCRIPTION_FILE'] is not None and desc_path is not None:
-            # combine relative path with description file
-            dfile = os.path.join(desc_path, summary['DESCRIPTION_FILE'])
-            # include a file
-            markdown.include_file(dfile)
-        else:
-            markdown.add_text('No description set')
+        markdown.add_text('See ARI documentation for the sequence description.')
         # ---------------------------------------------------------------------
         # add section: schematic
         markdown.add_section(names[1])
@@ -1193,7 +1159,6 @@ def _compile_sequence(params: ParamDict, sequence: DrsRunSequence,
     # save table filename to out table
     summary['OUTTABLE'] = basename
     summary['OUTTABLE-ABS'] = abs_filename
-    summary['DESCRIPTION_FILE'] = sequence.description_file
     summary['SCHEMATIC_FILE'] = sequence.schematic
     # return the summary dictionary
     return summary

@@ -237,7 +237,6 @@ apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_preprocess.schematic = 'apero_preproces_spirou_schematic.jpg'
-apero_preprocess.description_file = 'apero_preprocess_spirou.rst'
 # add to recipe
 recipes.append(apero_preprocess)
 
@@ -1423,7 +1422,6 @@ full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 full_seq.schematic = 'full_seq.jpg'
-full_seq.description_file = None
 # reference run
 full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
              arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1561,7 +1559,6 @@ limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 limited_seq.schematic = 'limited_seq.jpg'
-limited_seq.description_file = None
 # reference run
 limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
                 arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1743,7 +1740,6 @@ ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 ref_seq.schematic = 'ref_seq.jpg'
-ref_seq.description_file = None
 # add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -1770,7 +1766,6 @@ calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 calib_seq.schematic = 'calib_seq.jpg'
-calib_seq.description_file = None
 # night runs
 calib_seq.add(apero_badpix)
 calib_seq.add(apero_loc, files=[files.pp_dark_flat, files.calib_dark_flat,
@@ -1789,7 +1784,6 @@ tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 tellu_seq.schematic = 'tellu_seq.jpg'
-tellu_seq.description_file = None
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               files=files.science_pp,
@@ -1843,7 +1837,6 @@ science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 science_seq.schematic = 'science_seq.jpg'
-science_seq.description_file = None
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                 files=files.science_pp,

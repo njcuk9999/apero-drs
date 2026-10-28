@@ -119,6 +119,9 @@ def _system_move(qpath: str, qid: str, qresult: str) -> bool:
         if line.startswith('state:'):
             lines[it] = 'state: {0}\n'.format(to_state)
             break
+    # a pid only identifies the process while the task is running
+    lines = [line for line in lines
+             if not line.startswith(('pid:', 'pid_host:'))]
     # write the updated yaml to the destination
     with open(dst_path, 'w') as wfile:
         wfile.writelines(lines)

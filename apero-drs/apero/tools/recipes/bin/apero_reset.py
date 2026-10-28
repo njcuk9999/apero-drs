@@ -14,6 +14,7 @@ import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_startup
+from apero.tools.module.processing import drs_queue
 from apero.tools.module.setup import drs_reset
 
 # =============================================================================
@@ -92,7 +93,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # set up the different types of reset
     names = ['assets', 'tmp', 'red', 'calib', 'tellu', 'log',
-             'plot', 'run', 'lbl', 'out', 'other']
+             'plot', 'run', 'lbl', 'out', 'other', 'queue']
     # set up True criteria
     # set up default resets
     resets = list(names)
@@ -248,6 +249,18 @@ def __main__(recipe, params):
         drs_reset.reset_other_folder(params, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Other']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Queue')
+    reset = True
+    # queue folder (pending/running/complete/failed + queue output)
+    if 'queue' in warns:
+        reset = drs_reset.reset_confirmation(
+            params, 'Queue', drs_queue.get_queue_path(params))
+    if 'queue' in resets and reset:
+        drs_reset.reset_queue(params, log)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['Queue']))
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

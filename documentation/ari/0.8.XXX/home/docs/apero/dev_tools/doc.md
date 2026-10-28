@@ -69,7 +69,6 @@ apero_documentation.py {options}
 | `--mode[both,html,latex]` | [STRING] Which mode to output in "html", "latex" or "both". Default is "both". |
 | `--ari` | Generate the apero-ri markdown documentation tree (documentation/ari/{docversion}/home/docs/apero) from the recipe and file definitions |
 | `--docversion[STRING]` | [STRING] Documentation version directory to write to with --ari (e.g. 0.8.XXX). Defaults to the major version of the running APERO. |
-| `--migrate_desc` | One-off migration of the legacy rst descriptions in documentation/working/resources to documentation/descriptions (markdown). Existing markdown fragments are never overwritten. |
 
 ## Special arguments
 

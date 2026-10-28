@@ -1,1 +1,0 @@
-Run apero_preprocess on every raw fits file.

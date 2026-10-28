@@ -24,17 +24,26 @@ lowest priority run first). This is required by apero_queue which will
 take the "next item" from the queue (and wait until a group is finished
 before moving on to the next group).
 
+Every group is followed by a group named
+    APERO-QUEUE-GROUP-{UNIXTIME}-{GROUPNAME}-DBPUSH
+holding a single apero_db_push.py run, which pushes the pending database
+entries of that group (queued recipes run in parallel mode so they do
+not push themselves) before the next group starts.
+
 Created on 2026-08-31
 
 @author: cook
 """
+import collections
 import os
 import signal
 import shutil
+import socket
 import subprocess
 import sys
+import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -72,6 +81,8 @@ QUEUE_OUTPUT_DIR = 'output'
 QUEUE_LOGS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'logs')
 QUEUE_ERRORS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'errors')
 QUEUE_SCRIPTS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'scripts')
+# define the per-task log directory (one log per queue run file)
+QUEUE_TASK_LOGS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'task_logs')
 # define the chain output base directory (relative to PATH.OTHER)
 QUEUE_CHAIN_BASE_DIR = os.path.join('batch', 'chain')
 # define the chain name prefix
@@ -100,6 +111,10 @@ QUEUE_GROUP_NAME_FORMAT = '{0:04d}-{1}'
 #    {0} = run priority (zero padded so runs sort alphabetically by
 #          priority within a group)
 QUEUE_RUN_FORMAT = 'APERO-QUEUE-RUN-{0:08d}.yaml'
+# define the recipe (and shortname / group suffix) that pushes pending
+#    database entries - added as its own group after every queue group
+QUEUE_DB_PUSH_RECIPE = 'apero_db_push.py'
+QUEUE_DB_PUSH_SHORTNAME = 'DBPUSH'
 # define the queue states
 QUEUE_STATE_PENDING = 'pending'
 QUEUE_STATE_RUNNING = 'running'
@@ -423,6 +438,47 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
         msg = 'Queue: \t Added group "{0}" ({1} runs)'
         margs = [group_dirname, len(grouplist[groupkey])]
         WLOG(params, '', msg.format(*margs))
+        # ---------------------------------------------------------------------
+        # queued recipes run with --parallel so their database entries stay
+        #   pending until pushed - the next group needs them in the database
+        priority = max(int(run.priority) for run in grouplist[groupkey])
+        push_dirname = _add_db_push_group(pending_dir, group_dirname,
+                                          priority)
+        WLOG(params, '', 'Queue: \t Added group "{0}"'.format(push_dirname))
+
+
+def _add_db_push_group(pending_dir: str, group_dirname: str,
+                       priority: int) -> str:
+    """
+    Add a queue group (straight after group_dirname) containing a single
+    apero_db_push.py run
+
+    The push group name is the recipe group name plus a suffix, so it
+    sorts after that group and before the next one
+
+    :param pending_dir: str, the pending queue directory
+    :param group_dirname: str, the recipe group directory name
+    :param priority: int, the priority used for the run file name
+
+    :return: str, the push group directory name
+    """
+    push_dirname = '{0}-{1}'.format(group_dirname, QUEUE_DB_PUSH_SHORTNAME)
+    push_path = os.path.join(pending_dir, push_dirname)
+    os.makedirs(push_path, exist_ok=True)
+    # same keys as _run_item_to_dict
+    queue_dict = dict()
+    queue_dict['recipe'] = QUEUE_DB_PUSH_RECIPE.replace('.py', '')
+    queue_dict['shortname'] = QUEUE_DB_PUSH_SHORTNAME
+    queue_dict['obs_dir'] = ''
+    queue_dict['args'] = dict()
+    queue_dict['runstring'] = QUEUE_DB_PUSH_RECIPE
+    queue_dict['is_reference'] = False
+    queue_dict['group'] = push_dirname
+    queue_dict['state'] = QUEUE_STATE_PENDING
+    queue_dict['priority'] = int(priority)
+    run_path = os.path.join(push_path, QUEUE_RUN_FORMAT.format(priority))
+    base.write_yaml(queue_dict, run_path, width=float('inf'))
+    return push_dirname
 
 
 # =============================================================================
@@ -452,6 +508,40 @@ def setup_output_directories(params: ParamDict) -> Dict[str, str]:
             os.makedirs(out_dirs[key])
     # return the output directory paths
     return out_dirs
+
+
+def get_task_log_path(queue_path: str, group: str, run_file: str) -> str:
+    """
+    Get the log file path that captures the output of one queue task
+
+    The path only depends on the queue id so it is the same in every
+    queue state (and for run, batch and chain modes)
+
+    :param queue_path: str, the absolute path to the queue directory
+    :param group: str, the group directory name
+    :param run_file: str, the run yaml file name
+
+    :return: str, the absolute path to the task log file
+    """
+    log_name = os.path.splitext(run_file)[0] + '.log'
+    return os.path.join(queue_path, QUEUE_TASK_LOGS_DIR, group, log_name)
+
+
+def _shell_logged_command(command: str, log_path: str) -> List[str]:
+    """
+    Build bash lines that run a command, tee its output to a task log
+    and store the command exit code in $task_status
+
+    :param command: str, the shell command to run
+    :param log_path: str, the task log file path
+
+    :return: list of strings, the bash lines
+    """
+    lines = ['mkdir -p "{0}"'.format(os.path.dirname(log_path))]
+    lines.append('{{ {0} ; }} 2>&1 | tee "{1}"'.format(command, log_path))
+    # PIPESTATUS keeps the command exit code (not the tee exit code)
+    lines.append('task_status=${PIPESTATUS[0]}')
+    return lines
 
 
 def get_chain_root(params: ParamDict) -> str:
@@ -757,6 +847,10 @@ def move_run_file(queue_path: str, group: str, run_file: str,
         if line.startswith('state:'):
             lines[it] = 'state: {0}\n'.format(to_state)
             break
+    # a pid only identifies the process while the task is running
+    if to_state != QUEUE_RUNNING_DIR:
+        lines = [line for line in lines
+                 if not line.startswith(('pid:', 'pid_host:'))]
     # write the updated yaml to the destination
     with open(dst_path, 'w') as wfile:
         wfile.writelines(lines)
@@ -862,7 +956,10 @@ def get_queue_task_limit(params: ParamDict, cores: int) -> Optional[int]:
 # Define queue mode functions
 # =============================================================================
 def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
-                    mpmode: str) -> Dict[str, Any]:
+                    mpmode: str,
+                    progress: Optional[Callable[[str], None]] = None,
+                    cancel: Optional[threading.Event] = None
+                    ) -> Dict[str, Any]:
     """
     Run one queue claim/execute cycle
 
@@ -870,6 +967,10 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
     :param queue_path: str, absolute path to queue directory
     :param cores: int, maximum number of tasks to claim this cycle
     :param mpmode: str, multiprocessing mode
+    :param progress: callable or None, receives short progress messages
+                     (e.g. the gui activity log)
+    :param cancel: threading.Event or None, when set no further tasks are
+                   started
 
     :return: dictionary, summary for this cycle
     """
@@ -896,6 +997,7 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         if group is None:
             summary['message'] = 'Nothing to run (queue is empty)'
             WLOG(params, '', 'Queue: {0}'.format(summary['message']))
+            _progress(progress, summary['message'])
             return summary
         # store the group in the summary
         summary['group'] = group
@@ -908,6 +1010,7 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
             summary['message'] = wmsg.format(group, len(running_runs))
             WLOG(params, 'warning',
                  'Queue: {0}'.format(summary['message']), sublevel=2)
+            _progress(progress, summary['message'])
             return summary
         # take the next N pending tasks (up to the end of the group)
         claimed_runs = pending_runs[:cores]
@@ -917,8 +1020,10 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
                           QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
     # -------------------------------------------------------------------------
     # log progress: running N tasks from group
-    msg = 'Queue: Running {0} task(s) from group "{1}" [mpmode={2}]'
-    WLOG(params, 'info', msg.format(len(claimed_runs), group, mpmode))
+    msg = 'Running {0} task(s) from group "{1}" [mpmode={2}]'
+    WLOG(params, 'info', 'Queue: ' + msg.format(len(claimed_runs), group,
+                                                mpmode))
+    _progress(progress, msg.format(len(claimed_runs), group, mpmode))
     # build the task list (read the claimed yaml files)
     tasks = []
     for run_file in claimed_runs:
@@ -932,43 +1037,61 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         task['group'] = group
         task['run_file'] = run_file
         task['run_path'] = run_path
+        task['log_path'] = get_task_log_path(queue_path, group, run_file)
         task['runstring'] = str(run_dict['runstring'])
         task['shortname'] = str(run_dict['shortname'])
         tasks.append(task)
     # -------------------------------------------------------------------------
     # execute the tasks (linear or multiprocess based on mpmode)
-    results = _execute_tasks(params, tasks, cores, mpmode)
+    results = _execute_tasks(params, tasks, cores, mpmode,
+                             progress=progress, cancel=cancel)
     # -------------------------------------------------------------------------
     # move tasks from running to complete/failed based on results
+    n_stopped = 0
+    stopped = set()
     for run_file in results:
         # work out the destination state
         if results[run_file]:
             to_state = QUEUE_COMPLETE_DIR
         else:
             to_state = QUEUE_FAILED_DIR
-        # move the run file
-        move_run_file(queue_path, group, run_file,
-                      QUEUE_RUNNING_DIR, to_state)
+        # a stop action already moved this task out of running
+        moved = move_run_file(queue_path, group, run_file,
+                              QUEUE_RUNNING_DIR, to_state)
+        if not moved:
+            n_stopped += 1
+            stopped.add(run_file)
+            msg = 'Queue: \t {0}/{1} was stopped (left as is)'
+            WLOG(params, '', msg.format(group, run_file))
+            continue
         # log the result
         msg = 'Queue: \t {0}/{1} --> {2}'
         WLOG(params, '', msg.format(group, run_file, to_state))
     # -------------------------------------------------------------------------
     # summarize
-    n_ok = sum(1 for run_file in results if results[run_file])
-    n_bad = len(results) - n_ok
+    summary['n_stopped'] = n_stopped
+    n_ok = sum(1 for run_file in results
+               if results[run_file] and run_file not in stopped)
+    n_bad = len(results) - n_ok - n_stopped
     msg = 'Finished {0} task(s): {1} complete, {2} failed'
     summary['n_run'] = len(results)
     summary['n_complete'] = n_ok
     summary['n_failed'] = n_bad
     summary['message'] = msg.format(len(results), n_ok, n_bad)
+    if n_stopped > 0:
+        summary['message'] += ', {0} stopped'.format(n_stopped)
     WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
+    _progress(progress, 'Cycle done: {0}'.format(summary['message']))
     # return the summary (used by the gui/flask)
     return summary
 
 
 def queue_run(params: ParamDict, cores: Optional[int] = None,
               mpmode: Optional[str] = None,
-              ntasks: Optional[Any] = None) -> Dict[str, Any]:
+              ntasks: Optional[Any] = None,
+              progress: Optional[Callable[[str], None]] = None,
+              cancel: Optional[threading.Event] = None
+              ) -> Dict[str, Any]:
     """
     Run queue task(s), optionally across multiple claim/execute cycles
 
@@ -982,6 +1105,10 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     :param mpmode: str or None, override multiprocessing mode for this call
     :param ntasks: int/str or None, total number of tasks to run, or
                    "all" for no limit
+    :param progress: callable or None, receives short progress messages
+                     (e.g. the gui activity log)
+    :param cancel: threading.Event or None, when set no further tasks or
+                   cycles are started (e.g. the gui "stop all running")
 
     :return: dictionary, combined summary of the queue run
     """
@@ -997,9 +1124,14 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
         limit = _parse_task_limit(ntasks, cores)
     # keep a combined summary across one or more cycles
     summary = dict(group=None, n_run=0, n_complete=0, n_failed=0,
-                   message='')
+                   n_stopped=0, message='')
     # loop until we hit the limit, the queue empties, or a group blocks
+    n_cycle = 0
     while True:
+        if cancel is not None and cancel.is_set():
+            _progress(progress, 'Run cancelled - no new tasks started')
+            summary['n_stopped'] = max(summary['n_stopped'], 1)
+            break
         # respect the remaining task budget for this cycle
         cycle_cores = int(cores)
         if limit is not None:
@@ -1007,9 +1139,14 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
             if remaining <= 0:
                 break
             cycle_cores = min(cycle_cores, remaining)
+        n_cycle += 1
+        limit_str = 'all' if limit is None else str(limit)
+        msg = 'Cycle {0}: claiming up to {1} task(s) ({2}/{3} run so far)'
+        _progress(progress, msg.format(n_cycle, cycle_cores,
+                                       summary['n_run'], limit_str))
         # run one claim/execute cycle
         cycle = _queue_run_once(params, get_queue_path(params), cycle_cores,
-                                mpmode)
+                                mpmode, progress=progress, cancel=cancel)
         # keep the first touched group for reporting
         if summary['group'] is None and cycle['group'] is not None:
             summary['group'] = cycle['group']
@@ -1022,7 +1159,11 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
         summary['n_run'] += cycle['n_run']
         summary['n_complete'] += cycle['n_complete']
         summary['n_failed'] += cycle['n_failed']
+        summary['n_stopped'] += cycle.get('n_stopped', 0)
         summary['message'] = cycle['message']
+        # a stop action means the user wants the queue to halt
+        if cycle.get('n_stopped', 0) > 0:
+            break
         # one-cycle behaviour remains the default unless user asked for more
         if limit is not None and summary['n_run'] >= limit:
             break
@@ -1035,6 +1176,9 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
         margs = [summary['n_run'], summary['n_complete'],
                  summary['n_failed']]
         summary['message'] = msg.format(*margs)
+        if summary['n_stopped'] > 0:
+            summary['message'] += ', {0} stopped (queue run halted)'.format(
+                summary['n_stopped'])
     # return the combined summary
     return summary
 
@@ -1675,6 +1819,8 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
     :return: None
     """
     lines = ['#!/bin/bash', 'set -u']
+    # unbuffered python output lets the queue gui stream task logs live
+    lines.append('export PYTHONUNBUFFERED=1')
     lines.append('fail_count=0')
     if dry_run:
         for task in tasks:
@@ -1685,8 +1831,11 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
     else:
         for task in tasks:
             lines.append('echo "Running: {0}"'.format(task['shortname']))
-            lines.append(str(task['command']))
-            lines.append('task_status=$?')
+            group, run_file = str(task['qid']).split('/', 1)
+            log_path = get_task_log_path(str(task['qpath']), group,
+                                         run_file)
+            lines.extend(_shell_logged_command(str(task['command']),
+                                               log_path))
             lines.append('if [ $task_status -eq 0 ]; then')
             lines.append('    apero_queue.py system --qpath="{0}" '
                          '--qid="{1}" --qresult=success'.format(
@@ -2253,33 +2402,62 @@ def _stop_one_running(params: ParamDict, qid: Optional[str],
     run_path = os.path.join(queue_path, QUEUE_RUNNING_DIR, group, run_file)
     if not os.path.exists(run_path):
         return 0, 0, 'Queue: {0} not found in running'.format(qid)
-    # try to read a stored pid from the running yaml file
-    pid = None
-    try:
-        run_dict = base.load_yaml(run_path, default=dict())
-        pid = run_dict.get('pid')
-    except Exception:
-        pid = None
-    # if a pid is present, terminate it before moving the queue item
-    stopped = 0
-    can_move = True
-    if not drs_text.null_text(pid, ['', 'None']):
-        try:
-            can_move = _kill_pid(int(pid))
-        except (TypeError, ValueError):
-            can_move = False
-        if can_move:
-            stopped = 1
-    if not can_move:
-        return 0, 0, 'Queue: could not stop {0}'.format(qid)
-    # move the queue file under lock once the process is gone
-    with QueueLock(params):
-        moved = move_run_file(queue_path, group, run_file,
-                              QUEUE_RUNNING_DIR, to_state)
+    sargs = [params, queue_path, group, run_file, to_state]
+    stopped, moved = _stop_running_entry(*sargs)
     if moved:
         msg = 'Queue: {0} stopped -> {1}'
         return stopped, 1, msg.format(qid, to_state)
-    return stopped, 0, 'Queue: could not move {0}'.format(qid)
+    return stopped, 0, 'Queue: could not stop {0}'.format(qid)
+
+
+def _stop_running_entry(params: ParamDict, queue_path: str, group: str,
+                        run_file: str, to_state: str) -> Tuple[int, int]:
+    """
+    Move one running task to to_state and then kill its process
+
+    The entry is moved first so the process running the task sees it is
+    no longer in running (and leaves it alone) when the task dies. If the
+    process cannot be killed the entry is moved back to running.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param queue_path: str, absolute path to the queue directory
+    :param group: str, the group directory name
+    :param run_file: str, the run yaml file name
+    :param to_state: str, the destination state
+
+    :return: tuple, stopped count (0/1) and moved count (0/1)
+    """
+    run_path = os.path.join(queue_path, QUEUE_RUNNING_DIR, group, run_file)
+    # try to read a stored pid from the running yaml file
+    pid = None
+    pid_host = None
+    try:
+        run_dict = base.load_yaml(run_path, default=dict())
+        pid = run_dict.get('pid')
+        pid_host = run_dict.get('pid_host')
+    except Exception:
+        pid = None
+    # a pid recorded on another machine cannot be signalled from here
+    if pid_host not in [None, socket.gethostname()]:
+        return 0, 0
+    with QueueLock(params):
+        moved = move_run_file(queue_path, group, run_file,
+                              QUEUE_RUNNING_DIR, to_state)
+    if not moved:
+        return 0, 0
+    if drs_text.null_text(pid, ['', 'None']):
+        return 0, 1
+    try:
+        killed = _kill_pid(int(pid))
+    except (TypeError, ValueError):
+        killed = False
+    if killed:
+        return 1, 1
+    # the task is still running so it must stay tracked as running
+    with QueueLock(params):
+        move_run_file(queue_path, group, run_file, to_state,
+                      QUEUE_RUNNING_DIR)
+    return 0, 0
 
 
 def _set_task_pid(task: Dict[str, str], pid: Optional[int]):
@@ -2301,8 +2479,11 @@ def _set_task_pid(task: Dict[str, str], pid: Optional[int]):
         if pid is None:
             if 'pid' in run_dict:
                 del run_dict['pid']
+            if 'pid_host' in run_dict:
+                del run_dict['pid_host']
         else:
             run_dict['pid'] = int(pid)
+            run_dict['pid_host'] = socket.gethostname()
         base.write_yaml(run_dict, run_path, width=float('inf'))
     except Exception:
         return
@@ -2311,6 +2492,10 @@ def _set_task_pid(task: Dict[str, str], pid: Optional[int]):
 def _kill_pid(pid: int) -> bool:
     """
     Try to terminate one pid cleanly then force kill if needed
+
+    Tasks are started in their own session, so when the pid leads a
+    process group the whole group is signalled (the shell, the recipe
+    and any multiprocessing children it started)
 
     :param pid: int, process id
 
@@ -2323,32 +2508,43 @@ def _kill_pid(pid: int) -> bool:
         return True
     except PermissionError:
         return False
-    # send TERM first
+    # signal the whole process group if the pid leads one
     try:
-        os.kill(pid, signal.SIGTERM)
-    except (ProcessLookupError, PermissionError):
-        return False
-    # allow a short grace period
-    for _ in range(20):
-        time.sleep(0.1)
+        group = os.getpgid(pid) == pid
+    except ProcessLookupError:
+        return True
+
+    def _signal(sig: int) -> Optional[bool]:
         try:
-            os.kill(pid, 0)
+            if group:
+                os.killpg(pid, sig)
+            else:
+                os.kill(pid, sig)
         except ProcessLookupError:
             return True
         except PermissionError:
             return False
-    # still alive: force kill
-    try:
-        os.kill(pid, signal.SIGKILL)
-    except (ProcessLookupError, PermissionError):
-        return False
-    # verify it is gone
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return True
-    except PermissionError:
-        return False
+        return None
+
+    def _wait_gone(n_checks: int) -> Optional[bool]:
+        for _ in range(n_checks):
+            time.sleep(0.1)
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                return True
+            except PermissionError:
+                return False
+        return None
+
+    # send TERM first and allow a short grace period
+    for sig, n_checks in [(signal.SIGTERM, 20), (signal.SIGKILL, 20)]:
+        result = _signal(sig)
+        if result is not None:
+            return result
+        result = _wait_gone(n_checks)
+        if result is not None:
+            return result
     return False
 
 
@@ -2364,31 +2560,12 @@ def _stop_all_running(params: ParamDict) -> Tuple[int, int, int]:
     entries = list_queue_entries(params, states=[QUEUE_RUNNING_DIR])
     stopped, moved, failed = 0, 0, 0
     for entry in entries:
-        # try to read pid from the running yaml file
-        pid = None
-        try:
-            run_dict = base.load_yaml(entry['path'], default=dict())
-            pid = run_dict.get('pid')
-        except Exception:
-            pid = None
-        # if we have a pid attempt to terminate it first
-        can_move = True
-        if not drs_text.null_text(pid, ['', 'None']):
-            try:
-                can_move = _kill_pid(int(pid))
-            except (TypeError, ValueError):
-                can_move = False
-            if can_move:
-                stopped = stopped + 1
-        # move back to pending only if stop succeeded or pid unknown
-        if can_move:
-            ok = move_run_file(queue_path, entry['group'], entry['run'],
-                               QUEUE_RUNNING_DIR, QUEUE_PENDING_DIR)
-            moved = moved + int(ok)
-            if not ok:
-                failed = failed + 1
-        else:
-            failed = failed + 1
+        sargs = [params, queue_path, entry['group'], entry['run'],
+                 QUEUE_PENDING_DIR]
+        n_stopped, n_moved = _stop_running_entry(*sargs)
+        stopped += n_stopped
+        moved += n_moved
+        failed += 1 - n_moved
     return stopped, moved, failed
 
 
@@ -2584,6 +2761,38 @@ def _print_status_page(entries: List[Dict[str, str]], position: int,
         print('{0}    [{1}] {2:<9} {3}{4}'.format(*eargs))
 
 
+def _progress(progress: Optional[Callable[[str], None]], message: str):
+    """
+    Send a progress message to an optional callback
+
+    :param progress: callable or None, the progress callback
+    :param message: str, the message to send
+
+    :return: None
+    """
+    if progress is not None:
+        progress(message)
+
+
+def _task_label(run_file: str, shortname: Optional[str] = None) -> str:
+    """
+    Short human readable label for a queue task (e.g. "EXT #12")
+
+    :param run_file: str, the run yaml file name
+    :param shortname: str or None, the recipe shortname
+
+    :return: str, the label
+    """
+    number = run_file.replace('APERO-QUEUE-RUN-', '').replace('.yaml', '')
+    try:
+        number = str(int(number))
+    except ValueError:
+        pass
+    if shortname:
+        return '{0} #{1}'.format(shortname, number)
+    return '#{0}'.format(number)
+
+
 def _run_task(task: Dict[str, str]) -> Tuple[str, bool, str]:
     """
     Run a single queue task (executes the runstring in a shell)
@@ -2592,34 +2801,53 @@ def _run_task(task: Dict[str, str]) -> Tuple[str, bool, str]:
     "has NOT been successfully completed" log signature in the output
 
     :param task: dictionary, the task with keys 'group', 'run_file',
-                 'runstring' and 'shortname'
+                 'run_path', 'log_path', 'runstring' and 'shortname'
 
     :return: tuple, 1. the run file name, 2. bool True if the task was
              successful, 3. str the tail of the task output (for
              reporting failures)
     """
-    # run the queue command in a shell (capturing all output)
+    # run the queue command in a shell (all output goes to the task log
+    #   so the queue gui can stream it while the task runs)
     command = _build_task_command(task)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, text=True)
-    _set_task_pid(task, process.pid)
-    stdout, stderr = process.communicate()
-    _set_task_pid(task, None)
-    # combine standard output and error for the failure check
-    output = str(stdout) + str(stderr)
-    # keep only the tail of the output (for reporting)
-    tail = '\n'.join(output.splitlines()[-10:])
+    log_path = task['log_path']
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    # unbuffered python output so the log is written line by line
+    env = dict(os.environ)
+    env['PYTHONUNBUFFERED'] = '1'
+    with open(log_path, 'w') as logfile:
+        # own session so a stop can kill the whole task process group
+        process = subprocess.Popen(command, shell=True, stdout=logfile,
+                                   stderr=subprocess.STDOUT, env=env,
+                                   start_new_session=True)
+        _set_task_pid(task, process.pid)
+        try:
+            process.wait()
+        except KeyboardInterrupt:
+            # tasks are in their own session so Ctrl+C does not reach them
+            _kill_pid(process.pid)
+            raise
+    # the pid is left in the yaml: rewriting it here could race a stop
+    #   action that has just moved the file out of running
     # success requires a zero return code
     success = process.returncode == 0
-    # and the output must not contain the apero failure signature
-    if QUEUE_FAIL_SIGNATURE in output:
-        success = False
+    # scan the log for the apero failure signature (keeping the tail)
+    tail_lines = collections.deque(maxlen=10)
+    with open(log_path, 'r', errors='replace') as logfile:
+        for line in logfile:
+            tail_lines.append(line.rstrip('\n'))
+            if QUEUE_FAIL_SIGNATURE in line:
+                success = False
+    tail = '\n'.join(tail_lines)
     # return the run file name, success flag and output tail
     return task['run_file'], success, tail
 
 
 def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
-                   cores: int, mpmode: str) -> Dict[str, bool]:
+                   cores: int, mpmode: str,
+                   progress: Optional[Callable[[str], None]] = None,
+                   cancel: Optional[threading.Event] = None
+                   ) -> Dict[str, bool]:
     """
     Execute a list of queue tasks (linear or in parallel based on mpmode)
 
@@ -2629,16 +2857,52 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
     :param cores: int, the number of cores to use (for pool/process)
     :param mpmode: str, the multiprocessing mode ('process', 'pool' or
                    'linear')
+    :param progress: callable or None, receives a message as each task
+                     starts and finishes
+    :param cancel: threading.Event or None, when set no further tasks are
+                   started (linear mode)
 
     :return: dictionary, mapping run file name to success (bool)
     """
     # storage of results (run file name -> success)
     results = dict()
+    labels = {task['run_file']: _task_label(task['run_file'],
+                                            task['shortname'])
+              for task in tasks}
+    run_paths = {task['run_file']: task['run_path'] for task in tasks}
+    starts = dict()
+
+    def _started(task: Dict[str, str]):
+        starts[task['run_file']] = time.time()
+        _progress(progress, 'START {0}'.format(labels[task['run_file']]))
+
+    def _finished(run_file: str, success: bool, tail: str):
+        results[run_file] = success
+        duration = time.time() - starts.get(run_file, time.time())
+        status = 'DONE  ' if success else 'FAILED'
+        # a stop action moves the task out of running before killing it
+        if not success and not os.path.exists(run_paths[run_file]):
+            status = 'STOPPED'
+        msg = '{0} {1} ({2:.0f} s) [{3}/{4} finished]'
+        _progress(progress, msg.format(status, labels[run_file], duration,
+                                       len(results), len(tasks)))
+        # report failures (with the output tail)
+        if status == 'FAILED':
+            wmsg = 'Queue: Task {0} FAILED:\n{1}'
+            WLOG(params, 'warning', wmsg.format(run_file, tail),
+                 sublevel=2)
     # -------------------------------------------------------------------------
     # linear mode: run tasks one after the other
     if mpmode == 'linear' or cores == 1 or len(tasks) == 1:
         # loop around tasks
         for t_it, task in enumerate(tasks):
+            if cancel is not None and cancel.is_set():
+                break
+            # a stop action moved the remaining claimed tasks out of running
+            if not os.path.exists(task['run_path']):
+                _progress(progress, 'SKIP  {0} (stopped before start)'.format(
+                    labels[task['run_file']]))
+                continue
             command = _build_task_command(task)
             # log which task we are running
             msg = 'Queue: Running {0} [{1}/{2}]'
@@ -2646,16 +2910,13 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
             WLOG(params, '', msg.format(*margs))
             WLOG(params, '', '\t{0}'.format(command), wrap=False)
             # run the task
-            run_file, success, tail = _run_task(task)
-            # store the result
-            results[run_file] = success
-            # report failures (with the output tail)
-            if not success:
-                wmsg = 'Queue: Task {0} FAILED:\n{1}'
-                WLOG(params, 'warning', wmsg.format(run_file, tail),
-                     sublevel=2)
+            _started(task)
+            _finished(*_run_task(task))
         # return the results
         return results
+    # all claimed tasks start at once (never more claimed than cores)
+    for task in tasks:
+        _started(task)
     # -------------------------------------------------------------------------
     # pool mode: use a multiprocessing pool
     if mpmode == 'pool':
@@ -2663,7 +2924,8 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
         from multiprocessing import get_context
         # use fork-based pool (same as drs_processing pool mode)
         with get_context('fork').Pool(cores) as pool:
-            outputs = pool.map(_run_task, tasks)
+            for output in pool.imap_unordered(_run_task, tasks):
+                _finished(*output)
     # -------------------------------------------------------------------------
     # process mode: use individual processes (chunked by cores)
     else:
@@ -2677,6 +2939,7 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
         def _process_target(_task, _shared):
             _shared.append(_run_task(_task))
         # run the tasks in chunks of size cores
+        n_reported = 0
         for c_it in range(0, len(tasks), cores):
             # storage of processes in this chunk
             procs = []
@@ -2686,20 +2949,21 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
                                args=(task, shared))
                 proc.start()
                 procs.append(proc)
-            # wait for all processes in this chunk to finish
+            # report tasks as they finish until the chunk is done
+            while True:
+                alive = any(proc.is_alive() for proc in procs)
+                outputs = list(shared)
+                for output in outputs[n_reported:]:
+                    _finished(*output)
+                n_reported = len(outputs)
+                if not alive:
+                    break
+                time.sleep(0.5)
             for proc in procs:
                 proc.join()
-        # convert the shared list to a normal list
-        outputs = list(shared)
-    # -------------------------------------------------------------------------
-    # store (and report) the parallel results
-    for run_file, success, tail in outputs:
-        results[run_file] = success
-        # report failures (with the output tail)
-        if not success:
-            wmsg = 'Queue: Task {0} FAILED:\n{1}'
-            WLOG(params, 'warning', wmsg.format(run_file, tail),
-                 sublevel=2)
+        # catch results appended after the last poll
+        for output in list(shared)[n_reported:]:
+            _finished(*output)
     # return the results
     return results
 
@@ -2787,6 +3051,8 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
     lines.append('')
     # -------------------------------------------------------------------------
     # add the runstrings (or dry-run echoes)
+    # unbuffered python output lets the queue gui stream task logs live
+    lines.append('export PYTHONUNBUFFERED=1')
     state_dir = QUEUE_PENDING_DIR if dry_run else QUEUE_RUNNING_DIR
     for r_it, run_file in enumerate(batch_runs):
         # read the queue yaml to get the runstring and shortname
@@ -2803,11 +3069,13 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
             command = command.replace('"', '\\"')
             lines.append('echo "Would have run: {0}"'.format(command))
         else:
-            # add the runstring itself
-            lines.append(str(run_dict['runstring']))
+            # add the runstring itself (output also teed to the task log)
+            log_path = get_task_log_path(queue_path, group, run_file)
+            lines.extend(_shell_logged_command(str(run_dict['runstring']),
+                                               log_path))
             # add the apero_queue system call (moves the task to
             #   complete/failed based on the exit code of the runstring)
-            lines.append('if [ $? -eq 0 ]; then')
+            lines.append('if [ $task_status -eq 0 ]; then')
             lines.append('    apero_queue.py system --qpath={0} --qid={1} '
                          '--qresult=success'.format(queue_path, qid))
             lines.append('else')

@@ -32,6 +32,7 @@ from apero.io import drs_lock
 from apero.io import drs_path
 from apero.core import drs_file
 from apero.tools.module.database import manage_databases
+from apero.tools.module.processing import drs_queue
 from apero.tools.module.setup import drs_assets
 from apero.instruments import select
 from apero.base import base as apero_base
@@ -765,6 +766,52 @@ def reset_other_folder(params: ParamDict, log: bool = True):
         # make sure directory exists after removal
         if not os.path.exists(full_dir):
             os.makedirs(full_dir)
+
+
+def reset_queue(params: ParamDict, log: bool = True):
+    """
+    Reset the processing queue so apero_queue starts empty
+
+    Removes every queue entry (pending/running/complete/failed), the
+    queue output (batch logs/errors/scripts and task logs), the queue
+    lock file and the chain scripts. Saved batch templates are kept as
+    they are user settings, not queue state.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param log: bool, if True logs each removed path
+
+    :return: None, resets the queue directory
+    """
+    queue_path = drs_queue.get_queue_path(params)
+    keep = [drs_queue.QUEUE_BATCH_TEMPLATE_DIR,
+            drs_queue.QUEUE_BATCH_TEMPLATE]
+    # warn that running tasks will lose their queue entries
+    running = drs_queue.list_queue_entries(
+        params, states=[drs_queue.QUEUE_RUNNING_DIR])
+    if len(running) > 0:
+        wmsg = ('Queue has {0} running entries - any task still running '
+                'will no longer be tracked by the queue')
+        WLOG(params, 'warning', wmsg.format(len(running)), sublevel=2)
+    # remove everything in the queue directory except the templates
+    if os.path.exists(queue_path):
+        for name in sorted(os.listdir(queue_path)):
+            if name in keep:
+                continue
+            path = os.path.join(queue_path, name)
+            if log:
+                WLOG(params, '', '\tRemoving: {0}'.format(path))
+            if os.path.isdir(path) and not os.path.islink(path):
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                os.remove(path)
+    # chain scripts point at queue entries that no longer exist
+    chain_root = drs_queue.get_chain_root(params)
+    if os.path.exists(chain_root):
+        if log:
+            WLOG(params, '', '\tRemoving: {0}'.format(chain_root))
+        shutil.rmtree(chain_root, ignore_errors=True)
+    # recreate the empty queue state directories
+    drs_queue.setup_queue_directories(params)
 
 
 def remove_all(params, path, log=True, skipfiles=None):

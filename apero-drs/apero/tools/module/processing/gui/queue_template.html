@@ -127,6 +127,141 @@ tr.failed { background: #fadddd; }
 #status-controls { padding-bottom: 12px; border-bottom: 1px solid #e2e2e2;
                    margin-bottom: 14px; }
 #activity { margin-top: 18px; }
+#qbody tr { cursor: pointer; }
+#qbody tr:hover { outline: 2px solid #3c88ea; outline-offset: -2px; }
+#gbody tr { cursor: pointer; }
+#gbody tr:hover { outline: 2px solid #3c88ea; outline-offset: -2px; }
+#gbody tr.dbpush td { color: #667; font-style: italic; }
+#gbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.summary-card { display: flex; align-items: center; gap: 10px;
+                flex-wrap: wrap; }
+.summary-row { display: flex; align-items: center; gap: 6px;
+               margin: 3px 0; }
+.summary-label { width: 70px; font-size: 12px; font-weight: bold;
+                 color: #44536b; text-transform: uppercase; }
+.summary .summary-btn.task-btn { background: #fff; border: 2px solid;
+                                 padding: 2px 10px; }
+.summary .task-btn.s-pending { color: #b5830f; border-color: #e6a817; }
+.summary .task-btn.s-running { color: #1f63b5; border-color: #2a7de1; }
+.summary .task-btn.s-complete { color: #23793c; border-color: #2e9e4f; }
+.summary .task-btn.s-failed { color: #b02f2f; border-color: #d33c3c; }
+#group-bar { display: none; align-items: center; gap: 10px;
+             margin-bottom: 10px; }
+#group-bar.show { display: flex; }
+#group-title { font-weight: bold; font-family: monospace; }
+.gprog { display: inline-flex; vertical-align: middle; height: 10px;
+         width: 140px; border-radius: 3px; overflow: hidden;
+         background: #e5e9f0; margin-right: 6px; }
+.gprog span { display: block; height: 100%; }
+.gp-pending { background: #e6a817; } .gp-running { background: #2a7de1; }
+.gp-complete { background: #2e9e4f; } .gp-failed { background: #d33c3c; }
+.badge.s-pending { background: #e6a817; }
+.badge.s-running { background: #2a7de1; }
+.badge.s-complete { background: #2e9e4f; }
+.badge.s-failed { background: #d33c3c; }
+/* ---- task log viewer ---- */
+#logviewer { position: fixed; inset: 0; z-index: 1000; display: none;
+             background: rgba(5, 10, 20, 0.65); }
+#logviewer.open { display: flex; }
+.lv-panel { margin: 2vh 2vw; flex: 1; display: flex; min-width: 0;
+            flex-direction: column; background: #0d1117;
+            color: #c9d1d9; border: 1px solid #30363d;
+            border-radius: 8px; overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); }
+.lv-tabs { display: flex; gap: 3px; background: #010409;
+           padding: 6px 6px 0 6px; overflow-x: auto;
+           border-bottom: 1px solid #30363d; min-height: 32px; }
+.lv-tab { display: flex; align-items: center; gap: 6px;
+          padding: 5px 8px 5px 10px; background: #161b22;
+          color: #8b949e; border: 1px solid #30363d;
+          border-bottom: none; border-radius: 6px 6px 0 0;
+          cursor: pointer; font-size: 12px; white-space: nowrap;
+          font-family: monospace; }
+.lv-tab:hover { color: #e6edf3; }
+.lv-tab.active { background: #0d1117; color: #e6edf3;
+                 border-color: #58a6ff; }
+.lv-dot { width: 8px; height: 8px; border-radius: 50%;
+          background: #6e7681; flex-shrink: 0; }
+.lv-dot.pending { background: #e6a817; }
+.lv-dot.running { background: #2a7de1;
+                  animation: lvpulse 1.2s ease-in-out infinite; }
+.lv-dot.complete { background: #2e9e4f; }
+.lv-dot.failed { background: #d33c3c; }
+@keyframes lvpulse { 50% { opacity: 0.3; } }
+.lv-newcount { background: #d29922; color: #000; border-radius: 8px;
+               padding: 0 5px; font-size: 10px; font-weight: bold; }
+.lv-x { color: #6e7681; padding: 0 3px; border-radius: 3px; }
+.lv-x:hover { background: #30363d; color: #fff; }
+.lv-head { display: flex; align-items: center; gap: 8px;
+           padding: 6px 10px; background: #161b22; font-size: 12px; }
+.lv-meta { flex: 1; min-width: 0; color: #8b949e; font-family: monospace;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-state { padding: 2px 8px; border-radius: 3px; color: #fff;
+            font-size: 11px; font-weight: bold; background: #6e7681;
+            text-transform: uppercase; }
+.lv-state.pending { background: #e6a817; }
+.lv-state.running { background: #2a7de1; }
+.lv-state.complete { background: #2e9e4f; }
+.lv-state.failed { background: #d33c3c; }
+.lv-runstring { padding: 4px 10px 6px 10px; background: #161b22;
+                color: #a5d6ff; font-family: monospace; font-size: 12px;
+                white-space: pre-wrap; word-break: break-all;
+                border-bottom: 1px solid #30363d; }
+.lv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+          padding: 6px 10px; background: #0d1117; font-size: 12px;
+          border-bottom: 1px solid #30363d; }
+#logviewer button, #logviewer select { background: #21262d;
+    color: #c9d1d9; border: 1px solid #30363d; border-radius: 5px;
+    padding: 4px 9px; font-size: 12px; cursor: pointer; margin: 0; }
+#logviewer button:hover { background: #30363d; }
+#logviewer button.on { background: #1f6feb; border-color: #1f6feb;
+                       color: #fff; }
+#logviewer button:disabled { opacity: 0.4; cursor: default; }
+#lv-search { background: #010409; color: #e6edf3; width: 280px;
+             border: 1px solid #30363d; border-radius: 5px;
+             padding: 5px 8px; font-family: monospace; font-size: 12px; }
+#lv-search:focus { outline: none; border-color: #58a6ff; }
+#lv-search.bad { border-color: #f85149; }
+.lv-bar label { display: inline-flex; align-items: center; gap: 3px;
+                color: #8b949e; cursor: pointer; margin: 0; }
+.lv-count { color: #8b949e; font-family: monospace; min-width: 80px; }
+.lv-sep { flex: 1; }
+.lv-banner { display: none; padding: 5px 12px; font-size: 12px;
+             background: #2d2a12; color: #e3b341;
+             border-bottom: 1px solid #30363d; }
+.lv-bodies { flex: 1; position: relative; min-height: 0; }
+.lv-body { position: absolute; inset: 0; overflow: auto; display: none;
+           padding: 6px 0; font-size: 12px; line-height: 1.45;
+           font-family: ui-monospace, SFMono-Regular, Menlo, Consolas,
+                        monospace; }
+.lv-body.active { display: block; }
+.lv-line { white-space: pre; padding-right: 12px; min-height: 1.45em; }
+.lv-bodies.wrap .lv-line { white-space: pre-wrap; word-break: break-all; }
+.lv-line:hover { background: rgba(110, 118, 129, 0.12); }
+.lv-line.err { background: rgba(248, 81, 73, 0.12); }
+.lv-line.warn { background: rgba(210, 153, 34, 0.08); }
+.lv-ln { display: inline-block; width: 6ch; padding-right: 1ch;
+         margin-right: 1ch; text-align: right; color: #484f58;
+         user-select: none; border-right: 1px solid #21262d; }
+.lv-ln::before { content: attr(data-n); }
+.lv-body mark { background: #7d5a0a; color: #fff; border-radius: 2px; }
+.lv-body mark.cur { background: #f0883e; color: #000;
+                    outline: 1px solid #ffa657; }
+.lv-empty { padding: 40px; text-align: center; color: #8b949e;
+            font-family: sans-serif; font-size: 14px;
+            white-space: pre-wrap; }
+.lv-status { display: flex; gap: 18px; padding: 4px 10px;
+             background: #010409; color: #8b949e; font-size: 11px;
+             font-family: monospace; border-top: 1px solid #30363d; }
+.a-b { font-weight: bold; } .a-u { text-decoration: underline; }
+.a-fg0 { color: #8b949e; } .a-fg1 { color: #ff7b72; }
+.a-fg2 { color: #3fb950; } .a-fg3 { color: #d29922; }
+.a-fg4 { color: #58a6ff; } .a-fg5 { color: #bc8cff; }
+.a-fg6 { color: #39c5cf; } .a-fg7 { color: #b1bac4; }
+.a-fg8 { color: #8b949e; } .a-fg9 { color: #ffa198; }
+.a-fg10 { color: #56d364; } .a-fg11 { color: #e3b341; }
+.a-fg12 { color: #79c0ff; } .a-fg13 { color: #d2a8ff; }
+.a-fg14 { color: #56d4dd; } .a-fg15 { color: #f0f6fc; }
 </style>
 </head>
 <body>
@@ -145,6 +280,7 @@ tr.failed { background: #fadddd; }
 </div>
 <div id="global-actions">
     <button onclick="refreshAll()">&#8635; Refresh</button>
+    <button id="lv-reopen" onclick="lvShow()">Logs (0)</button>
     <button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
     <span id="busy">&#9203; action running...</span>
 </div>
@@ -403,7 +539,8 @@ source apero_profile.sh my_profile</pre>
 
 <div id="tab-status" class="tabpage">
 <div class="tabdesc">
-Inspect queue state, filter entries, and run per-row state transitions.
+Inspect queue state per group: click a group to see its tasks, click a
+task to view its log.
 </div>
 <div class="section-card summary-card">
 <div class="summary" id="summary-status"></div>
@@ -432,7 +569,36 @@ Inspect queue state, filter entries, and run per-row state transitions.
 <button onclick="prevPage()">&laquo; Prev</button>
 <span id="pos"></span>
 <button onclick="nextPage()">Next &raquo;</button>
+<select id="page-size" onchange="setPageSize(this.value)"
+        title="Rows per page">
+<option value="10">10 / page</option>
+<option value="20">20 / page</option>
+<option value="50">50 / page</option>
+<option value="100">100 / page</option>
+<option value="all">all</option>
+</select>
+<button onclick="showEntries(null)">All tasks</button>
+<button onclick="lvOpenRunning()">Open running logs</button>
 </div>
+<div id="group-bar">
+<button onclick="showGroups()">&larr; All groups</button>
+<span id="group-title"></span>
+</div>
+<table id="gtable">
+<thead><tr>
+<th data-key="num">#</th>
+<th data-key="recipe">Group</th>
+<th data-key="created">Created</th>
+<th data-key="state">State</th>
+<th data-key="pending">Pending</th>
+<th data-key="running">Running</th>
+<th data-key="complete">Complete</th>
+<th data-key="failed">Failed</th>
+<th data-key="total">Total</th>
+<th data-key="done">Progress</th>
+</tr></thead>
+<tbody id="gbody"></tbody>
+</table>
 <table id="qtable">
 <thead><tr>
 <th data-key="idx">#</th>
@@ -451,15 +617,27 @@ Inspect queue state, filter entries, and run per-row state transitions.
 
 <script>
 var allData = [];
+// one aggregated row per queue group (built from allData)
+var groupData = [];
+var statusCounts = {};
 var pageSize = XX_ROWS_XX;
 var page = 0;
-var sortKey = 'idx';
-var sortAsc = true;
+var groupsPage = 0;
+// 'groups' (one row per group) or 'entries' (tasks of currentGroup)
+var statusView = 'groups';
+// null in the entries view means tasks of all groups
+var currentGroup = null;
+// group view state filters, saved while looking inside a group
+var savedGroupFilters = null;
+var groupSort = {key: 'num', asc: true};
+var entrySort = {key: 'idx', asc: true};
 var view = [];
 // which states are currently shown (all shown by default)
 var activeStates = {pending: true, running: true,
                     complete: true, failed: true};
 var tplFields = XX_TPLFIELDS_XX;
+// TOOLS.REPROCESS.MP_TYPE (or --mpmode) from the server
+var defaultMpmode = XX_MPMODE_XX;
 
 function apiGet(url, callback) {
     fetch(url).then(function (resp) { return resp.json(); })
@@ -535,20 +713,63 @@ function setSingleStateFilter(state) {
     });
 }
 
-function gotoStatusFilter(state) {
+function gotoStatusFilter(state, kind) {
     setTab('status');
+    savedGroupFilters = null;
     setSingleStateFilter(state);
-    applyFilter();
+    if (kind === 'group') {
+        showGroups();
+    } else {
+        showEntries(null);
+    }
+}
+
+function parseGroupName(group) {
+    var match = /^APERO-QUEUE-GROUP-(\d+)-(\d+)-(.+)$/.exec(group);
+    if (!match) { return {num: '', name: group, created: ''}; }
+    var date = new Date(parseInt(match[1], 10) * 1000);
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var created = date.getFullYear() + '-' + pad(date.getMonth() + 1) +
+                  '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) +
+                  ':' + pad(date.getMinutes());
+    return {num: parseInt(match[2], 10), name: match[3], created: created};
+}
+
+function buildGroups() {
+    var byName = {};
+    groupData = [];
+    allData.forEach(function (row) {
+        var grp = byName[row.group];
+        if (!grp) {
+            var info = parseGroupName(row.group);
+            grp = {idx: groupData.length, group: row.group, num: info.num,
+                   recipe: info.name, created: info.created, pending: 0,
+                   running: 0, complete: 0, failed: 0, total: 0};
+            byName[row.group] = grp;
+            groupData.push(grp);
+        }
+        grp[row.state] += 1;
+        grp.total += 1;
+    });
+    groupData.forEach(function (grp) {
+        // any failed task fails the whole group
+        if (grp.failed > 0) { grp.state = 'failed'; }
+        else if (grp.running > 0) { grp.state = 'running'; }
+        else if (grp.pending > 0) { grp.state = 'pending'; }
+        else { grp.state = 'complete'; }
+        grp.done = grp.complete + grp.failed;
+    });
 }
 
 function sortView() {
+    var sortObj = (statusView === 'groups') ? groupSort : entrySort;
     view.sort(function (a, b) {
-        var x = a[sortKey];
-        var y = b[sortKey];
+        var x = a[sortObj.key];
+        var y = b[sortObj.key];
         if (x === undefined) { x = ''; }
         if (y === undefined) { y = ''; }
-        if (x < y) { return sortAsc ? -1 : 1; }
-        if (x > y) { return sortAsc ? 1 : -1; }
+        if (x < y) { return sortObj.asc ? -1 : 1; }
+        if (x > y) { return sortObj.asc ? 1 : -1; }
         return 0;
     });
 }
@@ -561,24 +782,169 @@ function toggleStateFilter(state) {
     applyFilter();
 }
 
-function applyFilter() {
+function pageLen() {
+    // pageSize 0 means show everything on one page
+    return (pageSize === 0) ? Math.max(view.length, 1) : pageSize;
+}
+
+function applyFilter(keepPage) {
     var text = document.getElementById('filter').value.toLowerCase();
-    view = allData.filter(function (row) {
-        if (!activeStates[row.state]) { return false; }
-        if (text === '') { return true; }
-        var blob = JSON.stringify(row).toLowerCase();
-        return blob.indexOf(text) !== -1;
-    });
+    if (statusView === 'groups') {
+        view = groupData.filter(function (grp) {
+            if (!activeStates[grp.state]) { return false; }
+            if (text === '') { return true; }
+            var blob = (grp.group + ' ' + grp.recipe).toLowerCase();
+            return blob.indexOf(text) !== -1;
+        });
+    } else {
+        view = allData.filter(function (row) {
+            if (currentGroup !== null && row.group !== currentGroup) {
+                return false;
+            }
+            if (!activeStates[row.state]) { return false; }
+            if (text === '') { return true; }
+            var blob = JSON.stringify(row).toLowerCase();
+            return blob.indexOf(text) !== -1;
+        });
+    }
     sortView();
+    if (keepPage !== true) {
+        page = 0;
+    } else if (page * pageLen() >= view.length) {
+        page = Math.max(0, Math.ceil(view.length / pageLen()) - 1);
+    }
+    render();
+}
+
+function setStateFilters(states) {
+    Object.keys(activeStates).forEach(function (name) {
+        activeStates[name] = !!states[name];
+        var btn = document.querySelector(
+            '.statefilter-btn[data-state="' + name + '"]');
+        if (btn) { btn.classList.toggle('active', activeStates[name]); }
+    });
+}
+
+function showGroups() {
+    if (savedGroupFilters !== null) {
+        setStateFilters(savedGroupFilters);
+        savedGroupFilters = null;
+    }
+    statusView = 'groups';
+    currentGroup = null;
+    page = groupsPage;
+    applyFilter(true);
+}
+
+function showEntries(group) {
+    if (statusView === 'groups') {
+        groupsPage = page;
+        // group-level filters describe groups, not the tasks inside them
+        if (group !== null) {
+            savedGroupFilters = Object.assign({}, activeStates);
+            setStateFilters({pending: true, running: true,
+                             complete: true, failed: true});
+        }
+    }
+    statusView = 'entries';
+    currentGroup = group;
+    applyFilter();
+}
+
+function setPageSize(value) {
+    pageSize = (value === 'all') ? 0 : parseInt(value, 10);
     page = 0;
+    groupsPage = 0;
     render();
 }
 
 function render() {
+    var groups = statusView === 'groups';
+    document.getElementById('gtable').style.display = groups ? '' : 'none';
+    document.getElementById('qtable').style.display = groups ? 'none' : '';
+    renderGroupBar();
+    var start = page * pageLen();
+    var end = Math.min(start + pageLen(), view.length);
+    if (groups) {
+        renderGroups(start, end);
+    } else {
+        renderEntries(start, end);
+    }
+    var pos = document.getElementById('pos');
+    var unit = groups ? 'groups' : 'tasks';
+    if (view.length === 0) {
+        pos.textContent = 'no ' + unit;
+    } else {
+        pos.textContent = unit + ' ' + (start + 1) + '-' + end + ' of ' +
+                          view.length;
+    }
+}
+
+function renderGroupBar() {
+    var bar = document.getElementById('group-bar');
+    var title = document.getElementById('group-title');
+    if (statusView === 'groups') {
+        bar.classList.remove('show');
+        return;
+    }
+    bar.classList.add('show');
+    if (currentGroup === null) {
+        title.textContent = 'Tasks in all groups';
+        return;
+    }
+    var grp = groupData.filter(function (g) {
+        return g.group === currentGroup;
+    })[0];
+    if (!grp) {
+        title.textContent = currentGroup + ' (no longer in the queue)';
+        return;
+    }
+    title.textContent = '#' + grp.num + ' ' + grp.recipe + '  |  ' +
+        grp.pending + ' pending, ' + grp.running + ' running, ' +
+        grp.complete + ' complete, ' + grp.failed + ' failed';
+    title.title = grp.group;
+}
+
+function groupProgressHtml(grp) {
+    var html = '<span class="gprog">';
+    ['complete', 'failed', 'running', 'pending'].forEach(function (state) {
+        if (grp[state] === 0) { return; }
+        var pct = 100 * grp[state] / grp.total;
+        html += '<span class="gp-' + state + '" style="width:' +
+                pct.toFixed(2) + '%"></span>';
+    });
+    return html + '</span>' + grp.done + '/' + grp.total;
+}
+
+function renderGroups(start, end) {
+    var tbody = document.getElementById('gbody');
+    tbody.innerHTML = '';
+    for (var i = start; i < end; i++) {
+        var grp = view[i];
+        var tr = document.createElement('tr');
+        tr.className = grp.state;
+        if (/-DBPUSH$/.test(grp.recipe)) { tr.classList.add('dbpush'); }
+        tr.innerHTML =
+            '<td class="num">' + grp.num + '</td>' +
+            '<td>' + escapeHtml(grp.recipe) + '</td>' +
+            '<td>' + escapeHtml(grp.created) + '</td>' +
+            '<td><span class="badge s-' + grp.state + '">' + grp.state +
+            '</span></td>' +
+            '<td class="num">' + grp.pending + '</td>' +
+            '<td class="num">' + grp.running + '</td>' +
+            '<td class="num">' + grp.complete + '</td>' +
+            '<td class="num">' + grp.failed + '</td>' +
+            '<td class="num">' + grp.total + '</td>' +
+            '<td>' + groupProgressHtml(grp) + '</td>';
+        tr.title = grp.group + '\nClick to show the tasks in this group';
+        tr.addEventListener('click', showEntries.bind(null, grp.group));
+        tbody.appendChild(tr);
+    }
+}
+
+function renderEntries(start, end) {
     var tbody = document.getElementById('qbody');
     tbody.innerHTML = '';
-    var start = page * pageSize;
-    var end = Math.min(start + pageSize, view.length);
     for (var i = start; i < end; i++) {
         var row = view[i];
         var tr = document.createElement('tr');
@@ -618,14 +984,9 @@ function render() {
             '<td class="runstring">' +
             escapeHtml(row.runstring || '') + '</td>' +
             actions;
+        tr.title = 'Click to view log';
+        tr.addEventListener('click', lvRowClick.bind(null, row));
         tbody.appendChild(tr);
-    }
-    var pos = document.getElementById('pos');
-    if (view.length === 0) {
-        pos.textContent = 'no entries';
-    } else {
-        pos.textContent = 'N=' + start + '-' + (end - 1) +
-                          ' of ' + view.length;
     }
 }
 
@@ -637,21 +998,32 @@ function prevPage() {
 }
 
 function nextPage() {
-    if ((page + 1) * pageSize < view.length) {
+    if ((page + 1) * pageLen() < view.length) {
         page = page + 1;
         render();
     }
 }
 
-function renderSummary(counts) {
-    var states = ['pending', 'running', 'complete', 'failed'];
-    var html = '';
-    states.forEach(function (state) {
-        html += '<button type="button" class="summary-btn s-' +
-                state + '" onclick="gotoStatusFilter(\'' + state +
-                '\')">' + state.toUpperCase() + ': ' +
-                (counts[state] || 0) + '</button>';
+function summaryRow(label, kind, counts, unit, btnClass) {
+    var html = '<div class="summary-row"><span class="summary-label">' +
+               label + '</span>';
+    ['pending', 'running', 'complete', 'failed'].forEach(function (state) {
+        var count = counts[state] || 0;
+        html += '<button type="button" class="summary-btn ' + btnClass +
+                ' s-' + state + '" onclick="gotoStatusFilter(\'' + state +
+                '\', \'' + kind + '\')">' + state.toUpperCase() + ': ' +
+                count + ' ' + unit + (count === 1 ? '' : 's') + '</button>';
     });
+    return html + '</div>';
+}
+
+function renderSummary() {
+    var groupCounts = {pending: 0, running: 0, complete: 0, failed: 0};
+    groupData.forEach(function (grp) { groupCounts[grp.state] += 1; });
+    var html = summaryRow('Groups', 'group', groupCounts, 'group',
+                          'group-btn') +
+               summaryRow('Tasks', 'individual', statusCounts, 'task',
+                          'task-btn');
     document.getElementById('summary-control').innerHTML = html;
     document.getElementById('summary-status').innerHTML = html;
 }
@@ -712,7 +1084,8 @@ function refreshAllTemplatePreviews() {
 function buildRunCli() {
     var cores = document.getElementById('run-cores').value || '1';
     var ntasks = document.getElementById('run-ntasks').value || '';
-    var mpmode = document.getElementById('run-mpmode').value || 'linear';
+    var mpmode = document.getElementById('run-mpmode').value ||
+                 defaultMpmode;
     var cmd = 'apero_queue.py run --cores ' + cores +
               ' --mpmode ' + mpmode;
     if (ntasks !== '') {
@@ -830,12 +1203,39 @@ function toggleActivationInfo() {
     }
 }
 
-function refreshStatus() {
-    apiGet('/api/status', function (data) {
+var statusLoading = false;
+
+function refreshStatus(keepPage) {
+    if (statusLoading) { return; }
+    statusLoading = true;
+    fetch('/api/status').then(function (resp) { return resp.json(); })
+    .then(function (data) {
+        statusLoading = false;
         allData = data.entries;
-        renderSummary(data.counts);
-        applyFilter();
+        statusCounts = data.counts;
+        buildGroups();
+        renderSummary();
+        applyFilter(keepPage);
+    })
+    .catch(function (err) {
+        statusLoading = false;
+        console.log(err);
     });
+}
+
+function autoRefreshStatus() {
+    if (document.hidden) { return; }
+    // do not rebuild the table under an open row action dropdown
+    var active = document.activeElement;
+    if (active && active.closest && active.closest('#qbody')) { return; }
+    // or while the user is selecting table text
+    var selection = window.getSelection();
+    if (selection && selection.toString() !== '' && selection.anchorNode &&
+            document.getElementById('status-content').contains(
+                selection.anchorNode)) {
+        return;
+    }
+    refreshStatus(true);
 }
 
 function refreshTemplate(name) {
@@ -1066,23 +1466,785 @@ document.getElementById('template-fields')
 document.getElementById('tpl-activation')
     .addEventListener('input', updateCliCommands);
 
-var headers = document.querySelectorAll('#qtable th');
-headers.forEach(function (th) {
-    th.addEventListener('click', function () {
-        var key = th.getAttribute('data-key');
-        if (sortKey === key) { sortAsc = !sortAsc; }
-        else { sortKey = key; sortAsc = true; }
-        sortView();
-        page = 0;
-        render();
+function bindSort(tableId, sortObj) {
+    document.querySelectorAll('#' + tableId + ' th').forEach(function (th) {
+        th.addEventListener('click', function () {
+            var key = th.getAttribute('data-key');
+            if (key === 'actions') { return; }
+            if (sortObj.key === key) { sortObj.asc = !sortObj.asc; }
+            else { sortObj.key = key; sortObj.asc = true; }
+            sortView();
+            page = 0;
+            render();
+        });
     });
-});
+}
+bindSort('gtable', groupSort);
+bindSort('qtable', entrySort);
 
+(function initPageSize() {
+    var select = document.getElementById('page-size');
+    if (['10', '20', '50', '100'].indexOf(String(pageSize)) === -1) {
+        var option = document.createElement('option');
+        option.value = String(pageSize);
+        option.textContent = pageSize + ' / page';
+        select.insertBefore(option, select.firstChild);
+    }
+    select.value = String(pageSize);
+})();
+
+document.getElementById('run-mpmode').value = defaultMpmode;
 updateCliCommands();
 refreshAll();
 refreshTemplateNames();
 refreshTemplate();
 setInterval(refreshState, 2000);
+setInterval(autoRefreshStatus, 5000);
+</script>
+
+<div id="logviewer">
+<div class="lv-panel" role="dialog" aria-label="Task logs">
+<div class="lv-tabs" id="lv-tabs"></div>
+<div class="lv-head">
+    <span id="lv-state" class="lv-state"></span>
+    <span id="lv-meta" class="lv-meta"></span>
+    <button onclick="lvCopyPath()">Copy path</button>
+    <button onclick="lvOpenRunning()">Open running logs</button>
+    <button onclick="lvHide()" title="Close (Esc)">&#10005; Close</button>
+</div>
+<div id="lv-runstring" class="lv-runstring"></div>
+<div class="lv-bar">
+    <input id="lv-search" type="text" autocomplete="off"
+           placeholder="Search (Ctrl+F, Enter / Shift+Enter)">
+    <button onclick="lvStep(-1)" title="Previous match">&#9650;</button>
+    <button onclick="lvStep(1)" title="Next match">&#9660;</button>
+    <span id="lv-count" class="lv-count"></span>
+    <label title="Case sensitive"><input id="lv-case" type="checkbox">
+        Aa</label>
+    <label title="Regular expression"><input id="lv-regex"
+        type="checkbox"> .*</label>
+    <label><input id="lv-only" type="checkbox"> Only matching</label>
+    <select id="lv-level" title="Level filter">
+        <option value="all">All lines</option>
+        <option value="warn">Warnings + errors</option>
+        <option value="err">Errors only</option>
+    </select>
+    <span class="lv-sep"></span>
+    <button id="lv-pause" onclick="lvTogglePause()">&#10074;&#10074; Pause</button>
+    <button id="lv-follow" onclick="lvToggleFollow()">Follow</button>
+    <button id="lv-wrap" onclick="lvToggleWrap()">Wrap</button>
+    <button onclick="lvNextError()">Next error</button>
+    <button onclick="lvScrollEnd(false)">Top</button>
+    <button onclick="lvScrollEnd(true)">Bottom</button>
+    <button onclick="lvCopyVisible()"
+            title="Copy all visible (filtered) lines">Copy</button>
+</div>
+<div id="lv-banner" class="lv-banner"></div>
+<div id="lv-bodies" class="lv-bodies"></div>
+<div id="lv-status" class="lv-status"></div>
+</div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------
+// Task log viewer: one tab per queue task, live streaming for running
+//   tasks, search/filter with highlighting and ANSI colour rendering
+// ---------------------------------------------------------------------
+var lvTabs = {};
+var lvOrder = [];
+var lvActive = null;
+var lvOpen = false;
+var lvMatch = {re: null, error: null};
+var lvMatches = [];
+var lvMatchIdx = -1;
+var lvSearchTimer = null;
+var LV_FINAL = {complete: true, failed: true};
+var LV_ERR_RE = new RegExp('\\|!!\\||Traceback \\(most recent call last\\)' +
+                           '|has NOT been successfully' +
+                           '|^\\s*\\w*(Error|Exception)\\b:');
+var LV_WARN_RE = /\|@@\|/;
+
+function lvEsc(value) {
+    return String(value).replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+}
+
+function lvFmtBytes(n) {
+    if (n < 1024) { return n + ' B'; }
+    if (n < 1048576) { return (n / 1024).toFixed(1) + ' KB'; }
+    return (n / 1048576).toFixed(1) + ' MB';
+}
+
+function lvRunLabel(qid, recipe) {
+    var run = qid.split('/')[1] || qid;
+    var match = run.match(/APERO-QUEUE-RUN-(\d+)/);
+    var num = match ? String(parseInt(match[1], 10)) : run;
+    return (recipe ? recipe + ' ' : '') + '#' + num;
+}
+
+function lvCopyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text);
+        return;
+    }
+    var box = document.createElement('textarea');
+    box.value = text;
+    document.body.appendChild(box);
+    box.select();
+    document.execCommand('copy');
+    document.body.removeChild(box);
+}
+
+// parse one line of ANSI coloured text into styled segments (the colour
+//   state is carried over between lines like a real terminal)
+function lvParseAnsi(raw, st) {
+    var segs = [];
+    var re = /\x1b\[([0-9;?]*)([A-Za-z])/g;
+    var last = 0;
+    var match;
+    function push(text) {
+        if (text) { segs.push({t: text, fg: st.fg, b: st.b, u: st.u}); }
+    }
+    raw = raw.replace(/\x1b[()][A-Za-z0-9]/g, '');
+    while ((match = re.exec(raw)) !== null) {
+        push(raw.slice(last, match.index));
+        last = re.lastIndex;
+        if (match[2] !== 'm') { continue; }
+        var codes = (match[1] === '') ? [0] : match[1].split(';')
+            .map(function (c) { return parseInt(c, 10) || 0; });
+        for (var i = 0; i < codes.length; i++) {
+            var c = codes[i];
+            if (c === 0) { st.fg = null; st.b = false; st.u = false; }
+            else if (c === 1) { st.b = true; }
+            else if (c === 22) { st.b = false; }
+            else if (c === 4) { st.u = true; }
+            else if (c === 24) { st.u = false; }
+            else if (c >= 30 && c <= 37) { st.fg = c - 30; }
+            else if (c === 39) { st.fg = null; }
+            else if (c >= 90 && c <= 97) { st.fg = c - 82; }
+            else if (c === 38 || c === 48) {
+                if (codes[i + 1] === 5) {
+                    if (c === 38 && codes[i + 2] < 16) {
+                        st.fg = codes[i + 2];
+                    }
+                    i += 2;
+                } else if (codes[i + 1] === 2) {
+                    i += 4;
+                }
+            }
+        }
+    }
+    push(raw.slice(last));
+    return segs;
+}
+
+function lvMakeLine(tab, raw) {
+    // carriage returns (progress bars) - keep the last drawn state
+    if (raw.indexOf('\r') !== -1) {
+        var parts = raw.split('\r').filter(function (p) {
+            return p !== '';
+        });
+        raw = parts.length > 0 ? parts[parts.length - 1] : '';
+    }
+    var segs = lvParseAnsi(raw, tab.ansi);
+    var text = segs.map(function (s) { return s.t; }).join('');
+    var red = false;
+    var yellow = false;
+    segs.forEach(function (s) {
+        if (s.t.trim() === '') { return; }
+        if (s.fg === 1 || s.fg === 9) { red = true; }
+        if (s.fg === 3 || s.fg === 11) { yellow = true; }
+    });
+    var level = '';
+    if (red || LV_ERR_RE.test(text)) { level = 'err'; }
+    else if (yellow || LV_WARN_RE.test(text)) { level = 'warn'; }
+    return {n: tab.lines.length + 1, segs: segs, text: text, level: level};
+}
+
+function lvReadMatcher() {
+    var input = document.getElementById('lv-search');
+    var query = input.value;
+    lvMatch = {re: null, error: null};
+    input.classList.remove('bad');
+    if (query === '') { return; }
+    var flags = document.getElementById('lv-case').checked ? 'g' : 'gi';
+    var src = query;
+    if (!document.getElementById('lv-regex').checked) {
+        src = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    try {
+        lvMatch.re = new RegExp(src, flags);
+    } catch (err) {
+        lvMatch.error = err.message;
+        input.classList.add('bad');
+    }
+}
+
+function lvVisible(line) {
+    var level = document.getElementById('lv-level').value;
+    if (level === 'warn' && line.level === '') { return false; }
+    if (level === 'err' && line.level !== 'err') { return false; }
+    if (document.getElementById('lv-only').checked && lvMatch.re) {
+        lvMatch.re.lastIndex = 0;
+        return lvMatch.re.test(line.text);
+    }
+    return true;
+}
+
+function lvLineHtml(line) {
+    var re = lvMatch.re;
+    var ranges = [];
+    if (re) {
+        re.lastIndex = 0;
+        var match;
+        while ((match = re.exec(line.text)) !== null) {
+            if (match[0].length === 0) { re.lastIndex++; continue; }
+            ranges.push([match.index, match.index + match[0].length]);
+        }
+    }
+    var html = '<div class="lv-line' + (line.level ? ' ' + line.level : '') +
+               '"><span class="lv-ln" data-n="' + line.n + '"></span>';
+    var pos = 0;
+    var r = 0;
+    line.segs.forEach(function (seg) {
+        var cls = [];
+        if (seg.fg !== null) { cls.push('a-fg' + seg.fg); }
+        if (seg.b) { cls.push('a-b'); }
+        if (seg.u) { cls.push('a-u'); }
+        var segEnd = pos + seg.t.length;
+        var inner = '';
+        var p = pos;
+        while (p < segEnd) {
+            while (r < ranges.length && ranges[r][1] <= p) { r++; }
+            if (r < ranges.length && ranges[r][0] <= p) {
+                var end = Math.min(ranges[r][1], segEnd);
+                // only the first piece of a match is a navigation stop
+                var mcls = (ranges[r][0] === p) ? 'lv-ms' : 'lv-mc';
+                inner += '<mark class="' + mcls + '">' +
+                         lvEsc(seg.t.slice(p - pos, end - pos)) + '</mark>';
+                p = end;
+            } else {
+                var stop = (r < ranges.length) ?
+                    Math.min(ranges[r][0], segEnd) : segEnd;
+                inner += lvEsc(seg.t.slice(p - pos, stop - pos));
+                p = stop;
+            }
+        }
+        if (cls.length > 0) {
+            html += '<span class="' + cls.join(' ') + '">' + inner +
+                    '</span>';
+        } else {
+            html += inner;
+        }
+        pos = segEnd;
+    });
+    return html + '</div>';
+}
+
+function lvEmptyMessage(tab) {
+    if (tab.error) { return 'Error: ' + tab.error; }
+    if (!tab.loaded) { return 'Loading...'; }
+    if (tab.exists) {
+        if (tab.lines.length === 0) { return 'Log file is empty'; }
+        return 'No lines match the current filter';
+    }
+    if (tab.state === 'pending') {
+        return 'Task is pending - there is no log yet.\n' +
+               'This view will start streaming as soon as the task starts.';
+    }
+    if (tab.state === 'running') {
+        return 'Task is running but no log file exists yet:\n' + tab.path +
+               '\n(waiting - tasks started before log capture was ' +
+               'enabled will never have one)';
+    }
+    return 'No log file found for this task:\n' + tab.path;
+}
+
+function lvRenderTab(tab) {
+    var parts = [];
+    tab.shown = 0;
+    for (var i = 0; i < tab.rendered; i++) {
+        if (lvVisible(tab.lines[i])) {
+            parts.push(lvLineHtml(tab.lines[i]));
+            tab.shown++;
+        }
+    }
+    if (parts.length === 0) {
+        tab.body.innerHTML = '<div class="lv-empty">' +
+                             lvEsc(lvEmptyMessage(tab)) + '</div>';
+    } else {
+        tab.body.innerHTML = parts.join('');
+    }
+    tab.dirty = false;
+}
+
+function lvFlush(tab) {
+    if (tab.paused || tab.rendered >= tab.lines.length) {
+        lvUpdateTabs();
+        return;
+    }
+    var parts = [];
+    for (var i = tab.rendered; i < tab.lines.length; i++) {
+        if (lvVisible(tab.lines[i])) {
+            parts.push(lvLineHtml(tab.lines[i]));
+        }
+    }
+    tab.rendered = tab.lines.length;
+    if (parts.length > 0) {
+        var empty = tab.body.querySelector('.lv-empty');
+        if (empty) { tab.body.innerHTML = ''; }
+        tab.body.insertAdjacentHTML('beforeend', parts.join(''));
+        tab.shown += parts.length;
+    }
+    if (tab.qid === lvActive) { lvRefreshMatches(false); }
+    if (tab.follow) { tab.body.scrollTop = tab.body.scrollHeight; }
+    lvUpdateTabs();
+}
+
+function lvAppend(tab, text, final) {
+    var raw = tab.partial + text;
+    var rows = raw.split('\n');
+    tab.partial = rows.pop();
+    if (final && tab.partial !== '') {
+        rows.push(tab.partial);
+        tab.partial = '';
+    }
+    rows.forEach(function (row) {
+        tab.lines.push(lvMakeLine(tab, row));
+    });
+    lvFlush(tab);
+}
+
+function lvResetTab(tab) {
+    tab.lines = [];
+    tab.rendered = 0;
+    tab.shown = 0;
+    tab.partial = '';
+    tab.offset = -1;
+    tab.ansi = {fg: null, b: false, u: false};
+    tab.done = false;
+    tab.body.innerHTML = '';
+}
+
+function lvPoll(tab) {
+    if (tab.loading || tab.done) { return; }
+    tab.loading = true;
+    var url = '/api/log?qid=' + encodeURIComponent(tab.qid) +
+              '&offset=' + tab.offset;
+    fetch(url).then(function (resp) { return resp.json(); })
+    .then(function (data) {
+        tab.loading = false;
+        if (!lvTabs[tab.qid]) { return; }
+        var prevState = tab.state;
+        tab.loaded = true;
+        tab.error = data.error;
+        tab.state = data.state;
+        tab.pid = data.pid;
+        tab.pidHost = data.pid_host;
+        tab.local = data.local;
+        tab.alive = data.alive;
+        tab.path = data.path;
+        tab.size = data.size;
+        tab.updated = new Date();
+        if (data.error) {
+            tab.done = true;
+            lvRenderTab(tab);
+            lvUpdateHead();
+            return;
+        }
+        // a pending task started (or log rewritten) - start over
+        if (data.reset || (prevState === 'pending' &&
+                           data.state === 'running')) {
+            lvResetTab(tab);
+            if (!data.reset) {
+                lvUpdateHead();
+                return;
+            }
+        }
+        tab.exists = data.exists;
+        if (data.truncated) { tab.truncated = true; }
+        var final = !(data.state === 'running') &&
+                    data.offset >= data.size;
+        if (data.exists) {
+            tab.offset = data.offset;
+            lvAppend(tab, data.text, final);
+        }
+        // finished tasks (or tasks gone from the queue) need no polling
+        if (final && (LV_FINAL[data.state] || data.state === null)) {
+            tab.done = true;
+        }
+        // refresh the placeholder message (loading/pending/no log)
+        if (tab.lines.length === 0 && !tab.paused) {
+            lvRenderTab(tab);
+        }
+        lvUpdateTabs();
+        lvUpdateHead();
+    })
+    .catch(function (err) {
+        tab.loading = false;
+        console.log(err);
+    });
+}
+
+function lvPollAll() {
+    if (!lvOpen) { return; }
+    lvOrder.forEach(function (qid) { lvPoll(lvTabs[qid]); });
+}
+
+function lvUpdateTabs() {
+    var bar = document.getElementById('lv-tabs');
+    bar.innerHTML = '';
+    lvOrder.forEach(function (qid) {
+        var tab = lvTabs[qid];
+        var el = document.createElement('div');
+        el.className = 'lv-tab' + (qid === lvActive ? ' active' : '');
+        el.title = qid;
+        var dot = document.createElement('span');
+        dot.className = 'lv-dot ' + (tab.state || '');
+        el.appendChild(dot);
+        var label = document.createElement('span');
+        label.textContent = tab.label;
+        el.appendChild(label);
+        var pending = tab.lines.length - tab.rendered;
+        if (tab.paused && pending > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'lv-newcount';
+            badge.textContent = '+' + pending;
+            el.appendChild(badge);
+        }
+        var close = document.createElement('span');
+        close.className = 'lv-x';
+        close.innerHTML = '&#10005;';
+        close.title = 'Close tab';
+        close.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            lvCloseTab(qid);
+        });
+        el.appendChild(close);
+        el.addEventListener('click', function () { lvActivate(qid); });
+        bar.appendChild(el);
+    });
+    document.getElementById('lv-reopen').textContent =
+        'Logs (' + lvOrder.length + ')';
+}
+
+function lvUpdateHead() {
+    var tab = lvTabs[lvActive];
+    var stateEl = document.getElementById('lv-state');
+    var meta = document.getElementById('lv-meta');
+    var runstring = document.getElementById('lv-runstring');
+    var banner = document.getElementById('lv-banner');
+    var status = document.getElementById('lv-status');
+    var pauseBtn = document.getElementById('lv-pause');
+    if (!tab) { return; }
+    var state = tab.state || 'unknown';
+    stateEl.className = 'lv-state ' + state;
+    stateEl.textContent = state;
+    var info = [tab.qid];
+    if (tab.pid !== null && tab.pid !== undefined) {
+        var where = tab.pidHost ? '@' + tab.pidHost : '';
+        var alive = !tab.local ? '' : (tab.alive ? ' (alive)' : ' (dead)');
+        info.push('PID ' + tab.pid + where + alive);
+    }
+    if (tab.path) { info.push(tab.path); }
+    meta.textContent = info.join('  |  ');
+    meta.title = info.join('\n');
+    runstring.textContent = tab.runstring || '';
+    runstring.style.display = tab.runstring ? 'block' : 'none';
+    // warnings shown above the log
+    var notes = [];
+    if (tab.truncated) {
+        notes.push('Large log - only the last part is shown (full file: ' +
+                   tab.path + ')');
+    }
+    if (tab.state === 'pending' && tab.exists) {
+        notes.push('Task is pending - showing the log of a previous attempt');
+    }
+    if (tab.loaded && tab.state === null && !tab.error) {
+        notes.push('Entry is no longer in the queue');
+    }
+    if (tab.state === 'running' && tab.pid !== null &&
+            tab.pid !== undefined && tab.local && !tab.alive) {
+        notes.push('PID ' + tab.pid + ' is no longer alive');
+    }
+    if (tab.paused) {
+        notes.push('Stream paused - ' + (tab.lines.length - tab.rendered) +
+                   ' new line(s) buffered');
+    }
+    banner.textContent = notes.join('  |  ');
+    banner.style.display = notes.length > 0 ? 'block' : 'none';
+    // pausing only makes sense while the log can still grow
+    pauseBtn.disabled = tab.done && !tab.paused;
+    pauseBtn.innerHTML = tab.paused ? '&#9654; Resume' :
+                                      '&#10074;&#10074; Pause';
+    pauseBtn.classList.toggle('on', tab.paused);
+    document.getElementById('lv-follow').classList.toggle('on', tab.follow);
+    var stream = tab.done ? 'static' : (tab.paused ? 'paused' : 'live');
+    var updated = tab.updated ? tab.updated.toLocaleTimeString() : '-';
+    status.innerHTML = '';
+    ['lines: ' + tab.lines.length + ' (shown ' + tab.shown + ')',
+     'size: ' + lvFmtBytes(tab.size || 0),
+     'stream: ' + stream,
+     'updated: ' + updated].forEach(function (text) {
+        var span = document.createElement('span');
+        span.textContent = text;
+        status.appendChild(span);
+    });
+}
+
+function lvRefreshMatches(jump) {
+    var tab = lvTabs[lvActive];
+    var count = document.getElementById('lv-count');
+    var oldCur = (lvMatchIdx >= 0) ? lvMatches[lvMatchIdx] : null;
+    lvMatches = tab ? Array.prototype.slice.call(
+        tab.body.querySelectorAll('mark.lv-ms')) : [];
+    if (jump) {
+        lvMatchIdx = -1;
+        if (lvMatches.length > 0) { lvGoto(0); }
+    } else if (oldCur) {
+        lvMatchIdx = lvMatches.indexOf(oldCur);
+    }
+    if (lvMatch.error) {
+        count.textContent = 'bad regex';
+    } else if (!lvMatch.re) {
+        count.textContent = '';
+    } else if (lvMatches.length === 0) {
+        count.textContent = 'no matches';
+    } else {
+        count.textContent = (lvMatchIdx + 1) + ' / ' + lvMatches.length;
+    }
+}
+
+function lvGoto(idx) {
+    if (lvMatches.length === 0) { return; }
+    if (lvMatchIdx >= 0 && lvMatches[lvMatchIdx]) {
+        lvMatches[lvMatchIdx].classList.remove('cur');
+    }
+    lvMatchIdx = (idx + lvMatches.length) % lvMatches.length;
+    var mark = lvMatches[lvMatchIdx];
+    mark.classList.add('cur');
+    var tab = lvTabs[lvActive];
+    if (tab) { tab.follow = false; }
+    mark.scrollIntoView({block: 'center', inline: 'nearest'});
+    document.getElementById('lv-count').textContent =
+        (lvMatchIdx + 1) + ' / ' + lvMatches.length;
+    lvUpdateHead();
+}
+
+function lvStep(dir) {
+    lvGoto(lvMatchIdx < 0 ? (dir > 0 ? 0 : -1) : lvMatchIdx + dir);
+}
+
+function lvSearchChanged() {
+    lvReadMatcher();
+    lvOrder.forEach(function (qid) { lvTabs[qid].dirty = true; });
+    var tab = lvTabs[lvActive];
+    if (!tab) { return; }
+    lvRenderTab(tab);
+    if (tab.follow && !lvMatch.re) {
+        tab.body.scrollTop = tab.body.scrollHeight;
+    }
+    lvRefreshMatches(true);
+    lvUpdateHead();
+}
+
+function lvActivate(qid) {
+    lvActive = qid;
+    lvOrder.forEach(function (key) {
+        lvTabs[key].body.classList.toggle('active', key === qid);
+    });
+    var tab = lvTabs[qid];
+    if (tab.dirty) {
+        lvRenderTab(tab);
+        if (tab.follow) { tab.body.scrollTop = tab.body.scrollHeight; }
+    }
+    lvMatchIdx = -1;
+    lvRefreshMatches(false);
+    lvUpdateTabs();
+    lvUpdateHead();
+}
+
+function openLog(qid, info, focus) {
+    info = info || {};
+    if (!lvTabs[qid]) {
+        var body = document.createElement('div');
+        body.className = 'lv-body';
+        document.getElementById('lv-bodies').appendChild(body);
+        var tab = {qid: qid, label: lvRunLabel(qid, info.recipe),
+                   runstring: info.runstring || '', state: info.state,
+                   body: body, follow: true, paused: false, loaded: false,
+                   exists: false, truncated: false, loading: false,
+                   pid: null, alive: false, path: '', size: 0,
+                   error: null, updated: null, dirty: false};
+        lvResetTab(tab);
+        body.addEventListener('scroll', function () {
+            var atEnd = body.scrollTop + body.clientHeight >=
+                        body.scrollHeight - 24;
+            if (atEnd !== tab.follow) {
+                tab.follow = atEnd;
+                if (tab.qid === lvActive) { lvUpdateHead(); }
+            }
+        });
+        lvTabs[qid] = tab;
+        lvOrder.push(qid);
+        lvRenderTab(tab);
+        lvPoll(tab);
+    }
+    if (focus || lvActive === null) { lvActivate(qid); }
+    else { lvUpdateTabs(); }
+    lvShow();
+}
+
+function lvCloseTab(qid) {
+    var tab = lvTabs[qid];
+    if (!tab) { return; }
+    var pos = lvOrder.indexOf(qid);
+    tab.body.parentNode.removeChild(tab.body);
+    delete lvTabs[qid];
+    lvOrder.splice(pos, 1);
+    if (lvActive === qid) {
+        lvActive = null;
+        if (lvOrder.length > 0) {
+            lvActivate(lvOrder[Math.min(pos, lvOrder.length - 1)]);
+        }
+    }
+    lvUpdateTabs();
+    if (lvOrder.length === 0) { lvHide(); }
+}
+
+function lvRowClick(row, ev) {
+    if (ev.target.closest('select, option, button, a, input')) { return; }
+    // let users select/copy table text without opening a log
+    if (window.getSelection().toString() !== '') { return; }
+    openLog(row.group + '/' + row.run, row, true);
+}
+
+function lvOpenRunning() {
+    var running = allData.filter(function (row) {
+        return row.state === 'running';
+    });
+    if (running.length === 0) {
+        alert('No running tasks (try Refresh)');
+        return;
+    }
+    running.forEach(function (row, it) {
+        openLog(row.group + '/' + row.run, row, it === 0);
+    });
+}
+
+function lvShow() {
+    if (lvOrder.length === 0) {
+        alert('No logs open - click a row in the Status tab');
+        return;
+    }
+    document.getElementById('logviewer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    lvOpen = true;
+    lvPollAll();
+}
+
+function lvHide() {
+    document.getElementById('logviewer').classList.remove('open');
+    document.body.style.overflow = '';
+    lvOpen = false;
+}
+
+function lvTogglePause() {
+    var tab = lvTabs[lvActive];
+    if (!tab) { return; }
+    tab.paused = !tab.paused;
+    if (!tab.paused) {
+        if (tab.dirty) { lvRenderTab(tab); }
+        lvFlush(tab);
+    }
+    lvUpdateTabs();
+    lvUpdateHead();
+}
+
+function lvToggleFollow() {
+    var tab = lvTabs[lvActive];
+    if (!tab) { return; }
+    tab.follow = !tab.follow;
+    if (tab.follow) { tab.body.scrollTop = tab.body.scrollHeight; }
+    lvUpdateHead();
+}
+
+function lvToggleWrap() {
+    var bodies = document.getElementById('lv-bodies');
+    bodies.classList.toggle('wrap');
+    document.getElementById('lv-wrap').classList.toggle(
+        'on', bodies.classList.contains('wrap'));
+}
+
+function lvScrollEnd(bottom) {
+    var tab = lvTabs[lvActive];
+    if (!tab) { return; }
+    tab.body.scrollTop = bottom ? tab.body.scrollHeight : 0;
+}
+
+function lvNextError() {
+    var tab = lvTabs[lvActive];
+    if (!tab) { return; }
+    var errs = tab.body.querySelectorAll('.lv-line.err');
+    if (errs.length === 0) { return; }
+    var mark = tab.body.scrollTop + tab.body.clientHeight / 2 + 2;
+    var target = errs[0];
+    for (var i = 0; i < errs.length; i++) {
+        if (errs[i].offsetTop > mark) { target = errs[i]; break; }
+    }
+    tab.follow = false;
+    target.scrollIntoView({block: 'center'});
+    lvUpdateHead();
+}
+
+function lvCopyVisible() {
+    var tab = lvTabs[lvActive];
+    if (!tab) { return; }
+    var lines = [];
+    for (var i = 0; i < tab.rendered; i++) {
+        if (lvVisible(tab.lines[i])) { lines.push(tab.lines[i].text); }
+    }
+    lvCopyText(lines.join('\n'));
+}
+
+function lvCopyPath() {
+    var tab = lvTabs[lvActive];
+    if (tab && tab.path) { lvCopyText(tab.path); }
+}
+
+document.getElementById('lv-search').addEventListener('input', function () {
+    clearTimeout(lvSearchTimer);
+    lvSearchTimer = setTimeout(lvSearchChanged, 150);
+});
+document.getElementById('lv-search').addEventListener('keydown',
+    function (ev) {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            lvStep(ev.shiftKey ? -1 : 1);
+        }
+    });
+['lv-case', 'lv-regex', 'lv-only', 'lv-level'].forEach(function (key) {
+    document.getElementById(key).addEventListener('change',
+                                                  lvSearchChanged);
+});
+document.addEventListener('keydown', function (ev) {
+    if (!lvOpen) { return; }
+    var search = document.getElementById('lv-search');
+    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'f') {
+        ev.preventDefault();
+        search.focus();
+        search.select();
+    } else if (ev.key === 'Escape') {
+        if (document.activeElement === search && search.value !== '') {
+            search.value = '';
+            lvSearchChanged();
+        } else {
+            lvHide();
+        }
+    }
+});
+setInterval(lvPollAll, 1000);
 </script>
 </body>
 </html>

@@ -47,6 +47,7 @@ explorer = DrsRecipe(__INSTRUMENT__)
 get_files = DrsRecipe(__INSTRUMENT__)
 go_recipe = DrsRecipe(__INSTRUMENT__)
 database_mgr = DrsRecipe(__INSTRUMENT__)
+db_push = DrsRecipe(__INSTRUMENT__)
 langdb = DrsRecipe(__INSTRUMENT__)
 listing = DrsRecipe(__INSTRUMENT__)
 stats = DrsRecipe(__INSTRUMENT__)
@@ -65,7 +66,7 @@ validate = DrsRecipe(__INSTRUMENT__)
 visulise = DrsRecipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [ari, astrometric, changelog, database_mgr, explorer,
+recipes = [ari, astrometric, changelog, database_mgr, db_push, explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing, queue_recipe, remake_doc, req_check,
            reject, remove, reset, run_ini,
@@ -142,7 +143,6 @@ ari.set_kwarg(name='--filterobjs', dtype=str, default='None',
               helpstr='Only process these objects (should only be used for '
                       'debugging). List of comma separated objects (named as '
                       'in astrometric database) ')
-ari.description_file = 'apero_ri.rst'
 
 # -----------------------------------------------------------------------------
 # apero_astrometrics.py
@@ -175,7 +175,6 @@ astrometric.set_kwarg(name='--aliases', dtype=str, default='None',
                       helpstr='Aliases to add to the database for this object. '
                               'Note this should only be used with a single '
                               'object name.')
-astrometric.description_file = 'apero_astrometrics.rst'
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py
@@ -189,7 +188,6 @@ changelog.recipe_type = 'nolog-tool'
 changelog.recipe_kind = 'admin'
 changelog.set_kwarg(name='--preview', dtype='switch',
                     helpstr=textentry('PREVIEW_HELP'))
-changelog.description_file = 'apero_changelog.rst'
 
 # -----------------------------------------------------------------------------
 # apero_database.py
@@ -257,7 +255,6 @@ database_mgr.set_kwarg(name='--deletefiles', dtype='switch',
 database_mgr.set_kwarg(name='--test', dtype='switch',
                        helpstr='Run the removal of entries in test mode')
 
-database_mgr.description_file = 'apero_database.rst'
 
 # -----------------------------------------------------------------------------
 # apero_documentation.py
@@ -294,13 +291,6 @@ remake_doc.set_kwarg(name='--docversion', dtype=str, default='None',
                      helpstr='[STRING] Documentation version directory to '
                              'write to with --ari (e.g. 0.8.XXX). Defaults '
                              'to the major version of the running APERO.')
-remake_doc.set_kwarg(name='--migrate_desc', dtype='switch',
-                     helpstr='One-off migration of the legacy rst '
-                             'descriptions in documentation/working/resources '
-                             'to documentation/descriptions (markdown). '
-                             'Existing markdown fragments are never '
-                             'overwritten.')
-remake_doc.description_file = 'apero_documentation.rst'
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -319,7 +309,6 @@ explorer.set_kwarg(name='--recipe', default='None', dtype=str,
 explorer.set_kwarg(name='--flagnum', default=0, dtype=int,
                    helpstr=textentry('EXPLORER_FLAGNUM'))
 
-explorer.description_file = 'apero_explorer.rst'
 
 # -----------------------------------------------------------------------------
 # apero_get.py
@@ -418,7 +407,6 @@ get_files.set_kwarg(name='--mp_mode', default='process', dtype=str,
                     helpstr='The multiprocessing mode to use when using '
                             '--cores')
 
-get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------
 # apero_go.py
@@ -443,7 +431,6 @@ go_recipe.set_kwarg(name='--mysql', dtype='switch',
 for block in path_definitions.BLOCKS:
     go_recipe.set_kwarg(name=f'--{block.argname}', dtype='switch',
                         helpstr=textentry('GO_BLOCK_HELP', args=[block.name]))
-go_recipe.description_file = 'apero_go.rst'
 
 # -----------------------------------------------------------------------------
 # apero_langdb.py
@@ -463,7 +450,6 @@ langdb.set_kwarg(name='--update', altnames=['--upgrade'],
                  helpstr=textentry('LANGDB_UPDATE_HELP'))
 langdb.set_kwarg(name='--reload', dtype='switch',
                  helpstr=textentry('LANGDB_RELOAD_HELP'))
-langdb.description_file = 'apero_langdb.rst'
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
@@ -484,7 +470,6 @@ listing.set_kwarg(name='--exclude_obs_dirs', dtype='List[str]', default='None',
                   helpstr=textentry('PROCESS_EXCLUDE_OBS_DIRS_HELP'))
 listing.set_kwarg(name='--include_obs_dirs', dtype='List[str]', default='None',
                   helpstr=textentry('PROCESS_INCLUDE_OBS_DIRS_HELP'))
-listing.description_file = 'apero_listing.rst'
 
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
@@ -510,7 +495,6 @@ stats.set_kwarg(name='--limit', dtype=int, default=0,
                 helpstr='Limit the number of entries in memory plot '
                         '(any recipe with more than this limit is left '
                         'out of stats)')
-stats.description_file = 'apero_stats.rst'
 
 # -----------------------------------------------------------------------------
 # apero_trigger.py
@@ -539,7 +523,6 @@ trigger.set_kwarg(name='--sci', dtype=str, default='trigger_night_scirun.ini',
                   helpstr=textentry('TRIGGER_SCI_HELP'))
 trigger.set_kwarg(name='--trigger_test', dtype='switch',
                   helpstr=textentry('TRIGGER_TEST_HELP'))
-trigger.description_file = 'apero_trigger.rst'
 
 # -----------------------------------------------------------------------------
 # apero_precheck.py
@@ -563,7 +546,6 @@ precheck.set_kwarg(name='--no_file_check', dtype='switch',
                    helpstr=textentry('PRECHECK_NOFILECHECK_HELP'))
 precheck.set_kwarg(name='--no_obj_check', dtype='switch',
                    helpstr=textentry('PRECHECK_NOOBJCHECK_HELP'))
-precheck.description_file = 'apero_precheck.rst'
 
 # -----------------------------------------------------------------------------
 # apero_processing.py
@@ -602,13 +584,24 @@ processing.set_kwarg(name='--to_file', dtype=str, default='None',
                      helpstr=textentry('PROCESS_TO_FILE_HELP'))
 processing.set_kwarg(name='--verify', dtype='switch',
                      helpstr=textentry('PROCESS_VERIFY_HELP'))
-processing.set_kwarg(name='--queue_mode', dtype='options', default='None',
-                     options=['True', 'False', '1', '0', 'None'],
-                     helpstr='Whether to run in queue mode (jobs are added '
-                             'to the queue instead of being processed '
-                             'directly). Overrides QUEUE_MODE from the run '
-                             'file and the QUEUE.MODE constant.')
-processing.description_file = 'apero_processing.rst'
+processing.set_kwarg(name='--queue_mode', altnames=['--queue'],
+                     dtype='switch',
+                     helpstr='Run in queue mode: add jobs to the queue '
+                             'instead of processing them directly')
+
+# -----------------------------------------------------------------------------
+# apero_db_push.py
+# -----------------------------------------------------------------------------
+db_push.name = 'apero_db_push.py'
+db_push.path = 'apero.tools.recipes.bin'
+db_push.shortname = 'DBPUSH'
+db_push.instrument = __INSTRUMENT__
+db_push.description = ('Push all pending database entries into the '
+                       'databases. apero_processing (queue mode) adds one '
+                       'run after every queue group so the next group '
+                       'can use the outputs of the previous group')
+db_push.recipe_type = 'nolog-tool'
+db_push.recipe_kind = 'processing'
 
 # -----------------------------------------------------------------------------
 # apero_queue.py
@@ -724,7 +717,6 @@ req_check.instrument = __INSTRUMENT__
 req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
 req_check.recipe_type = 'nolog-tool'
 req_check.recipe_kind = 'admin'
-req_check.description_file = 'apero_dependencies.rst'
 
 # -----------------------------------------------------------------------------
 # apero_reject.py
@@ -832,8 +824,11 @@ reset.set_kwarg(name='--only_out', dtype='switch',
                 helpstr='Reset only the out directory')
 reset.set_kwarg(name='--only_other', dtype='switch',
                 helpstr='Reset only the other directory')
+reset.set_kwarg(name='--only_queue', dtype='switch',
+                helpstr='Reset only the processing queue (all queue '
+                        'entries, queue output and chain scripts - '
+                        'batch templates are kept)')
 
-reset.description_file = 'apero_reset.rst'
 
 # -----------------------------------------------------------------------------
 # apero_update_run_config.py
@@ -850,7 +845,6 @@ run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   helpstr=textentry('RUN_INI_INSTRUMENT_HELP'))
 run_ini.set_kwarg(name='--runfile', dtype=str, default='None',
                   helpstr='Only create a single run file (for debugging)')
-run_ini.description_file = 'apero_update_run_config.rst'
 
 # -----------------------------------------------------------------------------
 # apero_validate.py
@@ -862,7 +856,6 @@ validate.instrument = __INSTRUMENT__
 validate.description = textentry('VALIDATE_DESCRIPTION')
 validate.recipe_type = 'nolog-tool'
 validate.recipe_kind = 'user'
-validate.description_file = 'apero_validate.rst'
 
 # -----------------------------------------------------------------------------
 # apero_visu.py
@@ -889,7 +882,6 @@ visulise.set_kwarg(name='--infopath', dtype=str, default='None',
                            '(i.e. where the files are found).')
 visulise.set_kwarg(name='--core', dtype=int, default=1,
                    helpstr='Number of cores to use')
-visulise.description_file = None
 
 # -----------------------------------------------------------------------------
 # compile recipe list

@@ -242,7 +242,6 @@ apero_preprocess.group_func = grouping.group_individually
 apero_preprocess.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_preprocess.schematic = apero_preprocess.default_sfile()
-apero_preprocess.description_file = apero_preprocess.default_rfile()
 # add to recipe
 recipes.append(apero_preprocess)
 
@@ -286,7 +285,6 @@ apero_badpix.group_func = grouping.group_by_dirname
 apero_badpix.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_badpix.schematic = apero_badpix.default_sfile()
-apero_badpix.description_file = apero_badpix.default_rfile()
 # add to recipe
 recipes.append(apero_badpix)
 
@@ -353,7 +351,6 @@ apero_dark_ref.group_func = grouping.no_group
 apero_dark_ref.group_column = None
 # documentation
 apero_dark_ref.schematic = apero_dark_ref.default_sfile()
-apero_dark_ref.description_file = apero_dark_ref.default_rfile()
 # add to recipe
 recipes.append(apero_dark_ref)
 
@@ -414,7 +411,6 @@ apero_loc.group_func = grouping.group_by_dirname
 apero_loc.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_loc.schematic = apero_loc.default_sfile()
-apero_loc.description_file = apero_loc.default_rfile()
 # add to recipe
 recipes.append(apero_loc)
 
@@ -476,7 +472,6 @@ apero_shape_ref.group_func = grouping.group_by_dirname
 apero_shape_ref.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_shape_ref.schematic = apero_shape_ref.default_sfile()
-apero_shape_ref.description_file = apero_shape_ref.default_rfile()
 # add to recipe
 recipes.append(apero_shape_ref)
 
@@ -525,7 +520,6 @@ apero_shape.group_func = grouping.group_by_dirname
 apero_shape.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_shape.schematic = apero_shape.default_sfile()
-apero_shape.description_file = apero_shape.default_rfile()
 # add to recipe
 recipes.append(apero_shape)
 
@@ -603,7 +597,6 @@ apero_flat.group_func = grouping.group_by_dirname
 apero_flat.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_flat.schematic = apero_flat.default_sfile()
-apero_flat.description_file = apero_flat.default_rfile()
 # add to recipe
 recipes.append(apero_flat)
 
@@ -668,7 +661,6 @@ apero_thermal.group_func = grouping.group_by_dirname
 apero_thermal.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_thermal.schematic = apero_thermal.default_sfile()
-apero_thermal.description_file = apero_thermal.default_rfile()
 # add to recipe
 recipes.append(apero_thermal)
 
@@ -711,7 +703,6 @@ apero_leak_ref.group_func = grouping.no_group
 apero_leak_ref.group_column = None
 # documentation
 # apero_leak_ref.schematic = apero_thermal.default_sfile()
-apero_leak_ref.description_file = apero_leak_ref.default_rfile()
 # add to recipe
 recipes.append(apero_leak_ref)
 
@@ -818,7 +809,6 @@ apero_extract.group_func = grouping.group_individually
 apero_extract.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_extract.schematic = apero_extract.default_sfile()
-apero_extract.description_file = apero_extract.default_rfile()
 # add to recipe
 recipes.append(apero_extract)
 
@@ -914,7 +904,6 @@ apero_wave_ref.group_func = grouping.group_by_dirname
 apero_wave_ref.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 apero_wave_ref.schematic = apero_wave_ref.default_sfile()
-apero_wave_ref.description_file = apero_wave_ref.default_rfile()
 # add to recipe
 recipes.append(apero_wave_ref)
 
@@ -998,7 +987,6 @@ apero_wave_night.group_func = grouping.group_by_dirname
 apero_wave_night.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_wave_night.schematic = apero_wave_night.default_sfile()
-apero_wave_night.description_file = apero_wave_night.default_rfile()
 # add to recipe
 recipes.append(apero_wave_night)
 
@@ -1057,7 +1045,6 @@ apero_ccf.group_func = grouping.group_individually
 apero_ccf.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_ccf.schematic = apero_ccf.default_sfile()
-apero_ccf.description_file = apero_ccf.default_rfile()
 # add to recipe
 recipes.append(apero_ccf)
 
@@ -1142,7 +1129,6 @@ apero_mk_tellu.group_func = grouping.group_individually
 apero_mk_tellu.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_mk_tellu.schematic = apero_mk_tellu.default_sfile()
-apero_mk_tellu.description_file = apero_mk_tellu.default_rfile()
 # add to recipe
 recipes.append(apero_mk_tellu)
 
@@ -1173,7 +1159,6 @@ apero_mk_model.group_func = grouping.no_group
 apero_mk_model.group_column = None
 # documentation
 # apero_mk_model.schematic = apero_mk_model.default_sfile()
-apero_mk_model.description_file = apero_mk_model.default_rfile()
 # add to recipe
 recipes.append(apero_mk_model)
 
@@ -1278,7 +1263,6 @@ apero_fit_tellu.group_func = grouping.group_individually
 apero_fit_tellu.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_fit_tellu.schematic = apero_fit_tellu.default_sfile()
-apero_fit_tellu.description_file = apero_fit_tellu.default_rfile()
 # add to recipe
 recipes.append(apero_fit_tellu)
 
@@ -1332,7 +1316,6 @@ apero_mk_template.group_func = grouping.no_group
 apero_mk_template.group_column = None
 # documentation
 # apero_mk_template.schematic = apero_mk_template.default_sfile()
-apero_mk_template.description_file = apero_mk_template.default_rfile()
 # special: don't skip on qc fail
 apero_mk_template.dont_skip_on_qc_fail = True
 # add to recipe
@@ -1413,7 +1396,6 @@ apero_pol.group_func = grouping.group_by_polar_sequence
 apero_pol.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_pol.schematic = apero_pol.default_sfile()
-apero_pol.description_file = apero_pol.default_rfile()
 # add to recipe
 recipes.append(apero_pol)
 
@@ -1555,7 +1537,6 @@ apero_postprocess.group_func = grouping.group_individually
 apero_postprocess.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
 # documentation
 # apero_postprocess.schematic = apero_postprocess.default_sfile()
-apero_postprocess.description_file = apero_postprocess.default_rfile()
 # add to recipe
 recipes.append(apero_postprocess)
 
@@ -1592,7 +1573,6 @@ apero_static.set_summary_plots('SUM_STATIC_DET', 'SUM_STATIC_WAVE_MIDDLE',
                                'SUM_STATIC_WAVE_FINAL')
 
 
-apero_static.description_file = 'apero_static.rst'
 # add to recipe
 recipes.append(apero_static)
 
@@ -1639,7 +1619,6 @@ full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 full_seq.schematic = 'full_seq.jpg'
-full_seq.description_file = 'full_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # reference run
 # full_seq.add(apero_pp_ref, recipe_kind='pre-reference',
 #              arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1793,7 +1772,6 @@ limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 limited_seq.schematic = 'limited_seq.jpg'
-limited_seq.description_file = 'limited_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # reference run
 # limited_seq.add(apero_pp_ref, recipe_kind='pre-reference',
 #                 arguments=dict(obs_dir='RUN_OBS_DIR'))
@@ -1958,7 +1936,6 @@ pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 pp_seq.schematic = None
-pp_seq.description_file = 'pp_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
@@ -1967,7 +1944,6 @@ pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
 pp_seq_opt.default_run = False
 # define schematic file and description file
 pp_seq_opt.schematic = None
-pp_seq_opt.description_file = 'pp_seq_opt_{0}.rst'.format(__INSTRUMENT__.lower())
 # pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_OBJNAME='CALIB'))
@@ -2010,7 +1986,6 @@ ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 ref_seq.schematic = 'ref_seq.jpg'
-ref_seq.description_file = 'ref_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # add recipes
 ref_seq.add(apero_dark_ref, ref=True)
 ref_seq.add(apero_badpix, name='BADREF', ref=True,
@@ -2043,7 +2018,6 @@ calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 calib_seq.schematic = 'calib_seq.jpg'
-calib_seq.description_file = 'calib_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # night runs
 calib_seq.add(apero_badpix)
 calib_seq.add(apero_loc, files=[files.pp_dark_flat, files.pp_flat_dark])
@@ -2067,7 +2041,6 @@ tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 tellu_seq.schematic = 'tellu_seq.jpg'
-tellu_seq.description_file = 'tellu_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract science
 tellu_seq.add(apero_extract, name='EXTTELL', recipe_kind='extract-hotstar',
               files=files.science_pp,
@@ -2121,7 +2094,6 @@ science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 science_seq.schematic = 'science_seq.jpg'
-science_seq.description_file = 'science_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract science
 science_seq.add(apero_extract, name='EXTOBJ', recipe_kind='extract-science',
                 files=files.science_pp,
@@ -2209,7 +2181,6 @@ quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 quick_seq.schematic = None
-quick_seq.description_file = 'quick_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract science
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               files=files.science_pp,
@@ -2230,7 +2201,6 @@ eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 eng_seq.default_run = False
 # define schematic file and description file
 eng_seq.schematic = None
-eng_seq.description_file = 'eng_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # extract sequences
 eng_seq.add(apero_extract, name='EXT_HC1HC1', files=[files.pp_hc1_hc1],
             recipe_kind='extract-hchc')
@@ -2270,7 +2240,6 @@ lbl_seq = drs_recipe.DrsRunSequence('lbl_seq', __INSTRUMENT__)
 
 # define schematic file and description file
 lbl_seq.schematic = None
-lbl_seq.description_file = 'lbl_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 # lbl ref
 lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref',
             arguments=dict(objnames='SCIENCE_TARGETS'))

@@ -216,7 +216,6 @@ class DrsRecipe(object):
         self.calib_required = False
         # parameters for summary documentation
         self.schematic = None
-        self.description_file = None
         # parameter for forcing no skipping
         self.never_skip = False
         # binary flags
@@ -318,7 +317,6 @@ class DrsRecipe(object):
         storage['RECIPE_KIND'] = self.recipe_kind
         # get schematic diagram for this recipe
         storage['SCHEMATIC_FILE'] = self.schematic
-        storage['DESCRIPTION_FILE'] = self.description_file
         # get usage string
         sout = self.drs_usage(output='all')
         storage['USAGE'], storage['POS'], storage['OPT'], storage['SOPT'] = sout
@@ -1166,7 +1164,6 @@ class DrsRecipe(object):
         self.calib_required = bool(recipe.calib_required)
         # parameters for summary documentation (immutable str)
         self.schematic = recipe.schematic
-        self.description_file = recipe.description_file
         # parameter for forcing no skipping (immutable bool)
         self.never_skip = recipe.never_skip
         # copy the binary flags
@@ -1239,16 +1236,6 @@ class DrsRecipe(object):
         # get the recipe name without py extension
         name = self.name.strip('.py')
         return '{0}_schematic.jpg'.format(name)
-
-    def default_rfile(self) -> str:
-        """
-        Default rst description file name
-
-        :return: str, the schematic file name
-        """
-        # get the recipe name without py extension
-        name = self.name.strip('.py')
-        return '{0}.rst'.format(name)
 
     # =========================================================================
     # Reprocessing methods
@@ -1818,8 +1805,7 @@ class DrsRunSequence:
         self.tstars = None
         # set up storage for the non-telluric stars list
         self.ostars = None
-        # define and store description and schematic file
-        self.description_file = None
+        # define and store schematic file
         self.schematic = None
         # define the default run and skip parameters
         self.default_run = True
