@@ -38,7 +38,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler
 from http.server import ThreadingHTTPServer
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Type
 from urllib.parse import parse_qs, urlparse
 
 from aperocore.base import base
@@ -174,6 +174,7 @@ def render_info_html(path: str = GUI_INFO_PATH) -> str:
     in_list = False
 
     def _flush() -> None:
+        """Append the buffered paragraph or list item to rendered output."""
         if not block:
             return
         text = _markdown_inline(' '.join(block))
@@ -225,7 +226,7 @@ class GuiState:
     Holds the busy flag (only one action runs at a time), the activity
     log messages and the worker thread for the current action
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize shared action, message, and cancellation state."""
         # whether an action is currently running
         self.busy = False
@@ -243,11 +244,12 @@ class GuiState:
         # lock protecting the state
         self._lock = threading.Lock()
 
-    def add_message(self, message: str):
+    def add_message(self, message: str) -> None:
         """
         Add a timestamped message to the activity log
 
         :param message: str, the message to add
+        :return: None.
         """
         with self._lock:
             # timestamp the message
@@ -1513,7 +1515,9 @@ def _stale_watcher(params: ParamDict, state: GuiState) -> None:
         time.sleep(GUI_STALE_INTERVAL)
 
 
-def _make_handler(params: ParamDict, state: GuiState, rows: int):
+def _make_handler(
+    params: ParamDict, state: GuiState, rows: int
+    ) -> Type[BaseHTTPRequestHandler]:
     """
     Create the http request handler class for the queue gui server
 
@@ -1524,7 +1528,7 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
     :param state: GuiState, the shared gui state (busy flag/log)
     :param rows: int, the number of rows per page in the status table
 
-    :return: the request handler class
+    :return: Generated request handler class for the queue GUI server.
     """
     class QueueGuiHandler(BaseHTTPRequestHandler):
         """Request handler for the queue gui server"""
@@ -1593,7 +1597,7 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
                      sublevel=2)
                 self._send(json.dumps(dict(error=emsg)), code=500)
 
-        def _get(self):
+        def _get(self) -> None:
             """Route GET requests"""
             parsed = urlparse(self.path)
             route = parsed.path
@@ -1678,7 +1682,7 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
                 self._send(json.dumps(dict(error='not found')),
                            code=404)
 
-        def _post(self):
+        def _post(self) -> None:
             """Route POST requests"""
             parsed = urlparse(self.path)
             route = parsed.path

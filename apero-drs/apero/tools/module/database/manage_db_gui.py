@@ -12,6 +12,7 @@ Created on 2021-06-24
 import tkinter as tk
 from tkinter import Tk as ThemedTk
 from tkinter import ttk, messagebox
+from typing import Any
 
 from ttkthemes import ThemedTk
 
@@ -52,8 +53,13 @@ StartPage = gen_gui.StartPage
 class DeleteTables(ThemedTk):
     """Window for selecting and confirming database table deletion."""
 
-    def __init__(self, *args, **kwargs):
-        """Create the themed table-management window."""
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Create the themed table-management window.
+
+        :param args: Positional window options accepted for compatibility.
+        :param kwargs: Keyword window options accepted for compatibility.
+        :return: None.
+        """
         _ = args, kwargs
         # run the super
         ThemedTk.__init__(self, themebg=True)
@@ -143,8 +149,14 @@ class DeleteTables(ThemedTk):
 class Page1(StartPage):
     """Page containing the database table selection controls."""
 
-    def __init__(self, parent, controller):
-        """Build the table-selection page in its parent frame."""
+    def __init__(self, parent: tk.Misc,
+                 controller: DeleteTables) -> None:
+        """Build the table-selection page in its parent frame.
+
+        :param parent: Tk widget that contains this page.
+        :param controller: Window that owns and updates the page.
+        :return: None.
+        """
         ttk.Frame.__init__(self, parent)
         # page logo
         self.logo = widgets.PageLogo(self, logo_path=None)

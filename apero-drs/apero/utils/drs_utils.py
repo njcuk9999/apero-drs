@@ -224,7 +224,7 @@ class RecipeLog:
         # return string representation of RecipeLOg
         return 'RecipeLog[{0}][{1}][N={2}]'.format(*pargs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Representation of this class
         :return:
@@ -705,7 +705,7 @@ class RecipeLog:
         # return rows
         return rows
 
-    def return_block(self, path: str):
+    def return_block(self, path: str) -> str:
         """
         Return the block name from a path that matches the block path
 
@@ -899,7 +899,7 @@ def update_index_db(params: ParamDict, block_kind: str,
 
 
 def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
-               columns='ABSPATH',
+               columns: str = 'ABSPATH',
                findexdbm: Union[FileIndexDatabase, None] = None,
                start_date: float = None, end_date: float = None,
                time_column: str = 'KW_MID_OBS_TIME'
@@ -1086,7 +1086,12 @@ def display_flag(params: ParamDict) -> None:
         WLOG(params, '', '\t{0:20s}: {1}'.format(flag, flags[flag]))
 
 
-def get_cores(params):
+def get_cores(params: ParamDict) -> int:
+    """Resolve the requested worker count against available CPU cores.
+
+    :param params: APERO parameter dictionary containing core settings.
+    :return: Number of worker cores selected for processing.
+    """
     # get number of cores on machine
     cpus = os.cpu_count()
     # set cores initially to zero
