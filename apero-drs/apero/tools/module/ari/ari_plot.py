@@ -66,12 +66,23 @@ class DebugPlot:
         self.active = False
 
 
-def add_zoom_inset(main_frame, zoom_frame, xvector, yvector, plotfunc,
-                   zoom_frac: float = 0.05, **kwargs) -> None:
+def add_zoom_inset(main_frame: Any, zoom_frame: Any,
+                   xvector: np.ndarray, yvector: np.ndarray,
+                   plotfunc: str, zoom_frac: float = 0.05,
+                   **kwargs: Any) -> None:
     """Plot sorted data on two axes, zooming the second to the final fraction.
 
     ``plotfunc`` names the plotting method used on both axes. Additional
     keyword arguments are passed to each plotting method.
+
+    :param main_frame: Matplotlib axes displaying the full data range.
+    :param zoom_frame: Matplotlib axes displaying the final data fraction.
+    :param xvector: X coordinates shared by both axes.
+    :param yvector: Y coordinates shared by both axes.
+    :param plotfunc: Axes method name used to draw the data.
+    :param zoom_frac: Fraction of sorted points shown in the zoom axes.
+    :param kwargs: Additional keyword arguments for the plotting method.
+    :return: None.
     """
     num = len(xvector)
     start_idx = int((1 - zoom_frac) * num)

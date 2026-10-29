@@ -32,7 +32,8 @@ import tempfile
 import time
 import warnings
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from types import TracebackType
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import yaml
@@ -1919,7 +1920,10 @@ class _FileLock:
                     raise AperoCodedException(None, '00-512-00021', targs=eargs)
                 time.sleep(self.SLEEP_INTERVAL)
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+            self, exc_type: Optional[Type[BaseException]],
+            exc_val: Optional[BaseException],
+            exc_tb: Optional[TracebackType]) -> None:
         """Release the lock and clean up."""
         # POSIX path
         if not self._fallback and self._fh is not None:
@@ -2171,6 +2175,7 @@ class AstrometricDatabase:
         :param entry: dict, the loaded yaml entry
         """
         def _index(value: Any, primary: bool) -> None:
+            """Add normalized value variants to the name index."""
             for variant in name_search_variants(value):
                 if primary:
                     name_index[variant] = apero_name
@@ -3058,6 +3063,7 @@ def _build_name_index(
     index: Dict[str, str] = {}
 
     def _index(value: Any, apero_name: str) -> None:
+        """Map every normalized value variant to its canonical name."""
         for variant in name_search_variants(value):
             index.setdefault(variant, apero_name)
 
@@ -3100,6 +3106,11 @@ _NAME_INDEX_DIR_ENV = 'APERO_ASTROMETRICS_INDEX_DIR'
 
 
 def _name_index_path(astrom_dir: str) -> str:
+    """Return the persisted index path for an astrometrics directory.
+
+    :param astrom_dir: Directory containing astrometric YAML entries.
+    :return: Index JSON path, using the configured override when available.
+    """
     override = os.environ.get(_NAME_INDEX_DIR_ENV)
     if override:
         try:

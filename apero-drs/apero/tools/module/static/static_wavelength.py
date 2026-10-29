@@ -47,7 +47,7 @@ import os
 import glob
 import pickle
 import warnings
-from typing import Any, Dict, Literal, List, Tuple
+from typing import Any, Dict, Literal, List, Optional, Tuple
 
 import numpy as np
 from astropy.table import Table

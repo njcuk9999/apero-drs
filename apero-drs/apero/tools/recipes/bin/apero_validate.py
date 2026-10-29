@@ -11,6 +11,7 @@ Created on 2019-11-26 at 18:10
 """
 import sys
 import os
+from typing import Any, Dict
 
 import apero as apero_pkg
 
@@ -28,8 +29,11 @@ __release__ = apero_pkg.__release__
 WLOG = None
 
 
-def _load_runtime_imports():
-    """Load heavy APERO modules only when validation execution starts."""
+def _load_runtime_imports() -> Any:
+    """Load heavy APERO modules only when validation execution starts.
+
+    :return: Startup module used to configure and run the validation.
+    """
     global WLOG
 
     from aperocore.core import drs_log
@@ -48,7 +52,7 @@ def _load_runtime_imports():
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_validate.py
 
@@ -56,8 +60,7 @@ def main(**kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Startup result or recipe/parameters in debug mode.
     """
     # Tell users immediately that APERO is still loading dependencies.
     print('Loading APERO validation runtime...', file=sys.stderr, flush=True)
@@ -80,13 +83,13 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local validation context.
     """
     # ----------------------------------------------------------------------
     # Main Code

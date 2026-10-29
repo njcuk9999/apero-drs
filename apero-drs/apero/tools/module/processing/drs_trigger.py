@@ -62,7 +62,7 @@ TRIGGER_TABLE = 'trigger_table.fits'
 def raw_files(user_indir: str, user_outdir: str, do_copy: bool = False,
               do_symlink: bool = False,
               exclude_obs_dir: Optional[List[str]] = None,
-              log: bool = True, replace: bool = True):
+              log: bool = True, replace: bool = True) -> None:
     """
     Copy (or sym-link) the whole raw directory
 
@@ -137,7 +137,13 @@ def raw_files(user_indir: str, user_outdir: str, do_copy: bool = False,
 
 
 class Trigger:
-    def __init__(self, params: ParamDict, recipe: DrsRecipe):
+    def __init__(self, params: ParamDict, recipe: DrsRecipe) -> None:
+        """Initialize trigger state and its database managers.
+
+        :param params: APERO parameter dictionary including trigger paths.
+        :param recipe: Recipe providing the run short name.
+        :return: None.
+        """
         # keep params
         self.params = params
         self.recipe = recipe
@@ -175,7 +181,11 @@ class Trigger:
                                                            recipe.shortname)
         self.objdbm.load_db()
 
-    def __call__(self):
+    def __call__(self) -> None:
+        """Synchronize raw files and run pending calibration/science steps.
+
+        :return: None.
+        """
         # ---------------------------------------------------------------------
         # step 1: sync raw directory
         # ----------------------------------------------------------------------
@@ -423,9 +433,11 @@ class Trigger:
         # return the table
         return sdict
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Reset the trigger table (delete it)
+
+        :return: None.
         """
         if os.path.exists(self.triggr_table):
             os.remove(self.triggr_table)

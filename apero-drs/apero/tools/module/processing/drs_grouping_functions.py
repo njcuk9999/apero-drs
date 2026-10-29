@@ -40,7 +40,8 @@ RunType = List[Dict[str, Any]]
 # Define functions
 # =============================================================================
 class RunInstance:
-    def __init__(self, rargs, rkwargs):
+    def __init__(self, rargs: Dict[str, DrsArgument],
+                 rkwargs: Dict[str, DrsArgument]) -> None:
         """
         Storage for individual runs where we eventually turn these into a
         dictionary instance
@@ -54,7 +55,11 @@ class RunInstance:
         self.group_column = None
         self.group = None
 
-    def copy(self):
+    def copy(self) -> 'RunInstance':
+        """Return a new run instance with independent argument values.
+
+        :return: A copy of this instance's arguments, group, and dictionary.
+        """
         new_instance = RunInstance(self.args, self.kwargs)
         new_instance.dictionary = dict(self.dictionary)
         new_instance.group_column = self.group_column
@@ -125,7 +130,7 @@ def find_file_args(rargs: Dict[str, DrsArgument],
 def get_argposorder(rargs: Dict[str, DrsArgument],
                     rkwargs: Dict[str, DrsArgument],
                     argdict: Dict[str, ArgDictType],
-                    kwargdict: Dict[str, ArgDictType]):
+                    kwargdict: Dict[str, ArgDictType]) -> List[str]:
     """
     Get the argument position order
 
@@ -149,14 +154,7 @@ def get_argposorder(rargs: Dict[str, DrsArgument],
                       value that argument should have i.e.
                       --{key}={value}    --plot=1
                       --> dict(plot=1)
-    :return: tuple,
-             1. runorder: list of strings of argument names, in the correct
-                order - the value is the name of the argument
-                (i.e. DrsArgument.name),
-             2. rundict: a dictionary where the keys are the argument name and
-                the value are a dictionary of DrsFitFile names and the values
-                of these are astropy.table.Tables containing the
-                files associated with this [argument][drsfile]
+     :return: Argument names ordered by recipe position.
     """
     # set function name
     _ = __NAME__ + 'get_argposorder'

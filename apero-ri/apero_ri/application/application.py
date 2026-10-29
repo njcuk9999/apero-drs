@@ -431,6 +431,20 @@ class ARIApp(Flask):
             self, perms
         )
 
+    def _api_clocks_get(self) -> Any:
+        """Return configured clocks for navigation and user pages.
+
+        :return: JSON response containing the configured clock rows.
+        """
+        return _impls.ariapp_api_clocks_get(self)
+
+    def _api_admin_clocks(self) -> Any:
+        """Read or update administrator-managed clocks.
+
+        :return: JSON response from the permission-checked clock API.
+        """
+        return _impls.ariapp_api_admin_clocks(self)
+
     def _api_admin_vault_list(self) -> Any:
         """List entries in the administrator credential vault."""
         return _impls.ariapp_api_vault_list(self)

@@ -176,7 +176,7 @@ def _system_main(quick_args: Dict[str, Optional[str]]) -> Dict[str, Any]:
 #     1) function calls  (i.e. main(arg1, arg2, **kwargs)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
-def main(mode=None, **kwargs):
+def main(mode: Optional[str] = None, **kwargs: Any) -> Any:
     """
     Main function for apero_queue.py
 
@@ -187,8 +187,7 @@ def main(mode=None, **kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Fast-path result or the standard APERO startup result.
     """
     # -------------------------------------------------------------------------
     # fast path for system mode (called after every runstring in batch
@@ -221,13 +220,13 @@ def main(mode=None, **kwargs):
                                 outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local context containing the queue mode and action state.
     """
     # deferred imports (only needed on the slow path)
     from aperocore.core import drs_log

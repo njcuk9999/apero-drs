@@ -9,6 +9,8 @@ Created on 2019-07-26 at 09:40
 
 @author: cook
 """
+from typing import Any, Dict
+
 import apero as apero_pkg
 from aperocore import drs_lang
 from aperocore.base import base
@@ -43,14 +45,13 @@ RUNDEF_PATH = 'apero.tools.module.processing.instruments.runfiles_{0}'
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_update_run_config.py
 
     :param kwargs: any additional keywords
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Startup result or recipe/parameters in debug mode.
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
@@ -69,7 +70,13 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
+    """Regenerate instrument run-config files and optionally update assets.
+
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local context containing the generated run-file state.
+    """
 
     # get instrument variable
     instruments = list(apero_base.INSTRUMENTS)

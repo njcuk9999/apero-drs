@@ -881,7 +881,7 @@ def index_files(params: ParamDict, recipe: DrsRecipe) -> None:
 def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
                 recipename: Union[str, None] = None,
                 recipemod: Union[base_class.ImportModule, None] = None,
-                **kwargs) -> Dict[str, Any]:
+                **kwargs: Any) -> Dict[str, Any]:
     """
     Copy input arguments (positional and optional) from "recipe" main to a
     dictionary (for later use)
@@ -1428,6 +1428,11 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
 
 
 def _deal_with_run_file_cmd_args(params: ParamDict) -> ParamDict:
+    """Apply run-file command-line directory filters to parameters.
+
+    :param params: APERO parameter dictionary to update.
+    :return: Updated parameter dictionary.
+    """
     # ---------------------------------------------------------------------
     # deal with arguments from command line (params['INPUTS'])
     # ---------------------------------------------------------------------
@@ -2128,6 +2133,12 @@ def _display_python_modules() -> str:
 
 def extract_package_info(line: str
                          ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """Parse a dependency requirement into its package and version parts.
+
+    :param line: Requirement line, optionally including a version operator.
+    :return: Package name, operator, and version or source; missing parts are
+             None.
+    """
     # match string like 'package @ URL'
     match_string = r'^\s*([\w-]+)\s*@.*'
     # Check if the line has the format 'package @ URL'
@@ -2299,7 +2310,7 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
     return copy_recipe, mod
 
 
-def _get_arg_strval(value: Any):
+def _get_arg_strval(value: Any) -> Any:
     """
     Get the string value representation of "value" (specifically for a listof
     DrsFitsFiles)
@@ -2830,6 +2841,7 @@ def _make_dirs(params: ParamDict, path: str) -> None:
     # make locked makedirs function
     @drs_lock.synchronized(lock, pid + lockfile)
     def locked_makedirs() -> None:
+        """Create the target directory once the synchronized lock is held."""
         # check again path already exists
         if os.path.exists(path):
             return

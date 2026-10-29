@@ -9,6 +9,8 @@ Created on 2022-06-03
 
 @author: cook
 """
+from typing import Any, Dict
+
 from aperocore.base import base
 import apero as apero_pkg
 from aperocore import drs_lang
@@ -36,14 +38,13 @@ textentry = drs_lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_changelog.py
 
     :param kwargs: any additional keywords
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Startup result or recipe/parameters in debug mode.
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
@@ -62,7 +63,13 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
+    """Configure and run the observation-directory trigger loop.
+
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local context containing the trigger state.
+    """
     # create trigger class
     trigger = drs_trigger.Trigger(params, recipe)
     # -------------------------------------------------------------------------
