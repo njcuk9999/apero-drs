@@ -774,7 +774,19 @@ def reldate_convert(params: ParamDict, header: drs_fits.Header,
 # =============================================================================
 # Define other functions
 # =============================================================================
-def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
+def quality_control1(
+        params: ParamDict, snr_hotpix: float, infile: Any,
+        rms_list: np.ndarray, log: bool = True
+        ) -> Tuple[List[List[Any]], int]:
+    """Run the initial preprocessing quality checks for one input file.
+
+    :param params: APERO parameter dictionary containing QC thresholds.
+    :param snr_hotpix: Hot-pixel signal-to-noise estimate.
+    :param infile: Input file wrapper providing filename and header access.
+    :param rms_list: RMS values used for the corruption threshold check.
+    :param log: Whether to log pass and failure messages.
+    :return: QC names, values, logic, and pass flags plus overall status.
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ----------------------------------------------------------------------
@@ -913,10 +925,16 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
     return qc_params, passed
 
 
-def _target_set_value(table, column, pos: int = 0,
+def _target_set_value(table: pd.DataFrame, column: str, pos: int = 0,
                       null_value: Any = np.nan) -> Any:
     """
-    Set a target value dealing with Null values
+    Return a table value or the fallback for a null entry.
+
+    :param table: Table of target values.
+    :param column: Column name to read.
+    :param pos: Row position to read.
+    :param null_value: Value returned when the cell is null.
+    :return: The cell value or the null fallback.
     """
     null_values = ['None', 'Null', '', '--']
     # get value

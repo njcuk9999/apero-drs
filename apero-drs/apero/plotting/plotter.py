@@ -185,7 +185,7 @@ class Plotter:
                  fiber: Union[str, None] = None,
                  _force: bool = False,
                  force_plot: bool = False,
-                 **kwargs):
+                 **kwargs: Any) -> int:
         """
         Function used to plot a specific graph (name needs to be defined in
         plot functions), keyword arguments are passed to plotting function
@@ -715,7 +715,8 @@ class Plotter:
             htmldoc.cleanup()
 
     def summary_latex(self, qc_params: Union[List[Any], None] = None,
-                      stats: Union[Table, None] = None, warnings: bool = True):
+                      stats: Union[Table, None] = None,
+                      warnings: bool = True) -> latex.LatexDocument:
         """
         Write the summary document as a latex file (can be compiled externally
         using pdflatex)
@@ -724,7 +725,7 @@ class Plotter:
         :param stats: Table or None, the stats to add
         :param warnings: bool, if True adds the warnings to the summary
 
-        :return: None, writes latex file
+        :return: The constructed LaTeX summary document.
         """
         # set up the latex document
         doc = latex.LatexDocument(self.params, self.summary_filename)
@@ -925,7 +926,8 @@ class Plotter:
         return doc
 
     def summary_html(self, qc_params: Union[List[Any], None] = None,
-                     stats: Union[Table, None] = None, warnings: bool = True):
+                     stats: Union[Table, None] = None,
+                     warnings: bool = True) -> drs_html.HtmlDocument:
         """
         Write the summary document as a html file
 
@@ -933,7 +935,7 @@ class Plotter:
         :param stats: Table or None, the stats to add
         :param warnings: bool, if True adds the warnings to the summary
 
-        :return: None, writes latex file
+        :return: The constructed HTML summary document.
         """
         summary_filename = self.summary_filename
         # set up the latex document
@@ -1248,6 +1250,7 @@ class Plotter:
     # internal methods
     # ------------------------------------------------------------------
     def _get_names(self) -> None:
+        """Load plot names from the plotting definitions file."""
         # load yaml
         self.yaml = base.load_yaml(definitions)
         # set up names of the plots that have been used
@@ -1544,7 +1547,7 @@ def _sigfig(value: Union[float, str], digits: int = 5) -> Union[float, Any]:
 
 
 def main(params: ParamDict, graph_name: str,
-         mode: Union[int, None] = 2, **kwargs):
+         mode: Union[int, None] = 2, **kwargs: Any) -> None:
     """
     Call the plotter without a class instance already loaded
 

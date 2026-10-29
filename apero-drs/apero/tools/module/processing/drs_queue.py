@@ -280,10 +280,7 @@ class QueueLock:
             pass
 
     def __enter__(self) -> 'QueueLock':
-        """Acquire the queue lock and return this context manager.
-
-        :return: This locked queue context manager.
-        """
+        """Acquire the lock and return this context manager."""
         # acquire the lock on entering the context
         self.acquire()
         return self
@@ -1506,11 +1503,7 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     proc_id = drs_queue_procs.register(proc_dir, 'run', label, **rkwargs)
 
     def _on_claim(qids: List[str]) -> None:
-        """Persist queue IDs claimed by the active run process.
-
-        :param qids: Queue IDs currently being processed.
-        :return: None. Updates the process registry record.
-        """
+        """Record queue item identifiers claimed by this process."""
         drs_queue_procs.update(proc_dir, proc_id, qids=qids)
 
     summary = dict(n_stopped=0)
@@ -2091,7 +2084,7 @@ def batch_queue(params: ParamDict, per_batch: int,
     return summary
 
 
-def queue_batch(params: ParamDict) -> Dict[str, Any]:
+def queue_batch(params: ParamDict) -> None:
     """
     Batch mode: create (and optionally submit) sbatch scripts for the
     next unfinished group in the queue (cli wrapper around batch_queue)
@@ -2105,7 +2098,7 @@ def queue_batch(params: ParamDict) -> Dict[str, Any]:
 
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return: Batch operation summary, including script and submission status.
+    :return: None
     """
     inputs = params['INPUTS'] if 'INPUTS' in params else dict()
 
@@ -2618,13 +2611,13 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
     return summary
 
 
-def queue_chain(params: ParamDict) -> Dict[str, Any]:
+def queue_chain(params: ParamDict) -> None:
     """
     Chain mode: build a dependency-chained set of Slurm array jobs
 
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return: Chain operation summary, including scripts and submission status.
+    :return: None
     """
     inputs = params['INPUTS'] if 'INPUTS' in params else dict()
 
@@ -3036,11 +3029,7 @@ def _kill_pid(pid: int) -> bool:
         return True
 
     def _signal(sig: int) -> Optional[bool]:
-        """Signal the task process or process group.
-
-        :param sig: Signal number to send.
-        :return: True/False when the process is gone/blocked, else None.
-        """
+        """Signal the process or its group and report immediate status."""
         try:
             if group:
                 os.killpg(pid, sig)
@@ -3053,11 +3042,7 @@ def _kill_pid(pid: int) -> bool:
         return None
 
     def _wait_gone(n_checks: int) -> Optional[bool]:
-        """Poll briefly for the task process to exit.
-
-        :param n_checks: Number of process-existence checks to perform.
-        :return: True/False when gone/blocked, else None after all checks.
-        """
+        """Check whether a process exits within a bounded number of polls."""
         for _ in range(n_checks):
             time.sleep(0.1)
             try:
@@ -3424,22 +3409,12 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
     starts = dict()
 
     def _started(task: Dict[str, str]) -> None:
-        """Record task start time and report it through the progress hook.
-
-        :param task: Queue task metadata containing run file and short name.
-        :return: None. Updates local timing state and progress output.
-        """
+        """Record a task start and notify the optional progress callback."""
         starts[task['run_file']] = time.time()
         _progress(progress, 'START {0}'.format(labels[task['run_file']]))
 
     def _finished(run_file: str, success: bool, tail: str) -> None:
-        """Record task completion and report status or failure details.
-
-        :param run_file: Queue run-file identifier.
-        :param success: Whether the task completed successfully.
-        :param tail: Tail of task output, used in failure warnings.
-        :return: None. Updates results and emits progress messages.
-        """
+        """Record task completion and report failures with log context."""
         results[run_file] = success
         duration = time.time() - starts.get(run_file, time.time())
         status = 'DONE  ' if success else 'FAILED'
@@ -3500,15 +3475,8 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
         shared = manager.list()
 
         # small wrapper to push results into the shared list
-        def _process_target(
-            _task: Dict[str, str], _shared: Any
-        ) -> None:
-            """Run one queue task and append its result to shared storage.
-
-            :param _task: Task metadata passed to the worker.
-            :param _shared: Multiprocessing manager list for worker results.
-            :return: None. Appends the task result to shared storage.
-            """
+        def _process_target(_task: Dict[str, str], _shared: Any) -> None:
+            """Run one task in a child process and store its result."""
             _shared.append(_run_task(_task))
         # run the tasks in chunks of size cores
         n_reported = 0

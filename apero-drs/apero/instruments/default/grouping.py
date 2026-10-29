@@ -66,7 +66,7 @@ def no_group(rargs: Dict[str, DrsArgument],
              rkwargs: Dict[str, DrsArgument],
              argdict: Dict[str, ArgDictType],
              kwargdict: Dict[str, ArgDictType],
-             **kwargs) -> RunType:
+             **kwargs: Any) -> RunType:
     """
     Use this for all instances where we do not have a file argument
     if directory argument is required it is set to the 'ref' kwarg
@@ -139,7 +139,7 @@ def group_individually(rargs: Dict[str, DrsArgument],
                        rkwargs: Dict[str, DrsArgument],
                        argdict: Dict[str, ArgDictType],
                        kwargdict: Dict[str, ArgDictType],
-                       **kwargs) -> RunType:
+                       **kwargs: Any) -> RunType:
     """
     Individually group files (with 1 file argument and multiple kinds)
 
@@ -236,7 +236,7 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                      rkwargs: Dict[str, DrsArgument],
                      argdict: Dict[str, ArgDictType],
                      kwargdict: Dict[str, ArgDictType],
-                     **kwargs) -> RunType:
+                     **kwargs: Any) -> RunType:
     """
     Group by column "DIRNAME" when we have multipe file argument and multiple
     drsfile kinds for each file argument
@@ -445,7 +445,7 @@ def group_by_polar_sequence(rargs: Dict[str, DrsArgument],
                             rkwargs: Dict[str, DrsArgument],
                             argdict: Dict[str, ArgDictType],
                             kwargdict: Dict[str, ArgDictType],
-                            **kwargs) -> RunType:
+                            **kwargs: Any) -> RunType:
     """
     Group by directory name but add a group by sequence number
     (controlled by columns KW_NEXP and KW_CMPLTEXP in index database)
@@ -709,19 +709,19 @@ def lbl_compute_group(rargs: Dict[str, DrsArgument],
                       rkwargs: Dict[str, DrsArgument],
                       argdict: Dict[str, ArgDictType],
                       kwargdict: Dict[str, ArgDictType],
-                      **kwargs) -> RunType:
+                      **kwargs: Any) -> RunType:
     """
     For objname = FP   sets iteration and total arguments
     based on number of cores given
 
     For all other objnames acts like "no_group"
 
-    :param rargs:
-    :param rkwargs:
-    :param argdict:
-    :param kwargdict:
-    :param kwargs:
-    :return:
+    :param rargs: Positional recipe arguments.
+    :param rkwargs: Optional recipe arguments.
+    :param argdict: Tables indexed by positional argument and file type.
+    :param kwargdict: Tables indexed by optional argument and file type.
+    :param kwargs: Additional recipe-specific grouping options.
+    :return: Run argument dictionaries for each processing task.
     """
 
     # get params from kwargs
@@ -818,7 +818,8 @@ def _is_numeric(array: Union[list, np.ndarray, Iterable]) -> np.ndarray:
              otherwise
     """
     # mapping function: True for numeric False otherwise
-    def test_float(x):
+    def test_float(x: Any) -> bool:
+        """Return whether a value can be converted to a float."""
         # noinspection PyBroadException
         try:
             _ = float(x)

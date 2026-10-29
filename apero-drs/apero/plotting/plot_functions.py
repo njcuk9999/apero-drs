@@ -178,7 +178,7 @@ class Graph:
 
     def set_figure(self, plotter: 'Plotter',
                    figsize: Union[Tuple[int, int], None] = None,
-                   **kwargs) -> Tuple[Any, Any]:
+                   **kwargs: Any) -> Tuple[Any, Any]:
         """
         Set up the figure (should be done before plotting)
 
@@ -203,7 +203,7 @@ class Graph:
 
     def set_grid(self, plotter: 'Plotter',
                  figsize: Union[Tuple[int, int], None] = None,
-                 **kwargs) -> Tuple[Any, Any]:
+                 **kwargs: Any) -> Tuple[Any, Any]:
         """
         Set up the figure grid (should be done before plotting)
 
@@ -461,7 +461,8 @@ class YesNoButtonGraph:
 # Define user graph functions
 # =============================================================================
 def ulegend(frame: Any = None,
-            plotter: Union[Plotter, None] = None, **kwargs) -> None:
+            plotter: Union[Plotter, None] = None,
+            **kwargs: Any) -> None:
     """
     Filter a legend so we only have unique legend elements that have unique
     text
@@ -1976,7 +1977,7 @@ def plot_flat_response_order(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
-def _plot_response_profile(frame, xpix: np.ndarray,
+def _plot_response_profile(frame: Any, xpix: np.ndarray,
                            y_norm: np.ndarray,
                            err_norm: np.ndarray,
                            ncols: int, panel: str = 'd') -> None:
@@ -2012,7 +2013,7 @@ def _plot_response_profile(frame, xpix: np.ndarray,
     frame.legend(loc='upper right', fontsize=8)
 
 
-def _plot_response_zoom(frame, xpix_zoom: np.ndarray,
+def _plot_response_zoom(frame: Any, xpix_zoom: np.ndarray,
                         y_zoom: np.ndarray,
                         err_zoom: np.ndarray,
                         panel: str = 'e') -> None:
@@ -6017,12 +6018,17 @@ def plot_static_det_plot(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_static_cav_check_plot(plotter: Plotter, **kwargs) -> bool:
+def plot_static_cav_check_plot(
+    plotter: Plotter, **kwargs: Any) -> bool:
     """
     Ask the user (interactively to check the cavity fit)
 
     Interactive graph: does not use Graph as inline online and requires
     return
+
+    :param plotter: Plotter controlling the interactive graph.
+    :param kwargs: Fit and calibration arrays used to draw the cavity check.
+    :return: Whether the user accepted the cavity fit.
     """
     # force interactive mode if this graph is being used
     plotter.plotoption = 3
@@ -6073,12 +6079,17 @@ def plot_static_cav_check_plot(plotter: Plotter, **kwargs) -> bool:
         return False
 
 
-def plot_static_wave_check_plot(plotter: Plotter, **kwargs) -> bool:
+def plot_static_wave_check_plot(
+    plotter: Plotter, **kwargs: Any) -> bool:
     """
     Ask the user (interactively to check the wave solution fit)
 
     Interactive graph: does not use Graph as inline online and requires
     return
+
+    :param plotter: Plotter controlling the interactive graph.
+    :param kwargs: Wave arrays and fit parameters used for the wave check.
+    :return: Whether the user accepted the wave solution.
     """
     # force interactive mode if this graph is being used
     plotter.plotoption = 3

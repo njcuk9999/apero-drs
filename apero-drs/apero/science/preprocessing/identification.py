@@ -8,6 +8,8 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
+from typing import Tuple, Union
+
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
@@ -41,7 +43,9 @@ textentry = drs_lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_infile_id(params, given_drs_file):
+def drs_infile_id(
+    params: ParamDict,
+    given_drs_file: DrsFitsFile) -> Tuple[bool, DrsFitsFile]:
     """
     Given a generic drs file (i.e. "raw_file") -- must have a fileset --
     identifies which sub-file (from fileset) this file is (based on
@@ -66,7 +70,10 @@ def drs_infile_id(params, given_drs_file):
     return found, kind
 
 
-def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
+def drs_outfile_id(
+    params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+    drsfileset: DrsFitsFile,
+    prefix: Union[str, None] = None) -> Tuple[bool, DrsFitsFile]:
     """
     Given a generic drs file (i.e. "pp_file") -- must have a fileset --
     identifies which sub-file (from fileset) this file is (based on the name

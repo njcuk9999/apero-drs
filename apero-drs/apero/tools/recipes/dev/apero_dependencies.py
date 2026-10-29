@@ -12,6 +12,7 @@ Created on 2019-11-27 at 13:58
 import os
 import apero as apero_pkg
 from collections import OrderedDict
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
@@ -53,7 +54,7 @@ DEBUG = True
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_dependencies.py
 
@@ -81,8 +82,13 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
-    """Collect and log package import statements and source statistics."""
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
+    """Collect and log package imports and source statistics.
+
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter object created by startup.
+    :return: Local context containing the collected import statistics.
+    """
     # Note: no instrument defined so do not use instrument only features
 
     # ----------------------------------------------------------------------
@@ -145,8 +151,15 @@ def get_python_files(path: str) -> np.ndarray:
     return np.sort(pyfiles)
 
 
-def get_import_statements(params, files):
-    """Collect source imports and aggregate line statistics for each file."""
+def get_import_statements(
+        params: Any, files: List[str]
+        ) -> Tuple[List[str], Dict[str, Any], Dict[str, List[str]]]:
+    """Collect source imports and aggregate line statistics for each file.
+
+    :param params: APERO parameters providing the package path.
+    :param files: Python source file paths to inspect.
+    :return: Import lines, aggregate/per-file statistics, and import locations.
+    """
     # get package list
     package = params['DRS.PACKAGE']
     # get import list

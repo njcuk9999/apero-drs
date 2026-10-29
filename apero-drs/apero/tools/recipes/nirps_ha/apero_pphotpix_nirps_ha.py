@@ -10,6 +10,7 @@ Created on 2020-04-05 11:44:00
 @author: cook
 """
 import os
+from typing import Any, Dict, Union
 
 import numpy as np
 from astropy.io import fits
@@ -82,7 +83,9 @@ RMOD.add(c_hotpix)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir=None, darkfile=None, **kwargs):
+def main(obs_dir: Union[str, None] = None,
+         darkfile: Union[str, None] = None,
+         **kwargs: Any) -> Any:
     """
     Main function for exposuremeter_spirou.py
 
@@ -92,8 +95,7 @@ def main(obs_dir=None, darkfile=None, **kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: obs_dir of the local space
-    :rtype: dict
+    :returns: Startup result or the recipe and parameters in debug mode.
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, darkfile=darkfile, **kwargs)
@@ -113,7 +115,13 @@ def main(obs_dir=None, darkfile=None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: ParamDict) -> Dict[str, Any]:
+    """Find hot pixels in the input dark and write their table.
+
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local context containing the computed hot-pixel products.
+    """
     # get input dark file drs fits file instance
     darkfile = params['INPUTS']['darkfile'][1][0]
     debug = params['INPUTS']['debugfile']

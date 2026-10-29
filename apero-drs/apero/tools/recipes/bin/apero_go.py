@@ -12,7 +12,7 @@ Created on 2020-02-27 at 10:56
 import argparse
 import os
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import apero as apero_pkg
 
@@ -111,10 +111,11 @@ def _load_runtime_imports() -> None:
     ParamDict = param_functions.ParamDict
 
 
-def main():
+def main() -> Dict[str, Any]:
     """
     Main function for apero_go.py
 
+    :return: Local context for the selected command path.
     """
     quick_args = _quick_parse_args()
 
@@ -247,7 +248,19 @@ def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     return locals()
 
 
-def get_path(params, storage, props, input_key, param_key):
+def get_path(
+        params: ParamDict, storage: Dict[str, str],
+        props: Dict[str, Any], input_key: str, param_key: str
+        ) -> Tuple[Dict[str, Any], Dict[str, str]]:
+    """Update path state and record an enabled path option.
+
+    :param params: APERO parameters containing inputs and configured paths.
+    :param storage: Mapping that collects selected path descriptions.
+    :param props: Path and directory-change state to update.
+    :param input_key: Input option selecting the configured path.
+    :param param_key: Parameter key containing the path value.
+    :return: Updated path state and storage mappings.
+    """
     # if is set to True then populate variables
     if params['INPUTS'][input_key]:
         # get the value from params

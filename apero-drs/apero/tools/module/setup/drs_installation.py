@@ -110,13 +110,14 @@ LANG_PATH = 'apero.core.lang.tables'
 # =============================================================================
 # Define setup/general functions
 # =============================================================================
-def cprint(message: Union[drs_lang.Text, str], colour: str = 'g'):
+def cprint(message: Union[drs_lang.Text, str],
+           colour: str = 'g') -> None:
     """
     print coloured message
 
     :param message: str, message to print
     :param colour: str, colour to print
-    :return:
+    :return: None.
     """
     print(Colors.print(str(message), colour))
 
@@ -124,7 +125,7 @@ def cprint(message: Union[drs_lang.Text, str], colour: str = 'g'):
 def ask(question: str, dtype: Union[str, type, None] = None,
         options: Union[List[Any], None] = None,
         optiondesc: Union[List[str], None] = None, default: Any = None,
-        required: bool = True, color='g',
+        required: bool = True, color: str = 'g',
         stringlimit: Optional[int] = None) -> Any:
     """
     Ask a question
@@ -1241,7 +1242,7 @@ def create_symlinks(params: ParamDict, all_params: ParamDict) -> ParamDict:
 
 
 def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
-                 log: bool = True):
+                 log: bool = True) -> None:
     """
     Create a symbolic link
 
@@ -1278,7 +1279,7 @@ def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
             cprint(textentry('00-000-00007', args=[filename]), 'r')
 
 
-def add_paths(all_params: ParamDict):
+def add_paths(all_params: ParamDict) -> None:
     """
     Add to path and python path (temporarily) while we install apero
 
@@ -1338,7 +1339,7 @@ def printheader() -> str:
     return '=' * (columns - 1)
 
 
-def print_options(params: ParamDict, all_params: ParamDict):
+def print_options(params: ParamDict, all_params: ParamDict) -> None:
     """
     Print the options to run apero
 
@@ -1524,6 +1525,14 @@ def create_ufiles(params: ParamDict, devmode: bool, ask_user: bool = True
 
 def create_uyaml(instrument: str, ckind: str, group_dict: Dict[str, list],
                  grouplist: List[str]) -> CommentedMap:
+    """Create a commented YAML mapping for one instrument configuration.
+
+    :param instrument: Instrument name included in the generated header.
+    :param ckind: Configuration kind, such as ``config`` or ``constant``.
+    :param group_dict: Values grouped by configuration section.
+    :param grouplist: Ordered group names to include in the output.
+    :return: Commented YAML mapping ready to serialize.
+    """
 
     # Create a commented map
     data = CommentedMap()
@@ -1787,6 +1796,14 @@ def ufile_write(aparams: ParamDict, lines: List[str], upath: Path,
 
 def yfile_write(data: CommentedMap, upath: Path, ufile: Union[Path, str],
                 ckind: str) -> Path:
+    """Write configuration data while preserving compatible user values.
+
+    :param data: Commented YAML mapping to write.
+    :param upath: Directory where the file should be written.
+    :param ufile: Output filename or path component.
+    :param ckind: Configuration kind used in conflict messages.
+    :return: Path to the written YAML file.
+    """
     # initialize YAML object
     yaml_inst = YAML(typ='rt')
     base.enable_scientific_floats(yaml_inst)

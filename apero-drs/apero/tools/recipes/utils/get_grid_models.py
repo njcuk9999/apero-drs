@@ -71,7 +71,14 @@ TABLENAME = 'goettingen_model_grids.fits'
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_url(download_url, infile, outpath):
+def get_url(download_url: str, infile: str, outpath: str) -> None:
+    """Download a model file when it is not already at its output path.
+
+    :param download_url: Base URL hosting the file.
+    :param infile: Filename requested from the download server.
+    :param outpath: Destination path for the downloaded file.
+    :return: None.
+    """
     # construct wave file url
     url = download_url + '/' + infile
     # get wave file
@@ -81,7 +88,11 @@ def get_url(download_url, infile, outpath):
         shutil.move(infile, outpath)
 
 
-def main():
+def main() -> None:
+    """Download the wavelength/model grid and write its FITS table.
+
+    :return: None.
+    """
     # create a table for output
     table = Table()
 
