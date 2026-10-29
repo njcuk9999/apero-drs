@@ -68,7 +68,7 @@ table, td, th {
 # =============================================================================
 class HtmlDocument:
     def __init__(self, params: Any, filename: str,
-                 extension: str = '.html'):
+                 extension: str = '.html') -> None:
         """
         Construct HTML instance
 
@@ -102,7 +102,7 @@ class HtmlDocument:
     # ----------------------------------------------------------------------
     # user functions
     # ----------------------------------------------------------------------
-    def print(self):
+    def print(self) -> None:
         """
         Print the text storage
 
@@ -110,7 +110,7 @@ class HtmlDocument:
         """
         print(self._t_)
 
-    def write_html(self):
+    def write_html(self) -> None:
         """
         Write the html file using writing function
 
@@ -122,7 +122,7 @@ class HtmlDocument:
         # write file to disk
         write_file(self.htmlfilename, self._t_)
 
-    def openhtml(self):
+    def openhtml(self) -> None:
         """
         Open the html using firefox
 
@@ -136,7 +136,7 @@ class HtmlDocument:
             # log: Cannot run command: {0}
             print(textentry('40-003-00006', args=margs))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Remove all temporary files from the filename
 
@@ -158,7 +158,7 @@ class HtmlDocument:
     # ----------------------------------------------------------------------
     # top level latex functions
     # ----------------------------------------------------------------------
-    def preamble(self):
+    def preamble(self) -> None:
         """
         Add the html preamble text (head and body)
 
@@ -184,7 +184,7 @@ class HtmlDocument:
         self.newline()
 
     def add_title(self, title: str,
-                  authors: Union[List[str], str, None] = None):
+                  authors: Union[List[str], str, None] = None) -> None:
         """
         Add a title to the html page
 
@@ -205,7 +205,7 @@ class HtmlDocument:
             self._t_ += cmd('h2', authortext)
             self.newline()
 
-    def newline(self, number: int = 1):
+    def newline(self, number: int = 1) -> None:
         """
         Add some new lines to the text storage
 
@@ -216,7 +216,7 @@ class HtmlDocument:
         for _ in range(number):
             self._t_ += '\n'
 
-    def end(self):
+    def end(self) -> None:
         """
         The final code to add to the html document (/body /html)
 
@@ -236,7 +236,7 @@ class HtmlDocument:
     # ----------------------------------------------------------------------
     # document html functions
     # ----------------------------------------------------------------------
-    def section(self, text: str):
+    def section(self, text: str) -> None:
         """
         Add a section title to the section
 
@@ -248,7 +248,7 @@ class HtmlDocument:
         self._t_ += cmd('h3', text)
         self.newline()
 
-    def subsection(self, text: str):
+    def subsection(self, text: str) -> None:
         """
         Add a sub-section title to the section
 
@@ -260,7 +260,7 @@ class HtmlDocument:
         self._t_ += cmd('h4', text)
         self.newline()
 
-    def add_text(self, text: Union[List[str], str]):
+    def add_text(self, text: Union[List[str], str]) -> None:
         """
         Add a text block to the html document
 
@@ -286,7 +286,7 @@ class HtmlDocument:
                      units: Union[Dict[str, str], None] = None,
                      caption: Union[str, None] = None,
                      label: Union[str, None] = None,
-                     colormask: Union[np.ndarray, list, None] = None):
+                     colormask: Union[np.ndarray, list, None] = None) -> None:
         """
         Insert a table into the html document
 
@@ -328,7 +328,7 @@ class HtmlDocument:
 
     def figure(self, filename: str, height: Union[int, None] = None,
                width: Union[int, None] = None, caption: Union[str, None] = None,
-               label: Union[str, None] = None):
+               label: Union[str, None] = None) -> None:
         """
         Add a figure (image from source "filename") to the html document,
         can set height, width and caption
@@ -380,7 +380,7 @@ def cmd(tag: str, inputs: Union[str, None] = None,
     :param inputs: str or None, if set the command "input"
     :param options: dict or None, a set of options for the command
 
-    :return: None, updates text storage
+    :return: The generated HTML element string.
     """
     # define tag start/end
     start = r'<{0}>'.format(tag)
@@ -403,7 +403,7 @@ def cmd(tag: str, inputs: Union[str, None] = None,
     return command
 
 
-def open_file(filename):
+def open_file(filename: str) -> List[str]:
     """
     Read a text file and return all lines of text
 
@@ -418,7 +418,7 @@ def open_file(filename):
     return lines
 
 
-def write_file(filename: str, text: Union[List[str], str]):
+def write_file(filename: str, text: Union[List[str], str]) -> None:
     """
     Write the "text" to "filename"
 

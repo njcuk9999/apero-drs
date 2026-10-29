@@ -41,7 +41,12 @@ def _failed_task_class(task_key: str, module_name: str) -> type:
     """
 
     class _FailedImportTask(apero_async.AperoAsyncTask):
-        def __init__(self, status: str = "pending"):
+        def __init__(self, status: str = "pending") -> None:
+            """Initialize a placeholder for a task that failed to import.
+
+            :param status: Initial asynchronous task status.
+            :return: None. Stores the unavailable task's error context.
+            """
             super().__init__(
                 f"{task_key} (Import Error)",
                 f"Task unavailable: failed to import {module_name}",

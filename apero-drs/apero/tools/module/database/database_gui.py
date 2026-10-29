@@ -12,7 +12,7 @@ import shutil
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -61,8 +61,12 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # Define classes
 # =============================================================================
 class DatabaseHolder:
-    def __init__(self, params, name, kind, path=None, df=None, url=None,
-                 tablename=None, hash_col: bool = False) -> None:
+    def __init__(self, params: Any, name: str, kind: str,
+                 path: Optional[Union[str, Path]] = None,
+                 df: Optional[pd.DataFrame] = None,
+                 url: Optional[str] = None,
+                 tablename: Optional[str] = None,
+                 hash_col: bool = False) -> None:
         """Store the configuration and loaded state for one database."""
         self.name = name
         self.kind = kind
@@ -191,14 +195,15 @@ class DatabaseHolder:
 
 
 class DatabaseTable(Table):
-    def __init__(self, parent=None, database_holder: DatabaseHolder = None,
-                 **kwargs) -> None:
+    def __init__(self, parent: Any = None,
+                 database_holder: Optional[DatabaseHolder] = None,
+                 **kwargs: Any) -> None:
         """Create a table view linked to its database holder."""
         Table.__init__(self, parent, **kwargs)
         self.db_hold = database_holder
 
-    def popupMenu(self, event, rows=None, cols=None,
-                  outside=None) -> tk.Menu:
+    def popupMenu(self, event: Any, rows: Any = None, cols: Any = None,
+                  outside: Optional[bool] = None) -> tk.Menu:
         """
         Same as parent just without file/edit/plot/table menus on right click
         :param event:
@@ -250,7 +255,7 @@ class DatabaseTable(Table):
         popupmenu = tk.Menu(self, tearoff=0)
 
         # noinspection PyPep8Naming
-        def popupFocusOut(_event) -> None:
+        def popupFocusOut(_event: Any) -> None:
             """Dismiss the context menu when it loses focus."""
             _ = _event
             popupmenu.unpost()
@@ -298,12 +303,12 @@ class DatabaseTable(Table):
         return popupmenu
 
     # noinspection PyPep8Naming
-    def getaColor(self, oldcolor):
+    def getaColor(self, oldcolor: str) -> Any:
         """Open the color picker initialized with the existing row color."""
         # TODO: may be removed if bug in pandas table fixed (Issue #183)
         return dialogs.pickColor(self, oldcolor=oldcolor)
 
-    def handleCellEntry(self, row, col) -> None:
+    def handleCellEntry(self, row: int, col: int) -> None:
         """Callback for cell entry"""
         super().handleCellEntry(row, col)
         self.prevdf = self.model.df.copy()
@@ -312,7 +317,9 @@ class DatabaseTable(Table):
 # noinspection PyUnresolvedReferences
 class DatabaseExplorer(tk.Frame):
 
-    def __init__(self, parent=None, databases=None) -> None:
+    def __init__(self, parent: Any = None,
+                 databases: Optional[Dict[str, DatabaseHolder]] = None
+                 ) -> None:
         """Create the database selector, table view, and application menu."""
         self._titletxt = 'APERO Database Explorer'
         # deal with database
@@ -384,7 +391,7 @@ class DatabaseExplorer(tk.Frame):
         # deal with a change in value
         self.database_option.trace('w', self.change_table)
 
-    def make_table(self, database_holder) -> None:
+    def make_table(self, database_holder: DatabaseHolder) -> None:
         """Display the selected database in the explorer table."""
         self.current_dataframe = database_holder.df
         self.has_data = True
@@ -398,7 +405,7 @@ class DatabaseExplorer(tk.Frame):
         self.table = DatabaseTable(self.table_frame, **kwargs)
         self.table.show()
 
-    def change_table(self, *args, reload=False) -> None:
+    def change_table(self, *args: Any, reload: bool = False) -> None:
         """Save the current view state and load the selected database."""
         # do not use args
         _ = args
@@ -531,7 +538,8 @@ class DatabaseExplorer(tk.Frame):
         self.menubar = tk.Menu(self.main)
 
         # noinspection PyPep8Naming
-        def createSubMenu(parent, label, commands) -> tk.Menu:
+        def createSubMenu(parent: Any, label: str,
+                  commands: List[str]) -> tk.Menu:
             """Add a labeled menu containing the supplied actions."""
             menu = tk.Menu(parent, tearoff=0)
             self.menubar.add_cascade(label=label, menu=menu)

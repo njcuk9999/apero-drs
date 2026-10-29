@@ -1708,7 +1708,8 @@ def write_localisation_files_multi(
 
 
 def loc_summary(recipe: DrsRecipe, it: int, params: ParamDict,
-                qc_params: List[list], props: ParamDict, lprops: ParamDict):
+                qc_params: List[list], props: ParamDict,
+                lprops: ParamDict) -> None:
     """
     Produce the localisation summary document
 

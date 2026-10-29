@@ -248,7 +248,7 @@ def _plot_entry(
 
 
 def _extract_column(
-    htable_rows: List[Dict[str, Any]], key: str, dtype=float
+    htable_rows: List[Dict[str, Any]], key: str, dtype: type = float
 ) -> np.ndarray:
     """Extract a column from htable_rows as a numpy array."""
     vals = []
@@ -626,7 +626,7 @@ def _get_cdt_keys_from_preset(
 # =============================================================================
 # Telluric map (matplotlib, generated on demand)
 # =============================================================================
-def _fig_to_base64(fig) -> str:
+def _fig_to_base64(fig: Any) -> str:
     """Render a matplotlib figure to base64-encoded PNG and close it."""
     import matplotlib.pyplot as plt
 
@@ -870,7 +870,7 @@ def _derive_sc1d_path(
     return candidate if candidate.exists() else None
 
 
-def _load_s1d_data(path) -> tuple:
+def _load_s1d_data(path: Any) -> tuple:
     """Load (wavelength, flux) from an S1D FITS BinTable (HDU index 1)."""
     try:
         from astropy.io import fits as _fits
@@ -884,7 +884,7 @@ def _load_s1d_data(path) -> tuple:
         return None, None
 
 
-def _load_s1d_data_with_header(path) -> tuple:
+def _load_s1d_data_with_header(path: Any) -> tuple:
     """Load (wavelength, flux, header) from an S1D FITS file."""
     try:
         from astropy.io import fits as _fits

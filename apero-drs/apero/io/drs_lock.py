@@ -24,7 +24,7 @@ Import rules:
 import os
 import random
 import time
-from typing import Any, Tuple, Union
+from typing import Any, Callable, Tuple, Union
 
 import numpy as np
 
@@ -68,7 +68,7 @@ class Lock:
     Class to control locking of decorated functions
     """
 
-    def __init__(self, params: ParamDict, lockname: str):
+    def __init__(self, params: ParamDict, lockname: str) -> None:
         """
         Construct the lock instance
 
@@ -125,7 +125,7 @@ class Lock:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -135,7 +135,7 @@ class Lock:
         # update dict with state
         self.__dict__.update(state)
 
-    def __makelockdir(self):
+    def __makelockdir(self) -> None:
         """
         Internal use only: make the lock directory
 
@@ -168,7 +168,7 @@ class Lock:
             else:
                 break
 
-    def __makelockfile(self, name: str):
+    def __makelockfile(self, name: str) -> None:
         """
         Internal use only: make the lock file "name.lock"
 
@@ -262,7 +262,7 @@ class Lock:
         # return list
         return rawlist[pos]
 
-    def __remove_file(self, name: str):
+    def __remove_file(self, name: str) -> None:
         """
         Internal use only: Remove file "name.lock"
 
@@ -317,7 +317,7 @@ class Lock:
         # return the cleaned name
         return name
 
-    def enqueue(self, name: str):
+    def enqueue(self, name: str) -> None:
         """
         Used to add "name" item to the queue
 
@@ -363,7 +363,7 @@ class Lock:
         else:
             return False, None
 
-    def dequeue(self, name: str):
+    def dequeue(self, name: str) -> None:
         """
         Used to remove "name" from queue
 
@@ -375,7 +375,7 @@ class Lock:
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Used to remove all entries from a queue (and start again)
 
@@ -417,7 +417,9 @@ class Lock:
                     AperoCodedWarning(None, '10-101-00005', targs=wargs)
 
 
-def synchronized(lock: Lock, name: str):
+def synchronized(
+    lock: Lock, name: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Synchroisation decorator - wraps the function to lock
     calls to function are added to a queue based on the lock given and
@@ -443,7 +445,7 @@ def synchronized(lock: Lock, name: str):
     :return: wrapper around function (decorator uses this in place of the
              function itself)
     """
-    def wrap(func):
+    def wrap(func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Internal wrap around decorator - required to pull in function to be
         locked (see how to on defining decorator)
@@ -453,7 +455,7 @@ def synchronized(lock: Lock, name: str):
         :return: return the wrapper function (which does the locking before
                  running 'func' - passes all args, kwargs to the 'func'
         """
-        def wrapperfunc(*args, **kw):
+        def wrapperfunc(*args: Any, **kw: Any) -> Any:
             """
             The proxy wrapper of 'func' i.e. in here is where we do the locking
             then run the function - this function is what is called when
@@ -515,7 +517,8 @@ def synchronized(lock: Lock, name: str):
     return wrap
 
 
-def locker(params: ParamDict, lockfile: str, my_func: Any, *args, **kwargs):
+def locker(params: ParamDict, lockfile: str, my_func: Callable[..., Any],
+           *args: Any, **kwargs: Any) -> Any:
     """
     A one function solution to avoid having to deal with decorators.
     Lock file is created in here, and locked function is decorated/run
@@ -541,7 +544,7 @@ def locker(params: ParamDict, lockfile: str, my_func: Any, *args, **kwargs):
     # ------------------------------------------------------------------
     # define wrapper lock file function
     @synchronized(lock, params['PID'])
-    def locked_function():
+    def locked_function() -> Any:
         return my_func(*args, **kwargs)
     # ------------------------------------------------------------------
     # try to run locked read function
@@ -556,7 +559,7 @@ def locker(params: ParamDict, lockfile: str, my_func: Any, *args, **kwargs):
         raise e
 
 
-def reset_lock_dir(params: ParamDict, log: bool = False):
+def reset_lock_dir(params: ParamDict, log: bool = False) -> None:
     """
     Reset the full lock directory (if empty and if it exists) of all
     sub-directories - should only be used when we know no locking is expected
@@ -578,7 +581,7 @@ def reset_lock_dir(params: ParamDict, log: bool = False):
 
 
 def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
-                     log: bool = False):
+                     log: bool = False) -> None:
     """
     Remove empty directories/sub-directories from under 'path' (and remove
     'path' if remove_head = True
@@ -632,13 +635,23 @@ if __name__ == "__main__":
 
     # define a function to print (this is the function to be called in a
     #    parallelised way)
-    def printfunc(i, j):
+    def printfunc(i: int, j: int) -> None:
+        """Run one test lock operation in a child process.
+
+        :param i: First index used to name this lock operation.
+        :param j: Second index used to name this lock operation.
+        :return: None. Prints one line per lowercase letter while locked.
+        """
         # set up the lock file (usually a file or function)
         mylock = Lock(_params, 'printfunc')
 
         # this is where we define the locked function
         @synchronized(mylock, '{0}-{1}'.format(i, j))
-        def lockprint():
+        def lockprint() -> None:
+            """Print the alphabet while holding the named lock.
+
+            :return: None. Writes test output to stdout.
+            """
             for k in list(string.ascii_lowercase):
                 print('{0}-{1}-{2}'.format(i, j, k))
             time.sleep(0.1)

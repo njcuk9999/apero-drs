@@ -96,7 +96,15 @@ EXTRA_SKIP_TEXT['lbl'] = ('Please note SKIP_XXX=True for LBL recipes skips '
 # =============================================================================
 class RunIniFile:
     def __init__(self, params: ParamDict, recipe: DrsRecipe,
-                 instrument: str, name: str):
+                 instrument: str, name: str) -> None:
+        """Initialize a run-configuration builder for one instrument.
+
+        :param params: APERO parameter dictionary used to build the file.
+        :param recipe: Recipe providing the run configuration context.
+        :param instrument: Instrument whose sequences are being configured.
+        :param name: Name used for the generated run configuration.
+        :return: None. Initializes run keys and output state.
+        """
         # core properties
         self.name = name
         self.instrument = instrument
@@ -134,12 +142,14 @@ class RunIniFile:
         self.outpath = None
 
     def __repr__(self) -> str:
+        """Return the string representation of this run-ini builder."""
         return self.__str__()
 
     def __str__(self) -> str:
+        """Return a concise instrument/name identifier for this builder."""
         return 'RunIniFile[{0},{1}]'.format(self.instrument, self.name)
 
-    def rkey(self, key: str, value: Any):
+    def rkey(self, key: str, value: Any) -> None:
         """
         alias to self.run_keys[key] = value
 
@@ -153,7 +163,7 @@ class RunIniFile:
         else:
             self.run_keys[key] = value
 
-    def append_sequence(self, seqstr: str):
+    def append_sequence(self, seqstr: str) -> None:
         """
         Append a sequence to the run.ini file
 
@@ -168,7 +178,7 @@ class RunIniFile:
         self.sequences.append(sequence)
         self.ids.append(sequence.name)
 
-    def append_command(self, command: str):
+    def append_command(self, command: str) -> None:
         """
         Append a single command to the run.ini file
 
@@ -178,13 +188,13 @@ class RunIniFile:
         """
         self.ids.append(command)
 
-    def add_sequence_as_command(self, seqstr: str):
+    def add_sequence_as_command(self, seqstr: str) -> None:
         """
         Add a sequence that generates a set of commands for the ids directly
 
         :param seqstr: str, the sequence name (must match the name of a
                        DrsRunSequence)
-        :return:
+        :return: None. Adds the sequence to ``cmd_sequences``.
         """
         # get sequence
         sequence = self.find_sequence(seqstr)
@@ -213,7 +223,7 @@ class RunIniFile:
         WLOG(self.params, 'error', textentry('09-502-00003', args=eargs))
         return None
 
-    def modify(self, key: str, value: Any):
+    def modify(self, key: str, value: Any) -> None:
         """
         Modify the run_keys or run_text/skip_Text just before they are
         used (only if present)
@@ -239,7 +249,7 @@ class RunIniFile:
         else:
             self.rkey(key, value)
 
-    def add_extra(self, key: str, value: Any):
+    def add_extra(self, key: str, value: Any) -> None:
         """
         Add an extra run key (not in the standard set)
 
@@ -250,7 +260,7 @@ class RunIniFile:
         """
         self.extra_params[key] = value
 
-    def _convert_override_run_keys(self, params: ParamDict):
+    def _convert_override_run_keys(self, params: ParamDict) -> None:
         """
         Convert plain run key values into APERO override run parameters.
 
@@ -286,7 +296,13 @@ class RunIniFile:
                                         position=override_position)
             self.run_keys[key] = ritem
 
-    def write_yaml_file(self, params: ParamDict):
+    def write_yaml_file(self, params: ParamDict) -> None:
+        """Generate and write this run configuration as a YAML file.
+
+        :param params: APERO parameter dictionary used to resolve paths and
+            profile-specific defaults.
+        :return: None. Writes the generated configuration to ``outpath``.
+        """
         # ---------------------------------------------------------------------
         # step 1: construct output filename for this instrument
         # ---------------------------------------------------------------------
@@ -518,11 +534,17 @@ class RunIniFile:
                 y_file.writelines(newlines)
 
 
-    def _generate_recipe_list(self, mode='group',
+    def _generate_recipe_list(self, mode: str = 'group',
                               sequences: Optional[List[DrsSequence]] = None
                               ) -> Union[Dict[str, List[str]],
                                          Tuple[List[DrsRecipe],
                                                List[DrsSequence]]]:
+        """Build grouped recipe names or flattened recipe/sequence lists.
+
+        :param mode: ``'group'`` to group short names, otherwise flatten them.
+        :param sequences: Sequences to process, defaulting to this run config.
+        :return: Group-to-shortname mapping, or recipes and source sequences.
+        """
         # construct the index database instance
         findexdbm = FileIndexDatabase(self.params, 'PROC')
         findexdbm.load_db()
@@ -602,14 +624,10 @@ class RunIniFile:
         else:
             return recipes, seqs
 
-    def _add_command_sequences(self):
-        """
-        Add command sequences (i.e. for a batch job)
+    def _add_command_sequences(self) -> None:
+        """Expand command sequences into individual runs for batch jobs.
 
-        This converts a sequence or set of sequences to a set of individual
-        commands based on current directories
-
-        :return:
+        :return: None. Appends generated command identifiers to ``ids``.
         """
 
         # get run obs dir
@@ -660,7 +678,11 @@ class RunIniFile:
             for newrun in newruns:
                 self.ids.append(newrun[0])
 
-    def write_text_file(self):
+    def write_text_file(self) -> None:
+        """Write the generated run configuration text to its output path.
+
+        :return: None. Writes the prepared lines to ``outpath``.
+        """
 
         with open(self.outpath, 'w') as ofile:
             ofile.writelines(self.lines)

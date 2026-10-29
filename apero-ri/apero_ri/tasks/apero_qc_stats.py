@@ -60,6 +60,11 @@ class AperoQCStats(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
 
     def __init__(self, status: str = "pending") -> None:
+        """Initialize the APERO quality-control statistics task.
+
+        :param status: Initial asynchronous task status.
+        :return: None. Sets task metadata and initial progress state.
+        """
         name = "APERO Quality Control Task"
         description = (
             "Generate the quality control statistics for the "
@@ -117,6 +122,11 @@ class AperoQCStats(apero_async.AperoAsyncTask):
         stop_event = params.get("STOP_EVENT")
 
         def tlog(message: str) -> None:
+            """Write a task message when a logger is available.
+
+            :param message: Text to send to the task logger.
+            :return: None. Logging failures are ignored.
+            """
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -252,6 +262,13 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                 def _update_subprogress(
                     done_items: int, total_items: int, _item_name: str
                 ) -> None:
+                    """Update progress while calibration headers are read.
+
+                    :param done_items: Number of completed header groups.
+                    :param total_items: Total number of header groups.
+                    :param _item_name: Current item label, unused by this task.
+                    :return: None. Updates the task's subprogress field.
+                    """
                     total = max(int(total_items or 0), 1)
                     self.subprogress = min(
                         1.0, float(done_items) / float(total))

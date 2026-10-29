@@ -76,7 +76,7 @@ def _proc_path(proc_dir: str, proc_id: str) -> Optional[str]:
     return os.path.join(proc_dir, '{0}.json'.format(proc_id))
 
 
-def _write(proc_dir: str, record: Dict[str, Any]):
+def _write(proc_dir: str, record: Dict[str, Any]) -> None:
     """Write one record atomically."""
     os.makedirs(proc_dir, exist_ok=True)
     path = _proc_path(proc_dir, record['id'])
@@ -167,7 +167,7 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
     return proc_id
 
 
-def update(proc_dir: str, proc_id: Optional[str], **fields: Any):
+def update(proc_dir: str, proc_id: Optional[str], **fields: Any) -> None:
     """
     Update fields of a process record (never raises)
 
@@ -175,7 +175,7 @@ def update(proc_dir: str, proc_id: Optional[str], **fields: Any):
     :param proc_id: str or None, the process id (None does nothing)
     :param fields: the fields to set
 
-    :return: None
+    :return: None. Persists the updated process record when it exists.
     """
     if proc_id is None:
         return
@@ -192,7 +192,7 @@ def update(proc_dir: str, proc_id: Optional[str], **fields: Any):
 
 
 def finish(proc_dir: str, proc_id: Optional[str], returncode: int,
-           stopped: bool = False):
+           stopped: bool = False) -> None:
     """
     Mark a process as finished (never raises)
 
@@ -201,7 +201,7 @@ def finish(proc_dir: str, proc_id: Optional[str], returncode: int,
     :param returncode: int, the exit code (0 = success)
     :param stopped: bool, True if the process was stopped by a user
 
-    :return: None
+    :return: None. Marks the process record as finished when found.
     """
     fields = dict(finished=time.strftime('%Y-%m-%d %H:%M:%S'),
                   returncode=int(returncode))

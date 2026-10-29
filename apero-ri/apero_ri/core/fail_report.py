@@ -376,6 +376,11 @@ def build_display_template(
                                  for i, k in enumerate(varying_keys)}
 
     def _replace(m: re.Match) -> str:  # type: ignore[type-arg]
+        """Replace one placeholder using constant or renumbered values.
+
+        :param m: Match for a numbered ``{{N}}`` placeholder.
+        :return: Substituted text or the original match when not recognized.
+        """
         k = m.group(1)
         if k in constant:
             return constant[k]

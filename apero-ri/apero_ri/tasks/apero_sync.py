@@ -62,7 +62,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from apero_ri.core import secret_store
 
@@ -348,7 +348,9 @@ def run_for_profile(task_key: str,
 # =============================================================================
 # Private helpers
 # =============================================================================
-def _build_logger(verbose: bool, log_file: Optional[str] = None):
+def _build_logger(
+    verbose: bool, log_file: Optional[str] = None
+) -> Callable[[str], None]:
     """Return a logging callable for TASK_LOGGER injection.
 
     The returned function accepts a single string message and prints it
@@ -364,6 +366,11 @@ def _build_logger(verbose: bool, log_file: Optional[str] = None):
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
     def _log(message: str) -> None:
+        """Print and optionally persist one timestamped task message.
+
+        :param message: Text to send to stdout and the optional log file.
+        :return: None. Output and file-writing errors do not stop the task.
+        """
         # UTC timestamp prefix for reproducible, timezone-independent logs.
         stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         line = f'{stamp} | {message}'

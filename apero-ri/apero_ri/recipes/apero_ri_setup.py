@@ -74,7 +74,7 @@ def _get_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Entry point for apero_ri_setup."""
     args = _get_arguments()
     test_mode = args.test

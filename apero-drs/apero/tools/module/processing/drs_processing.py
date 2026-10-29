@@ -321,7 +321,7 @@ class Run:
             if self.recipe.kwargs[kwarg].reprocess:
                 self.reprocess_args.append(kwarg)
 
-    def prerun_test(self):
+    def prerun_test(self) -> bool:
         """Check that the run's input directory and required files exist.
 
         :return: True when all checked paths exist, otherwise False.
@@ -436,12 +436,13 @@ class Run:
         # return dictionary state
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :param state: Serialized run state restored onto this instance.
+        :return: None. Reloads database and recipe references.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -529,7 +530,8 @@ def combine_outlist(name: str, goutlist: Dict[Any, Any],
     return goutlist
 
 
-def generate_skip_table(params: ParamDict, recipe: DrsRecipe):
+def generate_skip_table(params: ParamDict,
+                        recipe: DrsRecipe) -> Optional[Table]:
     """
     Uses the log.fits files to generate a list of previous run recipes
     skips will occur when arguments are identical
@@ -630,7 +632,7 @@ def skip_clean_arguments(runstring: str,
     return clean_runstring
 
 
-def skip_remove_non_required_args(runstrings, runobj):
+def skip_remove_non_required_args(runstrings: Any, runobj: Run) -> np.ndarray:
     """
     remove any non-required arguments from runstrings (for skip comparison)
 
@@ -675,7 +677,8 @@ def skip_remove_non_required_args(runstrings, runobj):
 
 
 def processing_email(params: ParamDict, position: str, name: str,
-                     tb: Union[str, None] = None):
+                     tb: Union[str, None] = None
+                     ) -> Union[int, Tuple[None, str]]:
     """
     Generate the email subject and contents for
 
@@ -744,7 +747,7 @@ def processing_email(params: ParamDict, position: str, name: str,
     drs_misc.send_email(params, subject, messages)
 
 
-def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
+def write_to_file(params: ParamDict, outlist: Dict[int, dict]) -> None:
     """
     Write a file to disk with the runs given in test mode
 
@@ -810,7 +813,7 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
         fout.write('\n'.join(lines))
 
 
-def reset_files(params: ParamDict, recipe: DrsRecipe):
+def reset_files(params: ParamDict, recipe: DrsRecipe) -> int:
     """
     Resets based on reset parameters
 
@@ -1099,9 +1102,8 @@ def _external_raw_record(src: str, dst: str, mode: str) -> dict:
     stat_result = os.stat(dst)
     record = dict(source=src, mode=mode, size=stat_result.st_size,
                   mtime_ns=stat_result.st_mtime_ns,
+                  ctime_ns=stat_result.st_ctime_ns,
                   device=stat_result.st_dev, inode=stat_result.st_ino)
-    if mode == 'copy':
-        record['sha256'] = _external_raw_checksum(dst)
     return record
 
 
@@ -1121,18 +1123,12 @@ def _external_raw_owned(dst: str, record: dict) -> bool:
     matches_stat = (stat_result.st_size == record.get('size') and
                     stat_result.st_mtime_ns == record.get('mtime_ns'))
     if record.get('mode') == 'copy':
-        return (matches_stat and
-                _external_raw_checksum(dst) == record.get('sha256'))
+        same_inode = stat_result.st_ino == record.get('inode')
+        same_device = stat_result.st_dev == record.get('device')
+        same_change_time = stat_result.st_ctime_ns == record.get('ctime_ns')
+        return (matches_stat and same_inode and same_device and
+                same_change_time)
     return matches_stat
-
-
-def _external_raw_checksum(path: str) -> str:
-    """Return a SHA-256 digest for a file using bounded memory."""
-    digest = hashlib.sha256()
-    with open(path, 'rb') as input_file:
-        for chunk in iter(lambda: input_file.read(1024 * 1024), b''):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _external_raw_mode(src: str, dst: str, link_type: str) -> str:
@@ -1198,7 +1194,7 @@ def _external_raw_link(src: str, dst: str, link_type: str) -> str:
         return 'copy'
 
 
-def update_index_db(params: ParamDict, shortname: str):
+def update_index_db(params: ParamDict, shortname: str) -> None:
     """
     Update the index database
 
@@ -1260,7 +1256,7 @@ def update_index_db(params: ParamDict, shortname: str):
     drs_database.db_push(params)
 
 
-def get_raw_obs_dirs(params, includelist: List[str] = None,
+def get_raw_obs_dirs(params: ParamDict, includelist: List[str] = None,
                      excludelist: List[str] = None) -> List[str]:
     """
     Get a list of all raw observation directories accounting for include
@@ -1476,7 +1472,8 @@ def generate_run_list(params: ParamDict, recipe: DrsRecipe,
     return run_list
 
 
-def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
+def process_verification(params: ParamDict,
+                         vdicts: Dict[str, dict]) -> None:
     """
     In validation mode (--verify) add a print out to display what was and
     wasn't used (in terms of RUN_XXXX
@@ -1974,7 +1971,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
 
 
 def _group_gen_ids(inkeylist: List[int], inrecipelist: List[DrsRecipe],
-                   cores=1) -> Dict[str, List[np.ndarray]]:
+                   cores: int = 1) -> Dict[str, List[np.ndarray]]:
     """
     Group all ids in keylist by reipce and then in to N=cores groups
 
@@ -2156,7 +2153,7 @@ RunSeqReturn = Union[Tuple[List[List[Union[str, DrsRecipe]]], Dict[str, dict]],
                      List[DrsRecipe]]
 
 
-def gen_run_from_seq(params: ParamDict, sequence,
+def gen_run_from_seq(params: ParamDict, sequence: Any,
                      indexdb: FileIndexDatabase,
                      return_recipes: bool = False,
                      logmsg: bool = True,
@@ -3335,7 +3332,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
                         input_recipe: DrsRecipe, skiptable: Table,
                         skip_storage: dict, cores: int = 1,
                         runfile: str = None, debug: bool = False,
-                        return_run: bool = False):
+                        return_run: bool = False) -> Any:
     """
     Linear run of a single validation step
 
@@ -3456,7 +3453,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
 def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
                        run_key: str, runlist: List[str], keylist: List[int],
                        inrecipelist: List[DrsRecipe], skiptable: Table,
-                       cores: int):
+                       cores: int) -> None:
     """
 
     :param params: ParamDict, parameter dictionary of constants
@@ -3505,7 +3502,7 @@ def _multi_process_gen_ids_pathos(params: ParamDict,
                                   run_key: str, runlist: List[str],
                                   cores: int, keylist: List[int],
                                   inrecipelist: List[DrsRecipe],
-                                  skiptable: Table):
+                                  skiptable: Table) -> Any:
     """
     Takes all the groups of run files and validates them using
     pathos.Pool.map
@@ -3552,7 +3549,7 @@ def _multi_process_gen_ids_pool(params: ParamDict,
                                 run_key: str, runlist: List[str],
                                 cores: int, keylist: List[int],
                                 inrecipelist: List[DrsRecipe],
-                                skiptable: Table):
+                                skiptable: Table) -> None:
     """
     Takes all the groups of run files and validates them using
     multiprocessing.Pool.starmap
@@ -3597,7 +3594,7 @@ def _multi_process_gen_ids_process(params: ParamDict,
                                    run_key: str, runlist: List[str],
                                    cores: int, keylist: List[int],
                                    inrecipelist: List[DrsRecipe],
-                                   skiptable: Table):
+                                   skiptable: Table) -> None:
     """
     Takes all the groups of run files and validates them using
     multiprocessing.Process
@@ -3680,9 +3677,10 @@ def _linear_findex(params: ParamDict, block_kind: str, shortname: str,
                               job=job, total_jobs=total_jobs)
 
 
-def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
+def _multi_process_findex_pathos(params: ParamDict, block_kind: str,
                                  shortname: str,
-                                 raw_obs_dirs: List[str], cores: int):
+                                 raw_obs_dirs: List[str],
+                                 cores: int) -> Any:
     """
     Takes all raw directories, finds files and read headers via
     pathos.Pool.map
@@ -3721,7 +3719,8 @@ def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
 
 def _multi_process_findex_pool(params: ParamDict, block_kind:str,
                                shortname: str,
-                               raw_obs_dirs: List[str], cores: int):
+                               raw_obs_dirs: List[str],
+                               cores: int) -> None:
     """
     Takes all raw directories, finds files and read headers via
     multiprocessing.Pool.starmap
@@ -3756,7 +3755,8 @@ def _multi_process_findex_pool(params: ParamDict, block_kind:str,
 
 def _multi_process_findex_process(params: ParamDict, block_kind:str,
                                   shortname: str,
-                                  raw_obs_dirs: List[str], cores: int):
+                                  raw_obs_dirs: List[str],
+                                  cores: int) -> None:
     """
     Takes all raw directories, finds files and read headers via
     multiprocessing.Process
@@ -3851,7 +3851,8 @@ def _multi_headerfix_process_worker(*args: Any, **kwargs: Any) -> None:
 
 
 def _multi_process_headerfix_pathos(params: ParamDict, shortname: str,
-                                    raw_obs_dirs: List[str], cores: int):
+                                    raw_obs_dirs: List[str], cores: int
+                                    ) -> Any:
     """
     Takes all raw directories, finds files and read headers via
     pathos.Pool.map
@@ -3887,7 +3888,8 @@ def _multi_process_headerfix_pathos(params: ParamDict, shortname: str,
 
 
 def _multi_process_headerfix_pool(params: ParamDict, shortname: str,
-                                  raw_obs_dirs: List[str], cores: int):
+                                  raw_obs_dirs: List[str],
+                                  cores: int) -> None:
     """
     Takes all raw directories, finds files and read headers via
     multiprocessing.Pool.starmap
@@ -3921,7 +3923,8 @@ def _multi_process_headerfix_pool(params: ParamDict, shortname: str,
 
 
 def _multi_process_headerfix_process(params: ParamDict, shortname: str,
-                                     raw_obs_dirs: List[str], cores: int):
+                                     raw_obs_dirs: List[str],
+                                     cores: int) -> None:
     """
     Takes all raw directories, finds files and read headers via
     multiprocessing.Process
@@ -4986,7 +4989,7 @@ def _check_runtable(params: ParamDict, runtable: Dict[Any, str],
             raise AperoCodedException(params, '00-503-00011', targs=eargs)
 
 
-def _find_special_targets(params: ParamDict, pconst,
+def _find_special_targets(params: ParamDict, pconst: Any,
                           object_list: List[str], special_name: str,
                           objdbm: drs_astrometrics.AstrometricDatabase,
                           ) -> List[str]:
@@ -5292,7 +5295,9 @@ def _get_dprtype_from_drsfile(arg: DrsArgument) -> Union[List[str], None]:
     return dprtypes
 
 
-def _split_string_list(string: str, allow_whitespace: bool = True):
+def _split_string_list(
+    string: str, allow_whitespace: bool = True
+) -> List[str]:
     """
     Split a string based on whether it has ";" or "," by default if a string
     has neither of these it will split based on space
@@ -5301,7 +5306,7 @@ def _split_string_list(string: str, allow_whitespace: bool = True):
     :param string: str, the string the split by ";" or "," or " "
     :param allow_whitespace: if True splits by white space (only if ";" and ","
                              not found)
-    :return:
+    :return: Input items separated by the selected delimiter.
     """
     # split based on semi-colon
     if ';' in string:

@@ -14,6 +14,7 @@ import shutil
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 from tqdm import tqdm
@@ -65,7 +66,12 @@ DEMO_FILE = os.path.join(RES_PATH, 'demos.yaml')
 # =============================================================================
 # Define user functions
 # =============================================================================
-def start_from_demo(params: ParamDict):
+def start_from_demo(params: ParamDict) -> Optional[int]:
+    """Offer to initialize the raw directory from a configured demo set.
+
+    :param params: APERO parameters containing paths and prompt settings.
+    :return: None when the demo prompt is disabled, otherwise a status code.
+    """
     # first check if demo setup is enabled
     if not params.get('DISABLE_DEMO_PROMPT', False):
         return
@@ -120,7 +126,7 @@ def start_from_demo(params: ParamDict):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _ask_start_from_minidata(params):
+def _ask_start_from_minidata(params: ParamDict) -> bool:
     '''
     Ask user if they want to start from a mini data set.
 
@@ -152,7 +158,8 @@ def _ask_start_from_minidata(params):
     return True
 
 
-def _select_demo(params, yaml_dict):
+def _select_demo(params: ParamDict,
+                 yaml_dict: Dict[str, Dict[str, Any]]) -> Optional[str]:
     '''
     Display available demo sets and let user select one.
 
@@ -207,7 +214,8 @@ def _select_demo(params, yaml_dict):
     return selected_key
 
 
-def _load_file_list(params, selected_info, selected_key):
+def _load_file_list(params: ParamDict, selected_info: Dict[str, Any],
+                    selected_key: str) -> Optional[List[str]]:
     '''
     Load the file list for the selected demo data set.
 
@@ -246,7 +254,8 @@ def _load_file_list(params, selected_info, selected_key):
     return file_paths
 
 
-def _check_missing_files(params, file_paths, output_dir):
+def _check_missing_files(params: ParamDict, file_paths: List[str],
+                         output_dir: str) -> List[str]:
     '''
     Check which files from file list are missing in output directory.
 
@@ -282,7 +291,12 @@ def _check_missing_files(params, file_paths, output_dir):
     return missing_files
 
 
-def _get_source_location(params, selected_info, missing_files, total_files):
+def _get_source_location(
+    params: ParamDict,
+    selected_info: Dict[str, Any],
+    missing_files: List[str],
+    total_files: int,
+) -> Tuple[Optional[str], Optional[str]]:
     '''
     Prompt user for source location of files (URL or directory).
 
@@ -381,7 +395,8 @@ def _get_source_location(params, selected_info, missing_files, total_files):
     return source_type, source_location
 
 
-def _get_copy_method(params, source_type):
+def _get_copy_method(params: ParamDict,
+                     source_type: str) -> Optional[str]:
     '''
     Ask user whether to symlink or copy files (for directory sources).
 
@@ -434,8 +449,9 @@ def _get_copy_method(params, source_type):
     return copy_method
 
 
-def _transfer_files(params, missing_files, output_dir, source_type,
-                    source_location, copy_method):
+def _transfer_files(params: ParamDict, missing_files: List[str],
+                    output_dir: str, source_type: str,
+                    source_location: str, copy_method: str) -> bool:
     '''
     Transfer missing files from source to output directory.
 
@@ -539,7 +555,8 @@ def _transfer_files(params, missing_files, output_dir, source_type,
     return True
 
 
-def _print_all_files_present(params, file_paths, output_dir):
+def _print_all_files_present(params: ParamDict, file_paths: List[str],
+                             output_dir: str) -> None:
     '''
     Print message when all files are already present.
 
@@ -559,7 +576,10 @@ def _print_all_files_present(params, file_paths, output_dir):
     WLOG(params, 'info', textentry('40-522-00033', args=margs))
 
 
-def _cleanup_extraneous_files(params, yaml_dict, output_dir):
+def _cleanup_extraneous_files(
+    params: ParamDict, yaml_dict: Dict[str, Dict[str, Any]],
+    output_dir: str
+) -> int:
     '''
     Remove files from DRS_DATA_RAW that aren't part of any mini data set.
 

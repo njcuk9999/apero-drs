@@ -616,15 +616,17 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     return outputs
 
 
-def _get_list_param(data, key: str, delimiter='||'):
+def _get_list_param(
+    data: Dict[str, Any], key: str, delimiter: str = '||'
+) -> List[str]:
     """
     Get the result of a parameter that is a list separated by some
     delimiter
 
-    :param data:
-    :param key:
-    :param delimiter:
-    :return:
+    :param data: Mapping containing the serialized parameter value.
+    :param key: Name of the parameter to read.
+    :param delimiter: Separator between serialized list items.
+    :return: Parameter items split on the delimiter, or an empty list.
     """
     if data[key] is None:
         return []
@@ -890,8 +892,9 @@ def _statstr_print(statstr: str, key: str, values: List[Any],
     return statstr
 
 
-def _mapqc(x, attribute: str, crit: str, name: Optional[str] = None,
-           default: Optional[Any] = None):
+def _mapqc(x: Any, attribute: str, crit: str,
+           name: Optional[str] = None,
+           default: Optional[Any] = None) -> Any:
     """Fetch one criterion value from a log entry, or return its default."""
     if hasattr(x, attribute):
         avalue = getattr(x, attribute)
@@ -903,8 +906,16 @@ def _mapqc(x, attribute: str, crit: str, name: Optional[str] = None,
     return default
 
 
-def _compile_plot_qc_params(stats, criteria, qcdict):
-    """Prepare date/value series, QC limits, and labels for QC plots."""
+def _compile_plot_qc_params(
+    stats: Any, criteria: List[str], qcdict: Dict[str, List[str]]
+) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    """Prepare date/value series, QC limits, and labels for QC plots.
+
+    :param stats: Statistics table used as the source for plot values.
+    :param criteria: QC criterion suffixes to include in the plot data.
+    :param qcdict: Criterion names grouped by criterion suffix.
+    :return: X values, Y values, limit values, and plot labels mappings.
+    """
     # -------------------------------------------------------------------------
     # plot parameters
     xvalues = dict()
@@ -1080,8 +1091,14 @@ def _get_qcv(stats: dict, xkey: str, ykey: str
 # Define error stats functions
 # =============================================================================
 class ErrorReportEntry:
-    def __init__(self, loglines, start, end) -> None:
-        """Capture the lines belonging to one error-report section."""
+    def __init__(self, loglines: List[str], start: int, end: int) -> None:
+        """Capture a slice of log lines belonging to one error section.
+
+        :param loglines: Complete log lines for the report.
+        :param start: Inclusive starting line index.
+        :param end: Exclusive ending line index.
+        :return: None. Initializes report fields from the selected lines.
+        """
 
         self.error_lines = loglines[start:end]
         self.run_id = -1
@@ -1099,8 +1116,13 @@ class ErrorReportEntry:
         """Print the cleaned report text for this error section."""
         print(self.error_str)
 
-    def write_entry(self, iteration, length) -> str:
-        """Format this error report with its position and run string."""
+    def write_entry(self, iteration: int, length: int) -> str:
+        """Format this error report with its position and run string.
+
+        :param iteration: Zero-based position in the report sequence.
+        :param length: Total number of error reports in the sequence.
+        :return: Formatted report text.
+        """
         entrystr = ''
         entrystr += '\n#' + '=' * 80
         entrystr += '\n#' + ' {0} / {1}'.format(iteration + 1, length)
@@ -1112,8 +1134,12 @@ class ErrorReportEntry:
         entrystr += '\n\n'
         return entrystr
 
-    def process(self, params) -> None:
-        """Extract run metadata, report text, and error codes from the lines."""
+    def process(self, params: ParamDict) -> None:
+        """Extract run metadata, report text, and error codes from the lines.
+
+        :param params: APERO parameters used to identify log header text.
+        :return: None. Updates this report entry's parsed fields.
+        """
         # ---------------------------------------------------------------------
         # get run id - should be in line 0
         # noinspection PyBroadException
@@ -1165,7 +1191,7 @@ class ErrorReportEntry:
             self.error_codes = error_codes
 
 
-def error_stats(params: ParamDict):
+def error_stats(params: ParamDict) -> None:
     """
     Get the error stats files and sorts logs into files.
     Files are saved to {DRS_DATA_MSG}/reports/LOG_NAME/
@@ -1445,7 +1471,7 @@ def error_stats(params: ParamDict):
 # =============================================================================
 # Define memory stats functions
 # =============================================================================
-def memory_stats(params: ParamDict, recipe: DrsRecipe):
+def memory_stats(params: ParamDict, recipe: DrsRecipe) -> None:
     """
     Create the memory stats plot
 
@@ -1679,7 +1705,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
 # =============================================================================
 class FileStat:
     def __init__(self, name: str, path: str, condition: Optional[str] = None,
-                 per_obs_dir: bool = False, suffix: str = ''):
+                 per_obs_dir: bool = False, suffix: str = '') -> None:
         """
         Construct the file stat class
 
@@ -1709,7 +1735,7 @@ class FileStat:
         # must deal with per obs dirs
         self.deal_with_per_obs_dir()
 
-    def deal_with_per_obs_dir(self):
+    def deal_with_per_obs_dir(self) -> None:
         """
         Deal with requiring obs_dir sub-directories
 
@@ -1733,7 +1759,7 @@ class FileStat:
                 self.names.append(name)
                 self.conditions.append(condition)
 
-    def count_on_disk(self):
+    def count_on_disk(self) -> None:
         """
         Count files on disk
 
@@ -1753,7 +1779,9 @@ class FileStat:
             # save to storage
             self.disk_counts['disk_' + self.names[it]] = count
 
-    def count_in_db(self, database: drs_database.drs_db.AperoDatabase):
+    def count_in_db(
+        self, database: drs_database.drs_db.AperoDatabase
+    ) -> None:
         """
         Count files in database
 
@@ -1872,7 +1900,9 @@ def file_index_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
 # =============================================================================
 # Define combine stats functions
 # =============================================================================
-def combine_stats(params: ParamDict, outputs: List[Union[ParamDict, None]]):
+def combine_stats(
+    params: ParamDict, outputs: List[Union[ParamDict, None]]
+) -> None:
     """
     Combine the various outputs into a text file
 

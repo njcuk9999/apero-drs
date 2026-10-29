@@ -616,6 +616,12 @@ def get_sidebar_tree(
     result: List[dict] = []
 
     def _walk(parent_id: str, depth: int) -> None:
+        """Append visible descendants of a parent to the captured result.
+
+        :param parent_id: Page identifier whose children are traversed.
+        :param depth: Current sidebar nesting depth.
+        :return: None. Adds visible child entries to ``result``.
+        """
         children = get_children(parent_id, pages)
         for child_id in children:
             child_def = pages[child_id]

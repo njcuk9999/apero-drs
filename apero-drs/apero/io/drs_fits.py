@@ -87,7 +87,7 @@ class Header(fits.Header):
     - Can automatically convert NaN values to strings
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Apero Fits Header
 
@@ -104,7 +104,7 @@ class Header(fits.Header):
         self.__temp_items = {}
 
     def __setitem__(self, key: str,
-                    item: Union[AnySimple, Tuple[AnySimple, str]]):
+                    item: Union[AnySimple, Tuple[AnySimple, str]]) -> None:
         """
         Set a key with "item"
         same as using: header[key] = item
@@ -195,7 +195,8 @@ class Header(fits.Header):
         value = super().get(key, default)
         return self.__nan_check(value, dtype=float)
 
-    def get_key(self, params: ParamDict, key: str, default=None) -> Any:
+    def get_key(self, params: ParamDict, key: str,
+                default: Any = None) -> Any:
         # deal with key in params
         if key in params:
             drs_key, _, drs_comment = params[key]
@@ -229,7 +230,7 @@ class Header(fits.Header):
         else:
             return super().__contains__(key)
 
-    def set_key(self, params: ParamDict, key: str, value: Any):
+    def set_key(self, params: ParamDict, key: str, value: Any) -> None:
         """
         Set a key (maybe from params with a keywordstore)
 
@@ -330,7 +331,7 @@ class Header(fits.Header):
             return key
 
     @staticmethod
-    def __nan_check(value, dtype=None) -> Any:
+    def __nan_check(value: Any, dtype: Any = None) -> Any:
         """
         Check for NaNs/Infs in value (cannot be used in astropy.io.header)
 
@@ -901,7 +902,8 @@ ListHeader = List[Union[Header, fits.Header, None]]
 def writefits(params: ParamDict, filename: str, data: ListImageTable,
               header: ListHeader, names: List[Union[str, None]],
               datatype: List[str],
-              dtype: List[Union[str, None]], func: Union[str, None] = None):
+              dtype: List[Union[str, None]],
+              func: Union[str, None] = None) -> None:
     """
     Write a fits file (wrapper around locked function _write_fits) either
     with single extension (data/header/datatype/dtype) are not lists,
@@ -937,7 +939,7 @@ def writefits(params: ParamDict, filename: str, data: ListImageTable,
 def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
                 header: ListHeader, names: List[Union[str, None]],
                 datatype: List[Union[str, None]], dtype: List[Union[str, None]],
-                func: Union[str, None] = None):
+                func: Union[str, None] = None) -> None:
     """
     Internal write fits file function (should use writefits externally)
     write fits file with single extension (data/header/datatype/dtype)
@@ -1133,7 +1135,8 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
 
 def update_extension(params: ParamDict, filename: str, extension: int,
                      data: Union[np.ndarray, Table, None] = None,
-                     header: Union[Header, None] = None, fmt: str = 'image'):
+                     header: Union[Header, None] = None,
+                     fmt: str = 'image') -> None:
     """
     Update the extension of an existing file
 
@@ -1206,7 +1209,8 @@ def update_extension(params: ParamDict, filename: str, extension: int,
                 raise AperoCodedException(params, '01-001-00005', targs=eargs)
 
 
-def update_fits(params: ParamDict, filename: str, hkeys: Dict[str, str]):
+def update_fits(params: ParamDict, filename: str,
+                hkeys: Dict[str, str]) -> None:
     """
     Ypdate the files on disk with the hkeys
 

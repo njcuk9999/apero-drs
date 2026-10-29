@@ -65,6 +65,10 @@ class InteractiveSession:
     lock: threading.Lock = field(default_factory=threading.Lock)
 
     def touch(self) -> None:
+        """Record the current time as this session's latest activity.
+
+        :return: None. Updates ``last_activity`` using a monotonic clock.
+        """
         self.last_activity = time.monotonic()
 
 

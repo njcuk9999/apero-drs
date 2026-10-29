@@ -679,6 +679,11 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
     """
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the APERO assets synchronization task.
+
+        :param status: Initial asynchronous task status.
+        :return: None. Sets the task name and description.
+        """
         name = 'APERO Assets Sync Task'
         description = (
             'Sync the APERO data-assets bundle with '

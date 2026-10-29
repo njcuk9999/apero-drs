@@ -92,7 +92,7 @@ class DrsRecipe(object):
                  name: Union[str, None] = None,
                  filemod: Union[Any] = None,
                  params: Union[ParamDict, None] = None,
-                 path: Union[str, None] = None):
+                 path: Union[str, None] = None) -> None:
         """
         Create a DRS Recipe object (one of these for each top 'user' level
         script (or recipe)
@@ -242,7 +242,7 @@ class DrsRecipe(object):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -354,7 +354,7 @@ class DrsRecipe(object):
         # return summary storage
         return storage
 
-    def get_drs_params(self, **kwargs):
+    def get_drs_params(self, **kwargs: Any) -> None:
         """
         Get the drs parameter dictionary and pseudo constants, and pass
         the kwargs directly into params i.e. params[kwarg] = kwargs[kwarg]
@@ -493,7 +493,7 @@ class DrsRecipe(object):
             self.input_params[key] = params[key]
             self.input_params.set_source(key, strsource)
 
-    def option_manager(self):
+    def option_manager(self) -> None:
         """
         Takes all the optional parameters and deals with them (i.e. puts them
         into self.drs_params
@@ -588,7 +588,7 @@ class DrsRecipe(object):
                 default: Union[Any, None] = None,
                 default_ref: Union[Any, None] = None,
                 required: bool = None, reprocess: bool = False,
-                optional: bool = False, single_call: bool = False):
+                optional: bool = False, single_call: bool = False) -> None:
         """
         Add an argument to the recipe
 
@@ -708,7 +708,7 @@ class DrsRecipe(object):
                   default: Union[Any, None] = None,
                   default_ref: Union[Any, None] = None,
                   required: bool = None, reprocess: bool = False,
-                  single_call: bool = False):
+                  single_call: bool = False) -> None:
         """
         Add a keyword argument to the recipe
 
@@ -827,7 +827,7 @@ class DrsRecipe(object):
         # set to keyword argument
         self.kwargs[name] = keywordargument
 
-    def set_outputs(self, **kwargs: DrsInputFile):
+    def set_outputs(self, **kwargs: DrsInputFile) -> None:
         """
         Set the output files
 
@@ -845,7 +845,7 @@ class DrsRecipe(object):
             if isinstance(kwargs[kwarg], DrsInputFile):
                 self.outputs[kwarg] = kwargs[kwarg]
 
-    def set_output_data(self, **kwargs):
+    def set_output_data(self, **kwargs: Any) -> None:
         """
         Set the output files
 
@@ -864,7 +864,7 @@ class DrsRecipe(object):
                 # set fibers
                 self.output_fibers[kwarg] = kwargs[kwarg]
 
-    def set_inputs(self):
+    def set_inputs(self) -> None:
         """
         Set the recipes input arguments (rargs), input keyword arguments
         (rkwargs) and special keyword arguments (rskwargs) - usually from
@@ -918,14 +918,14 @@ class DrsRecipe(object):
                 self.params.set('DRS.RECIPE_KIND', self.recipe_kind,
                                 source=func_name)
 
-    def set_min_nfiles(self, filearg: str, limit: int):
+    def set_min_nfiles(self, filearg: str, limit: int) -> None:
         """
         Set minimum number of files required to use "filearg" in this recipe
         (for processing only in trigger mode)
         """
         self.minimum_files[filearg] = int(limit)
 
-    def set_flags(self, **kwargs: bool):
+    def set_flags(self, **kwargs: bool) -> None:
         """
         Set the initial value of the flags
 
@@ -949,7 +949,7 @@ class DrsRecipe(object):
                 # update the flag
                 self.flags[kwarg] = bool(kwargs[kwarg])
 
-    def set_debug_plots(self, *args: str):
+    def set_debug_plots(self, *args: str) -> None:
         """
         Sets the debug plot list
 
@@ -966,7 +966,7 @@ class DrsRecipe(object):
             if isinstance(arg, str):
                 self.debug_plots.append(arg)
 
-    def set_summary_plots(self, *args: str):
+    def set_summary_plots(self, *args: str) -> None:
         """
         Sets the summary plot list
 
@@ -984,7 +984,7 @@ class DrsRecipe(object):
             if isinstance(arg, str):
                 self.summary_plots.append(arg)
 
-    def add_output_file(self, outfile: DrsInputFile):
+    def add_output_file(self, outfile: DrsInputFile) -> None:
         """
         Add an output file to DrsRecipe.output_files (for the index database)
 
@@ -1010,7 +1010,7 @@ class DrsRecipe(object):
             emsg = textentry('00-008-00016', args=eargs)
             WLOG(self.params, 'error', emsg)
 
-    def main(self, **kwargs) -> Dict[str, Any]:
+    def main(self, **kwargs: Any) -> Dict[str, Any]:
         """
         Run the main function associated with this recipe
 
@@ -1057,7 +1057,7 @@ class DrsRecipe(object):
             emsg = textentry('00-000-00004', args=eargs)
             WLOG(self.params, 'error', emsg)
 
-    def copy(self, recipe: 'DrsRecipe'):
+    def copy(self, recipe: 'DrsRecipe') -> None:
         """
         Copy a "recipe" (DrsRecipe instance) over the current DrsRecipe instance
 
@@ -1259,7 +1259,7 @@ class DrsRecipe(object):
     def add_extra(self, arguments: Union[dict, None] = None,
                   tstars: Union[List[str], None] = None,
                   ostars: Union[List[str], None] = None,
-                  current_tstars: Union[List[str], None] = None):
+                  current_tstars: Union[List[str], None] = None) -> None:
         """
         Add extra arguments to this DrsRecipe instance
         i.e. from arguments (a dictionary of arguments where each key is the
@@ -1460,7 +1460,7 @@ class DrsRecipe(object):
         if len(self.str_arg_list) == 0:
             self.str_arg_list = None
 
-    def _parse_arg(self, arg: DrsArgument, values: Any):
+    def _parse_arg(self, arg: DrsArgument, values: Any) -> None:
         """
         Parse argument to "recipe.str_arg_list"
 
@@ -1512,7 +1512,7 @@ class DrsRecipe(object):
             strarg = [arg.argname, values]
             self.str_arg_list.append(strfmt.format(*strarg))
 
-    def _make_specials(self):
+    def _make_specials(self) -> None:
         """
         Make special arguments based on pre-defined static properties
         (i.e. a valid kwargs for parser.add_argument)
@@ -1589,7 +1589,7 @@ class DrsRecipe(object):
         self._make_special(drs_argument.set_inputdir, skip=False)
         self._make_special(drs_argument.set_outputdir, skip=False)
 
-    def _make_special(self, function: Any, skip: bool = False):
+    def _make_special(self, function: Any, skip: bool = False) -> None:
         """
         Make a special argument using a special DrsArgument method (function)
         to supplies the properties of this special argument
@@ -1802,7 +1802,7 @@ class DrsRunSequence:
     # set class name
     class_name = 'DrsRunSequence'
 
-    def __init__(self, name: str, instrument: str = 'None'):
+    def __init__(self, name: str, instrument: str = 'None') -> None:
         """
         Construct a Drs Run Sequence (used in processing a set of recipes)
 
@@ -1842,7 +1842,7 @@ class DrsRunSequence:
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -1883,7 +1883,7 @@ class DrsRunSequence:
             rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
             template_required: bool = False,
             recipe_kind: Union[str, None] = None,
-            calib_required: Optional[bool] = None):
+            calib_required: Optional[bool] = None) -> None:
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
         with the name (shortname), reference, fiber keys and add more specialised
@@ -1974,7 +1974,7 @@ class DrsRunSequence:
                      tstars: Union[List[str], None] = None,
                      ostars: Union[List[str], None] = None,
                      current_tstars: Union[List[str], None] = None,
-                     logmsg: bool = True):
+                     logmsg: bool = True) -> None:
         """
         Process the DrsRunSequence.adds list (that have been added/defined
         previous) - this actually creates copies of the recipes and modifies
@@ -2337,6 +2337,12 @@ def filter_values(values: List[str], filter_list: List[str],
 # Define other functions
 # =============================================================================
 def compile_recipe_dict(recipes: List[DrsRecipe]) -> Dict[str, DrsRecipe]:
+    """Index recipes by name, rejecting duplicate recipe names.
+
+    :param recipes: Recipe instances to index.
+    :return: Mapping from each unique recipe name to its instance.
+    :raises AperoCodedException: If more than one recipe has the same name.
+    """
     # storage for recipe list
     recipe_list = dict()
     # loop around recipes
@@ -2392,7 +2398,7 @@ def _summary_args(args: Dict[str, Any], argkind: str = 'pos') -> str:
 
 
 # must add a plot lambda function
-def lambda_plot(*args, **kwargs):
+def lambda_plot(*args: Any, **kwargs: Any) -> None:
     """
     Lambda function when a plotting function cannot be attached to the
     recipe

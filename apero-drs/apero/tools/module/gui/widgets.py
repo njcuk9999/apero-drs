@@ -12,6 +12,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
+from typing import Any, Dict, Optional
 
 from PIL import Image, ImageTk
 
@@ -82,7 +83,7 @@ class DropDown(ttk.OptionMenu):
         :return: None. The callback is registered on the Tk variable.
         """
 
-        def internal_callback(*args) -> None:
+        def internal_callback(*args: Any) -> None:
             """Forward a Tk variable change to the registered callback."""
             _ = args
             callback()
@@ -129,7 +130,8 @@ class StatusBar(ttk.Frame):
 
 
 class PageButtonPanel(ttk.Frame):
-    def __init__(self, parent, number, controller) -> None:
+    def __init__(self, parent: tk.Misc, number: int,
+                 controller: Any) -> None:
         """
 
         :param parent:
@@ -151,7 +153,7 @@ class PageButtonPanel(ttk.Frame):
         self.button3 = None
         self.button4 = None
 
-    def button_panel(self, number=0) -> None:
+    def button_panel(self, number: int = 0) -> None:
         """Add navigation, submit, and exit buttons for this page."""
 
         if self.num_pages == 1:
@@ -200,7 +202,7 @@ class PageButtonPanel(ttk.Frame):
         self.controller.current = current
         self._goto_page(current)
 
-    def _goto_page(self, page) -> None:
+    def _goto_page(self, page: int) -> None:
         """Collect current settings and display the requested page."""
         self.controller.update()
         frame = self.controller.pages[page]
@@ -208,7 +210,8 @@ class PageButtonPanel(ttk.Frame):
 
 
 class PageLogo(ttk.Frame):
-    def __init__(self, parent, logo_path=None) -> None:
+    def __init__(self, parent: tk.Misc,
+                 logo_path: Optional[str] = None) -> None:
         """Load and display the APERO logo in a frame."""
         if logo_path is None:
             logo_path = os.path.join(IMAGEDIR, 'apero_logo.png')
@@ -221,7 +224,8 @@ class PageLogo(ttk.Frame):
 
 
 class SettingsPage(ttk.Frame):
-    def __init__(self, parent, settings_dict) -> None:
+    def __init__(self, parent: tk.Misc,
+                 settings_dict: Dict[str, Any]) -> None:
         """Create the appropriate setting widget for each configuration item."""
         # intialise scrolled window
         ttk.Frame.__init__(self, parent)
@@ -262,7 +266,7 @@ class SettingsPage(ttk.Frame):
 
 
 class BrowseSetting(ttk.Frame):
-    def __init__(self, parent, props) -> None:
+    def __init__(self, parent: tk.Misc, props: Dict[str, Any]) -> None:
         """
 
         :param parent:
@@ -307,7 +311,7 @@ class BrowseSetting(ttk.Frame):
 
 
 class DropDownSetting(ttk.Frame):
-    def __init__(self, parent, props) -> None:
+    def __init__(self, parent: tk.Misc, props: Dict[str, Any]) -> None:
         """Create a labeled dropdown from the setting properties."""
         ttk.Frame.__init__(self, parent)
         self.props = props
@@ -333,7 +337,7 @@ class DropDownSetting(ttk.Frame):
 
 
 class CheckBoxes(ttk.Frame):
-    def __init__(self, parent, props) -> None:
+    def __init__(self, parent: tk.Misc, props: Dict[str, Any]) -> None:
         """Create one checkbox for each option in the setting properties."""
         ttk.Frame.__init__(self, parent)
         self.props = props

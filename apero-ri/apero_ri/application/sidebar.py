@@ -1,20 +1,20 @@
 """Sidebar construction helpers for ARIApp."""
 
-from typing import Optional
+from typing import Any, Dict, List, Optional, Set
 
 from apero_ri.core.permissions import get_pinned_sidebar_items
 
 
 def build_data_portal_sidebar_tree(
-    app,
-    accessible_profiles: list,
+    app: Any,
+    accessible_profiles: List[Dict[str, Any]],
     active_page_id: str,
-    user_permissions,
-    user_info=None,
+    user_permissions: Set[str],
+    user_info: Optional[Dict[str, Any]] = None,
     current_profile_id: Optional[str] = None,
     objname: Optional[str] = None,
     include_children: bool = True,
-) -> list:
+) -> List[Dict[str, Any]]:
     """Build data portal sidebar tree from pages.yaml templates."""
     sidebar_tree = []
     pinned_tree = get_pinned_sidebar_items(

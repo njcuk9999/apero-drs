@@ -525,7 +525,7 @@ def write_reference_files(params: ParamDict, recipe: DrsRecipe,
 
 
 def reference_summary(recipe: DrsRecipe, params: ParamDict,
-                      qc_params: List[list], dark_table: Table):
+                      qc_params: List[list], dark_table: Table) -> None:
     """
     Write the dark reference calibration summary document
 
@@ -712,7 +712,7 @@ def dark_write_files(params: ParamDict, recipe: DrsRecipe, dprtype: str,
 def dark_summary(recipe: DrsRecipe, it: int, params: ParamDict,
                  dadead_full: float, med_full: float, dadead_blue: float,
                  med_blue: float, dadead_red: float, med_red: float,
-                 qc_params: List[list]):
+                 qc_params: List[list]) -> None:
     """
     Write the dark calibration summary document
 

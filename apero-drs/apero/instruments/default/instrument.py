@@ -10,7 +10,7 @@ import os
 import string
 import sys
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, NoReturn, Optional, Tuple, Union
 
 import numpy as np
 import sqlalchemy
@@ -75,7 +75,8 @@ class Instrument:
     # set class name
     class_name = 'Instrument'
 
-    def __init__(self, instrument_name: Union[str, None] = None):
+    def __init__(self,
+                 instrument_name: Union[str, None] = None) -> None:
         """
         Pseudo Constants constructor
 
@@ -104,7 +105,7 @@ class Instrument:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -140,7 +141,7 @@ class Instrument:
         """Return a new default instrument object with the same name."""
         return Instrument(instrument_name=self.instrument)
 
-    def _not_implemented(self, method_name: str):
+    def _not_implemented(self, method_name: str) -> NoReturn:
         """
         Raise a Not Implemented Error (for methods that are required to be
         defined by PseudoConstants child class i.e. the instrument class)
@@ -155,6 +156,10 @@ class Instrument:
         raise NotImplementedError(emsg.format(method_name))
 
     def get_clists(self) -> List[Any]:
+        """Return the default config, constants, and keyword dictionaries.
+
+        :return: The three default CDict/KDict definitions.
+        """
         # this has to be local
         from apero.instruments.default import config
         from apero.instruments.default import constants
@@ -196,7 +201,7 @@ class Instrument:
     # =========================================================================
     def HEADER_FIXES(self, params: Any, header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
-                     objdbm: Any = None):
+                     objdbm: Any = None) -> NoReturn:
         """
         This should do nothing unless an instrument header needs fixing
 
@@ -241,7 +246,8 @@ class Instrument:
         return clean_object(objname)
 
     def GET_OBJNAME(self, params: Any, header: Any, filename: str,
-                    check_aliases, objdbm: Any = None):
+                    check_aliases: bool,
+                    objdbm: Any = None) -> str:
         """
         Get a cleaned version of the object name from the header
 
@@ -256,7 +262,8 @@ class Instrument:
         # raise implementation error
         self._not_implemented('DRS_DPRTYPE')
 
-    def DRS_DPRTYPE(self, params: Any, header: Any, filename: str):
+    def DRS_DPRTYPE(self, params: Any, header: Any,
+                    filename: str) -> NoReturn:
         """
         Get the dprtype for a specific header
 
@@ -275,7 +282,8 @@ class Instrument:
         # raise implementation error
         self._not_implemented('DRS_DPRTYPE')
 
-    def DRS_MIDMJD(self, params: Any, header: Any, filename: str):
+    def DRS_MIDMJD(self, params: Any, header: Any,
+                   filename: str) -> NoReturn:
         """
         Get the midmjd for a specific header
 
@@ -293,7 +301,7 @@ class Instrument:
         self._not_implemented('DRS_MIDMJD')
 
     def GET_AREL_DATE(self, params: Any, header: Any,
-                      delta_key: str):
+                      delta_key: str) -> NoReturn:
         """
         Get the apero release date
 
@@ -305,7 +313,7 @@ class Instrument:
         # raise implementation error
         self._not_implemented('GET_AREL_DATE')
 
-    def FRAME_TIME(self, params: Any, header: Any):
+    def FRAME_TIME(self, params: Any, header: Any) -> NoReturn:
         """
         Get the frame time (either from header or constants depending on
         instrument)
@@ -320,7 +328,7 @@ class Instrument:
         # raise implementation error
         self._not_implemented('IMAGE.FRAME_TIME')
 
-    def SATURATION(self, params: Any, header: Any):
+    def SATURATION(self, params: Any, header: Any) -> NoReturn:
         """
         Get the saturation (either from header or constants depending on
         instrument)
@@ -335,7 +343,9 @@ class Instrument:
         # raise implementation error
         self._not_implemented('IMAGE.SATURATION')
 
-    def GET_STOKES_FROM_HEADER(self, params: Any, header: Any, wlog: Any):
+    def GET_STOKES_FROM_HEADER(
+        self, params: Any, header: Any, wlog: Any
+    ) -> NoReturn:
         """
         Get the stokes parameter and exposure number from the header
 
@@ -402,7 +412,9 @@ class Instrument:
         length = 80
         return length
 
-    def COLOUREDLEVELS(self, params=None) -> dict:
+    def COLOUREDLEVELS(
+        self, params: Optional[Any] = None
+    ) -> dict:
         """
         Defines the colours if using coloured log.
         Allowed colour strings are found here:
@@ -521,7 +533,9 @@ class Instrument:
         # return lpath
         return lpath
 
-    def ADJUST_SUBLEVEL(self, code: str, sublevel: Optional[int] = None):
+    def ADJUST_SUBLEVEL(
+        self, code: str, sublevel: Optional[int] = None
+    ) -> str:
         """
         Adjust the log code based on sub level (minor and major)
 
@@ -608,7 +622,7 @@ class Instrument:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_LOCALISATION(self, fiber):
+    def FIBER_LOCALISATION(self, fiber: str) -> None:
         """
         Return which fibers to calculate localisation for
 
@@ -623,7 +637,7 @@ class Instrument:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_DILATE(self, fiber: str):
+    def FIBER_DILATE(self, fiber: str) -> None:
         """
         whether we are dilate the imagine due to fiber configuration this should
         only be used when we want a combined localisation solution
@@ -639,7 +653,7 @@ class Instrument:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_DOUBLETS(self, fiber: str):
+    def FIBER_DOUBLETS(self, fiber: str) -> None:
         """
         whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
 
@@ -697,7 +711,7 @@ class Instrument:
         # return input fiber
         return fiber
 
-    def FIBER_DPR_POS(self, dprtype: str, fiber: str):
+    def FIBER_DPR_POS(self, dprtype: str, fiber: str) -> None:
         """
         When we have a DPRTYPE figure out what is in the fiber requested
 
@@ -716,7 +730,7 @@ class Instrument:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_DPRTYPE(self, dprtype: str):
+    def FIBER_DPRTYPE(self, dprtype: str) -> None:
         """
         Input DPRTYPE tells you which fiber we are correcting for
 
@@ -731,7 +745,15 @@ class Instrument:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_LOC_PROPS(self, fiber: str, lprops_all: dict):
+    def FIBER_LOC_PROPS(
+        self, fiber: str, lprops_all: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Build the localisation-property mapping for one fiber.
+
+        :param fiber: Fiber identifier whose localization values are selected.
+        :param lprops_all: Mapping containing localization data for all fibers.
+        :return: Localization values and polynomial/order metadata.
+        """
         # get the cent coefficients
         _ccoeffs = lprops_all[fiber]['CENT_COEFFS']
         fccoeffs, nbo = self.FIBER_LOC_COEFF_EXT(_ccoeffs, fiber)
@@ -758,7 +780,8 @@ class Instrument:
         lprops['LOC_POLY_TYPE'] = str(lprops_all[fiber]['LOC_POLY_TYPE'])
         return lprops
 
-    def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray, fiber: str):
+    def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray,
+                            fiber: str) -> NoReturn:
         """
         Extract the localisation coefficients based on how they are stored
         FIBER_LOC_TYPES
@@ -776,7 +799,7 @@ class Instrument:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_DATA_TYPE(self, dprtype, fiber):
+    def FIBER_DATA_TYPE(self, dprtype: str, fiber: str) -> NoReturn:
         """
         Return the data type from a DPRTYPE
 
@@ -796,7 +819,7 @@ class Instrument:
         _ = fiber
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
-    def FIBER_KINDS(self):
+    def FIBER_KINDS(self) -> None:
         """
         Set the fiber kinds (those to be though as as "science" and those to be
         though as as "reference" fibers.
@@ -1192,7 +1215,7 @@ class Instrument:
         self.logdb_cols = log_columns
         return log_columns
 
-    def GET_EPOCH(self, params, header):
+    def GET_EPOCH(self, params: Any, header: Any) -> NoReturn:
         """
         Get the EPOCH in JD from a input header file (instrument specific)
         """
@@ -1200,7 +1223,8 @@ class Instrument:
         # raise implementation error
         self._not_implemented('GET_EPOCH')
 
-    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
+    def COMBINE_FILE_SUFFIX(self, basenames: List[str],
+                            suffix: str) -> None:
 
         """
         Get a possible suffix from the basename

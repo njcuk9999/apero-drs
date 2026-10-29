@@ -17,7 +17,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from apero_ri.apero_monitoring import CHECKS
 from apero_ri.apero_monitoring import core as checks_core
@@ -80,6 +80,11 @@ class AperoCheckTask(apero_async.AperoAsyncTask):
     """Run APERO checks and write monitor-portal YAML files."""
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the APERO checks task and its subprocess settings.
+
+        :param status: Initial asynchronous task status.
+        :return: None. Sets task metadata and subprocess support.
+        """
         # Set the task name shown in the UI.
         name = 'APERO Check Task'
         # Set the task description shown in the UI.
@@ -1387,7 +1392,7 @@ def _normalize_mp_config(task_config: dict) -> dict:
 def _make_executor(backend: str,
                    ncores: int,
                    start_method: str,
-                   tlog) -> Any:
+                   tlog: Callable[[str], None]) -> Any:
     """Create the executor used for per-obsdir parallelism."""
     # Use threads when explicitly requested.
     if backend == 'threads':

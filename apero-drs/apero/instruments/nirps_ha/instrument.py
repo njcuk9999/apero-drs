@@ -56,7 +56,7 @@ class NirpsHa(instrument_mod.Instrument):
     # set class name
     class_name = 'NirpsHa'
 
-    def __init__(self, instrument_name: Union[str, None] = None):
+    def __init__(self, instrument_name: Union[str, None] = None) -> None:
         """
         Pseudo Constants constructor
 
@@ -93,7 +93,7 @@ class NirpsHa(instrument_mod.Instrument):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -128,10 +128,15 @@ class NirpsHa(instrument_mod.Instrument):
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
-    def copy(self):
+    def copy(self) -> 'NirpsHa':
+        """Return a new pseudo-constant object for the same instrument."""
         return NirpsHa(instrument_name=self.instrument)
 
     def get_clists(self) -> List[Any]:
+        """Return this instrument's configuration, constant, and keyword sets.
+
+        :return: Config, constants, and keyword dictionaries in that order.
+        """
         # this has to be local
         from apero.instruments.nirps_ha import config
         from apero.instruments.nirps_ha import constants
@@ -270,7 +275,8 @@ class NirpsHa(instrument_mod.Instrument):
         return instrument_mod.clean_object(objname)
 
     def GET_OBJNAME(self, params: ParamDict, header: Any, filename: str,
-                    check_aliases, objdbm: Any = None) -> str:
+                    check_aliases: bool,
+                    objdbm: Any = None) -> str:
         """
         Get a cleaned version of the object name from the header
 
@@ -329,7 +335,7 @@ class NirpsHa(instrument_mod.Instrument):
         return manual_apero_reldate(params, header, delta_key=delta_key,
                                  return_value=True)
 
-    def FRAME_TIME(self, params: ParamDict, header: Any):
+    def FRAME_TIME(self, params: ParamDict, header: Any) -> float:
         """
         Get the frame time (either from header or constants depending on
         instrument)
@@ -341,7 +347,7 @@ class NirpsHa(instrument_mod.Instrument):
         """
         return float(params['IMAGE.FRAME_TIME'])
 
-    def SATURATION(self, params: ParamDict, header: Any):
+    def SATURATION(self, params: ParamDict, header: Any) -> float:
         """
         Get the saturation (either from header or constants depending on
         instrument)
@@ -501,13 +507,13 @@ class NirpsHa(instrument_mod.Instrument):
         # return params
         return fiberparams
 
-    def FIBER_LOCALISATION(self, fiber) -> List[str]:
+    def FIBER_LOCALISATION(self, fiber: str) -> str:
         """
-        Return which fibers to calculate localisation for
+        Return the fiber used to calculate localisation.
 
         :param fiber: str, fiber name
 
-        :return: list of strings, the fibers to find localisation for
+        :return: The unchanged fiber identifier.
         """
         return fiber
 
@@ -641,7 +647,7 @@ class NirpsHa(instrument_mod.Instrument):
 
         return acc, nbo
 
-    def FIBER_DATA_TYPE(self, dprtype, fiber):
+    def FIBER_DATA_TYPE(self, dprtype: str, fiber: str) -> str:
         """
         Return the data type from a DPRTYPE
 
@@ -651,7 +657,7 @@ class NirpsHa(instrument_mod.Instrument):
         :param dprtype: str, the DPRTYPE (data type {AB}_{C})
         :param fiber: str, the current fiber (i.e. AB, A, B or C)
 
-        :return:
+        :return: Data type selected for the requested fiber.
         """
         # set function name
         # _ = display_func('FIBER_DATA_TYPE', __NAME__, self.class_name)
@@ -777,9 +783,13 @@ class NirpsHa(instrument_mod.Instrument):
         # return column object
         return index_cols
 
-    def GET_EPOCH(self, params, header) -> float:
+    def GET_EPOCH(self, params: ParamDict, header: Any) -> float:
         """
         Get the EPOCH in JD from a input header file (instrument specific)
+
+        :param params: APERO parameter dictionary containing header keys.
+        :param header: FITS header with the object equinox value.
+        :return: Observation epoch as a Julian date.
         """
         # spirou stores the equinox in decimal years
         key = params['KW_OBJEQUIN'][0]
@@ -791,7 +801,7 @@ class NirpsHa(instrument_mod.Instrument):
         # return epoch in JD
         return epoch.jd
 
-    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str):
+    def COMBINE_FILE_SUFFIX(self, basenames: List[str], suffix: str) -> str:
         """
         Get a possible suffix from the basename
 
@@ -824,7 +834,7 @@ class NirpsHa(instrument_mod.Instrument):
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
 def construct_objname(params: Union[ParamDict, None],
-                      pconst, header,
+                      pconst: Any, header: Any,
                       filename: Union[None, str, Path] = None,
                       check_aliases: bool = False,
                       objdbm: Any = None) -> str:

@@ -11,6 +11,7 @@ Version 0.0.1
 import tkinter as tk
 from tkinter import Tk as ThemedTk
 from tkinter import ttk
+from typing import Any, Optional
 
 from ttkthemes import ThemedTk
 
@@ -46,7 +47,7 @@ INSTRUMENTS = apero_base.INSTRUMENTS
 # Define classes
 # =============================================================================
 class TestApp(ThemedTk):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Create the themed settings application and its page stack."""
         _ = args, kwargs
         # run the super
@@ -101,7 +102,7 @@ class TestApp(ThemedTk):
 
 
 class StartPage(ttk.Frame):
-    def __init__(self, parent, controller) -> None:
+    def __init__(self, parent: Any, controller: Any) -> None:
         """Initialize the base frame used by the sample settings pages."""
         _ = controller
         ttk.Frame.__init__(self, parent)
@@ -112,7 +113,7 @@ class StartPage(ttk.Frame):
 
 
 class Page1(StartPage):
-    def __init__(self, parent, controller) -> None:
+    def __init__(self, parent: Any, controller: Any) -> None:
         """Create the introductory page and its navigation controls."""
         ttk.Frame.__init__(self, parent)
         # page logo
@@ -131,7 +132,7 @@ class Page1(StartPage):
 
 
 class Page2(StartPage):
-    def __init__(self, parent, controller) -> None:
+    def __init__(self, parent: Any, controller: Any) -> None:
         """Create the general settings page and its navigation controls."""
         ttk.Frame.__init__(self, parent)
 
@@ -171,7 +172,7 @@ class Page2(StartPage):
 
 
 class Page3(StartPage):
-    def __init__(self, parent, controller) -> None:
+    def __init__(self, parent: Any, controller: Any) -> None:
         """Create the additional settings page and its navigation controls."""
         ttk.Frame.__init__(self, parent)
 
@@ -219,7 +220,7 @@ class Page3(StartPage):
 # =============================================================================
 # Define functions
 # =============================================================================
-def test(instrument=None) -> TestApp:
+def test(instrument: Optional[str] = None) -> Any:
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the

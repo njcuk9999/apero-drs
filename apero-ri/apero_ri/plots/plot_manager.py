@@ -151,6 +151,10 @@ class PlotClass:
     """
 
     def __init__(self) -> None:
+        """Initialize an empty plot registry entry.
+
+        :return: None. Sets the display and loading defaults for a plot.
+        """
         self.title: str = ""
         self.description: str = ""
         self.plot_key: str = ""
@@ -170,6 +174,10 @@ class PlotClass:
         self.section: str = ""
 
     def __repr__(self) -> str:
+        """Return a compact representation of the plot configuration.
+
+        :return: Representation containing the key, title, and zoom options.
+        """
         return (
             f"PlotClass(key={self.plot_key!r},"
             f" title={self.title!r},"

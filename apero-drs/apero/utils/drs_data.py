@@ -186,7 +186,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
                       assetsdir: Union[str, None] = None,
                       cavity_dir: Union[str, None] = None,
                       file1m: Union[str, None] = None,
-                      filell: Union[str, None] = None):
+                      filell: Union[str, None] = None) -> None:
     """
     Save the 1/m file and ll wavelength cavity files
 
@@ -201,7 +201,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
                    -- overrides params['CAL.WAVE.GEN.CAVITY_1M_FILE']
     :param filell: str, Define the coefficients of the fit of wavelength vs d
                    -- overrides params['CAL.WAVE.GEN.CAVITY_LL_FILE']
-    :return:
+    :return: None, writes both cavity arrays to disk.
     """
     # set function name
     func_name = display_func('save_cavity_files', __NAME__)
@@ -957,7 +957,7 @@ def load_text_file(params: ParamDict, filename: str,
 
 
 def save_text_file(params: ParamDict, filename: str, array: np.ndarray,
-                   func_name: Union[None, str] = None):
+                   func_name: Union[None, str] = None) -> None:
     """
     Saves a numpy array to a text file
 
@@ -965,7 +965,7 @@ def save_text_file(params: ParamDict, filename: str, array: np.ndarray,
     :param filename: str, filename of the text file to load
     :param array: np.ndarray the array to save to text file
     :param func_name: str the function name where save_text_file was called
-    :return:
+    :return: None, writes the array to the requested text file.
     """
     # set function name
     if func_name is None:

@@ -1,12 +1,14 @@
 """Admin SSHFS API helper functions for ARIApp."""
 
+from typing import Any
+
 from apero_ri.core import sshfs_backend as sb
 from apero_ri.core.auth import get_effective_user
 from apero_ri.core.permissions import resolve_user_permissions
 from flask import jsonify, request, session
 
 
-def api_admin_sshfs_interactive_close(app):
+def api_admin_sshfs_interactive_close(app: Any) -> Any:
     """Close and clean up an interactive SSH/SSHFS session."""
     user_info = get_effective_user(session)
     if not user_info:

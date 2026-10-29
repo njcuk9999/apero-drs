@@ -57,7 +57,8 @@ LARGE = 16
 NORMAL = 12
 SMALL = 10
 # define internal path to database explorer
-EXPLORER_PATH = os.path.join('tools', 'recipes', 'bin', 'apero_explorer.py')
+EXPLORER_PATH = os.path.join(
+    'tools', 'recipes', 'bin', 'apero_explorer.py')
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
@@ -91,7 +92,8 @@ class WrappingLabel(tk.Label):
          how_would_you_make_text_that_automatically_wraps/
     """
 
-    def __init__(self, master=None, **kwargs) -> None:
+    def __init__(self, master: Any = None,
+                 **kwargs: Any) -> None:
         """Initialize a label that wraps its text to the widget width."""
         tk.Label.__init__(self, master, **kwargs)
         self.bind('<Configure>',
@@ -107,7 +109,8 @@ class AutocompleteEntry(tk.Entry):
         578253-an-entry-with-autocompletion-for-the-tkinter-gui/
     """
 
-    def __init__(self, lista, *args, **kwargs) -> None:
+    def __init__(self, lista: List[str], *args: Any,
+                 **kwargs: Any) -> None:
         """Create an entry with suggestions drawn from ``lista``.
 
         :param lista: Candidate strings shown while the entry is edited.
@@ -116,7 +119,7 @@ class AutocompleteEntry(tk.Entry):
         """
 
         tk.Entry.__init__(self, *args, **kwargs)
-        self.lista = lista
+        self.lista: Any = lista
         self.lb = None
         self.var = self["textvariable"]
         if self.var == '':
@@ -129,7 +132,7 @@ class AutocompleteEntry(tk.Entry):
 
         self.lb_up = False
 
-    def changed(self, name, index, mode) -> None:
+    def changed(self, name: Any, index: Any, mode: Any) -> None:
         """Refresh the suggestion list after the entry text changes."""
         _ = name, index, mode
 
@@ -137,7 +140,7 @@ class AutocompleteEntry(tk.Entry):
             self.lb.destroy()
             self.lb_up = False
         else:
-            words = self.comparison()
+            words: List[str] = self.comparison()
             if words:
                 if not self.lb_up:
                     self.lb = tk.Listbox()
@@ -155,7 +158,7 @@ class AutocompleteEntry(tk.Entry):
                     self.lb.destroy()
                     self.lb_up = False
 
-    def selection(self, event) -> None:
+    def selection(self, event: Any) -> None:
         """Copy the active suggestion into the entry and close the list."""
         _ = event
         if self.lb_up:
@@ -164,7 +167,7 @@ class AutocompleteEntry(tk.Entry):
             self.lb_up = False
             self.icursor(tk.END)
 
-    def up(self, event) -> None:
+    def up(self, event: Any) -> None:
         """Move the active suggestion selection up by one row."""
         _ = event
         if self.lb_up:
@@ -178,7 +181,7 @@ class AutocompleteEntry(tk.Entry):
                 self.lb.selection_set(first=index)
                 self.lb.activate(index)
 
-    def down(self, event) -> None:
+    def down(self, event: Any) -> None:
         """Move the active suggestion selection down by one row."""
         _ = event
         if self.lb_up:
@@ -197,7 +200,7 @@ class AutocompleteEntry(tk.Entry):
         pattern = re.compile('.*' + self.var.get() + '.*')
         return [w for w in self.lista if re.match(pattern, w)]
 
-    def destroy_tab(self, event=None) -> None:
+    def destroy_tab(self, event: Any = None) -> None:
         """Remove the suggestion list when it exists."""
         _ = event
         if self.lb is not None:
@@ -213,7 +216,7 @@ class Navbar:
     Navigation bar widget
     """
 
-    def __init__(self, master) -> None:
+    def __init__(self, master: Any) -> None:
         """
         Navigation bar constructor
 
@@ -221,10 +224,10 @@ class Navbar:
 
         :type master: tk.TK
         """
-        self.master = master
+        self.master: Any = master
         self.menubar = tk.Menu(master)
         # set title
-        self.title = 'About {0}'.format(PROGRAM_NAME)
+        self.title: str = 'About {0}'.format(PROGRAM_NAME)
         # add file menu
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='Open database folder',
@@ -263,7 +266,7 @@ class Navbar:
         :return:
         """
         root = self.master.datastore.drs_params['PATH.ROOT']
-        explorer = os.path.join(root, EXPLORER_PATH)
+        explorer: str = os.path.join(root, EXPLORER_PATH)
         os.system('python {0}'.format(explorer))
 
 
@@ -273,14 +276,14 @@ class Search:
     and instrument
     """
 
-    def __init__(self, parent, appobj) -> None:
+    def __init__(self, parent: Any, appobj: Any) -> None:
         """
         Search widget constructor
         :param parent: tk.TK parent app/frame
         :param appobj: tk.TK root app
         """
         self.frame = tk.Frame(parent)
-        self.master = parent
+        self.master: Any = parent
         self.entry = None
         self.button = None
         self.ilabel = None
@@ -300,7 +303,7 @@ class Search:
         self.frame.grid_columnconfigure(2, weight=0)
         self.frame.grid_columnconfigure(3, weight=0)
 
-    def search_entry(self, frame) -> None:
+    def search_entry(self, frame: Any) -> None:
         """
         Populate the widget with the entry/button/label/drop down box
         :param frame: tk.Frame, the parent frame
@@ -310,7 +313,7 @@ class Search:
         # get all keys
         lista = list(self.dataobj.dict.keys())
         # add the search box
-        self.entry = AutocompleteEntry(lista=lista, master=frame, width=32,
+        self.entry: Any = AutocompleteEntry(lista=lista, master=frame, width=32,
                                        background='white',
                                        font="-size {0}".format(LARGE))
 
@@ -323,7 +326,7 @@ class Search:
                                 font="-size {0}".format(LARGE))
         self.button.grid(row=0, column=1, padx=10, sticky=tk.W)
 
-    def execute_search(self, event=None) -> None:
+    def execute_search(self, event: Any = None) -> None:
         """
         Event: start a search (and destory the autocomplete tab)
         Also updates the tables
@@ -335,7 +338,7 @@ class Search:
         # destroy autocomplete box
         self.entry.destroy_tab()
         # get search text
-        search_text = self.entry.get()
+        search_text: str = self.entry.get()
         # set searching text
         self.titlebar.title0.set('Please wait. Searching for: ')
         self.titlebar.title1.set(search_text)
@@ -346,7 +349,7 @@ class Search:
         # set complete text
         if found:
             # log message to console
-            margs = [search_text]
+            margs: List[str] = [search_text]
             # log: Complete. APERO code searched for: {0}
             WLOG(self.dataobj.drs_params, '',
                  textentry('40-519-00007', args=margs))
@@ -355,7 +358,7 @@ class Search:
             self.titlebar.title1.set(search_text)
         else:
             # log message to console
-            margs = [search_text]
+            margs: List[str] = [search_text]
             # log: Cannot find APERO code: {0}
             WLOG(self.dataobj.drs_params, '',
                  textentry('40-519-00008', args=margs))
@@ -431,12 +434,12 @@ class Search:
         self.rbox1.table.unpopulated_table()
         self.rbox2.table.unpopulated_table()
         # populate box1
-        labels1 = r1['labels']
-        values1 = r1['values']
+        labels1: List[Any] = r1['labels']
+        values1: List[Any] = r1['values']
         self.rbox1.table.populate_table(labels1, values1)
         # populate box2
-        labels2 = r2['labels']
-        values2 = r2['values']
+        labels2: List[Any] = r2['labels']
+        values2: List[Any] = r2['values']
         self.rbox2.table.populate_table(labels2, values2)
 
 
@@ -445,7 +448,7 @@ class SearchTitle:
     Search title widget
     """
 
-    def __init__(self, frame):
+    def __init__(self, frame: Any) -> None:
         """
         Search title widget constructor. Adds two labels that can be updated
         with calls to "self.title0" and "self.title1"
@@ -475,7 +478,7 @@ class Results1:
     This is the left side widget to hold one of the results table
     """
 
-    def __init__(self, frame):
+    def __init__(self, frame: Any) -> None:
         """
         The r1 widget constructor. Adds internal frame and table widget
         :param frame: tk.Frame, the parent frame
@@ -494,7 +497,7 @@ class Results1:
         self.frame.pack_propagate(False)
         self.frame.pack(expand=tk.YES, fill=tk.BOTH, padx=10, pady=10)
 
-    def result_entry(self, frame):
+    def result_entry(self, frame: Any) -> None:
         """
         Result table widget for r1
         :param frame: tk.Frame, the parent frame
@@ -502,10 +505,11 @@ class Results1:
 
         :returns: None
         """
-        labels = ['Entry Sheet:', 'Error text:', 'Arguments:', 'Comment']
-        values = ['', '', '', '']
+        labels: List[str] = ['Entry Sheet:', 'Error text:', 'Arguments:',
+                     'Comment']
+        values: List[str] = ['', '', '', '']
         self.table = None
-        self.table = Table(frame, scroll=False)
+        self.table: Any = Table(frame, scroll=False)
         self.table.populate_table(labels, values)
 
 
@@ -516,7 +520,7 @@ class Results2:
     This is the right side widget to hold one of the results table
     """
 
-    def __init__(self, frame):
+    def __init__(self, frame: Any) -> None:
         """
         The r2 widget constructor. Adds internal frame and table widget
         :param frame: tk.Frame, the parent frame
@@ -534,7 +538,7 @@ class Results2:
         self.frame.pack_propagate(False)
         self.frame.pack(expand=tk.YES, fill=tk.BOTH, padx=10, pady=10)
 
-    def result_entry(self, frame):
+    def result_entry(self, frame: Any) -> None:
         """
         Result table widget for r2
         :param frame: tk.Frame, the parent frame
@@ -542,10 +546,10 @@ class Results2:
 
         :returns: None
         """
-        labels = ['1 Filename:', '1 Line number:']
-        values = ['', '']
+        labels: List[str] = ['1 Filename:', '1 Line number:']
+        values: List[str] = ['', '']
 
-        self.table = Table(frame, scroll=True)
+        self.table: Any = Table(frame, scroll=True)
         self.table.populate_table(labels, values)
 
 
@@ -554,7 +558,7 @@ class Table:
     Results Table widget
     """
 
-    def __init__(self, frame, scroll):
+    def __init__(self, frame: Any, scroll: bool) -> None:
         """
         Results table widget constructor. Chooses whether to add scroll bar
         If we add a scroll bar we have to use a canvas that is movable.
@@ -571,8 +575,8 @@ class Table:
             self.canvas = tk.Canvas(frame, bg='black')
             self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
             self.frame = tk.Frame(self.canvas)
-            self.canvas_frame = self.canvas.create_window((4, 4),
-                                                          window=self.frame)
+            self.canvas_frame: int = self.canvas.create_window(
+                (4, 4), window=self.frame)
             scrollbar = tk.Scrollbar(self.canvas, command=self.canvas.yview)
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
             self.canvas.configure(yscrollcommand=scrollbar.set)
@@ -583,7 +587,7 @@ class Table:
 
         self.values = []
 
-    def on_frame_configure(self, event=None):
+    def on_frame_configure(self, event: Any = None) -> None:
         """
         Event: Define the scroll region when <Configure> is used.
         :param event: tk.Event
@@ -594,7 +598,7 @@ class Table:
         # when all widgets are in canvas
         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
 
-    def on_mouse_scroll(self, event=None):
+    def on_mouse_scroll(self, event: Any = None) -> None:
         """
         Event: Define the mouse scroll event and how to scroll
         :param event: tk.Event
@@ -609,19 +613,19 @@ class Table:
                 move = -1
             self.canvas.yview_scroll(move, 'units')
 
-    def frame_width(self, event=None):
+    def frame_width(self, event: Any = None) -> None:
         """
         Event: Deal with the canvas width
         :param event: tk.Event
         :return: None
         """
         if event is None:
-            canvas_width = self.canvas.winfo_width()
+            canvas_width: int = self.canvas.winfo_width()
         else:
             canvas_width = event.width
         self.canvas.itemconfig(self.canvas_frame, width=canvas_width)
 
-    def populate_table(self, labels: List[str], values: List[Any]):
+    def populate_table(self, labels: List[str], values: List[Any]) -> None:
         """
         Populate table with frames/labels/values from "labels" and "values"
         in a set of rows
@@ -662,7 +666,7 @@ class Table:
 
             fm.pack(fill=tk.X, side=tk.TOP, padx=2)
 
-    def unpopulated_table(self):
+    def unpopulated_table(self) -> None:
         """
         Unpopulate the table (with widget.destroy())
 
@@ -678,7 +682,8 @@ class App(tk.Tk):
     Main Application for error finder
     """
 
-    def __init__(self, datastore, *args, **kwargs):
+    def __init__(self, datastore: Any, *args: Any,
+                 **kwargs: Any) -> None:
         """
         Main application constructor
 
@@ -694,9 +699,9 @@ class App(tk.Tk):
         # run the super
         tk.Tk.__init__(self, *args, **kwargs)
         # save datastore
-        self.datastore = datastore
+        self.datastore: Any = datastore
         # get the family font
-        self.fontfamily = font.Font(font='TkTextFont').actual()['family']
+        self.fontfamily: str = font.Font(font='TkTextFont').actual()['family']
         # set minimum size
         self.minsize(512, 360)
         # set application title
@@ -704,9 +709,9 @@ class App(tk.Tk):
         # update the height and width(s) - need to update idle tasks to make
         #   sure we have correct height/width
         self.update_idletasks()
-        self.height = self.winfo_height()
-        self.width = self.winfo_width()
-        self.table_width = (self.width / 2) - 20
+        self.height: int = self.winfo_height()
+        self.width: int = self.winfo_width()
+        self.table_width: float = (self.width / 2) - 20
         # add full frames
         self.main_top = tk.Frame(self, borderwidth=1, relief=tk.GROOVE)
         self.main_middle = tk.Frame(self)
@@ -720,11 +725,11 @@ class App(tk.Tk):
         self.main_bottom1.grid(column=0, row=2, sticky=(tk.W, tk.S, tk.N, tk.E))
         self.main_bottom2.grid(column=1, row=2, sticky=(tk.W, tk.S, tk.N, tk.E))
         # get app elements
-        self.navbar = Navbar(self)
-        self.r1 = Results1(self.main_bottom1)
-        self.r2 = Results2(self.main_bottom2)
-        self.s1 = SearchTitle(self.main_middle)
-        self.search = Search(self.main_top, self)
+        self.navbar: Any = Navbar(self)
+        self.r1: Any = Results1(self.main_bottom1)
+        self.r2: Any = Results2(self.main_bottom2)
+        self.s1: Any = SearchTitle(self.main_middle)
+        self.search: Any = Search(self.main_top, self)
         # add menu reference
         self.config(menu=self.navbar.menubar)
         # set up the grid weights (to make it expand to full size)
@@ -742,7 +747,7 @@ class App(tk.Tk):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_explorer.py
 
@@ -806,7 +811,8 @@ class LoadData:
     database)
     """
 
-    def __init__(self, params, instrument=None, language=None):
+    def __init__(self, params: ParamDict, instrument: Any = None,
+                 language: Any = None) -> None:
         """
         LoadData constructor - loads both database and lines
 
@@ -831,7 +837,7 @@ class LoadData:
         if language is None:
             language = base.DEFAULT_LANG
         self.language = language
-        self.drs_params = params
+        self.drs_params: Any = params
         # storage of outputs
         self.dict, self.source = None, None
         self.args, self.kinds, self.comments = None, None, None
@@ -839,7 +845,7 @@ class LoadData:
         # update database
         self.update_database(self.instrument)
 
-    def update_database(self, instrument):
+    def update_database(self, instrument: str) -> None:
         """
         Update the database with the given instrument
 
@@ -854,7 +860,7 @@ class LoadData:
         # find line numbers for all entries
         self.lines, self.files = self.load_lines()
 
-    def load_databases(self):
+    def load_databases(self) -> None:
         """
         Loads the language databases into dictionaries
 
@@ -889,7 +895,7 @@ class LoadData:
         # return databases
         return values, source, args, kinds, comments
 
-    def load_lines(self):
+    def load_lines(self) -> None:
         """
         Loads the python script line number and file references into
         dictionaries
@@ -906,9 +912,9 @@ class LoadData:
         # log: Generating line list for instrument = "{0}"
         WLOG(self.drs_params, 'info', textentry('40-519-00006', args=margs))
         # get package (from drs_text)
-        package = __PACKAGE__
+        package: str = __PACKAGE__
         # get level above package
-        modpath = drs_misc.get_relative_folder(package, '.')
+        modpath: str = drs_misc.get_relative_folder(package, '.')
         # get python scripts in modpath
         pyfiles = find_all_py_files(modpath)
         # open and combine in to single list of lines
@@ -934,7 +940,7 @@ class LoadData:
         return lines, files
 
 
-def find_all_py_files(path):
+def find_all_py_files(path: str) -> Any:
     """
     Find all python files within a given path
 
@@ -960,7 +966,9 @@ def find_all_py_files(path):
     return np.sort(pyfiles)
 
 
-def open_all_py_files(files):
+def open_all_py_files(
+    files: List[str]
+    ) -> Tuple[List[str], List[Any], List[str]]:
     """
     Opens all python files (one by one) and adds info to lists
 
@@ -976,8 +984,8 @@ def open_all_py_files(files):
     :rtype: tuple[list[str], list[str], list[str]]
     """
     # get package and relative path to database (basaed on drs_text values)
-    package = __PACKAGE__
-    path = drs_misc.get_relative_folder(package, '..')
+    package: str = __PACKAGE__
+    path: str = drs_misc.get_relative_folder(package, '..')
     # set up storage
     all_entries = []
     all_line_numbers = []
@@ -986,13 +994,13 @@ def open_all_py_files(files):
     for filename in files:
         # read the lines
         with open(filename, 'r') as f:
-            flines = f.readlines()
+            flines: List[str] = f.readlines()
         # add entries
         all_entries += flines
         # add line numbers
         all_line_numbers += list(np.arange(len(flines)))
         # get relative filepath (for printing)
-        common = os.path.commonpath([filename, path]) + os.sep
+        common: str = os.path.commonpath([filename, path]) + os.sep
         outfile = filename.split(common)[-1]
         all_filenames += [outfile] * len(flines)
 
@@ -1000,7 +1008,9 @@ def open_all_py_files(files):
     return all_entries, all_line_numbers, all_filenames
 
 
-def search_for_database_entry(key, entries, line_nums, files):
+def search_for_database_entry(
+    key: str, entries: List[str], line_nums: List[int], files: List[str]
+    ) -> Tuple[bool, List[int], List[str]]:
     """
     Searches for a key in "entries" and notes down the "line number" and
     "filename"

@@ -937,6 +937,12 @@ def backfill_lbl_run_ids(
     def _ingest(
         source_rows: List[Dict[str, Any]], lbl_ok: bool
     ) -> None:
+        """Index donor metadata by identifier, filename, and observation.
+
+        :param source_rows: Rows to inspect for run and PI metadata.
+        :param lbl_ok: Whether LBL rows may be used as donor rows.
+        :return: None. Updates the enclosing donor-index mappings.
+        """
         for r in source_rows or []:
             if not isinstance(r, dict):
                 continue
@@ -1035,6 +1041,11 @@ def apply_preset_filter(
     """
 
     def _qc(r: Dict[str, Any]) -> bool:
+        """Check whether a table row passed the all-QC flag.
+
+        :param r: Table row mapping with an optional ``PASSED_ALL_QC`` value.
+        :return: True when the row's QC value represents a pass.
+        """
         v = r.get("PASSED_ALL_QC", 1)
         try:
             return int(v) == 1

@@ -10,7 +10,7 @@ Created on 2019-08-16 at 11:18
 @author: cook
 """
 import os
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -55,8 +55,21 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 # =============================================================================
 # Define functions
 # =============================================================================
-def extract_thermal_files(params, recipe, extname, thermalfile,
-                          logger, **kwargs):
+def extract_thermal_files(
+    params: ParamDict, recipe: DrsRecipe, extname: str,
+    thermalfile: DrsFitsFile, logger: Optional[RecipeLog],
+    **kwargs: Any,
+) -> Dict[str, DrsFitsFile]:
+    """Extract thermal data and repackage the results by fiber.
+
+    :param params: APERO parameters for the extraction.
+    :param recipe: Calling recipe that owns output definitions.
+    :param extname: Name of the extraction recipe to invoke.
+    :param thermalfile: Input thermal calibration file.
+    :param logger: Optional recipe log for the extraction sub-run.
+    :param kwargs: Optional parameter overrides forwarded to ``PCheck``.
+    :return: Thermal output files keyed by fiber name.
+    """
     func_name = __NAME__ + '.extract_thermal_files()'
     # get parameters from params/kwargs
     therm_always_extract = pcheck(params, 'CAL.THERM.ALWAYS_EXTRACT',
@@ -135,7 +148,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
 def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
                        extname: str, flatfile: DrsFitsFile,
                        logger: Optional[RecipeLog],
-                       **kwargs) -> dict:
+                       **kwargs: Any) -> Dict[str, Any]:
     """
     Extract or read back the e2ds flat spectrum for all fibers.
 
@@ -190,8 +203,21 @@ def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
     return {'e2dsff': flat_outputs, 'flat_response': flat_response_outputs}
 
 
-def extract_leak_files(params, recipe, extname, darkfpfile, logger,
-                       **kwargs):
+def extract_leak_files(
+    params: ParamDict, recipe: DrsRecipe, extname: str,
+    darkfpfile: DrsFitsFile, logger: Optional[RecipeLog],
+    **kwargs: Any,
+) -> Dict[str, DrsFitsFile]:
+    """Extract leakage-correction spectra for the input dark/FP file.
+
+    :param params: APERO parameters for the extraction.
+    :param recipe: Calling recipe that owns output definitions.
+    :param extname: Name of the extraction recipe to invoke.
+    :param darkfpfile: Input dark/Fabry-Perot file used for extraction.
+    :param logger: Optional recipe log for the extraction sub-run.
+    :param kwargs: Optional parameter overrides forwarded to ``PCheck``.
+    :return: Extracted leakage files keyed by fiber name.
+    """
     func_name = __NAME__ + '.extract_leak_files()'
     # get parameters from params/kwargs
     leak_always_extract = pcheck(params, 'CAL.LEAK.ALWAYS_EXTRACT',
@@ -217,8 +243,24 @@ def extract_leak_files(params, recipe, extname, darkfpfile, logger,
     return darkfp_outputs
 
 
-def extract_wave_files(params, recipe, extname, hcfile,
-                       fpfile, wavefile, logger, **kwargs):
+def extract_wave_files(
+    params: ParamDict, recipe: DrsRecipe, extname: str,
+    hcfile: DrsFitsFile, fpfile: Optional[DrsFitsFile],
+    wavefile: Optional[str], logger: Optional[RecipeLog],
+    **kwargs: Any,
+) -> Tuple[Dict[str, DrsFitsFile], Dict[str, Optional[DrsFitsFile]]]:
+    """Extract hollow-cathode and optional Fabry-Perot spectra by fiber.
+
+    :param params: APERO parameters for the extraction.
+    :param recipe: Calling recipe that owns output definitions.
+    :param extname: Name of the extraction recipe to invoke.
+    :param hcfile: Input hollow-cathode file.
+    :param fpfile: Optional input Fabry-Perot file.
+    :param wavefile: Optional wavelength file passed to extraction.
+    :param logger: Optional recipe log for the extraction sub-runs.
+    :param kwargs: Optional parameter overrides forwarded to ``PCheck``.
+    :return: Hollow-cathode and Fabry-Perot output mappings by fiber.
+    """
     func_name = __NAME__ + '.extract_wave_files()'
     # get parameters from params/kwargs
     wave_always_extract = pcheck(params, 'CAL.WAVE.GEN.ALWAYS_EXTRACT',
@@ -271,7 +313,24 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
                   wavefile: Optional[str] = None,
                   logger: Optional[RecipeLog] = None,
                   force_ref_wave: bool = False,
-                  extract_type: str = 'standard'):
+                  extract_type: str = 'standard') -> Dict[str, DrsFitsFile]:
+    """Extract or load one output file for every supported fiber.
+
+    :param params: APERO parameters controlling paths and extraction behavior.
+    :param recipe: Calling recipe whose output files and log are updated.
+    :param infile: Input file instance to extract.
+    :param outfile: Output file definition used for each fiber.
+    :param always_extract: Re-run extraction even if output files exist.
+    :param extrecipe: Extraction recipe instance, if already available.
+    :param kind: Extraction product category passed to the sub-recipe.
+    :param func_name: Optional calling function name for logs and errors.
+    :param leakcorr: Optional leakage-correction override.
+    :param wavefile: Optional wavelength solution file for extraction.
+    :param logger: Optional recipe log for progress messages.
+    :param force_ref_wave: Force the reference wave solution when enabled.
+    :param extract_type: Extraction mode passed to the sub-recipe.
+    :return: Extracted output file instances keyed by fiber name.
+    """
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter

@@ -73,7 +73,7 @@ clean = latex.clean
 # =============================================================================
 class Plotter:
     def __init__(self, params: ParamDict, recipe: Union[DrsRecipe, None] = None,
-                 mode: Union[int, None] = None):
+                 mode: Union[int, None] = None) -> None:
         """
         Constructor for the plotter class
 
@@ -139,7 +139,7 @@ class Plotter:
         # track whether the current plot call is forced
         self.force_plot_active = False
 
-    def set_location(self, iteration: int = 0):
+    def set_location(self, iteration: int = 0) -> None:
         """
         Set the plot directory path
 
@@ -359,7 +359,7 @@ class Plotter:
             # return False --> plot not allowed
             return False
 
-    def plotend(self, graph: Graph):
+    def plotend(self, graph: Graph) -> None:
         """
         Perform the final plotting tasks before properly closing all
         plots
@@ -564,7 +564,7 @@ class Plotter:
         # close all plots
         self.plt.close('all')
 
-    def close_plots(self, loop: bool = False):
+    def close_plots(self, loop: bool = False) -> None:
         """
         Asks the user whether they want to close plots (used in specific
         plot modes where many graphs may need to be closed)
@@ -590,7 +590,8 @@ class Plotter:
             # close any open plots properly
             self.closeall()
 
-    def interactive(self, switch: bool = False, show: bool = True):
+    def interactive(self, switch: bool = False,
+                    show: bool = True) -> None:
         """
         plt.ion()/plt.ioff() sometimes does not work in debug mode
         therefore we must catch it.
@@ -630,7 +631,7 @@ class Plotter:
     def summary_document(self, iteration: Union[int, None] = None,
                          qc_params: Union[List[Any], None] = None,
                          stats: Union[Table, None] = None,
-                         warnings: bool = True):
+                         warnings: bool = True) -> None:
         """
         Produce the summary document(s) using all parameters saved in the
         plot class so far, this may include:
@@ -798,7 +799,7 @@ class Plotter:
         return doc
 
     def summary_latex_qc_params(self, doc: latex.LatexDocument,
-                                qc_params: Union[List[Any], None] = None):
+                                qc_params: Union[List[Any], None] = None) -> None:
         """
         Compile the qc params  table for the latex document
 
@@ -849,7 +850,7 @@ class Plotter:
             doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
     def summary_latex_stats(self, doc: latex.LatexDocument,
-                            stats: Union[Table, None] = None):
+                            stats: Union[Table, None] = None) -> None:
         """
         Add the stats table to the latex document
 
@@ -991,7 +992,7 @@ class Plotter:
         return doc
 
     def summary_html_qc_params(self, doc: drs_html.HtmlDocument,
-                               qc_params: Union[List[Any], None] = None):
+                               qc_params: Union[List[Any], None] = None) -> None:
         """
         Compile the qc params  table for the html document
 
@@ -1042,7 +1043,7 @@ class Plotter:
             doc.insert_table(qc_table, caption=qc_caption, colormask=qc_mask)
 
     def summary_html_stats(self, doc: drs_html.HtmlDocument,
-                           stats: Union[Table, None] = None):
+                           stats: Union[Table, None] = None) -> None:
         """
         Add the stats table to the html document
 
@@ -1117,7 +1118,7 @@ class Plotter:
 
     # -------------------------------------------------------------------------
     # summary worker functions
-    def summary_stats(self):
+    def summary_stats(self) -> None:
         """
         Update attribute 'stats' from attribute 'stat_dict'
 
@@ -1158,7 +1159,7 @@ class Plotter:
             self.stats['FIBER'] = fibers
 
     def add_stat(self, key: str, value: Any, comment: Union[str, None] = None,
-                 fiber: Union[str, None] = None):
+                 fiber: Union[str, None] = None) -> None:
         """
         Add an individual stat to the stats dictionary (self.stat_dict)
 
@@ -1197,7 +1198,7 @@ class Plotter:
             # add to stat dictionary
             self.stat_dict[fkey] = [dkey, str(value), comment, fiber]
 
-    def add_qc_params(self, qc_params: list, fiber: str):
+    def add_qc_params(self, qc_params: list, fiber: str) -> None:
         """
         Add a list of qc parameters to the qc params dictionary (assuming
         the self.qc_params is a dictionary
@@ -1211,7 +1212,7 @@ class Plotter:
         # add qc_params for this fiber
         self.qc_params[fiber] = qc_params
 
-    def add_warnings(self, params: Union[ParamDict, None] = None):
+    def add_warnings(self, params: Union[ParamDict, None] = None) -> None:
         """
         Add any warnings logged up to this point from params['LOGGER_WARNING']
 
@@ -1229,7 +1230,7 @@ class Plotter:
             # set warnings
             self.warnings = storage['LOGGER_WARNING']
 
-    def set_interactive(self):
+    def set_interactive(self) -> None:
         """
         Set matplotlib in an iteractive session (excluding MacOSX backend)
 
@@ -1246,7 +1247,7 @@ class Plotter:
     # ------------------------------------------------------------------
     # internal methods
     # ------------------------------------------------------------------
-    def _get_names(self):
+    def _get_names(self) -> None:
         # load yaml
         self.yaml = base.load_yaml(definitions)
         # set up names of the plots that have been used
@@ -1308,7 +1309,7 @@ class Plotter:
             #     definitions. \n Function = {1}
             raise AperoCodedException(self.params, '00-100-00001', targs=eargs)
 
-    def _get_plot_switches(self):
+    def _get_plot_switches(self) -> None:
         """
         Find all currently defined plot switches in params and checks
         to see if we have any debug plots
@@ -1348,7 +1349,7 @@ class Plotter:
             elif kind == 'show':
                 self.has_debugs = True
 
-    def _get_matplotlib(self, force: bool = False):
+    def _get_matplotlib(self, force: bool = False) -> None:
         """
         Deal with the difference plotting modes and get the correct backend
         This sets self.plt, self.matplotlib and self.mpl_toolkits

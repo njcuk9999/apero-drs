@@ -1189,7 +1189,8 @@ class DrsInputFile:
                 description: Optional[str] = None,
                 inpath: Union[str, None] = None,
                 required: Union[bool, None] = None,
-                hdulist: Dict[str, AperoDataModel] = None):
+                hdulist: Dict[str, AperoDataModel] = None
+                ) -> 'DrsInputFile':
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -1375,7 +1376,8 @@ class DrsInputFile:
         if optional:
             self.optional_fileset.append(drsfile.name)
 
-    def copyother(self, drsfile, name: Union[str, None] = None,
+    def copyother(self, drsfile: Optional['DrsInputFile'],
+                  name: Union[str, None] = None,
                   filetype: Union[str, None] = None,
                   suffix: Union[str, None] = None,
                   remove_insuffix: Union[bool, None] = None,
@@ -1414,7 +1416,8 @@ class DrsInputFile:
                   description: Union[str, None] = None,
                   inpath: Union[str, None] = None,
                   required: Union[bool, None] = None,
-                  hdulist: Dict[str, AperoDataModel] = None):
+                  hdulist: Dict[str, AperoDataModel] = None
+                  ) -> 'DrsInputFile':
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -1510,7 +1513,7 @@ class DrsInputFile:
                             is_combined, combined_list, infiles, s1d, hkeys,
                             instrument, nosave, description, inpath, hdulist)
 
-    def completecopy(self, drsfile,
+    def completecopy(self, drsfile: Optional['DrsInputFile'],
                      name: Union[str, None] = None,
                      filetype: Union[str, None] = None,
                      suffix: Union[str, None] = None,
@@ -1550,7 +1553,8 @@ class DrsInputFile:
                      description: Union[str, None] = None,
                      inpath: Union[str, None] = None,
                      required: Union[bool, None] = None,
-                     hdulist: Dict[str, AperoDataModel] = None):
+                     hdulist: Dict[str, AperoDataModel] = None
+                     ) -> 'DrsInputFile':
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -1780,7 +1784,7 @@ class DrsInputFile:
     # read/write methods
     # -------------------------------------------------------------------------
     def read_file(self, ext: Union[int, None] = None, check: bool = False,
-                  copy: bool = False):
+                  copy: bool = False) -> None:
         """
         Does nothing - abstract at this point - cannot read a generic file
 
@@ -1800,7 +1804,7 @@ class DrsInputFile:
         _ = copy
 
     def write_file(self, kind: str,
-                   runstring: Union[str, None] = None):
+                   runstring: Union[str, None] = None) -> None:
         """
         Does nothing - abstract at this point - cannot write a generic file
 
@@ -1823,7 +1827,7 @@ class DrsInputFile:
                            prefix: Union[str, None] = None,
                            suffix: Union[str, None] = None,
                            check: bool = True,
-                           filename: Union[str, None] = None):
+                           filename: Union[str, None] = None) -> None:
         """
         Constructs the filename from the parameters defined at instance
         definition and using the infile (if required). If check is True, checks
@@ -1941,7 +1945,7 @@ class DrsInputFile:
                              prefix: Union[str, None] = None,
                              suffix: Union[str, None] = None,
                              inext: Union[str, None] = None,
-                             fiber: Union[str, None] = None):
+                             fiber: Union[str, None] = None) -> None:
         """
         Reconstructs the output filename based on the current filename (that is
         then striped back to the original input file name) and then added
@@ -2012,7 +2016,7 @@ class DrsInputFile:
         self.basename = outfilename
 
     def output_dictionary(self, block_kind: str,
-                          runstring: Union[str, None] = None):
+                          runstring: Union[str, None] = None) -> None:
         """
         Generate the output dictionary (for use while writing)
         Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
@@ -2112,7 +2116,7 @@ class DrsFitsFile(DrsInputFile):
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
                  required: Union[bool, None] = None,
-                 hdulist: Dict[str, AperoDataModel] = None):
+                 hdulist: Dict[str, AperoDataModel] = None) -> None:
         """
         Create a DRS Input File object
 
@@ -2394,7 +2398,8 @@ class DrsFitsFile(DrsInputFile):
                 description: Optional[str] = None,
                 inpath: Union[str, None] = None,
                 required: Union[bool, None] = None,
-                hdulist: Dict[str, AperoDataModel] = None):
+                hdulist: Dict[str, AperoDataModel] = None
+                ) -> 'DrsFitsFile':
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -2524,7 +2529,8 @@ class DrsFitsFile(DrsInputFile):
             # set required header keys
             self.required_header_keys[key] = value
 
-    def copyother(self, drsfile, name: Union[str, None] = None,
+    def copyother(self, drsfile: Optional['DrsFitsFile'],
+                  name: Union[str, None] = None,
                   filetype: Union[str, None] = None,
                   suffix: Union[str, None] = None,
                   remove_insuffix: Union[bool, None] = None,
@@ -2563,7 +2569,8 @@ class DrsFitsFile(DrsInputFile):
                   description: Union[str, None] = None,
                   inpath: Union[str, None] = None,
                   required: Union[bool, None] = None,
-                  hdulist: Dict[str, AperoDataModel] = None):
+                  hdulist: Dict[str, AperoDataModel] = None
+                  ) -> 'DrsFitsFile':
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -2662,7 +2669,7 @@ class DrsFitsFile(DrsInputFile):
                             instrument, nosave, description, inpath, required,
                             hdulist)
 
-    def completecopy(self, drsfile,
+    def completecopy(self, drsfile: Optional['DrsFitsFile'],
                      name: Union[str, None] = None,
                      filetype: Union[str, None] = None,
                      suffix: Union[str, None] = None,
@@ -2702,7 +2709,8 @@ class DrsFitsFile(DrsInputFile):
                      description: Union[str, None] = None,
                      inpath: Union[str, None] = None,
                      required: Union[bool, None] = None,
-                     hdulist: Dict[str, AperoDataModel] = None):
+                     hdulist: Dict[str, AperoDataModel] = None
+                     ) -> 'DrsFitsFile':
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -3448,7 +3456,7 @@ class DrsFitsFile(DrsInputFile):
     # fits file methods
     # -------------------------------------------------------------------------
     def read_file(self, ext: Union[int, None] = None, check: bool = False,
-                  copy: bool = False):
+                  copy: bool = False) -> Optional[bool]:
         """
         Read this fits file data and header
 
@@ -3572,7 +3580,7 @@ class DrsFitsFile(DrsInputFile):
             self.shape = None
 
     def read_header(self, ext: Union[int, None] = None, log: bool = True,
-                    copy: bool = False):
+                    copy: bool = False) -> None:
         """
         Read a header from DrsFitsFile.filename into DrsFitsFile.header
 
@@ -3855,7 +3863,7 @@ class DrsFitsFile(DrsInputFile):
         return ''.join(filter(lambda x: x in printable, str(value)))
 
     def write_file(self, block_kind: str,
-                   runstring: Union[str, None] = None):
+                   runstring: Union[str, None] = None) -> None:
         """
         Write a single Table/numpy array to disk useing DrsFitsFile.data,
         DrsFitsfile.header to write to DrsFitsFile.filename
@@ -3907,7 +3915,7 @@ class DrsFitsFile(DrsInputFile):
                     name_list: Union[List[str], None] = None,
                     datatype_list: Union[List[str], None] = None,
                     dtype_list: Union[List[Union[Type, None]], None] = None,
-                    runstring: Union[str, None] = None):
+                    runstring: Union[str, None] = None) -> None:
         """
         Write a set of Tables/numpy arrays to disk useing DrsFitsFile.data,
         DrsFitsfile.header to write to DrsFitsFile.filename
@@ -4047,7 +4055,7 @@ class DrsFitsFile(DrsInputFile):
         return None
 
     def output_dictionary(self, block_kind: str,
-                          runstring: Union[str, None] = None):
+                          runstring: Union[str, None] = None) -> None:
         """
         Generate the output dictionary (for use while writing)
         Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
@@ -4455,8 +4463,9 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file header methods
     # -------------------------------------------------------------------------
-    def get_hkey(self, key, has_default=False, default=None,
-                 required=True, dtype: Type = None,
+    def get_hkey(self, key: str, has_default: bool = False,
+                 default: Any = None,
+                 required: bool = True, dtype: Type = None,
                  listtype: Union[Type, None] = None) -> Any:
         """
         Looks for a key in DrsFitsFile.header, if has_default is
@@ -4812,7 +4821,7 @@ class DrsFitsFile(DrsInputFile):
                            root: Union[str, None] = None,
                            allkeys: bool = False,
                            group: Union[str, None] = None,
-                           exclude_groups: Union[str, List[str], None] = None):
+                         exclude_groups: Union[str, List[str], None] = None) -> None:
         """
         Copies keys from hdr dictionary to DrsFile.hdict,
         if forbid_keys is True some keys will not be copied
@@ -4999,7 +5008,7 @@ class DrsFitsFile(DrsInputFile):
     def add_hkey(self, key: Union[str, None] = None,
                  keyword: Union[list, None] = None, value: Any = None,
                  comment: Union[str, None] = None,
-                 fullpath: bool = False):
+                 fullpath: bool = False) -> None:
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
         and key and comment are defined these are used instead.
@@ -5067,7 +5076,7 @@ class DrsFitsFile(DrsInputFile):
     def add_hkeys(self, keys: Union[List[str], None] = None,
                   kwstores: Union[List[list], None] = None,
                   values: Union[List[Any], None] = None,
-                  comments: Union[List[str], None] = None):
+                  comments: Union[List[str], None] = None) -> None:
         """
         Add a set of new key to DrsFile.hdict from keywordstores. If kwstores
         is None and keys and comments are defined these are used instead.
@@ -5130,7 +5139,7 @@ class DrsFitsFile(DrsInputFile):
                     values: Union[List[Any], np.ndarray, None] = None,
                     keyword: Union[List[list], None] = None,
                     comment: Union[str, None] = None,
-                    dim1name: Union[str, None] = None):
+                    dim1name: Union[str, None] = None) -> None:
         """
         Add a new 1d list to key using the "kwstore"[0] or "key" as prefix
         in form:
@@ -5222,7 +5231,7 @@ class DrsFitsFile(DrsInputFile):
                     values: Union[np.ndarray, None] = None,
                     comment: Union[str, None] = None,
                     dim1name: Union[str, None] = None,
-                    dim2name: Union[str, None] = None):
+                    dim2name: Union[str, None] = None) -> None:
         """
         Add a new 2d list to key using the "kwstore"[0] or "key" as prefix
         in form:
@@ -5316,7 +5325,7 @@ class DrsFitsFile(DrsInputFile):
                 self.hdict[keyname] = (value, comm)
 
     def add_hkey_vals(self, prefix: str, keys: List[str], values: List[Any],
-                      name: str = None):
+                      name: str = None) -> None:
         """
         Add a set of new key to DrsFile.hdict from keywordstores. If kwstores
         is None and keys and comments are defined these are used instead.
@@ -5519,7 +5528,8 @@ class DrsFitsFile(DrsInputFile):
         return qc_params
 
     def get_keywordstore(self, kwstore: Tuple[str, Any, str],
-                         func_name=None) -> Tuple[str, Any, str]:
+                         func_name: Optional[str] = None
+                         ) -> Tuple[str, Any, str]:
         """
         Deal with extraction of key, value and comment from kwstore
         the kwstore should be a list in the following form:
@@ -5559,7 +5569,7 @@ class DrsFitsFile(DrsInputFile):
         return key, dvalue, comment
 
     def copy_hdict(self, drsfile: Optional['DrsFitsFile'] = None,
-                   hdict: Optional[dict] = None):
+                   hdict: Optional[dict] = None) -> None:
         """
         Copy a hdict entry from drsfile (a DrsFitsFile instance)
 
@@ -5580,7 +5590,7 @@ class DrsFitsFile(DrsInputFile):
             self.hdict = hdict.copy()
 
     def copy_header(self, drsfile: Optional['DrsFitsFile'] = None,
-                    header: Optional[Header] = None):
+                    header: Optional[Header] = None) -> None:
         """
         Copy a header entry from drsfile (a DrsFitsFile instance)
         
@@ -5626,7 +5636,7 @@ class DrsFitsFile(DrsInputFile):
         return self.get_hdulist_attribute('datatype')
 
     def hdulist_load(self, params: ParamDict, name: str,
-                     **kwargs) -> Union[Table, np.ndarray]:
+                     **kwargs: Any) -> Union[Table, np.ndarray]:
         """
         Load a Apero Data Model
 
@@ -5686,7 +5696,7 @@ class DrsFitsFile(DrsInputFile):
         return self.dbkey
 
     def update_param_table(self, name: str, param_kind: str,
-                           values: Union[str, list]):
+                           values: Union[str, list]) -> None:
         """
         Tries to add a string representation of "values" to any param table
         in the file
@@ -5769,7 +5779,7 @@ class DrsNpyFile(DrsInputFile):
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
                  required: Union[bool, None] = None,
-                 hdulist: Dict[str, AperoDataModel] = None):
+                 hdulist: Dict[str, AperoDataModel] = None) -> None:
         """
         Create a DRS Npy File Input object
 
@@ -5892,7 +5902,7 @@ class DrsNpyFile(DrsInputFile):
         return self.string_output()
 
     def read_file(self, ext: Union[int, None] = None, check: bool = False,
-                  copy: bool = False):
+                  copy: bool = False) -> None:
         """
         Read a npy file (using advance np.load via drs_path.numpy_load)
 
@@ -5945,7 +5955,7 @@ class DrsNpyFile(DrsInputFile):
                                               targs=[func_name])
 
     def check_read(self, header_only: bool = False, data_only: bool = False,
-                   load: bool = True):
+                   load: bool = True) -> Union[None, int]:
         """
         Check whether data have been read
         if load is True and they haven't been read them read them
@@ -5987,7 +5997,7 @@ class DrsNpyFile(DrsInputFile):
         return 1
 
     def get_data(self, copy: bool = False,
-                 extensions=None) -> Union[np.ndarray, Table, None]:
+                 extensions: Any = None) -> Union[np.ndarray, Table, None]:
         """
         return the data array
 
@@ -6913,7 +6923,7 @@ class DrsOutFile(DrsInputFile):
                  filename: str = None,
                  params: ParamDict = None,
                  header: Union[drs_fits.Header, None] = None,
-                 basename: str = None):
+                 basename: str = None) -> None:
         """
         Drs class for post-processed output files
 
@@ -8197,7 +8207,7 @@ class DrsOutFile(DrsInputFile):
                     self.clear_files.append(filename)
 
     def write_file(self, block_kind: str,
-                   runstring: Union[str, None] = None):
+                   runstring: Union[str, None] = None) -> None:
         """Write the configured output extensions to a data-block path.
 
         :param block_kind: Output data block to write into.
@@ -8243,7 +8253,7 @@ class DrsOutFile(DrsInputFile):
 
     def output_dictionary(self, block_kind: str,
                           runstring: Union[str, None] = None,
-                          recipe: Union[Any, None] = None):
+                          recipe: Union[Any, None] = None) -> None:
         """
         Generate the output dictionary (for use while writing)
         Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
@@ -8356,7 +8366,7 @@ class DrsOutFile(DrsInputFile):
         return True, None
 
     def read_header(self, ext: Union[int, None] = None, log: bool = True,
-                    copy: bool = False):
+                    copy: bool = False) -> None:
         """
         Required for some calls (but not used)
         :return:
@@ -8367,7 +8377,7 @@ class DrsOutFile(DrsInputFile):
                   copy: bool = False,
                   return_data: bool = False,
                   extname: Union[str, None] = None
-                  ):
+                  ) -> None:
         """
         Required for some calls (but not used)
         :return:
@@ -8416,7 +8426,7 @@ class DrsLBLFile(DrsFitsFile):
                  nosave: Optional[bool] = False,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
-                 required: Union[bool, None] = None):
+                 required: Union[bool, None] = None) -> None:
         """Initialize an LBL output file from its file and instrument settings.
 
         :param name: Name identifying the output file definition.
@@ -8521,7 +8531,7 @@ class DrsLBLFile(DrsFitsFile):
         return True, None
 
     def read_header(self, ext: Union[int, None] = None, log: bool = True,
-                    copy: bool = False):
+                    copy: bool = False) -> None:
         """
         Read a header for an LBL file (may not be possible)
 
@@ -9218,7 +9228,8 @@ def combine_metric_1(params: ParamDict, row: int, image1: np.ndarray,
 
 
 def combine_headers(params: ParamDict, headers: List[Header],
-                    names: List[str], math: str):
+                    names: List[str], math: str
+                    ) -> Tuple[Header, Dict[str, Any], Table]:
     """
     Takes a list of headers and combines them in the proper fashion (for the
     output combined file)
@@ -9984,7 +9995,7 @@ def _check_keyworddict(key: str,
     return False, None
 
 
-def _copydrsfile(drsfileclass,
+def _copydrsfile(drsfileclass: Type[Any],
                  instance1: DrsInputFile,
                  instance2: Union[DrsInputFile, None],
                  name: Union[str, None] = None,
@@ -10026,7 +10037,7 @@ def _copydrsfile(drsfileclass,
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
                  required: Union[bool, None] = None,
-                 hdulist: Dict[str, AperoDataModel] = None):
+                 hdulist: Dict[str, AperoDataModel] = None) -> Any:
     """
     Global copier of file instance
 

@@ -140,16 +140,17 @@ def find_night_skyfiles(params: ParamDict, fiber: Union[str, None],
 
 
 def skymodel_matchfiles(sky_files_sci: List[str], sky_files_cal: List[str],
-                        sci_fiber: str, cal_fiber: str):
+                        sci_fiber: str, cal_fiber: str
+                        ) -> Tuple[List[str], List[str]]:
     """
     Only keep files that match in both fibers
 
-    :param sky_files_sci:
-    :param sky_files_cal:
-    :param sci_fiber:
-    :param cal_fiber:
+    :param sky_files_sci: Candidate night-sky files for the science fiber.
+    :param sky_files_cal: Candidate night-sky files for the calibration fiber.
+    :param sci_fiber: Science fiber identifier to remove from filenames.
+    :param cal_fiber: Calibration fiber identifier to remove from filenames.
 
-    :return:
+    :return: Matching science-fiber and calibration-fiber filenames.
     """
     # lists for keeping
     keep_sci_files = []
@@ -177,7 +178,18 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
                    reffile: DrsFitsFile, snr_order: Optional[int] = None,
                    min_exptime: Optional[float] = None,
                    max_files: Optional[int] = None,
-                   ) -> Tuple[Union[Table, None], Union[DrsFitsFile, None], int]:
+                   ) -> Tuple[Union[Table, None],
+                              Union[DrsFitsFile, None], int]:
+    """Build a table of candidate sky frames and the selected reference.
+
+    :param params: APERO parameter dictionary.
+    :param sky_files: Candidate sky filenames, or None when unavailable.
+    :param reffile: Reference FITS file used to read instrument metadata.
+    :param snr_order: Optional order used for candidate SNR selection.
+    :param min_exptime: Optional minimum exposure time for candidates.
+    :param max_files: Optional maximum number of candidates to retain.
+    :return: Candidate table, reference file, and number of accepted files.
+    """
     # set function name
     func_name = display_func('skymodel_table', __NAME__)
     # -------------------------------------------------------------------------
@@ -186,12 +198,15 @@ def skymodel_table(params: ParamDict, sky_files: Union[List[str], None],
         return None, None, 0
     # -------------------------------------------------------------------------
     # get parameters from parameter dictionary
-    snr_order = pcheck(params, 'OBJ.SKY_CORR.MODEL_EXT_SNR_ORDER', func=func_name,
-                       override=snr_order)
-    min_exptime = pcheck(params, 'OBJ.SKY_CORR.MODEL_MIN_EXPTIME', func=func_name,
-                         override=min_exptime)
-    max_files = pcheck(params, 'OBJ.SKY_CORR.MODEL_MAX_OPEN_FILES', func=func_name,
-                       override=max_files)
+    snr_order = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_EXT_SNR_ORDER', func=func_name,
+        override=snr_order)
+    min_exptime = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_MIN_EXPTIME', func=func_name,
+        override=min_exptime)
+    max_files = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_MAX_OPEN_FILES', func=func_name,
+        override=max_files)
     # get fiber from ref file
     fiber = reffile.fiber
     # -------------------------------------------------------------------------
@@ -388,17 +403,31 @@ def identify_sky_line_regions(params: ParamDict, sky_props: ParamDict,
                               dilate_size: Optional[int] = None,
                               wavestart: Optional[float] = None,
                               waveend: Optional[float] = None,
-                              binvelo: Optional[float] = None,
+                              binvelo: Optional[float] = None
                               ) -> np.ndarray:
+    """Identify wavelength regions containing sky emission lines.
+
+    :param params: APERO parameter dictionary.
+    :param sky_props: Sky properties containing the median spectrum and grid.
+    :param line_sigma: Optional threshold for detecting sky-line features.
+    :param erode_size: Optional mask erosion size.
+    :param dilate_size: Optional mask dilation size.
+    :param wavestart: Optional lower wavelength bound.
+    :param waveend: Optional upper wavelength bound.
+    :param binvelo: Optional velocity-grid bin size.
+    :return: Boolean or labeled array identifying sky-line regions.
+    """
     # set function name
     func_name = display_func('identify_sky_line_regions', __NAME__)
     # get parameters from parameter dictionary
     line_sigma = pcheck(params, 'OBJ.SKY_CORR.MODEL_LINE_SIG', func=func_name,
                         override=line_sigma)
-    erode_size = pcheck(params, 'OBJ.SKY_CORR.MODEL_LINE_ERODE_SIZE', func=func_name,
-                        override=erode_size)
-    dilate_size = pcheck(params, 'OBJ.SKY_CORR.MODEL_LINE_DILATE_SIZE', func=func_name,
-                         override=dilate_size)
+    erode_size = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_LINE_ERODE_SIZE', func=func_name,
+        override=erode_size)
+    dilate_size = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_LINE_DILATE_SIZE', func=func_name,
+        override=dilate_size)
     wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name,
                        override=wavestart)
     waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', 'waveend', func=func_name,
@@ -419,14 +448,26 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
                   sky_props_cal: ParamDict, regions: np.ndarray,
                   witerations: Optional[int] = None,
                   erode_size: Optional[int] = None) -> ParamDict:
+    """Combine science and calibration sky cubes into a sky model.
+
+    :param params: APERO parameter dictionary.
+    :param sky_props_sci: Science-fiber sky cube and wavelength properties.
+    :param sky_props_cal: Calibration-fiber sky cube and wavelength properties.
+    :param regions: Array labeling wavelength regions for sky-line modeling.
+    :param witerations: Optional iteration count for model weights.
+    :param erode_size: Optional erosion size for model-weight masks.
+    :return: Sky properties updated with modeled spectra and diagnostics.
+    """
     # set function name
     func_name = display_func('calc_skymodel', __NAME__)
     # -------------------------------------------------------------------------
     # get values from parameters
-    weight_iterations = pcheck(params, 'OBJ.SKY_CORR.MODEL_WEIGHT_ITERS', func=func_name,
-                               override=witerations)
-    erode_size = pcheck(params, 'OBJ.SKY_CORR.MODEL_WEIGHT_ERODE_SIZE', func=func_name,
-                        override=erode_size)
+    weight_iterations = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_WEIGHT_ITERS', func=func_name,
+        override=witerations)
+    erode_size = pcheck(
+        params, 'OBJ.SKY_CORR.MODEL_WEIGHT_ERODE_SIZE', func=func_name,
+        override=erode_size)
     # get cubes
     sci_cube = sky_props_sci['CUBE']
     cal_cube = sky_props_cal['CUBE']
@@ -574,6 +615,12 @@ def calc_skymodel(params: ParamDict, sky_props_sci: ParamDict,
 
 def mk_skymodel_qc(params: ParamDict, sky_props: ParamDict
                    ) -> Tuple[List[list], int]:
+    """Return quality-control metadata for the generated sky model.
+
+    :param params: APERO parameter dictionary.
+    :param sky_props: Generated sky-model properties.
+    :return: QC names, values, logic, flags, and an overall pass value.
+    """
     # TODO: Fill out QC
     _ = sky_props
     # set passed variable and fail message list
@@ -604,6 +651,14 @@ def mk_skymodel_qc(params: ParamDict, sky_props: ParamDict
 
 def write_skymodel(recipe: DrsRecipe, params: ParamDict,
                    infile: DrsFitsFile, sky_props: ParamDict) -> DrsFitsFile:
+    """Write the generated sky model and register it with the recipe.
+
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param params: APERO parameter dictionary.
+    :param infile: Input spectrum used to construct the output filename.
+    :param sky_props: Sky-model data and diagnostic properties.
+    :return: The written sky-model FITS file instance.
+    """
     # ------------------------------------------------------------------
     # write the sky model file (SKYMODEL)
     # ------------------------------------------------------------------
@@ -662,7 +717,16 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
     return skymodel_file
 
 
-def mk_skymodel_summary(recipe, params, sky_props: ParamDict, qc_params):
+def mk_skymodel_summary(recipe: DrsRecipe, params: ParamDict,
+                        sky_props: ParamDict, qc_params: list) -> None:
+    """Add sky-model metadata and QC results to the recipe summary.
+
+    :param recipe: Recipe whose summary receives the metadata.
+    :param params: APERO parameter dictionary.
+    :param sky_props: Generated sky-model properties.
+    :param qc_params: Quality-control names, values, logic, and flags.
+    :return: None.
+    """
     # TODO: Write skymodel summary
     _ = sky_props
     # add stats
@@ -1052,7 +1116,8 @@ def get_sky_model(params: ParamDict, recipe: DrsRecipe,
 
 def skyclean_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
                    rawfiles: List[str],
-                   combine: bool, wprops: ParamDict, props: ParamDict):
+                   combine: bool, wprops: ParamDict,
+                   props: ParamDict) -> None:
     """
     Write the sky cleaning file to disk
 

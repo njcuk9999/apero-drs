@@ -70,6 +70,10 @@ VAULT_LEVEL_PERM: Dict[str, str] = {
 # Raw I/O
 # ---------------------------------------------------------------------------
 def _load_raw() -> dict:
+    """Load the raw vault mapping, falling back to an empty entry list.
+
+    :return: YAML mapping with an ``entries`` list.
+    """
     path = vault_file()
     if not path.exists():
         return {"entries": []}
@@ -84,6 +88,11 @@ def _load_raw() -> dict:
 
 
 def _save_raw(data: dict) -> None:
+    """Write the raw vault mapping to its YAML file.
+
+    :param data: Vault mapping to persist.
+    :return: None. Creates the parent directory when needed.
+    """
     path = vault_file()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fio:

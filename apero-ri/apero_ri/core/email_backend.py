@@ -155,6 +155,10 @@ PROVIDER_DEFAULTS = {
 
 
 def _get_email_config_path() -> Path:
+    """Return the email configuration path, migrating the legacy file.
+
+    :return: Path to the managed email YAML configuration file.
+    """
     ari_dir = os.environ.get("ARI_DIR", os.path.expanduser("~/.ari"))
     admin_dir = Path(ari_dir) / "admin"
     email_dir = admin_dir / "email"
@@ -170,6 +174,10 @@ def _get_email_config_path() -> Path:
 
 
 def _get_email_password_path() -> Path:
+    """Return the managed path for the encrypted SMTP password.
+
+    :return: Path to the secret-store password file.
+    """
     return ss.resolve_secret_file("smtp_password.enc")
 
 

@@ -494,6 +494,11 @@ class LegacyCheckGSheetTask(apero_async.AperoAsyncTask):
     """One-way sync from legacy NIRPS check Google Sheets to ARI YAMLs."""
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the legacy Google Sheets synchronization task.
+
+        :param status: Initial asynchronous task status.
+        :return: None. Sets task metadata for the task registry.
+        """
         name = 'Legacy Check GSheet Sync'
         description = (
             'One-way sync from the NIRPS check Google Sheets '

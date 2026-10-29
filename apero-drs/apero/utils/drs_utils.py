@@ -75,7 +75,7 @@ class RecipeLog:
 
     def __init__(self, name: str, sname: str, params: ParamDict, level: int = 0,
                  database: Union[LogDatabase, None] = None,
-                 flags: Optional[BinaryDict] = None):
+                 flags: Optional[BinaryDict] = None) -> None:
         """
         Constructor for the recipe log
 
@@ -202,7 +202,7 @@ class RecipeLog:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -236,7 +236,7 @@ class RecipeLog:
         # return representation of RecipeLog
         return 'RecipeLog[{0}][{1}][N={2}]'.format(*pargs)
 
-    def copy(self, rlog: 'RecipeLog'):
+    def copy(self, rlog: 'RecipeLog') -> None:
         """
         Copy another RecipeLog over this one
 
@@ -288,7 +288,7 @@ class RecipeLog:
         self.cpu_usage_end = float(rlog.cpu_usage_end)
         self.cpu_num = int(rlog.cpu_num)
 
-    def set_log_file(self, logfile: Union[str, Path]):
+    def set_log_file(self, logfile: Union[str, Path]) -> None:
         """
         Set the log file
 
@@ -307,7 +307,7 @@ class RecipeLog:
 
     def set_plot_dir(self, params: ParamDict,
                      location: Union[str, Path, None] = None,
-                     write: bool = True):
+                     write: bool = True) -> None:
         """
         Set the plot directory for RecipeLog and all children
 
@@ -385,7 +385,8 @@ class RecipeLog:
 
     def add_qc(self,
                qc_params: Tuple[List[str], List[Any], List[str], List[int]],
-               passed: Union[int, bool, str], write: bool = True):
+               passed: Union[int, bool, str],
+               write: bool = True) -> None:
         """
         Add the quality control criteria (stored in qc_params) to the recipe
         log
@@ -432,7 +433,7 @@ class RecipeLog:
         if write:
             self.write_logfile()
 
-    def no_qc(self, write: bool = True):
+    def no_qc(self, write: bool = True) -> None:
         """
         Writes that quality control passed (there were no quality control)
 
@@ -453,7 +454,7 @@ class RecipeLog:
             self.write_logfile()
 
     def add_error(self, errortype: Union[Exception, str],
-                  errormsg: str, write: bool = True):
+                  errormsg: str, write: bool = True) -> None:
         """
         Add an error (exception) to the database in the errors column
         errors are separate by two ||
@@ -493,7 +494,7 @@ class RecipeLog:
         else:
             return [self]
 
-    def end(self, write: bool = True, success: bool = True):
+    def end(self, write: bool = True, success: bool = True) -> None:
         """
         Add the row that says recipe finished correctly to database
 
@@ -523,7 +524,7 @@ class RecipeLog:
         if write:
             self.write_logfile()
 
-    def write_logfile(self):
+    def write_logfile(self) -> None:
         """
         Write to the log database
 
@@ -658,7 +659,7 @@ class RecipeLog:
         # return row
         return row
 
-    def update_flags(self, **kwargs: bool):
+    def update_flags(self, **kwargs: bool) -> None:
         """
         Update the log flags
 
@@ -673,7 +674,7 @@ class RecipeLog:
         # whether to write (update) recipe log file
         self.write_logfile()
 
-    def convert_flags(self):
+    def convert_flags(self) -> None:
         """
         Convert flags from a list to a string (keys separated by |)
         and decode the flag number from the individual flags
@@ -1017,7 +1018,7 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
     return mask
 
 
-def display_flag(params: ParamDict):
+def display_flag(params: ParamDict) -> None:
     """
     Print out the binary flags used throughout the logging process
 

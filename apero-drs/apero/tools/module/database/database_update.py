@@ -70,14 +70,15 @@ GAIA_COL = 'GAIADR2ID'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
+def update_database(params: ParamDict, recipe: DrsRecipe,
+                    dbkind: str) -> None:
     """
     Update the calib/tellu/log and index databases from files on disk
 
     :param params: Paramdict, the parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe instance
     :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
-    :return:
+    :return: None. Updates the selected databases from files on disk.
     """
     # load pconst
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -146,19 +147,19 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
         manage_databases.update_reject_database(params)
 
 
-def reset_databases(params: ParamDict, dbkind):
+def reset_databases(params: ParamDict, dbkind: str) -> None:
     """
     Reset all database to installation point
 
     :param params: ParamDict, parameter dictionary of constants
-    :param dbkind: str, the type of database (i.e. all, calib, tellu, log etc)
-    :return:
+    :param dbkind: Database selector such as all, calib, tellu, or log.
+    :return: None. Resets selected databases to their installation state.
     """
     manage_databases.install_databases(params, dbkind=dbkind, verbose=True)
 
 
 def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
-                       pconst: Instrument, db_type: str):
+                       pconst: Instrument, db_type: str) -> None:
     """
     Update either the calibration or telluric database with files on disk
 
@@ -257,7 +258,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
                                   name, func_name, db_files)
 
 
-def index_update(params: ParamDict, recipe: DrsRecipe):
+def index_update(params: ParamDict, recipe: DrsRecipe) -> None:
     """
     Update the file index database using multiprocessing if enabled
 
@@ -293,7 +294,8 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
         _index_update_blocks(params, recipe.shortname, block_kinds)
 
 
-def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
+def log_update(params: ParamDict, recipe: DrsRecipe,
+               pconst: Instrument) -> None:
     """
     Update log database using files on disk in block directories flagged as
     "logging" block kinds
@@ -1108,7 +1110,8 @@ def _log_update_files_batch_process(params: ParamDict,
 
 
 def _get_log_update_entry(params: ParamDict, pconst: select.Instrument,
-                          filename: str):
+                          filename: str
+                          ) -> Optional[Tuple[List[Any], str, str]]:
     """
     Get the log database payload for a file.
 
@@ -1295,6 +1298,12 @@ def _is_header_log_entry(pconst: select.Instrument, entry: List[Any]) -> bool:
     logcols = list(ldb_cols.names)
 
     def _value(key: str, default: Any = None) -> Any:
+        """Read a value from the log entry by database column name.
+
+        :param key: Column name to look up.
+        :param default: Value returned when the column is not defined.
+        :return: Entry value or ``default``.
+        """
         if key not in logcols:
             return default
         return entry[logcols.index(key)]
@@ -1327,6 +1336,11 @@ def _select_newer_log_entry(pconst: select.Instrument,
     idx = logcols.index('UNIXTIME')
 
     def _to_float(value: Any) -> float:
+        """Convert a log value to float, using -inf when invalid.
+
+        :param value: Value stored in the UNIXTIME column.
+        :return: Converted float or negative infinity on conversion failure.
+        """
         try:
             return float(value)
         except (TypeError, ValueError):
@@ -1384,6 +1398,12 @@ def _merge_log_entries(existing: List[Any],
     qc_idx = logcols.index('PASSED_ALL_QC')
 
     def _to_int(val: Any, default: int = 0) -> int:
+        """Convert a log value to int, using a default when invalid.
+
+        :param val: Value stored in the QC result column.
+        :param default: Integer returned when conversion fails.
+        :return: Converted integer or ``default``.
+        """
         try:
             return int(val)
         except (ValueError, TypeError):
@@ -1483,6 +1503,13 @@ def _log_update(ptable: Table) -> Tuple[List[Any], str, str]:
 
 def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
                       db_type: str) -> bool:
+    """Remove database entries selected by the current recipe inputs.
+
+    :param params: APERO parameters containing removal filters and options.
+    :param recipe: Recipe providing its shortname and output-file definitions.
+    :param db_type: Database kind to remove entries from.
+    :return: True when removal was requested, otherwise False.
+    """
 
     # first check if we have the --since and --keys arguments in INPUTS
     # if we do then we need to remove entries from the database

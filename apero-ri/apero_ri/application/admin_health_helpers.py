@@ -2,7 +2,7 @@
 
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from apero_ri.application import run_ids_api_helpers
 from apero_ri.core import backup_backend as bb
@@ -28,9 +28,21 @@ log = get_logger(__name__)
 
 
 def get_admin_health(
-    app, user_info, perms, force: bool = False, allow_async_refresh: bool = True
-):
-    """Return cached admin-health with optional async/sync refresh."""
+    app: Any,
+    user_info: Optional[Dict[str, Any]],
+    perms: Set[str],
+    force: bool = False,
+    allow_async_refresh: bool = True,
+) -> Tuple[Dict[str, Any], Optional[datetime], bool]:
+    """Return cached admin health, refreshing synchronously or in background.
+
+    :param app: Application facade containing health-cache state and helpers.
+    :param user_info: Current user record, if available.
+    :param perms: Permission names used to scope the health cache.
+    :param force: Refresh the cache even when its current entry is fresh.
+    :param allow_async_refresh: Spawn a refresh when cached data is stale.
+    :return: Health payload, last update time, and refresh-in-progress flag.
+    """
     cache_key = app._admin_health_cache_key(perms)
     now = datetime.now(timezone.utc)
 
@@ -107,9 +119,19 @@ def get_admin_health(
 
 
 def refresh_admin_health_after_change(
-    app, user_info=None, perms=None, session_obj=None
+    app: Any,
+    user_info: Optional[Dict[str, Any]] = None,
+    perms: Optional[Set[str]] = None,
+    session_obj: Any = None,
 ) -> None:
-    """Refresh admin-health cache after successful admin mutations."""
+    """Refresh admin-health cache after successful admin mutations.
+
+    :param app: Application facade containing health-cache helpers.
+    :param user_info: Current user record, resolved from the session if absent.
+    :param perms: User permissions, resolved when not supplied.
+    :param session_obj: Optional session used to resolve the current user.
+    :return: None. Starts a refresh only for users allowed to view admin data.
+    """
     try:
         if user_info is None:
             user_info = get_effective_user(session_obj)
@@ -136,8 +158,16 @@ def refresh_admin_health_after_change(
         return
 
 
-def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
-    """Build uncached health payload for admin cards."""
+def build_admin_card_health_uncached(
+    app: Any, user_info: Dict[str, Any], perms: Set[str]
+) -> Dict[str, Any]:
+    """Build the uncached health payload shown on admin cards.
+
+    :param app: Application facade for profile and local-data access.
+    :param user_info: User record whose accessible resources are checked.
+    :param perms: Permission names that determine which checks to include.
+    :return: Mapping from admin page IDs to health status details.
+    """
     health: Dict[str, Any] = {}
 
     _t0 = time.monotonic()
@@ -577,8 +607,15 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
     return health
 
 
-def build_admin_health_rows(app, health: dict) -> list:
-    """Build ordered health rows for the Admin Portal health panel."""
+def build_admin_health_rows(
+    app: Any, health: Dict[str, Any]
+) -> List[Dict[str, Any]]:
+    """Build ordered health rows for the Admin Portal health panel.
+
+    :param app: Application facade used to build page labels and links.
+    :param health: Health status mapping keyed by admin page ID.
+    :return: Ordered rows containing each health check's display metadata.
+    """
     checks = {
         'home.admin_portal.run_ids': dict(
             ok='All RUN IDs have a PI name.',

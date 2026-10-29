@@ -103,6 +103,11 @@ def get_mount_log(mount_name: str) -> Dict[str, Any]:
 
 
 def _normalize_connection_mode(value: str) -> str:
+    """Normalize a connection mode to a supported value.
+
+    :param value: Requested connection mode.
+    :return: ``direct`` or ``ssh_config_host``, defaulting to ``direct``.
+    """
     mode = str(value or "direct").strip().lower()
     return mode if mode in {"direct", "ssh_config_host"} else "direct"
 
@@ -815,7 +820,9 @@ def lazy_unmount_sshfs(mount_name: str) -> Dict[str, Any]:
 # -------------------------------------------------------------------------
 # Define status and health functions
 # -------------------------------------------------------------------------
-def _check_mount_status_worker(mount: Dict[str, Any], out_conn) -> None:
+def _check_mount_status_worker(
+    mount: Dict[str, Any], out_conn: Any
+) -> None:
     """Worker for mount status checks, isolated in a child process."""
     try:
         local_mount = str(mount.get("local_mount", "") or "").strip()

@@ -87,8 +87,8 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
     :param user_outdir: str, the output directory
     :param do_copy: bool, if True copies files (else just prints)
     :param do_symlink: bool, if True creates symlink instead of copying files
-    :param tarfilename: str, if not None make a tar file instead of copying files/
-                    creating symlinks
+    :param tarfilename: str, if not None make a tar file instead of copying
+                        files/creating symlinks
 
     :param since: str, if not None only copy files since this date
     :param latest: str, if not None only copy up to this date
@@ -250,7 +250,8 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
                                           condition=condition)
         # get absolute paths
         inpaths = drs_file.DrsPath.get_abs_paths(params,
-                                                 block_kinds=itable['BLOCK_KIND'],
+                                                 block_kinds=
+                                                 itable['BLOCK_KIND'],
                                                  obs_dirs=itable['OBS_DIR'],
                                                  basenames=itable['FILENAME'])
         inpaths = np.array(inpaths)
@@ -296,13 +297,29 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
 
 
 
-def manage_outputs(params: ParamDict, db_entries,
+def manage_outputs(params: ParamDict, db_entries: Any,
                    nosubdir: bool, user_outdir: str, tarpath: str = None,
                    do_copy: bool = True, do_symlink: bool = False,
                    sizelimit: int = None, perm_yaml: str = None,
-                   group_yaml: str = None, group_server: str = None):
+                   group_yaml: str = None,
+                   group_server: str = None
+                   ) -> Tuple[Dict[str, List[str]],
+                              Dict[str, List[str]]]:
     """
     Manage the outputs from apero get
+
+    :param params: APERO parameter dictionary.
+    :param db_entries: Object and run-ID file paths from the index database.
+    :param nosubdir: Whether to place files directly in the output directory.
+    :param user_outdir: Destination directory for copied files.
+    :param tarpath: Optional destination archive path.
+    :param do_copy: Whether to create output files.
+    :param do_symlink: Whether copied output entries should be symlinks.
+    :param sizelimit: Optional maximum total input size in GB.
+    :param perm_yaml: Optional permission configuration file.
+    :param group_yaml: Optional group configuration file.
+    :param group_server: Optional server name used to select groups.
+    :return: Input and output paths, grouped by object name.
     """
     # storage of inpaths/outpaths
     if perm_yaml is not None and group_yaml is not None:
@@ -402,6 +419,20 @@ def calib_filter(params: ParamDict, recipe: DrsRecipe,
                  since: Optional[Time] = None, latest: Optional[Time] = None,
                  sizelimit: int = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    """Filter calibration files and copy matching outputs.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing database and run configuration.
+    :param filters: Database columns mapped to accepted values.
+    :param user_outdir: Destination directory for matching files.
+    :param do_copy: Whether to create output files.
+    :param do_symlink: Whether to create symlinks instead of copies.
+    :param tarfilename: Optional archive filename for matching files.
+    :param since: Optional earliest calibration timestamp.
+    :param latest: Optional latest calibration timestamp.
+    :param sizelimit: Optional maximum total input size in GB.
+    :return: Input and output paths grouped by object name.
+    """
     # -------------------------------------------------------------------------
     # get pconst
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -515,6 +546,22 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
                  since: Optional[Time] = None, latest: Optional[Time] = None,
                  nosubdir: bool = False, sizelimit: int = None
                  ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    """Filter telluric files and copy matching outputs.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing database and run configuration.
+    :param kw_objnames: Object names to include.
+    :param filters: Database columns mapped to accepted values.
+    :param user_outdir: Destination directory for matching files.
+    :param do_copy: Whether to create output files.
+    :param do_symlink: Whether to create symlinks instead of copies.
+    :param tarfilename: Optional archive filename for matching files.
+    :param since: Optional earliest file timestamp.
+    :param latest: Optional latest file timestamp.
+    :param nosubdir: Whether to omit object-specific output directories.
+    :param sizelimit: Optional maximum total input size in GB.
+    :return: Input and output paths grouped by object name.
+    """
     # -------------------------------------------------------------------------
     # get pconst
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -642,8 +689,8 @@ def get_disk_entries(params: ParamDict, icolumns: List[str],
     Get entries from disk (instead of database)
 
     :param ParamDict params: the parameter dictionary of constants
-    :param icolumns: list of strings, the columns to get (must be ABSPATH, KW_PID
-                     and KW_RUN_ID)
+    :param icolumns: list of strings, columns to get (must be ABSPATH,
+                     KW_PID and KW_RUN_ID)
     :param condition: str, the condition to apply (must be in the format of a
                       SQL condition but without the WHERE)
     :return: pandas dataframe, the entries that match the condition
@@ -747,7 +794,9 @@ def _get_files_from_disk(filepath: str, file_wildcard: str) -> List[str]:
 # =============================================================================
 # Define helper functions for parallel file copying
 # =============================================================================
-def _copy_single_file(inpath: str, outpath: str, do_symlink: bool) -> Dict[str, Any]:
+def _copy_single_file(
+    inpath: str, outpath: str, do_symlink: bool
+    ) -> Dict[str, Any]:
     """
     Copy or symlink a single file
 
@@ -770,7 +819,9 @@ def _copy_single_file(inpath: str, outpath: str, do_symlink: bool) -> Dict[str, 
     return record
 
 
-def _copy_files_serial(filepairs: List[Tuple[str, str]], do_symlink: bool) -> List[Dict[str, Any]]:
+def _copy_files_serial(
+    filepairs: List[Tuple[str, str]], do_symlink: bool
+    ) -> List[Dict[str, Any]]:
     """
     Copy files serially
 
@@ -904,14 +955,15 @@ def _copy_files_pathos(filepairs: List[Tuple[str, str]], do_symlink: bool,
 
 
 def _copy_files_worker(filepairs: List[Tuple[str, str]], do_symlink: bool,
-                       records_list, progress_queue=None) -> None:
+                       records_list: Any,
+                       progress_queue: Optional[Any] = None) -> None:
     """
     Worker function for multiprocessing.Process to copy a batch of files
 
     :param filepairs: List[Tuple[str, str]], list of (inpath, outpath) tuples
     :param do_symlink: bool, whether to create symlinks or copies
     :param records_list: multiprocessing.Manager.list, shared list for results
-    :param progress_queue: multiprocessing.Queue, optional queue for progress updates
+    :param progress_queue: Optional multiprocessing queue for progress updates
 
     :return: None
     """
@@ -930,7 +982,8 @@ def _copy_files_parallel(filepairs: List[Tuple[str, str]], do_symlink: bool,
 
     :param filepairs: List[Tuple[str, str]], list of (inpath, outpath) tuples
     :param do_symlink: bool, whether to create symlinks or copies
-    :param mp_mode: str, multiprocessing mode ('pathos', 'pool', 'process', or serial)
+    :param mp_mode: Multiprocessing mode ('pathos', 'pool', 'process',
+                    or serial)
     :param cores: int, number of cores to use
 
     :return: List[Dict[str, Any]], list of records
@@ -948,7 +1001,8 @@ def _copy_files_parallel(filepairs: List[Tuple[str, str]], do_symlink: bool,
     return records
 
 
-def _get_file_hkeys(params, files: List[str], hkeys: Dict[str, str],
+def _get_file_hkeys(params: ParamDict, files: List[str],
+                    hkeys: Dict[str, str],
                     req_abspath: bool, req_filename: bool,
                     req_obsdir: bool, block_kind: str,
                     block_path: str) -> List[Dict[str, Any]]:
@@ -1001,7 +1055,8 @@ def _get_file_hkeys(params, files: List[str], hkeys: Dict[str, str],
 
 
 def _convert_records_to_dataframe(records: List[Dict[str, Any]],
-                                  condition: Optional[str] = None) -> pd.DataFrame:
+                                  condition: Optional[str] = None
+                                  ) -> pd.DataFrame:
     """
     Convert a list of records (dictionaries) into a pandas DataFrame and
     apply a SQL condition filter using pandasql
@@ -1234,7 +1289,8 @@ def _multi_process_get_hkeys_pathos(files: List[str], hkeys: Dict[str, str],
 
         # create partial function with fixed arguments
         process_func = partial(_get_single_file_hkeys, hkeys=hkeys,
-                               req_abspath=req_abspath, req_filename=req_filename,
+                               req_abspath=req_abspath,
+                               req_filename=req_filename,
                                req_obsdir=req_obsdir, block_kind=block_kind,
                                block_path=block_path)
 
@@ -1254,7 +1310,8 @@ def _multi_process_get_hkeys_pathos(files: List[str], hkeys: Dict[str, str],
 def _multi_get_hkeys_worker(files: List[str], hkeys: Dict[str, str],
                             req_abspath: bool, req_filename: bool,
                             req_obsdir: bool, block_kind: str, block_path: str,
-                            records_list, progress_queue=None) -> None:
+                            records_list: Any,
+                            progress_queue: Optional[Any] = None) -> None:
     """
     Worker function for multiprocessing.Process to process a batch of files
 
@@ -1265,7 +1322,7 @@ def _multi_get_hkeys_worker(files: List[str], hkeys: Dict[str, str],
     :param req_obsdir: bool, whether to include observation directory
     :param block_path: str, base block path for relative path calculation
     :param records_list: multiprocessing.Manager.list, shared list for results
-    :param progress_queue: multiprocessing.Queue, optional queue for progress updates
+    :param progress_queue: Optional multiprocessing queue for progress updates
 
     :return: None
     """
@@ -1319,9 +1376,19 @@ def get_out_basename(params: ParamDict, infile: str) -> str:
         return prefix + base + suffix + ext
 
 
-def get_standard_outpaths(params, nosubdir: bool, db_entries,
-                          user_outdir, do_copy: bool = True
+def get_standard_outpaths(params: ParamDict, nosubdir: bool,
+                          db_entries: Any, user_outdir: str,
+                          do_copy: bool = True
                           ) -> Tuple[AllDict, AllDict, PermDict]:
+    """Build standard input/output path maps for selected files.
+
+    :param params: APERO parameter dictionary.
+    :param nosubdir: Whether to omit object-specific output directories.
+    :param db_entries: Object and run-ID file paths from the index database.
+    :param user_outdir: Destination directory for copied files.
+    :param do_copy: Whether to create the destination directory.
+    :return: Input paths, output paths, and empty permission entries.
+    """
     # storage of inpaths/outpaths
     all_inpaths = dict()
     all_outpaths = dict()
@@ -1365,11 +1432,24 @@ def get_standard_outpaths(params, nosubdir: bool, db_entries,
     return all_inpaths, all_outpaths, all_permissions
 
 
-def get_perm_outpaths(params, nosubdir: bool, db_entries,
-                      user_outdir, do_copy: bool = True,
+def get_perm_outpaths(params: ParamDict, nosubdir: bool,
+                      db_entries: Any, user_outdir: str,
+                      do_copy: bool = True,
                       perm_yaml: str = None, group_yaml: str = None,
                       group_server: str = None
                       ) -> Tuple[AllDict, AllDict, PermDict]:
+    """Build output path maps and permission commands for selected files.
+
+    :param params: APERO parameter dictionary.
+    :param nosubdir: Whether to omit object-specific output directories.
+    :param db_entries: Object and run-ID file paths from the index database.
+    :param user_outdir: Destination directory for copied files.
+    :param do_copy: Whether to create output directories.
+    :param perm_yaml: Permission configuration file.
+    :param group_yaml: Group configuration file.
+    :param group_server: Server name used to select applicable groups.
+    :return: Input paths, output paths, and per-file permissions.
+    """
 
     # storage of inpaths/outpaths
     all_inpaths = dict()
@@ -1476,9 +1556,21 @@ def get_perm_outpaths(params, nosubdir: bool, db_entries,
     return all_inpaths, all_outpaths, all_permissions
 
 
-def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
+def copy_files(params: ParamDict, all_inpaths: AllDict,
+               all_outpaths: AllDict,
                do_symlink: bool, do_copy: bool,
-               all_permissions: PermDict):
+               all_permissions: PermDict
+               ) -> Tuple[AllDict, AllDict]:
+    """Copy or link the selected input files to their output paths.
+
+    :param params: APERO parameter dictionary.
+    :param all_inpaths: Input paths grouped by object name.
+    :param all_outpaths: Destination paths grouped by object name.
+    :param do_symlink: Whether to create symbolic links.
+    :param do_copy: Whether to perform copy or link operations.
+    :param all_permissions: Per-file copy type and permission commands.
+    :return: Input and output path mappings.
+    """
     for objname in all_inpaths:
         WLOG(params, '', '')
         WLOG(params, '', params['DRS_HEADER'])
@@ -1551,7 +1643,7 @@ def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
     return all_inpaths, all_outpaths
 
 
-def permission_commands(params, run_id: str, perm_dict: dict,
+def permission_commands(params: ParamDict, run_id: str, perm_dict: dict,
                         group_dict: dict, group_server: str,
                         ptype: str = 'file',
                         run: bool = False, path: str = '') -> List[str]:
@@ -1626,7 +1718,7 @@ def permission_commands(params, run_id: str, perm_dict: dict,
     return commands
 
 
-def remove_previous(outpath: str):
+def remove_previous(outpath: str) -> None:
     """
     Deal with removing previous file (whether it is a hard link or symlink)
     :param outpath: str, file to check
@@ -1640,7 +1732,13 @@ def remove_previous(outpath: str):
         os.remove(outpath)
 
 
-def all_objects(params: ParamDict, recipe: DrsRecipe):
+def all_objects(params: ParamDict, recipe: DrsRecipe) -> List[Any]:
+    """Return unique raw-object names from the file index.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing the database short name.
+    :return: Names of indexed raw objects.
+    """
     # load index database
     # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='file index'))
@@ -1660,6 +1758,12 @@ def all_objects(params: ParamDict, recipe: DrsRecipe):
 def fiber_by_output(kw_fibers: Union[List[str], None],
                     kw_outputs: Union[List[str], None]
                     ) -> Union[List[str], None]:
+    """Drop fiber selection when any requested output is fiber-independent.
+
+    :param kw_fibers: Requested fiber names, or None for all fibers.
+    :param kw_outputs: Requested output identifiers, or None.
+    :return: Applicable fiber names, or None for fiber-independent outputs.
+    """
     # if we have no outputs just return the fibers
     if kw_outputs is None:
         return kw_fibers
@@ -1689,7 +1793,7 @@ def fiber_by_output(kw_fibers: Union[List[str], None],
 
 
 def check_size_limit(params: ParamDict, inpaths: Dict[str, List[str]],
-                     sizelimit: int):
+                     sizelimit: int) -> None:
     """
     Check that the total size of files does not exceed the size limit
 

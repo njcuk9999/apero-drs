@@ -11,7 +11,7 @@ Created on 2024-08-06 at 10:42
 """
 import copy
 import textwrap
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from aperocore.base import base
 from apero.base import base as apero_base
@@ -46,9 +46,23 @@ RUN_YAML_TITLE = """
 # Define functions
 # =============================================================================
 class RunParam:
-    def __init__(self, name: str, value=None, dtype=None, comment=None,
-                 dtypei=None, section: str = None, after: str = None,
-                 disabled: bool = False, position: int = 0):
+    def __init__(self, name: str, value: Any = None, dtype: Any = None,
+                 comment: Union[str, None] = None, dtypei: Any = None,
+                 section: Union[str, None] = None,
+                 after: Union[str, None] = None,
+                 disabled: bool = False, position: int = 0) -> None:
+        """Store metadata for one configurable run parameter.
+
+        :param name: Name used to register the parameter.
+        :param value: Default value for the parameter.
+        :param dtype: Declared type or mapping type for the value.
+        :param comment: Optional help text for generated run files.
+        :param dtypei: Optional element type for collection values.
+        :param section: Optional section heading for the parameter.
+        :param after: Optional parameter name that should precede this one.
+        :param disabled: Whether the parameter is disabled by default.
+        :param position: Ordering position; zero assigns the next position.
+        """
         self.name = name
         self.value = value
         self.dtype = dtype
@@ -59,43 +73,46 @@ class RunParam:
         self.disabled = disabled
         self.position = position
 
-    def add(self):
-        """
-        Add to the global RUN_KEYS dictionary
+    def add(self) -> None:
+        """Add this parameter to the global RUN_KEYS dictionary.
+
+        :return: None.
         """
         global RUN_KEYS
         global POS
-        # update the position
         if self.position == 0:
             POS = POS + 1
             self.position = int(POS)
-        # add to the dictionary
         RUN_KEYS[self.name] = self
 
     def create_comment(self, current_section_title: str,
                        no_header: bool = False) -> Union[str, None]:
-        # storage for commented text returned
+        """Format the section heading and help text for this parameter.
+
+        :param current_section_title: Section title currently being written.
+        :param no_header: If true, omit separator lines around headings.
+        :return: Formatted comment text, or None when there is no content.
+        """
         comment_text = ''
-        # deal with needing a new section (assume this will change)
         if self.section != current_section_title:
             if not no_header:
-                comment_text += '\n' + '-'*MAX_WIDTH + '\n'
+                comment_text += '\n' + '-' * MAX_WIDTH + '\n'
             comment_text += self.section
             if not no_header:
-                comment_text += '\n' + '-'*MAX_WIDTH + '\n'
-        # add the current comment
+                comment_text += '\n' + '-' * MAX_WIDTH + '\n'
         if self.comment is not None:
-            comment_text += '\n'.join(textwrap.wrap(self.comment, MAX_WIDTH))
-            # add a new line
+            comment_text += '\n'.join(
+                textwrap.wrap(self.comment, MAX_WIDTH))
             comment_text += '\n'
-        # return this text
         if len(comment_text) == 0:
             return None
-        else:
-            return comment_text
+        return comment_text
 
     def copy(self) -> 'RunParam':
-        # deep copy all parameters
+        """Return an independent deep copy of this run parameter.
+
+        :return: A new parameter with copied metadata and value.
+        """
         name = copy.deepcopy(self.name)
         value = copy.deepcopy(self.value)
         dtype = copy.deepcopy(self.dtype)
@@ -105,7 +122,6 @@ class RunParam:
         after = copy.deepcopy(self.after)
         disabled = copy.deepcopy(self.disabled)
         position = copy.deepcopy(self.position)
-        # create new run parameter
         return RunParam(name, value, dtype, comment,
                         dtypei, section, after, disabled, position)
 

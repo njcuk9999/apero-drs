@@ -28,7 +28,7 @@ def _pretty_label(page_ref: str) -> str:
     return ' '.join(part.capitalize() for part in token.split())
 
 
-def _doc_edit_allowed(perms, page_ref: str) -> bool:
+def _doc_edit_allowed(perms: set[str], page_ref: str) -> bool:
     """Check edit permissions with full-path and leaf fallback."""
     if 'edit.doc' in perms:
         return True

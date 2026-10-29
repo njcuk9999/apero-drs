@@ -86,7 +86,7 @@ class SetupArgument:
                  optiondescs: List[str] = None,
                  aperoname: str = None,
                  installname: str = None,
-                 databasename: str = None):
+                 databasename: str = None) -> None:
         """
         Setup argument class
 
@@ -170,6 +170,10 @@ class SetupArgument:
         self.database_name = databasename
 
     def parser_args(self) -> List[Any]:
+        """Return positional arguments for ``ArgumentParser.add_argument``.
+
+        :return: Argument name followed by any alternative option names.
+        """
         # storage for arguments
         args = []
         # add the argument name
@@ -181,6 +185,10 @@ class SetupArgument:
         return args
 
     def parser_kwargs(self) -> Dict[str, Any]:
+        """Build keyword options for ``ArgumentParser.add_argument``.
+
+        :return: Parser keyword arguments for this setup option.
+        """
         # storage for kwargs
         kwargs = dict()
         # set the default value to None - we never set this from command line
@@ -214,6 +222,11 @@ class SetupArgument:
         return kwargs
 
     def print_arg(self, value: Any = None) -> Optional[str]:
+        """Format this setup value as a command-line option.
+
+        :param value: Value to format, or None to omit the option.
+        :return: Command-line argument string, or None when unset.
+        """
 
         # if we don't have a value set then don't add this argument
         if value is None:
@@ -237,7 +250,7 @@ class SetupArgument:
         return command
 
 
-def catch_sigint(signal_received: Any, frame: Any):
+def catch_sigint(signal_received: Any, frame: Any) -> None:
     """
     Catch sigint signal
     """
@@ -250,6 +263,11 @@ def catch_sigint(signal_received: Any, frame: Any):
 
 
 def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
+    """Parse command-line setup values into the parameter dictionary.
+
+    :param sargs: Setup argument definitions used to construct the parser.
+    :return: Parsed setup values with defaults and sources attached.
+    """
     # install description
     description = textentry('INSTALL_DESCRIPTION')
     # start the parser
@@ -313,7 +331,14 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
     return params
 
 
-def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
+def ask_user(params: ParamDict,
+             sargs: Dict[str, SetupArgument]) -> ParamDict:
+    """Prompt for setup values that were not supplied on the command line.
+
+    :param params: Current setup values and their sources.
+    :param sargs: Definitions controlling prompts and value validation.
+    :return: Updated setup parameter dictionary.
+    """
     # -------------------------------------------------------------------------
     # print progress
     # log: Setup parameters
@@ -490,6 +515,12 @@ def ask_external_raw(params: ParamDict) -> ParamDict:
 
 def update_setup(setup_params: ParamDict,
                  sargs: Dict[str, SetupArgument]) -> ParamDict:
+    """Populate setup values from the active APERO installation.
+
+    :param setup_params: Current setup values to update.
+    :param sargs: Setup argument definitions mapping APERO values to fields.
+    :return: Updated setup parameter dictionary.
+    """
 
     # if we have a environment variable we can get current parameters from
     # the setup directory
@@ -563,7 +594,8 @@ def update_setup(setup_params: ParamDict,
     return setup_params
 
 
-def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def run_setup(params: ParamDict,
+              sargs: Dict[str, SetupArgument]) -> None:
     """
     Run the setup (create files in DRS_UCONFIG)
 
@@ -656,7 +688,7 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
 # =============================================================================
 # Define other functions
 # =============================================================================
-def display_title():
+def display_title() -> None:
     """
     Print the title of the script
     """
@@ -691,7 +723,8 @@ def display_title():
     WLOG(None, '', drs_header)
 
 
-def end_all(params, recipename='apero_setup.py'):
+def end_all(params: Optional[ParamDict],
+            recipename: str = 'apero_setup.py') -> None:
     """
     Quick end script
     """
@@ -735,7 +768,14 @@ def fix_config_path(params: ParamDict) -> ParamDict:
     return params
 
 
-def create_paths(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def create_paths(params: ParamDict,
+                 sargs: Dict[str, SetupArgument]) -> None:
+    """Validate configured paths and create any missing directories.
+
+    :param params: Setup parameters containing resolved path values.
+    :param sargs: Argument definitions used to identify path settings.
+    :return: None. Creates missing directories or raises on failure.
+    """
     # -------------------------------------------------------------------------
     # print progress
     # log: Validating paths
@@ -774,7 +814,7 @@ def create_paths(params: ParamDict, sargs: Dict[str, SetupArgument]):
         WLOG(None, '', textentry('40-510-00004'))
 
 
-def create_yamls(params: Any):
+def create_yamls(params: ParamDict) -> None:
     """
     Create the yaml files from allparams
 
@@ -857,7 +897,9 @@ def create_yamls(params: Any):
     base.write_yaml(database_dict, str(database_path))
 
 
-def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def create_user_configs(
+    params: ParamDict, sargs: Dict[str, SetupArgument]
+) -> None:
     """
     Create the user_config.yaml and user_constants.yaml files
     for the user specified instrument
@@ -923,7 +965,12 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
                         log=False)
 
 
-def create_setup_files(params: ParamDict):
+def create_setup_files(params: ParamDict) -> None:
+    """Create the shell/profile files for the configured APERO installation.
+
+    :param params: Setup parameters including target paths and profile name.
+    :return: None. Writes configured files beneath the user config directory.
+    """
     # get config directory
     userconfig = Path(params['CONFIG_PATH'])
     # setup the user config directory
@@ -999,7 +1046,9 @@ def create_setup_files(params: ParamDict):
             afile.write('{0}={1}\n'.format(key, value))
 
 
-def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def create_install_script(
+    params: ParamDict, sargs: Dict[str, SetupArgument]
+) -> None:
     """
     Create the install.sh script to reproduce the installation
 
@@ -1052,7 +1101,12 @@ def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
     os.chmod(destination, 0o755)
 
 
-def clean_install(params: ParamDict):
+def clean_install(params: ParamDict) -> None:
+    """Run the requested pre-install cleanup, if enabled.
+
+    :param params: Setup parameters controlling cleanup and prompt behavior.
+    :return: None. Performs cleanup or raises when reset fails.
+    """
     # clean install
     if not params['CLEAN_START']:
         return

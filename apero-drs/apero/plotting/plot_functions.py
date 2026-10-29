@@ -773,7 +773,7 @@ def graph_test_plot_2(plotter: Plotter, graph: Graph,
 # Define dark plotting functions
 # =============================================================================
 def plot_dark_image_regions(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Dark image region plot
 
@@ -928,7 +928,7 @@ def plot_badpix_map(plotter: Plotter, graph: Graph,
 # Define localisation plotting functions
 # =============================================================================
 def plot_loc_width_regions(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Localisation width regions
 
@@ -975,7 +975,7 @@ def plot_loc_width_regions(plotter: Plotter, graph: Graph,
 
 
 def plot_loc_fiber_doublet_parity(plotter: Plotter, graph: Graph,
-                                  kwargs: Dict[str, Any]):
+                                  kwargs: Dict[str, Any]) -> None:
     """
     Graph: Localisation fiber doublet parity plot
 
@@ -1052,7 +1052,7 @@ def plot_loc_gap_orders(plotter: Plotter, graph: Graph,
 
 
 def plot_loc_image_fit(plotter: Plotter, graph: Graph,
-                       kwargs: Dict[str, Any]):
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Localisation image saturation threshold plot
 
@@ -1387,7 +1387,7 @@ def plot_shape_dx(plotter: Plotter, graph: Graph,
 
 
 def plot_shape_linear_tparams(plotter: Plotter, graph: Graph,
-                              kwargs: Dict[str, Any]):
+                              kwargs: Dict[str, Any]) -> None:
     """
     Graph: Shape linear transform plot
 
@@ -1484,7 +1484,7 @@ def plot_shape_linear_tparams(plotter: Plotter, graph: Graph,
 
 
 def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Shape angle offset plot
 
@@ -1588,7 +1588,7 @@ def plot_shape_angle_offset(plotter: Plotter, graph: Graph,
 
 
 def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
-                                kwargs: Dict[str, Any]):
+                                kwargs: Dict[str, Any]) -> None:
     """
     Graph: Shape local zoom shift plot
 
@@ -1663,7 +1663,7 @@ def plot_shape_local_zoom_shift(plotter: Plotter, graph: Graph,
 # Define flat plotting functions
 # =============================================================================
 def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
-                              kwargs: Dict[str, Any]):
+                              kwargs: Dict[str, Any]) -> None:
     """
     Graph: Flat order fit edges plot
 
@@ -1797,7 +1797,7 @@ def plot_flat_order_fit_edges(plotter: Plotter, graph: Graph,
 
 
 def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+                          kwargs: Dict[str, Any]) -> None:
     """
     Graph: Flat blaze order plot
 
@@ -1873,7 +1873,7 @@ def plot_flat_blaze_order(plotter: Plotter, graph: Graph,
 
 
 def plot_flat_response_order(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Flat-field response profile per order.
 
@@ -2045,7 +2045,7 @@ def _plot_response_zoom(frame, xpix_zoom: np.ndarray,
 
 
 def plot_flat_edge_orders(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+                          kwargs: Dict[str, Any]) -> None:
     """
     Graph: Plot for the flat edge of orders (qc) plot
 
@@ -2114,7 +2114,7 @@ def plot_flat_edge_orders(plotter: Plotter, graph: Graph,
 # Define thermal plotting functions
 # =============================================================================
 def plot_thermal_background(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Thermal background plot
 
@@ -2200,7 +2200,7 @@ def plot_extract_model_background(plotter: Plotter, graph: Graph,
 
 
 def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
-                                kwargs: Dict[str, Any]):
+                                kwargs: Dict[str, Any]) -> None:
     """
     Graph: extract spectral order plot
 
@@ -2438,7 +2438,7 @@ def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
 # Define wave ea plotting functions
 # =============================================================================
 def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wavelength vs cavity length plot
 
@@ -2513,7 +2513,7 @@ def plot_wave_wl_vs_cavity(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wavelength HC difference histogram
 
@@ -2564,7 +2564,7 @@ def plot_wave_hc_diff_hist(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
-                               kwargs: Dict[str, Any]):
+                               kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution fiber comparison plot
 
@@ -2646,7 +2646,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_slinky_ew_cov(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
 
     """
     Graph: Wave solution fiber comparison plot
@@ -2690,7 +2690,7 @@ def plot_wave_slinky_ew_cov(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_slinky_fit(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """Plot the wavelength solution fit for a slinky sequence."""
     # ------------------------------------------------------------------
     # start the plotting process
@@ -2834,7 +2834,7 @@ def plot_wave_hc_guess(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_hc_brightest_lines(plotter: Plotter, graph: Graph,
-                                 kwargs: Dict[str, Any]):
+                                 kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution HC brightest lines plot
 
@@ -2880,7 +2880,7 @@ def plot_wave_hc_brightest_lines(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_hc_tfit_grid(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution HC t-fit grid
 
@@ -3047,7 +3047,7 @@ def plot_wave_hc_resmap(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution resolution map plot (old)
 
@@ -3153,7 +3153,7 @@ def plot_wave_hc_resmap_old(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution Littrow check plot
 
@@ -3220,7 +3220,7 @@ def plot_wave_littrow_check(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_littrow_extrap(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution Littrow extrapolation plot
 
@@ -3283,7 +3283,7 @@ def plot_wave_littrow_extrap(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_final_order(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP final order plot
 
@@ -3328,7 +3328,7 @@ def plot_wave_fp_final_order(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_lwid_offset(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP l-width offset plot
 
@@ -3371,7 +3371,7 @@ def plot_wave_fp_lwid_offset(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_wave_res(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+                          kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP wave resolution plot
 
@@ -3407,7 +3407,7 @@ def plot_wave_fp_wave_res(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_m_x_res(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP M vs x-res plot
 
@@ -3456,7 +3456,7 @@ def plot_wave_fp_m_x_res(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_ipt_cwid_1mhc(plotter: Plotter, graph: Graph,
-                               kwargs: Dict[str, Any]):
+                               kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP IPT c-width 1/m plot
 
@@ -3512,7 +3512,7 @@ def plot_wave_fp_ipt_cwid_1mhc(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_ipt_cwid_llhc(plotter: Plotter, graph: Graph,
-                               kwargs: Dict[str, Any]):
+                               kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP IPT c-width ll plot
 
@@ -3572,7 +3572,7 @@ def plot_wave_fp_ipt_cwid_llhc(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP ll difference plot
 
@@ -3632,7 +3632,7 @@ def plot_wave_fp_ll_diff(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_multi_order(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP multi-order plot
 
@@ -3695,7 +3695,7 @@ def plot_wave_fp_multi_order(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_single_order(plotter: Plotter, graph: Graph,
-                              kwargs: Dict[str, Any]):
+                              kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution FP single-order plot
 
@@ -3766,7 +3766,7 @@ def plot_wave_fp_single_order(plotter: Plotter, graph: Graph,
 
 
 def plot_waveref_expected(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+                          kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution reference expected plot
 
@@ -3827,7 +3827,7 @@ def plot_waveref_expected(plotter: Plotter, graph: Graph,
 
 
 def plot_wave_fp_count_corr(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: FP peak-number correction residual history.
 
@@ -3898,7 +3898,7 @@ def plot_wave_fp_count_corr(plotter: Plotter, graph: Graph,
 
 
 def plot_wavenight_iterplot(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave night iteration plot
 
@@ -3935,7 +3935,7 @@ def plot_wavenight_iterplot(plotter: Plotter, graph: Graph,
 
 
 def plot_wavenight_histplot(plotter: Plotter, graph: Graph,
-                            kwargs: Dict[str, Any]):
+                            kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave night histogram plot
 
@@ -4005,7 +4005,7 @@ def plot_wavenight_histplot(plotter: Plotter, graph: Graph,
 # Define telluric plotting functions
 # =============================================================================
 def plot_regions_sky_model(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Sky model region plot
 
@@ -4118,7 +4118,7 @@ def plot_sky_model_med(plotter: Plotter, graph: Graph,
 
 
 def plot_sky_model_line_fits(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Sky model line fits
 
@@ -4149,7 +4149,7 @@ def plot_sky_model_line_fits(plotter: Plotter, graph: Graph,
 
 
 def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
-                        kwargs: Dict[str, Any]):
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Sky Correction plot
 
@@ -4210,7 +4210,7 @@ def plot_tellu_sky_corr(plotter: Plotter, graph: Graph,
 
 
 def plot_tellup_mean_res(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Telluric wave transmission plot
 
@@ -4266,7 +4266,7 @@ def plot_tellup_mean_res(plotter: Plotter, graph: Graph,
 
 
 def plot_tellup_clean_oh(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Telluric clean OH lines plot
 
@@ -4324,7 +4324,7 @@ def plot_tellup_clean_oh(plotter: Plotter, graph: Graph,
 
 
 def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+                          kwargs: Dict[str, Any]) -> None:
     """
     Graph: Telluric absorption spectrum plot
 
@@ -4392,7 +4392,7 @@ def plot_tellup_abso_spec(plotter: Plotter, graph: Graph,
 
 
 def plot_mktellu_wave_flux(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Make Telluric wave flux plot
 
@@ -4475,7 +4475,7 @@ def plot_mktellu_wave_flux(plotter: Plotter, graph: Graph,
 
 
 def plot_mktellu_model(plotter: Plotter, graph: Graph,
-                       kwargs: Dict[str, Any]):
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Make Telluric Model plot
 
@@ -4513,7 +4513,7 @@ def plot_mktellu_model(plotter: Plotter, graph: Graph,
 
 
 def plot_ftellu_pca_comp(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Fit telluric PCA components plot
 
@@ -4586,7 +4586,7 @@ def plot_ftellu_pca_comp(plotter: Plotter, graph: Graph,
 
 
 def plot_ftellu_recon_spline(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: Fit telluric recon spline plot
 
@@ -4653,7 +4653,7 @@ def plot_ftellu_recon_spline(plotter: Plotter, graph: Graph,
 
 
 def plot_ftellu_wave_shift(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Fit telluric wave shift plot
 
@@ -4723,7 +4723,7 @@ def plot_ftellu_wave_shift(plotter: Plotter, graph: Graph,
 
 
 def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Fit telluric recon absorption plot
 
@@ -4807,7 +4807,7 @@ def plot_ftellu_recon_abso(plotter: Plotter, graph: Graph,
 
 
 def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
-                          kwargs: Dict[str, Any]):
+                          kwargs: Dict[str, Any]) -> None:
     """
     Graph: Fit telluric recon absorption plot
 
@@ -4910,7 +4910,7 @@ def plot_ftellu_res_model(plotter: Plotter, graph: Graph,
 
 
 def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Make telluric template BERV coverage plot
 
@@ -4947,7 +4947,7 @@ def plot_mktemp_berv_cov(plotter: Plotter, graph: Graph,
 
 
 def plot_mktemp_deconv(plotter: Plotter, graph: Graph,
-                       kwargs: Dict[str, Any]):
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Make telluric template deconvolution plot
 
@@ -4990,7 +4990,7 @@ def plot_mktemp_deconv(plotter: Plotter, graph: Graph,
 
 
 def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
-                               kwargs: Dict[str, Any]):
+                               kwargs: Dict[str, Any]) -> None:
     """
     Graph: Make telluric template deconvolution plot
 
@@ -5194,7 +5194,7 @@ def plot_ccf_swave_ref(plotter: Plotter, graph: Graph,
 
 
 def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: CCF photon uncertainty plot
 
@@ -5335,7 +5335,7 @@ def plot_polar_fit_cont(plotter: Plotter, graph: Graph,
 
 
 def plot_polar_continuum(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """
     Graph: Polar continuum spectrum plot
 
@@ -5637,7 +5637,7 @@ def plot_logstats_bar(plotter: Plotter, graph: Graph,
 
 
 def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
-                           kwargs: Dict[str, Any]):
+                           kwargs: Dict[str, Any]) -> None:
     """
     Graph: Log stats bar plot
 
@@ -5744,7 +5744,7 @@ def plot_stats_timing_plot(plotter: Plotter, graph: Graph,
 
 
 def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
-                              kwargs: Dict[str, Any]):
+                              kwargs: Dict[str, Any]) -> None:
     """
     Graph: Log stats bar plot
 
@@ -5959,7 +5959,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph,
 # Define static file plotting functions
 # =============================================================================
 def plot_static_det_plot(plotter: Plotter, graph: Graph,
-                         kwargs: Dict[str, Any]):
+                         kwargs: Dict[str, Any]) -> None:
     """Plot static detector diagnostic data."""
     # -------------------------------------------------------------------------
     # start the plotting process
@@ -6135,7 +6135,7 @@ def plot_static_wave_check_plot(plotter: Plotter, **kwargs) -> bool:
 
 
 def plot_static_wave_middle_plot(plotter: Plotter, graph: Graph,
-                                 kwargs: Dict[str, Any]):
+                                 kwargs: Dict[str, Any]) -> None:
     """Plot the middle-order static wavelength diagnostic."""
     # -------------------------------------------------------------------------
     # start the plotting process
@@ -6167,7 +6167,7 @@ def plot_static_wave_middle_plot(plotter: Plotter, graph: Graph,
 
 
 def plot_static_wave_final_plot(plotter: Plotter, graph: Graph,
-                                kwargs: Dict[str, Any]):
+                                kwargs: Dict[str, Any]) -> None:
     """Plot the final static wavelength diagnostic."""
     # -------------------------------------------------------------------------
     # start the plotting process

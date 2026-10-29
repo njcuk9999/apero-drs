@@ -817,7 +817,12 @@ class AriObject:
                 # set value in header dict
                 self.header_dict[keydict][pos] = value
 
-    def save_to_disk(self, params: ParamDict):
+    def save_to_disk(self, params: ParamDict) -> None:
+        """Serialize this object's ARI state to its YAML cache file.
+
+        :param params: APERO parameter dictionary containing the YAML path.
+        :return: None. Writes the object's state to disk.
+        """
         # make full yaml path
         yaml_path = params['TOOLS.ARI.OBJ_YAMLS']
         # check if yaml file exists
@@ -851,7 +856,12 @@ class AriObject:
         # save yaml dict to yaml file
         base.write_yaml(yaml_dict, yaml_abs_path)
 
-    def load_from_disk(self, params: ParamDict):
+    def load_from_disk(self, params: ParamDict) -> None:
+        """Load this object's cached ARI state from YAML when available.
+
+        :param params: APERO parameter dictionary containing the YAML path.
+        :return: None. Updates this object's state in place.
+        """
         # make full yaml path
         yaml_path = params['TOOLS.ARI.OBJ_YAMLS']
         # check if yaml file exists
@@ -891,7 +901,12 @@ class AriObject:
     # -------------------------------------------------------------------------
     # Target functions
     # -------------------------------------------------------------------------
-    def get_target_parameters(self, params: ParamDict):
+    def get_target_parameters(self, params: ParamDict) -> None:
+        """Populate this object's general target-page parameters.
+
+        :param params: APERO parameters used to resolve target metadata.
+        :return: None. Stores target values and tables on this object.
+        """
         # set up the object page
         obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], self.objname)
         ari_user = params['TOOLS.ARI.USER']
@@ -954,7 +969,12 @@ class AriObject:
     # -------------------------------------------------------------------------
     # Spectrum functions
     # -------------------------------------------------------------------------
-    def get_spec_parameters(self, params: ParamDict):
+    def get_spec_parameters(self, params: ParamDict) -> None:
+        """Populate this object's spectral-page data and output paths.
+
+        :param params: APERO parameters used to load spectra and file metadata.
+        :return: None. Stores spectrum properties on this object.
+        """
         # set up the object page
         obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], self.objname)
         ari_user = params['TOOLS.ARI.USER']
@@ -1346,7 +1366,12 @@ class AriObject:
     # -------------------------------------------------------------------------
     # LBL functions
     # -------------------------------------------------------------------------
-    def get_lbl_parameters(self, params: ParamDict):
+    def get_lbl_parameters(self, params: ParamDict) -> None:
+        """Populate this object's line-by-line result properties.
+
+        :param params: APERO parameters used to locate LBL products.
+        :return: None. Stores LBL tables, links, and plot data on this object.
+        """
         """
         Get the LBL parameters for this object
 
@@ -1555,7 +1580,12 @@ class AriObject:
     # -------------------------------------------------------------------------
     # CCF functions
     # -------------------------------------------------------------------------
-    def get_ccf_parameters(self, params: ParamDict):
+    def get_ccf_parameters(self, params: ParamDict) -> None:
+        """Populate this object's cross-correlation result properties.
+
+        :param params: APERO parameters used to locate CCF products.
+        :return: None. Stores CCF tables, links, and plot data on this object.
+        """
         # set up the object page
         obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
                                      self.objname)
@@ -1702,7 +1732,12 @@ class AriObject:
     # -------------------------------------------------------------------------
     # Time Series functions
     # -------------------------------------------------------------------------
-    def get_time_series_parameters(self, params: ParamDict):
+    def get_time_series_parameters(self, params: ParamDict) -> None:
+        """Populate this object's time-series properties and tables.
+
+        :param params: APERO parameters used to load time-series data.
+        :return: None. Stores time-series values and output paths on this object.
+        """
         # set up the object page
         obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
                                      self.objname)
@@ -1884,7 +1919,12 @@ class AriObject:
     # -------------------------------------------------------------------------
     # Debug functions
     # -------------------------------------------------------------------------
-    def get_debug_parameters(self, params: ParamDict):
+    def get_debug_parameters(self, params: ParamDict) -> None:
+        """Populate this object's debug-plot metadata and output paths.
+
+        :param params: APERO parameters used to locate debug plot products.
+        :return: None. Stores debug plot properties on this object.
+        """
         # set up the object page
         obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'],
                                      self.objname)

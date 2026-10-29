@@ -31,6 +31,12 @@ def build_safe_select_query(
     allowed_sort_dirs = frozenset({"ASC", "DESC"})
 
     def q_id(name: str) -> str:
+        """Validate and quote a SQL identifier.
+
+        :param name: Identifier containing only letters, digits, or `_`.
+        :return: Backtick-quoted identifier.
+        :raises ValueError: If the identifier contains unsupported characters.
+        """
         if not re.match(r"^[A-Za-z0-9_]+$", name):
             raise ValueError(f"Invalid identifier: {name!r}")
         return f"`{name}`"
@@ -215,6 +221,12 @@ def build_safe_count_query(
     allowed_join_types = frozenset({"INNER", "LEFT", "RIGHT"})
 
     def q_id(name: str) -> str:
+        """Validate and quote a SQL identifier.
+
+        :param name: Identifier containing only letters, digits, or `_`.
+        :return: Backtick-quoted identifier.
+        :raises ValueError: If the identifier contains unsupported characters.
+        """
         if not re.match(r"^[A-Za-z0-9_]+$", name):
             raise ValueError(f"Invalid identifier: {name!r}")
         return f"`{name}`"
@@ -418,6 +430,11 @@ def load_query_db_presets(
                 constants[skey] = str(value)
 
     def replace_placeholders(sql: str) -> str:
+        """Substitute profile constants and table names into preset SQL.
+
+        :param sql: SQL preset text containing named placeholders.
+        :return: SQL text with known placeholders substituted and trimmed.
+        """
         if not isinstance(sql, str):
             return ""
         out = sql

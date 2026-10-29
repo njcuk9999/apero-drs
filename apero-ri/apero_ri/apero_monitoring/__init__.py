@@ -3,11 +3,12 @@
 """Top-level exports for APERO monitoring checks."""
 
 from importlib import import_module
+from typing import Any
 
 from apero_ri.apero_monitoring.checks import CHECKS
 
 
-def _module(module_name: str):
+def _module(module_name: str) -> Any:
     """Import one APERO-monitoring module by full dotted name."""
     return import_module(module_name)
 

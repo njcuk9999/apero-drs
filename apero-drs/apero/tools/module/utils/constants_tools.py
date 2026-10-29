@@ -49,14 +49,14 @@ display_func = drs_misc.display_func
 # =============================================================================
 # Define config generation functions
 # =============================================================================
-def deal_with_generate(params: ParamDict):
+def deal_with_generate(params: ParamDict) -> bool:
     """
     Re-generate user_config and user_constant files using installation files
     useful when needing more constants
 
     :param params: ParamDict, the current set of parameter constants
 
-    :return: None - writes + backs up user_config.ini and user_constants.ini
+    :return: Whether the user configuration and constants were generated.
     """
     # get user config directory
     userconfig = Path(os.environ[base.USER_ENV])
@@ -114,7 +114,7 @@ def deal_with_generate(params: ParamDict):
 # =============================================================================
 # Cleaning constant python files functions
 # =============================================================================
-def deal_with_clean(params) -> bool:
+def deal_with_clean(params: ParamDict) -> bool:
     """
     Function to clean constants (use with causion)
 
@@ -307,13 +307,13 @@ def get_comment(start: int, string: str) -> str:
     return description
 
 
-def format_lines(entry, length=78):
+def format_lines(entry: str, length: int = 78) -> str:
     """
     Deal with description making the lines too long
 
     :param entry: str, the entry to add
     :param length: int, the length of the line
-    :return:
+    :return: Entry text with the description moved when a line is too long.
     """
     # need to deal with last line too long
     lines = entry.split('\n')
@@ -338,7 +338,12 @@ def format_lines(entry, length=78):
 # =============================================================================
 # Create glossary functions
 # =============================================================================
-def create_glossary(params):
+def create_glossary(params: ParamDict) -> None:
+    """Generate and write the constants and keywords glossary.
+
+    :param params: APERO parameter dictionary used for logging.
+    :return: None.
+    """
     # set function name
     func_name = display_func('create_glossary', __NAME__)
     # set output filename
@@ -398,6 +403,11 @@ def create_glossary(params):
 
 
 def generate_entry(instance: Union[cf.Const, cf.Keyword]) -> str:
+    """Format one constant or keyword as a glossary entry.
+
+    :param instance: Constant or keyword whose metadata is documented.
+    :return: Formatted reStructuredText glossary entry.
+    """
 
     # add blank line
     entry = ''

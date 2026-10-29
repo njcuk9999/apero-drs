@@ -173,7 +173,7 @@ def render_info_html(path: str = GUI_INFO_PATH) -> str:
     kind = None
     in_list = False
 
-    def _flush():
+    def _flush() -> None:
         if not block:
             return
         text = _markdown_inline(' '.join(block))
@@ -277,7 +277,11 @@ class GuiState:
             self.cancel.clear()
 
         # define the worker wrapper (clears busy when done)
-        def _worker():
+        def _worker() -> None:
+            """Run one background action and release the busy state.
+
+            :return: None. Records failures and clears the busy flag on exit.
+            """
             try:
                 target(*args)
             except Exception as gui_error:
@@ -871,7 +875,8 @@ def action_run(params: ParamDict, state: GuiState,
         ntasks = None
 
     # define the run action (executed in the worker thread)
-    def _do_run():
+    def _do_run() -> None:
+        """Run queue tasks and report the resulting status to the GUI."""
         state.add_message('Run started (cores={0}, mpmode={1}, '
                           'ntasks={2})'.format(cores, mpmode, ntasks))
         summary = drs_queue.queue_run(params, cores=cores,
@@ -934,7 +939,8 @@ def action_batch(params: ParamDict, state: GuiState,
     dry_run = bool(dry_run)
 
     # define the batch action (executed in the worker thread)
-    def _do_batch():
+    def _do_batch() -> None:
+        """Generate and optionally submit batch scripts in the background."""
         state.add_message('Batch started (template={0}, per_batch={1}, '
                           'n_batches={2}, submit={3}, dry_run={4})'
                           ''.format(template_name, per_batch,
@@ -980,7 +986,8 @@ def action_chain(params: ParamDict, state: GuiState,
     submit = bool(submit)
     dry_run = bool(dry_run)
 
-    def _do_chain():
+    def _do_chain() -> None:
+        """Generate and optionally submit chained queue jobs."""
         state.add_message('Chain started (template={0}, per_batch={1}, '
                           'submit={2}, dry_run={3})'.format(
                               template_name, per_batch, submit, dry_run))
@@ -1303,7 +1310,8 @@ def _display_command(cmd: List[str]) -> str:
 
 def _start_job(params: ParamDict, state: GuiState, kind: str,
                cmd: List[str], stdin_text: Optional[str] = None,
-               on_done=None) -> Dict[str, Any]:
+               on_done: Optional[Callable[[int], None]] = None
+               ) -> Dict[str, Any]:
     """
     Run a command (generate/reset) as the gui background action, with its
     output written to a log file the browser can follow
@@ -1324,7 +1332,8 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
                                                           stamp))
     display = _display_command(cmd)
 
-    def _run():
+    def _run() -> None:
+        """Execute the command, update job state, and record its result."""
         state.job = dict(kind=kind, cmd=display, path=log_path,
                          running=True, returncode=None,
                          started=time.strftime('%H:%M:%S'))
@@ -1445,7 +1454,8 @@ def action_generate(params: ParamDict, state: GuiState,
     except ValueError as value_error:
         return dict(started=False, message=str(value_error))
 
-    def _report(returncode: int):
+    def _report(returncode: int) -> None:
+        """Report the pending queue size after generation completes."""
         pending = drs_queue.list_queue_entries(
             params, states=[drs_queue.QUEUE_PENDING_DIR])
         state.add_message('Queue now has {0} pending task(s)'.format(
@@ -1478,7 +1488,7 @@ def action_reset_data(params: ParamDict, state: GuiState,
 # =============================================================================
 # Define server functions
 # =============================================================================
-def _stale_watcher(params: ParamDict, state: GuiState):
+def _stale_watcher(params: ParamDict, state: GuiState) -> None:
     """
     Background loop: fail running entries nothing is running any more
     (see drs_queue.find_stale_running)
@@ -1520,8 +1530,14 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
         """Request handler for the queue gui server"""
 
         def _send(self, content: str, ctype: str = 'application/json',
-                  code: int = 200):
-            """Send a response with the given content and type"""
+              code: int = 200) -> None:
+            """Send a response and tolerate a client closing the connection.
+
+            :param content: Response body before UTF-8 encoding.
+            :param ctype: MIME content type, without a charset suffix.
+            :param code: HTTP response status code.
+            :return: None. Writes the response to the client socket.
+            """
             body = content.encode('utf-8')
             # the browser may abandon a request (reload, closed tab)
             try:
@@ -1544,21 +1560,26 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
             except (ValueError, TypeError):
                 return dict()
 
-        def log_message(self, fmt, *args):
-            """Silence the default request logging"""
+        def log_message(self, fmt: str, *args: Any) -> None:
+            """Suppress the default BaseHTTPRequestHandler log output.
+
+            :param fmt: Format string supplied by the HTTP server.
+            :param args: Values that would be interpolated into the message.
+            :return: None. Request messages are logged by the queue GUI.
+            """
             _ = fmt, args
 
         # pylint: disable=invalid-name
-        def do_GET(self):
+        def do_GET(self) -> None:
             """Handle GET requests (dashboard + read-only api)"""
             self._safe(self._get)
 
         # pylint: disable=invalid-name
-        def do_POST(self):
+        def do_POST(self) -> None:
             """Handle POST requests (actions)"""
             self._safe(self._post)
 
-        def _safe(self, handler):
+        def _safe(self, handler: Callable[[], None]) -> None:
             """Run a handler, returning a json error instead of dropping
             the connection if it raises"""
             try:
@@ -1747,7 +1768,7 @@ def _make_handler(params: ParamDict, state: GuiState, rows: int):
     return QueueGuiHandler
 
 
-def queue_gui(params: ParamDict):
+def queue_gui(params: ParamDict) -> None:
     """
     Gui mode: start the queue dashboard web server and open it in a
     browser

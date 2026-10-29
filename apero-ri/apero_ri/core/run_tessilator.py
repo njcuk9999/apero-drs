@@ -234,7 +234,7 @@ def run_tessilator(
     cache_root: Path,
     instrument: str,
     aliases: Optional[List[str]] = None,
-    log_queue=None,
+    log_queue: Any = None,
 ) -> Dict[str, Any]:
     """Run tessilator for *objname*, store results in cache dir.
 
@@ -431,8 +431,14 @@ def _patch_simbad_column_case() -> None:
     _orig = Simbad.query_objectids
 
     @staticmethod
-    def _fixed(*args, **kwargs):
-        res = _orig(*args, **kwargs)
+    def _fixed(*args: Any, **kwargs: Any) -> Any:
+        """Normalize the SIMBAD identifier column in query results.
+
+        :param args: Positional arguments forwarded to the original query.
+        :param kwargs: Keyword arguments forwarded to the original query.
+        :return: Original query result, with ``ID`` renamed to ``id``.
+        """
+        res: Any = _orig(*args, **kwargs)
         if res is not None and 'ID' in res.colnames:
             try:
                 res.rename_column('ID', 'id')

@@ -786,7 +786,8 @@ def ref_dark_fp_cube(params: ParamDict, recipe: DrsRecipe,
 
 def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
                             infile: DrsFitsFile, eprops: ParamDict,
-                            fiber: str, debug_uncorr: Optional[bool] = None):
+                            fiber: str,
+                            debug_uncorr: Optional[bool] = None) -> None:
     """
     Save un-corrected extracted file (before correction) for debugging
 
@@ -1103,7 +1104,7 @@ def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
 def write_leak(params: ParamDict, recipe: DrsRecipe,
                inputs: Dict[str, Dict[str, DrsFitsFile]],
                props: ParamDict, qc_params: Dict[str, List[list]],
-               s1dextfile: Optional[str] = None):
+               s1dextfile: Optional[str] = None) -> None:
     """
     Write the leak file to disk
 

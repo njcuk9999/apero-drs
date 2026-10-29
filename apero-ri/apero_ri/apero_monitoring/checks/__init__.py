@@ -3,9 +3,10 @@
 """Raw and reduced APERO check function modules and CHECKS registry."""
 
 from importlib import import_module
+from typing import Any
 
 
-def _module(module_name: str):
+def _module(module_name: str) -> Any:
 	"""Import one APERO-check module by its full dotted name."""
 	return import_module(module_name)
 

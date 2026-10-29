@@ -148,7 +148,12 @@ def rel_path_from_current(current: str, required: str) -> str:
     return os.path.join(*outargs)
 
 
-def clean_auto(instruments: List[str]):
+def clean_auto(instruments: List[str]) -> None:
+    """Recreate generated documentation directories for each instrument.
+
+    :param instruments: Instrument names requiring generated definition paths.
+    :return: None. Removes and recreates the generated documentation tree.
+    """
     # get the absolute path of the auto directory
     abs_auto_dir = drs_misc.get_relative_folder(__PACKAGE__, AUTO_DIR)
     # remove everything in the auto directory
@@ -175,7 +180,8 @@ def clean_auto(instruments: List[str]):
                                  instrument.lower()))
 
 
-def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
+def compile_file_definitions(params: ParamDict,
+                             recipe: DrsRecipe) -> None:
     """
     Compile file definitions as an rst file for sphinx documentation
 
@@ -357,7 +363,8 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     markdown.write_page(markdown_filename)
 
 
-def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
+def compile_recipe_definitions(params: ParamDict,
+                               recipe: DrsRecipe) -> None:
     """
     Compile recipe definitions as rst files for sphinx documentation
 
@@ -382,7 +389,7 @@ def compile_recipe_definitions(params: ParamDict, recipe: DrsRecipe):
 
 
 def make_recipe_definitions(params: ParamDict, srecipes: List[DrsRecipe],
-                            instrument: str):
+                            instrument: str) -> None:
     """
     Make recipe definitions for "recipe_type = recipe"
 
@@ -416,7 +423,7 @@ def make_recipe_definitions(params: ParamDict, srecipes: List[DrsRecipe],
 
 
 def make_devtool_defintions(params: ParamDict, srecipes: List[DrsRecipe],
-                            instrument: str):
+                            instrument: str) -> None:
     """
     Make recipe definitions for "recipe_type = nolog-tool or tool" and
     "recipe_kind = admin"
@@ -453,7 +460,7 @@ def make_devtool_defintions(params: ParamDict, srecipes: List[DrsRecipe],
 
 
 def make_tool_user_defintions(params: ParamDict, srecipes: List[DrsRecipe],
-                              instrument: str):
+                              instrument: str) -> None:
     """
     Make recipe definitions for "recipe_type = nolog-tool or tool" and
     "recipe_kind = user or processing"
@@ -491,7 +498,17 @@ def make_tool_user_defintions(params: ParamDict, srecipes: List[DrsRecipe],
 
 def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
                      instrument: str, kind: str, outpath: str,
-                     listfile: str):
+                     listfile: str) -> None:
+    """Generate individual recipe/tool pages and their index page.
+
+    :param params: APERO parameter dictionary used to load instrument data.
+    :param srecipes: Recipes to document.
+    :param instrument: Instrument name used to select definitions.
+    :param kind: Definition category used in page names and headings.
+    :param outpath: Directory where generated pages are written.
+    :param listfile: Filename for the generated index page.
+    :return: None. Writes Markdown definition and index pages.
+    """
     # set string kind
     strkind = kind.replace('_', ' ')
     # store list of recipe definitions
@@ -679,7 +696,15 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
 
 
 def make_blank_definitions(instrument: str, kind: str, outpath: str,
-                           listfile: str):
+                           listfile: str) -> None:
+    """Write an index page for a category with no documented definitions.
+
+    :param instrument: Instrument name shown in the page title.
+    :param kind: Definition category shown in the page content.
+    :param outpath: Directory where the index page is written.
+    :param listfile: Filename for the generated index page.
+    :return: None. Writes a Markdown page indicating the category is empty.
+    """
     # set string kind
     strkind = kind.replace('_', ' ')
     # get page reference
@@ -698,7 +723,8 @@ def make_blank_definitions(instrument: str, kind: str, outpath: str,
     markdown.write_page(os.path.join(outpath, listfile))
 
 
-def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
+def compile_recipe_sequences(params: ParamDict,
+                             recipe: DrsRecipe) -> None:
     """
     Compile recipes sequences as rst files for sphinx documentation
 
@@ -836,7 +862,13 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
     markdown.write_page(os.path.join(def_dir, SEQUENCE_LIST_FILE))
 
 
-def compile_docs(params: ParamDict, mode: str = 'both'):
+def compile_docs(params: ParamDict, mode: str = 'both') -> None:
+    """Build the documentation output in HTML, LaTeX, or both formats.
+
+    :param params: APERO parameter dictionary containing package paths.
+    :param mode: Build target: ``'html'``, ``'latex'``, or ``'both'``.
+    :return: None. Runs the documentation build in the output directory.
+    """
     # get package
     package = params['DRS.PACKAGE']
     # get paths
@@ -944,7 +976,12 @@ def compile_docs(params: ParamDict, mode: str = 'both'):
         raise e
 
 
-def upload(params: ParamDict):
+def upload(params: ParamDict) -> None:
+    """Upload generated documentation output to the configured web host.
+
+    :param params: APERO parameters containing SSH and web-path settings.
+    :return: None. Changes output permissions and invokes the rsync command.
+    """
     # get package
     package = params['DRS.PACKAGE']
     # get paths

@@ -52,6 +52,11 @@ def _sync_all(kind: str, params: Dict[str, Any]) -> List[str]:
     stop_event = params.get('STOP_EVENT')
 
     def log(msg: str) -> None:
+        """Send one synchronization status message to the task logger.
+
+        :param msg: Status message to forward.
+        :return: None. Does nothing when no logger is configured.
+        """
         if callable(logger):
             logger(msg)
 

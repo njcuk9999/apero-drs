@@ -15,6 +15,7 @@ Created on 2026-10-28
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any, Dict, List
 
 import yaml
@@ -59,8 +60,11 @@ DEFAULT_REMOTE_PORT = '8090'
 # =============================================================================
 # Define functions
 # =============================================================================
-def _queues_file():
-    """Return the definitions file path (follows auth.set_ari_dir)."""
+def _queues_file() -> Path:
+    """Return the definitions file path selected by ``auth.set_ari_dir``.
+
+    :return: Path to the queue definitions YAML file.
+    """
     return auth.ADMIN_GENERAL_DIR / QUEUES_FILENAME
 
 
@@ -106,6 +110,12 @@ def normalize_queue(raw: Dict[str, Any]) -> Dict[str, Any]:
     :return: dict, the normalized definition
     """
     def _str(key: str, default: str = '') -> str:
+        """Read and trim one string field from the raw definition.
+
+        :param key: Definition field to read.
+        :param default: Value used when the field is empty or missing.
+        :return: Trimmed field value or its default.
+        """
         return str(raw.get(key, default) or default).strip()
 
     blocked = raw.get('blocked_actions', DEFAULT_BLOCKED_ACTIONS)

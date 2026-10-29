@@ -788,7 +788,8 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe,
 
 
 def flat_blaze_summary(recipe: DrsRecipe, params: ParamDict,
-                       qc_params: List[list], eprops: ParamDict, fiber: str):
+                       qc_params: List[list], eprops: ParamDict,
+                       fiber: str) -> None:
     """
     Produce the flat and blaze summary document
 

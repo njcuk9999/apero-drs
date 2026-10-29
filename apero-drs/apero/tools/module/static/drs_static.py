@@ -63,7 +63,10 @@ AperoCodedException = drs_log.AperoCodedException
 # =============================================================================
 def load(params: ParamDict) -> Dict[str, Any]:
     """
-    Load the static parameters yaml file
+    Load the static parameters YAML file.
+
+    :param params: APERO parameter dictionary containing the YAML path.
+    :return: Parsed static parameter mapping.
     """
     # get yaml file
     yamlfile = params['INPUTS']['yamlfile']
@@ -90,18 +93,19 @@ def load(params: ParamDict) -> Dict[str, Any]:
     return sparams
 
 
-def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile, 
+def save_static_file(params: ParamDict, recipe: Any,
+                     static_file: DrsFitsFile,
                      desc: str,
                      data_list: List[Union[np.ndarray, Table]],
                      datatype_list: List[str] = None,
                      name_list: List[str] = None,
                      hdr_kwargs: Dict[str, Any] = None,
-                     header_list: List[Dict[str, Any]] = None):
+                     header_list: List[Dict[str, Any]] = None) -> None:
     """
     Save a static file using the standard apero file instance
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the apero recipe instance
+    :param recipe: Recipe providing the output file and index registration.
     :param static_file: DrsInputFile, the apero static file
     :param desc: str, description from writing status
     :param data_list: list, list of data to be saved [np.ndarray and/or Table]
@@ -112,7 +116,7 @@ def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile,
                        to push into the headers
     :param header_list: list, list of headers to be saved to each extension
 
-    :return None - writes to disk
+    :return: None. Writes the FITS file and registers it as a recipe output.
     """
     # set function name
     func_name = __NAME__ + '.save_static_file()'
@@ -171,18 +175,18 @@ def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile,
     recipe.add_output_file(static_file)
 
 
-def update_repo(params: ParamDict, recipe, save_path: str,
-                outdir: str = ''):
+def update_repo(params: ParamDict, recipe: Any, save_path: str,
+                outdir: str = '') -> None:
     """
     Update the local github repository for APERO with the new version of the
     files (up to now they have been saved to the installation path not the
     python module path)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe: Apero recipe object
+    :param recipe: Recipe whose output files are copied into the assets tree.
     :param save_path: str, path the static files were saved to
 
-    :return None - copies writen files
+    :return: None. Copies confirmed files and removes them from recipe outputs.
     """
     # Step 1. use recipe.output_files and change det_path to assets path
     # Step 2. copy files to APERO local python module directory
@@ -234,13 +238,13 @@ def update_repo(params: ParamDict, recipe, save_path: str,
         del recipe.output_files[key]
 
 
-def update_assets(params: ParamDict):
+def update_assets(params: ParamDict) -> None:
     """
     Update the assets to the remote repo
 
     :param params: ParamDict, parameter dictionary of constants
 
-    :return None - updates remote assets
+    :return: None. Uploads the assets directory when the user confirms.
     """
     # Ask user if they wish to update the remote assets
     question = '\n\nUpdate REMOTE assets with all changes?'
@@ -260,16 +264,20 @@ def update_assets(params: ParamDict):
 # =============================================================================
 # Define proxy night functions
 # =============================================================================
-def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
+def proxy_processing(params: ParamDict, recipe: Any,
+                     sparams: Dict[str, Any],
                      cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Proxy preprocess function for static wavelength calibration
+    Proxy preprocess function for static wavelength calibration.
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the apero recipe instance
-    :param sparams: dict, static parameters from yaml file
+    :param recipe: Recipe providing extraction output file definitions.
+    :param sparams: Static parameters loaded from the configuration YAML.
+    :param cal_path: Destination directory for extracted static products.
+    :param ofiles: Existing static output-file mapping to update.
 
-    :return None - writes to disk
+    :return: Updated output-file mapping containing the extracted HC and FP
+        file instances.
     """
     # print progress
     # log: Processing static night (to extract HC and FP)
@@ -327,8 +335,18 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     return ofiles
 
 
-def get_q2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
-                    cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
+def get_q2ds_files(params: ParamDict, recipe: Any,
+                    sparams: Dict[str, Any], cal_path: str,
+                    ofiles: Dict[str, Any]) -> Dict[str, Any]:
+    """Copy extracted HC/FP files and register them in the output mapping.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing extraction output definitions.
+    :param sparams: Static wavelength setup parameters.
+    :param cal_path: Destination directory for copied extraction files.
+    :param ofiles: Existing static output-file mapping to update.
+    :return: Updated mapping including the HC and FP extracted files.
+    """
     # print progress
     # log: Loading static night extracted HC and FP files
     WLOG(params, 'info', textentry('40-518-00002'))
@@ -409,7 +427,8 @@ def get_q2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
     return ofiles
 
 
-def get_hc_cat_file(params: ParamDict, recipe, sparams: Dict[str, Any],
+def get_hc_cat_file(params: ParamDict, recipe: Any,
+                    sparams: Dict[str, Any],
                     cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
     """
     Get the static HC catalogue file

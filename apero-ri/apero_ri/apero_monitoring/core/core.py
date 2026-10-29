@@ -35,6 +35,14 @@ class AperoCheck:
 
     def __init__(self, name: str, string_name: str,
                  check_type: str, instruments: List[str]) -> None:
+        """Initialize an APERO monitoring check definition.
+
+        :param name: Internal key used to store and retrieve this check.
+        :param string_name: Human-readable check name for reports.
+        :param check_type: Data category inspected by the check.
+        :param instruments: Instrument identifiers for which it applies.
+        :return: None. Initializes metadata and fresh check state.
+        """
         # the name of this test which should be used in the check_dict
         self.name = name
         # the string name of this test (for internal use)
@@ -146,6 +154,13 @@ class SimpleCheck:
         test_key: str,
         config_section: str = 'eng_test',
     ) -> None:
+        """Initialize the declarative runner for one simple check.
+
+        :param check: Check definition whose result this runner updates.
+        :param test_key: Configuration key that selects this test.
+        :param config_section: Section containing the test configuration.
+        :return: None. Associates this runner with its check definition.
+        """
         self.check = check
         self.test_key = str(test_key or '').strip()
         self.config_section = str(config_section or 'eng_test').strip()

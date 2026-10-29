@@ -205,6 +205,11 @@ class FavObjectWatcherTask(apero_async.AperoAsyncTask):
         task_logger = params.get('TASK_LOGGER')
 
         def tlog(message: str) -> None:
+            """Forward a watcher status message to its optional logger.
+
+            :param message: Status text to send to the task logger.
+            :return: None. Ignores failures from the injected logger.
+            """
             if callable(task_logger):
                 try:
                     task_logger(message)

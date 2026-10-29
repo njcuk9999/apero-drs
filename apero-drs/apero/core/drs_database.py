@@ -349,7 +349,8 @@ class CalibrationDatabase(DatabaseManager):
                            Tuple[List[Path], List[float], List[bool]],
                            None]
 
-    def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
+    def get_calib_file(self, key: str, drsfile: Any = None,
+                       header: Any = None, hdict: Any = None,
                        filetime: Union[None, Time] = None,
                        timemode: Union[str, None] = None,
                        nentries: Union[str, int] = 1,
@@ -535,7 +536,7 @@ class CalibrationDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames, list(filetimes), list(reference)
 
-    def remove_entries(self, condition: str):
+    def remove_entries(self, condition: str) -> None:
         """
         Remove row(s) from a database
 
@@ -559,7 +560,7 @@ class CalibrationDatabase(DatabaseManager):
 
 class TelluricDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, shortname: str,
-                 pconst: Any = None):
+                 pconst: Any = None) -> None:
         """
         Constructor of the Telluric Database class
 
@@ -591,7 +592,7 @@ class TelluricDatabase(DatabaseManager):
                        objname: Union[str, None] = None,
                        airmass: Union[float, str, None] = None,
                        tau_water: Union[float, str, None] = None,
-                       tau_others: Union[float, str, None] = None):
+                       tau_others: Union[float, str, None] = None) -> None:
         """
         Add DrsFile to the calibration database
 
@@ -853,7 +854,8 @@ class TelluricDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def get_tellu_file(self, key: str, drsfile=None, header=None, hdict=None,
+    def get_tellu_file(self, key: str, drsfile: Any = None,
+                       header: Any = None, hdict: Any = None,
                        filetime: Union[None, Time] = None,
                        timemode: Union[str, None] = None,
                        nentries: Union[str, int] = 1,
@@ -1045,7 +1047,7 @@ class TelluricDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames
 
-    def remove_entries(self, condition: str):
+    def remove_entries(self, condition: str) -> None:
         """
         Remove row(s) from a database
 
@@ -1189,7 +1191,7 @@ def _get_is_super(drsfile: DrsInputFile) -> int:
 
 def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
                   outpath: Union[str, Path], dbmname: str,
-                  verbose: bool = True):
+                  verbose: bool = True) -> None:
     """
     Copy a database file from drsfile.filename to outpath
 
@@ -1405,7 +1407,7 @@ def _none_float(params: ParamDict, value: Any, name: str) -> float:
 class FileIndexDatabase(DatabaseManager):
 
     def __init__(self, params: ParamDict, shortname: str,
-                 pconst: Any = None):
+                 pconst: Any = None) -> None:
         """
         Constructor of the Index Database class
 
@@ -1440,7 +1442,7 @@ class FileIndexDatabase(DatabaseManager):
                   infiles: Union[str, None] = None,
                   hkeys: Union[Dict[str, str], None] = None,
                   used: Union[int, None] = None,
-                  rawfix: Union[int, None] = None):
+                  rawfix: Union[int, None] = None) -> None:
         """
         Add an entry to the index database
 
@@ -1578,7 +1580,7 @@ class FileIndexDatabase(DatabaseManager):
                 db_send(self.params, self.database.tablename, self.shortname,
                         insert_dict, mode='SET')
 
-    def remove_entries(self, condition: str):
+    def remove_entries(self, condition: str) -> None:
         """
         Remove row(s) from a database
 
@@ -1733,7 +1735,8 @@ class FileIndexDatabase(DatabaseManager):
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
                        filename: FileTypes = None, suffix: str = '',
-                       force_update: bool = False, job_msg: str = ''):
+                       force_update: bool = False,
+                       job_msg: str = '') -> None:
         """
         Update the index database for files of 'kind', deal with including
         and excluding directories for files with 'suffix'
@@ -1993,7 +1996,7 @@ class FileIndexDatabase(DatabaseManager):
 
     def update_header_fix(self, objdbm: AstrometricDatabase,
                           obs_dirs: Union[List[str], None] = None,
-                          job_msg: str = ''):
+                          job_msg: str = '') -> None:
         """
         Update the index database with the header fixes for block_kind = raw
 
@@ -2104,7 +2107,7 @@ class FileIndexDatabase(DatabaseManager):
             margs = [len(table), dur_hfix]
             WLOG(self.params, '', msg.format(*margs) + job_msg)
 
-    def _update_params(self, **kwargs) -> bool:
+    def _update_params(self, **kwargs: Any) -> bool:
         """
         Update the parameters for update_entries (so we don't update twice)
 
@@ -2334,7 +2337,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
 # =============================================================================
 class LogDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, shortname: str,
-                 pconst: Any = None):
+                 pconst: Any = None) -> None:
         """
         Constructor of the Log Database class
 
@@ -2357,7 +2360,7 @@ class LogDatabase(DatabaseManager):
         # set path
         self.database_settings(kind=self.kind)
 
-    def remove_pids(self, pid: str):
+    def remove_pids(self, pid: str) -> None:
         """
         Remove rows with this pid
         :param pid:
@@ -2414,7 +2417,7 @@ class LogDatabase(DatabaseManager):
                     cpu_usage_end: Union[float, None] = None,
                     cpu_num: Union[int, None] = None,
                     log_start: Union[str, None] = None,
-                    log_end: Union[str, None] = None):
+                    log_end: Union[str, None] = None) -> None:
         """
         Add a log entry to database
 
@@ -2654,7 +2657,7 @@ class LogDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def remove_entries(self, condition: str):
+    def remove_entries(self, condition: str) -> None:
         """
         Remove row(s) from a database
 
@@ -2706,7 +2709,7 @@ def _clean_error(errors: Union[str, None]) -> Union[str, None]:
 # =============================================================================
 class RejectDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, shortname: str,
-                 pconst: Any = None):
+                 pconst: Any = None) -> None:
         """
         Constructor of the Reject Database class
 
@@ -2734,7 +2737,7 @@ class RejectDatabase(DatabaseManager):
                     tel_flag: Optional[bool] = None,
                     rv_flag: Optional[bool] = None,
                     used: Union[int, None] = None,
-                    comment: Union[str, None] = None):
+                    comment: Union[str, None] = None) -> None:
         """
         Add a reject entry to database
 
@@ -2846,7 +2849,7 @@ class RejectDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def remove_entries(self, condition: str):
+    def remove_entries(self, condition: str) -> None:
         """
         Remove row(s) from a database
 
@@ -2874,7 +2877,7 @@ class RejectDatabase(DatabaseManager):
 class PandasDBStorage:
     classname: str = 'PandasDBStorage'
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Constructs the Pandas database storage class
         """
@@ -2882,7 +2885,7 @@ class PandasDBStorage:
         self.filedbs = dict(FILEDBS)
 
     @staticmethod
-    def set(key: str, value: Any):
+    def set(key: str, value: Any) -> None:
         """
         Setter function to store value of "key" globally
 
@@ -2917,7 +2920,8 @@ class PandasDBStorage:
             raise KeyError(emsg.format(key, self.classname))
 
     @staticmethod
-    def reset(key: Optional[str] = None, subkey: Optional[str] = None):
+    def reset(key: Optional[str] = None,
+              subkey: Optional[str] = None) -> None:
         """
         Resets "key" globally to default value / remove subkey
 
@@ -2961,7 +2965,7 @@ class PandasDBStorage:
 
 
 class PandasLikeDatabase:
-    def __init__(self, data: pd.DataFrame):
+    def __init__(self, data: pd.DataFrame) -> None:
         """
         Construct a database just using a pandas dataframe stored in the memory
 
@@ -3010,7 +3014,8 @@ class PandasLikeDatabase:
         # return result
         return int(df.iloc[0])
 
-    def get_index_entries(self, columns: str, condition: Optional[str] = None):
+    def get_index_entries(self, columns: str,
+                          condition: Optional[str] = None) -> pd.DataFrame:
         """
         Proxy for index database get_entries method
 
@@ -3059,7 +3064,7 @@ class PandasLikeDatabase:
 # Define other database functionality
 # =============================================================================
 def db_push(params: ParamDict, pid: Optional[str] = None,
-            groupname: Optional[str] = None):
+            groupname: Optional[str] = None) -> None:
     """
     Check and if it doesn't exist make the directory 'path'
     (locking path as necessary)
@@ -3278,7 +3283,7 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
 
 
 def db_remove(params: ParamDict, filename: str, max_tries: int = 10,
-              wait: int = 2, file_kind: str = 'pending'):
+              wait: int = 2, file_kind: str = 'pending') -> None:
     """
     Remove a file (pending or lock) in a safe way (i.e. with retries and
     waiting)
@@ -3308,7 +3313,7 @@ def db_send(params: ParamDict, tablename: str,
             shortname: str, entry: Dict[str, Any],
             mode: Literal['ADD', 'SET'] = 'ADD',
             condition: Optional[str] = None,
-            groupname: Optional[str] = None):
+            groupname: Optional[str] = None) -> None:
     """
     Send an entry to the pending database list
 

@@ -12,7 +12,7 @@ Created on 2022-12-13 at 11:32
 import ast
 import os
 import apero as apero_pkg
-from typing import Dict, List
+from typing import Any, Dict, List, Union
 
 from aperocore.base import base
 from aperocore.core import drs_log
@@ -39,14 +39,13 @@ textentry = drs_lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_documentation.py
 
     :param kwargs: any additional keywords
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Result returned by the APERO startup runner.
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
@@ -65,11 +64,22 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> None:
+    """Placeholder callback for the startup runner.
+
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter object created by startup.
+    :return: None.
+    """
     pass
 
 
 def get_all_pyfiles(path: str) -> List[str]:
+    """Collect Python source file paths below a directory.
+
+    :param path: Directory tree to search.
+    :return: Paths to all files with a ``.py`` suffix.
+    """
     # get all python files in a path
     pyfiles = []
     for root, dirs, files in os.walk(path):
@@ -79,7 +89,13 @@ def get_all_pyfiles(path: str) -> List[str]:
     return pyfiles
 
 
-def check_for_missing_docstrings(path: str) -> Dict[str, List[str]]:
+def check_for_missing_docstrings(
+        path: str) -> Dict[str, Union[str, List[str]]]:
+    """Print and collect functions without docstrings under a directory.
+
+    :param path: Directory tree containing Python source files.
+    :return: File paths mapped to missing function names or parse errors.
+    """
     # get all python files in path
     pyfiles = get_all_pyfiles(path)
     # storage for output
@@ -125,7 +141,12 @@ def check_for_missing_docstrings(path: str) -> Dict[str, List[str]]:
 
 
 
-def check_for_usused_functions(path: str) -> Dict[str, List[str]]:
+def check_for_usused_functions(path: str) -> None:
+    """Print bytecode calls that appear not to be consumed.
+
+    :param path: Directory tree containing Python source files to inspect.
+    :return: None.
+    """
     # get all python files in path
     pyfiles = get_all_pyfiles(path)
 

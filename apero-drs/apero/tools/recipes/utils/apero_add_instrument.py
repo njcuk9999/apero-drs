@@ -66,7 +66,12 @@ class AperoElement:
         else:
             print('Kind not recognized')
 
-    def process_dir(self, kwargdict: dict[str, str]):
+    def process_dir(self, kwargdict: dict[str, str]) -> None:
+        """Create this element's target directory.
+
+        :param kwargdict: Values used to format the element path.
+        :return: None.
+        """
         # get the relative path for this os
         relpath = self.get_rel_path()
         # make sure all arguments all pushed into relpath
@@ -78,7 +83,12 @@ class AperoElement:
         # if path doesn't exist create this directory
         os.makedirs(path, exist_ok=True)
 
-    def process_file_copy(self, kwargdict: dict[str, str]):
+    def process_file_copy(self, kwargdict: dict[str, str]) -> None:
+        """Copy the configured file from the source instrument.
+
+        :param kwargdict: Values used to format source and target paths.
+        :return: None.
+        """
         # get the relative path for this os
         rel_inpath = self.get_rel_path()
         # make sure all arguments all pushed into relpath
@@ -123,7 +133,12 @@ class AperoElement:
         with open(outpath, 'w') as f:
             f.write(content)
 
-    def process_multi_file_copy(self, kwargdict: dict[str, str]):
+    def process_multi_file_copy(self, kwargdict: dict[str, str]) -> None:
+        """Copy matching files while substituting the configured wildcard.
+
+        :param kwargdict: Values used to format source and target paths.
+        :return: None.
+        """
 
         wildcard = '{' + self.wildcard + '}'
         # replace the wildcard
@@ -158,7 +173,12 @@ class AperoElement:
             # process single file copy and update
             self.process_single_file_copy(inpath, tmp_outpath, kwargdict)
 
-    def process_file_edit(self, kwargdict: dict[str, str]):
+    def process_file_edit(self, kwargdict: dict[str, str]) -> None:
+        """Apply configured edits to a file in its target location.
+
+        :param kwargdict: Values used to format paths and edit content.
+        :return: None.
+        """
         # get the relative path for this os
         rel_path = self.get_rel_path()
         # make sure all arguments all pushed into relpath
@@ -191,11 +211,21 @@ class AperoElement:
             f.write(content)
 
     def process_edits(self, content: str, kwargdict: Dict[str, str]) -> str:
+        """Apply all configured edits to a text value.
+
+        :param content: Original file content.
+        :param kwargdict: Values used to format edit templates.
+        :return: Updated file content.
+        """
         for edit in self.edits:
             content = self.edits[edit].process(content, kwargdict)
         return content
 
     def get_rel_path(self) -> str:
+        """Return this element's dotted path as an operating-system path.
+
+        :return: Relative filesystem path for this element.
+        """
         # set the extension to None at first
         extension = None
         # get the relative path
@@ -256,7 +286,14 @@ class AperoEdit:
         # return content
         return content
 
-    def replace_line(self, content: str, kwargsdict) -> str:
+    def replace_line(self, content: str,
+                     kwargsdict: Dict[str, str]) -> str:
+        """Replace the configured line using target instrument values.
+
+        :param content: Text containing the line to replace.
+        :param kwargsdict: Values used to format old and new lines.
+        :return: Updated text.
+        """
         # get inkwargsdict
         inkwargsdict = self.inkwargs(kwargsdict)
         # get current and new line
@@ -269,7 +306,14 @@ class AperoEdit:
         # return content
         return content
 
-    def replace_element(self, content: str, kwargsdict) -> str:
+    def replace_element(self, content: str,
+                        kwargsdict: Dict[str, str]) -> str:
+        """Replace the configured content block in a text value.
+
+        :param content: Text containing the content block to replace.
+        :param kwargsdict: Values used to format the replacement templates.
+        :return: Updated text.
+        """
         # get inkwargsdict
         inkwargsdict = self.inkwargs(kwargsdict)
         # deal with user definition being wrong
@@ -315,7 +359,8 @@ class AperoEdit:
         # otherwise we replace current content with new content
         else:
             # set the content to current content
-            inkwargsdict['content'] = self.current_content.format(**inkwargsdict)
+            inkwargsdict['content'] = self.current_content.format(
+                **inkwargsdict)
             # construct the find string
             current_string = self.content.format(**inkwargsdict)
             # set the content to the new content
@@ -330,6 +375,11 @@ class AperoEdit:
         return content
 
     def inkwargs(self, kwargsdict: Dict[str, str]) -> Dict[str, str]:
+        """Build source-instrument values for formatting existing content.
+
+        :param kwargsdict: Target instrument values and source instrument.
+        :return: Formatting values describing the source instrument.
+        """
         instrument_name = str(kwargsdict['prev_inst'])
         inkwargsdict = dict()
         inkwargsdict['instrument'] = instrument_name
@@ -358,7 +408,14 @@ class AperoEdit:
             index = min(len(content), after + 1)
         return index
 
-    def add_line(self, content: str, kwargsdict) -> str:
+    def add_line(self, content: str,
+                 kwargsdict: Dict[str, str]) -> str:
+        """Insert the configured line before or after its anchor.
+
+        :param content: Text receiving the new line.
+        :param kwargsdict: Values used to format the line template.
+        :return: Updated text.
+        """
         # get the line to add
         line = self.line.format(**kwargsdict)
         # get where we need to split
@@ -587,7 +644,8 @@ ELEMENTS['tools/instrument dir'] = element
 # =============================================================================
 # Define functions
 # =============================================================================
-def main():
+def main() -> None:
+    """Interactively create a new instrument's initial file structure."""
     # -------------------------------------------------------------------------
     # ask for authors initials
     author = input('\n\nAuthor initials (e.g. NJC): ')

@@ -477,7 +477,8 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
 
 
 def debug_file_envelope(recipe: DrsRecipe, params: ParamDict,
-                        infile: DrsFitsFile, dlist: List[np.ndarray]):
+                        infile: DrsFitsFile,
+                        dlist: List[np.ndarray]) -> None:
     """
     Produce the background DEBUG file for `correction_lower_envelope`
 
@@ -531,7 +532,7 @@ def debug_file_envelope(recipe: DrsRecipe, params: ParamDict,
 
 
 def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
-               dlist: List[np.ndarray]):
+               dlist: List[np.ndarray]) -> None:
     """
     Produce the background DEBUG file
 

@@ -104,6 +104,11 @@ SIMBAD_EPOCH = 2000.0
 # Define functions
 # =============================================================================
 def load_params(params: ParamDict) -> ParamDict:
+    """Load finder-chart settings and normalize their physical units.
+
+    :param params: APERO parameter dictionary to update.
+    :return: Updated parameters, including the normalized ``ARI_FINDER`` map.
+    """
     # set function name
     func_name = __NAME__ + '.load_params()'
     # check if we already have params loaded (don't load twice)
@@ -211,7 +216,12 @@ def load_params(params: ParamDict) -> ParamDict:
     return params
 
 
-def copy_finder_charts(params: ParamDict):
+def copy_finder_charts(params: ParamDict) -> None:
+    """Copy local finder-chart PDFs to the configured remote directory.
+
+    :param params: APERO parameters containing local and remote paths.
+    :return: None. Runs the configured rsync transfer.
+    """
     # get the finder directory
     finder_dir = params['ARI_FINDER']['directory']
     # get the ssh directory
@@ -232,10 +242,16 @@ def copy_finder_charts(params: ParamDict):
 
 def create_finder_chart(params: ParamDict, objname: str,
                         it: int, object_table: pd.DataFrame,
-                        skip_done: bool = False):
+                        skip_done: bool = False) -> None:
     """
-    Get all objects and push into finder chart one by one
-    :return:
+    Create a finder chart for one row of the object table.
+
+    :param params: APERO parameters containing finder-chart settings.
+    :param objname: Object name used for the output PDF filename.
+    :param it: Row index of the object in ``object_table``.
+    :param object_table: Astrometric object table containing target metadata.
+    :param skip_done: Skip generation when the object's PDF already exists.
+    :return: None. Writes the finder chart PDF when generation is enabled.
     """
     # print progress
     # log: Creating finder
@@ -299,7 +315,7 @@ def from_apero_objtable(it: int, object_table: pd.DataFrame) -> Dict[str, Any]:
 
 
 def make_finder_chart(params: ParamDict, objname: str, date: Time,
-                      objdict: Dict[str, Any], directory: str):
+                      objdict: Dict[str, Any], directory: str) -> None:
     """
     Using an object name, an astropy time and a dictionary of the target
     object parameters create the finder chart for the object
@@ -319,6 +335,7 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
         - PMRA: float, the proper motion in right ascension (mas/yr)
         - PMDE: float, the proper motion in declination (mas/yr)
 
+    :return: None. Writes the multi-page finder chart PDF.
     """
     # get parameters from params
     radius = params['ARI_FINDER']['RADIUS']
@@ -447,6 +464,12 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
 
 def propagate_coords(objdata: Dict[str, Any], obs_time: Time
                      ) -> Tuple[SkyCoord, Time]:
+    """Propagate object coordinates from their catalog epoch to observation.
+
+    :param objdata: Object astrometry mapping with position, motion, and epoch.
+    :param obs_time: Observation time used as the propagation epoch.
+    :return: Propagated sky coordinates and the observation time.
+    """
     # deal with distance
     if objdata['PLX'] <= 0:
         distance = None
@@ -476,6 +499,16 @@ def propagate_coords(objdata: Dict[str, Any], obs_time: Time
 def setup_wcs(image_shape: Tuple[int, int], cent_coords: SkyCoord,
               pixel_scale: uu.Quantity, rotation: uu.Quantity,
               flip_x: bool, flip_y: bool) -> WCS:
+    """Build a two-dimensional tangent-plane WCS for a finder chart.
+
+    :param image_shape: Image height and width in pixels.
+    :param cent_coords: Sky coordinate placed at the image center.
+    :param pixel_scale: Angular pixel size.
+    :param rotation: Position-angle rotation quantity.
+    :param flip_x: Whether to flip the horizontal axis.
+    :param flip_y: Whether to flip the vertical axis.
+    :return: Configured celestial WCS.
+    """
     # need to set up a wcs
     naxis2, naxis1 = image_shape
     pix_scale = pixel_scale.to(uu.deg / uu.pixel).value
@@ -501,6 +534,14 @@ def setup_wcs(image_shape: Tuple[int, int], cent_coords: SkyCoord,
 
 def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
                      radius: uu.Quantity) -> Dict[str, List[float]]:
+    """Query Gaia sources near a propagated target position.
+
+    :param params: APERO parameters containing finder search settings.
+    :param coords: Observation-epoch center coordinate.
+    :param obstime: Observation time used for proper-motion expansion.
+    :param radius: Search radius around the observation coordinate.
+    :return: Gaia source columns as lists, propagated for chart rendering.
+    """
     # get parameters from params
     max_pm = params['ARI_FINDER']['MAX_PM']
     # get the gaia time
@@ -713,7 +754,7 @@ def get_2mass_field(params: ParamDict, obs_coords: SkyCoord, obs_time: Time,
 
 def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
                       obs_coords: SkyCoord, obs_time: Time,
-                      radius: uu.Quantity):
+                      radius: uu.Quantity) -> Dict[str, List[float]]:
     """
     for each source in gaia sources cross match with the 2mass/Gaia catalog
 
@@ -724,7 +765,7 @@ def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
     :param radius: Quantity, the radius of the search (should be at least
                    field_of_view / sqrt(2) in size so full image is filled
                    with sources
-    :return:
+    :return: Gaia source mapping augmented with J, H, and K magnitudes.
     """
     # get parameters from params
     sigma_limit = params['ARI_FINDER']['SIGMA_LIMIT']
@@ -802,8 +843,19 @@ def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
     return gaia_sources
 
 
-def seed_image(gaia_sources, pixel_scale, obs_coords, fwhm, field_of_view,
-               sigma_limit, band, rotation, flip_x, flip_y, scale_factor):
+def seed_image(
+    gaia_sources: Dict[str, List[float]],
+    pixel_scale: uu.Quantity,
+    obs_coords: SkyCoord,
+    fwhm: uu.Quantity,
+    field_of_view: uu.Quantity,
+    sigma_limit: float,
+    band: str,
+    rotation: float,
+    flip_x: bool,
+    flip_y: bool,
+    scale_factor: float,
+) -> Tuple[np.ndarray, WCS]:
     """
     Create the image WCS and seed all gaia soirces for band at their co
     """
@@ -861,8 +913,23 @@ def seed_image(gaia_sources, pixel_scale, obs_coords, fwhm, field_of_view,
     return image, wcs
 
 
-def plot_map1(params: ParamDict, frame, image, wcs, obs_coords, title,
-              field_of_view, pixel_scale, scale_factor):
+def plot_map1(params: ParamDict, frame: Any, image: np.ndarray,
+              wcs: WCS, obs_coords: SkyCoord, title: str,
+              field_of_view: uu.Quantity, pixel_scale: uu.Quantity,
+              scale_factor: float) -> None:
+    """Render the primary finder-chart image and orientation metadata.
+
+    :param params: APERO parameters containing chart annotations and scale.
+    :param frame: Matplotlib axes receiving the image and overlays.
+    :param image: Seeded image array to display.
+    :param wcs: Image world-coordinate system.
+    :param obs_coords: Observation-centered coordinate used for markers.
+    :param title: Chart title.
+    :param field_of_view: Angular field dimensions.
+    :param pixel_scale: Angular size of one pixel.
+    :param scale_factor: Scale multiplier used for the displayed image.
+    :return: None. Draws the primary panel into ``frame``.
+    """
     # get parameters from params
     compass_frac = params['ARI_FINDER']['COMPASS_FRAC']
     scale_size = params['ARI_FINDER']['SCALE_SIZE']

@@ -67,6 +67,11 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
     """Create retained daily and weekly backups of LOCAL_DATA_DIR."""
 
     def __init__(self, status: str = "pending") -> None:
+        """Initialize the local-data backup task.
+
+        :param status: Initial asynchronous task status.
+        :return: None. Sets the task name and description.
+        """
         name = "Local Data Backup Task"
         description = (
             "Create compressed backups of LOCAL_DATA_DIR and keep "
@@ -91,6 +96,11 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         stop_event = params.get("STOP_EVENT")
 
         def tlog(message: str) -> None:
+            """Forward a message to the optional task logger.
+
+            :param message: Text to write to the task log.
+            :return: None. Ignores failures from the injected logger.
+            """
             if callable(task_logger):
                 try:
                     task_logger(message)

@@ -79,7 +79,7 @@ def _styles() -> Dict[str, ParagraphStyle]:
     return out
 
 
-def _kv_table(rows: List[List[Any]], styles) -> Table:
+def _kv_table(rows: List[List[Any]], styles: Any) -> Table:
     """Build a 2-column key/value table for the summary block."""
     data = []
     for key, val in rows:
@@ -97,7 +97,7 @@ def _kv_table(rows: List[List[Any]], styles) -> Table:
     return tbl
 
 
-def _error_box(error_lines: List[str], styles) -> List[Any]:
+def _error_box(error_lines: List[str], styles: Any) -> List[Any]:
     """Render error lines as red-on-black monospace paragraphs in a box."""
     inner = []
     for line in error_lines or []:

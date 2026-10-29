@@ -36,7 +36,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 try:
     import yaml
@@ -68,7 +68,7 @@ def _is_null(value: Any) -> bool:
     return False
 
 
-def _iter_yaml_files(root: Path):
+def _iter_yaml_files(root: Path) -> Iterator[Path]:
     """Yield every astrometric ``*.yaml`` under ``root``.
 
     Includes flat-layout entries directly under ``root`` and any
@@ -143,7 +143,12 @@ def _atomic_write(path: Path, entry: Dict[str, Any]) -> None:
     os.replace(tmp, path)
 
 
-def main(argv=None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
+    """Backfill first-update metadata from legacy provenance notes.
+
+    :param argv: Optional command-line argument list; defaults to process args.
+    :return: Exit status, zero on success and non-zero on failure.
+    """
     parser = argparse.ArgumentParser(
         description=(
             "Back-fill FIRST_UPDATED / FIRST_AUTHOR from legacy "

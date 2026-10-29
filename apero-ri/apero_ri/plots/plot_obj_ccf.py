@@ -197,6 +197,11 @@ def _load_ccf_data(
     """
 
     def _row_mid_obs_mjd(row: Dict[str, Any]) -> Optional[float]:
+        """Parse an observation timestamp as MJD when possible.
+
+        :param row: CCF table row with an optional ``MID_OBS_TIME`` field.
+        :return: MJD value, or None when the field is empty or invalid.
+        """
         raw = row.get("MID_OBS_TIME")
         if raw is None:
             return None
@@ -212,6 +217,12 @@ def _load_ccf_data(
                 return None
 
     def _equally_spaced_indices(nvals: int, nout: int) -> List[int]:
+        """Choose up to ``nout`` evenly spaced indices from a sequence.
+
+        :param nvals: Number of available values.
+        :param nout: Desired number of indices.
+        :return: Unique, ascending indices within the input range.
+        """
         if nvals <= 0 or nout <= 0:
             return []
         if nout >= nvals:

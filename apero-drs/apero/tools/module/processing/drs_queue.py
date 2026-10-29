@@ -182,7 +182,7 @@ class QueueLock:
     stale and is taken over.
     """
     def __init__(self, params: ParamDict, timeout: float = 60.0,
-                 wait: float = 1.0):
+                 wait: float = 1.0) -> None:
         """
         Construct the queue lock
 
@@ -280,6 +280,10 @@ class QueueLock:
             pass
 
     def __enter__(self) -> 'QueueLock':
+        """Acquire the queue lock and return this context manager.
+
+        :return: This locked queue context manager.
+        """
         # acquire the lock on entering the context
         self.acquire()
         return self
@@ -384,7 +388,7 @@ def setup_queue_directories(params: ParamDict) -> Dict[str, str]:
 
 
 def add_run_list_to_queue(params: ParamDict, runlist: List[Any],
-                          drs_group: Optional[str] = None):
+                          drs_group: Optional[str] = None) -> None:
     """
     Add a run list to the queue
 
@@ -1501,7 +1505,12 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     rkwargs = dict(pid=os.getpid(), owner=owner, cmd=label)
     proc_id = drs_queue_procs.register(proc_dir, 'run', label, **rkwargs)
 
-    def _on_claim(qids: List[str]):
+    def _on_claim(qids: List[str]) -> None:
+        """Persist queue IDs claimed by the active run process.
+
+        :param qids: Queue IDs currently being processed.
+        :return: None. Updates the process registry record.
+        """
         drs_queue_procs.update(proc_dir, proc_id, qids=qids)
 
     summary = dict(n_stopped=0)
@@ -1612,7 +1621,7 @@ def _queue_run_cycles(params: ParamDict, cores: int, mpmode: str,
     return summary
 
 
-def queue_status(params: ParamDict):
+def queue_status(params: ParamDict) -> None:
     """
     Status mode: show an interactive terminal (cli) view of the queue
 
@@ -1753,7 +1762,7 @@ def reset_queue(params: ParamDict, states: List[str],
     return len(entries)
 
 
-def queue_reset(params: ParamDict):
+def queue_reset(params: ParamDict) -> None:
     """
     Reset mode: remove all run yaml files (and group directories) from
     the queue state directories
@@ -1811,7 +1820,7 @@ def queue_reset(params: ParamDict):
     WLOG(params, 'info', msg)
 
 
-def queue_init(params: ParamDict):
+def queue_init(params: ParamDict) -> None:
     """
     Init mode: interactively create a named batch template file
 
@@ -2082,7 +2091,7 @@ def batch_queue(params: ParamDict, per_batch: int,
     return summary
 
 
-def queue_batch(params: ParamDict):
+def queue_batch(params: ParamDict) -> Dict[str, Any]:
     """
     Batch mode: create (and optionally submit) sbatch scripts for the
     next unfinished group in the queue (cli wrapper around batch_queue)
@@ -2096,7 +2105,7 @@ def queue_batch(params: ParamDict):
 
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return: None
+    :return: Batch operation summary, including script and submission status.
     """
     inputs = params['INPUTS'] if 'INPUTS' in params else dict()
 
@@ -2286,7 +2295,7 @@ def _chunk_list(values: List[str], size: int) -> List[List[str]]:
 
 
 def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
-                              dry_run: bool):
+                              dry_run: bool) -> None:
     """
     Write one executable shell script for one queue chunk
 
@@ -2339,7 +2348,7 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
 def _write_chain_worker_script(worker_path: str, template: Dict[str, Any],
                                group: str, task_index_path: str,
                                n_tasks: int, parallel: int,
-                               logs_dir: str, errors_dir: str):
+                               logs_dir: str, errors_dir: str) -> None:
     """
     Write one Slurm array worker script for one queue group
 
@@ -2395,7 +2404,7 @@ def _write_chain_worker_script(worker_path: str, template: Dict[str, Any],
 
 def _write_chain_submit_script(submit_path: str,
                                worker_meta: List[Dict[str, Any]],
-                               chain_name: str):
+                               chain_name: str) -> None:
     """
     Write the top-level chain submission script
 
@@ -2609,13 +2618,13 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
     return summary
 
 
-def queue_chain(params: ParamDict):
+def queue_chain(params: ParamDict) -> Dict[str, Any]:
     """
     Chain mode: build a dependency-chained set of Slurm array jobs
 
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return: None
+    :return: Chain operation summary, including scripts and submission status.
     """
     inputs = params['INPUTS'] if 'INPUTS' in params else dict()
 
@@ -2678,7 +2687,7 @@ def queue_chain(params: ParamDict):
         WLOG(params, '', textentry('40-513-00015', args=wargs))
 
 
-def queue_system(params: ParamDict):
+def queue_system(params: ParamDict) -> None:
     """
     System mode (slow fallback): move a run yaml file from running to
     complete/failed
@@ -2800,7 +2809,7 @@ def queue_action_core(params: ParamDict, qaction: str,
     return result
 
 
-def queue_action(params: ParamDict):
+def queue_action(params: ParamDict) -> None:
     """
     Action mode: run one explicit queue action from command line inputs
 
@@ -2971,7 +2980,7 @@ def _stop_running_entry(params: ParamDict, queue_path: str, group: str,
     return 0, 0
 
 
-def _set_task_pid(task: Dict[str, str], pid: Optional[int]):
+def _set_task_pid(task: Dict[str, str], pid: Optional[int]) -> None:
     """
     Store/remove a running process pid in the task yaml file
 
@@ -3027,6 +3036,11 @@ def _kill_pid(pid: int) -> bool:
         return True
 
     def _signal(sig: int) -> Optional[bool]:
+        """Signal the task process or process group.
+
+        :param sig: Signal number to send.
+        :return: True/False when the process is gone/blocked, else None.
+        """
         try:
             if group:
                 os.killpg(pid, sig)
@@ -3039,6 +3053,11 @@ def _kill_pid(pid: int) -> bool:
         return None
 
     def _wait_gone(n_checks: int) -> Optional[bool]:
+        """Poll briefly for the task process to exit.
+
+        :param n_checks: Number of process-existence checks to perform.
+        :return: True/False when gone/blocked, else None after all checks.
+        """
         for _ in range(n_checks):
             time.sleep(0.1)
             try:
@@ -3243,7 +3262,7 @@ def _ask_int(question: str, default: int, minimum: int = 1) -> int:
 
 def _print_status_page(entries: List[Dict[str, str]], position: int,
                        page: int, state_colors: Dict[str, str],
-                       colors: Any):
+                       colors: Any) -> None:
     """
     Print one page of the queue status pager
 
@@ -3280,7 +3299,9 @@ def _print_status_page(entries: List[Dict[str, str]], position: int,
         print('{0}    [{1}] {2:<9} {3}{4}'.format(*eargs))
 
 
-def _progress(progress: Optional[Callable[[str], None]], message: str):
+def _progress(
+    progress: Optional[Callable[[str], None]], message: str
+) -> None:
     """
     Send a progress message to an optional callback
 
@@ -3402,11 +3423,23 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
     run_paths = {task['run_file']: task['run_path'] for task in tasks}
     starts = dict()
 
-    def _started(task: Dict[str, str]):
+    def _started(task: Dict[str, str]) -> None:
+        """Record task start time and report it through the progress hook.
+
+        :param task: Queue task metadata containing run file and short name.
+        :return: None. Updates local timing state and progress output.
+        """
         starts[task['run_file']] = time.time()
         _progress(progress, 'START {0}'.format(labels[task['run_file']]))
 
-    def _finished(run_file: str, success: bool, tail: str):
+    def _finished(run_file: str, success: bool, tail: str) -> None:
+        """Record task completion and report status or failure details.
+
+        :param run_file: Queue run-file identifier.
+        :param success: Whether the task completed successfully.
+        :param tail: Tail of task output, used in failure warnings.
+        :return: None. Updates results and emits progress messages.
+        """
         results[run_file] = success
         duration = time.time() - starts.get(run_file, time.time())
         status = 'DONE  ' if success else 'FAILED'
@@ -3467,7 +3500,15 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
         shared = manager.list()
 
         # small wrapper to push results into the shared list
-        def _process_target(_task, _shared):
+        def _process_target(
+            _task: Dict[str, str], _shared: Any
+        ) -> None:
+            """Run one queue task and append its result to shared storage.
+
+            :param _task: Task metadata passed to the worker.
+            :param _shared: Multiprocessing manager list for worker results.
+            :return: None. Appends the task result to shared storage.
+            """
             _shared.append(_run_task(_task))
         # run the tasks in chunks of size cores
         n_reported = 0

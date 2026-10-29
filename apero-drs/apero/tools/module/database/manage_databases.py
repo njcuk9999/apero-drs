@@ -58,7 +58,7 @@ textentry = drs_lang.textentry
 # =============================================================================
 # Define general functions
 # =============================================================================
-def kill(params: ParamDict, timeout: int = 60):
+def kill(params: ParamDict, timeout: int = 60) -> None:
     """
     Kill all processes that are in the database yaml database from the specified
     user that are greater than timeout
@@ -67,7 +67,7 @@ def kill(params: ParamDict, timeout: int = 60):
     :param timeout: time in seconds, the minimum time a sql process has been
                     running to kill it (if this is too low it will try to kill
                     itself which isn't recommended)
-    :return:
+    :return: None.
     """
     # get database parameters from base
     dparams = base.DPARAMS
@@ -118,7 +118,7 @@ def kill(params: ParamDict, timeout: int = 60):
 
 
 def export_database(params: ParamDict, recipe: DrsRecipe,
-                    database_name: str, outfilename: str):
+                    database_name: str, outfilename: str) -> None:
     """
     Exports a given database "database_name" to "outfilename" (csv file)
 
@@ -127,7 +127,7 @@ def export_database(params: ParamDict, recipe: DrsRecipe,
                           object, lang)
     :param outfilename: str, the output filepath for the csv file
 
-    :return: None, writes outfilename
+    :return: None.
     """
     # ----------------------------------------------------------------------
     # get database list
@@ -167,7 +167,8 @@ def export_database(params: ParamDict, recipe: DrsRecipe,
 
 def import_database(params: ParamDict, recipe: DrsRecipe,
                     database_name: str, infilename: str,
-                    joinmode: Literal["fail", "replace", "append"] = 'replace'):
+                    joinmode: Literal["fail", "replace", "append"] = 'replace'
+                    ) -> None:
     """
     Imports a given csv file "infilename" to database "database_name"
 
@@ -179,7 +180,7 @@ def import_database(params: ParamDict, recipe: DrsRecipe,
                      - if 'replace' then current database is deleted first,
                      - if 'append' adds the infile to bottom of current database
 
-    :return: None, writes to database
+    :return: None.
     """
     # ----------------------------------------------------------------------
     # get database list
@@ -243,6 +244,12 @@ def import_database(params: ParamDict, recipe: DrsRecipe,
 
 def list_databases(params: ParamDict,
                    shortname: str) -> Dict[str, DatabaseM]:
+    """Create the database managers used by an APERO recipe.
+
+    :param params: APERO parameter dictionary.
+    :param shortname: Recipe short name used by the database managers.
+    :return: Mapping from database kind to its manager.
+    """
     # set up storage
     databases = dict()
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -266,7 +273,15 @@ def list_databases(params: ParamDict,
 
 def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
                       dbkind: Union[str, List[str]] = 'all',
-                      verbose: bool = False):
+                      verbose: bool = False) -> None:
+    """Create the selected APERO database tables.
+
+    :param params: APERO parameter dictionary.
+    :param skip: Database kinds that should not be installed.
+    :param dbkind: One database kind or ``'all'`` for every supported kind.
+    :param verbose: Whether to log each table creation.
+    :return: None.
+    """
     # deal with skip
     if skip is None:
         skip = []
@@ -736,13 +751,13 @@ def get_reject_database(params: ParamDict,
 # =============================================================================
 # Define misc functions
 # =============================================================================
-def reset_db_pending(params):
+def reset_db_pending(params: ParamDict) -> None:
     """
     Reset the pending object database - this is for testing purposes only
 
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return: None, updates local object database
+    :return: None.
     """
     # get the path to the database
     db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))

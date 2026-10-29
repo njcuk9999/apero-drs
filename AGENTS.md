@@ -1,5 +1,10 @@
 # APERO Agent Guidelines
 
+## Temporary files
+
+- If the `TMPDIR` environment variable is set, use it as the location for
+  temporary files instead of `/tmp`.
+
 ## Package layout
 
 - `apero-core/aperocore` contains reusable, DRS-independent functionality.

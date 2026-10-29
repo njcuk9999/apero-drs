@@ -105,6 +105,11 @@ PM_TABLE = [
 # Helpers
 # ---------------------------------------------------------------
 def _f(value: Any) -> Optional[float]:
+    """Convert a target-info value to a finite float when possible.
+
+    :param value: Value read from the target information table.
+    :return: Finite numeric value, or None when conversion fails.
+    """
     if value is None:
         return None
     try:

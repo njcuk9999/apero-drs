@@ -295,6 +295,13 @@ def _make_snr_figure(
 
     # -------------------------------------------------------------------------
     def _add_series(pts: list, color: str, legend_label: str) -> None:
+        """Add passing and failing points as separate scatter series.
+
+        :param pts: Point tuples containing x, y, and QC-pass values.
+        :param color: Color used for the series markers.
+        :param legend_label: Label displayed in the figure legend.
+        :return: None. Adds scatter renderers to the enclosing figure.
+        """
         pass_x = [p[0] for p in pts if p[2]]
         pass_y = [p[1] for p in pts if p[2]]
         fail_x = [p[0] for p in pts if not p[2]]

@@ -225,7 +225,13 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     return params
 
 
-def list_profiles(params: ParamDict):
+def list_profiles(params: ParamDict) -> bool:
+    """List available ARI profiles or validate the requested profile.
+
+    :param params: APERO parameters containing profile and listing options.
+    :return: True when the requested profile exists, otherwise False when
+        listing was requested; raises if a required profile is missing.
+    """
     # get the profiles argument
     view_profiles = params['INPUTS']['PROFILES']
     # get the requested profile name
@@ -263,6 +269,11 @@ def list_profiles(params: ParamDict):
 
 
 def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
+    """Load persisted ARI object state, excluding objects selected for redo.
+
+    :param params: APERO and ARI configuration parameters.
+    :return: Object instances keyed by object name, sorted by name.
+    """
     # get a list of objects from astrometric database
     astrometric_obj_list = _get_object_table(params)
     # get the filetypes for these params
@@ -328,6 +339,13 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
 def find_new_objects(params: ParamDict, recipe: DrsRecipe,
                      object_classes: Dict[str, AriObject]
                      ) -> Dict[str, AriObject]:
+    """Add current file/rejection statistics and remove empty objects.
+
+    :param params: APERO and ARI configuration parameters.
+    :param recipe: Recipe providing the database short name.
+    :param object_classes: Existing object instances keyed by object name.
+    :return: Updated objects that have at least one raw file.
+    """
     # -------------------------------------------------------------------------
     # get the index database from file index database
     indexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
@@ -381,6 +399,12 @@ def find_new_objects(params: ParamDict, recipe: DrsRecipe,
 
 def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
                       ) -> Tuple[Dict[str, AriObject], TableFile]:
+    """Generate object pages and the object table page.
+
+    :param params: APERO and ARI configuration parameters.
+    :param object_classes: Objects to render into pages and table rows.
+    :return: The updated objects and generated object table file.
+    """
     # log progress
     # log: Counting LBL files
     WLOG(params, '', textentry('40-514-00016'))
@@ -403,6 +427,12 @@ def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
 
 
 def make_recipe_pages(params: ParamDict, recipe: DrsRecipe) -> TableFile:
+    """Generate the recipe table page from the log database.
+
+    :param params: APERO and ARI configuration parameters.
+    :param recipe: Recipe providing the database short name.
+    :return: Generated recipe table file.
+    """
     # ------------------------------------------------------------------
     # log progress
     # log: Compiling apero log table (this may take a while)
@@ -474,6 +504,12 @@ def make_calib_page(params: ParamDict, recipe: DrsRecipe) -> TableFile:
 
 def make_observation_page(params: ParamDict,
                           object_classes: Dict[str, AriObject]) -> TableFile:
+    """Generate the observation table page for the selected objects.
+
+    :param params: APERO and ARI configuration parameters.
+    :param object_classes: Objects used to build the observation table.
+    :return: Generated observation table file.
+    """
     # log progress
     # log: Making observation table
     WLOG(params, '', textentry('40-514-00020'))
@@ -482,7 +518,14 @@ def make_observation_page(params: ParamDict,
     return obs_table
 
 
-def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject]):
+def save_yamls(params: ParamDict,
+               object_classes: Dict[str, AriObject]) -> None:
+    """Persist each ARI object to its YAML file.
+
+    :param params: APERO and ARI configuration parameters.
+    :param object_classes: Objects to save.
+    :return: None. Writes one YAML file per object.
+    """
     # -------------------------------------------------------------------------
     # Deal with objects
     # -------------------------------------------------------------------------
@@ -494,6 +537,11 @@ def save_yamls(params: ParamDict, object_classes: Dict[str, AriObject]):
 
 
 def upload(params: ParamDict) -> None:
+    """Upload the generated ARI site and home content to the remote host.
+
+    :param params: APERO parameters containing remote copy configuration.
+    :return: None. Sends generated directories using the configured rsync.
+    """
     # get the base_path page (above ari_dir level)
     base_path = str(os.path.join(params['PATH.OTHER'], 'ari',
                                  '_build', 'html'))
@@ -532,6 +580,11 @@ def upload(params: ParamDict) -> None:
 # Object worker functions
 # -----------------------------------------------------------------------------
 def _get_object_table(params: ParamDict) -> pd.DataFrame:
+    """Load astrometric objects into a pandas table, applying ARI filters.
+
+    :param params: APERO and ARI configuration parameters.
+    :return: DataFrame containing the selected astrometric objects.
+    """
     # -------------------------------------------------------------------------
     # set up condition for filtering (callable predicate over yaml entry)
     condition = None

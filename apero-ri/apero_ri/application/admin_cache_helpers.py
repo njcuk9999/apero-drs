@@ -3,6 +3,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict
 
 from apero_ri.core.plot_cache import (
     CACHE_SECTIONS,
@@ -12,8 +13,15 @@ from apero_ri.core.plot_cache import (
 )
 
 
-def build_admin_cache_context(app, perms):
-    """Build context for admin plot-cache settings page."""
+def build_admin_cache_context(
+    app: Any, perms: set[str]
+) -> Dict[str, Any]:
+    """Build template context for the admin plot-cache settings page.
+
+    :param app: Application facade for local paths and cache configuration.
+    :param perms: Permission names granted to the current user.
+    :return: Context mapping with permissions, cache config, and inventory.
+    """
     data_dir = app._resolve_local_data_dir()
     cfg = load_cache_config(data_dir)
     inv = cache_inventory(data_dir)
@@ -29,8 +37,12 @@ def build_admin_cache_context(app, perms):
             pdir = cache_root / instrument / profile_id
             reset_ts = get_timing_reset_ts(pdir)
 
-            def _after_reset(entry):
-                """Return False if entry was cached before the reset point."""
+            def _after_reset(entry: Dict[str, Any]) -> bool:
+                """Check whether a cache entry is newer than its reset point.
+
+                :param entry: Cache metadata mapping with an optional timestamp.
+                :return: True when the entry was cached after the reset.
+                """
                 if reset_ts is None:
                     return True
                 cached_at = (entry or {}).get("cached_at", "")

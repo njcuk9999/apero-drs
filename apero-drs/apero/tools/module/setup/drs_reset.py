@@ -67,7 +67,7 @@ COMMON_ASSET_DIRS = ['core', 'astrometrics']
 # =============================================================================
 # Define reset functions
 # =============================================================================
-def check_cwd(params: ParamDict):
+def check_cwd(params: ParamDict) -> None:
     """
     Check whether we are currently in a block path
 
@@ -205,7 +205,8 @@ def reset_confirmation(params: ParamDict, name: str,
         raise SystemExit('Only YES or NO are valid responses')
 
 
-def reset_tmp_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
+def reset_tmp_folders(params: ParamDict, recipe: DrsRecipe,
+                      log: bool = True) -> None:
     """
     Reset the "tmp" (preprocessed directories)
 
@@ -273,7 +274,7 @@ def reset_tmp_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
 
 
 def reset_reduced_folders(params: ParamDict, recipe: DrsRecipe,
-                          log: bool = True):
+                          log: bool = True) -> None:
     """
     Resets the reduced directory
 
@@ -340,7 +341,8 @@ def reset_reduced_folders(params: ParamDict, recipe: DrsRecipe,
     logdb.remove_entries(condition=condition)
 
 
-def reset_calibdb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
+def reset_calibdb(params: ParamDict, recipe: DrsRecipe,
+                  log: bool = True) -> None:
     """
     Wrapper for reset_dbdir - specifically for calibDB
 
@@ -375,7 +377,8 @@ def reset_calibdb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     calibdb.remove_entries(condition=condition)
 
 
-def reset_telludb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
+def reset_telludb(params: ParamDict, recipe: DrsRecipe,
+                  log: bool = True) -> None:
     """
     Wrapper for reset_dbdir - specifically for telluDB
 
@@ -414,7 +417,7 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
                 reset_path: str, log: bool = True,
                 empty_first: bool = True,
                 relative_path: Union[str, None] = None,
-                backup: bool = False):
+                backup: bool = False) -> None:
     """
     Resets a database file directory (i.e. calibDB or telluDB)
 
@@ -456,7 +459,7 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
 
 
 def copy_default_db(params: ParamDict, name: str, db_dir: str,
-                    reset_path: str):
+                    reset_path: str) -> None:
     """
     Copies reset files to a database file directory (i.e. calibDB or telluDB)
 
@@ -482,7 +485,7 @@ def copy_default_db(params: ParamDict, name: str, db_dir: str,
 
 
 def reset_log(params: ParamDict, exclude_files: Union[List[str], None] = None,
-              log: bool = True):
+              log: bool = True) -> None:
     """
     Resets the plot directory
 
@@ -513,7 +516,7 @@ def reset_log(params: ParamDict, exclude_files: Union[List[str], None] = None,
         os.makedirs(log_dir)
 
 
-def reset_plot(params: ParamDict, log: bool = True):
+def reset_plot(params: ParamDict, log: bool = True) -> None:
     """
     Resets the plot directory
 
@@ -534,7 +537,7 @@ def reset_plot(params: ParamDict, log: bool = True):
         os.makedirs(plot_dir)
 
 
-def reset_run(params: ParamDict, log: bool = True):
+def reset_run(params: ParamDict, log: bool = True) -> None:
     """
     Resets the run directory (but does not empty first)
 
@@ -550,7 +553,15 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
-def reset_lbl_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
+def reset_lbl_folders(params: ParamDict, recipe: DrsRecipe,
+                      log: bool = True) -> None:
+    """Remove LBL output folders selected by this recipe's reset settings.
+
+    :param params: APERO parameters containing the configured data paths.
+    :param recipe: Recipe whose LBL output paths are being reset.
+    :param log: Whether to log each reset operation.
+    :return: None. Removes eligible LBL output folders.
+    """
     # log progress
     # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['lbl']))
@@ -609,7 +620,8 @@ def reset_lbl_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_out_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
+def reset_out_folders(params: ParamDict, recipe: DrsRecipe,
+                      log: bool = True) -> None:
     """
     Resets the reduced directory
 
@@ -677,7 +689,7 @@ def reset_out_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
 
 
 def reset_assets(params: ParamDict, recipe: DrsRecipe,
-                 log: bool = True, reset_dbs: bool = True):
+                 log: bool = True, reset_dbs: bool = True) -> None:
     """
     Reset the Assets directory (including re-creating databases)
 
@@ -734,7 +746,7 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
         manage_databases.create_reject_database(params, pconst, databases)
 
 
-def reset_other_folder(params: ParamDict, log: bool = True):
+def reset_other_folder(params: ParamDict, log: bool = True) -> None:
     """
     Reset the Assets directory (including re-creating databases)
 
@@ -778,7 +790,7 @@ def reset_other_folder(params: ParamDict, log: bool = True):
             os.makedirs(full_dir)
 
 
-def reset_queue(params: ParamDict, log: bool = True):
+def reset_queue(params: ParamDict, log: bool = True) -> None:
     """
     Reset the processing queue so apero_queue starts empty
 
@@ -830,7 +842,16 @@ def reset_queue(params: ParamDict, log: bool = True):
     drs_queue.setup_queue_directories(params)
 
 
-def remove_all(params, path, log=True, skipfiles=None):
+def remove_all(params: ParamDict, path: str, log: bool = True,
+               skipfiles: Optional[List[str]] = None) -> None:
+    """Remove files and directories below a path, respecting skip patterns.
+
+    :param params: APERO parameters used for logging and coded errors.
+    :param path: Root path whose contents will be removed.
+    :param log: Whether to log removed paths.
+    :param skipfiles: Optional filenames or patterns to preserve.
+    :return: None. Deletes eligible files and directories.
+    """
     # deal with no skipfiles being defined
     if skipfiles is None:
         skipfiles = []
@@ -875,7 +896,8 @@ def remove_all(params, path, log=True, skipfiles=None):
     drs_lock.__remove_empty__(params, path, log=True, remove_head=False)
 
 
-def backup_all_diff(params, old_path, new_path):
+def backup_all_diff(params: ParamDict, old_path: str,
+                    new_path: str) -> None:
     """
     Back up all files that are different between paths (based on filename)
 
@@ -1011,7 +1033,8 @@ def fast_rm_remove(path: str) -> bool:
         return False
 
 
-def remove_files(params, path, log=True, skipfiles=None):
+def remove_files(params: ParamDict, path: str, log: bool = True,
+                 skipfiles: Optional[List[str]] = None) -> None:
     """
     Remove a file or add files to list_of_files
 
@@ -1191,6 +1214,12 @@ def get_filelist(params: ParamDict, recipe: DrsRecipe,
 
 
 def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
+    """Remove files selected by an APERO file-index table.
+
+    :param params: APERO parameters, including test mode and path settings.
+    :param filetable: Table containing block kind, obsdir, and filename rows.
+    :return: Number of files removed, or that would be removed in test mode.
+    """
     # get the test criteria
     test = params['INPUTS']['test']
     # deal with tqdm and print outs
@@ -1230,6 +1259,14 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
 def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
                                 filetable: Table,
                                 file_cond: str) -> Dict[str, int]:
+    """Remove file records from APERO databases using the selected table.
+
+    :param params: APERO parameters, including database and test settings.
+    :param recipe: Recipe providing the database short name.
+    :param filetable: File-index rows identifying records to remove.
+    :param file_cond: Database condition used to select matching records.
+    :return: Counts of removed records keyed by database type.
+    """
     # get the test criteria
     test = params['INPUTS']['test']
     # set up a dictionary of ints to count how many files removed from each

@@ -9,6 +9,7 @@ Created on 2019-11-09 10:44
 Version 0.0.1
 """
 import os
+from typing import Optional
 
 import requests
 import wget
@@ -71,7 +72,7 @@ def get_asset_directory(package: str = None) -> str:
     return drs_path.get_relative_folder(package, 'apero-assets')
 
 
-def update_remote_assets(params: ParamDict, indir: str):
+def update_remote_assets(params: ParamDict, indir: str) -> None:
     """
     Create a yaml file containing all checksums and create a tar file of the
     assets directory and upload to the server
@@ -79,7 +80,7 @@ def update_remote_assets(params: ParamDict, indir: str):
     :param params: ParamDict, parameter dictionary of constants
     :param indir: the input directory for local assets to be uploaded
 
-    :return:
+    :return: None. Creates checksums/archive and uploads the asset bundle.
     """
     # check that indir is correct
     if not indir.endswith(os.sep):
@@ -195,7 +196,7 @@ def update_remote_assets(params: ParamDict, indir: str):
         raise AperoCodedException(params, '09-510-00006', targs=eargs)
 
 
-def upload_assets_ssh(params: ParamDict, tar_path: str):
+def upload_assets_ssh(params: ParamDict, tar_path: str) -> None:
     """
     Upload the assets tar file to the remote server using rsync over ssh
 
@@ -290,7 +291,7 @@ def check_ari_response(params: ParamDict, response: requests.Response,
     return reply
 
 
-def upload_assets_ari(params: ParamDict, tar_path: str):
+def upload_assets_ari(params: ParamDict, tar_path: str) -> None:
     """
     Upload the assets tar file to an APERO RI server through its admin API
 
@@ -334,7 +335,8 @@ def upload_assets_ari(params: ParamDict, tar_path: str):
 
 
 def download_assets_url(params: ParamDict, servers: list,
-                        server_tarfile: str, abs_asset_path: str):
+                        server_tarfile: str,
+                        abs_asset_path: str) -> None:
     """
     Download the assets tar file from the first working public url
 
@@ -377,7 +379,7 @@ def download_assets_url(params: ParamDict, servers: list,
 
 
 def download_assets_ari(params: ParamDict, server_tarfile: str,
-                        abs_asset_path: str):
+                        abs_asset_path: str) -> None:
     """
     Download the assets tar file through the APERO RI API (token required)
 
@@ -417,7 +419,7 @@ def download_assets_ari(params: ParamDict, server_tarfile: str,
     WLOG(params, '', textentry('40-510-00015'), colour='magenta')
 
 
-def check_local_assets(params: ParamDict):
+def check_local_assets(params: ParamDict) -> bool:
     """
     Check if we need to update assets based on the check sums in the yaml file
 
@@ -427,7 +429,7 @@ def check_local_assets(params: ParamDict):
 
     :param params: ParamDict, parameter dictionary of constants
 
-    :return:
+    :return: True when local assets need updating; otherwise False.
     """
     # get path to yaml file
     _asset_path = params['IPATH.RESET_ASSETS']
@@ -489,7 +491,14 @@ def check_local_assets(params: ParamDict):
         return True
 
 
-def update_local_assets(params: ParamDict, tarfile: str = None):
+def update_local_assets(params: ParamDict,
+                        tarfile: Optional[str] = None) -> None:
+    """Update local assets from a supplied tar or configured asset source.
+
+    :param params: APERO parameters containing asset paths and options.
+    :param tarfile: Optional local assets archive to install.
+    :return: None. Updates local assets and checksum files on disk.
+    """
 
     # get the input directory
     indir = params['INPUTS'].get('INDIR', 'None')

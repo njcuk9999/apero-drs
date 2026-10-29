@@ -10,7 +10,7 @@ Created on 2020-02-04 at 13:37
 @author: cook
 """
 import sys
-from typing import List, Optional, Set
+from typing import Any, List, Optional, Set
 
 from aperocore.base import base
 from apero.base import base as apero_base
@@ -59,7 +59,14 @@ class TmpRecipe(DrsRecipe):
     """Recipe instance used by developer tools and demonstrations."""
 
     def __init__(self, instrument: str = 'None', name: Optional[str] = None,
-                 filemod=None) -> None:
+                 filemod: Any = None) -> None:
+        """Initialize a recipe wrapper for developer tooling.
+
+        :param instrument: Instrument associated with the recipe.
+        :param name: Optional recipe module name.
+        :param filemod: Optional file-definition module for the recipe.
+        :return: None. Initializes the inherited recipe state.
+        """
         # load super class
         super().__init__(instrument, name, filemod)
 
@@ -68,6 +75,11 @@ class RecipeDefinition:
     """Expose instrument recipe definitions with temporary additions."""
 
     def __init__(self, instrument: str = 'None') -> None:
+        """Load recipe definitions for the selected instrument.
+
+        :param instrument: Instrument associated with the recipe definitions.
+        :return: None. Loads the recipe module and initial definitions.
+        """
         self.instrument = instrument
         self.recipes = []
         self.mod = None
@@ -84,12 +96,11 @@ class RecipeDefinition:
         self.recipes = recipemod.recipes
         self.recipemod = recipemod
 
-    def add(self, *args):
-        """
-        Add temporary recipes to recipe definitions recipe list
+    def add(self, *args: Any) -> None:
+        """Add temporary recipe objects to the definition list.
 
-        :param args:
-        :return:
+        :param args: Candidate recipe objects; non-temporary recipes are ignored.
+        :return: None. Appends accepted temporary recipes to ``recipes``.
         """
         for arg in args:
             if isinstance(arg, TmpRecipe):
@@ -99,8 +110,13 @@ class RecipeDefinition:
 class TmpInputFile(DrsFitsFile):
     """Temporary FITS input-file definition used in developer tooling."""
 
-    def __init__(self, name, **kwargs):
-        """Initialize a temporary FITS file with the supplied definition."""
+    def __init__(self, name: str, **kwargs: Any) -> None:
+        """Initialize a temporary FITS input file definition.
+
+        :param name: Name of the temporary input file.
+        :param kwargs: File-definition values forwarded to ``DrsFitsFile``.
+        :return: None. Initializes the inherited FITS file state.
+        """
         # load super class
         super().__init__(name, **kwargs)
 
@@ -108,8 +124,13 @@ class TmpInputFile(DrsFitsFile):
 class TmpFitsFile(DrsFitsFile):
     """Temporary FITS output-file definition used in developer tooling."""
 
-    def __init__(self, name, **kwargs):
-        """Initialize a temporary FITS file with the supplied definition."""
+    def __init__(self, name: str, **kwargs: Any) -> None:
+        """Initialize a temporary FITS output file definition.
+
+        :param name: Name of the temporary output file.
+        :param kwargs: File-definition values forwarded to ``DrsFitsFile``.
+        :return: None. Initializes the inherited FITS file state.
+        """
         # load super class
         super().__init__(name, **kwargs)
 
@@ -117,8 +138,13 @@ class TmpFitsFile(DrsFitsFile):
 class TmpNpyFile(DrsFitsFile):
     """Temporary NumPy-file definition used in developer tooling."""
 
-    def __init__(self, name, **kwargs):
-        """Initialize a temporary NumPy file with the supplied definition."""
+    def __init__(self, name: str, **kwargs: Any) -> None:
+        """Initialize a temporary NumPy file definition.
+
+        :param name: Name of the temporary NumPy file.
+        :param kwargs: File-definition values forwarded to ``DrsFitsFile``.
+        :return: None. Initializes the inherited file state.
+        """
         # load super class
         super().__init__(name, **kwargs)
 
@@ -127,6 +153,11 @@ class FileDefinition:
     """Expose the active instrument's input and output file definitions."""
 
     def __init__(self, instrument: str = 'None') -> None:
+        """Load file definitions for one instrument.
+
+        :param instrument: Instrument whose file definitions are exposed.
+        :return: None. Loads the module and its output file definitions.
+        """
         self.instrument = instrument
         self.files = None
         self.out = None
@@ -150,6 +181,11 @@ class Demo:
     """
 
     def __init__(self, params: Optional[ParamDict] = None) -> None:
+        """Initialize demo helpers using supplied or loaded APERO parameters.
+
+        :param params: Optional parameter dictionary; loaded when omitted.
+        :return: None. Stores parameters and package metadata.
+        """
         # get parameters
         if params is None:
             self.params = load_functions.load_config(select.INSTRUMENTS)

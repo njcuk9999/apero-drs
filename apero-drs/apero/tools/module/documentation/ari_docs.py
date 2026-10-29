@@ -249,7 +249,7 @@ def front_matter(label: str, icon: str,
 
 
 def write_page(path: Path, label: str, icon: str, lines: List[str],
-               related: Optional[List[str]] = None):
+               related: Optional[List[str]] = None) -> None:
     """
     Write a markdown documentation page (front matter + body).
 
@@ -381,7 +381,7 @@ def catalog_table_rows(catalog_rows: List[dict],
 def build_catalog_index(catalog_rows: List[dict], outdir: Path, label: str,
                         icon: str, title: str, intro: List[str],
                         show_category: bool = False,
-                        related: Optional[List[str]] = None):
+                        related: Optional[List[str]] = None) -> None:
     """
     Write a consolidated, cross-instrument recipe/tool summary page.
 
@@ -476,6 +476,11 @@ def expand_includes(body: str) -> str:
     :return: str, the markdown body with includes expanded
     """
     def _replace(match: re.Match) -> str:
+        """Expand one include directive into its referenced Markdown text.
+
+        :param match: Regex match containing the include path.
+        :return: Included Markdown text without its trailing newline.
+        """
         path = (INCLUDE_ROOT / match.group(1)).resolve()
         # only allow files inside the apero-drs directory
         if INCLUDE_ROOT not in path.parents or not path.is_file():
@@ -508,7 +513,7 @@ def split_front_matter(text: str) -> Tuple[dict, str]:
 
 
 def ensure_description_stub(instrument: str, kind: str, name: str,
-                            title: str, fallback: str):
+                            title: str, fallback: str) -> None:
     """
     Create an empty description fragment so authors have somewhere to write.
 
@@ -606,7 +611,7 @@ def remove_empty_cols(table: Table) -> Table:
 # =============================================================================
 def build_recipe_page(params: ParamDict, pconst: Instrument,
                       srecipe: DrsRecipe, instrument: str, kind: str,
-                      outdir: Path):
+                      outdir: Path) -> None:
     """
     Write one markdown page describing a single recipe or tool.
 
@@ -752,7 +757,7 @@ def link_section(meta: dict) -> List[str]:
 
 
 def build_sequence_page(params: ParamDict, sequence: DrsRunSequence,
-                        instrument: str, outdir: Path):
+                        instrument: str, outdir: Path) -> None:
     """
     Write one markdown page describing a single recipe sequence.
 
@@ -858,7 +863,8 @@ def build_index(outdir: Path, label: str, icon: str, title: str,
                 intro: List[str], items: List[Tuple[str, str]],
                 related: Optional[List[str]] = None,
                 table_rows: Optional[List[Dict[str, str]]] = None,
-                table_columns: Optional[List[Tuple[str, str]]] = None):
+                table_columns: Optional[List[Tuple[str, str]]] = None
+                ) -> None:
     """
     Write an ``index.md`` giving a directory its card label and contents list.
 
@@ -1128,7 +1134,8 @@ def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
 
 
 def compile_global_tools(params: ParamDict, recipe: DrsRecipe,
-                         apero_dir: Path, tool_rows: List[dict]):
+                         apero_dir: Path,
+                         tool_rows: List[dict]) -> None:
     """
     Generate the instrument-independent user and developer tool pages.
 
@@ -1202,7 +1209,7 @@ def build_unregistered_tool_pages(outdir: Path, kind: str, category: str,
                                   source_dir: Path, source_kind: str,
                                   known_names: set,
                                   items: List[Tuple[str, str]],
-                                  tool_rows: List[dict]):
+                                  tool_rows: List[dict]) -> None:
     """
     Add command scripts that have no DrsRecipe definition to the tool index.
 
@@ -1251,7 +1258,8 @@ def build_unregistered_tool_pages(outdir: Path, kind: str, category: str,
 
 
 def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
-                     instruments: List[str], docversion: str):
+                     instruments: List[str],
+                     docversion: str) -> None:
     """
     Generate the whole ``apero`` documentation sub-tree for apero-ri.
 

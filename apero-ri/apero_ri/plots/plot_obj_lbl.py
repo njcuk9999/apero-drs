@@ -115,6 +115,11 @@ def _sort_lbl_rdb_rows(
     """
 
     def _key(row: Dict[str, Any]) -> Tuple[int, str]:
+        """Sort self-self LBL products before other rows, then by filename.
+
+        :param row: LBL result row containing a filename.
+        :return: Sort rank and lowercased filename.
+        """
         fname = str(row.get("FILENAME", "") or "").strip()
         flavor_id = _lbl_rdb_flavor_id(fname)
         return (
@@ -733,6 +738,11 @@ def _build_lbl_layout(
     ]
 
     def _wave_nm_from_col(colname: str) -> float:
+        """Extract the wavelength in nanometres from a column name.
+
+        :param colname: Column name containing a numeric ``_NNNnm`` suffix.
+        :return: Parsed wavelength, or infinity when no suffix is present.
+        """
         m = re.match(r".*_(\d+)nm", str(colname))
         if m:
             return float(m.group(1))

@@ -102,7 +102,16 @@ def pid_to_time(pid: str = None) -> Union[str, None]:
         return None
 
 
-def to_yaml_dict(save_path, save_name, group_date, yaml_dict):
+def to_yaml_dict(save_path: str, save_name: str, group_date: str,
+                 yaml_dict: Dict[str, Any]) -> None:
+    """Write one processing error record to its dated YAML file.
+
+    :param save_path: Root directory holding dated error-report folders.
+    :param save_name: Filename stem for this report.
+    :param group_date: Date folder for the report.
+    :param yaml_dict: Report fields to serialize.
+    :return: None. Creates the destination directory and writes YAML.
+    """
     # ---------------------------------------------------------------------
     # construct path to yaml file
     yaml_file = '{0}.yaml'.format(save_name)
@@ -114,7 +123,14 @@ def to_yaml_dict(save_path, save_name, group_date, yaml_dict):
     base.write_yaml(yaml_dict, os.path.join(yaml_path, yaml_file))
 
 
-def from_outlist(save_path: str, outlist: Dict[int, Dict[str, Any]]):
+def from_outlist(save_path: str,
+                 outlist: Dict[int, Dict[str, Any]]) -> None:
+    """Convert error rows from an output list into per-run YAML records.
+
+    :param save_path: Root directory for generated report YAML files.
+    :param outlist: Error report rows keyed by their table row number.
+    :return: None. Writes one YAML file for each output-list row.
+    """
     for row in tqdm(outlist):
         # get item from row
         item = outlist[row]
@@ -174,7 +190,13 @@ def from_outlist(save_path: str, outlist: Dict[int, Dict[str, Any]]):
         to_yaml_dict(save_path, item['PID'], group_date, yaml_dict)
 
 
-def from_processing_log_file(save_path: str, log_filename: str):
+def from_processing_log_file(save_path: str, log_filename: str) -> None:
+    """Extract processing errors from a log and write per-run YAML records.
+
+    :param save_path: Root directory for generated report YAML files.
+    :param log_filename: Processing log file to parse.
+    :return: None. Writes one YAML file for each error section found.
+    """
     # load file
     with open(log_filename, 'r') as rfile:
         lines = rfile.readlines()
@@ -258,7 +280,7 @@ def from_processing_log_file(save_path: str, log_filename: str):
         to_yaml_dict(save_path, pid, group_date, yaml_dict)
 
 
-def process_load_messages(params: ParamDict):
+def process_load_messages(params: ParamDict) -> None:
     """
     Load all messages from the message directory and push into individual
     yaml files
@@ -290,7 +312,12 @@ def process_load_messages(params: ParamDict):
 # =============================================================================
 # Define html functions
 # =============================================================================
-def python_str_to_html_str(value):
+def python_str_to_html_str(value: Any) -> str:
+    """Convert newline and tab characters to HTML display markup.
+
+    :param value: Value converted to text before HTML whitespace replacement.
+    :return: Text with newlines and tabs represented by HTML tokens.
+    """
     value = str(value)
     value = value.replace('\n', '<br>')
     value = value.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
@@ -302,16 +329,19 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                         col_types: List[str],
                         clean: bool = True,
                         log: bool = True,
-                        table_class: str = ''):
+                        table_class: str = '') -> str:
     """
     Generate a html page with a table of data that can be filtered by column
     values.
 
     :param outlist: dictionary of dictionaries containing the data to display
                     each primary key is a number (must contain at least 1 row)
-    :param col_names:
-    :param col_types:
-    :return:
+    :param col_names: Column labels rendered in the table header.
+    :param col_types: Rendering types corresponding to each column label.
+    :param clean: Whether to convert embedded newline and tab characters.
+    :param log: Whether to print progress messages.
+    :param table_class: Optional attributes inserted into the table element.
+    :return: HTML fragment containing the filter controls and data table.
     """
     # -------------------------------------------------------------------------
     if clean:
@@ -432,6 +462,14 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
 def full_page_html(html_body1: str = '', html_table: str = '',
                    html_body2: str = '',
                    css: Union[str, List[str]] = None) -> str:
+    """Wrap HTML fragments in a complete document with optional stylesheets.
+
+    :param html_body1: HTML fragment placed before the table.
+    :param html_table: HTML table fragment.
+    :param html_body2: HTML fragment placed after the table.
+    :param css: One stylesheet path or a list of stylesheet paths.
+    :return: Complete HTML document as text.
+    """
     # deal with css provided
     css_content = ''
     if css is not None:

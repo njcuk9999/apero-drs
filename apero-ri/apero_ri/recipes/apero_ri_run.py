@@ -29,7 +29,7 @@ def _get_arguments() -> argparse.Namespace:
     return args
 
 
-def main():
+def main() -> None:
     """Entry point for apero_ri_run."""
     args = _get_arguments()
     if args.kill and not free_port(args.port):

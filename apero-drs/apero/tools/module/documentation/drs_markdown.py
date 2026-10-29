@@ -20,7 +20,8 @@ from aperocore.io import drs_io
 # Define variables
 # =============================================================================
 class MarkDownPage:
-    def __init__(self, page_ref: str, initial_lines: List[str] = None):
+    def __init__(self, page_ref: str,
+                 initial_lines: List[str] = None) -> None:
         # store the page reference
         self.page_ref = page_ref
         # storage of lines for output file
@@ -33,7 +34,7 @@ class MarkDownPage:
         # multi-line table flag
         self.multiline_table_enabled = False
 
-    def write_page(self, filename: str):
+    def write_page(self, filename: str) -> None:
         """
         Write a page to filename
 
@@ -48,7 +49,7 @@ class MarkDownPage:
     # -------------------------------------------------------------------------
     # add methods (widgets)
     # -------------------------------------------------------------------------
-    def add_newline(self, nlines: int = 1):
+    def add_newline(self, nlines: int = 1) -> None:
         """
         Add new line(s) to a page
 
@@ -62,7 +63,7 @@ class MarkDownPage:
     def add_table_of_contents(self, items: List[str],
                               names: Optional[List[str]] = None,
                               sectionname: Optional[str] = 'Contents',
-                              maxdepth: int = 1):
+                              maxdepth: int = 1) -> None:
 
         self.add_newline()
         # no names means items are url links to other pages
@@ -85,7 +86,7 @@ class MarkDownPage:
                 self.lines += [lineref]
         self.add_newline()
 
-    def add_back_to_top(self):
+    def add_back_to_top(self) -> None:
         """
         Add a reference to go back to the top of the page
         :return:
@@ -93,7 +94,7 @@ class MarkDownPage:
         self.lines += ['.. only:: html', '']
         self.lines += ['  :ref:`Back to top <{0}>`'.format(self.page_ref)]
 
-    def add_title(self, title: str):
+    def add_title(self, title: str) -> None:
         """
         Add a title to a page
         :param title: str, the title to add
@@ -107,7 +108,7 @@ class MarkDownPage:
         self.lines += ['#' * length]
         self.add_newline()
 
-    def add_reference(self, reference: str):
+    def add_reference(self, reference: str) -> None:
         """
         Add a reference to a section / page
 
@@ -118,7 +119,7 @@ class MarkDownPage:
         self.lines += ['.. _{0}:'.format(reference)]
         self.add_newline()
 
-    def add_section(self, section_title: str):
+    def add_section(self, section_title: str) -> None:
         """
         Add a section to a page
         :param section_title: str, the title to add
@@ -131,7 +132,7 @@ class MarkDownPage:
         self.lines += ['=' * length]
         self.add_newline()
 
-    def add_sub_section(self, section_title: str):
+    def add_sub_section(self, section_title: str) -> None:
         """
         Add a section to a page
         :param section_title: str, the title to add
@@ -144,7 +145,7 @@ class MarkDownPage:
         self.lines += ['-' * length]
         self.add_newline()
 
-    def add_sub_sub_section(self, section_title: str):
+    def add_sub_sub_section(self, section_title: str) -> None:
         """
         Add a section to a page
         :param section_title: str, the title to add
@@ -157,7 +158,7 @@ class MarkDownPage:
         self.lines += ['^' * length]
         self.add_newline()
 
-    def add_divider(self, color, height):
+    def add_divider(self, color: str, height: int) -> None:
         """
         Add a divider to a page using the raw html feature
 
@@ -175,7 +176,7 @@ class MarkDownPage:
         self.lines += [f'    <hr style="{styletxt}" />']
         self.add_newline()
 
-    def add_html(self, htmllines: Union[List[str], str]):
+    def add_html(self, htmllines: Union[List[str], str]) -> None:
         """
         Add raw html to a page
 
@@ -195,7 +196,7 @@ class MarkDownPage:
                       abs_path: Union[str, None] = None,
                       widths: Union[List[str], None] = None,
                       width: Union[int, None] = None,
-                      cssclass: str = 'csvtable'):
+                      cssclass: str = 'csvtable') -> None:
         """
         Create a csv table in the markdown page
 
@@ -243,7 +244,7 @@ class MarkDownPage:
             self.add_text('N/A')
             self.add_newline()
 
-    def enable_multiline_table(self):
+    def enable_multiline_table(self) -> None:
         """
         If table uses the |br| tag must add these lines
 
@@ -259,7 +260,7 @@ class MarkDownPage:
         # flag that for this page we have already enabled multiline tables
         self.multiline_table_enabled = True
 
-    def add_text(self, text: str):
+    def add_text(self, text: str) -> None:
         """
         Add text to the markdown page
         :param text: str, the text to add
@@ -272,7 +273,8 @@ class MarkDownPage:
         self.add_newline()
 
     def add_image(self, filename: str, width: Optional[int] = None,
-                  align: str = 'center', inline: bool = False):
+                  align: str = 'center',
+                  inline: bool = False) -> None:
         """
         Add image to the markdown page
 
@@ -305,7 +307,7 @@ class MarkDownPage:
         self.lines += ['    This section can only currently be viewed in the '
                        'html documentation.']
 
-    def include_file(self, filename: str):
+    def include_file(self, filename: str) -> None:
         """
         Include a rst file
 
@@ -317,7 +319,7 @@ class MarkDownPage:
         self.lines += ['.. include:: {0}'.format(filename)]
         self.add_newline()
 
-    def add_code_block(self, codetype: str, codetext: List[str]):
+    def add_code_block(self, codetype: str, codetext: List[str]) -> None:
         """
         Add a code block
 

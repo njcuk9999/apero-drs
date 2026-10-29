@@ -384,6 +384,13 @@ def _make_snr_figure(
 
     # -------------------------------------------------------------------------
     def _add_series(pts: list, color: str, legend_label: str) -> None:
+        """Add passing and failing points as separate scatter series.
+
+        :param pts: Point tuples containing x, y, and QC-pass values.
+        :param color: Color used for the series markers.
+        :param legend_label: Label displayed in the figure legend.
+        :return: None. Adds scatter renderers to the enclosing figure.
+        """
         pass_x = [p[0] for p in pts if p[2]]
         pass_y = [p[1] for p in pts if p[2]]
         fail_x = [p[0] for p in pts if not p[2]]
@@ -2689,6 +2696,11 @@ def _sort_lbl_rdb_rows(
     """
 
     def _key(row: Dict[str, Any]) -> Tuple[int, str]:
+        """Sort self-self LBL products before other rows, then by filename.
+
+        :param row: LBL result row containing a filename.
+        :return: Sort rank and lowercased filename.
+        """
         fname = str(row.get("FILENAME", "") or "").strip()
         flavor_id = _lbl_rdb_flavor_id(fname)
         return (

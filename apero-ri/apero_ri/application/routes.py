@@ -1,8 +1,14 @@
 """Route registration helpers for ARIApp."""
 
+from typing import Any
 
-def register_static_routes(app):
-    """Register static auth/user/admin/docs API routes."""
+
+def register_static_routes(app: Any) -> None:
+    """Register static authentication, user, admin, and docs routes.
+
+    :param app: Flask application with route handlers and limiter configured.
+    :return: None. Adds URL rules to the application.
+    """
     _lim = app._limiter
 
     # Registration and account APIs — rate-limited
@@ -1063,8 +1069,12 @@ def register_static_routes(app):
     )
 
 
-def register_data_portal_routes(app):
-    """Register Data Portal profile, object, basket, and API routes."""
+def register_data_portal_routes(app: Any) -> None:
+    """Register Data Portal profile, object, basket, and API routes.
+
+    :param app: Flask application with data-portal handlers configured.
+    :return: None. Adds URL rules to the application.
+    """
     app.add_url_rule(
         "/data_portal/<profile_id>", "ri_profile", app._ri_profile_view
     )

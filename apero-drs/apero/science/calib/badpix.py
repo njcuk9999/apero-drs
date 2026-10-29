@@ -469,7 +469,8 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
 
 
 def summary(recipe: DrsRecipe, it: int, params: ParamDict,
-            bstats_a: List[float], bstats_b: List[float], btotal: float):
+            bstats_a: List[float], bstats_b: List[float],
+            btotal: float) -> None:
     """
 
     :param recipe: DrsRecipe, the recipe that called this function

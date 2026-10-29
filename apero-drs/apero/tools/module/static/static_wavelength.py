@@ -110,7 +110,15 @@ Time = apero_base.AstropyTime
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
+def main(params: ParamDict, recipe: Any,
+         sparams: Dict[str, Any]) -> None:
+    """Generate and package the configured static wavelength products.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing output files and plotting hooks.
+    :param sparams: Static wavelength setup parameters.
+    :return: None. Creates or loads the requested calibration products.
+    """
     # -------------------------------------------------------------------------
     # sort out detector path (this is where we are saving things to)
     cal_path = str(os.path.join(params['PATH.ASSETS'],
@@ -150,9 +158,18 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
                            outdir='calib')
 
 
-def generate_hc_catagloue(params: ParamDict, recipe, 
-                          sparams: Dict[str, Any], cal_path: str, 
+def generate_hc_catagloue(params: ParamDict, recipe: Any,
+                          sparams: Dict[str, Any], cal_path: str,
                           ofiles: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate the filtered hollow-cathode line catalogue.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing the static catalogue output definition.
+    :param sparams: Static wavelength setup parameters.
+    :param cal_path: Directory where the catalogue is written.
+    :param ofiles: Existing static output files, updated with the catalogue.
+    :return: Output-file mapping including ``STATIC_HC_CAT``.
+    """
     # print progress
     # log: Generating HC catalogue
     WLOG(params, 'info', textentry('40-518-00004'))
@@ -196,8 +213,18 @@ def generate_hc_catagloue(params: ParamDict, recipe,
     return ofiles
 
 
-def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
-                        cal_path: str, ofiles: Dict[str, Any]):
+def generate_wave_guess(params: ParamDict, recipe: Any,
+                        sparams: Dict[str, Any], cal_path: str,
+                        ofiles: Dict[str, Any]) -> None:
+    """Build and package a wavelength solution from extracted HC and FP data.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing output files and plot hooks.
+    :param sparams: Static wavelength setup parameters.
+    :param cal_path: Directory for generated wavelength products.
+    :param ofiles: Static input/output files used by this workflow.
+    :return: None. Writes accepted wavelength products to disk.
+    """
     # print progress
     # log: Generating wavelength guess from HC and FP extracted files
     WLOG(params, 'info', textentry('40-518-00021'))
@@ -307,8 +334,9 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
 # =============================================================================
 # Define main wave guess functions
 # =============================================================================
-def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
-                      orders: np.ndarray):
+def refine_cavity_fit(params: ParamDict, recipe: Any,
+                      sparams: Dict[str, Any],
+                      orders: np.ndarray) -> Optional[List[float]]:
     """
     Refine the cavity fit using all previous wavelength solutions.
 
@@ -484,10 +512,10 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
     return fit_cavity
 
 
-def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
+def build_wavesol(params: ParamDict, recipe: Any, sparams: Dict[str, Any],
                   cal_path: str, hc_image: np.ndarray, fp_image: np.ndarray,
                   hc_cat_table: Table, iteration: int, fit_cavity: List[float], 
-                  orders: np.ndarray):
+                  orders: np.ndarray) -> None:
     """
     Build the wavelength solution for all orders.
     This is done order-by-order with a user check after each order.
@@ -782,9 +810,19 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
             save_wave_pickle(params, dict_fp, wave_order_pklfile)
 
 
-def build_final_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
+def build_final_wavesol(params: ParamDict, recipe: Any,
+                        sparams: Dict[str, Any],
                         fp_image: np.ndarray, fit_cavity: List[float]
                         ) -> Tuple[np.ndarray, np.ndarray, List[float]]:
+    """Fit and return the final wavelength map, coefficients, and cavity.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing the output wavelength file definition.
+    :param sparams: Static wavelength setup parameters.
+    :param fp_image: Extracted Fabry-Perot image used for order geometry.
+    :param fit_cavity: Refined cavity-fit coefficients.
+    :return: Wavelength map, per-order coefficients, and cavity coefficients.
+    """
 
     # get the input path
     inpath = sparams['inpath']
@@ -998,7 +1036,8 @@ def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
         raise AperoCodedException(params, '09-518-00012', targs=eargs)
 
 
-def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
+def get_hc_lines(params: ParamDict, recipe: Any,
+                 sparams: Dict[str, Any],
                  table: Table) -> Table:
     """
     Cut down the HC model to only keep species and wavelength we are
@@ -1339,7 +1378,7 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
 
 
 def get_peak0_guess(params: ParamDict, sparams: Dict[str, Any],
-                    order_num) -> float:
+                    order_num: int) -> float:
     """
     Get the initial guess for the peak position in order "order_num".
     This is done by looking at all previous wavelength solution pickles
@@ -1405,10 +1444,18 @@ def get_peak0_guess(params: ParamDict, sparams: Dict[str, Any],
     return pvalue
 
 
-def get_wavesol_from_file(params: ParamDict, recipe, sparams: Dict[str, Any],
-                          cal_path, hc_file, fp_file) -> bool:
-    """
-    Test way to push previous wavesolution into static files
+def get_wavesol_from_file(params: ParamDict, recipe: Any,
+                          sparams: Dict[str, Any], cal_path: str,
+                          hc_file: Any, fp_file: Any) -> bool:
+    """Load a prior wavelength solution and package it as static products.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing output files and calibration metadata.
+    :param sparams: Static wavelength setup, including source file names.
+    :param cal_path: Destination directory for packaged products.
+    :param hc_file: Hollow-cathode input file instance.
+    :param fp_file: Fabry-Perot input file instance.
+    :return: True when the prior solution was packaged successfully.
     """
     # check if we have a final wave sol file
     fparams = sparams['wavelength']['from_file']
@@ -1483,10 +1530,12 @@ def get_wavesol_from_file(params: ParamDict, recipe, sparams: Dict[str, Any],
     return True
 
 
-def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
-                    cal_path: str, hc_file, fp_file,
-                    final_wave_sol: np.ndarray, final_wave_coeffs: np.ndarray, 
-                    final_fit_cavity: List[float]):
+def package_wavesol(params: ParamDict, recipe: Any,
+                    sparams: Dict[str, Any], cal_path: str,
+                    hc_file: Any, fp_file: Any,
+                    final_wave_sol: np.ndarray,
+                    final_wave_coeffs: np.ndarray,
+                    final_fit_cavity: List[float]) -> None:
     """
     Package the final wavelength solution into static files for each fiber.
     Try to minic the APERO wave solution files as much as possible.
@@ -1602,12 +1651,15 @@ def load_wave_pickle(params: ParamDict, pickle_file: str) -> Dict[str, Any]:
         return pickle.load(f)
 
 
-def save_wave_pickle(params, data: Dict[str, Any], pickle_file: str):
+def save_wave_pickle(params: ParamDict, data: Dict[str, Any],
+                     pickle_file: str) -> None:
     """
     Save a wavelength solution dictionary to a pickle file.
 
-    :param data: dict, dictionary containing the wavelength solution data
+    :param params: APERO parameter dictionary used for logging.
+    :param data: Dictionary containing the wavelength solution data.
     :param pickle_file: str, path to the pickle file
+    :return: None. Writes the dictionary to the pickle file.
     """
     # save the pickle file
     with open(pickle_file, 'wb') as f:

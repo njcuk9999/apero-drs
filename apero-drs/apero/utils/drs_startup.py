@@ -638,7 +638,7 @@ def run(func: Any, recipe: DrsRecipe,
     return llmain, success
 
 
-def push_to_databases(params: ParamDict):
+def push_to_databases(params: ParamDict) -> None:
     """
     Push any pending database entries to the databases
 
@@ -827,7 +827,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         return outdict
 
 
-def index_files(params: ParamDict, recipe: DrsRecipe):
+def index_files(params: ParamDict, recipe: DrsRecipe) -> None:
     """
     Index files in current recipe (via recipe.output_files)
 
@@ -969,7 +969,8 @@ def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
     return outkwargs
 
 
-def file_processing_update(params: ParamDict, it: int, num_files: int):
+def file_processing_update(params: ParamDict, it: int,
+                           num_files: int) -> None:
     """
     Printout via wlog of the file process
     i.e. Process file {it+1} of {num_files}
@@ -991,7 +992,7 @@ def file_processing_update(params: ParamDict, it: int, num_files: int):
     WLOG(params, '', params['LOG.HEADER'])
 
 
-def fiber_processing_update(params: ParamDict, fiber: str):
+def fiber_processing_update(params: ParamDict, fiber: str) -> None:
     """
     Printout via wlog of which fiber we are processing
     i.e. Process fiber {fiber}
@@ -1010,7 +1011,8 @@ def fiber_processing_update(params: ParamDict, fiber: str):
     WLOG(params, '', params['LOG.HEADER'])
 
 
-def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
+def end_plotting(params: ParamDict,
+                 recipe: Union[DrsRecipe, None]) -> None:
     """
     Closes all currently opened plots (via DrsRecipe.plot.close_plots)
     required as plt is not defined unless inside DrsRecipe.plot)
@@ -1686,7 +1688,8 @@ def _parallel_key_present(fkwargs: Dict[str, Any]) -> bool:
 
 
 def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
-                       printonly: bool = False, logonly: bool = False):
+                       printonly: bool = False,
+                       logonly: bool = False) -> None:
     """
     Display title for this execution
 
@@ -1724,7 +1727,7 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
 
 def _display_title(params: ParamDict, title: str,
                    group: Union[str, None] = None, printonly: bool = False,
-                   logonly: bool = False):
+                   logonly: bool = False) -> None:
     """
     Display any title between HEADER bars via the WLOG command
 
@@ -1755,7 +1758,7 @@ def _display_title(params: ParamDict, title: str,
          printonly=printonly, logonly=logonly)
 
 
-def _display_logo(params: ParamDict):
+def _display_logo(params: ParamDict) -> None:
     """
     Display the instrument logo
 
@@ -1777,7 +1780,7 @@ def _display_logo(params: ParamDict):
     WLOG(params, '', params['LOG.HEADER'], wrap=False, printonly=True)
 
 
-def _display_ee(params: ParamDict):
+def _display_ee(params: ParamDict) -> None:
     """
     Display the logo text
 
@@ -1807,7 +1810,7 @@ def _display_ee(params: ParamDict):
 
 def _display_initial_parameterisation(params: ParamDict,
                                       printonly: bool = False,
-                                      logonly: bool = False):
+                                      logonly: bool = False) -> None:
     """
     Display initial parameterisation for this execution
 
@@ -1980,8 +1983,12 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
         WLOG(params, '', messages, logonly=logonly)
 
 
-def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
-                                logonly=False):
+def _display_run_time_arguments(
+    recipe: DrsRecipe,
+    fkwargs: Optional[Dict[str, Any]] = None,
+    printonly: bool = False,
+    logonly: bool = False,
+) -> None:
     """
     Display for arguments used (got from p['INPUT'])
 
@@ -2196,7 +2203,7 @@ def _find_ipython() -> bool:
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _update_input_params(params: ParamDict, args: Dict[str, Any]):
+def _update_input_params(params: ParamDict, args: Dict[str, Any]) -> None:
     """
     Update the input parameter dictionary with new arguments
 
@@ -2785,7 +2792,7 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     return messages
 
 
-def _make_dirs(params: ParamDict, path: str):
+def _make_dirs(params: ParamDict, path: str) -> None:
     """
     Check and if it doesn't exist make the directory 'path'
     (locking path as necessary)
@@ -2822,7 +2829,7 @@ def _make_dirs(params: ParamDict, path: str):
     # -------------------------------------------------------------------------
     # make locked makedirs function
     @drs_lock.synchronized(lock, pid + lockfile)
-    def locked_makedirs():
+    def locked_makedirs() -> None:
         # check again path already exists
         if os.path.exists(path):
             return

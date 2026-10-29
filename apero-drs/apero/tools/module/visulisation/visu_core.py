@@ -80,17 +80,26 @@ ValidTypes = Union[int, float, str, bool]
 # =============================================================================
 class BokehPlot:
     def __init__(self, params: ParamDict, func_name: str, path: str,
-                 title: str):
+                 title: str) -> None:
+        """Initialize a Bokeh plot script configuration.
+
+        :param params: APERO parameters used by this plot configuration.
+        :param func_name: Plotting function to call from the generated script.
+        :param path: Destination path for the proxy Python script.
+        :param title: Title assigned to the Bokeh document.
+        :return: None. Stores the script configuration.
+        """
         self.params = params
         self.func = func_name
         self.path = path
         self.title = title
 
-    def create(self, kwargs: Optional[Dict[str, Any]] = None):
+    def create(self, kwargs: Optional[Dict[str, Any]] = None) -> None:
         """
-        Create our proxy python code
-        :param kwargs:
-        :return:
+        Write the proxy Python script used to launch the Bokeh plot.
+
+        :param kwargs: Optional keyword values passed to the plotting function.
+        :return: None. Writes the generated script to ``self.path``.
         """
         # push into dictionary
         fkwargs = dict()
@@ -101,10 +110,11 @@ class BokehPlot:
         with open(self.path, 'w') as pyfile:
             pyfile.write(PYTEMPLATE.format(**fkwargs))
 
-    def run(self):
+    def run(self) -> None:
         """
-        Run the bokey server from our proxy python code
-        :return:
+        Start a Bokeh server for the generated proxy script.
+
+        :return: None. Launches ``bokeh serve --show`` for ``self.path``.
         """
         # run an interactive session
         os.system('bokeh serve --show {0}'.format(self.path))
@@ -151,7 +161,17 @@ class BokehPlot:
         return fullstring
 
 
-def check_arg(func_name, kwargs, key, dtype, required: bool = True):
+def check_arg(func_name: str, kwargs: Dict[str, Any], key: str,
+              dtype: Any, required: bool = True) -> Any:
+    """Validate and convert one required or optional plotting argument.
+
+    :param func_name: Name used to identify the calling plotting function.
+    :param kwargs: Keyword arguments supplied to that function.
+    :param key: Argument name to read and convert.
+    :param dtype: Callable used to convert the argument value.
+    :param required: Whether a missing argument is an error.
+    :return: Converted value, or None when an optional value is absent.
+    """
     # check key exists
     if key not in kwargs and required:
         eargs = [func_name, key]
@@ -171,6 +191,17 @@ def check_arg(func_name, kwargs, key, dtype, required: bool = True):
 def get_file(block_kind: str,  obs_dir: str, identifier: str,
              output: str, fiber: str, hdu: int, get_data: bool = True
              ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
+    """Load a file's selected HDU and return its absolute filename.
+
+    :param block_kind: APERO file block containing the requested file.
+    :param obs_dir: Observation directory recorded in the file index.
+    :param identifier: File identifier recorded in the header.
+    :param output: Output keyword value used to filter file-index rows.
+    :param fiber: Fiber keyword value used to filter file-index rows.
+    :param hdu: FITS extension index to load.
+    :param get_data: Whether to read the extension data from disk.
+    :return: Data array and filename, or ``(None, None)`` if not indexed.
+    """
 
     # get database
     findexdbm = drs_database.FileIndexDatabase(PARAMS, 'VISU')
@@ -201,6 +232,11 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
 
 
 def get_header(filename: str) -> drs_fits.Header:
+    """Read and return the primary FITS header for a file.
+
+    :param filename: Absolute path to the FITS file.
+    :return: Primary header wrapped as an APERO FITS header.
+    """
     # load the header of the filename
     return drs_fits.read_header(PARAMS, filename, ext=0)
 
@@ -230,6 +266,10 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
 
 
 def get_obs_dirs() -> List[str]:
+    """Return unique observation directories containing raw files.
+
+    :return: Raw observation-directory names, or an empty list when none exist.
+    """
     # get database
     findexdbm = drs_database.FileIndexDatabase(PARAMS, 'VISU')
     findexdbm.load_db()
@@ -242,7 +282,14 @@ def get_obs_dirs() -> List[str]:
         return list(new_obs_dirs)
 
 
-def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
+def get_identifers(block_kind: str = 'red',
+                   obs_dir: Optional[str] = None) -> List[str]:
+    """Return unique file identifiers for a block and optional obsdir.
+
+    :param block_kind: APERO file block to search.
+    :param obs_dir: Optional observation directory restriction.
+    :return: Matching identifiers, or an empty list when none exist.
+    """
     # get database
     findexdbm = drs_database.FileIndexDatabase(PARAMS, 'VISU')
     findexdbm.load_db()
@@ -263,7 +310,13 @@ def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
         return list(newidentifiers)
 
 
-def get_bokeh_plot_dir(params, pyfile):
+def get_bokeh_plot_dir(params: ParamDict, pyfile: str) -> str:
+    """Create and return the path for one generated Bokeh script.
+
+    :param params: APERO parameters containing the plot root path.
+    :param pyfile: Python filename to place in the Bokeh subdirectory.
+    :return: Path to the generated plot script.
+    """
     # set path to bokeh subdir
     path = os.path.join(params['PATH.PLOT'], 'bokeh')
     # create path if it doesn't exist

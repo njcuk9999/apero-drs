@@ -210,7 +210,7 @@ def list_obsdir_files(aparams: dict, obs_dir: str) -> Tuple[Path, List[Path]]:
     return obs_path, files
 
 
-def read_primary_header(filename: Path):
+def read_primary_header(filename: Path) -> Any:
     """Read one primary FITS header with optional obsdir-local caching.
 
     When an obsdir cache is active, this function stores one detached header

@@ -298,10 +298,19 @@ class AperoProfile:
     >>> obs_table = profile.get_observation_table(fmt='astropy')
     """
 
-    def __init__(self, profile_id: str):
+    def __init__(self, profile_id: str) -> None:
+        """Create a client for one APERO profile.
+
+        :param profile_id: Identifier of the APERO profile to access.
+        :return: None. Stores the profile identifier for later requests.
+        """
         self.profile_id = profile_id
 
     def __repr__(self) -> str:
+        """Return a representation that can identify this profile client.
+
+        :return: Constructor-style representation of this profile handle.
+        """
         return f"AperoProfile('{self.profile_id}')"
 
     # -----------------------------------------------------------------
@@ -387,11 +396,21 @@ class AperoObject:
     >>> obj.get_data('/tmp/GL699_data')     # download matching files
     """
 
-    def __init__(self, profile_id: str, objname: str):
+    def __init__(self, profile_id: str, objname: str) -> None:
+        """Create a client for one target in an APERO profile.
+
+        :param profile_id: Identifier of the APERO profile containing target.
+        :param objname: Target name to access.
+        :return: None. Stores the profile and target identifiers.
+        """
         self.profile_id = profile_id
         self.objname = objname
 
     def __repr__(self) -> str:
+        """Return a representation that identifies this target handle.
+
+        :return: Constructor-style representation of this object handle.
+        """
         return f"AperoObject('{self.profile_id}', '{self.objname}')"
 
     def target_info(self, fmt: str = "pandas") -> Any:

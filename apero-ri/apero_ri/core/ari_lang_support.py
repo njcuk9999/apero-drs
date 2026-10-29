@@ -162,6 +162,12 @@ def context() -> Dict[str, Any]:
     lang = get_language()
 
     def _gettext(text: str, **kwargs: Any) -> Markup:
+        """Translate text and safely format its placeholders.
+
+        :param text: Source-language text to translate.
+        :param kwargs: Values used to format translated placeholders.
+        :return: Escaped translated text as Markup.
+        """
         # escape the translated text; placeholder values are escaped too
         # unless they are already Markup (e.g. ``'<code>x</code>'|safe``)
         value = escape(translate(text, lang))

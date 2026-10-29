@@ -11,6 +11,7 @@ Created on 2019-07-26 at 09:40
 """
 import os
 import shutil
+from typing import Any, Dict, Optional, Tuple
 
 import apero
 from aperocore import drs_lang
@@ -46,7 +47,7 @@ DOC_CHANGELOGPATH = '../../documentation/working/main/misc/changelog.rst'
 # =============================================================================
 # Define functions
 # =============================================================================
-def ask_for_new_tag():
+def ask_for_new_tag() -> Optional[Tuple[str, bool]]:
     """
     Ask user for a new tag in format major.minor.subversion
 
@@ -136,8 +137,12 @@ def ask_for_new_tag():
     return None
 
 
-def create_single_tag(tag):
-    """Create a single git tag at HEAD with the commit date"""
+def create_single_tag(tag: str) -> None:
+    """Create an annotated git tag at HEAD using the commit date.
+
+    :param tag: Version tag to create.
+    :return: None. Creates or replaces the local git tag.
+    """
     import subprocess
     import os
 
@@ -162,9 +167,13 @@ def create_single_tag(tag):
     print(textentry('40-501-00020', args=margs))
 
 
-def backfill_subversion_tags(end_tag, params):
+def backfill_subversion_tags(end_tag: str, params: Any) -> None:
     """
     Backfill all subversion tags from the last existing tag to end_tag
+
+    :param end_tag: Final semantic-version tag for this backfill range.
+    :param params: APERO parameters used for progress logging.
+    :return: None. Creates local tags for intervening commits.
     """
     import subprocess
 
@@ -297,8 +306,12 @@ def backfill_subversion_tags(end_tag, params):
         WLOG(params, 'info', textentry('40-501-00028', args=margs))
 
 
-def remove_backfilled_tags(end_tag):
-    """Remove backfilled tags if user cancels in preview mode"""
+def remove_backfilled_tags(end_tag: str) -> None:
+    """Remove generated subversion tags after a cancelled preview.
+
+    :param end_tag: Final semantic-version tag in the generated range.
+    :return: None. Deletes the generated local tags in that range.
+    """
     import subprocess
 
     parts = end_tag.split('.')
@@ -325,7 +338,7 @@ def remove_backfilled_tags(end_tag):
                       stderr=subprocess.DEVNULL)
 
 
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_changelog.py
 
@@ -351,7 +364,13 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Any:
+    """Update the package changelog and version tags.
+
+    :param recipe: Recipe wrapper providing execution metadata and logging.
+    :param params: APERO parameters controlling package and preview mode.
+    :return: Recipe-dependent result returned by the changelog workflow.
+    """
     # Note: no instrument defined so do not use instrument only features
 
     # get current working directory

@@ -132,6 +132,11 @@ def _make_ts_snr_figure(
     snr_y = [d[1].get("EXT_Y", float("nan")) for d in obs_data]
 
     def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
+        """Parse an observation-directory name as a UTC date.
+
+        :param obs_dir: Directory label containing a YYYYMMDD date.
+        :return: UTC midnight for the date, or None when invalid.
+        """
         text = str(obs_dir or "").strip()
         m = re.match(r"^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$", text)
         if not m:
@@ -276,6 +281,11 @@ def _make_ts_airmass_figure(
     airmass: List[float] = []
 
     def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
+        """Parse an observation-directory name as a UTC date.
+
+        :param obs_dir: Directory label containing a YYYYMMDD date.
+        :return: UTC midnight for the date, or None when invalid.
+        """
         text = str(obs_dir or "").strip()
         m = re.match(r"^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$", text)
         if not m:

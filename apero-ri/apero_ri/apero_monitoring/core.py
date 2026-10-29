@@ -32,6 +32,14 @@ class AperoCheck:
 
     def __init__(self, name: str, string_name: str,
                  check_type: str, instruments: List[str]) -> None:
+        """Initialize an APERO monitoring check definition.
+
+        :param name: Internal key used to store and retrieve this check.
+        :param string_name: Human-readable check name for reports.
+        :param check_type: Data category inspected by the check.
+        :param instruments: Instrument identifiers for which it applies.
+        :return: None. Initializes metadata and fresh check state.
+        """
         # the name of this test which should be used in the check_dict
         self.name = name
         # the string name of this test (for internal use)
@@ -68,7 +76,7 @@ class AperoCheck:
         # Copy the instance so runtime state is not shared between runs.
         return copy.deepcopy(self)
         
-    def __call__(self, instrument, obs_dir: str, aparams: dict,
+    def __call__(self, instrument: str, obs_dir: str, aparams: dict,
                  dbparams: dict, check_dict: Dict[str, bool]) -> None:
         """Run this check when its instrument and dependencies are valid.
 

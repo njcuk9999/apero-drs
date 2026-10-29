@@ -51,7 +51,15 @@ AperoCodedException = drs_log.AperoCodedException
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
+def main(params: ParamDict, recipe: Any,
+         sparams: Dict[str, Any]) -> None:
+    """Generate and save the static detector calibration products.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing output files and plotting hooks.
+    :param sparams: Static detector setup parameters.
+    :return: None. Creates static calibration files and updates the repo.
+    """
     # get input file definitions
     in_path = sparams['inpath']
     dark_files = sparams['files']['raw_dark_files']
@@ -115,7 +123,8 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
 # =============================================================================
 # Define create functions
 # =============================================================================
-def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
+def create_median_dark(params: ParamDict, recipe: Any, in_path: str,
+                       det_path: str,
                        in_dark_files: List[str]) -> np.ndarray:
     """
     Create a median dark image form the longest exposures only
@@ -210,7 +219,7 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
     return dark
 
 
-def create_median_led(params: ParamDict, recipe,
+def create_median_led(params: ParamDict, recipe: Any,
                       in_path: str, det_path: str, dark: np.ndarray,
                       in_led_files: List[str], engineering_flat: str
                       ) -> np.ndarray:
@@ -351,7 +360,7 @@ def create_median_led(params: ParamDict, recipe,
     return led
     
 
-def create_high_pass_flat(params: ParamDict, recipe,
+def create_high_pass_flat(params: ParamDict, recipe: Any,
                           det_path: str, led: np.ndarray,
                           binsize: int, led_thres: float,
                           frac_flat_bad: float) -> np.ndarray:
@@ -432,7 +441,8 @@ def create_high_pass_flat(params: ParamDict, recipe,
 
 
 
-def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
+def create_dark_curr(params: ParamDict, recipe: Any, in_path: str,
+                     det_path: str,
                      in_dark_files: List[str]) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create amplifier dark current model
@@ -599,9 +609,9 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
     return recon_amp, dark0
 
 
-def create_hotpix_map(params: ParamDict, recipe, det_path: str,
+def create_hotpix_map(params: ParamDict, recipe: Any, det_path: str,
                       dark0: np.ndarray, flat: np.ndarray,
-                      dark_threshold: float):
+                      dark_threshold: float) -> None:
     """
     Create hotpix map
 
@@ -610,11 +620,10 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
     :param det_path: str, directory to save files to
     :param dark0: np.ndarray, dark image
     :param flat: np.ndarray, flat image
-    :param binsize: int, size to bin by
     :param dark_threshold: float, threshold to consider too dark to be
                            hot pixel
 
-    :return np.ndarray - median dark image
+    :return: None. Writes the hot-pixel table to the static calibration file.
     """
     # find nearest neighbours for each pixel
     cube = []

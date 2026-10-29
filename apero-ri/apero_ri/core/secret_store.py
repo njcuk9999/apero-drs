@@ -60,6 +60,11 @@ def protect_path(path: Path, mode: int = 0o600) -> Path:
 
 
 def _unique_paths(paths: Iterable[Path]) -> list[Path]:
+    """Resolve paths and remove duplicates while preserving their order.
+
+    :param paths: Candidate paths to normalize and deduplicate.
+    :return: Unique expanded, resolved paths in first-seen order.
+    """
     unique: list[Path] = []
     seen: set[str] = set()
     for path in paths:

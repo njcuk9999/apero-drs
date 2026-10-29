@@ -30,7 +30,12 @@ FILTERS: List[str] = []
 class GenerateCheckDocsTask(apero_async.AperoAsyncTask):
     """Generate markdown documentation for APERO monitoring checks."""
 
-    def __init__(self, status: str = 'pending'):
+    def __init__(self, status: str = 'pending') -> None:
+        """Initialize the APERO check documentation task.
+
+        :param status: Initial asynchronous task status.
+        :return: None. Sets task metadata for the task registry.
+        """
         name = 'Generate APERO Check Docs'
         description = (
             'Generate markdown documentation pages for APERO '

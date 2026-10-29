@@ -17,7 +17,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 from apero_ri.core import auth
 from apero_ri.core import sshfs_backend
@@ -140,7 +140,9 @@ def update_item(kind: str, name: str, values: Dict[str, Any],
     save()
 
 
-def _locate(kind: str, name: str):
+def _locate(
+    kind: str, name: str
+) -> Tuple[Dict[str, Any], Callable[[], None]]:
     """
     Find a record by kind/name and return it with a save callback.
 

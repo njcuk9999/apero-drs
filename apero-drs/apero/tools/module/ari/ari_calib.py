@@ -10,7 +10,7 @@ Created on 2025-04-23 at 12:15
 @author: cook
 """
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import numpy as np
 from astropy.io import fits
@@ -55,14 +55,32 @@ textentry = drs_lang.textentry
 # Define calibration keys
 # =============================================================================
 class CalibKey:
-    def __init__(self, name: str, kind: str, label: str = None,
-                 dtype: bool = float):
+    def __init__(self, name: str, kind: str,
+                 label: Union[str, None] = None,
+                 dtype: type = float) -> None:
+        """Describe a calibration value and its source.
+
+        :param name: Parameter or header key used to retrieve the value.
+        :param kind: Source category for the value.
+        :param label: Optional display label for plots.
+        :param dtype: Value type used to choose the missing-value default.
+        :return: None.
+        """
         self.name = name
         self.kind = kind
         self.label = label
         self.dtype = dtype
 
-    def get_key(self, params, hdr, dim1 = 0, dim2 =0):
+    def get_key(self, params: ParamDict, hdr: Any, dim1: int = 0,
+                dim2: int = 0) -> Any:
+        """Read this calibration value from parameters or a FITS header.
+
+        :param params: APERO parameters used to resolve keyword aliases.
+        :param hdr: FITS-like header providing a ``get`` method.
+        :param dim1: First index for a formatted keyword name.
+        :param dim2: Second index for a formatted keyword name.
+        :return: Header value or a dtype-dependent missing-value default.
+        """
         # get key name
         if self.name in params:
             hkey = params[self.name][0]
@@ -114,14 +132,15 @@ REQ_FIBER = [False, True]
 # Define functions
 # =============================================================================
 def add_calib_page(params: ParamDict, recipe: DrsRecipe,
-                   recipe_table: ari_pages.TableFile):
+                   recipe_table: ari_pages.TableFile) -> int:
     """
     Adds calibration page to ARI
 
     :param params: ParamDict, parameter dictionary of constants
+    :param recipe: Recipe providing the calibration context.
     :param recipe_table: AriTable, table containing calibration pages info
 
-    :return: None, writes calibration rst to disk
+    :return: Zero after writing the calibration page.
     """
     # set where this page is relative to the ari/home directory
     rel_root = '../../../ari/home/'
@@ -424,7 +443,9 @@ def get_calib_hkeys(params: ParamDict, calib_data: Dict[str, Any],
     return calib_data
 
 
-def get_wave_cent_x(params: ParamDict, calib_data: Dict[str, np.ndarray]):
+def get_wave_cent_x(
+    params: ParamDict,
+    calib_data: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
     """
     Add a special column (for WAVE_NIGHT files) which is the wavelength for the
     central pixel of every order - either loaded from file or remembered

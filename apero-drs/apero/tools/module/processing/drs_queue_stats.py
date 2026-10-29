@@ -154,7 +154,7 @@ class TaskMonitor:
     """
     def __init__(self, stats_dir: Optional[str], qid: str, shortname: str,
                  recipe: str = '', mode: str = 'run',
-                 interval: Optional[float] = None):
+                 interval: Optional[float] = None) -> None:
         """
         :param stats_dir: str or None, the stats directory (None disables)
         :param qid: str, the queue id "{group}/{run_file}"
@@ -181,7 +181,7 @@ class TaskMonitor:
         self._thread = None
         self._nsamples = 0
 
-    def begin(self, pid: int):
+    def begin(self, pid: int) -> None:
         """
         Start watching the process group led by pid
 
@@ -214,7 +214,7 @@ class TaskMonitor:
         total['rss_mb'] = sum(u['rss_mb'] for u in current.values())
         return total
 
-    def _loop(self):
+    def _loop(self) -> None:
         """Sample until the task ends."""
         prev, prev_time = None, None
         while True:
@@ -256,7 +256,8 @@ class TaskMonitor:
         sample.update(_host_usage())
         return sample
 
-    def finish(self, returncode: int, success: Optional[bool] = None):
+    def finish(self, returncode: int,
+               success: Optional[bool] = None) -> None:
         """
         Stop watching and write the task record
 
@@ -282,7 +283,7 @@ class TaskMonitor:
                       nsamples=self._nsamples)
         self._write(TASK_PREFIX, record)
 
-    def _write(self, prefix: str, record: Dict[str, Any]):
+    def _write(self, prefix: str, record: Dict[str, Any]) -> None:
         """Append one json line to this process' stats file."""
         name = '{0}{1}-{2}.jsonl'.format(prefix, self.info['host'],
                                          os.getpid())
@@ -303,13 +304,13 @@ class StatsReader:
     Incremental reader of the stats directory (only new bytes are parsed
     on each call, so the dashboard can poll it cheaply)
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.offsets: Dict[str, int] = dict()
         self.tasks: List[Dict[str, Any]] = []
         self.samples: List[Dict[str, Any]] = []
         self.lock = threading.Lock()
 
-    def update(self, stats_dir: str):
+    def update(self, stats_dir: str) -> None:
         """
         Parse anything new in the stats directory
 

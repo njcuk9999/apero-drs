@@ -490,6 +490,11 @@ def run_peer(peer_id: str, dry_run: bool = True, kind: str = 'all',
     :raises store.SyncBusy: if another run holds the lock
     """
     def log(msg: str) -> None:
+        """Forward synchronization progress to the optional task logger.
+
+        :param msg: Progress message to send.
+        :return: None. Does nothing when no logger is configured.
+        """
         if callable(logger):
             logger(msg)
 

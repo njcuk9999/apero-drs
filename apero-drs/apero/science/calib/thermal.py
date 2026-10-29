@@ -10,7 +10,7 @@ Created on 2022-01-26
 @author: cook
 """
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -65,12 +65,12 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
                             ) -> Dict[str, DrsFitsFile]:
     """
     Take a dictionary of thermal files and apply
-    :param params:
-    :param recipe:
-    :param thermal_files:
-    :param fiber_types:
-    :param calibdbm:
-    :return:
+    :param params: APERO parameters used to load calibration constants.
+    :param recipe: Recipe providing plot and file-definition interfaces.
+    :param thermal_files: Thermal extraction files keyed by fiber.
+    :param fiber_types: Fibers whose thermal data should be corrected.
+    :param calibdbm: Calibration database used to load wavelength solutions.
+    :return: Input mapping with each applicable thermal image corrected.
     """
     # set function name
     func_name = display_func('apply_excess_emissivity', __NAME__)
@@ -125,8 +125,28 @@ def apply_excess_emissivity(params: ParamDict, recipe: DrsRecipe,
 # =============================================================================
 # Define thermal functions
 # =============================================================================
-def thermal_correction(params, recipe, header, props=None, eprops=None,
-                       fiber=None, database=None, **kwargs):
+def thermal_correction(
+    params: ParamDict,
+    recipe: DrsRecipe,
+    header: drs_file.Header,
+    props: Optional[ParamDict] = None,
+    eprops: Optional[ParamDict] = None,
+    fiber: Optional[str] = None,
+    database: Optional[drs_database.CalibrationDatabase] = None,
+    **kwargs: Any,
+) -> ParamDict:
+    """Apply the configured thermal correction and update extraction props.
+
+    :param params: APERO parameters containing thermal correction settings.
+    :param recipe: Recipe providing plot and calibration file interfaces.
+    :param header: FITS header used to identify the input calibration files.
+    :param props: Optional extraction properties used for DPRTYPE lookup.
+    :param eprops: Optional extraction properties updated with correction data.
+    :param fiber: Fiber identifier for this extraction.
+    :param database: Optional calibration database to reuse.
+    :param kwargs: Optional per-call overrides for thermal settings and files.
+    :return: Updated extraction properties, including correction metadata.
+    """
     func_name = __NAME__ + '.thermal_correction()'
     # deal with props = None
     if props is None:
@@ -267,9 +287,25 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     return eprops
 
 
-def get_thermal(params, recipe, header, fiber, kind, filename=None,
-                database=None, required: bool = True
+def get_thermal(
+                params: ParamDict, recipe: DrsRecipe,
+                header: drs_file.Header, fiber: str, kind: str,
+                filename: Optional[str] = None,
+                database: Optional[drs_database.CalibrationDatabase] = None,
+                required: bool = True
                 ) -> Tuple[str, float, Union[np.ndarray, None]]:
+    """Load a thermal calibration matching the input file and fiber.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe used to identify the calibration database.
+    :param header: Header of the file being thermally corrected.
+    :param fiber: Fiber whose thermal calibration is required.
+    :param kind: Calibration file-definition key to search for.
+    :param filename: Optional user-selected thermal filename.
+    :param database: Optional calibration database instance to reuse.
+    :param required: Whether absence of a matching file is an error.
+    :return: Thermal filename, observation time, and thermal image data.
+    """
     # get file definition
     out_thermal = drs_file.get_file_definition(params, kind, block_kind='red')
     # get key
@@ -382,7 +418,21 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
               thermal: Optional[np.ndarray] = None,
               flat: Optional[np.ndarray] = None,
               database: Optional[drs_database.CalibrationDatabase] = None,
-              **kwargs) -> Tuple[np.ndarray, ParamDict]:
+              **kwargs: Any) -> Tuple[np.ndarray, ParamDict]:
+    """Correct a thermal image using TAPAS transmission scaling.
+
+    :param params: APERO parameters for logging and calibration settings.
+    :param recipe: Recipe providing the thermal diagnostic plot.
+    :param image: Extracted image to correct.
+    :param header: Input FITS header.
+    :param fiber: Fiber identifier.
+    :param wavemap: Wavelength map corresponding to ``image``.
+    :param thermal: Optional thermal calibration image.
+    :param flat: Optional flat image associated with the extraction.
+    :param database: Optional calibration database for thermal lookup.
+    :param kwargs: Overrides such as TAPAS threshold, order, and limits.
+    :return: Corrected image and thermal correction properties.
+    """
     # set function name
     func_name = display_func('tcorrect1', __NAME__)
     # get parameters from skwargs
@@ -494,7 +544,21 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
               thermal: Optional[np.ndarray] = None,
               flat: Optional[np.ndarray] = None,
               database: Optional[drs_database.CalibrationDatabase] = None,
-              **kwargs) -> Tuple[np.ndarray, ParamDict]:
+              **kwargs: Any) -> Tuple[np.ndarray, ParamDict]:
+    """Correct a thermal image using the configured envelope scaling.
+
+    :param params: APERO parameters for logging and correction settings.
+    :param recipe: Recipe providing the thermal diagnostic plot.
+    :param image: Extracted image to correct.
+    :param header: Input FITS header.
+    :param fiber: Fiber identifier.
+    :param wavemap: Wavelength map corresponding to ``image``.
+    :param thermal: Optional thermal calibration image.
+    :param flat: Optional flat image associated with the extraction.
+    :param database: Optional calibration database for thermal lookup.
+    :param kwargs: Overrides for envelope, filtering, order, and wavelength.
+    :return: Corrected image and thermal correction properties.
+    """
     # set function name
     func_name = display_func('tcorrect2', __NAME__)
     # get parameters from skwargs

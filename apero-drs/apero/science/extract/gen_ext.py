@@ -10,7 +10,7 @@ Created on 2019-07-09 at 13:42
 @author: cook
 """
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -168,8 +168,22 @@ def get_order_profiles(params: ParamDict, recipe: DrsRecipe,
     return oprops
 
 
-def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
-                database=None, **kwargs):
+def ref_fplines(params: ParamDict, recipe: DrsRecipe,
+                e2dsfile: DrsFitsFile, wavemap: np.ndarray, fiber: str,
+                cavity_poly: Any, database: Any = None,
+                **kwargs: Any) -> Any:
+    """Calculate reference FP-line positions when the input fiber permits.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe requesting the reference-line calculation.
+    :param e2dsfile: Extracted spectrum file used as the wavelength input.
+    :param wavemap: Wavelength map corresponding to the extracted spectrum.
+    :param fiber: Fiber identifier being processed.
+    :param cavity_poly: Fabry-Perot cavity polynomial coefficients.
+    :param database: Optional calibration database manager.
+    :param kwargs: Optional overrides for wavelength configuration.
+    :return: Reference FP-line result, or None when processing is skipped.
+    """
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # skip FP-line processing for quick-look mode and flat extractions;
@@ -239,7 +253,7 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,
                 fiber: Union[str, None] = None, wgrid: str = 'wave',
                 s1dkind: Union[str, None] = None,
                 e2dserr: Union[np.ndarray, None] = None,
-                **kwargs):
+                **kwargs: Any) -> Optional[ParamDict]:
     """
     Resample an extracted 2D spectrum onto a 1D wavelength or velocity grid.
 
@@ -443,7 +457,13 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,
     return props
 
 
-def add_s1d_keys(infile, props):
+def add_s1d_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
+    """Write S1D processing properties into the output file header.
+
+    :param infile: FITS output file receiving the S1D header keywords.
+    :param props: S1D properties containing grid and smoothing metadata.
+    :return: The updated FITS output file.
+    """
     infile.add_hkey('KW_S1D_WAVESTART', value=props['WAVESTART'])
     infile.add_hkey('KW_S1D_WAVEEND', value=props['WAVEEND'])
     infile.add_hkey('KW_S1D_KIND', value=props['WAVEKIND'])
@@ -470,7 +490,8 @@ def _extracted_image_key(eprops: ParamDict) -> str:
     raise KeyError('Extraction properties contain no E2DSFF image')
 
 
-def qc_extraction(params, eprops=None, spectra=None):
+def qc_extraction(params: ParamDict, eprops: Optional[ParamDict] = None,
+                  spectra: Any = None) -> Tuple[List[List[Any]], int]:
     """
     Check that the extracted spectrum contract contains finite data.
 
@@ -478,7 +499,7 @@ def qc_extraction(params, eprops=None, spectra=None):
     :param eprops: ParamDict or None, legacy extraction properties
     :param spectra: tuple or None, spectrum and error arrays
 
-    :return: tuple, QC parameter lists and pass flag
+    :return: QC parameter lists and an integer pass flag.
     """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
@@ -573,9 +594,32 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     return order_table
 
 
-def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
-                           props, lprops, wprops, eprops, bprops,
-                           swprops, svprops, sprops, fbprops, qc_params):
+def write_extraction_files(
+        params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+        rawfiles: List[str], combine: bool, fiber: str, props: Any,
+        lprops: Any, wprops: Any, eprops: Any, bprops: Any, swprops: Any,
+        svprops: Any, sprops: Any, fbprops: Any, qc_params: Any
+        ) -> Tuple[DrsFitsFile, DrsFitsFile]:
+    """Write standard extracted spectra and their associated products.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param infile: Input spectrum file used to construct output filenames.
+    :param rawfiles: Names of source raw files included in the extraction.
+    :param combine: Whether multiple raw inputs were combined.
+    :param fiber: Fiber identifier associated with these products.
+    :param props: General calibration properties.
+    :param lprops: Localization and order-profile properties.
+    :param wprops: Wavelength solution properties.
+    :param eprops: Extraction products and quality metrics.
+    :param bprops: Barycentric correction properties.
+    :param swprops: Optional wavelength-grid S1D properties.
+    :param svprops: Optional velocity-grid S1D properties.
+    :param sprops: Shape calibration properties.
+    :param fbprops: Flat and blaze calibration properties.
+    :param qc_params: Quality-control names, values, logic, and flags.
+    :return: The extracted E2DS and E2DSFF output files.
+    """
 
     # create extraction order table
     order_table = create_order_table(lprops, wprops, eprops)
@@ -834,9 +878,27 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     return e2dsfile, e2dsfffile
 
 
-def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
-                              props, lprops, eprops, sprops, fbprops,
-                              qc_params):
+def write_extraction_files_ql(
+        params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+        rawfiles: List[str], combine: bool, fiber: str, props: Any,
+        lprops: Any, eprops: Any, sprops: Any, fbprops: Any,
+        qc_params: Any) -> Tuple[DrsFitsFile, DrsFitsFile]:
+    """Write quick-look extracted spectra and their associated products.
+
+    :param params: APERO parameter dictionary.
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param infile: Input spectrum file used to construct output filenames.
+    :param rawfiles: Names of source raw files included in the extraction.
+    :param combine: Whether multiple raw inputs were combined.
+    :param fiber: Fiber identifier associated with these products.
+    :param props: General calibration properties.
+    :param lprops: Localization and order-profile properties.
+    :param eprops: Extraction products and quality metrics.
+    :param sprops: Shape calibration properties.
+    :param fbprops: Flat and blaze calibration properties.
+    :param qc_params: Quality-control names, values, logic, and flags.
+    :return: The quick-look E2DS and E2DSFF output files.
+    """
     # ----------------------------------------------------------------------
     # Store the single quicklook E2DSFF product.
     # ----------------------------------------------------------------------
@@ -952,8 +1014,20 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     return e2dsfile, e2dsfffile
 
 
-def extract_summary(recipe, params, qc_params, e2dsfile, sprops, eprops,
-                    fiber):
+def extract_summary(recipe: DrsRecipe, params: ParamDict, qc_params: Any,
+                    e2dsfile: DrsFitsFile, sprops: Any, eprops: Any,
+                    fiber: str) -> None:
+    """Add fiber-specific extraction quality values to recipe summaries.
+
+    :param recipe: Recipe whose summary plot receives the values.
+    :param params: APERO parameter dictionary.
+    :param qc_params: Quality-control values for this fiber.
+    :param e2dsfile: Extracted spectrum file used for product metadata.
+    :param sprops: Shape calibration properties.
+    :param eprops: Extraction products and quality metrics.
+    :param fiber: Fiber identifier associated with the summary values.
+    :return: None.
+    """
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
@@ -992,8 +1066,9 @@ def extract_summary(recipe, params, qc_params, e2dsfile, sprops, eprops,
 
 
 def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
-                 pconst,
-                 database: Optional[drs_database.CalibrationDatabase] = None) -> ParamDict:
+                 pconst: Any,
+                 database: Optional[drs_database.CalibrationDatabase] = None
+                 ) -> ParamDict:
     """
     Top-level extraction setup: shape calibration, image calibration, order
     profiles, shape transform, geometry, and simultaneous-fiber model fit.
@@ -1175,7 +1250,7 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
 
 
 def calculate_snr(e2dsff: np.ndarray, e2dsff_err: np.ndarray,
-                  blaze_width: int):
+                  blaze_width: int) -> np.ndarray:
     """
     Calculate the per-order SNR from the extracted spectrum and its error.
 

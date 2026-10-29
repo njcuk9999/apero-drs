@@ -70,7 +70,8 @@ AperoCodedException = drs_log.AperoCodedException
 # =============================================================================
 # Basic other functions
 # =============================================================================
-def gsp_setup():
+def gsp_setup() -> None:
+    """Create the local Google Sheets credential files."""
     # make sure token is in correct directory
     outpath = os.path.join(os.path.expanduser('~'), '.config/')
     # make sure .config exists
@@ -88,9 +89,10 @@ def gsp_setup():
         file2.write(TEXT2.format(''.join(PARAM4), PARAM1, PARAM3))
 
 
-def check_local_googlesheet(params: Any, dataframe,
-                            sheet_name: str, sheet_id: str, logger=None,
-                            check_len: bool = True):
+def check_local_googlesheet(
+    params: Any, dataframe: pd.DataFrame, sheet_name: str,
+    sheet_id: str, logger: Any = None, check_len: bool = True
+    ) -> None:
     """
     Check a local backup of a google sheet against the version we want to
     upload - if for any reason it is shorter than the online version we will
@@ -140,8 +142,9 @@ def check_local_googlesheet(params: Any, dataframe,
     dataframe.to_csv(filename, index=False)
 
 
-def pull_from_googlesheet(params: Any, google_sheet: Any, logger=None,
-                          **kwargs):
+def pull_from_googlesheet(
+    params: Any, google_sheet: Any, logger: Any = None,
+    **kwargs: Any) -> pd.DataFrame:
     """
     Pull from googlesheets using the gspread class
     Has a while loop to try multiple times before raising an error
@@ -179,7 +182,8 @@ def pull_from_googlesheet(params: Any, google_sheet: Any, logger=None,
 
 
 def push_to_googlesheet(params: Any, google_sheet: Any, dataframe: pd.DataFrame,
-                        logger=None, **kwargs):
+                        logger: Any = None,
+                        **kwargs: Any) -> None:
     """
     Push to googlesheets using the gspread class
     Has a while loop to try multiple times before raising an error

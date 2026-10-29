@@ -77,6 +77,11 @@ class _FileLock:
     """Context manager: acquires an exclusive cross-process file lock."""
 
     def __init__(self, path: Path) -> None:
+        """Initialize the lock wrapper for one index lock file.
+
+        :param path: File path used for the cross-process lock.
+        :return: None. Stores the path until the context is entered.
+        """
         self._path = path
         self._fh = None
 

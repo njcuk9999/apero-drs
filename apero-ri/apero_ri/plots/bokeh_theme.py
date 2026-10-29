@@ -13,7 +13,7 @@ See ``.github/instructions/ari-new-page.instructions.md`` §3 for the
 contract.
 """
 
-from typing import Optional
+from typing import Any, Optional
 import threading
 
 # Thread-local request-scoped theme. API endpoints set this from
@@ -79,7 +79,9 @@ def normalise_theme(theme: Optional[str]) -> str:
     return t
 
 
-def apply_bokeh_theme(fig, theme: Optional[str] = "default") -> None:
+def apply_bokeh_theme(
+    fig: Any, theme: Optional[str] = "default"
+) -> None:
     """Apply ARI theme colors to a Bokeh figure in-place.
 
     Safe to call with any object: missing attributes are ignored so
@@ -170,7 +172,9 @@ def fg_glyph_color(theme: Optional[str] = None) -> str:
     return "#FFFFFF" if t == "dark" else "#000000"
 
 
-def apply_theme_to_layout(obj, theme: Optional[str] = "default") -> None:
+def apply_theme_to_layout(
+    obj: Any, theme: Optional[str] = "default"
+) -> None:
     """Walk a Bokeh model tree and apply ``apply_bokeh_theme`` to every
     Plot/Figure encountered. Safe to pass any Bokeh model, layout, or
     None.
