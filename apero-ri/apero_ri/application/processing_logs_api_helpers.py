@@ -100,7 +100,7 @@ def _safe_table(name: str) -> str:
     return f"`{name}`"
 
 
-def _get_log_table(profile_data: dict) -> str:
+def _get_log_table(profile_data: Dict[str, Any]) -> str:
     """Return the log table name for a profile."""
     val = profile_utils.profile_get_db(
         profile_data, "LOG_TABLENAME", ""
@@ -108,7 +108,7 @@ def _get_log_table(profile_data: dict) -> str:
     return str(val).strip() if val else ""
 
 
-def _get_log_dir(profile_data: dict) -> str:
+def _get_log_dir(profile_data: Dict[str, Any]) -> str:
     """Return the log directory root for a profile."""
     for key in ("PATH_LOG", "DRS_DATA_MSG", "LOG_PATH"):
         val = profile_utils.profile_get_path(
@@ -132,7 +132,7 @@ def _find_profile(
     return None
 
 
-def _unique_count(rows: list, key: str) -> int:
+def _unique_count(rows: List[Dict[str, Any]], key: str) -> int:
     """Count unique non-null values for a column key."""
     seen = set()
     for row in rows:
@@ -142,7 +142,9 @@ def _unique_count(rows: list, key: str) -> int:
     return len(seen)
 
 
-def _rows_to_serializable(rows: list) -> List[dict]:
+def _rows_to_serializable(
+    rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     """Convert any non-serialisable values to strings."""
     out = []
     for row in rows:
@@ -255,8 +257,8 @@ def _pid_group_summary(
 # =============================================================================
 # API: processing log table for a profile
 # =============================================================================
-def api_processing_logs(app: Any):
-    """Return JSON rows for the processing log table."""
+def api_processing_logs(app: Any) -> Any:
+    """Return the processing-run table rows for an accessible profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -389,8 +391,8 @@ def api_processing_logs(app: Any):
 # =============================================================================
 # API: PID detail rows
 # =============================================================================
-def api_processing_logs_pid(app: Any):
-    """Return JSON rows for one PID's recipe detail."""
+def api_processing_logs_pid(app: Any) -> Any:
+    """Return recipe-level processing rows and summary for one PID."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -522,7 +524,7 @@ def api_processing_logs_pid(app: Any):
             order_expr = _col_sql[sort_col]
         order_dir_sql = "ASC" if sort_dir == "asc" else "DESC"
 
-        # Data query with LIMIT / OFFSET (LIMIT/OFFSET are integers, not user strings).
+        # LIMIT/OFFSET values are integers, not user-provided strings.
         offset = (page - 1) * per_page
         data_q = f"""
             SELECT
@@ -562,7 +564,8 @@ def api_processing_logs_pid(app: Any):
         try:
             gn_rows = apero_async.database_query(
                 db_params,
-                f"SELECT GROUPNAME FROM {tbl} WHERE GROUPNAME LIKE :pid_like LIMIT 1",
+                f"SELECT GROUPNAME FROM {tbl} "
+                "WHERE GROUPNAME LIKE :pid_like LIMIT 1",
                 bind_params={"pid_like": f"%{safe_pid}%"},
             )
             if gn_rows:
@@ -670,7 +673,7 @@ def api_processing_logs_pid(app: Any):
 # =============================================================================
 # API: log file content
 # =============================================================================
-def api_processing_log_file(app: Any):
+def api_processing_log_file(app: Any) -> Any:
     """Return the text content of one APERO log file."""
     user_info = get_effective_user(session)
     if user_info:
@@ -809,7 +812,7 @@ def _read_log_text(log_dir: str, clean_logfile: str) -> str:
         return ""
 
 
-def api_processing_logs_fail_report(app: Any):
+def api_processing_logs_fail_report(app: Any) -> Any:
     """Generate a PDF fail report for one PID and return share/download URLs."""
     from apero_ri.core import fail_report as fr
 
@@ -876,8 +879,10 @@ def api_processing_logs_fail_report(app: Any):
     """
     try:
         fail_rows = _rows_to_serializable(
-            apero_async.database_query(db_params, fail_query,
-                                       bind_params={"pid_like": f"%{safe_pid}%"})
+            apero_async.database_query(
+                db_params, fail_query,
+                bind_params={"pid_like": f"%{safe_pid}%"},
+            )
         )
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
@@ -1002,7 +1007,7 @@ def api_processing_logs_fail_report(app: Any):
     }), 200
 
 
-def api_processing_logs_report_download(app: Any, token: str):
+def api_processing_logs_report_download(app: Any, token: str) -> Any:
     """Serve a generated fail-report PDF by its public share token.
 
     Public by design (unguessable UUID token, 24h expiry) so reports can be
@@ -1023,7 +1028,7 @@ def api_processing_logs_report_download(app: Any, token: str):
     )
 
 
-def api_processing_logs_fail_report_info(app: Any):
+def api_processing_logs_fail_report_info(app: Any) -> Any:
     """Return cached fail-report status for a profile+pid (no generation)."""
     from apero_ri.core import fail_report as fr
 
@@ -1071,19 +1076,21 @@ def api_processing_logs_fail_report_info(app: Any):
 PROC_LOGS_TABLE_ID = "processing_logs"
 
 
-def api_processing_logs_filters_list(app: Any):
-    """Return the current user's saved filter sets for the processing logs table."""
+def api_processing_logs_filters_list(app: Any) -> Any:
+    """Return this user's saved processing-log filter sets."""
     from apero_ri.core import user_data as ud
 
     user_info = get_effective_user(session)
     if not user_info:
         return jsonify({"error": "Unauthorized"}), 401
 
-    items = ud.load_saved_filters(user_info["username"], table_id=PROC_LOGS_TABLE_ID)
+    items = ud.load_saved_filters(
+        user_info["username"], table_id=PROC_LOGS_TABLE_ID
+    )
     return jsonify({"filters": items}), 200
 
 
-def api_processing_logs_filters_save(app: Any):
+def api_processing_logs_filters_save(app: Any) -> Any:
     """Save (or replace by name) a filter set for the processing logs table."""
     from apero_ri.core import user_data as ud
 
@@ -1104,12 +1111,13 @@ def api_processing_logs_filters_save(app: Any):
         sort_dir = "asc"
 
     entry = ud.save_filter_set(
-        user_info["username"], PROC_LOGS_TABLE_ID, name, filters, sort_col, sort_dir
+        user_info["username"], PROC_LOGS_TABLE_ID, name, filters,
+        sort_col, sort_dir,
     )
     return jsonify({"success": True, "filter": entry}), 200
 
 
-def api_processing_logs_filters_delete(app: Any):
+def api_processing_logs_filters_delete(app: Any) -> Any:
     """Delete one of the current user's saved filter sets by id."""
     from apero_ri.core import user_data as ud
 
@@ -1146,7 +1154,7 @@ _EXPORT_COL_SQL = {
 EXPORT_ROW_LIMIT = 20000
 
 
-def api_processing_logs_pid_export(app: Any):
+def api_processing_logs_pid_export(app: Any) -> Any:
     """Stream a CSV export of one PID's recipe rows (filters/sort applied)."""
     import csv
     import io
@@ -1176,7 +1184,9 @@ def api_processing_logs_pid_export(app: Any):
     profile_data = prof["data"]
     log_table = _get_log_table(profile_data)
     if not log_table:
-        return jsonify({"error": "No log table configured for this profile"}), 404
+        return jsonify(
+            {"error": "No log table configured for this profile"}
+        ), 404
 
     try:
         tbl = _safe_table(log_table)
@@ -1239,7 +1249,9 @@ def api_processing_logs_pid_export(app: Any):
     """
     try:
         rows = _rows_to_serializable(
-            apero_async.database_query(db_params, data_q, bind_params=query_bind)
+            apero_async.database_query(
+                db_params, data_q, bind_params=query_bind
+            )
         )
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500

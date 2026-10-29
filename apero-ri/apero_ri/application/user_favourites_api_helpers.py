@@ -3,18 +3,29 @@
 import json as _json
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from apero_ri.core import user_data as ud
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _load_object_table(base_dir: Path, instrument: str, profile_id: str):
-    """Load object_table.json rows for alias resolution, or None."""
+def _load_object_table(
+    base_dir: Path, instrument: str, profile_id: str,
+) -> list[dict[str, Any]] | None:
+    """Load object-table rows used to resolve names and access.
+
+    Args:
+        base_dir: ARI local data directory.
+        instrument: Instrument owning the profile output.
+        profile_id: APERO profile identifier.
+
+    Returns:
+        Object rows, or ``None`` when no usable table is available.
+    """
     tasks_dir = base_dir / "tasks" / instrument
     json_path = tasks_dir / profile_id / "object_table.json"
     if not json_path.exists():
@@ -31,7 +42,15 @@ def _load_object_table(base_dir: Path, instrument: str, profile_id: str):
         return None
 
 
-def _norm_variants(value: str):
+def _norm_variants(value: str) -> set[str]:
+    """Normalize a name into comparable alphanumeric variants.
+
+    Args:
+        value: Object name or alias to normalize.
+
+    Returns:
+        Non-empty normalized name variants.
+    """
     text = str(value or "").strip().lower()
     if not text:
         return set()
@@ -45,7 +64,16 @@ def _norm_variants(value: str):
     return {v for v in variants if v}
 
 
-def _name_match_row(row: Dict, query: str) -> bool:
+def _name_match_row(row: Dict[str, Any], query: str) -> bool:
+    """Check whether a query partially matches a row name or alias.
+
+    Args:
+        row: Object-table row containing ``OBJNAME`` and optional aliases.
+        query: Name fragment to compare.
+
+    Returns:
+        Whether any normalized query variant occurs in a row name.
+    """
     qvars = _norm_variants(query)
     if not qvars:
         return True
@@ -63,13 +91,20 @@ def _name_match_row(row: Dict, query: str) -> bool:
 
 
 def _resolve_objname(
-    rows: Optional[List[Dict]], query: str
+    rows: Optional[List[Dict[str, Any]]], query: str,
 ) -> Optional[str]:
     """Resolve a user query to a canonical OBJNAME from the object table.
 
     Returns the canonical OBJNAME if exactly one match is found.
     Returns None if 0 or >1 matches (ambiguous).
     Also returns the exact match first (case-insensitive exact OBJNAME).
+
+    Args:
+        rows: Object-table rows, or ``None`` if unavailable.
+        query: Object name or alias supplied by the user.
+
+    Returns:
+        Canonical object name for a unique match, otherwise ``None``.
     """
     if rows is None:
         return None
@@ -88,9 +123,17 @@ def _resolve_objname(
 
 
 def _find_object_in_sections(
-    sections: List[Dict], objname: str
+    sections: List[Dict[str, Any]], objname: str,
 ) -> Optional[str]:
-    """Return section name containing objname, or None."""
+    """Find the section containing an object name.
+
+    Args:
+        sections: User favourite sections and their items.
+        objname: Canonical object name to find.
+
+    Returns:
+        The containing section name, or ``None`` if absent.
+    """
     for sec in sections:
         for item in sec.get("items", []):
             if str(item.get("objname", "")).strip() == objname:
@@ -98,8 +141,19 @@ def _find_object_in_sections(
     return None
 
 
-def _get_profile_info(app, profile_id: str, user_info: Dict):
-    """Return (profile dict, instrument) or (None, None) if not found."""
+def _get_profile_info(
+    app: Any, profile_id: str, user_info: Dict[str, Any],
+) -> tuple[Dict[str, Any] | None, str | None]:
+    """Resolve an accessible profile and its instrument.
+
+    Args:
+        app: The ARI application providing group configuration.
+        profile_id: Profile identifier to resolve.
+        user_info: Authenticated user data.
+
+    Returns:
+        The profile and instrument, or ``(None, None)`` if inaccessible.
+    """
     from apero_ri.core.auth import get_accessible_profiles
     accessible = get_accessible_profiles(user_info, app.ari_groups)
     for prof in accessible:
@@ -109,8 +163,11 @@ def _get_profile_info(app, profile_id: str, user_info: Dict):
 
 
 def _is_object_accessible(
-    app, user_info: Dict, instrument: str,
-    rows: Optional[List[Dict]], objname: str
+    app: Any,
+    user_info: Dict[str, Any],
+    instrument: str,
+    rows: Optional[List[Dict[str, Any]]],
+    objname: str,
 ) -> bool:
     """Check whether *objname* is accessible to the user.
 
@@ -142,8 +199,17 @@ def _is_object_accessible(
 # Existing: reorder (now delegates to sections/save internally)
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_reorder(app):
-    """Save explicit user-defined order for favourite objects."""
+def api_user_favourite_objects_reorder(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Save the submitted order of favourite objects in the default section.
+
+    Args:
+        app: The ARI application providing user authentication.
+
+    Returns:
+        JSON updated sections or an error response with its HTTP status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -210,8 +276,17 @@ def api_user_favourite_objects_reorder(app):
 # New: save full sections structure
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_sections_save(app):
-    """Save the full sections structure (for drag-reorder and collapse)."""
+def api_user_favourite_objects_sections_save(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Save normalized favourite sections and item ordering.
+
+    Args:
+        app: The ARI application providing user authentication.
+
+    Returns:
+        JSON saved sections or an error response with its HTTP status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -288,8 +363,17 @@ def api_user_favourite_objects_sections_save(app):
 # New: rename a section
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_sections_rename(app):
-    """Rename a section."""
+def api_user_favourite_objects_sections_rename(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Rename a favourite section without changing its items.
+
+    Args:
+        app: The ARI application providing user authentication.
+
+    Returns:
+        JSON updated sections or an error response with its HTTP status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -344,8 +428,17 @@ def api_user_favourite_objects_sections_rename(app):
 # New: delete a section
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_sections_delete(app):
-    """Delete a section, moving its items to 'default' (or another)."""
+def api_user_favourite_objects_sections_delete(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Delete a section and move its items to the selected destination.
+
+    Args:
+        app: The ARI application providing user authentication.
+
+    Returns:
+        JSON updated sections or an error response with its HTTP status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -427,8 +520,17 @@ def api_user_favourite_objects_sections_delete(app):
 # New: save per-object nickname/note
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_meta_save(app):
-    """Save nickname and note for a specific favourite object."""
+def api_user_favourite_objects_meta_save(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Save the nickname and note for an existing favourite object.
+
+    Args:
+        app: The ARI application providing user authentication.
+
+    Returns:
+        JSON updated sections or an error response with its HTTP status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -483,8 +585,17 @@ def api_user_favourite_objects_meta_save(app):
 # New: add one object (with alias resolution)
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_add(app):
-    """Add an object by name (resolves aliases) to a section."""
+def api_user_favourite_objects_add(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Resolve and add one accessible object to a favourite section.
+
+    Args:
+        app: The ARI application providing user and profile access.
+
+    Returns:
+        JSON resolution and updated sections, or an HTTP error response.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -626,8 +737,17 @@ def api_user_favourite_objects_add(app):
 # New: bulk add from a text file
 # ---------------------------------------------------------------------------
 
-def api_user_favourite_objects_add_bulk(app):
-    """Bulk add objects from an uploaded text file (one name per line)."""
+def api_user_favourite_objects_add_bulk(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Add accessible objects from an uploaded, line-separated text file.
+
+    Args:
+        app: The ARI application providing user and profile access.
+
+    Returns:
+        JSON per-name results and updated sections, or an HTTP error.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401

@@ -57,7 +57,8 @@ class DropDown(ttk.OptionMenu):
         dd.add_callback(callback)
     """
 
-    def __init__(self, parent, options: list, initial_value: str = None):
+    def __init__(self, parent: tk.Misc, options: list,
+                 initial_value: str = None) -> None:
         """
         Constructor for drop down entry
 
@@ -73,40 +74,44 @@ class DropDown(ttk.OptionMenu):
                                                    *options)
         self.callback = None
 
-    def add_callback(self, callback: callable):
+    def add_callback(self, callback: callable) -> None:
         """
         Add a callback on change
 
         :param callback: callable function
-        :return:
+        :return: None. The callback is registered on the Tk variable.
         """
 
-        def internal_callback(*args):
+        def internal_callback(*args) -> None:
+            """Forward a Tk variable change to the registered callback."""
             _ = args
             callback()
 
         self.var.trace("w", internal_callback)
 
-    def get(self):
+    def get(self) -> str:
         """
         Retrieve the value of the dropdown
 
-        :return:
+        :return: The currently selected option.
         """
         return self.var.get()
 
-    def set(self, value: str):
+    def set(self, value: str) -> None:
         """
         Set the value of the dropdown
 
-        :param value: a string representing the
+        :param value: The option to select.
         :return:
         """
         self.var.set(value)
 
 
 class StatusBar(ttk.Frame):
-    def __init__(self, master):
+    """A bottom-aligned Tk frame that displays one status string."""
+
+    def __init__(self, master: tk.Misc) -> None:
+        """Create the status label and pack it at the bottom of its parent."""
         ttk.Frame.__init__(self, master)
 
         self.frame = tk.Frame(self, relief=tk.SUNKEN)
@@ -124,7 +129,7 @@ class StatusBar(ttk.Frame):
 
 
 class PageButtonPanel(ttk.Frame):
-    def __init__(self, parent, number, controller):
+    def __init__(self, parent, number, controller) -> None:
         """
 
         :param parent:
@@ -146,7 +151,8 @@ class PageButtonPanel(ttk.Frame):
         self.button3 = None
         self.button4 = None
 
-    def button_panel(self, number=0):
+    def button_panel(self, number=0) -> None:
+        """Add navigation, submit, and exit buttons for this page."""
 
         if self.num_pages == 1:
             self.button3 = ttk.Button(self, text='Submit',
@@ -172,7 +178,8 @@ class PageButtonPanel(ttk.Frame):
                                   command=self.controller.close)
         self.button4.grid(row=0, column=3)
 
-    def __nextpage(self):
+    def __nextpage(self) -> None:
+        """Advance to the next page, bounded by the final page."""
         current = self.controller.current
         current += 1
         if current < 0:
@@ -182,7 +189,8 @@ class PageButtonPanel(ttk.Frame):
         self.controller.current = current
         self._goto_page(current)
 
-    def __previouspage(self):
+    def __previouspage(self) -> None:
+        """Return to the previous page, bounded by the first page."""
         current = self.controller.current
         current -= 1
         if current < 0:
@@ -192,14 +200,16 @@ class PageButtonPanel(ttk.Frame):
         self.controller.current = current
         self._goto_page(current)
 
-    def _goto_page(self, page):
+    def _goto_page(self, page) -> None:
+        """Collect current settings and display the requested page."""
         self.controller.update()
         frame = self.controller.pages[page]
         frame.show()
 
 
 class PageLogo(ttk.Frame):
-    def __init__(self, parent, logo_path=None):
+    def __init__(self, parent, logo_path=None) -> None:
+        """Load and display the APERO logo in a frame."""
         if logo_path is None:
             logo_path = os.path.join(IMAGEDIR, 'apero_logo.png')
         ttk.Frame.__init__(self, parent)
@@ -211,7 +221,8 @@ class PageLogo(ttk.Frame):
 
 
 class SettingsPage(ttk.Frame):
-    def __init__(self, parent, settings_dict):
+    def __init__(self, parent, settings_dict) -> None:
+        """Create the appropriate setting widget for each configuration item."""
         # intialise scrolled window
         ttk.Frame.__init__(self, parent)
         # storage for outputs
@@ -239,7 +250,8 @@ class SettingsPage(ttk.Frame):
             # push into frame
             element.grid(row=it, column=0)
 
-    def get_results(self):
+    def get_results(self) -> None:
+        """Refresh stored values from each setting widget."""
         # loop around elements and update results
         for name in self.elements:
             # get element
@@ -250,7 +262,7 @@ class SettingsPage(ttk.Frame):
 
 
 class BrowseSetting(ttk.Frame):
-    def __init__(self, parent, props):
+    def __init__(self, parent, props) -> None:
         """
 
         :param parent:
@@ -283,17 +295,20 @@ class BrowseSetting(ttk.Frame):
         self.entry.grid(row=1, column=1)
         button.grid(row=1, column=2)
 
-    def get(self):
+    def get(self) -> str:
+        """Return the currently entered path."""
         return self.rvalue.get()
 
-    def browse(self):
+    def browse(self) -> None:
+        """Choose a directory and place its path in the entry field."""
         initialdir = self.props.get('initialdir', '/')
         directory = filedialog.askdirectory(initialdir=initialdir)
         self.rvalue.set(directory)
 
 
 class DropDownSetting(ttk.Frame):
-    def __init__(self, parent, props):
+    def __init__(self, parent, props) -> None:
+        """Create a labeled dropdown from the setting properties."""
         ttk.Frame.__init__(self, parent)
         self.props = props
         self.keyword = props['keyword']
@@ -312,12 +327,14 @@ class DropDownSetting(ttk.Frame):
         label.grid(row=1, column=0)
         self.dropdown.grid(row=1, column=1)
 
-    def get(self):
+    def get(self) -> str:
+        """Return the selected dropdown option."""
         return self.dropdown.get()
 
 
 class CheckBoxes(ttk.Frame):
-    def __init__(self, parent, props):
+    def __init__(self, parent, props) -> None:
+        """Create one checkbox for each option in the setting properties."""
         ttk.Frame.__init__(self, parent)
         self.props = props
         self.comment = props['comment']
@@ -337,7 +354,8 @@ class CheckBoxes(ttk.Frame):
             checkbox.grid(row=it + 1, column=1)
             self.checkboxes[self.options[it]] = rvalue
 
-    def get(self):
+    def get(self) -> dict:
+        """Return each checkbox option mapped to its selected state."""
         values = dict()
         for option in self.options:
             rvalue = self.checkboxes[option]

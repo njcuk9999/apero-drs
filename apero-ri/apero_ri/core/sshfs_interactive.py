@@ -64,7 +64,7 @@ class InteractiveSession:
     exit_code: Optional[int] = None
     lock: threading.Lock = field(default_factory=threading.Lock)
 
-    def touch(self):
+    def touch(self) -> None:
         self.last_activity = time.monotonic()
 
 
@@ -76,7 +76,7 @@ _sessions_lock = threading.Lock()
 _reaper_started = False
 
 
-def _start_reaper():
+def _start_reaper() -> None:
     """Start the background reaper thread (once)."""
     global _reaper_started
     if _reaper_started:
@@ -88,7 +88,7 @@ def _start_reaper():
     t.start()
 
 
-def _reaper_loop():
+def _reaper_loop() -> None:
     """Periodically clean up expired sessions."""
     while True:
         time.sleep(REAPER_INTERVAL)
@@ -109,7 +109,7 @@ def _reaper_loop():
 # =============================================================================
 # PTY reader thread
 # =============================================================================
-def _reader_thread(session: InteractiveSession):
+def _reader_thread(session: InteractiveSession) -> None:
     """Read output from the PTY master fd and append to the session buffer."""
     fd = session.fd
     while True:
@@ -221,6 +221,7 @@ def poll_session(token: str) -> Dict[str, Any]:
     """
     Return new output since the last poll, plus session status.
 
+    :param token: Opaque token identifying the interactive session.
     :return: dict with 'ok', 'output' (str), 'finished', 'exit_code'
     """
     with _sessions_lock:
@@ -254,8 +255,9 @@ def send_input(token: str, data: str) -> Dict[str, Any]:
     """
     Send keystrokes to the PTY process.
 
-    :param data: text to write (caller appends \\n for Enter)
-    :return: dict with 'ok'
+    :param token: Opaque token identifying the interactive session.
+    :param data: Text to write; callers append a newline for Enter.
+    :returns: Status mapping describing whether the input was sent.
     """
     with _sessions_lock:
         session = _sessions.get(token)
@@ -277,6 +279,9 @@ def send_input(token: str, data: str) -> Dict[str, Any]:
 def close_session(token: str) -> Dict[str, Any]:
     """
     Terminate and clean up an interactive session.
+
+    :param token: Opaque token identifying the session to close.
+    :returns: Status mapping describing whether the session was closed.
     """
     with _sessions_lock:
         session = _sessions.pop(token, None)
@@ -307,7 +312,10 @@ def close_session(token: str) -> Dict[str, Any]:
 
 
 def close_all_sessions() -> Dict[str, Any]:
-    """Terminate and clean up all active interactive sessions."""
+    """Terminate and clean up all active interactive sessions.
+
+    :returns: Status mapping with the number of sessions closed.
+    """
     with _sessions_lock:
         tokens = list(_sessions.keys())
 
@@ -321,7 +329,10 @@ def close_all_sessions() -> Dict[str, Any]:
 
 
 def list_sessions() -> List[Dict[str, Any]]:
-    """Return summary of active sessions (for debugging)."""
+    """Return summary of active sessions (for debugging).
+
+    :returns: Session summaries with abbreviated tokens and status fields.
+    """
     now = time.monotonic()
     with _sessions_lock:
         return [
@@ -353,6 +364,14 @@ def start_interactive_test(
 
     Unlike the non-interactive test_ssh_connection(), this allows
     the user to respond to password/2FA prompts in the browser.
+
+    :param connection_mode: SSH connection mode to use.
+    :param remote_host: Remote hostname for direct connections.
+    :param remote_user: Remote username for direct connections.
+    :param ssh_config_host: Host alias from the SSH config file.
+    :param remote_path: Optional remote directory to check.
+    :param ssh_key_name: Name of the configured SSH key.
+    :returns: Session status mapping, including its token on success.
     """
     from apero_ri.core.sshfs_backend import (
         _get_ssh_keys_dir,
@@ -429,6 +448,9 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
     causing the PTY child to exit (code 0) while the FUSE mount
     persists via the background daemon – the same pattern used by
     ``start_interactive_ssh_tunnel()`` for database tunnels.
+
+    :param mount_name: Name of the configured mount to start.
+    :returns: Session or mount status mapping.
     """
     from apero_ri.core.sshfs_backend import (
         _get_ssh_keys_dir,
@@ -526,6 +548,9 @@ def finalise_interactive_mount(mount_name: str) -> Dict[str, Any]:
 
     Called once the health-check or mountpoint -q confirms the mount
     is actually live.
+
+    :param mount_name: Name of the configured mount to mark as mounted.
+    :returns: Status mapping describing the configuration update.
     """
     from datetime import datetime, timezone
 
@@ -571,6 +596,15 @@ def start_interactive_ssh_tunnel(
     operations. The ``-f`` flag causes SSH to fork to the background
     after successful authentication, which exits the PTY process while
     the tunnel keeps running.
+
+    :param ssh_config_host: SSH config alias used for the connection.
+    :param local_port: Local port to forward.
+    :param remote_host: Remote database hostname.
+    :param remote_port: Remote database port, defaulting to MySQL.
+    :param local_data_dir: Optional ARI data directory for tunnel state.
+    :param simple_ssh: Skip control-socket setup when true.
+    :param state_subdir: Subdirectory for tunnel control-socket state.
+    :returns: Status mapping describing tunnel startup.
     """
     from hashlib import sha1
 

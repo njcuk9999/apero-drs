@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from apero_ri.core import permissions as perms
 from apero_ri.core import schedule
@@ -21,11 +21,21 @@ __NAME__ = 'apero_ri.application.schedule_api_helpers'
 # =============================================================================
 # Define permission helpers
 # =============================================================================
-def _data_dir(app) -> Path:
+def _data_dir(app: Any) -> Path:
+    """Return the configured local data directory.
+
+    :param app: ARI application providing the data directory setting.
+    :return: Local ARI data directory.
+    """
     return Path(app.args.data_dir or str(Path.home() / '.ari'))
 
 
 def _monitor_like_perm(perm: str) -> bool:
+    """Check whether a permission grants monitor-level access.
+
+    :param perm: Permission name to inspect.
+    :return: Whether the permission matches a monitor access pattern.
+    """
     if not isinstance(perm, str):
         return False
     if perm in ('view.monitor_portal', 'view.monitor', 'monitor'):
@@ -39,7 +49,12 @@ def _monitor_like_perm(perm: str) -> bool:
     return False
 
 
-def _user_and_perms(app):
+def _user_and_perms(app: Any) -> tuple[Optional[dict], Set[str]]:
+    """Return the current API user and their resolved permissions.
+
+    :param app: ARI application providing user and group configuration.
+    :return: User information, if authenticated, and permission names.
+    """
     user_info = app._get_api_user()
     if user_info:
         user_perms = resolve_user_permissions(
@@ -51,13 +66,24 @@ def _user_and_perms(app):
 
 
 def _all_instruments() -> Set[str]:
+    """Return configured instrument names in uppercase.
+
+    :return: Set of valid instrument names.
+    """
     params = perms.load_parameters()
     raw = params.get('instruments', {}).get('value', [])
     return set(str(item).strip().upper() for item in raw if item)
 
 
-def _monitor_instruments(app, user_info: Optional[dict],
+def _monitor_instruments(app: Any, user_info: Optional[dict],
                          user_perms: Set[str]) -> List[str]:
+    """List instruments available through the user's monitor permissions.
+
+    :param app: ARI application providing group configuration.
+    :param user_info: Authenticated user information, if available.
+    :param user_perms: Resolved permission names.
+    :return: Authorized instrument names.
+    """
     valid = _all_instruments()
     out: Set[str] = set()
 
@@ -84,9 +110,17 @@ def _monitor_instruments(app, user_info: Optional[dict],
     return sorted(list(out))
 
 
-def _can_view_monitor_schedule(app, user_info: Optional[dict],
+def _can_view_monitor_schedule(app: Any, user_info: Optional[dict],
                                user_perms: Set[str],
                                instrument: str) -> bool:
+    """Check whether a user may view a monitor schedule.
+
+    :param app: ARI application providing group configuration.
+    :param user_info: Authenticated user information, if available.
+    :param user_perms: Resolved permission names.
+    :param instrument: Instrument whose schedule is requested.
+    :return: Whether the user may view that instrument's schedule.
+    """
     if not user_info:
         return False
     if any(_monitor_like_perm(p) for p in user_perms):
@@ -96,6 +130,12 @@ def _can_view_monitor_schedule(app, user_info: Optional[dict],
 
 
 def _can_manage_schedule(user_perms: Set[str], instrument: str) -> bool:
+    """Check whether permissions allow managing an instrument schedule.
+
+    :param user_perms: Resolved permission names.
+    :param instrument: Instrument whose schedule is being managed.
+    :return: Whether the user may manage the schedule.
+    """
     inst = str(instrument or '').strip().upper()
     if ('manage.astrometrics' in user_perms
             or 'manage.group.super_admin' in user_perms
@@ -131,6 +171,12 @@ def _can_manage_schedule(user_perms: Set[str], instrument: str) -> bool:
 
 
 def _display_name(users: Dict[str, dict], username: str) -> str:
+    """Build a display name from a user's configured name fields.
+
+    :param users: User records keyed by username.
+    :param username: Username to display.
+    :return: Full name, or the username when no name is configured.
+    """
     row = users.get(username, dict())
     first_names = str(row.get('first_names', '') or '').strip()
     last_name = str(row.get('last_name', '') or '').strip()
@@ -139,6 +185,10 @@ def _display_name(users: Dict[str, dict], username: str) -> str:
 
 
 def _user_list_payload() -> List[Dict]:
+    """Build the sorted username/display-name list for schedule responses.
+
+    :return: User rows containing ``username`` and ``who`` values.
+    """
     users = load_users()
     out = []
     for username, udata in users.items():
@@ -155,7 +205,12 @@ def _user_list_payload() -> List[Dict]:
 # =============================================================================
 # Define endpoint helpers
 # =============================================================================
-def api_schedule_meta(app):
+def api_schedule_meta(app: Any) -> Response | tuple[Response, int]:
+    """Return schedule metadata for an instrument the user can monitor.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -193,7 +248,12 @@ def api_schedule_meta(app):
     )
 
 
-def api_schedule_entries_list(app):
+def api_schedule_entries_list(app: Any) -> Response | tuple[Response, int]:
+    """List schedule entries visible to the current user.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     instrument = str(request.args.get('instrument', '')).strip().upper()
     if not _can_view_monitor_schedule(app, user_info, user_perms, instrument):
@@ -210,6 +270,10 @@ def api_schedule_entries_list(app):
 
 
 def _save_user_calendar_event(entry: Dict) -> None:
+    """Save a schedule entry as a personal calendar event.
+
+    :param entry: Schedule entry row to copy into the user's calendar.
+    """
     username = str(entry.get('username', '') or '').strip()
     if not username:
         return
@@ -230,7 +294,12 @@ def _save_user_calendar_event(entry: Dict) -> None:
     ud.save_event(username, event)
 
 
-def api_schedule_entries_add(app):
+def api_schedule_entries_add(app: Any) -> Response | tuple[Response, int]:
+    """Create a schedule entry from the request body.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -278,7 +347,12 @@ def api_schedule_entries_add(app):
     return jsonify(success=True, row=row)
 
 
-def api_schedule_entries_edit(app):
+def api_schedule_entries_edit(app: Any) -> Response | tuple[Response, int]:
+    """Update a schedule entry from the request body.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -322,7 +396,12 @@ def api_schedule_entries_edit(app):
     return jsonify(success=True, row=row)
 
 
-def api_schedule_entries_delete(app):
+def api_schedule_entries_delete(app: Any) -> Response | tuple[Response, int]:
+    """Delete a schedule entry selected in the request body.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -352,7 +431,14 @@ def api_schedule_entries_delete(app):
     return jsonify(success=True)
 
 
-def api_schedule_link_user_calendar(app):
+def api_schedule_link_user_calendar(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Link an existing schedule entry to the user's personal calendar.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -376,7 +462,12 @@ def api_schedule_link_user_calendar(app):
     return jsonify(success=True)
 
 
-def api_schedule_tasks_upsert(app):
+def api_schedule_tasks_upsert(app: Any) -> Response | tuple[Response, int]:
+    """Create or update a task for an instrument schedule.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -403,7 +494,12 @@ def api_schedule_tasks_upsert(app):
     return jsonify(success=True, row=row)
 
 
-def api_schedule_tasks_rename(app):
+def api_schedule_tasks_rename(app: Any) -> Response | tuple[Response, int]:
+    """Rename a task in an instrument schedule.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -430,7 +526,14 @@ def api_schedule_tasks_rename(app):
     return jsonify(success=True, row=row)
 
 
-def api_schedule_tasks_set_active(app):
+def api_schedule_tasks_set_active(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Set whether a task is active in an instrument schedule.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -454,7 +557,12 @@ def api_schedule_tasks_set_active(app):
     return jsonify(success=True)
 
 
-def api_schedule_calendar_week(app):
+def api_schedule_calendar_week(app: Any) -> Response | tuple[Response, int]:
+    """Return calendar rows for one schedule week.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     instrument = str(request.args.get('instrument', '')).strip().upper()
     if not _can_view_monitor_schedule(app, user_info, user_perms, instrument):
@@ -473,7 +581,12 @@ def api_schedule_calendar_week(app):
     return jsonify(success=True, payload=payload)
 
 
-def api_schedule_calendar_month(app):
+def api_schedule_calendar_month(app: Any) -> Response | tuple[Response, int]:
+    """Return calendar rows for one schedule month.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     instrument = str(request.args.get('instrument', '')).strip().upper()
     if not _can_view_monitor_schedule(app, user_info, user_perms, instrument):
@@ -492,7 +605,14 @@ def api_schedule_calendar_month(app):
     return jsonify(success=True, payload=payload)
 
 
-def api_schedule_calendar_weeks(app):
+def api_schedule_calendar_weeks(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Return calendar rows for several schedule weeks.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     instrument = str(request.args.get('instrument', '')).strip().upper()
     if not _can_view_monitor_schedule(app, user_info, user_perms, instrument):
@@ -523,7 +643,12 @@ def api_schedule_calendar_weeks(app):
     return jsonify(success=True, payload=payload)
 
 
-def api_schedule_stats(app):
+def api_schedule_stats(app: Any) -> Response | tuple[Response, int]:
+    """Return schedule statistics filtered by the user's visibility settings.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     instrument = str(request.args.get('instrument', '')).strip().upper()
     if not _can_view_monitor_schedule(app, user_info, user_perms, instrument):
@@ -561,7 +686,14 @@ def api_schedule_stats(app):
     )
 
 
-def api_schedule_stats_visibility_set(app):
+def api_schedule_stats_visibility_set(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Update one user's schedule-statistics visibility setting.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -593,7 +725,14 @@ def api_schedule_stats_visibility_set(app):
     return jsonify(success=True, stats_visibility=vis_map)
 
 
-def api_schedule_instrument_setting_set(app):
+def api_schedule_instrument_setting_set(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Set a configurable value for an instrument schedule.
+
+    :param app: ARI application providing authentication and profile access.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info, user_perms = _user_and_perms(app)
     if not user_info:
         return jsonify(
@@ -635,7 +774,9 @@ def api_schedule_instrument_setting_set(app):
     return jsonify(success=True)
 
 
-def api_schedule_entries_bulk_add(app):
+def api_schedule_entries_bulk_add(
+    app: Any,
+) -> Response | tuple[Response, int]:
     """Create repeating unassigned entries in one call.
 
     Requires manage permission.  Generates one entry per repeat
@@ -687,6 +828,7 @@ def api_schedule_entries_bulk_add(app):
         ), 400
 
     def _add_months(d: date, n: int) -> date:
+        """Add months to a date, clamping the day to the month's length."""
         month = d.month - 1 + n
         year = d.year + month // 12
         month = month % 12 + 1

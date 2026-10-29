@@ -15,8 +15,9 @@ Created on 2026-04-23
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, Iterable
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -35,12 +36,27 @@ from apero_ri.core.permissions import resolve_user_permissions
 __NAME__ = 'apero_ri.application.issues_api_helpers'
 
 
-def _data_dir(app) -> Path:
-    """Return the ARI data directory as a Path."""
+def _data_dir(app: Any) -> Path:
+    """Resolve the configured ARI data directory.
+
+    Args:
+        app: The ARI application whose arguments may define the data path.
+
+    Returns:
+        Configured data directory, defaulting to ``~/.ari``.
+    """
     return Path(app.args.data_dir or str(Path.home() / '.ari'))
 
 
-def _is_monitor_perm(p) -> bool:
+def _is_monitor_perm(p: Any) -> bool:
+    """Return whether a permission grants monitor-level access.
+
+    Args:
+        p: Permission value to inspect.
+
+    Returns:
+        Whether it is a recognized monitor permission string.
+    """
     if not isinstance(p, str):
         return False
     if p in ('view.monitor_portal', 'view.monitor'):
@@ -54,7 +70,7 @@ def _is_monitor_perm(p) -> bool:
     return False
 
 
-def _user_visibility(perms) -> str:
+def _user_visibility(perms: Iterable[str] | None) -> str:
     """Map a permission set to an issues visibility level.
 
     :param perms: set/list of permissions
@@ -69,8 +85,15 @@ def _user_visibility(perms) -> str:
     return 'public'
 
 
-def api_issues_list(app):
-    """List issues visible to the current caller."""
+def api_issues_list(app: Any) -> Response | tuple[Response, int]:
+    """List issues visible to the current caller.
+
+    Args:
+        app: The ARI application providing user and group information.
+
+    Returns:
+        JSON response containing visible issues or an HTTP error.
+    """
     user_info = app._get_api_user()
     if user_info:
         perms = resolve_user_permissions(
@@ -100,7 +123,7 @@ def api_issues_list(app):
                    visibility=visibility)
 
 
-def api_issues_create(app):
+def api_issues_create(app: Any) -> Response | tuple[Response, int]:
     """Create a new issue (flag / target_request / other).
 
     JSON body:
@@ -112,6 +135,12 @@ def api_issues_create(app):
         instrument  (optional)
         profile_id  (optional)
         visibility  (optional): 'public' (default) | 'monitor' | 'admin'
+
+    Args:
+        app: The ARI application providing user and group information.
+
+    Returns:
+        JSON response containing the created issue or an HTTP error.
     """
     user_info = app._get_api_user()
     if user_info:
@@ -164,13 +193,19 @@ def api_issues_create(app):
     return jsonify(success=True, issue=issue)
 
 
-def api_issues_update(app):
+def api_issues_update(app: Any) -> Response | tuple[Response, int]:
     """Update an issue's status or append a note (monitor+ only).
 
     JSON body:
         id      (required, int)
         status  (optional): 'open' | 'resolved' | 'invalid'
         note    (optional): free-form text to append
+
+    Args:
+        app: The ARI application providing user and group information.
+
+    Returns:
+        JSON response containing the updated issue or an HTTP error.
     """
     user_info = app._get_api_user()
     if not user_info:
@@ -208,13 +243,19 @@ def api_issues_update(app):
     return jsonify(success=True, issue=issue)
 
 
-def api_issues_users(app):
+def api_issues_users(app: Any) -> Response | tuple[Response, int]:
     """List users that an issue can be assigned to.
 
     Returns the set of users whose resolved permissions grant
     at least monitor-level visibility (i.e. anyone who can act on
     issues). Optional ``?instrument=`` arg further restricts to
     monitors of a specific instrument.
+
+    Args:
+        app: The ARI application providing user and group information.
+
+    Returns:
+        JSON response containing eligible users or an HTTP error.
     """
     user_info = app._get_api_user()
     if not user_info:
@@ -273,7 +314,7 @@ def api_issues_users(app):
     return jsonify(success=True, users=out)
 
 
-def _is_admin_or_super(perms) -> bool:
+def _is_admin_or_super(perms: Iterable[str] | None) -> bool:
     """True if the caller can fully edit/delete issues."""
     pset = set(perms or ())
     if 'manage.astrometrics' in pset:
@@ -289,10 +330,16 @@ def _is_admin_or_super(perms) -> bool:
     return False
 
 
-def api_issues_delete(app):
+def api_issues_delete(app: Any) -> Response | tuple[Response, int]:
     """Hard-delete an issue. Admin / super-admin only.
 
     JSON body: {"id": <int>}
+
+    Args:
+        app: The ARI application providing user and group information.
+
+    Returns:
+        JSON deletion result or an HTTP error.
     """
     user_info = app._get_api_user()
     if not user_info:
@@ -314,7 +361,7 @@ def api_issues_delete(app):
     return jsonify(success=True, deleted=deleted)
 
 
-def api_issues_edit(app):
+def api_issues_edit(app: Any) -> Response | tuple[Response, int]:
     """Edit core fields of an issue. Admin / super-admin only.
 
     Unlike :func:`api_issues_update` (which monitors can use to set
@@ -324,6 +371,12 @@ def api_issues_edit(app):
 
     JSON body keys (all optional except ``id``):
         id, title, reason, kind, type, label, action, visibility
+
+    Args:
+        app: The ARI application providing user and group information.
+
+    Returns:
+        JSON response containing the edited issue or an HTTP error.
     """
     user_info = app._get_api_user()
     if not user_info:
@@ -368,13 +421,22 @@ def create_issue_internal(
     title: str = '',
     body: str = '',
     created_by: str = 'system',
-    meta=None,
-):
+    meta: dict[str, Any] | None = None,
+) -> str | None:
     """Programmatic issue creation (used by the message flag flow).
 
     Returns the created issue's ``id`` as a string, or ``None`` on
-    failure. Reads ``ARI_DIR`` from the environment because there is
-    no ``app`` context here.
+    failure. Uses ``~/.ari`` because there is no ``app`` context here.
+
+    Args:
+        kind: Issue category.
+        title: Optional issue title.
+        body: Issue description.
+        created_by: Username recorded as the creator.
+        meta: Optional issue metadata, including type and origin URL.
+
+    Returns:
+        The new issue ID as a string, or ``None`` if creation fails.
     """
     try:
         from pathlib import Path as _P

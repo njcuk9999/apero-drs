@@ -48,7 +48,9 @@ speed_of_light_kms = physics.speed_of_light_kms
 # =============================================================================
 # Define functions
 # =============================================================================
-def wave_to_wave(spectrum, wave1, wave2, reshape=False, splinek=5):
+def wave_to_wave(spectrum: np.ndarray, wave1: np.ndarray,
+                 wave2: np.ndarray, reshape: bool = False,
+                 splinek: int = 5) -> np.ndarray:
     """
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
@@ -59,7 +61,7 @@ def wave_to_wave(spectrum, wave1, wave2, reshape=False, splinek=5):
     :param wave2: numpy array (2D), destination wavelength grid
     :param reshape: bool, if True try to reshape spectrum to the shape of
                     the output wave solution
-    :param splinek: int, the splinke k value
+    :param splinek: spline order used to resample each detector order
 
     :return output_spectrum: numpy array (2D), spectrum resampled to "wave2"
     """

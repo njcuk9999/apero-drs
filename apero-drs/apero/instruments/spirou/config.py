@@ -77,6 +77,11 @@ CDict.set('ROOT', value='/drs/spirou/drs/', source=__NAME__, author='NJC',
 CDict.set('RAW', value='/drs/spirou/data/raw/', source=__NAME__,
           author='NJC', group=cgroup)
 
+#   Define an external raw directory to mirror into PATH.RAW (None to
+#   disable) - files are linked using IPATH.EXTERNAL_RAW_TYPE
+CDict.set('EXTERNAL_RAW', value=None, source=__NAME__, author='NJC',
+          group=cgroup)
+
 #   Define the directory that the reduced data should be saved to/read from
 CDict.set('RED', value='/drs/spirou/data/reduced', source=__NAME__,
           author='NJC', group=cgroup)
@@ -189,6 +194,12 @@ CDict.set('RESET_TELLU', value='reset/telludb/', source=__NAME__,
           author='NJC', group=cgroup)
 # for run files (within assets directory)
 CDict.set('RESET_RUN', value='reset/runs/', source=__NAME__,
+          author='NJC', group=cgroup)
+
+# How files in PATH.EXTERNAL_RAW are linked into PATH.RAW
+#   'symlink' = symbolic link per file
+#   'hardlink' = hard link per file (copies if on a different filesystem)
+CDict.set('EXTERNAL_RAW_TYPE', value='symlink', source=__NAME__,
           author='NJC', group=cgroup)
 
 # -----------------------------------------------------------------------------

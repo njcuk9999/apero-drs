@@ -63,6 +63,7 @@ FILTERS: List[str] = []
 # Helpers
 # =============================================================================
 def _load_yaml(path: Path) -> Optional[Dict[str, Any]]:
+    """Load a YAML mapping, returning None when it is missing or unreadable."""
     if not _HAS_YAML or not path.exists():
         return None
     try:
@@ -73,6 +74,7 @@ def _load_yaml(path: Path) -> Optional[Dict[str, Any]]:
 
 
 def _load_json(path: Path) -> Optional[Dict[str, Any]]:
+    """Load a JSON mapping, returning None when it is missing or unreadable."""
     if not path.exists():
         return None
     try:
@@ -83,6 +85,7 @@ def _load_json(path: Path) -> Optional[Dict[str, Any]]:
 
 
 def _save_json(data: Dict[str, Any], path: Path) -> None:
+    """Atomically write a JSON mapping, cleaning up a failed temp file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + '.tmp')
     try:
@@ -97,6 +100,7 @@ def _save_json(data: Dict[str, Any], path: Path) -> None:
 
 
 def _list_users(users_dir: Path) -> List[str]:
+    """Return sorted directory names for users below the supplied path."""
     if not users_dir.exists():
         return []
     out: List[str] = []
@@ -141,6 +145,7 @@ def _load_fav_objects(user_dir: Path) -> List[Dict[str, Any]]:
 def _load_object_state(
     base_dir: Path, instrument: str, profile: str, objname: str,
 ) -> Optional[Dict[str, Any]]:
+    """Load one favourite object's task-state JSON file."""
     state_path = (
         base_dir / 'tasks' / instrument / profile / 'objects'
         / f'.state_{objname}.json'
@@ -166,6 +171,7 @@ def _diff_fields(
 
 
 def _summarise_changes(changes: List[Tuple[str, Any, Any]]) -> str:
+    """Format changed watch fields as a short Markdown list."""
     bits = []
     for field, old, new in changes:
         bits.append(f'**{field}**: `{old}` → `{new}`')
@@ -180,6 +186,7 @@ class FavObjectWatcherTask(apero_async.AperoAsyncTask):
     change."""
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the registered task with its display metadata."""
         name = 'Favourite Object Watcher'
         description = (
             'Detect changes in favourite-object .state_<OBJ>.json '

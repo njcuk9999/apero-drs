@@ -22,6 +22,7 @@ import threading
 import types
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 import numpy as np
@@ -53,12 +54,14 @@ from apero_ri.core.permissions import (
     get_inherited_groups,
     resolve_user_permissions,
 )
-from flask import jsonify, request, send_file, session
+from flask import Response, jsonify, request, send_file, session
 
 # ================================================================
 # Module name
 # ================================================================
 __NAME__ = 'apero_ri.application.object_groups_api_helpers'
+
+_ApiResponse = Response | tuple[Response, int]
 
 
 _ALLOWED_STR_METHODS = {
@@ -205,7 +208,11 @@ class _EvalTimeoutError(Exception):
 # ================================================================
 # Helpers
 # ================================================================
-def _can_moderate(user_info, app, instrument):
+def _can_moderate(
+    user_info: dict[str, Any],
+    app: Any,
+    instrument: str,
+) -> bool:
     """Check if user has monitor.{instrument} privileges."""
     user_groups = set(user_info.get('groups', []))
     all_groups = set(user_groups)
@@ -215,7 +222,11 @@ def _can_moderate(user_info, app, instrument):
     return target in all_groups
 
 
-def _resolve_profile(app, user_info, profile_id):
+def _resolve_profile(
+    app: Any,
+    user_info: Any,
+    profile_id: str,
+) -> dict[str, Any] | None:
     """Find an accessible profile or return None."""
     accessible = get_accessible_profiles(
         user_info, app.ari_groups
@@ -226,7 +237,11 @@ def _resolve_profile(app, user_info, profile_id):
     return None
 
 
-def _resolve_query(app, profile, query):
+def _resolve_query(
+    app: Any,
+    profile: dict[str, Any],
+    query: str,
+) -> tuple[str | None, str, str | None, list[str]]:
     """Resolve *query* to (objname, nickname, error, candidates).
 
     Returns a 4-tuple:
@@ -291,7 +306,8 @@ def _resolve_query(app, profile, query):
     return partial[0], nickname, None, []
 
 
-def _summary_catalog_items():
+def _summary_catalog_items(
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
     """Return summary-property catalog and lookup by property ID."""
     catalog = build_target_info_property_catalog()
     counts = dict()
@@ -321,7 +337,7 @@ def _summary_catalog_items():
     return out, by_id
 
 
-def _humanize_key(text):
+def _humanize_key(text: str) -> str:
     """Return a compact display label from a snake/camel key."""
     raw = str(text or '').strip()
     if not raw:
@@ -332,7 +348,7 @@ def _humanize_key(text):
     return out
 
 
-def _section_title(section_key):
+def _section_title(section_key: str) -> str:
     """Return display title for a section key."""
     names = dict(
         target_info='target info',
@@ -347,7 +363,11 @@ def _section_title(section_key):
     return names.get(section_key, _humanize_key(section_key).lower())
 
 
-def _property_parts(section_key, prefix, prop_label):
+def _property_parts(
+    section_key: str,
+    prefix: list[str],
+    prop_label: str,
+) -> dict[str, str]:
     """Return category/sub-category/LBL category/property parts."""
     category = _section_title(section_key)
     subcategory = 'general'
@@ -394,12 +414,12 @@ def _property_parts(section_key, prefix, prop_label):
     )
 
 
-def _display_label(meta):
+def _display_label(meta: dict[str, Any]) -> str:
     """Return default column label for one summary property."""
     return str(meta.get('property_name') or '').strip()
 
 
-def _is_lbl_self_pair(flavor_id):
+def _is_lbl_self_pair(flavor_id: str) -> bool:
     """Return True when flavor_id matches science_companion self-pair."""
     text = str(flavor_id or '').strip()
     if not text:
@@ -411,15 +431,15 @@ def _is_lbl_self_pair(flavor_id):
 
 
 def _add_property(
-    out,
-    prop_id,
-    section_key,
-    prop_label,
-    value,
-    prefix=None,
-    subcategory=None,
-    preserve_raw=False,
-):
+    out: dict[str, Any],
+    prop_id: str,
+    section_key: str,
+    prop_label: str,
+    value: Any,
+    prefix: list[str] | None = None,
+    subcategory: str | None = None,
+    preserve_raw: bool = False,
+) -> None:
     """Insert one flattened property into *out*."""
     if prefix is None:
         prefix = []
@@ -453,7 +473,10 @@ def _add_property(
     )
 
 
-def _add_time_series_binned_properties(out, rows):
+def _add_time_series_binned_properties(
+    out: dict[str, Any],
+    rows: Any,
+) -> None:
     """Add time-series values aggregated by observation directory."""
     if not isinstance(rows, list):
         return
@@ -502,7 +525,12 @@ def _add_time_series_binned_properties(out, rows):
         )
 
 
-def _add_header_summary_properties(app, profile, objname, props):
+def _add_header_summary_properties(
+    app: Any,
+    profile: dict[str, Any],
+    objname: str,
+    props: dict[str, Any],
+) -> None:
     """Add htable-backed header values from the first available row."""
     base_dir = Path(
         app.args.data_dir or str(Path.home() / '.ari')
@@ -539,7 +567,11 @@ def _add_header_summary_properties(app, profile, objname, props):
         )
 
 
-def _add_admin_custom_summary_properties(app, profile, props):
+def _add_admin_custom_summary_properties(
+    app: Any,
+    profile: dict[str, Any],
+    props: dict[str, Any],
+) -> None:
     """Add persisted admin custom columns as summary properties."""
     local_data_dir = app._resolve_local_data_dir()
     catalog_map = {
@@ -594,7 +626,12 @@ def _add_admin_custom_summary_properties(app, profile, props):
         )
 
 
-def _flatten_section_values(out, section_key, prefix, value):
+def _flatten_section_values(
+    out: dict[str, Any],
+    section_key: str,
+    prefix: list[str],
+    value: Any,
+) -> None:
     """Flatten nested section data into summary properties."""
     if value is None:
         return
@@ -665,7 +702,10 @@ def _flatten_section_values(out, section_key, prefix, value):
     )
 
 
-def _add_lbl_uncertainties(out, lbl_info):
+def _add_lbl_uncertainties(
+    out: dict[str, Any],
+    lbl_info: dict[str, Any],
+) -> None:
     """Add explicit per-flavor LBL uncertainty percentile properties."""
     flavors = lbl_info.get('flavors', [])
     if not isinstance(flavors, list):
@@ -696,12 +736,12 @@ def _add_lbl_uncertainties(out, lbl_info):
 
 
 def _collect_object_summary_properties(
-    app,
-    profile,
-    obj_row,
-    objname,
-    accessible_rids,
-):
+    app: Any,
+    profile: dict[str, Any],
+    obj_row: dict[str, Any],
+    objname: str,
+    accessible_rids: set[str],
+) -> dict[str, Any]:
     """Return full summary properties for one object."""
     base_dir = Path(
         app.args.data_dir or str(Path.home() / '.ari')
@@ -774,7 +814,10 @@ def _collect_object_summary_properties(
     return props
 
 
-def _normalise_summary_columns(columns, catalog_map):
+def _normalise_summary_columns(
+    columns: Any,
+    catalog_map: dict[str, Any],
+) -> list[str]:
     """Return the valid, de-duplicated summary property IDs."""
     result = []
     seen = set()
@@ -793,7 +836,7 @@ def _normalise_summary_columns(columns, catalog_map):
     return result
 
 
-def _summary_value(value):
+def _summary_value(value: Any) -> Any:
     """Normalise values for summary-table display and export."""
     if value is None:
         return ''
@@ -811,7 +854,7 @@ def _summary_value(value):
     return str(value)
 
 
-def _is_null_value(value):
+def _is_null_value(value: Any) -> bool:
     """Return True for null-like values used in custom columns."""
     if value is None:
         return True
@@ -824,14 +867,14 @@ def _is_null_value(value):
     return False
 
 
-def _is_number_value(value):
+def _is_number_value(value: Any) -> bool:
     """Return True when *value* is numeric and not boolean."""
     if isinstance(value, bool):
         return False
     return isinstance(value, (int, float, np.number))
 
 
-def _allowed_expr_rules_path(local_data_dir):
+def _allowed_expr_rules_path(local_data_dir: str | Path) -> Path:
     """Return JSON path used for allowed expression rows."""
     return (
         Path(local_data_dir)
@@ -840,7 +883,7 @@ def _allowed_expr_rules_path(local_data_dir):
     )
 
 
-def _default_allowed_expression_rows():
+def _default_allowed_expression_rows() -> list[dict[str, str]]:
     """Return fresh default rows for allowed expression rules."""
     out = []
     for row in _DEFAULT_ALLOWED_EXPRESSION_ROWS:
@@ -851,7 +894,7 @@ def _default_allowed_expression_rows():
     return out
 
 
-def _normalise_allowed_expression_rows(rows):
+def _normalise_allowed_expression_rows(rows: Any) -> list[dict[str, str]]:
     """Normalise allowed expression rows from JSON payload/file."""
     out = []
     if not isinstance(rows, list):
@@ -871,7 +914,9 @@ def _normalise_allowed_expression_rows(rows):
     return out
 
 
-def _load_allowed_expression_rows(local_data_dir):
+def _load_allowed_expression_rows(
+    local_data_dir: str | Path,
+) -> list[dict[str, str]]:
     """Load persisted allowed expression rows (or defaults)."""
     path = _allowed_expr_rules_path(local_data_dir)
     defaults = _default_allowed_expression_rows()
@@ -908,7 +953,10 @@ def _load_allowed_expression_rows(local_data_dir):
     return merged
 
 
-def _save_allowed_expression_rows(local_data_dir, rows):
+def _save_allowed_expression_rows(
+    local_data_dir: str | Path,
+    rows: Any,
+) -> list[dict[str, str]]:
     """Persist allowed expression rows atomically."""
     clean_rows = _normalise_allowed_expression_rows(rows)
     if not clean_rows:
@@ -928,7 +976,7 @@ def _save_allowed_expression_rows(local_data_dir, rows):
     return clean_rows
 
 
-def _admin_custom_columns_path(local_data_dir):
+def _admin_custom_columns_path(local_data_dir: str | Path) -> Path:
     """Return JSON path used for persisted admin custom columns."""
     return (
         Path(local_data_dir)
@@ -937,7 +985,9 @@ def _admin_custom_columns_path(local_data_dir):
     )
 
 
-def _load_admin_custom_columns(local_data_dir):
+def _load_admin_custom_columns(
+    local_data_dir: str | Path,
+) -> dict[str, Any]:
     """Load persisted admin custom columns payload from disk."""
     path = _admin_custom_columns_path(local_data_dir)
     if not path.exists():
@@ -991,7 +1041,10 @@ def _load_admin_custom_columns(local_data_dir):
     )
 
 
-def _admin_custom_profile_rows(local_data_dir, profile_id):
+def _admin_custom_profile_rows(
+    local_data_dir: str | Path,
+    profile_id: str,
+) -> list[dict[str, Any]]:
     """Return persisted admin custom columns for one profile."""
     payload = _load_admin_custom_columns(local_data_dir)
     pid = str(profile_id or '').strip()
@@ -1006,7 +1059,10 @@ def _admin_custom_profile_rows(local_data_dir, profile_id):
     return []
 
 
-def _admin_custom_profile_test_object(local_data_dir, profile_id):
+def _admin_custom_profile_test_object(
+    local_data_dir: str | Path,
+    profile_id: str,
+) -> str:
     """Return remembered test object for one profile."""
     payload = _load_admin_custom_columns(local_data_dir)
     pid = str(profile_id or '').strip()
@@ -1017,11 +1073,11 @@ def _admin_custom_profile_test_object(local_data_dir, profile_id):
 
 
 def _save_admin_custom_columns(
-    local_data_dir,
-    profile_id,
-    rows=None,
-    default_test_object=None,
-):
+    local_data_dir: str | Path,
+    profile_id: str,
+    rows: Any = None,
+    default_test_object: str | None = None,
+) -> None:
     """Persist admin custom columns atomically for one profile."""
     payload_in = _load_admin_custom_columns(local_data_dir)
     rows_by_profile = payload_in.get('rows_by_profile', dict())
@@ -1060,7 +1116,11 @@ def _save_admin_custom_columns(
     tmp_path.replace(path)
 
 
-def _build_admin_custom_catalog(app, user_info, profile_id=''):
+def _build_admin_custom_catalog(
+    app: Any,
+    user_info: Any,
+    profile_id: str = '',
+) -> list[dict[str, Any]]:
     """Build broad summary-property catalog for admin custom-column editor."""
     catalog_map = dict()
 
@@ -1177,7 +1237,7 @@ def _build_admin_custom_catalog(app, user_info, profile_id=''):
     ]
 
 
-def _resolve_allowed_target(target):
+def _resolve_allowed_target(target: str) -> Any:
     """Resolve one safe target path used by allow-rule aliases."""
     cleaned = str(target or '').strip()
     if not cleaned:
@@ -1210,7 +1270,9 @@ def _resolve_allowed_target(target):
     return value
 
 
-def _compile_allowed_expression_rows(rows):
+def _compile_allowed_expression_rows(
+    rows: Any,
+) -> tuple[dict[str, Any], list[str]]:
     """Compile rows into validator/evaluator rule structures."""
     warnings = []
     env = dict(__builtins__=dict())
@@ -1302,7 +1364,9 @@ def _compile_allowed_expression_rows(rows):
     return compiled, warnings
 
 
-def _get_compiled_expression_rules(local_data_dir):
+def _get_compiled_expression_rules(
+    local_data_dir: str | Path,
+) -> tuple[dict[str, Any], list[dict[str, str]], list[str]]:
     """Return compiled expression rules with simple file-mtime cache."""
     path = _allowed_expr_rules_path(local_data_dir)
     path_text = str(path)
@@ -1336,7 +1400,11 @@ def _get_compiled_expression_rules(local_data_dir):
     return compiled, rows, warnings
 
 
-def _validate_expr_node(node, var_names, rules):
+def _validate_expr_node(
+    node: ast.AST,
+    var_names: set[str],
+    rules: dict[str, Any],
+) -> tuple[bool, str]:
     """Validate AST node for safe custom expressions."""
     allowed_bin = tuple(rules.get('allowed_bin_ops', tuple()))
     allowed_unary = tuple(rules.get('allowed_unary_ops', tuple()))
@@ -1347,7 +1415,8 @@ def _validate_expr_node(node, var_names, rules):
     allowed_methods = set(rules.get('allowed_str_methods', set()))
     allowed_time_attrs = set(rules.get('allowed_time_attrs', set()))
 
-    def _is_allowed_module_chain(attr_node):
+    def _is_allowed_module_chain(attr_node: ast.AST) -> bool:
+        """Check whether an attribute chain starts at an allowed module."""
         current = attr_node
         while isinstance(current, ast.Attribute):
             if str(current.attr).startswith('__'):
@@ -1491,7 +1560,7 @@ def _validate_expr_node(node, var_names, rules):
     )
 
 
-def _contains_time_name(node):
+def _contains_time_name(node: ast.AST) -> bool:
     """Return True when AST uses ``Time`` or ``astropy.time.Time``."""
     for subnode in ast.walk(node):
         if isinstance(subnode, ast.Name) and subnode.id == 'Time':
@@ -1508,7 +1577,7 @@ def _contains_time_name(node):
     return False
 
 
-def _astropy_namespace():
+def _astropy_namespace() -> Any:
     """Return a minimal astropy namespace for safe eval."""
     if _AstropyTime is None:
         return None
@@ -1517,14 +1586,15 @@ def _astropy_namespace():
     )
 
 
-def _with_eval_timeout(timeout_sec, callback):
+def _with_eval_timeout(timeout_sec: float, callback: Any) -> Any:
     """Run callback with a thread-safe timeout."""
     if timeout_sec <= 0:
         return callback()
 
     result_queue = queue.Queue(maxsize=1)
 
-    def _runner():
+    def _runner() -> None:
+        """Run the expression callback and publish its result or exception."""
         try:
             result = callback()
             result_queue.put((True, result))
@@ -1547,7 +1617,11 @@ def _with_eval_timeout(timeout_sec, callback):
     raise payload
 
 
-def _eval_custom_expression(expression, var_values, rules):
+def _eval_custom_expression(
+    expression: str,
+    var_values: dict[str, Any],
+    rules: dict[str, Any],
+) -> tuple[Any, str | None]:
     """Evaluate one custom expression with strict safety checks."""
     values = dict(var_values)
     for value in values.values():
@@ -1578,7 +1652,8 @@ def _eval_custom_expression(expression, var_values, rules):
     if _contains_time_name(tree) and (_AstropyTime is None):
         return None, 'astropy.time.Time is not available here.'
 
-    def _run_eval():
+    def _run_eval() -> Any:
+        """Evaluate the validated expression in its local scope."""
         code = compile(tree, '<custom-column>', 'eval')
         return eval(code, env, values)
 
@@ -1604,7 +1679,10 @@ def _eval_custom_expression(expression, var_values, rules):
     return result, None
 
 
-def _normalise_custom_columns(custom_columns, catalog_map):
+def _normalise_custom_columns(
+    custom_columns: Any,
+    catalog_map: dict[str, Any],
+) -> list[dict[str, Any]]:
     """Normalise custom column definitions from API payload."""
     result = []
     seen = set()
@@ -1648,7 +1726,7 @@ def _normalise_custom_columns(custom_columns, catalog_map):
     return result
 
 
-def _find_duplicate_custom_column_name(rows):
+def _find_duplicate_custom_column_name(rows: Any) -> str:
     """Return first duplicate custom column name (case-insensitive)."""
     seen = set()
     if not isinstance(rows, list):
@@ -1666,7 +1744,10 @@ def _find_duplicate_custom_column_name(rows):
     return ''
 
 
-def _seed_catalog_with_custom_var_ids(catalog_map, custom_rows):
+def _seed_catalog_with_custom_var_ids(
+    catalog_map: dict[str, Any],
+    custom_rows: Any,
+) -> None:
     """Ensure variable property IDs exist in *catalog_map* placeholders."""
     if not isinstance(catalog_map, dict):
         return
@@ -1687,7 +1768,10 @@ def _seed_catalog_with_custom_var_ids(catalog_map, custom_rows):
             catalog_map[pid] = dict(id=pid)
 
 
-def _load_astrometric_entry(app, objname):
+def _load_astrometric_entry(
+    app: Any,
+    objname: str,
+) -> dict[str, Any]:
     """Load one astrometric YAML entry for *objname*."""
     from apero.core import drs_astrometrics as dra
 
@@ -1702,7 +1786,10 @@ def _load_astrometric_entry(app, objname):
     return entry if isinstance(entry, dict) else dict()
 
 
-def _load_profile_object_row_map(app, profile):
+def _load_profile_object_row_map(
+    app: Any,
+    profile: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
     """Return ``OBJNAME -> object_table row`` for one profile."""
     base_dir = Path(
         app.args.data_dir or str(Path.home() / '.ari')
@@ -1723,7 +1810,12 @@ def _load_profile_object_row_map(app, profile):
     return row_map
 
 
-def _resolve_summary_group(app, user_info, profile_id, group_name):
+def _resolve_summary_group(
+    app: Any,
+    user_info: Any,
+    profile_id: str,
+    group_name: str,
+) -> tuple[Any, Any, Any, _ApiResponse | None]:
     """Resolve a visible profile/group pair for summary actions."""
     if not user_info:
         return None, None, None, (
@@ -1751,7 +1843,7 @@ def _resolve_summary_group(app, user_info, profile_id, group_name):
     return profile, group, accessible_rids, None
 
 
-def _normalise_summary_source(source):
+def _normalise_summary_source(source: str) -> str:
     """Return canonical summary source name."""
     text = str(source or 'group').strip().lower()
     if text in {'fav', 'favourite', 'favourites', 'favorite', 'favorites'}:
@@ -1759,13 +1851,19 @@ def _normalise_summary_source(source):
     return 'group'
 
 
-def _favourites_summary_path(local_data_dir, username):
+def _favourites_summary_path(
+    local_data_dir: str | Path,
+    username: str,
+) -> Path:
     """Return per-user favourites summary settings path."""
     base = Path(local_data_dir or str(Path.home() / '.ari'))
     return base / 'users' / str(username) / 'favourite_summary.yaml'
 
 
-def _load_favourites_summary_data(local_data_dir, username):
+def _load_favourites_summary_data(
+    local_data_dir: str | Path,
+    username: str,
+) -> dict[str, Any]:
     """Load per-user favourites summary settings."""
     path = _favourites_summary_path(local_data_dir, username)
     if not path.exists():
@@ -1785,7 +1883,11 @@ def _load_favourites_summary_data(local_data_dir, username):
     return {'profiles': profiles}
 
 
-def _save_favourites_summary_data(local_data_dir, username, data):
+def _save_favourites_summary_data(
+    local_data_dir: str | Path,
+    username: str,
+    data: dict[str, Any],
+) -> None:
     """Persist per-user favourites summary settings."""
     import yaml
 
@@ -1796,8 +1898,12 @@ def _save_favourites_summary_data(local_data_dir, username, data):
         yaml.safe_dump(payload, handle, sort_keys=False)
 
 
-def _get_favourites_summary_entry(local_data_dir, username, profile_id,
-                                 section_name):
+def _get_favourites_summary_entry(
+    local_data_dir: str | Path,
+    username: str,
+    profile_id: str,
+    section_name: str,
+) -> dict[str, Any]:
     """Return one per-section favourites summary settings entry."""
     data = _load_favourites_summary_data(local_data_dir, username)
     profiles = data.get('profiles', dict())
@@ -1811,8 +1917,13 @@ def _get_favourites_summary_entry(local_data_dir, username, profile_id,
     return entry if isinstance(entry, dict) else dict()
 
 
-def _set_favourites_summary_entry(local_data_dir, username, profile_id,
-                                 section_name, entry):
+def _set_favourites_summary_entry(
+    local_data_dir: str | Path,
+    username: str,
+    profile_id: str,
+    section_name: str,
+    entry: dict[str, Any],
+) -> None:
     """Update one per-section favourites summary settings entry."""
     data = _load_favourites_summary_data(local_data_dir, username)
     profiles = data.get('profiles', dict())
@@ -1832,8 +1943,14 @@ def _set_favourites_summary_entry(local_data_dir, username, profile_id,
     _save_favourites_summary_data(local_data_dir, username, data)
 
 
-def _resolve_summary_target(app, user_info, profile_id, group_name,
-                           source='group', section_name=''):
+def _resolve_summary_target(
+    app: Any,
+    user_info: Any,
+    profile_id: str,
+    group_name: str,
+    source: str = 'group',
+    section_name: str = '',
+) -> tuple[Any, Any, Any, dict[str, Any] | None, _ApiResponse | None]:
     """Resolve summary source objects for group or favourites."""
     if not user_info:
         return None, None, None, None, (
@@ -1899,7 +2016,11 @@ def _resolve_summary_target(app, user_info, profile_id, group_name,
     return profile, objects, accessible_rids, settings, None
 
 
-def _get_summary_saved_columns(local_data_dir, profile_id, settings):
+def _get_summary_saved_columns(
+    local_data_dir: str | Path,
+    profile_id: str,
+    settings: dict[str, Any],
+) -> list[str]:
     """Return persisted summary columns for current summary source."""
     if str(settings.get('type')) == 'favourites':
         entry = _get_favourites_summary_entry(
@@ -1913,8 +2034,12 @@ def _get_summary_saved_columns(local_data_dir, profile_id, settings):
     return og.get_summary_columns(profile_id, settings.get('group', ''))
 
 
-def _set_summary_saved_columns(local_data_dir, profile_id, settings,
-                              columns):
+def _set_summary_saved_columns(
+    local_data_dir: str | Path,
+    profile_id: str,
+    settings: dict[str, Any],
+    columns: list[str],
+) -> bool:
     """Persist summary columns for current summary source."""
     if str(settings.get('type')) == 'favourites':
         entry = _get_favourites_summary_entry(
@@ -1936,7 +2061,11 @@ def _set_summary_saved_columns(local_data_dir, profile_id, settings,
                                   columns)
 
 
-def _get_summary_saved_aliases(local_data_dir, profile_id, settings):
+def _get_summary_saved_aliases(
+    local_data_dir: str | Path,
+    profile_id: str,
+    settings: dict[str, Any],
+) -> dict[str, str]:
     """Return persisted summary aliases for current summary source."""
     if str(settings.get('type')) == 'favourites':
         entry = _get_favourites_summary_entry(
@@ -1950,8 +2079,12 @@ def _get_summary_saved_aliases(local_data_dir, profile_id, settings):
     return og.get_summary_aliases(profile_id, settings.get('group', ''))
 
 
-def _set_summary_saved_aliases(local_data_dir, profile_id, settings,
-                              aliases):
+def _set_summary_saved_aliases(
+    local_data_dir: str | Path,
+    profile_id: str,
+    settings: dict[str, Any],
+    aliases: dict[str, str],
+) -> bool:
     """Persist summary aliases for current summary source."""
     if str(settings.get('type')) == 'favourites':
         entry = _get_favourites_summary_entry(
@@ -1973,7 +2106,11 @@ def _set_summary_saved_aliases(local_data_dir, profile_id, settings,
                                   aliases)
 
 
-def _get_summary_saved_custom(local_data_dir, profile_id, settings):
+def _get_summary_saved_custom(
+    local_data_dir: str | Path,
+    profile_id: str,
+    settings: dict[str, Any],
+) -> list[dict[str, Any]]:
     """Return persisted custom columns for current summary source."""
     if str(settings.get('type')) == 'favourites':
         entry = _get_favourites_summary_entry(
@@ -1987,8 +2124,12 @@ def _get_summary_saved_custom(local_data_dir, profile_id, settings):
     return og.get_summary_custom_columns(profile_id, settings.get('group', ''))
 
 
-def _set_summary_saved_custom(local_data_dir, profile_id, settings,
-                             custom_columns):
+def _set_summary_saved_custom(
+    local_data_dir: str | Path,
+    profile_id: str,
+    settings: dict[str, Any],
+    custom_columns: list[dict[str, Any]],
+) -> bool:
     """Persist custom columns for current summary source."""
     if str(settings.get('type')) == 'favourites':
         entry = _get_favourites_summary_entry(
@@ -2014,14 +2155,14 @@ def _set_summary_saved_custom(local_data_dir, profile_id, settings,
 
 
 def _build_group_summary_payload(
-    app,
-    user_info,
-    profile_id,
-    group_name,
-    source='group',
-    section_name='',
-    columns=None,
-):
+    app: Any,
+    user_info: Any,
+    profile_id: str,
+    group_name: str,
+    source: str = 'group',
+    section_name: str = '',
+    columns: list[str] | None = None,
+) -> tuple[bool, dict[str, Any] | _ApiResponse]:
     """Return summary-table payload or a Flask error response."""
     profile, objects_raw, accessible_rids, settings, error = (
         _resolve_summary_target(
@@ -2264,7 +2405,7 @@ def _build_group_summary_payload(
     return True, payload
 
 
-def _latex_escape(value):
+def _latex_escape(value: Any) -> str:
     """Escape a value for simple LaTeX table export."""
     text = str(value)
     repl = [
@@ -2284,7 +2425,7 @@ def _latex_escape(value):
     return text
 
 
-def _summary_filename(profile_id, group_name, ext):
+def _summary_filename(profile_id: str, group_name: str, ext: str) -> str:
     """Return a filesystem-safe download filename."""
     safe_group = quote(group_name, safe='') or 'group'
     return 'object_group_summary_{0}_{1}.{2}'.format(
@@ -2295,11 +2436,11 @@ def _summary_filename(profile_id, group_name, ext):
 
 
 def _summary_html_document(
-    profile_id,
-    group_name,
-    columns,
-    rows,
-):
+    profile_id: str,
+    group_name: str,
+    columns: list[str],
+    rows: list[dict[str, Any]],
+) -> str:
     """Build a standalone HTML summary table document."""
     title = 'Summary table: {0} ({1})'.format(group_name, profile_id)
     escaped_title = html.escape(title)
@@ -2368,11 +2509,11 @@ def _summary_html_document(
 
 
 def _summary_table_figure(
-    columns,
-    rows,
-    title,
-    subtitle,
-):
+    columns: list[str],
+    rows: list[dict[str, Any]],
+    title: str,
+    subtitle: str,
+) -> Any:
     """Create a styled matplotlib figure for summary table export."""
     import matplotlib.pyplot as plt
 
@@ -2434,7 +2575,7 @@ def _summary_table_figure(
 # ================================================================
 # API endpoints — group CRUD
 # ================================================================
-def api_object_groups_list(app):
+def api_object_groups_list(app: Any) -> _ApiResponse:
     """GET  list all groups for a profile."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2469,7 +2610,7 @@ def api_object_groups_list(app):
     )
 
 
-def api_object_groups_for_object(app):
+def api_object_groups_for_object(app: Any) -> _ApiResponse:
     """GET  groups containing a specific object."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2508,7 +2649,7 @@ def api_object_groups_for_object(app):
     )
 
 
-def api_object_groups_create(app):
+def api_object_groups_create(app: Any) -> _ApiResponse:
     """POST  create a new group."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2545,7 +2686,7 @@ def api_object_groups_create(app):
     return jsonify(success=True, group=group)
 
 
-def api_object_groups_delete(app):
+def api_object_groups_delete(app: Any) -> _ApiResponse:
     """POST  delete a group (monitor only)."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2581,7 +2722,7 @@ def api_object_groups_delete(app):
     return jsonify(success=True)
 
 
-def api_object_groups_rename(app):
+def api_object_groups_rename(app: Any) -> _ApiResponse:
     """POST  rename a group (monitor only)."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2623,7 +2764,7 @@ def api_object_groups_rename(app):
 # ================================================================
 # API endpoints — object membership
 # ================================================================
-def api_object_groups_add_object(app):
+def api_object_groups_add_object(app: Any) -> _ApiResponse:
     """POST  add an object to a group (resolves aliases)."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2669,7 +2810,7 @@ def api_object_groups_add_object(app):
     )
 
 
-def api_object_groups_add_objects_bulk(app):
+def api_object_groups_add_objects_bulk(app: Any) -> _ApiResponse:
     """POST  (multipart) bulk-add objects from text/csv.
 
     Each line is resolved through alias lookup. Lines that
@@ -2743,7 +2884,7 @@ def api_object_groups_add_objects_bulk(app):
     )
 
 
-def api_object_groups_add_objects_json(app):
+def api_object_groups_add_objects_json(app: Any) -> _ApiResponse:
     """POST  bulk-add objects from a JSON list of names.
 
     Expected JSON body::
@@ -2831,7 +2972,7 @@ def api_object_groups_add_objects_json(app):
     )
 
 
-def api_object_groups_remove_object(app):
+def api_object_groups_remove_object(app: Any) -> _ApiResponse:
     """POST  remove an object from a group (monitor only)."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2871,7 +3012,7 @@ def api_object_groups_remove_object(app):
     return jsonify(success=True)
 
 
-def api_object_groups_objects(app):
+def api_object_groups_objects(app: Any) -> _ApiResponse:
     """GET  list objects in a group, filtered by user access."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -2919,7 +3060,7 @@ def api_object_groups_objects(app):
     )
 
 
-def api_object_groups_summary_config(app):
+def api_object_groups_summary_config(app: Any) -> _ApiResponse:
     """GET/POST summary-table column config for one group."""
     user_info = get_effective_user(session)
     profile_id = ''
@@ -3118,7 +3259,7 @@ def api_object_groups_summary_config(app):
     )
 
 
-def api_object_groups_summary_custom_test(app):
+def api_object_groups_summary_custom_test(app: Any) -> _ApiResponse:
     """POST test one custom summary column expression."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -3266,7 +3407,7 @@ def api_object_groups_summary_custom_test(app):
     )
 
 
-def api_object_groups_allowed_expressions(app):
+def api_object_groups_allowed_expressions(app: Any) -> _ApiResponse:
     """GET/POST allowed-python-expression rows for admin tools."""
     user_info = app._get_api_user()
     if not user_info:
@@ -3312,12 +3453,12 @@ def api_object_groups_allowed_expressions(app):
 
 
 def _resolve_admin_custom_test_value(
-    prop_id,
-    props,
-    admin_custom_map,
-    expr_rules,
-    stack=None,
-):
+    prop_id: str,
+    props: dict[str, Any],
+    admin_custom_map: dict[str, Any],
+    expr_rules: dict[str, Any],
+    stack: set[str] | None = None,
+) -> Any:
     """Resolve one raw or admin-custom property value for tests."""
     prop_key = str(prop_id or '').strip()
     if not prop_key:
@@ -3370,12 +3511,12 @@ def _resolve_admin_custom_test_value(
 
 
 def _find_admin_custom_test_sample(
-    app,
-    user_info,
-    var_map,
-    profile_id='',
-    preferred_objname='',
-):
+    app: Any,
+    user_info: Any,
+    var_map: dict[str, str],
+    profile_id: str = '',
+    preferred_objname: str = '',
+) -> dict[str, Any] | None:
     """Find the first sampled variable map with non-null values."""
     local_data_dir = app._resolve_local_data_dir()
     expr_rules, _, _ = _get_compiled_expression_rules(
@@ -3457,7 +3598,7 @@ def _find_admin_custom_test_sample(
     return None
 
 
-def api_object_groups_admin_custom_columns(app):
+def api_object_groups_admin_custom_columns(app: Any) -> _ApiResponse:
     """GET/POST admin-managed custom summary column definitions."""
     user_info = app._get_api_user()
     if not user_info:
@@ -3591,7 +3732,7 @@ def api_object_groups_admin_custom_columns(app):
     )
 
 
-def api_object_groups_admin_custom_test(app):
+def api_object_groups_admin_custom_test(app: Any) -> _ApiResponse:
     """POST test one admin custom-column expression."""
     user_info = app._get_api_user()
     if not user_info:
@@ -3725,7 +3866,7 @@ def api_object_groups_admin_custom_test(app):
     )
 
 
-def api_object_groups_summary_table(app):
+def api_object_groups_summary_table(app: Any) -> _ApiResponse:
     """GET summary-table rows for one object group."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -3757,7 +3898,7 @@ def api_object_groups_summary_table(app):
     return jsonify(**payload)
 
 
-def api_object_groups_summary_export(app):
+def api_object_groups_summary_export(app: Any) -> _ApiResponse:
     """Download one group summary as csv, latex, fits, pdf, png, or html."""
     user_info = get_effective_user(session)
     if not user_info:
@@ -3953,8 +4094,11 @@ def api_object_groups_summary_export(app):
 
 
 def _filter_group_objects(
-    app, profile_id, group, accessible_rids
-):
+    app: Any,
+    profile_id: str,
+    group: dict[str, Any],
+    accessible_rids: set[str],
+) -> list[dict[str, Any]]:
     """Return list of objects the user can see.
 
     If accessible_rids is empty the user can see nothing.
@@ -3992,7 +4136,7 @@ def _filter_group_objects(
     return result
 
 
-def _load_run_id_map(app, profile_id):
+def _load_run_id_map(app: Any, profile_id: str) -> dict[str, set[str]]:
     """Build objname -> set(run_id) mapping from cache."""
     import json as _json
     from pathlib import Path

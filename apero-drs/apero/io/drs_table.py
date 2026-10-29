@@ -21,7 +21,7 @@ import os
 import shutil
 import warnings
 from collections import OrderedDict
-from typing import List, Tuple, Type, Union
+from typing import Any, List, Tuple, Type, Union
 
 import numpy as np
 from astropy.io import fits
@@ -158,7 +158,8 @@ def make_table(columns: List[str],
 
 
 def write_table(params: ParamDict, table: Table, filename: str,
-                fmt: str = 'fits', header: Union[dict, None] = None):
+                fmt: str = 'fits',
+                header: Union[dict, None] = None) -> None:
     """
     Writes a table to file "filename" with format "fmt"
 
@@ -230,7 +231,12 @@ def write_table(params: ParamDict, table: Table, filename: str,
     # -------------------------------------------------------------------------
     # make locked write function
     @drs_lock.synchronized(lock, pid)
-    def locked_write():
+    def locked_write() -> None:
+        """Write the table and optional FITS header while holding the lock.
+
+        :return: None
+        :raises AperoCodedException: If the table or header cannot be written
+        """
         # try to write table to file
         try:
             # write file
@@ -272,7 +278,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
 
 
 def merge_table(params: ParamDict, table: Table, filename: str,
-                fmt: str = 'fits'):
+                fmt: str = 'fits') -> None:
     """
     If a file already exists for "filename" try to merge this new table with
     the old one (requires all columns/formats to be the same).
@@ -319,7 +325,8 @@ def merge_table(params: ParamDict, table: Table, filename: str,
 
 
 def read_table(params: ParamDict, filename: str, fmt: str,
-               colnames: Union[List[str], None] = None, **kwargs) -> Table:
+               colnames: Union[List[str], None] = None,
+               **kwargs: Any) -> Table:
     """
     Reads a table from file "filename" in format "fmt", if colnames are defined
     renames the columns to these name
@@ -408,7 +415,7 @@ def read_table(params: ParamDict, filename: str, fmt: str,
     return table
 
 
-def print_full_table(table: Table):
+def print_full_table(table: Table) -> None:
     """
     print and log table (all lines) in standard drs manner
 
@@ -520,7 +527,7 @@ def read_fits_table(params: ParamDict, filename: str,
 
 
 def write_fits_table(params: ParamDict, astropy_table: Table,
-                     output_filename: str):
+                     output_filename: str) -> None:
     """
     Write "astropy_table" fits table to "output_filename"
 
@@ -880,7 +887,7 @@ def string_formats(ftable: Union[Table, None] = None,
     return string
 
 
-def update_docs():
+def update_docs() -> None:
     """
     Updates the documentation of "write_table" and "read_table" with the
     string version of the formats currently available in astropy.

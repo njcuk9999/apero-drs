@@ -24,7 +24,7 @@ import importlib.resources as resources
 import os
 from hashlib import blake2b
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 
 from aperocore.base import base
@@ -78,12 +78,14 @@ def _escape_map(value: Any) -> Any:
             return value
 
 
-def lang_db_proxy(language=None):
+def lang_db_proxy(language: Union[str, None] = None) -> None:
     """
     If all else fails (i.e. if the language database has yet to be
     installed - load the default reset file from reset csv files)
 
-    :return: dictionary of key, value language pairs (default language)
+    :param language: language code to load, or None for the default language
+
+    :return: None. Matching language values are stored in ``BETEXT``.
     """
     global BETEXT
 
@@ -122,7 +124,8 @@ def lang_db_proxy(language=None):
             _store_betext(key, values, language)
 
 
-def _store_betext(key: str, values: dict, language: str):
+def _store_betext(key: str, values: Dict[str, str],
+                  language: str) -> None:
     """
     Store a language value in BETEXT (falling back to the default language)
 
@@ -203,7 +206,8 @@ class DrsBaseException(Exception):
 
 
 class DrsBaseError(DrsBaseException):
-    def __init__(self, code: str, arguments: Union[List, None] = None):
+    def __init__(self, code: str,
+                 arguments: Union[List[Any], None] = None) -> None:
         """
         Construct drs base error
 
@@ -211,6 +215,8 @@ class DrsBaseError(DrsBaseException):
 
         :param arguments: list, list of arguments for error string (or None if
                           no arguments
+
+        :return: None
         """
         # define the class name
         self.classname = 'DrsBaseError'
@@ -239,7 +245,7 @@ class DrsBaseError(DrsBaseException):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
         For when we have to unpickle the class
 
@@ -249,7 +255,7 @@ class DrsBaseError(DrsBaseException):
         # update dict with state
         self.__dict__.update(state)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation used for raise Exception message printing
         :return:
@@ -270,7 +276,8 @@ class DrsBaseError(DrsBaseException):
 # =============================================================================
 # Define core base functions
 # =============================================================================
-def base_func(func, _func: str, *args, **kwargs):
+def base_func(func: Callable[..., Any], _func: str,
+              *args: Any, **kwargs: Any) -> Any:
     """
     Wrapper to wrap around base functions
 
@@ -290,7 +297,7 @@ def base_func(func, _func: str, *args, **kwargs):
 
 
 def base_printer(codeid: str, message: str, level: str,
-                 args: Union[str, list, None] = None,
+                 args: Union[str, List[Any], None] = None,
                  exceptionname: Union[str, None] = None,
                  printstatement: bool = True) -> str:
     """
@@ -378,7 +385,7 @@ def base_printer(codeid: str, message: str, level: str,
 
 
 def base_error(codeid: str, message: str, level: str = 'error',
-               args: Union[str, list, None] = None,
+               args: Union[str, List[Any], None] = None,
                exceptionname: Union[str, None] = None,
                exception: Any = None,
                exit_flag: bool = False) -> Any:

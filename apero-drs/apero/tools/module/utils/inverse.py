@@ -43,7 +43,8 @@ textentry = drs_lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_image_shape(params):
+def drs_image_shape(params: ParamDict) -> tuple:
+    """Return the cropped detector image shape as ``(ny, nx)``."""
     # get image shape from params
     ylow, yhigh = params['IMAGE.Y_LOW'], params['IMAGE.Y_HIGH']
     xlow, xhigh = params['IMAGE.X_LOW'], params['IMAGE.X_HIGH']
@@ -51,8 +52,10 @@ def drs_image_shape(params):
     return yhigh - ylow, xhigh - xlow
 
 
-def calc_central_localisation(params, recipe, fiber, header=None,
-                              filename=None):
+def calc_central_localisation(params: ParamDict, recipe: object,
+                              fiber: str, header=None,
+                              filename: str = None) -> tuple:
+    """Evaluate one fiber's center and width at detector midpoint."""
     # get the loco image and number of orders for this fiber
     lprops = localisation.get_coefficients(params, recipe, header,
                                            filename=filename,
@@ -77,8 +80,11 @@ def calc_central_localisation(params, recipe, fiber, header=None,
     return centers, widths
 
 
-def e2ds_to_simage(e2ds, xpixels, ypixels, centers, widths,
-                   fill=np.nan, simage=None):
+def e2ds_to_simage(e2ds: np.ndarray, xpixels: np.ndarray,
+                   ypixels: np.ndarray, centers: list, widths: list,
+                   fill: float = np.nan,
+                   simage: np.ndarray = None) -> np.ndarray:
+    """Map extracted orders into a straightened detector image."""
     # get the shape of the simage
     ishape = xpixels.shape
     # define output input
@@ -100,13 +106,17 @@ def e2ds_to_simage(e2ds, xpixels, ypixels, centers, widths,
     return simage
 
 
-def simage_to_drs(params, simage, shapex2, shapey):
+def simage_to_drs(params: ParamDict, simage: np.ndarray,
+                  shapex2: np.ndarray, shapey: np.ndarray) -> np.ndarray:
+    """Transform a straightened image back to detector coordinates."""
     pimage = shape.ea_transform(params, simage, dymap=-shapey)
     pimage = shape.ea_transform(params, pimage, dxmap=-shapex2)
     return pimage
 
 
-def drs_to_pp(params, image, fill=0.0):
+def drs_to_pp(params: ParamDict, image: np.ndarray,
+              fill: float = 0.0) -> np.ndarray:
+    """Embed a cropped detector image in the full, flipped PP frame."""
     # get full image dimensions (from constants)
     full_y, full_x = params['IMAGE.Y_FULL'], params['IMAGE.X_FULL']
     # get the cut down image size
@@ -124,8 +134,11 @@ def drs_to_pp(params, image, fill=0.0):
     return outmap
 
 
-class ProxyRecipe():
-    def __init__(self, params, shortname):
+class ProxyRecipe:
+    """Minimal recipe-like holder used by the standalone inverse test."""
+
+    def __init__(self, params: ParamDict, shortname: str) -> None:
+        """Store the parameter dictionary and recipe short name."""
         self.params = params
         self.shortname = shortname
 

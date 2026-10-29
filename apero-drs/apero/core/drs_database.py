@@ -118,7 +118,7 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
 # =============================================================================
 class CalibrationDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, shortname: str,
-                 pconst: Any = None):
+                 pconst: Any = None) -> None:
         """
         Constructor of the Calibration Database class
 
@@ -146,7 +146,7 @@ class CalibrationDatabase(DatabaseManager):
         self.filedir = Path(str(self.params['PATH.CALIB']))
 
     def add_calib_file(self, drsfile: DrsInputFile, verbose: bool = True,
-                       copy_files=True):
+                       copy_files: bool = True) -> None:
         """
         Add DrsFile to the calibration database
 

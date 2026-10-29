@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+"""Astronomical coordinate and velocity routines used for BERV calculations.
 
 Created on 2019-05-30 at 10:47
 
 @author: cook
 """
 import datetime
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 
@@ -45,7 +43,7 @@ obs_alt = 4204.  # in meters
 # =============================================================================
 # Define functions
 # =============================================================================
-def baryvel(dje, deq):
+def baryvel(dje: float, deq: float) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate helio- and barycentric velocity.
 
@@ -365,7 +363,8 @@ def baryvel(dje, deq):
     return dvelh, dvelb
 
 
-def bary_corr(jd, ra, dec, deq=0.0):
+def bary_corr(jd: float, ra: float, dec: float,
+              deq: float = 0.0) -> Tuple[float, float]:
     """
     Calculate barycentric correction.
 
@@ -410,7 +409,9 @@ def bary_corr(jd, ra, dec, deq=0.0):
     return vhp, vbp
 
 
-def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
+def helcorr(obs_long: float, obs_lat: float, obs_alt: float,
+            ra2000: float, dec2000: float, jd: float,
+            debug: bool = False) -> Tuple[float, float]:
     """
     Calculate barycentric velocity correction.
 
@@ -644,7 +645,9 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def idl_mod(a, b):
+def idl_mod(a: Union[float, np.ndarray],
+            b: Union[float, np.ndarray]
+            ) -> Union[float, np.ndarray]:
     """
       Emulate 'modulo' behavior of IDL.
 
@@ -670,7 +673,8 @@ def idl_mod(a, b):
     return m
 
 
-def premat(equinox1, equinox2, fk4=False):
+def premat(equinox1: float, equinox2: float,
+           fk4: bool = False) -> np.ndarray:
     """
     Return the precession matrix needed to go from EQUINOX1 to EQUINOX2.
 
@@ -771,7 +775,8 @@ def premat(equinox1, equinox2, fk4=False):
     return r
 
 
-def daycnv(xjd, mode="idl"):
+def daycnv(xjd: Union[float, np.ndarray],
+           mode: str = 'idl') -> Any:
     """
     Converts Julian dates to Gregorian calendar dates.
 
@@ -895,8 +900,10 @@ def daycnv(xjd, mode="idl"):
     return [[yr[i], mn[i], day[i], hr[i]] for i in range(len(yr))]
 
 
-def bprecess(ra, dec, mu_radec=None,
-             parallax=0.0, rad_vel=0.0, epoch=2000.0):
+def bprecess(ra: Union[float, np.ndarray],
+             dec: Union[float, np.ndarray],
+             mu_radec: Any = None, parallax: float = 0.0,
+             rad_vel: float = 0.0, epoch: float = 2000.0) -> List[Any]:
     """
     Precess positions from J2000.0 (FK5) to B1950.0 (FK4).
 
@@ -1109,7 +1116,10 @@ def bprecess(ra, dec, mu_radec=None,
     return [ra_1950, dec_1950, mu_radec, parallax, rad_vel]
 
 
-def precess(ra, dec, equinox1, equinox2, FK4=False, radian=False):
+def precess(ra: Union[float, np.ndarray], dec: Union[float, np.ndarray],
+            equinox1: float, equinox2: float, FK4: bool = False,
+            radian: bool = False
+            ) -> List[Union[float, np.ndarray]]:
     """
     Precess coordinates from EQUINOX1 to EQUINOX2.
 
@@ -1248,7 +1258,8 @@ def precess(ra, dec, equinox1, equinox2, FK4=False, radian=False):
     return [ra, dec]
 
 
-def helio_jd(date, ra, dec, B1950=False, TIME_DIFF=False):
+def helio_jd(date: float, ra: float, dec: float, B1950: bool = False,
+             TIME_DIFF: bool = False) -> float:
     """
     Convert geocentric (reduced) Julian date to heliocentric Julian date
 
@@ -1380,7 +1391,8 @@ def helio_jd(date, ra, dec, B1950=False, TIME_DIFF=False):
         return date + time / 86400.0
 
 
-def xyz(date, velocity=False, equinox=1950.0):
+def xyz(date: float, velocity: bool = False,
+    equinox: float = 1950.0) -> List[Any]:
     """
     Calculate geocentric X,Y, and Z  and velocity coordinates of the Sun.
 
@@ -1586,7 +1598,10 @@ def xyz(date, velocity=False, equinox=1950.0):
     return [X, Y, Z, XVEL, YVEL, ZVEL]
 
 
-def precess_xyz(x, y, z, equinox1, equinox2):
+def precess_xyz(x: Union[float, np.ndarray], y: Union[float, np.ndarray],
+                z: Union[float, np.ndarray], equinox1: float,
+                equinox2: float
+                ) -> List[Union[float, np.ndarray]]:
     """
     Precess equatorial geocentric rectangular coordinates.
 
@@ -1661,14 +1676,16 @@ def precess_xyz(x, y, z, equinox1, equinox2):
     return [x, y, z]
 
 
-def demo():
+def demo() -> Tuple[float, float]:
+    """Return the sample barycentric correction and heliocentric JD."""
     # outputs
     berv, bjd = helcorr(obs_long, obs_lat, obs_alt, ra, dec, jd)
 
     return berv, bjd
 
 
-def demo2():
+def demo2() -> Tuple[float, float]:
+    """Return reference BERV and BJD values from barycorrpy for comparison."""
     import barycorrpy
 
     kwargs = dict(ra=ra, dec=dec, epoch=2000.0, pmra=0.0, pmdec=0.0, rv=0.0,

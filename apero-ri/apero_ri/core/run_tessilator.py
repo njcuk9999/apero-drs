@@ -44,7 +44,12 @@ class _TeeWriter:
 
     __slots__ = ('_real', '_q', '_buf', '_line')
 
-    def __init__(self, real_stream, log_queue=None):
+    def __init__(self, real_stream: Any, log_queue: Any = None) -> None:
+        """Wrap an output stream and optionally forward complete lines.
+
+        :param real_stream: Stream receiving the original output.
+        :param log_queue: Optional queue receiving completed text lines.
+        """
         self._real = real_stream
         self._q = log_queue
         self._buf = io.StringIO()
@@ -52,7 +57,8 @@ class _TeeWriter:
 
     # -- file-like interface -------------------------------------------
 
-    def write(self, text):
+    def write(self, text: str) -> int:
+        """Write text to both destinations and return its character count."""
         self._real.write(text)
         self._buf.write(text)
         if self._q is not None:
@@ -64,7 +70,8 @@ class _TeeWriter:
                 self._q.put(ln + '\n')
         return len(text)
 
-    def flush(self):
+    def flush(self) -> None:
+        """Flush the wrapped stream and any buffered partial line."""
         self._real.flush()
         if self._q is not None and self._line:
             self._q.put(self._line)
@@ -72,7 +79,8 @@ class _TeeWriter:
 
     # -- helpers -------------------------------------------------------
 
-    def getvalue(self):
+    def getvalue(self) -> str:
+        """Return all text captured by this wrapper."""
         return self._buf.getvalue()
 
 __NAME__ = 'apero_ri.core.run_tessilator'
@@ -407,7 +415,7 @@ def _run_in_workdir(
         os.chdir(orig_cwd)
 
 
-def _patch_simbad_column_case():
+def _patch_simbad_column_case() -> None:
     """Monkey-patch Simbad.query_objectids for tessilator.
 
     Keep the identifier column name compatible with tessilator.

@@ -61,7 +61,7 @@ class Graph:
                  func: Any = None, filename: Union[str, None] = None,
                  description: Union[str, None] = None,
                  figsize: Union[Tuple[float, float], None] = None,
-                 dpi: Union[int, None] = None):
+                 dpi: Union[int, None] = None) -> None:
         """
         Construct a graph instance (there should be one of these instances for
         each type of graph) these graphs a linked to a plotting function:
@@ -151,7 +151,7 @@ class Graph:
         return Graph(name, **kwargs)
 
     def set_filename(self, params: ParamDict, location: str,
-                     suffix: Union[str, None] = None):
+                     suffix: Union[str, None] = None) -> None:
         """
         Set the file name for this Graph instance
 
@@ -255,12 +255,12 @@ class Plotter:
         Bases this on graph.kind and self.plotoption
 
         :param graph: Graph instances, has atrribute "kind"
-        :return:
+        :return: Whether plotting should start.
         """
         _ = self.plt, graph
         return True
 
-    def plotend(self, graph: Graph):
+    def plotend(self, graph: Graph) -> None:
         """
         Proxy for plotting.core.Plotter.plotend
 
@@ -289,7 +289,7 @@ class Plotter:
         _ = self.plt, looplist
         yield None
 
-    def close_plots(self, loop: bool = False):
+    def close_plots(self, loop: bool = False) -> None:
         """
         Proxy for core.plotting.Plotter.close_plots
 
@@ -302,7 +302,7 @@ class Plotter:
         """
         _ = self.plt, loop
 
-    def _get_matplotlib(self, force: bool = False):
+    def _get_matplotlib(self, force: bool = False) -> Any:
         """
         Proxy for core.plotting.Plotter._get_matplotlib
         """
@@ -311,7 +311,8 @@ class Plotter:
 
 
 class CrossCursor(object):
-    def __init__(self, frame: Any, color: str = 'r', alpha: float = 0.5):
+    def __init__(self, frame: Any, color: str = 'r',
+                 alpha: float = 0.5) -> None:
         """
         Construct a matplotlib object that updates some text on the plot when
         the cursor is moved (via event "mouse_move") - sets self.txt to blank
@@ -336,7 +337,7 @@ class CrossCursor(object):
         # start off the text without values
         self.txt.set_text('x=NaN, y=NaN')
 
-    def mouse_move(self, event: Any):
+    def mouse_move(self, event: Any) -> None:
         """
         The event for matplotlib to catch (on mouse movement this function is
         called)
@@ -359,7 +360,7 @@ class CrossCursor(object):
 
 
 class ClickCursor(object):
-    def __init__(self, fig: Any, frame: Any):
+    def __init__(self, fig: Any, frame: Any) -> None:
         """
         Construct an object that prints to screen when the cursor
         is clicked (via event "mouse_click") - sets self.txt to blank until
@@ -371,7 +372,7 @@ class ClickCursor(object):
         self.fig = fig
         self.frame = frame
 
-    def mouse_click(self, event: Any):
+    def mouse_click(self, event: Any) -> None:
         """
         The event for matplotlib to catch (on mouse click this function is
         called)
@@ -394,7 +395,12 @@ class ClickCursor(object):
 
 
 class YesNoButtonGraph:
-    def __init__(self, fig, matplotlib):
+    def __init__(self, fig: Any, matplotlib: Any) -> None:
+        """Initialize a yes/no question prompt attached to a figure.
+
+        :param fig: Matplotlib figure hosting the prompt controls.
+        :param matplotlib: Matplotlib module providing pyplot and widgets.
+        """
         self.matplotlib = matplotlib
         self.plt = matplotlib.pyplot
         self.fig = fig
@@ -403,7 +409,13 @@ class YesNoButtonGraph:
         self.yes_button = None
         self.no_button = None
 
-    def add(self, question, adjust: Dict[str, float] = None):
+    def add(self, question: str,
+            adjust: Union[Dict[str, float], None] = None) -> None:
+        """Add the prompt text and response buttons to the figure.
+
+        :param question: Text shown above the response buttons.
+        :param adjust: Optional button-layout adjustments.
+        """
 
         # get the button widget
         Button = self.matplotlib.widgets.Button
@@ -428,14 +440,16 @@ class YesNoButtonGraph:
         self.yes_button.on_clicked(self.on_yes)
         self.no_button.on_clicked(self.on_no)
 
-    def on_yes(self, event):
+    def on_yes(self, event: Any) -> None:
+        """Record an affirmative response and close the prompt figure."""
         margs = [self.question]
         # log: {0}: yes
         print(textentry('40-003-00008', args=margs))
         self.response = 'y'
         self.plt.close(self.fig)
 
-    def on_no(self, event):
+    def on_no(self, event: Any) -> None:
+        """Record a negative response and close the prompt figure."""
         margs = [self.question]
         # log: {0}: no
         print(textentry('40-003-00009', args=margs))
@@ -447,7 +461,7 @@ class YesNoButtonGraph:
 # Define user graph functions
 # =============================================================================
 def ulegend(frame: Any = None,
-            plotter: Union[Plotter, None] = None, **kwargs):
+            plotter: Union[Plotter, None] = None, **kwargs) -> None:
     """
     Filter a legend so we only have unique legend elements that have unique
     text
@@ -541,7 +555,7 @@ def remove_first_last_ticks(frame: Any, axis: str = 'x') -> Any:
     return frame
 
 
-def legend_no_alpha(legend: Any):
+def legend_no_alpha(legend: Any) -> None:
     """
     Remove an transparency from the legend lines
     
@@ -619,7 +633,7 @@ def legend_no_alpha(legend: Any):
             pass
 
 
-def add_grid(frame: Any):
+def add_grid(frame: Any) -> None:
     """
     Add grid lines to a frame
     
@@ -686,7 +700,8 @@ def get_arr_limits(*arrays: np.ndarray, plow: float = 1,
 # =============================================================================
 # Define test plotting functions
 # =============================================================================
-def graph_test_plot_1(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def graph_test_plot_1(plotter: Plotter, graph: Graph,
+                      kwargs: Dict[str, Any]) -> None:
     """
     Graph: Test Plot 1
 
@@ -715,7 +730,8 @@ def graph_test_plot_1(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-def graph_test_plot_2(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def graph_test_plot_2(plotter: Plotter, graph: Graph,
+                      kwargs: Dict[str, Any]) -> None:
     """
     Graph: Test Plot 2
 
@@ -823,7 +839,8 @@ def plot_dark_image_regions(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_dark_histogram(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_dark_histogram(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Dark Histogram plot
 
@@ -871,7 +888,8 @@ def plot_dark_histogram(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 # =============================================================================
 # Define badpix plotting functions
 # =============================================================================
-def plot_badpix_map(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_badpix_map(plotter: Plotter, graph: Graph,
+                    kwargs: Dict[str, Any]) -> None:
     """
     Graph: Bad pixel map plot
 
@@ -996,7 +1014,8 @@ def plot_loc_fiber_doublet_parity(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_loc_gap_orders(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_loc_gap_orders(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Localisation gap between consecutive orders
 
@@ -1150,7 +1169,8 @@ def plot_loc_image_fit(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_loc_im_corner(plotter: Plotter, graph: Graph,
+                      kwargs: Dict[str, Any]) -> None:
     """
     Graph: Localisation image "corners" plot
 
@@ -1241,7 +1261,8 @@ def plot_loc_im_corner(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_loc_im_regions(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Localisation image regions plot
 
@@ -1274,7 +1295,8 @@ def plot_loc_im_regions(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 # =============================================================================
 # Define shape plotting functions
 # =============================================================================
-def plot_shape_dx(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_shape_dx(plotter: Plotter, graph: Graph,
+                  kwargs: Dict[str, Any]) -> None:
     """
     Graph: Shape dx plot
 
@@ -1957,7 +1979,7 @@ def plot_flat_response_order(plotter: Plotter, graph: Graph,
 def _plot_response_profile(frame, xpix: np.ndarray,
                            y_norm: np.ndarray,
                            err_norm: np.ndarray,
-                           ncols: int, panel: str = 'd'):
+                           ncols: int, panel: str = 'd') -> None:
     """
     Draw the full normalised flat-response profile (order_profile panel d).
 
@@ -1993,7 +2015,7 @@ def _plot_response_profile(frame, xpix: np.ndarray,
 def _plot_response_zoom(frame, xpix_zoom: np.ndarray,
                         y_zoom: np.ndarray,
                         err_zoom: np.ndarray,
-                        panel: str = 'e'):
+                        panel: str = 'e') -> None:
     """
     Draw the 120-column zoom with propagated error envelope
     (order_profile panel e).
@@ -2250,7 +2272,8 @@ def plot_extract_spectral_order(plotter: Plotter, graph: Graph,
         plotter.plotend(graph)
 
 
-def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_extract_s1d(plotter: Plotter, graph: Graph,
+                     kwargs: Dict[str, Any]) -> None:
     """
     Graph: extract 1D plot
 
@@ -2327,7 +2350,7 @@ def plot_extract_s1d(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 
 
 def plot_extract_s1d_weights(plotter: Plotter, graph: Graph,
-                             kwargs: Dict[str, Any]):
+                             kwargs: Dict[str, Any]) -> None:
     """
     Graph: extract 1D weights plot
 
@@ -2668,6 +2691,7 @@ def plot_wave_slinky_ew_cov(plotter: Plotter, graph: Graph,
 
 def plot_wave_slinky_fit(plotter: Plotter, graph: Graph,
                          kwargs: Dict[str, Any]):
+    """Plot the wavelength solution fit for a slinky sequence."""
     # ------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -2717,7 +2741,8 @@ def plot_wave_slinky_fit(plotter: Plotter, graph: Graph,
 # =============================================================================
 # Define wave plotting functions
 # =============================================================================
-def plot_wave_hc_guess(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_wave_hc_guess(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution HC guess plot
 
@@ -2926,7 +2951,8 @@ def plot_wave_hc_tfit_grid(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_wave_hc_resmap(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_wave_hc_resmap(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Wave solution resolution map plot
 
@@ -4023,7 +4049,8 @@ def plot_regions_sky_model(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_sky_model_med(plotter: Plotter, graph: Graph,  kwargs: Dict[str, Any]):
+def plot_sky_model_med(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Sky model median plot
 
@@ -5016,7 +5043,8 @@ def plot_tellu_finite_res_corr(plotter: Plotter, graph: Graph,
 # =============================================================================
 # Define velocity plotting functions
 # =============================================================================
-def plot_ccf_rv_fit(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_ccf_rv_fit(plotter: Plotter, graph: Graph,
+                    kwargs: Dict[str, Any]) -> None:
     """
     Graph: CCF RV fit plot
 
@@ -5106,7 +5134,8 @@ def plot_ccf_rv_fit(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         plotter.plotend(graph)
 
 
-def plot_ccf_swave_ref(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_ccf_swave_ref(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: CCF spectral wave reference plot
 
@@ -5210,7 +5239,8 @@ def plot_ccf_photon_uncert(plotter: Plotter, graph: Graph,
 # =============================================================================
 # Define polarisation plotting functions
 # =============================================================================
-def plot_polar_fit_cont(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_polar_fit_cont(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Polar fit continuum plot
 
@@ -5364,7 +5394,8 @@ def plot_polar_continuum(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_polar_results(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Polar results plot
 
@@ -5416,7 +5447,8 @@ def plot_polar_results(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_polar_stoke_i(plotter: Plotter, graph: Graph,
+                       kwargs: Dict[str, Any]) -> None:
     """
     Graph: Polar Stokes I plot
 
@@ -5478,7 +5510,8 @@ def plot_polar_stoke_i(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_polar_lsd(plotter: Plotter, graph: Graph,
+                   kwargs: Dict[str, Any]) -> None:
     """
     Graph: Polar LSD plot
 
@@ -5543,7 +5576,8 @@ def plot_polar_lsd(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 # =============================================================================
 # Define tool plotting functions
 # =============================================================================
-def plot_logstats_bar(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_logstats_bar(plotter: Plotter, graph: Graph,
+                      kwargs: Dict[str, Any]) -> None:
     """
     Graph: Log stats bar plot
 
@@ -5787,7 +5821,8 @@ def plot_stats_qc_recipe_plot(plotter: Plotter, graph: Graph,
     plotter.plotend(graph)
 
 
-def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_stats_ram_plot(plotter: Plotter, graph: Graph,
+                        kwargs: Dict[str, Any]) -> None:
     """
     Graph: Log stats bar plot
 
@@ -5925,6 +5960,7 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
 # =============================================================================
 def plot_static_det_plot(plotter: Plotter, graph: Graph,
                          kwargs: Dict[str, Any]):
+    """Plot static detector diagnostic data."""
     # -------------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -6100,6 +6136,7 @@ def plot_static_wave_check_plot(plotter: Plotter, **kwargs) -> bool:
 
 def plot_static_wave_middle_plot(plotter: Plotter, graph: Graph,
                                  kwargs: Dict[str, Any]):
+    """Plot the middle-order static wavelength diagnostic."""
     # -------------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -6130,7 +6167,8 @@ def plot_static_wave_middle_plot(plotter: Plotter, graph: Graph,
 
 
 def plot_static_wave_final_plot(plotter: Plotter, graph: Graph,
-                                 kwargs: Dict[str, Any]):
+                                kwargs: Dict[str, Any]):
+    """Plot the final static wavelength diagnostic."""
     # -------------------------------------------------------------------------
     # start the plotting process
     if not plotter.plotstart(graph):
@@ -6184,7 +6222,8 @@ def plot_static_wave_final_plot(plotter: Plotter, graph: Graph,
 # =============================================================================
 # Define other plotting functions
 # =============================================================================
-def plot_image(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_image(plotter: Plotter, graph: Graph,
+               kwargs: Dict[str, Any]) -> None:
     """
     Generic image plotter
 
@@ -6232,7 +6271,8 @@ def plot_image(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
     plotter.plotend(graph)
 
 
-def plot_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
+def plot_plot(plotter: Plotter, graph: Graph,
+              kwargs: Dict[str, Any]) -> None:
     """
     Generic print position on click plot
 

@@ -110,12 +110,22 @@ class _FileLock:
 
     def __init__(self, lockpath: str,
                  timeout: float = DEFAULT_TIMEOUT) -> None:
+        """Prepare a lock for the sidecar file at *lockpath*.
+
+        :param lockpath: Path of the lock or fallback sentinel file
+        :param timeout: Maximum seconds to wait before raising an error
+        """
         self.lockpath = lockpath
         self.timeout = timeout
         self._fh = None
         self._fallback = _fcntl is None
 
     def __enter__(self) -> '_FileLock':
+        """Acquire the lock, waiting up to the configured timeout.
+
+        :return: This lock, for use by a ``with`` statement
+        :raises AperoCodedException: If the lock cannot be acquired in time
+        """
         os.makedirs(os.path.dirname(self.lockpath), exist_ok=True)
         start = time.time()
         if not self._fallback:
@@ -148,7 +158,19 @@ class _FileLock:
                     raise AperoCodedException(None, '00-512-00021', targs=eargs)
                 time.sleep(self.SLEEP_INTERVAL)
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Optional[type],
+                 exc_val: Optional[BaseException],
+                 exc_tb: Optional[Any]) -> None:
+        """Release the acquired lock when leaving a ``with`` block.
+
+        The exception details are accepted to satisfy the context-manager
+        protocol and do not affect lock release.
+
+        :param exc_type: Exception class raised in the managed block, if any
+        :param exc_val: Exception raised in the managed block, if any
+        :param exc_tb: Traceback for the managed-block exception, if any
+        :return: None
+        """
         if not self._fallback and self._fh is not None:
             try:
                 _fcntl.flock(self._fh.fileno(), _fcntl.LOCK_UN)
@@ -218,7 +240,13 @@ class RejectDatabase:
     # Public API
     # ------------------------------------------------------------------
     def load_db(self) -> None:
-        """Load / refresh the CSV into the module-level cache."""
+        """Load or refresh this CSV in the process-wide DataFrame cache.
+
+        The cached frame is reused while the file's modification time stays
+        unchanged.
+
+        :return: None
+        """
         _ensure_loaded(self.path)
 
     def get_entries(self, columns: str = '*',
@@ -239,7 +267,9 @@ class RejectDatabase:
         :param columns: str, comma-separated column list or ``'*'`` for all
         :param nentries: int or None, maximum rows to return
         :param condition: str or None, pandas ``DataFrame.query`` expression
-        :return: see above
+        :return: None for an empty single-row query, a scalar or tuple for
+             ``nentries=1``, an array for one column, or a DataFrame for
+             multiple columns
         """
         _ensure_loaded(self.path)
         df = _DF_CACHE.get(self.path, pd.DataFrame(columns=CSV_COLUMNS))
@@ -302,6 +332,8 @@ class RejectDatabase:
         :param rv_flag: int (0/1), reject at RV stage
         :param used: int (0/1), whether the entry is active (default 1)
         :param comment: str, human-readable reason for the rejection
+        :return: None; replaces any existing row for the same identifier
+        :raises AperoCodedException: If the identifier is empty
         """
         clean_identifier = ''
         if identifier is not None:
@@ -339,6 +371,8 @@ class RejectDatabase:
 
         :param condition: str, boolean expression understood by
                           ``pd.DataFrame.eval`` e.g. ``'IDENTIFIER == "abc"'``
+        :return: None; matching rows are removed and the cached frame is
+             invalidated after a successful write
         """
         lockpath = os.path.join(self.lockdir, 'reject.lock')
         with _FileLock(lockpath):
@@ -371,6 +405,8 @@ def add_file_reject(params: ParamDict, recipe: Any,
     :param params: ParamDict, the apero parameter dictionary
     :param recipe: DrsRecipe instance, the calling recipe
     :param raw_identifier: str, one or more comma-separated odometer codes
+    :return: None; logs the outcome and writes confirmed entries unless test
+             mode is enabled
     """
     # deferred imports – apero.* only inside this function
     from aperocore.constants import load_functions
@@ -547,6 +583,8 @@ def update_from_obsdir(params: ParamDict, recipe: Any,
     :param recipe: DrsRecipe instance, the calling recipe
     :param obsdir: str, the observation directory name (relative to PATH.RAW)
     :return: str, comma-separated odometer identifiers, or ``'None'``
+    :raises AperoCodedException: If the observation directory is absent or
+                                 contains no FITS files
     """
     # guard against empty/null obsdir
     if obsdir in [None, 'None', '', 'Null']:
@@ -633,6 +671,7 @@ def _ensure_loaded(csv_path: str, force: bool = False) -> None:
 
     :param csv_path: str, absolute path to the reject CSV
     :param force: bool, if True reload even if mtime is unchanged
+    :return: None; updates the module-level frame and modification-time caches
     """
     if not os.path.isfile(csv_path):
         _DF_CACHE[csv_path] = pd.DataFrame(columns=CSV_COLUMNS)
@@ -660,6 +699,8 @@ def _read_csv(csv_path: str) -> pd.DataFrame:
 
     :param csv_path: str, absolute path to the reject CSV
     :return: pd.DataFrame
+    :raises: No file errors are propagated; unreadable files produce an empty
+             DataFrame with the rejection schema
     """
     if not os.path.isfile(csv_path):
         return pd.DataFrame(columns=CSV_COLUMNS)
@@ -691,6 +732,7 @@ def _write_csv(csv_path: str, df: pd.DataFrame) -> None:
 
     :param csv_path: str, absolute path for the output CSV
     :param df: pd.DataFrame, the reject table to write
+    :return: None
     """
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     # enforce uniqueness before persisting to disk

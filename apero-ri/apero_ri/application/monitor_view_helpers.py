@@ -19,9 +19,10 @@ import threading
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import Any
 
 from flask import (flash, redirect, render_template, request,
-                   session, url_for)
+                   session, url_for, Response)
 
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -40,9 +41,11 @@ from apero_ri.application import instrument_color_helpers
 
 __NAME__ = 'apero_ri.application.monitor_view_helpers'
 
+_ViewResult = str | Response | tuple[str | Response, int]
+
 
 ALLIANCE_STATUS_URL = 'https://status.alliancecan.ca/'
-# Per-file minimal-status cache: path_str -> (file_mtime, ignored_key, card_dict)
+# Cache: path -> (mtime, ignored-check key, minimal status card).
 _CARD_STATUS_CACHE: dict = {}
 _CARD_STATUS_LOCK = threading.Lock()
 
@@ -53,12 +56,15 @@ _MONITOR_PERMS = {'view.monitor_portal', 'view.monitor',
                   'manage.astrometrics'}
 
 
-def _can_manage_apero_profiles(perms):
+def _can_manage_apero_profiles(perms: Any) -> bool:
     """Return True when user can manage APERO profiles."""
     return 'manage.apero_profile' in set(perms or set())
 
 
-def _can_see_apero_checks_advanced(perms, groups):
+def _can_see_apero_checks_advanced(
+    perms: Any,
+    groups: Any,
+) -> bool:
     """Return True when user can see APERO-check advanced options."""
     if _can_manage_apero_profiles(perms):
         return True
@@ -73,7 +79,7 @@ def _can_see_apero_checks_advanced(perms, groups):
     return False
 
 
-def _can_manage_sci_groups(perms):
+def _can_manage_sci_groups(perms: Any) -> bool:
     """Return True when user can manage any science group."""
     pset = set(perms or set())
     if 'manage.sci_group' in pset:
@@ -105,8 +111,8 @@ def _monitor_check_docs_url(check_key: str) -> str:
 
 def _monitor_profile_logic_payload(
     check_key: str,
-    profile_data: dict,
-) -> dict:
+    profile_data: dict[str, Any],
+) -> dict[str, str]:
     """Return profile-specific logic markdown/html for one check."""
     check_obj = MONITOR_CHECKS.get(str(check_key or '').strip())
     if check_obj is None:
@@ -139,7 +145,7 @@ def _monitor_profile_logic_payload(
     return dict(markdown=logic_markdown, html=logic_html)
 
 
-def _has_any_monitor_perm(perms):
+def _has_any_monitor_perm(perms: Any) -> bool:
     """Return True if user has any monitor-level permission.
 
     Accepts the legacy flat perms (view.monitor_portal,
@@ -163,7 +169,18 @@ def _has_any_monitor_perm(perms):
     return False
 
 
-def _monitor_instruments(perms, groups, ari_groups):
+def _monitor_instruments(
+    perms: Any,
+    groups: Any,
+    ari_groups: Any,
+) -> list[str]:
+    """List configured instruments granted by monitor permissions.
+
+    :param perms: Resolved permission names.
+    :param groups: User group names used for broad monitor access.
+    :param ari_groups: ARI group configuration.
+    :return: Authorized instrument names in uppercase.
+    """
     instruments = set()
     valid = set(
         perms_mod.load_parameters().get('instruments', {})
@@ -192,7 +209,8 @@ def _monitor_instruments(perms, groups, ari_groups):
 class _AllianceStatusParser(HTMLParser):
     """Collect visible tables, links, and paragraphs from the status page."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize containers for parsed status-page content."""
         super().__init__()
         self.tables = []
         self.links = []
@@ -205,7 +223,12 @@ class _AllianceStatusParser(HTMLParser):
         self._paragraph = None
         self._link = None
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        """Collect opening tags relevant to tables, links, and paragraphs."""
         attrs = dict(attrs)
         if tag == 'table':
             self._table = []
@@ -222,7 +245,8 @@ class _AllianceStatusParser(HTMLParser):
                 'text': [],
             }
 
-    def handle_data(self, data):
+    def handle_data(self, data: str) -> None:
+        """Append visible text to the active parsed elements."""
         self.text_chunks.append(data)
         if self._cell is not None:
             self._cell.append(data)
@@ -231,7 +255,8 @@ class _AllianceStatusParser(HTMLParser):
         if self._link is not None:
             self._link['text'].append(data)
 
-    def handle_endtag(self, tag):
+    def handle_endtag(self, tag: str) -> None:
+        """Finalize parsed elements when their closing tags are reached."""
         if tag in {'td', 'th'} and self._cell is not None:
             cell_text = ''.join(self._cell).strip()
             cell_text = re.sub(r'\s*question\s*$', '', cell_text, flags=re.I)
@@ -259,7 +284,7 @@ class _AllianceStatusParser(HTMLParser):
             self._link = None
 
 
-def _scrape_alliance_status_page():
+def _scrape_alliance_status_page() -> dict[str, Any]:
     """Fetch and parse the Digital Research Alliance status page."""
     from urllib.parse import urljoin
     from urllib.request import Request, urlopen
@@ -360,7 +385,7 @@ def _scrape_alliance_status_page():
     }
 
 
-def _status_level_from_tokens(tokens):
+def _status_level_from_tokens(tokens: list[str]) -> str:
     """Return ok/warning/critical based on status icon tokens."""
     cleaned = []
     for token in list(tokens or []):
@@ -377,7 +402,7 @@ def _status_level_from_tokens(tokens):
     return 'ok'
 
 
-def _extract_first_past_incident_text(text):
+def _extract_first_past_incident_text(text: str) -> str:
     """Extract the most recent 'Past Incidents' body text snippet."""
     normalized = ' '.join(str(text or '').split())
     lower = normalized.lower()
@@ -403,7 +428,7 @@ def _extract_first_past_incident_text(text):
     return snippet
 
 
-def _scrape_canfar_status_page():
+def _scrape_canfar_status_page() -> dict[str, Any]:
     """Fetch and parse the CANFAR status page."""
     from urllib.parse import urljoin
     from urllib.request import Request, urlopen
@@ -460,7 +485,7 @@ def _scrape_canfar_status_page():
     }
 
 
-def monitor_issues_view(app):
+def monitor_issues_view(app: Any) -> _ViewResult:
     """Render the monitor portal issues management page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -502,7 +527,7 @@ def monitor_issues_view(app):
                            **context)
 
 
-def monitor_known_errors_view(app):
+def monitor_known_errors_view(app: Any) -> _ViewResult:
     """Render the monitor portal known errors page.
 
     Read access is public. Write actions are controlled by the
@@ -537,7 +562,7 @@ def monitor_known_errors_view(app):
                            **context)
 
 
-def monitor_status_view(app):
+def monitor_status_view(app: Any) -> _ViewResult:
     """Render status index cards linking to individual status pages."""
     user_info = get_effective_user(session)
     if user_info:
@@ -615,7 +640,7 @@ def monitor_status_view(app):
     return render_template('monitor_portal/status.html', **context)
 
 
-def monitor_status_alliance_view(app):
+def monitor_status_alliance_view(app: Any) -> _ViewResult:
     """Render detailed Digital Research Alliance status content."""
     user_info = get_effective_user(session)
     if user_info:
@@ -665,7 +690,7 @@ def monitor_status_alliance_view(app):
     return render_template('monitor_portal/status_detail.html', **context)
 
 
-def monitor_status_canfar_view(app):
+def monitor_status_canfar_view(app: Any) -> _ViewResult:
     """Render detailed CANFAR status content."""
     user_info = get_effective_user(session)
     if user_info:
@@ -716,7 +741,7 @@ def monitor_status_canfar_view(app):
     return render_template('monitor_portal/status_detail.html', **context)
 
 
-def become_monitor_view(app):
+def become_monitor_view(app: Any) -> _ViewResult:
     """Render the public "Become a Monitor" landing/signup page.
 
     Visible to everyone (including anonymous visitors). Monitors who
@@ -769,7 +794,7 @@ def become_monitor_view(app):
     return render_template('home/become_monitor.html', **context)
 
 
-def monitor_portal_index_view(app):
+def monitor_portal_index_view(app: Any) -> _ViewResult:
     """Render the monitor portal index page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -849,7 +874,7 @@ def monitor_portal_index_view(app):
                            **context)
 
 
-def monitor_schedule_view(app):
+def monitor_schedule_view(app: Any) -> _ViewResult:
     """Render the monitor portal schedule page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -904,7 +929,7 @@ def monitor_schedule_view(app):
                            **context)
 
 
-def monitor_awards_view(app):
+def monitor_awards_view(app: Any) -> _ViewResult:
     """Render the monitor portal "Awards" leaderboard page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -967,7 +992,11 @@ def monitor_awards_view(app):
 # Processing logs views
 # ==========================================================================
 
-def _accessible_profile_cards(app, user_info, perms):
+def _accessible_profile_cards(
+    app: Any,
+    user_info: Any,
+    perms: Any,
+) -> list[dict[str, Any]]:
     """Return profile card list and instrument info for monitor users.
 
     Filters `get_accessible_profiles` to instruments the current
@@ -1012,7 +1041,7 @@ def _accessible_profile_cards(app, user_info, perms):
     return cards, shown, colors
 
 
-def monitor_processing_logs_view(app):
+def monitor_processing_logs_view(app: Any) -> _ViewResult:
     """Render the processing logs index page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1054,7 +1083,10 @@ def monitor_processing_logs_view(app):
     )
 
 
-def monitor_processing_logs_profile_view(app, profile_id):
+def monitor_processing_logs_profile_view(
+    app: Any,
+    profile_id: str,
+) -> _ViewResult:
     """Render per-profile processing log table page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1102,7 +1134,11 @@ def monitor_processing_logs_profile_view(app, profile_id):
     )
 
 
-def monitor_processing_logs_pid_view(app, profile_id, pid):
+def monitor_processing_logs_pid_view(
+    app: Any,
+    profile_id: str,
+    pid: str,
+) -> _ViewResult:
     """Render per-PID recipe detail page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1148,7 +1184,11 @@ def monitor_processing_logs_pid_view(app, profile_id, pid):
     )
 
 
-def _checks_profile_cards(app, user_info, perms):
+def _checks_profile_cards(
+    app: Any,
+    user_info: Any,
+    perms: Any,
+) -> list[dict[str, Any]]:
     """Return profile cards for the APERO checks landing page."""
     groups = user_info.get('groups', []) if user_info else []
     allowed_instruments = set(
@@ -1186,7 +1226,7 @@ def _checks_profile_cards(app, user_info, perms):
     return cards, shown, colors
 
 
-def monitor_apero_checks_view(app):
+def monitor_apero_checks_view(app: Any) -> _ViewResult:
     """Render the APERO checks landing page."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1225,7 +1265,11 @@ def monitor_apero_checks_view(app):
     return render_template('monitor_portal/apero_checks.html', **context)
 
 
-def _checks_root_for_profile(app, profile_data, overrides=None):
+def _checks_root_for_profile(
+    app: Any,
+    profile_data: dict[str, Any],
+    overrides: str | None = None,
+) -> Path:
     """Resolve the checks YAML root for one profile."""
     local_data_dir = app._resolve_local_data_dir()
     cfg = checks_core.load_config(local_data_dir)
@@ -1237,7 +1281,7 @@ def _checks_root_for_profile(app, profile_data, overrides=None):
     )
 
 
-def _normalize_apero_checks_args(args):
+def _normalize_apero_checks_args(args: Any) -> dict[str, Any]:
     """Normalise monitor APERO-check page arguments."""
     q_page = args.get('page', '1')
     q_per_page = args.get('per_page', '10')
@@ -1301,7 +1345,11 @@ def _obsdir_matches_filter(obsdir: str, obsdir_filter: str) -> bool:
         return pattern.lower() in value.lower()
 
 
-def _filter_apero_check_paths(files, obsdir_filter, obsdir_sort):
+def _filter_apero_check_paths(
+    files: list[Path],
+    obsdir_filter: str,
+    obsdir_sort: str,
+) -> list[Path]:
     """Apply obsdir filter and sorting to APERO-check YAML paths."""
     paths = []
     for path in files:
@@ -1314,15 +1362,15 @@ def _filter_apero_check_paths(files, obsdir_filter, obsdir_sort):
 
 
 def _build_apero_check_summary(
-    path,
-    profile_id,
-    instrument,
-    type_filter,
-    show_overridden,
-    show_monitored,
-    show_passed,
-    ignored_checks,
-):
+    path: Path,
+    profile_id: str,
+    instrument: str,
+    type_filter: str,
+    show_overridden: bool,
+    show_monitored: bool,
+    show_passed: bool,
+    ignored_checks: Any,
+) -> dict[str, Any]:
     """Build one obsdir card payload from a YAML file."""
     try:
         loaded = checks_core.load_check_file(path)
@@ -1362,7 +1410,7 @@ def _build_apero_check_summary(
         return summary
 
 
-def _build_apero_check_minimal(path):
+def _build_apero_check_minimal(path: Path) -> dict[str, Any]:
     """Build a minimal obsdir card using file metadata only."""
     raw_last = checks_core._iso_from_mtime(str(path))
     last_run = checks_core.format_last_run_display(raw_last)
@@ -1373,9 +1421,12 @@ def _build_apero_check_minimal(path):
     }
 
 
-def _build_apero_check_minimal_with_status(path, ignored_checks):
+def _build_apero_check_minimal_with_status(
+    path: Path,
+    ignored_checks: Any,
+) -> dict[str, Any]:
     """Build minimal obsdir card and evaluate pass/fail quickly (cached)."""
-    def _init_type_counts():
+    def _init_type_counts() -> dict[str, dict[str, int]]:
         """Return default per-type pass/total counters."""
         out = dict()
         raw = dict()
@@ -1482,7 +1533,7 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
     if file_mtime is not None:
         with _CARD_STATUS_LOCK:
             _CARD_STATUS_CACHE[path_key] = (file_mtime, ignored_key, dict(card))
-            # Evict oldest entries if cache grows large (one entry per obsdir YAML).
+            # Evict oldest entries if the cache grows beyond one per obsdir.
             if len(_CARD_STATUS_CACHE) > 2000:
                 keys = list(_CARD_STATUS_CACHE)
                 for old_key in keys[:200]:
@@ -1490,9 +1541,11 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
     return card
 
 
-def _loaded_has_marker(loaded: dict,
-                       ignored_checks,
-                       marker: str) -> bool:
+def _loaded_has_marker(
+    loaded: dict[str, Any],
+    ignored_checks: Any,
+    marker: str,
+) -> bool:
     """Return True when any non-ignored check has marker metadata."""
     ignored_set = set(ignored_checks or [])
     for bucket in ('failures', 'passes'):
@@ -1518,7 +1571,10 @@ def _status_banner_state(base_state: str,
     return 'failed'
 
 
-def _monitoring_override_rows(loaded: dict, ignored_checks) -> list:
+def _monitoring_override_rows(
+    loaded: dict[str, Any],
+    ignored_checks: Any,
+) -> list[dict[str, str]]:
     """Build table rows for active monitor/override check markers."""
     rows = []
     ignored_set = set(ignored_checks or [])
@@ -1572,7 +1628,10 @@ def _monitoring_override_rows(loaded: dict, ignored_checks) -> list:
     return rows
 
 
-def _apply_apero_check_result_filter(cards, result_filter):
+def _apply_apero_check_result_filter(
+    cards: list[dict[str, Any]],
+    result_filter: str,
+) -> list[dict[str, Any]]:
     """Filter APERO-check cards by computed visible result status."""
     mode = str(result_filter or 'all').strip().lower()
     if mode == 'all':
@@ -1591,21 +1650,21 @@ def _apply_apero_check_result_filter(cards, result_filter):
 
 
 def _get_apero_check_page_payload(
-    app,
-    profile_data,
-    profile_id,
-    instrument,
-    page_num,
-    per_page,
-    type_filter,
-    result_filter,
-    obsdir_filter,
-    obsdir_sort,
-    show_overridden,
-    show_monitored,
-    show_passed,
-    pages_to_load=1,
-):
+    app: Any,
+    profile_data: dict[str, Any],
+    profile_id: str,
+    instrument: str,
+    page_num: int,
+    per_page: int,
+    type_filter: str,
+    result_filter: str,
+    obsdir_filter: str,
+    obsdir_sort: str,
+    show_overridden: bool,
+    show_monitored: bool,
+    show_passed: bool,
+    pages_to_load: int = 1,
+) -> dict[str, Any]:
     """Return paged APERO-check cards and page metadata."""
     checks_root = _checks_root_for_profile(app, profile_data)
     local_data_dir = app._resolve_local_data_dir()
@@ -1694,15 +1753,15 @@ def _get_apero_check_page_payload(
 
 
 def _get_apero_check_page_payload_minimal(
-    app,
-    profile_data,
-    per_page,
-    page_num,
-    obsdir_filter,
-    obsdir_sort,
-    result_filter,
-    instrument=None,
-):
+    app: Any,
+    profile_data: dict[str, Any],
+    per_page: int,
+    page_num: int,
+    obsdir_filter: str,
+    obsdir_sort: str,
+    result_filter: str,
+    instrument: str | None = None,
+) -> dict[str, Any]:
     """Return paged minimal obsdir cards (file metadata only)."""
     checks_root = _checks_root_for_profile(app, profile_data)
     local_data_dir = app._resolve_local_data_dir()
@@ -1758,7 +1817,10 @@ def _get_apero_check_page_payload_minimal(
     }
 
 
-def monitor_apero_checks_profile_view(app, profile_id):
+def monitor_apero_checks_profile_view(
+    app: Any,
+    profile_id: str,
+) -> _ViewResult:
     """Render the APERO checks obsdir card page for one profile."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1830,7 +1892,10 @@ def monitor_apero_checks_profile_view(app, profile_id):
     )
 
 
-def monitor_apero_checks_queue_view(app, profile_id):
+def monitor_apero_checks_queue_view(
+    app: Any,
+    profile_id: str,
+) -> _ViewResult:
     """Render APERO-check queue and history page for one profile."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1878,7 +1943,11 @@ def monitor_apero_checks_queue_view(app, profile_id):
     )
 
 
-def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
+def monitor_apero_checks_obsdir_view(
+    app: Any,
+    profile_id: str,
+    obsdir: str,
+) -> _ViewResult:
     """Render APERO-check information page for one obsdir YAML."""
     user_info = get_effective_user(session)
     if user_info:
@@ -2062,11 +2131,11 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
 
 
 def monitor_apero_checks_check_view(
-    app,
-    profile_id,
-    obsdir,
-    check_key,
-):
+    app: Any,
+    profile_id: str,
+    obsdir: str,
+    check_key: str,
+) -> _ViewResult:
     """Render APERO-check information page for one check key."""
     user_info = get_effective_user(session)
     if user_info:

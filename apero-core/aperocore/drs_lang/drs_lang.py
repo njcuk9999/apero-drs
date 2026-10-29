@@ -57,7 +57,15 @@ class LanguageLookup:
     Class to get text in the correct language from the lanuage lists
     """
     def __init__(self, lang_insts: List[LanguageList] = None,
-                 langauge=DEFAULT_LANG, mode: str = 'value'):
+                 langauge: str = DEFAULT_LANG,
+                 mode: str = 'value') -> None:
+        """Prepare the shared language lookup tables.
+
+        :param lang_insts: ordered language sources; later sources override
+            earlier ones
+        :param langauge: language code to compile, preserving the legacy name
+        :param mode: ``'value'`` for text only, otherwise include metadata
+        """
         self.language: str = langauge
         # compile only once
         if len(lang_insts) > 0 and self.language is not None:
@@ -74,7 +82,7 @@ class LanguageLookup:
         self.lang_kinds = LANG_KINDS
         self.lang_sources = LANG_SOURCES
 
-    def _compile(self):
+    def _compile(self) -> None:
         """
         Compile a single language list from all language instances, by this
         point the code is running and we only have one language from one
@@ -102,7 +110,7 @@ class LanguageLookup:
                 # overwrite value in LANG_VALUES/LANG_COMMENTS
                 LANG_VALUES[key] = value
 
-    def _full_compile(self):
+    def _full_compile(self) -> None:
         """
         Compile a single language list from all language instances, by this
         point the code is running and we only have one language from one
@@ -179,15 +187,23 @@ class LanguageLookup:
 
 class LanguageTable:
     def __init__(self, lang_insts: List[LanguageList] = None,
-                 langauge=DEFAULT_LANG):
+                 langauge: str = DEFAULT_LANG) -> None:
+        """Build a table view using the already-compiled language values.
+
+        :param lang_insts: retained for compatibility; compiled globals
+            provide the table contents
+        :param langauge: selected language code, retained on the instance
+        """
         self.language: str = langauge
         self.table = None
         # make the table
         self.make_table()
 
-    def make_table(self):
+    def make_table(self) -> List[List[str]]:
         """
-        Make a table of all language values
+        Collect each compiled key, value, and comment into a row.
+
+        :return: rows containing the language key, translated value, comment
         """
         # storage for table
         table = []

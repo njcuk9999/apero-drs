@@ -125,6 +125,7 @@ METHOD_FIELDS = {
 
 
 def _default_method() -> Dict[str, Any]:
+    """Return the immutable built-in local backup method settings."""
     return {
         "id": "default",
         "name": "Local (built-in)",
@@ -150,6 +151,7 @@ def _default_method() -> Dict[str, Any]:
 
 
 def _sanitize_method(raw: Dict[str, Any], index: int) -> Dict[str, Any]:
+    """Normalize a configured method and discard unsupported secret fields."""
     method = _default_method()
     if isinstance(raw, dict):
         for key in METHOD_FIELDS:
@@ -184,6 +186,7 @@ def _sanitize_method(raw: Dict[str, Any], index: int) -> Dict[str, Any]:
 def get_backup_methods(
     cfg: Optional[Dict[str, Any]] = None, enabled_only: bool = False
 ) -> List[Dict[str, Any]]:
+    """Return sanitized backup methods, optionally limited to enabled ones."""
     if cfg is None:
         cfg = load_backup_config()
 
@@ -250,6 +253,7 @@ def get_backup_methods(
 def _cfg_for_method(
     cfg: Dict[str, Any], method_id: Optional[str] = None
 ) -> Dict[str, Any]:
+    """Overlay one selected backup method onto the overall configuration."""
     methods = get_backup_methods(cfg, enabled_only=False)
     active_id = str(method_id or cfg.get("active_method_id", "") or "").strip()
 
@@ -274,6 +278,7 @@ def _cfg_for_method(
 # Define functions
 # =============================================================================
 def _get_backup_config_path() -> Path:
+    """Return the backup config path, migrating the legacy file if needed."""
     ari_dir = os.environ.get("ARI_DIR", os.path.expanduser("~/.ari"))
     admin_dir = Path(ari_dir) / "admin"
     general_dir = admin_dir / "general"
@@ -289,10 +294,12 @@ def _get_backup_config_path() -> Path:
 
 
 def _get_s3_secret_access_key_path() -> Path:
+    """Return the protected storage path for the S3 secret key."""
     return ss.resolve_secret_file("s3_secret_access_key.txt")
 
 
 def _write_secret_text(path: Path, value: str) -> None:
+    """Write a secret and restrict its file permissions."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(value, encoding="utf-8")
     ss.protect_path(path, 0o600)
@@ -301,6 +308,7 @@ def _write_secret_text(path: Path, value: str) -> None:
 def _maybe_migrate_managed_secret_path(
     field_name: str, path_value: str, allow_blank: bool = False
 ) -> str:
+    """Resolve a managed secret path and migrate recognized legacy paths."""
     value = str(path_value or "").strip()
     ari_dir = ss.get_ari_dir()
     target_name = MANAGED_SECRET_PATHS[field_name]
@@ -335,6 +343,7 @@ def _maybe_migrate_managed_secret_path(
 
 
 def _migrate_backup_secret_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """Migrate configured secret paths and legacy S3 secret storage."""
     cfg["gdrive_oauth_token_file"] = _maybe_migrate_managed_secret_path(
         "gdrive_oauth_token_file",
         str(cfg.get("gdrive_oauth_token_file", "") or ""),
@@ -382,10 +391,12 @@ def _migrate_backup_secret_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _encode_secret(value: str) -> str:
+    """Base64-encode a legacy config secret value."""
     return base64.b64encode(value.encode("utf-8")).decode("utf-8")
 
 
 def _decode_secret(value: str) -> str:
+    """Decode a legacy base64 config secret, returning empty text on error."""
     try:
         return base64.b64decode(value.encode("utf-8")).decode("utf-8")
     except Exception:
@@ -393,6 +404,7 @@ def _decode_secret(value: str) -> str:
 
 
 def _default_config() -> Dict[str, Any]:
+    """Return the default backup configuration mapping."""
     return {
         "enabled": False,
         "provider": "local_only",
@@ -535,6 +547,7 @@ def get_secret(cfg: Dict[str, Any], field_name: str) -> str:
 
 
 def format_bytes(size: int) -> str:
+    """Format a byte count using binary units through terabytes."""
     units = ["B", "KB", "MB", "GB", "TB"]
     value = float(size)
     for unit in units:
@@ -545,11 +558,13 @@ def format_bytes(size: int) -> str:
 
 
 def _normalize_s3_prefix(prefix: str) -> str:
+    """Normalize an S3 key prefix to empty text or a trailing slash."""
     pref = str(prefix or "").strip().strip("/")
     return f"{pref}/" if pref else ""
 
 
 def _is_cloud_enabled(cfg: Dict[str, Any]) -> bool:
+    """Return whether the enabled provider supports remote/local mirroring."""
     if not bool(cfg.get("enabled", False)):
         return False
     provider = str(cfg.get("provider", "local_only")).strip()
@@ -661,6 +676,7 @@ def validate_gdrive_oauth_client_secret_file(
 
 
 def _provider_requirements_ok(cfg: Dict[str, Any]) -> Tuple[bool, str]:
+    """Check required credentials and destinations for the selected provider."""
     provider = str(cfg.get("provider", "local_only")).strip()
     if provider == "gdrive_oauth":
         client_secret_file = Path(
@@ -728,7 +744,8 @@ def _provider_requirements_ok(cfg: Dict[str, Any]) -> Tuple[bool, str]:
 GDRIVE_OAUTH_SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
-def _build_google_drive_service(cfg: Dict[str, Any]):
+def _build_google_drive_service(cfg: Dict[str, Any]) -> Any:
+    """Load OAuth credentials and build a Google Drive API client."""
     try:
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
@@ -794,8 +811,12 @@ def _build_google_drive_service(cfg: Dict[str, Any]):
 
 
 def _gdrive_find_child_folder(
-    service, parent_id: str, name: str, create_if_missing: bool = False
+    service: Any,
+    parent_id: str,
+    name: str,
+    create_if_missing: bool = False,
 ) -> Optional[str]:
+    """Find a named child folder, optionally creating it when absent."""
     query = (
         "mimeType='application/vnd.google-apps.folder' and trashed=false "
         f"and name='{name}' and '{parent_id}' in parents"
@@ -836,8 +857,9 @@ def _gdrive_find_child_folder(
 
 
 def _gdrive_list_period(
-    service, period_folder_id: str, period: str
+    service: Any, period_folder_id: str, period: str
 ) -> Dict[str, Dict[str, Any]]:
+    """List Drive files in one backup period, indexed by relative path."""
     out: Dict[str, Dict[str, Any]] = {}
     page_token = None
     while True:
@@ -876,7 +898,7 @@ def _gdrive_list_period(
 
 
 def _gdrive_validate_shared_drive_target(
-    service, folder_id: str
+    service: Any, folder_id: str
 ) -> Dict[str, Any]:
     """Validate that target folder is accessible."""
     meta = (
@@ -892,8 +914,12 @@ def _gdrive_validate_shared_drive_target(
 
 
 def _gdrive_upload_file(
-    service, parent_id: str, file_path: Path, existing_id: Optional[str] = None
+    service: Any,
+    parent_id: str,
+    file_path: Path,
+    existing_id: Optional[str] = None,
 ) -> None:
+    """Upload a backup archive, replacing its existing Drive file if given."""
     try:
         from googleapiclient.http import MediaFileUpload
     except Exception as exc:
@@ -925,7 +951,8 @@ def _gdrive_upload_file(
     ).execute()
 
 
-def _build_s3_client(cfg: Dict[str, Any]):
+def _build_s3_client(cfg: Dict[str, Any]) -> Any:
+    """Create an S3 client from the configured credentials and endpoint."""
     try:
         import boto3
     except Exception as exc:
@@ -1002,8 +1029,9 @@ def _read_s3_credentials_file(path_value: str) -> Tuple[str, str]:
 
 
 def _s3_list_period(
-    client, bucket: str, prefix: str, period: str
+    client: Any, bucket: str, prefix: str, period: str
 ) -> Dict[str, Dict[str, Any]]:
+    """List S3 objects in one backup period, indexed by relative path."""
     out: Dict[str, Dict[str, Any]] = {}
     period_prefix = f"{prefix}{period}/"
     token = None
@@ -1044,6 +1072,7 @@ def _s3_list_period(
 
 
 def _build_rsync_ssh_transport(cfg: Dict[str, Any]) -> Tuple[List[str], str]:
+    """Build SSH options and the remote rsync destination from config."""
     target = str(cfg.get("rsync_ssh_target", "")).strip()
     remote_root = str(cfg.get("rsync_remote_dir", "")).strip().rstrip("/")
     if not target or not remote_root:
@@ -1070,6 +1099,7 @@ def _build_rsync_ssh_transport(cfg: Dict[str, Any]) -> Tuple[List[str], str]:
 def _run_rsync_ssh(
     cfg: Dict[str, Any], src_dir: Path, remote_period: str
 ) -> Tuple[int, str]:
+    """Run rsync for one period and return its status and captured output."""
     ssh_parts, remote_base = _build_rsync_ssh_transport(cfg)
     src_with_slash = str(src_dir).rstrip("/") + "/"
     dst = f"{remote_base}/{remote_period}/"
@@ -1365,6 +1395,7 @@ def test_backup_roundtrip(
 
 
 def _local_backup_root(local_data_dir: Optional[Path]) -> Path:
+    """Resolve the local daily/weekly backup directory."""
     if local_data_dir is None:
         ari_dir = Path(os.environ.get("ARI_DIR", os.path.expanduser("~/.ari")))
         return (ari_dir / "backups").expanduser().resolve()
@@ -1387,6 +1418,7 @@ def list_local_backups(local_data_dir: Optional[Path] = None) -> Dict[str, Any]:
     weekly_dir = backup_root / "weekly"
 
     def _list_period(period: str, directory: Path) -> List[Dict[str, Any]]:
+        """List readable backup archives in one local period directory."""
         rows: List[Dict[str, Any]] = []
         if not directory.exists():
             return rows
@@ -1427,6 +1459,7 @@ def _list_mirror_backups(mirror_root: Path) -> Dict[str, Any]:
     weekly_dir = mirror_root / "weekly"
 
     def _list_period(period: str, directory: Path) -> List[Dict[str, Any]]:
+        """List readable backup archives in one mirror period directory."""
         rows: List[Dict[str, Any]] = []
         if not directory.exists():
             return rows
@@ -1600,6 +1633,7 @@ def list_cloud_backups(
 def _remote_map(
     cfg: Dict[str, Any], method_id: Optional[str] = None
 ) -> Dict[str, Dict[str, Any]]:
+    """Index remote backup records by their relative archive paths."""
     cloud = list_cloud_backups(cfg, method_id=method_id)
     if not cloud.get("ok", False):
         raise RuntimeError(
@@ -1928,6 +1962,7 @@ def sync_local_backups_to_all_methods(
 
 
 def _safe_relative_path(relative_path: str) -> Tuple[str, str]:
+    """Validate a daily/weekly backup path and return period and filename."""
     rel = str(relative_path or "").strip().replace("\\", "/")
     parts = [part for part in rel.split("/") if part]
     if len(parts) != 2:

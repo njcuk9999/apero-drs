@@ -296,14 +296,18 @@ def fit_blaze_model(
               & (np.abs(pixel[None, :] - peaks[:, None])
                  <= peak_half_width))
 
-    def _backbone(c0, c1, beta, asym):
+    def _backbone(c0: float, c1: float, beta: float,
+                  asym: float) -> np.ndarray:
         """BB * sinc^2 blaze * dlambda/dpixel (without transmission)."""
         cst = c0 + c1 * (wave - lref)
         ee = mm * wave / cst - 1.0
         env = np.sinc(beta * mm * (ee + asym * ee ** 2)) ** 2
         return photon * np.maximum(env, 1e-8) * dwave
 
-    def _solve_trans(c0, c1, beta, asym):
+    def _solve_trans(
+            c0: float, c1: float, beta: float, asym: float
+            ) -> Tuple[np.ndarray, np.ndarray,
+                       Tuple[np.ndarray, np.ndarray]]:
         """Solve for log-transmission given the grating parameters.
 
         Uses a linear spline with one knot per order at its peak, where
@@ -334,7 +338,8 @@ def fit_blaze_model(
     x_scale = [cst_start, 1e-3 * slope_max, 1.0, 1.0]
     # iterative least-squares fit with sigma clipping (3 passes)
     for _ in range(3):
-        def _residual(p):
+        def _residual(p: np.ndarray) -> np.ndarray:
+            """Return fit residuals for currently selected pixels."""
             return _solve_trans(*p)[1][use]
         fit = least_squares(
             _residual, guess, bounds=bounds,

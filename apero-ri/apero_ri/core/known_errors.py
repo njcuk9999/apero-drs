@@ -21,10 +21,12 @@ __NAME__ = 'apero_ri.core.known_errors'
 
 
 def _repo_root() -> Path:
+    """Return the repository root containing the APERO RI package."""
     return Path(__file__).resolve().parents[3]
 
 
 def known_errors_dir() -> Path:
+    """Return the directory used to store known-error YAML records."""
     dpath = (
         _repo_root()
         / 'apero-ri'
@@ -38,6 +40,7 @@ def known_errors_dir() -> Path:
 
 
 def _slugify(text: str) -> str:
+    """Convert error text into a lowercase, filename-safe slug."""
     raw = str(text or '').strip().lower()
     raw = re.sub(r'[^a-z0-9]+', '-', raw)
     raw = re.sub(r'-+', '-', raw)
@@ -45,10 +48,12 @@ def _slugify(text: str) -> str:
 
 
 def _safe(value: Any) -> str:
+    """Convert a possibly empty record value to trimmed text."""
     return str(value or '').strip()
 
 
-def _parse_date(value: str) -> str:
+def _parse_date(value: Any) -> str:
+    """Normalize common report dates, preserving unrecognized text."""
     text = _safe(value)
     if not text:
         return ''
@@ -62,8 +67,12 @@ def _parse_date(value: str) -> str:
 
 
 def _normalize_row(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a complete known-error row with normalized fields and ID."""
     generic_error = _safe(payload.get('generic_error'))
-    title = generic_error.splitlines()[0][:100] if generic_error else 'Known error'
+    title = (
+        generic_error.splitlines()[0][:100]
+        if generic_error else 'Known error'
+    )
     slug = _slugify(title)
     row_id = _safe(payload.get('id')) or str(uuid.uuid4())
 
@@ -86,10 +95,12 @@ def _normalize_row(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _yaml_path(error_id: str) -> Path:
+    """Return the YAML path associated with one known-error ID."""
     return known_errors_dir() / f'{error_id}.yaml'
 
 
 def _load_yaml(path: Path) -> Optional[Dict[str, Any]]:
+    """Load and normalize one known-error record, or return None on error."""
     try:
         data = yaml.safe_load(path.read_text(encoding='utf-8')) or {}
     except Exception:
@@ -100,6 +111,7 @@ def _load_yaml(path: Path) -> Optional[Dict[str, Any]]:
 
 
 def list_known_errors() -> List[Dict[str, Any]]:
+    """Load normalized known errors, newest reported records first."""
     rows: List[Dict[str, Any]] = []
     for path in sorted(known_errors_dir().glob('*.yaml')):
         data = _load_yaml(path)
@@ -119,6 +131,7 @@ def list_known_errors() -> List[Dict[str, Any]]:
 
 
 def _write_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize and atomically write one known-error record."""
     norm = _normalize_row(row)
     path = _yaml_path(norm['id'])
     text = yaml.safe_dump(norm, sort_keys=False, allow_unicode=True)
@@ -129,13 +142,17 @@ def _write_row(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def create_known_error(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a known-error record with a newly generated ID."""
     row = _normalize_row(payload)
     row['id'] = str(uuid.uuid4())
     out = _write_row(row)
     return out
 
 
-def update_known_error(error_id: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def update_known_error(
+    error_id: str, payload: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """Update an existing record, or return None if it cannot be loaded."""
     path = _yaml_path(error_id)
     if not path.exists():
         return None
@@ -150,6 +167,7 @@ def update_known_error(error_id: str, payload: Dict[str, Any]) -> Optional[Dict[
 
 
 def delete_known_error(error_id: str) -> bool:
+    """Delete a record by ID and report whether its file existed."""
     path = _yaml_path(error_id)
     if not path.exists():
         return False

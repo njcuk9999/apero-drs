@@ -58,6 +58,7 @@ _initialised = set()
 # Connection management
 # ---------------------------------------------------------------------------
 def _connect() -> sqlite3.Connection:
+    """Open the notifications database with its required pragmas."""
     notif_dir().mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(notif_db()), timeout=30.0)
     conn.row_factory = sqlite3.Row
@@ -67,6 +68,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def _init_schema() -> None:
+    """Create the notification, message, flag, and preference tables."""
     db_key = str(notif_db())
     if db_key in _initialised:
         return
@@ -131,10 +133,12 @@ def _init_schema() -> None:
 
 
 def _now() -> float:
+    """Return the current Unix timestamp."""
     return time.time()
 
 
 def _row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
+    """Convert a SQLite row to a plain mapping."""
     return {k: row[k] for k in row.keys()}
 
 
@@ -203,6 +207,7 @@ def list_notifications(
     channel: Optional[str] = None,
     limit: int = 100,
 ) -> List[Dict[str, Any]]:
+    """List a user's notifications, with optional unread and channel filters."""
     _init_schema()
     sql = "SELECT * FROM notifications WHERE username = ?"
     args: List[Any] = [username]
@@ -224,6 +229,7 @@ def list_notifications(
 
 
 def count_unread(username: str) -> int:
+    """Count active unread notifications for a user."""
     _init_schema()
     conn = _connect()
     try:
@@ -238,6 +244,7 @@ def count_unread(username: str) -> int:
 
 
 def mark_read(username: str, ids: Iterable[str]) -> int:
+    """Mark the selected unread notifications read and return row count."""
     _init_schema()
     ids = [i for i in (ids or []) if i]
     if not ids:
@@ -258,6 +265,7 @@ def mark_read(username: str, ids: Iterable[str]) -> int:
 
 
 def mark_all_read(username: str) -> int:
+    """Mark all of a user's unread notifications read."""
     _init_schema()
     conn = _connect()
     try:
@@ -273,6 +281,7 @@ def mark_all_read(username: str) -> int:
 
 
 def dismiss(username: str, ids: Iterable[str]) -> int:
+    """Dismiss selected notifications and return the number updated."""
     _init_schema()
     ids = [i for i in (ids or []) if i]
     if not ids:
@@ -294,6 +303,7 @@ def dismiss(username: str, ids: Iterable[str]) -> int:
 def dismiss_all(
     username: str, channel: Optional[str] = None
 ) -> int:
+    """Dismiss a user's active notifications, optionally by channel."""
     _init_schema()
     conn = _connect()
     try:
@@ -350,6 +360,7 @@ def set_pref(
     enabled: Optional[bool] = None,
     browser_popups: Optional[bool] = None,
 ) -> None:
+    """Update supplied preference fields for a disableable channel."""
     _init_schema()
     if channel not in DISABLEABLE:
         return
@@ -384,6 +395,7 @@ def set_pref(
 
 
 def is_channel_enabled(username: str, channel: str) -> bool:
+    """Return whether the user allows notifications for this channel."""
     if channel == "system":
         return True
     if channel not in DISABLEABLE:
@@ -401,6 +413,7 @@ def send_message(
     body: str,
     subject: str = "",
 ) -> Optional[str]:
+    """Store a direct message and notify its recipient; return its ID."""
     _init_schema()
     sender = (sender or "").strip()
     recipient = (recipient or "").strip()
@@ -438,6 +451,7 @@ def list_messages(
     only_unread: bool = False,
     limit: int = 200,
 ) -> List[Dict[str, Any]]:
+    """List inbox or sent messages, optionally filtering unread inbox items."""
     _init_schema()
     conn = _connect()
     try:
@@ -463,6 +477,7 @@ def list_messages(
 
 
 def get_message(username: str, mid: str) -> Optional[Dict[str, Any]]:
+    """Return a message visible to the user, or None if not found."""
     _init_schema()
     conn = _connect()
     try:
@@ -477,6 +492,7 @@ def get_message(username: str, mid: str) -> Optional[Dict[str, Any]]:
 
 
 def mark_message_read(username: str, mid: str) -> bool:
+    """Mark a recipient's message read and clear its linked notification."""
     _init_schema()
     conn = _connect()
     try:
@@ -515,6 +531,7 @@ def mark_message_read(username: str, mid: str) -> bool:
 
 
 def mark_message_unread(username: str, mid: str) -> bool:
+    """Mark a recipient's active message unread and restore its notice."""
     _init_schema()
     conn = _connect()
     try:
@@ -548,6 +565,7 @@ def mark_message_unread(username: str, mid: str) -> bool:
 
 
 def delete_message(username: str, mid: str) -> bool:
+    """Hide a message from the user's sent or received mailbox."""
     _init_schema()
     conn = _connect()
     try:
@@ -569,6 +587,7 @@ def delete_message(username: str, mid: str) -> bool:
 
 
 def mark_all_messages_read(username: str) -> int:
+    """Mark all unread inbox messages read and return the changed count."""
     _init_schema()
     conn = _connect()
     try:
@@ -600,6 +619,7 @@ def delete_all_messages(
     username: str,
     box: str = 'inbox',
 ) -> int:
+    """Hide messages in the requested mailbox and return rows updated."""
     _init_schema()
     target = str(box or 'inbox').strip().lower()
     if target not in ('inbox', 'sent', 'all'):
@@ -638,6 +658,7 @@ def delete_all_messages(
 
 
 def count_unread_messages(username: str) -> int:
+    """Count unread messages still present in the user's inbox."""
     _init_schema()
     conn = _connect()
     try:
@@ -655,6 +676,7 @@ def count_unread_messages(username: str) -> int:
 def flag_message(
     username: str, mid: str, issue_id: Optional[str] = None
 ) -> bool:
+    """Create or update the issue flag associated with a message."""
     _init_schema()
     msg = get_message(username, mid)
     if not msg:
@@ -674,6 +696,7 @@ def flag_message(
 
 
 def get_message_flag(mid: str) -> Optional[Dict[str, Any]]:
+    """Return the issue flag for a message, if one has been recorded."""
     _init_schema()
     conn = _connect()
     try:

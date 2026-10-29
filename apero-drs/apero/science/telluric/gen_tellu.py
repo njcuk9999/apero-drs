@@ -87,6 +87,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # Define functions
 # =============================================================================
 def id_hot_star(params: ParamDict, recipe: DrsRecipe, objname: str) -> bool:
+    """Return whether an object appears in the configured telluric allowlist."""
     # get all telluric stars
     tstars = get_tellu_include_list(params, recipe)
     # return whether objname is a hot-star
@@ -99,6 +100,7 @@ def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
                            tellu_include_file: Union[str, None] = None,
                            all_objects: Optional[List[str]] = None
                            ) -> List[str]:
+    """Load allowed telluric targets, optionally restricted to given names."""
     func_name = __NAME__ + '.get_whitelist()'
     # get object database (yaml-backed)
     objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
@@ -131,6 +133,7 @@ def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
                            tellu_dir: Union[str, None] = None,
                            tellu_exclude_file: Union[str, None] = None
                            ) -> Tuple[List[str], str]:
+    """Load rejected telluric targets and return their source filename."""
     func_name = __NAME__ + '.get_blacklist()'
     # get object database (yaml-backed)
     objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
@@ -153,7 +156,9 @@ def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
     return blacklist, blacklistfile
 
 
-def get_blaze_props(params, recipe, header, fiber) -> ParamDict:
+def get_blaze_props(params: ParamDict, recipe: DrsRecipe, header: Any,
+                    fiber: str) -> ParamDict:
+    """Load the selected fiber's blaze and package it with its provenance."""
     # set function
     func_name = display_func('get_blaze_props', __NAME__)
     # load the blaze file for this fiber
@@ -173,7 +178,10 @@ def get_blaze_props(params, recipe, header, fiber) -> ParamDict:
     return nprops
 
 
-def normalise_by_pblaze(params, recipe, image, header, fiber, **kwargs):
+def normalise_by_pblaze(params: ParamDict, recipe: DrsRecipe,
+                        image: np.ndarray, header: Any, fiber: str,
+                        **kwargs: Any) -> Tuple[np.ndarray, ParamDict]:
+    """Normalize an image by its percentile-scaled blaze and return metadata."""
     func_name = __NAME__ + '.normalise_by_pblaze()'
     # get properties from params/kwargs
     blaze_p = pcheck(params, 'OBJ.TELL.MAKE.BLAZE_PTILE', 'blaze_p', kwargs,
@@ -209,20 +217,23 @@ def normalise_by_pblaze(params, recipe, image, header, fiber, **kwargs):
 
 
 def get_non_tellu_objs(params: ParamDict, recipe: DrsRecipe,
-                       fiber, filetype=None,
-                       dprtypes=None, robjnames: List[str] = None,
-                       findexdbm: Union[FileIndexDatabase, None] = None):
+                       fiber: Optional[str],
+                       filetype: Optional[Union[List[str], str]] = None,
+                       dprtypes: Optional[Union[List[str], str]] = None,
+                       robjnames: Optional[List[str]] = None,
+                       findexdbm: Optional[FileIndexDatabase] = None
+                       ) -> Tuple[List[str], List[str]]:
     """
     Get the objects of "filetype" and that are not telluric objects
     :param params: ParamDict - the parameter dictionary of constants
-    :param fiber:
-    :param filetype:
-    :param dprtypes:
+    :param fiber: Fiber filter, or None to search all fibers.
+    :param filetype: Output file-type filter, optionally comma-separated.
+    :param dprtypes: Data-product-type filter, optionally comma-separated.
     :param robjnames: list of strings - a list of all object names (only return
                       if found and in this list
-    :param findexdbm:
+    :param findexdbm: Optional file-index database for the search.
 
-    :return:
+    :return: Absolute filenames and unique object names for matching files.
     """
     # get the telluric star names (we don't want to process these)
     objnames = get_tellu_include_list(params, recipe)
@@ -423,12 +434,14 @@ def mask_bad_regions(params: ParamDict,
 # =============================================================================
 # pre-cleaning functions
 # =============================================================================
-def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   template_props: ParamDict, refprops: ParamDict,
-                   bprops: ParamDict,
-                   sky_props: Optional[ParamDict] = None,
-                   calibdbm: Union[CalibDatabase, None] = None,
-                   telludbm: Union[TelluDatabase, None] = None, **kwargs):
+def tellu_preclean(
+    params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+    wprops: ParamDict, fiber: str, rawfiles: List[str], combine: bool,
+    template_props: ParamDict, refprops: ParamDict, bprops: ParamDict,
+    sky_props: Optional[ParamDict] = None,
+    calibdbm: Optional[CalibDatabase] = None,
+    telludbm: Optional[TelluDatabase] = None,
+    **kwargs: Any) -> Tuple[ParamDict, ParamDict]:
     """
     Main telluric pre-cleaning functionality.
 
@@ -450,19 +463,22 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
     we set bounds to the limits of the reasonable domain for both parameters.
 
-    :param params:
-    :param recipe:
-    :param infile:
-    :param wprops:
-    :param fiber:
-    :param rawfiles:
-    :param combine:
-    :param template_props:
-    :param sky_props:
-    :param calibdbm:
-    :param telludbm:
+    :param params: APERO constants controlling pre-cleaning.
+    :param recipe: Calling recipe used for products and diagnostic plots.
+    :param infile: Input extracted file used for headers and output naming.
+    :param wprops: Wavelength properties accessed through existing keys.
+    :param fiber: Fiber being cleaned.
+    :param rawfiles: Source filenames recorded when the inputs are combined.
+    :param combine: Whether the input represents a combined file set.
+    :param template_props: Template properties used by the existing workflow.
+    :param refprops: Reference spectrum and wavelength properties.
+    :param bprops: Barycentric properties accessed through existing keys.
+    :param sky_props: Optional sky-correction properties.
+    :param calibdbm: Optional calibration database already loaded by caller.
+    :param telludbm: Optional telluric database already loaded by caller.
+    :param kwargs: Optional overrides consumed by parameter checks.
 
-    :return:
+    :return: Pre-clean properties and the possibly updated template properties.
     """
     # set the function name
     func_name = __NAME__ + '.tellu_preclean()'
@@ -1299,7 +1315,18 @@ def qc_p2pscat_bands(params: ParamDict, p2p_dict: Dict[str, float] = None
     return qc_value, qc_name, qc_logic, qc_pass
 
 
-def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
+def clean_ohline_pca(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
+                     wavemap: np.ndarray,
+                     **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+    """Estimate and subtract a sky model built from OH-line components.
+
+    :param params: APERO constants controlling component selection.
+    :param recipe: Calling recipe used to emit the diagnostic plot.
+    :param image: Two-dimensional input spectrum to clean.
+    :param wavemap: Wavelength map corresponding to ``image``.
+    :param kwargs: Optional overrides consumed by parameter checks.
+    :return: Cleaned image and fitted sky model, each with image shape.
+    """
     # load ohline principle components
     func_name = __NAME__ + '.clean_ohline_pca()'
     # -------------------------------------------------------------------------
@@ -1435,14 +1462,17 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     return image - sky_model, sky_model
 
 
-def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
-                  spl_water, res_fwhm, res_expo, dv_abso, wavestart,
-                  waveend, dvgrid, no_convolve: bool = False):
+def get_abso_expo(wavemap: np.ndarray, expo_others: float,
+                  expo_water: float, spl_others: Any, spl_water: Any,
+                  res_fwhm: np.ndarray, res_expo: np.ndarray,
+                  dv_abso: float, wavestart: float, waveend: float,
+                  dvgrid: float, no_convolve: bool = False
+                  ) -> np.ndarray:
     """
     Returns an absorption spectrum from exponents describing water and 'others'
     in absorption
 
-    :param wavemap: numpy nd array, wavelength grid onto which the spectrum is
+    :param wavemap: numpy array, wavelength grid onto which the spectrum is
                     splined
     :param expo_others: float, optical depth of all species other than water
     :param expo_water: float, optical depth of water
@@ -1451,13 +1481,13 @@ def get_abso_expo(wavemap, expo_others, expo_water, spl_others,
     :param res_fwhm: fwhm map from the resolution map
     :param res_expo: exponent map from the resolution map
     :param dv_abso: velocity of the absorption
-    :param wavestart:
-    :param waveend:
+    :param wavestart: Lower wavelength bound of the output grid.
+    :param waveend: Upper wavelength bound of the output grid.
     :param dvgrid: float, the s1d bin grid (constant in velocity)
     :param no_convolve: bool, if True no convolution performed (important for
                         finite resolution effect)
 
-    :return:
+    :return: Absorption spectrum sampled on the requested wavelength grid.
     """
     # set the function name
     # _ = display_func('get_abso_expo', __NAME__)
@@ -1718,30 +1748,36 @@ def finite_res_correction(params: ParamDict, template_props: ParamDict,
     return finite_res_e2ds
 
 
-def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
-                           wavemap, qc_params, sky_model, res_e2ds_fwhm,
-                           res_e2ds_expo, template_props, wave_e2ds,
-                           res_s1d_fwhm, res_s1d_expo, database=None, **kwargs):
+def qc_exit_tellu_preclean(
+    params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
+    image_e2ds_ini: np.ndarray, infile: DrsFitsFile,
+    wavemap: np.ndarray, qc_params: Any, sky_model: np.ndarray,
+    res_e2ds_fwhm: np.ndarray, res_e2ds_expo: np.ndarray,
+    template_props: ParamDict, wave_e2ds: np.ndarray,
+    res_s1d_fwhm: np.ndarray, res_s1d_expo: np.ndarray,
+    database: Optional[TelluDatabase] = None,
+    **kwargs: Any) -> Tuple[ParamDict, ParamDict]:
     """
     Provides an exit point for tellu_preclean via a quality control failure
 
-    :param params:
-    :param recipe:
-    :param image:
-    :param image_e2ds_ini:
-    :param infile:
-    :param wavemap:
-    :param qc_params:
-    :param sky_model:
-    ;param res_e2ds_fwhm:
-    :param res_e2ds_expo:
-    :param template_props:
-    :param wave_e2ds:
-    :param res_s1d_fwhm:
-    :param res_s1d_expo:
-    :param database:
+    :param params: APERO constants controlling pre-cleaning.
+    :param recipe: Calling recipe used for products and summary plots.
+    :param image: Current extracted image.
+    :param image_e2ds_ini: Initial image retained for QC comparisons.
+    :param infile: Input file used for headers and output context.
+    :param wavemap: Wavelength map corresponding to the current image.
+    :param qc_params: Existing quality-control payload.
+    :param sky_model: Sky model passed through to the pre-clean properties.
+    :param res_e2ds_fwhm: E2DS resolution-width map.
+    :param res_e2ds_expo: E2DS resolution-exponent map.
+    :param template_props: Template properties used by the pre-clean step.
+    :param wave_e2ds: E2DS wavelength map used for finite-resolution work.
+    :param res_s1d_fwhm: One-dimensional resolution-width data.
+    :param res_s1d_expo: One-dimensional resolution-exponent data.
+    :param database: Optional telluric database already loaded by caller.
+    :param kwargs: Optional overrides consumed by parameter checks.
 
-    :return:
+    :return: Pre-clean properties and the possibly updated template properties.
     """
     # set the function name
     func_name = __NAME__ + '.qc_exit_tellu_preclean()'
@@ -1916,9 +1952,40 @@ def qc_exit_tellu_preclean(params, recipe, image, image_e2ds_ini, infile,
     return props, template_props
 
 
-def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
-                         props, wprops, sky_props: Optional[ParamDict] = None,
-                         database: Union[TelluDatabase, None] = None):
+def tellu_preclean_write(params: ParamDict, recipe: DrsRecipe,
+                         infile: DrsFitsFile, rawfiles: List[str],
+                         fiber: str, combine: bool, props: ParamDict,
+                         wprops: ParamDict,
+                         sky_props: Optional[ParamDict] = None,
+                         database: Optional[TelluDatabase] = None) -> None:
+    """Write and register telluric pre-clean products.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling headers and output writing.
+    recipe : DrsRecipe
+        Calling recipe providing output definitions and registration.
+    infile : DrsFitsFile
+        Input file used to derive output naming and copied headers.
+    rawfiles : list[str]
+        Source filenames recorded when the inputs are combined.
+    fiber : str
+        Fiber associated with the products.
+    combine : bool
+        Whether the output represents a combined input set.
+    props, wprops : ParamDict
+        Pre-clean and wavelength properties accessed through existing keys.
+    sky_props : ParamDict, optional
+        Optional sky-correction properties.
+    database : TelluDatabase, optional
+        Existing database, or ``None`` to load one for registration.
+
+    Returns
+    -------
+    None
+        The pre-clean products are written and registered.
+    """
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(params=params,
@@ -2081,18 +2148,21 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     database.add_tellu_file(tpclfile)
 
 
-def read_tellu_preclean(params, recipe, infile, fiber, database=None):
+def read_tellu_preclean(params: ParamDict, recipe: DrsRecipe,
+                        infile: DrsFitsFile, fiber: str,
+                        database: Any = None
+                        ) -> Optional[ParamDict]:
     """
     Read all TELLU_PCLEAN files and if infile is one of them load the images
     and properties, else return None
 
-    :param params:
-    :param recipe:
-    :param infile:
-    :param fiber:
-    :param database:
+    :param params: APERO constants used for telluric file lookup.
+    :param recipe: Calling recipe providing the pre-clean output definition.
+    :param infile: Input file whose object metadata selects the products.
+    :param fiber: Fiber whose pre-clean products are requested.
+    :param database: Optional telluric database already loaded by caller.
 
-    :return:
+    :return: Loaded pre-clean properties, or None when no matching file exists.
     """
 
     # get infile object name
@@ -2411,6 +2481,20 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
                    refprops: ParamDict, wprops: ParamDict,
                    bprops: ParamDict, rvoffset: float = 0.0,
                    rvoffseterr: float = 0.0, log: bool = True) -> ParamDict:
+    """Shift an available stellar template into the current wavelength frame.
+
+    :param params: APERO constants controlling interpolation and logging.
+    :param recipe: Calling recipe used for diagnostic plots.
+    :param image: Optional image used as plot context.
+    :param tprops: Template properties updated through existing keys.
+    :param refprops: Reference wavelength properties.
+    :param wprops: Current wavelength properties.
+    :param bprops: Barycentric properties accessed through ``USE_BERV``.
+    :param rvoffset: Velocity offset in m/s.
+    :param rvoffseterr: Uncertainty of the velocity offset in m/s.
+    :param log: Whether to log shifts and raise on unusable velocity.
+    :return: Input template properties, with shifted arrays when available.
+    """
     # set function name
     func_name = display_func('shift_template', __NAME__)
     # ------------------------------------------------------------------
@@ -2492,7 +2576,17 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
 
 
 def get_transmission_files(params: ParamDict, recipe: DrsRecipe,
-                           header, fiber, database=None):
+                           header: drs_fits.Header, fiber: str,
+                           database: Any = None) -> List[str]:
+    """Return transmission-map filenames applicable to a header and fiber.
+
+    :param params: APERO constants used for calibration lookup.
+    :param recipe: Calling recipe used to identify database context.
+    :param header: Header used to select transmission maps.
+    :param fiber: Fiber whose transmission maps are requested.
+    :param database: Optional telluric database already loaded by caller.
+    :return: Unique transmission-map filenames returned by the lookup.
+    """
     # get file definition
     out_trans = drs_file.get_file_definition(params, 'TELLU_TRANS',
                                              block_kind='red', fiber=fiber)
@@ -2516,6 +2610,15 @@ def get_trans_model(params: ParamDict, recipe: DrsRecipe,
                     header: drs_fits.Header, fiber: str,
                     database: Optional[drs_database.TelluricDatabase] = None
                     ) -> ParamDict:
+    """Load stored zero-resolution and species transmission components.
+
+    :param params: APERO constants used for calibration lookup and reading.
+    :param recipe: Calling recipe used to identify database context.
+    :param header: Header used to select the applicable transmission model.
+    :param fiber: Fiber whose transmission model is requested.
+    :param database: Optional telluric database already loaded by caller.
+    :return: Model arrays and table in the established property keys.
+    """
     # set function name
     func_name = display_func('get_trans_model', __NAME__)
     # get file definition
@@ -2549,10 +2652,25 @@ def get_trans_model(params: ParamDict, recipe: DrsRecipe,
 # =============================================================================
 # Tapas functions
 # =============================================================================
-def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
+def load_conv_tapas(params: ParamDict, recipe: DrsRecipe,
+                    header: drs_fits.Header, refprops: ParamDict,
+                    fiber: str, database: Any = None,
                     absorbers: Union[List[str], None] = None,
                     fwhm_lsf: Union[float, None] = None,
-                    only_load: bool = False):
+                    only_load: bool = False) -> ParamDict:
+    """Load or generate convolved TAPAS transmission properties.
+
+    :param params: APERO constants controlling species and LSF settings.
+    :param recipe: Calling recipe used for file writing and database context.
+    :param header: Header used to select or register the convolved model.
+    :param refprops: Reference wavelength properties used for convolution.
+    :param fiber: Fiber associated with the model.
+    :param database: Optional telluric database already loaded by caller.
+    :param absorbers: Species list, or None to use configured species.
+    :param fwhm_lsf: LSF width in pixels, or None to use the configured value.
+    :param only_load: Load an existing model without generating a replacement.
+    :return: Convolved species arrays and source/settings properties.
+    """
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
     tellu_absorbers = pcheck(params, 'OBJ.TELL.MAKE.ABSORBERS', func=func_name,
@@ -2665,7 +2783,17 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     return tapas_props
 
 
-def load_tapas_spl(params, recipe, header, database=None):
+def load_tapas_spl(params: ParamDict, recipe: DrsRecipe,
+                   header: drs_fits.Header,
+                   database: Any = None) -> Tuple[Any, Any]:
+    """Load TAPAS transmission data and return water/other splines.
+
+    :param params: APERO constants used for paths, file lookup, and logging.
+    :param recipe: Calling recipe used for database context and cache writing.
+    :param header: Header used when registering newly cached TAPAS data.
+    :param database: Optional telluric database already loaded by caller.
+    :return: Interpolation splines for non-water and water transmission.
+    """
     # get file definition
     tellu_tapas = drs_file.get_file_definition(params, 'TELLU_TAPAS',
                                                block_kind='red')
@@ -2765,8 +2893,18 @@ def load_tapas_spl(params, recipe, header, database=None):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
-                    fwhm_pixel_lsf):
+def _convolve_tapas(params: ParamDict, tapas_table: Table,
+                    refprops: ParamDict, tellu_absorbers: List[str],
+                    fwhm_pixel_lsf: float) -> np.ndarray:
+    """Convolve selected TAPAS species onto the reference wavelength grid.
+
+    :param params: APERO constants used for progress logging.
+    :param tapas_table: TAPAS wavelength and species-transmission columns.
+    :param refprops: Reference wavelength map and detector dimensions.
+    :param tellu_absorbers: Species names selecting the table columns.
+    :param fwhm_pixel_lsf: Instrument line-spread width in pixels.
+    :return: Flattened convolved transmission values, one row per species.
+    """
     # get reference wave data
     wavemap_ref = refprops['WAVEMAP']
     ydim = refprops['NBO']

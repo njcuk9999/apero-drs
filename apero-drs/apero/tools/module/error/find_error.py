@@ -13,7 +13,7 @@ import re
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
@@ -91,7 +91,8 @@ class WrappingLabel(tk.Label):
          how_would_you_make_text_that_automatically_wraps/
     """
 
-    def __init__(self, master=None, **kwargs):
+    def __init__(self, master=None, **kwargs) -> None:
+        """Initialize a label that wraps its text to the widget width."""
         tk.Label.__init__(self, master, **kwargs)
         self.bind('<Configure>',
                   lambda e: self.config(wraplength=self.winfo_width()))
@@ -106,7 +107,13 @@ class AutocompleteEntry(tk.Entry):
         578253-an-entry-with-autocompletion-for-the-tkinter-gui/
     """
 
-    def __init__(self, lista, *args, **kwargs):
+    def __init__(self, lista, *args, **kwargs) -> None:
+        """Create an entry with suggestions drawn from ``lista``.
+
+        :param lista: Candidate strings shown while the entry is edited.
+        :param args: Positional options passed to ``tk.Entry``.
+        :param kwargs: Keyword options passed to ``tk.Entry``.
+        """
 
         tk.Entry.__init__(self, *args, **kwargs)
         self.lista = lista
@@ -122,7 +129,8 @@ class AutocompleteEntry(tk.Entry):
 
         self.lb_up = False
 
-    def changed(self, name, index, mode):
+    def changed(self, name, index, mode) -> None:
+        """Refresh the suggestion list after the entry text changes."""
         _ = name, index, mode
 
         if self.var.get() == '':
@@ -147,7 +155,8 @@ class AutocompleteEntry(tk.Entry):
                     self.lb.destroy()
                     self.lb_up = False
 
-    def selection(self, event):
+    def selection(self, event) -> None:
+        """Copy the active suggestion into the entry and close the list."""
         _ = event
         if self.lb_up:
             self.var.set(self.lb.get(tk.ACTIVE))
@@ -155,7 +164,8 @@ class AutocompleteEntry(tk.Entry):
             self.lb_up = False
             self.icursor(tk.END)
 
-    def up(self, event):
+    def up(self, event) -> None:
+        """Move the active suggestion selection up by one row."""
         _ = event
         if self.lb_up:
             if self.lb.curselection() == ():
@@ -168,7 +178,8 @@ class AutocompleteEntry(tk.Entry):
                 self.lb.selection_set(first=index)
                 self.lb.activate(index)
 
-    def down(self, event):
+    def down(self, event) -> None:
+        """Move the active suggestion selection down by one row."""
         _ = event
         if self.lb_up:
             if self.lb.curselection() == ():
@@ -181,11 +192,13 @@ class AutocompleteEntry(tk.Entry):
                 self.lb.selection_set(first=index)
                 self.lb.activate(index)
 
-    def comparison(self):
+    def comparison(self) -> List[str]:
+        """Return candidates containing the current entry text."""
         pattern = re.compile('.*' + self.var.get() + '.*')
         return [w for w in self.lista if re.match(pattern, w)]
 
-    def destroy_tab(self, event=None):
+    def destroy_tab(self, event=None) -> None:
+        """Remove the suggestion list when it exists."""
         _ = event
         if self.lb is not None:
             self.lb.destroy()
@@ -200,7 +213,7 @@ class Navbar:
     Navigation bar widget
     """
 
-    def __init__(self, master):
+    def __init__(self, master) -> None:
         """
         Navigation bar constructor
 
@@ -223,7 +236,7 @@ class Navbar:
         self.helpmenu.add_command(label='About', command=self.about)
         self.menubar.add_cascade(label='Help', menu=self.helpmenu)
 
-    def about(self):
+    def about(self) -> None:
         """
         Make the about message box
 
@@ -236,14 +249,14 @@ class Navbar:
         # make message box
         messagebox.showinfo(self.title, message)
 
-    def quit(self):
+    def quit(self) -> None:
         """
         Quits the app
         :return:
         """
         self.master.destroy()
 
-    def open(self):
+    def open(self) -> None:
         """
         Opens the database folder (requires web browser)
 
@@ -260,7 +273,7 @@ class Search:
     and instrument
     """
 
-    def __init__(self, parent, appobj):
+    def __init__(self, parent, appobj) -> None:
         """
         Search widget constructor
         :param parent: tk.TK parent app/frame
@@ -287,7 +300,7 @@ class Search:
         self.frame.grid_columnconfigure(2, weight=0)
         self.frame.grid_columnconfigure(3, weight=0)
 
-    def search_entry(self, frame):
+    def search_entry(self, frame) -> None:
         """
         Populate the widget with the entry/button/label/drop down box
         :param frame: tk.Frame, the parent frame
@@ -310,7 +323,7 @@ class Search:
                                 font="-size {0}".format(LARGE))
         self.button.grid(row=0, column=1, padx=10, sticky=tk.W)
 
-    def execute_search(self, event=None):
+    def execute_search(self, event=None) -> None:
         """
         Event: start a search (and destory the autocomplete tab)
         Also updates the tables
@@ -350,7 +363,9 @@ class Search:
             self.titlebar.title0.set('Cannot find APERO code: ')
             self.titlebar.title1.set(search_text)
 
-    def search_for_entry(self, value):
+    def search_for_entry(
+            self, value: str
+            ) -> Tuple[bool, Dict[str, List[Any]], Dict[str, List[Any]]]:
         """
         Search for a "value" in database (via self.dataobj)
         :param value: string, the value to search for
@@ -398,7 +413,8 @@ class Search:
         # return r1 and r2
         return found, r1, r2
 
-    def update_tables(self, r1, r2):
+    def update_tables(self, r1: Dict[str, List[Any]],
+                      r2: Dict[str, List[Any]]) -> None:
         """
         Updates the tables "r1" and "r2" with the dictionary values.
         First unpopulates table and then repopulates it with new data.
@@ -605,7 +621,7 @@ class Table:
             canvas_width = event.width
         self.canvas.itemconfig(self.canvas_frame, width=canvas_width)
 
-    def populate_table(self, labels, values):
+    def populate_table(self, labels: List[str], values: List[Any]):
         """
         Populate table with frames/labels/values from "labels" and "values"
         in a set of rows

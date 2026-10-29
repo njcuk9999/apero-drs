@@ -72,7 +72,8 @@ NO_FUNC_IDENTITIES = []
 # =============================================================================
 # Define functions
 # =============================================================================
-def process_path(params: ParamDict, path: str):
+def process_path(params: ParamDict, path: str) -> None:
+    """Process a single file, wildcard, or directory at the supplied path."""
     # -------------------------------------------------------------------------
     # deal with single file
     if os.path.isfile(path):
@@ -97,7 +98,8 @@ def process_path(params: ParamDict, path: str):
     return process_directory(params, path)
 
 
-def process_one_file(params: ParamDict, filename: str):
+def process_one_file(params: ParamDict, filename: str) -> None:
+    """Identify one file and generate its information plot."""
     # identify file type
     identity = identify_file(params, filename)
     # give the identity of the file
@@ -110,7 +112,8 @@ def process_one_file(params: ParamDict, filename: str):
     return
 
 
-def process_wildcards(params: ParamDict, path: str):
+def process_wildcards(params: ParamDict, path: str) -> None:
+    """Find matching files, identify supported products, and plot them."""
     # remove all " and ' characters from path
     path = path.replace('"', '').replace("'", '')
     # find all files matching wildcard
@@ -152,7 +155,8 @@ def process_wildcards(params: ParamDict, path: str):
     return
 
 
-def process_directory(params: ParamDict, path: str):
+def process_directory(params: ParamDict, path: str) -> None:
+    """Find supported products below a directory and generate their plots."""
     # -------------------------------------------------------------------------
     # print that we are searching directory
     margs = [path]
@@ -204,6 +208,7 @@ def process_directory(params: ParamDict, path: str):
 
 
 def _use_multiprocessing_identify(params: ParamDict, all_files: List[str]) -> bool:
+    """Return whether configured multiprocessing applies to these files."""
     if len(all_files) == 0:
         return False
     cores = drs_utils.get_cores(params)
@@ -212,6 +217,7 @@ def _use_multiprocessing_identify(params: ParamDict, all_files: List[str]) -> bo
 
 
 def _use_multiprocessing_plot(params: ParamDict, valid_files: List[str]) -> bool:
+    """Return whether plotting should use the configured worker mode."""
     return _use_multiprocessing_identify(params, valid_files)
 
 
@@ -233,6 +239,7 @@ def _collect_valid_files_mp(params: ParamDict, all_files: List[str],
 
 
 def _split_all_files(all_files: List[str], cores: int) -> List[List[str]]:
+    """Partition file paths into at most one group per worker."""
     if len(all_files) == 0:
         return []
     cores = min(cores, len(all_files))
@@ -244,6 +251,7 @@ def _split_all_files(all_files: List[str], cores: int) -> List[List[str]]:
 def _multi_identify(params: ParamDict, all_files: List[str],
                     job: int = None, total_jobs: int = None,
                     source: str = 'files') -> Tuple[List[str], List[str]]:
+    """Identify supported files in a group and return paths and identities."""
     if (job is not None) and (total_jobs is not None):
         label = '{0} [{1}/{2}]'.format(source, job, total_jobs)
     else:
@@ -260,6 +268,7 @@ def _multi_identify(params: ParamDict, all_files: List[str],
 def _multi_process_identify_pathos(params: ParamDict, all_files: List[str],
                                    cores: int, source: str
                                    ) -> Tuple[List[str], List[str]]:
+    """Identify file groups with pathos, falling back to serial processing."""
     try:
         from pathos.pools import ParallelPool as Pool
     except ImportError:
@@ -287,6 +296,7 @@ def _multi_process_identify_pathos(params: ParamDict, all_files: List[str],
 def _multi_process_identify_pool(params: ParamDict, all_files: List[str],
                                  cores: int, source: str
                                  ) -> Tuple[List[str], List[str]]:
+    """Identify file groups with a spawned multiprocessing pool."""
     from multiprocessing import get_context
 
     grouped_files = _split_all_files(all_files, cores)
@@ -305,7 +315,9 @@ def _multi_process_identify_pool(params: ParamDict, all_files: List[str],
 
 
 def _process_identify_wrapper(params: ParamDict, all_files: List[str],
-                              job: int, total_jobs: int, source: str, queue):
+                              job: int, total_jobs: int, source: str,
+                              queue) -> None:
+    """Identify one file group and place its result on the worker queue."""
     queue.put((job, _multi_identify(params, all_files, job, total_jobs,
                                     source=source)))
 
@@ -313,6 +325,7 @@ def _process_identify_wrapper(params: ParamDict, all_files: List[str],
 def _multi_process_identify_process(params: ParamDict, all_files: List[str],
                                     cores: int, source: str
                                     ) -> Tuple[List[str], List[str]]:
+    """Identify file groups in processes and collect ordered results."""
     from multiprocessing import Process
     from multiprocessing import Queue
 
@@ -360,6 +373,7 @@ def _multi_process_identify_process(params: ParamDict, all_files: List[str],
 
 def _split_plot_groups(valid_identity: List[str], valid_files: List[str],
                        cores: int) -> List[Tuple[List[str], List[str]]]:
+    """Partition matching identities and paths into paired worker groups."""
     if len(valid_files) == 0:
         return []
     cores = min(cores, len(valid_files))
@@ -375,6 +389,7 @@ def _multi_generate_plots(params: ParamDict, valid_identity: List[str],
                           valid_files: List[str], job: int = None,
                           total_jobs: int = None, source: str = 'files',
                           verbose: bool = True) -> None:
+    """Generate information plots for a paired group of identified files."""
     if (job is not None) and (total_jobs is not None):
         label = '{0} [{1}/{2}]'.format(source, job, total_jobs)
     else:
@@ -387,6 +402,7 @@ def _multi_generate_plots(params: ParamDict, valid_identity: List[str],
 
 def _generate_info_plots_mp(params: ParamDict, valid_identity: List[str],
                             valid_files: List[str], source: str) -> None:
+    """Dispatch identified files to the configured parallel plot workers."""
     if len(valid_files) == 0:
         return
     cores = drs_utils.get_cores(params)
@@ -408,6 +424,7 @@ def _generate_info_plots_mp(params: ParamDict, valid_identity: List[str],
 def _multi_process_plot_pathos(params: ParamDict, valid_identity: List[str],
                                valid_files: List[str], cores: int,
                                source: str) -> None:
+    """Generate plot groups with pathos, falling back to serial plotting."""
     try:
         from pathos.pools import ParallelPool as Pool
     except ImportError:
@@ -432,6 +449,7 @@ def _multi_process_plot_pathos(params: ParamDict, valid_identity: List[str],
 def _multi_process_plot_pool(params: ParamDict, valid_identity: List[str],
                              valid_files: List[str], cores: int,
                              source: str) -> None:
+    """Generate plot groups with a spawned multiprocessing pool."""
     from multiprocessing import get_context
 
     grouped = _split_plot_groups(valid_identity, valid_files, cores)
@@ -447,6 +465,7 @@ def _multi_process_plot_pool(params: ParamDict, valid_identity: List[str],
 def _process_plot_wrapper(params: ParamDict, valid_identity: List[str],
                           valid_files: List[str], job: int, total_jobs: int,
                           source: str, verbose: bool = True) -> None:
+    """Run the plot generator for one process group's paired file lists."""
     _multi_generate_plots(params, valid_identity, valid_files,
                           job=job, total_jobs=total_jobs, source=source,
                           verbose=verbose)
@@ -455,6 +474,7 @@ def _process_plot_wrapper(params: ParamDict, valid_identity: List[str],
 def _multi_process_plot_process(params: ParamDict, valid_identity: List[str],
                                 valid_files: List[str], cores: int,
                                 source: str) -> None:
+    """Generate plots in processes and stop workers that exceed the timeout."""
     from multiprocessing import Process
 
     grouped = _split_plot_groups(valid_identity, valid_files, cores)

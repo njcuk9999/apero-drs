@@ -59,7 +59,7 @@ FILTERS = ["APERO_PROFILE_INCLUDE", "APERO_PROFILE_EXCLUDE"]
 class AperoQCStats(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
 
-    def __init__(self, status="pending"):
+    def __init__(self, status: str = "pending") -> None:
         name = "APERO Quality Control Task"
         description = (
             "Generate the quality control statistics for the "
@@ -69,7 +69,7 @@ class AperoQCStats(apero_async.AperoAsyncTask):
         self.subprogress = 0.0
         self.USE_SUBPROCESS = True
 
-    def run_job(self, params: Dict[str, Any]):
+    def run_job(self, params: Dict[str, Any]) -> None:
         """
         Create a file that can be used to populate the quality control
         statistics in the APERO reduction interface.
@@ -363,41 +363,10 @@ class AperoQCStats(apero_async.AperoAsyncTask):
         else:
             tlog("APERO_QC_STATS completed.")
 
-    def test_query(self, params: Dict[str, Any]):
-        """
-        Create a file that can be used to populate the object table in the
-        APERO reduction interface.
+    def test_query(self, params: Dict[str, Any]) -> None:
+        """Print calibration inventory queries for configured profiles.
 
-        parameters needed in params for this task:
-        - LOCAL_DATA_DIR: str, the local directory where data files are stored
-        - APERO_PROFILES: dict of dicts, where each key is an APERO profile
-                          name and each value is a dictionary of parameters for
-                          that profile
-        - APERO_PROFILE_NAMES: list of strings
-
-        parameters needed in params['APERO_PROFILES'] for each profile::
-
-        - DATABASE_MODE: str, mysql+pymysql
-        - DATABASE_HOST: str, the database host, e.g. localhost
-        - DATABASE_USER: str, the database user, e.g. root
-        - DATABASE_PASSWORD: str, the database password, e.g. password
-        - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric
-          data
-        - CALIB_TABLENAME: str, the name of the table containing calibration
-          data
-        - FINDEX_TABLENAME: str, the name of the table containing file index
-          data
-        - LOG_TABLENAME: str, the name of the table containing log data
-        - TELLU_TABLENAME: str, the name of the table containing telluric data
-        - REJECT_TABLENAME: str, the name of the table containing rejected data
-        - SCIENCE_FIBER: str, the name of the science fiber, e.g. 'A' or 'B'
-        - SCIENCE_TYPES: list of str, the list of DPRTYPEs to include in
-                            the object table, e.g. 'POLAR_FP', 'OBJ_SKY' etc
-
-        :param params: A dictionary of parameters needed to run the job.
-        This should include database connection parameters and any other
-        necessary information.
+        :param params: Runtime parameters containing profile names and settings.
         """
 
         # get apero profiles:
@@ -436,10 +405,18 @@ class AperoQCStats(apero_async.AperoAsyncTask):
 # =============================================================================
 def get_calib_file(
     aparams: Dict[str, Any],
-    return_query=False,
-    task_logger=None,
-    stop_event=None,
-) -> Tuple[Dict[str, List[Dict[str, Any]]], float, int]:
+    return_query: bool = False,
+    task_logger: Any = None,
+    stop_event: Any = None,
+) -> Tuple[Dict[str, Any], float, int]:
+    """Query calibration file entries for each configured output.
+
+    :param aparams: APERO profile and database settings.
+    :param return_query: Return SQL strings instead of querying the database.
+    :param task_logger: Optional callable receiving progress messages.
+    :param stop_event: Optional event used to cancel pending queries.
+    :returns: Output-keyed query results, elapsed query time, and query count.
+    """
     # get the hkeys for this fkind
     hcfg = aparams.get("calib-headers", {})
     # Construct queries
@@ -519,13 +496,25 @@ def get_calib_file(
 def read_calib_headers(
     aparams: Dict[str, Any],
     cfiles: Dict[str, List[Dict[str, Any]]],
-    task_logger=None,
-    stop_event=None,
+    task_logger: Any = None,
+    stop_event: Any = None,
     ncores: int = 1,
     mp_backend: str = "threads",
     mp_start_method: str = "default",
-    progress_callback=None,
+    progress_callback: Any = None,
 ) -> Tuple[Dict[str, List[dict]], float, int]:
+    """Read configured FITS keywords from calibration files.
+
+    :param aparams: Profile settings including calibration header config.
+    :param cfiles: Output-keyed file entries from :func:`get_calib_file`.
+    :param task_logger: Optional callable receiving progress messages.
+    :param stop_event: Optional event used to cancel header reads.
+    :param ncores: Maximum worker count when parallel reads are enabled.
+    :param mp_backend: ``threads`` or ``processes`` executor selection.
+    :param mp_start_method: Multiprocessing start method or ``default``.
+    :param progress_callback: Optional callback for read progress updates.
+    :returns: Output-keyed header rows, elapsed time, and read-group count.
+    """
 
     # get the hkeys for this fkind
     hcfg = aparams.get("calib-headers", {})
@@ -669,7 +658,11 @@ def _read_one_calib_header(
 
 
 def _normalize_mp_config(task_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalize multiprocessing config from TASK_CONFIG."""
+    """Normalize executor settings from TASK_CONFIG within host limits.
+
+    :param task_config: Optional task-specific worker settings.
+    :returns: Mapping with ``ncores``, ``backend``, and ``start_method``.
+    """
     cfg = task_config or {}
     try:
         ncores = int(cfg.get("ncores", cfg.get("NCORES", 1)) or 1)
@@ -697,9 +690,19 @@ def _normalize_mp_config(task_config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _make_executor(
-    mp_backend: str, ncores: int, mp_start_method: str, task_logger=None
-):
-    """Build thread/process executor with fallback to threads."""
+    mp_backend: str,
+    ncores: int,
+    mp_start_method: str,
+    task_logger: Any = None,
+) -> Any:
+    """Build a process or thread executor, falling back to threads.
+
+    :param mp_backend: Requested executor backend.
+    :param ncores: Maximum number of workers.
+    :param mp_start_method: Process start method, when applicable.
+    :param task_logger: Optional callable for fallback warnings.
+    :returns: A concurrent-futures executor.
+    """
     if mp_backend == "processes":
         try:
             ctx = None

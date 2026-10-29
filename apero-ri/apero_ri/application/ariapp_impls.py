@@ -177,7 +177,7 @@ def _heal_duplicated_template(text: str) -> Optional[str]:
     return final
 
 
-def _install_self_healing_loader(loader):
+def _install_self_healing_loader(loader: Any) -> Any:
     """Wrap a Jinja loader so ``get_source`` runs through the healer.
 
     We monkey-patch the bound ``get_source`` on the loader instance
@@ -192,7 +192,9 @@ def _install_self_healing_loader(loader):
         return loader
     original = loader.get_source
 
-    def get_source(environment, template):
+    def get_source(
+            environment: Any, template: str) -> tuple[str, str, Any]:
+        """Load and repair a template source when needed."""
         source, filename, uptodate = original(environment, template)
         healed = _heal_duplicated_template(source)
         if healed is None or healed == source:
@@ -380,7 +382,7 @@ def _check_template_inline_js(template_dir: Path) -> List[str]:
 _ISSUE_MONITOR_INTERVAL_S = 6 * 3600
 
 
-def _start_issue_monitor(app) -> None:
+def _start_issue_monitor(app: Any) -> None:
     """Start a daemon thread that periodically scans for new issues.
 
     Runs :func:`scan_pending_verification` (and any future scanners)
@@ -395,7 +397,8 @@ def _start_issue_monitor(app) -> None:
     data_dir = _Path(app.args.data_dir or str(_Path.home() / '.ari'))
     astrom_root = data_dir / 'apero-assets' / 'astrometrics'
 
-    def _loop():
+    def _loop() -> None:
+        """Run periodic issue scans in the monitor thread."""
         while True:
             try:
                 scan_pending_verification(
@@ -412,7 +415,9 @@ def _start_issue_monitor(app) -> None:
     t.start()
 
 
-def ariapp_run(self, host, port, debug, **kwargs):
+def ariapp_run(
+    self: Any, host: Any, port: Any, debug: bool,
+    **kwargs: Any) -> None:
     """Run the ARI Flask application.
 
     Uses values from command-line args unless explicitly overridden.
@@ -516,7 +521,8 @@ def ariapp_run(self, host, port, debug, **kwargs):
     _watchdog_thread = None
     _original_sigint = signal.getsignal(signal.SIGINT)
 
-    def _sigint_handler(signum, frame):
+    def _sigint_handler(signum: int, frame: Any) -> None:
+        """Arm the shutdown watchdog and interrupt the server loop."""
         nonlocal _watchdog_thread
         # Restore the previous handler so a *second* Ctrl+C forces
         # the original behaviour (usually raising KeyboardInterrupt
@@ -564,7 +570,8 @@ def ariapp_run(self, host, port, debug, **kwargs):
         _cleanup_done.set()
 
 
-def ariapp_init(self, **kwargs):
+def ariapp_init(self: Any, **kwargs: Any) -> None:
+    """Initialize Flask, ARI configuration, routes, and background services."""
     configure_logging()
     Flask.__init__(
         self,
@@ -727,7 +734,7 @@ def ariapp_init(self, **kwargs):
     atexit.register(self.shutdown)
 
 
-def ariapp_get_instrument_run_ids(instrument):
+def ariapp_get_instrument_run_ids(instrument: str) -> list:
     """Return sorted list of all unique run_ids from object table JSONs.
 
     Only scans profiles that currently exist in apero_profiles to avoid
@@ -798,7 +805,9 @@ def ariapp_get_instrument_run_ids(instrument):
     return sorted(records)
 
 
-def ariapp_get_instrument_run_id_pi_names(instrument):
+def ariapp_get_instrument_run_id_pi_names(
+    instrument: str,
+) -> dict:
     """Return run_id -> PI name map from object table JSON rows."""
     import json as _json
 
@@ -809,7 +818,8 @@ def ariapp_get_instrument_run_id_pi_names(instrument):
         if isinstance(inst_profiles, dict):
             current_profile_names = set(inst_profiles.keys())
 
-    def _clean_pi_name(raw_value):
+    def _clean_pi_name(raw_value: Any) -> str:
+        """Normalize one PI name from a run-ID row."""
         pi_name = str(raw_value or '').strip()
         if not pi_name:
             return ''
@@ -817,7 +827,8 @@ def ariapp_get_instrument_run_id_pi_names(instrument):
             return ''
         return pi_name
 
-    def _split_multi(raw_value):
+    def _split_multi(raw_value: Any) -> list[str]:
+        """Split a PI field containing multiple names."""
         if isinstance(raw_value, list):
             return [str(x).strip() for x in raw_value if str(x).strip()]
         text = str(raw_value or '').strip()
@@ -829,7 +840,8 @@ def ariapp_get_instrument_run_id_pi_names(instrument):
             parts = text.split(',')
         return [part.strip() for part in parts if part.strip()]
 
-    def _get_pi_raw(row):
+    def _get_pi_raw(row: dict[str, Any]) -> Any:
+        """Return the PI field available in an object-table row."""
         pi_keys = (
             'PI_NAMES',
             'PI_NAME',
@@ -841,7 +853,10 @@ def ariapp_get_instrument_run_id_pi_names(instrument):
                 return row.get(key, '')
         return ''
 
-    def _update_map(run_id_map, rows):
+    def _update_map(
+            run_id_map: dict[str, set[str]],
+            rows: list[dict[str, Any]]) -> None:
+        """Add PI names from rows to the run-ID mapping."""
         for row in rows:
             raw_run = row.get('RUN_ID', '')
             raw_pi = _get_pi_raw(row)
@@ -897,7 +912,13 @@ def ariapp_get_instrument_run_id_pi_names(instrument):
     return run_id_pi_names
 
 
-def ariapp_sync_all_science_group(self, instrument, groups, run_ids, persist):
+def ariapp_sync_all_science_group(
+    self: Any,
+    instrument: str,
+    groups: Optional[dict],
+    run_ids: Optional[list],
+    persist: bool,
+) -> tuple[dict, list]:
     """Ensure reserved All science group mirrors instrument run IDs."""
     if groups is None:
         groups = auth.load_science_groups(instrument)
@@ -948,7 +969,7 @@ def ariapp_sync_all_science_group(self, instrument, groups, run_ids, persist):
     return groups, normalized_run_ids
 
 
-def ariapp_api_db_ssh_tunnel_save(self):
+def ariapp_api_db_ssh_tunnel_save(self: Any) -> Any:
     """Create or update one DB tunnel definition."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -1025,7 +1046,7 @@ def ariapp_api_db_ssh_tunnel_save(self):
     return jsonify(success=True)
 
 
-def ariapp_shutdown(self):
+def ariapp_shutdown(self: Any) -> None:
     """Clean up background services and interactive child processes."""
     import sys as _sys
 
@@ -1107,7 +1128,7 @@ def ariapp_shutdown(self):
         print("[apero_ri] Shutdown complete.", file=_sys.stderr, flush=True)
 
 
-def ariapp_list_db_tunnel_rows(self):
+def ariapp_list_db_tunnel_rows(self: Any) -> list[dict[str, Any]]:
     """List DB tunnel definitions with live health details."""
     tunnels = self._load_db_tunnel_definitions()
     rows = []
@@ -1186,7 +1207,7 @@ def ariapp_list_db_tunnel_rows(self):
     return rows
 
 
-def ariapp_reset_password_view(self, token):
+def ariapp_reset_password_view(self: Any, token: str) -> Any:
     """Validate token and allow user to set a new password."""
     users = auth.load_users()
     changed = self._cleanup_expired_reset_tokens(users)
@@ -1236,7 +1257,7 @@ def ariapp_reset_password_view(self, token):
     )
 
 
-def ariapp_configure_production_hardening(self):
+def ariapp_configure_production_hardening(self: Any) -> None:
     """Apply production hardening: proxy support, limits, security headers.
 
     Environment variables:
@@ -1292,7 +1313,8 @@ def ariapp_configure_production_hardening(self):
 
     # --- Security headers on every response --------------------------------
     @self.after_request
-    def _security_headers(response):
+    def _security_headers(response: Any) -> Any:
+        """Add default security and static-cache headers to a response."""
         hdrs = response.headers
         hdrs.setdefault("X-Content-Type-Options", "nosniff")
         hdrs.setdefault("X-Frame-Options", "SAMEORIGIN")
@@ -1314,7 +1336,7 @@ def ariapp_configure_production_hardening(self):
         return response
 
 
-def ariapp_register_routes(self):
+def ariapp_register_routes(self: Any) -> None:
     """Register all routes from pages.yaml plus login/logout."""
     _lim = self._limiter
 
@@ -1347,13 +1369,15 @@ def ariapp_register_routes(self):
 
     # Lightweight unauthenticated liveness probe for load balancers and
     # uptime monitors.  Deliberately does no DB/disk work.
-    def _healthz():
+    def _healthz() -> tuple[Any, int]:
+        """Return the lightweight server liveness response."""
         return jsonify(status="ok"), 200
 
     self.add_url_rule("/healthz", "healthz", _healthz)
 
     # ARI is a private reduction interface — opt out of search indexing.
-    def _robots_txt():
+    def _robots_txt() -> tuple[str, int, dict[str, str]]:
+        """Disallow indexing of the private ARI interface."""
         body = "User-agent: *\nDisallow: /\n"
         return body, 200, {"Content-Type": "text/plain; charset=utf-8"}
 
@@ -1387,37 +1411,53 @@ def ariapp_register_routes(self):
     # HTTP error handlers
     # ------------------------------------------------------------------
     @self.errorhandler(400)
-    def _handle_400(exc):
+    def _handle_400(exc: Any) -> Any:
+        """Render or return a JSON response for a bad request."""
         if _request_wants_json():
             return jsonify({"error": "Bad Request", "detail": str(exc)}), 400
         return render_template("general/error.html", code=400,
                                title="Bad Request",
-                               message="The server could not understand the request."), 400
+                               message=(
+                                   "The server could not understand the "
+                                   "request."
+                               )), 400
 
     @self.errorhandler(403)
-    def _handle_403(exc):
+    def _handle_403(exc: Any) -> Any:
+        """Render or return a JSON response for forbidden access."""
         if _request_wants_json():
             return jsonify({"error": "Forbidden"}), 403
         return render_template("general/error.html", code=403,
                                title="Forbidden",
-                               message="You do not have permission to access this page."), 403
+                               message=(
+                                   "You do not have permission to access "
+                                   "this page."
+                               )), 403
 
     @self.errorhandler(404)
-    def _handle_404(exc):
+    def _handle_404(exc: Any) -> Any:
+        """Render or return a JSON response for a missing route."""
         if _request_wants_json():
             return jsonify({"error": "Not Found"}), 404
         return render_template("general/error.html", code=404,
                                title="Page Not Found",
-                               message="The page you are looking for does not exist."), 404
+                               message=(
+                                   "The page you are looking for does not "
+                                   "exist."
+                               )), 404
 
     @self.errorhandler(500)
-    def _handle_500(exc):
+    def _handle_500(exc: Any) -> Any:
+        """Log and render or return a JSON response for server errors."""
         log.exception("Unhandled server error")
         if _request_wants_json():
             return jsonify({"error": "Internal Server Error"}), 500
         return render_template("general/error.html", code=500,
                                title="Internal Server Error",
-                               message="An unexpected error occurred. Please try again later."), 500
+                               message=(
+                                   "An unexpected error occurred. Please "
+                                   "try again later."
+                               )), 500
 
 
 def _request_wants_json() -> bool:
@@ -1431,7 +1471,9 @@ def _request_wants_json() -> bool:
     )
 
 
-def ariapp_execute_db_query(self, profile_cfg, query, query_params):
+def ariapp_execute_db_query(
+    self: Any, profile_cfg: dict[str, Any], query: str,
+    query_params: dict[str, Any]) -> list[dict[str, Any]]:
     """Execute a parameterized SELECT query against the profile's database.
 
     Uses SQLAlchemy's expanding bindparams for IN-clause list values.
@@ -1474,7 +1516,7 @@ def ariapp_execute_db_query(self, profile_cfg, query, query_params):
         engine.dispose()
 
 
-def ariapp_api_apero_profiles_ssh_tunnel_start(self):
+def ariapp_api_apero_profiles_ssh_tunnel_start(self: Any) -> Any:
     """Start an interactive SSH tunnel session for DB access."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -1529,7 +1571,7 @@ def ariapp_api_apero_profiles_ssh_tunnel_start(self):
     return jsonify(**result)
 
 
-def ariapp_api_apero_profiles_delete(self):
+def ariapp_api_apero_profiles_delete(self: Any) -> Any:
     """Delete an APERO profile and remove all matching profile directories."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -1571,7 +1613,7 @@ def ariapp_api_apero_profiles_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_cache_purge(self):
+def ariapp_api_admin_cache_purge(self: Any) -> Any:
     """Purge cached data (all or per-profile)."""
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -1625,7 +1667,7 @@ def ariapp_api_admin_cache_purge(self):
     return jsonify(success=True, removed=removed)
 
 
-def ariapp_share_landing(self, token):
+def ariapp_share_landing(self: Any, token: str) -> Any:
     """Public page for a shared download – no authentication required."""
     share_info = bk.get_share_job(str(token or ""))
     if share_info is None:
@@ -1670,7 +1712,7 @@ def ariapp_share_landing(self, token):
     )
 
 
-def ariapp_api_user_db_access_profiles(self):
+def ariapp_api_user_db_access_profiles(self: Any) -> Any:
     """List editor-accessible APERO profiles for DB access management."""
     user_info, perms = self._require_user_db_access_perm()
     if not user_info:
@@ -1718,7 +1760,7 @@ def ariapp_api_user_db_access_profiles(self):
     return jsonify(success=True, profiles=out)
 
 
-def ariapp_api_db_ssh_tunnel_delete(self):
+def ariapp_api_db_ssh_tunnel_delete(self: Any) -> Any:
     """Delete one DB tunnel definition."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -1762,7 +1804,7 @@ def ariapp_api_db_ssh_tunnel_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_database_setup_local_db_test(self):
+def ariapp_api_database_setup_local_db_test(self: Any) -> Any:
     """Test one local database definition with supplied credentials."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -1874,7 +1916,8 @@ def ariapp_api_database_setup_local_db_test(self):
     )
 
 
-def ariapp_api_admin_backups_oauth_start(self):
+def ariapp_api_admin_backups_oauth_start(self: Any) -> Any:
+    """Start the Google Drive OAuth flow for backup administration."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(ok=False, error="Unauthorized"), 401
@@ -1930,12 +1973,14 @@ def ariapp_api_admin_backups_oauth_start(self):
     return redirect(auth_url)
 
 
-def ariapp_register_context_processors(self):
+def ariapp_register_context_processors(self: Any) -> None:
+    """Register shared template filters and context values."""
     # translate an English label (e.g. from pages.yaml) in templates
     self.jinja_env.filters['tl'] = ari_lang_support.translate
 
     @self.context_processor
-    def inject_globals():
+    def inject_globals() -> dict[str, Any]:
+        """Provide shared page context values to Jinja templates."""
         user_info = auth.get_effective_user(session)
         if user_info:
             user_perms = permissions_mod.resolve_user_permissions(
@@ -1979,7 +2024,7 @@ def ariapp_register_context_processors(self):
         }
 
 
-def ariapp_api_user_favourite_objects_toggle(self):
+def ariapp_api_user_favourite_objects_toggle(self: Any) -> Any:
     """Toggle one object in the current user's favourite list."""
     user_info = self._require_user()
     if not user_info:
@@ -2080,7 +2125,7 @@ def ariapp_api_user_favourite_objects_toggle(self):
     )
 
 
-def ariapp_api_apero_profiles_update_groups(self):
+def ariapp_api_apero_profiles_update_groups(self: Any) -> Any:
     """Update the groups assigned to an APERO profile."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -2119,7 +2164,8 @@ def ariapp_api_apero_profiles_update_groups(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_backups_browse(self):
+def ariapp_api_admin_backups_browse(self: Any) -> Any:
+    """List visible subdirectories under a requested backup path."""
     try:
         user_info, perms = self._require_admin_backup_perm()
         if not user_info:
@@ -2153,7 +2199,7 @@ def ariapp_api_admin_backups_browse(self):
         return jsonify(success=False, error=f"Browse failed: {exc}"), 500
 
 
-def ariapp_load_health_cache_from_disk(self):
+def ariapp_load_health_cache_from_disk(self: Any) -> None:
     """Populate in-memory admin health cache from the persisted disk file."""
     try:
         cache_file = self._admin_health_cache_file
@@ -2191,7 +2237,7 @@ def ariapp_load_health_cache_from_disk(self):
         pass
 
 
-def ariapp_api_apero_profiles_browse(self):
+def ariapp_api_apero_profiles_browse(self: Any) -> Any:
     """Browse server directories for the file browser."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -2240,7 +2286,8 @@ def ariapp_api_apero_profiles_browse(self):
     )
 
 
-def ariapp_build_home_page_context(self, user_info, perms):
+def ariapp_build_home_page_context(
+    self: Any, user_info: Any, perms: Any) -> dict[str, Any]:
     """Build the full context payload used by the home page."""
     from apero_ri.application.monitor_view_helpers import (
         _has_any_monitor_perm,
@@ -2303,7 +2350,7 @@ def ariapp_build_home_page_context(self, user_info, perms):
     return context
 
 
-def ariapp_api_user_delete(self):
+def ariapp_api_user_delete(self: Any) -> Any:
     """Delete a user account."""
     user_info, perms = self._require_admin_user()
     if not user_info:
@@ -2343,7 +2390,8 @@ def ariapp_api_user_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_user_links_get(self):
+def ariapp_api_user_links_get(self: Any) -> Any:
+    """Return the current user's links, optionally merged by instrument."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -2383,7 +2431,8 @@ def ariapp_api_user_links_get(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_admin_backups_validate_dir(self):
+def ariapp_api_admin_backups_validate_dir(self: Any) -> Any:
+    """Check whether a requested backup path is an accessible directory."""
     try:
         user_info, perms = self._require_admin_backup_perm()
         if not user_info:
@@ -2434,7 +2483,7 @@ def ariapp_api_admin_backups_validate_dir(self):
         )
 
 
-def ariapp_login_view(self):
+def ariapp_login_view(self: Any) -> Any:
     """Handle login via a modal rendered on top of the home page."""
     username_value = str(session.get("last_username", "") or "")
     user_info = auth.get_effective_user(session)
@@ -2471,7 +2520,11 @@ def ariapp_login_view(self):
     return render_template("home/index.html", **context)
 
 
-def ariapp_filter_plot_rows(htable_rows, ftable_dict, accessible_run_ids):
+def ariapp_filter_plot_rows(
+    htable_rows: list[dict[str, Any]],
+    ftable_dict: dict[str, Any],
+    accessible_run_ids: list[str],
+) -> list[dict[str, Any]]:
     """Filter htable and ftable rows by accessible run_ids.
 
     Parameters
@@ -2507,7 +2560,8 @@ def ariapp_filter_plot_rows(htable_rows, ftable_dict, accessible_run_ids):
     return filtered_htable, filtered_ftables
 
 
-def ariapp_api_basket_download(self, job_id, chunk_idx):
+def ariapp_api_basket_download(
+    self: Any, job_id: str, chunk_idx: int) -> Any:
     """Serve a compiled archive chunk for download."""
     user_info, err = self._basket_access_check()
     if err:
@@ -2545,7 +2599,7 @@ def ariapp_api_basket_download(self, job_id, chunk_idx):
     )
 
 
-def ariapp_api_basket_jobs(self):
+def ariapp_api_basket_jobs(self: Any) -> Any:
     """Return recent compilation jobs for the user."""
     user_info, err = self._basket_access_check()
     if err:
@@ -2583,7 +2637,7 @@ def ariapp_api_basket_jobs(self):
     )
 
 
-def ariapp_api_sci_groups_get(self):
+def ariapp_api_sci_groups_get(self: Any) -> Any:
     """Get details of a specific science group."""
     user_info, perms = self._require_sci_group_perm()
     if not user_info:
@@ -2621,7 +2675,7 @@ def ariapp_api_sci_groups_get(self):
     )
 
 
-def ariapp_api_sci_groups_refresh_run_ids(self):
+def ariapp_api_sci_groups_refresh_run_ids(self: Any) -> Any:
     """Re-scan instrument run IDs and sync the reserved All group only."""
     user_info, perms = self._require_sci_group_perm()
     if not user_info:
@@ -2661,7 +2715,7 @@ def ariapp_api_sci_groups_refresh_run_ids(self):
     )
 
 
-def ariapp_api_apero_profiles_test_db(self):
+def ariapp_api_apero_profiles_test_db(self: Any) -> Any:
     """Test a database connection with the given credentials."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -2705,7 +2759,7 @@ def ariapp_api_apero_profiles_test_db(self):
     return jsonify(success=True, **result)
 
 
-def ariapp_api_async_tasks_reorder(self):
+def ariapp_api_async_tasks_reorder(self: Any) -> Any:
     """Update task order after a drag-reorder."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -2742,7 +2796,9 @@ def ariapp_api_async_tasks_reorder(self):
     return jsonify(success=True)
 
 
-def ariapp_build_sidebar_context(self, page_id, perms, user_info):
+def ariapp_build_sidebar_context(
+    self: Any, page_id: str, perms: Any, user_info: Any
+) -> dict[str, Any]:
     """Build sidebar context dict for pages with side-nav top-level."""
     username = ''
     if isinstance(user_info, dict):
@@ -2808,7 +2864,7 @@ def ariapp_build_sidebar_context(self, page_id, perms, user_info):
     return payload
 
 
-def ariapp_normalize_pinned_pages(value):
+def ariapp_normalize_pinned_pages(value: Any) -> list[str]:
     """Normalize persisted pinned pages into a clean list of dicts."""
     if not isinstance(value, list):
         return []
@@ -2843,7 +2899,8 @@ def ariapp_normalize_pinned_pages(value):
     return normalized
 
 
-def ariapp_share_download(self, token, chunk_idx):
+def ariapp_share_download(
+    self: Any, token: str, chunk_idx: int) -> Any:
     """Direct file download for a shared job chunk – no auth required."""
     share_info = bk.get_share_job(str(token or ""))
     if share_info is None:
@@ -2876,7 +2933,7 @@ def ariapp_share_download(self, token, chunk_idx):
     return send_file(str(path), as_attachment=True, download_name=path.name)
 
 
-def ariapp_api_db_ssh_tunnel_ensure(self):
+def ariapp_api_db_ssh_tunnel_ensure(self: Any) -> Any:
     """Ensure selected named tunnel is active."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -2912,7 +2969,8 @@ def ariapp_api_db_ssh_tunnel_ensure(self):
         )
 
 
-def ariapp_spawn_admin_health_refresh(self, cache_key, user_info, perms):
+def ariapp_spawn_admin_health_refresh(
+    self: Any, cache_key: str, user_info: Any, perms: Any) -> None:
     """Spawn async refresh if one is not already in progress."""
     with self._admin_health_cache_lock:
         entry = self._admin_health_cache.get(cache_key, {})
@@ -2925,7 +2983,8 @@ def ariapp_spawn_admin_health_refresh(self, cache_key, user_info, perms):
             "perms": sorted(perms),
         }
 
-    def _runner():
+    def _runner() -> None:
+        """Refresh the requested admin health cache entry."""
         try:
             self._refresh_admin_health_entry(cache_key, user_info, perms)
         except Exception:
@@ -2941,7 +3000,8 @@ def ariapp_spawn_admin_health_refresh(self, cache_key, user_info, perms):
     ).start()
 
 
-def ariapp_load_user_object_section_pins(self, username):
+def ariapp_load_user_object_section_pins(
+    self: Any, username: str) -> list[dict[str, Any]]:
     """Load per-user object section pin order and migrate legacy users.yaml."""
     file_pins = self._normalize_object_section_pins(
         ud.list_object_section_pins(username)
@@ -2970,7 +3030,7 @@ def ariapp_load_user_object_section_pins(self, username):
     return pins
 
 
-def ariapp_api_user_favourite_objects_remove(self):
+def ariapp_api_user_favourite_objects_remove(self: Any) -> Any:
     """Remove one object from the current user's favourite list."""
     user_info = self._require_user()
     if not user_info:
@@ -3011,7 +3071,7 @@ def ariapp_api_user_favourite_objects_remove(self):
     )
 
 
-def ariapp_api_basket_get(self):
+def ariapp_api_basket_get(self: Any) -> Any:
     """Return the user's basket entries (filtered to accessible run_ids)."""
     user_info, err = self._basket_access_check()
     if err:
@@ -3044,7 +3104,8 @@ def ariapp_api_basket_get(self):
     )
 
 
-def ariapp_api_admin_backups_delete_all(self):
+def ariapp_api_admin_backups_delete_all(self: Any) -> Any:
+    """Delete backups matching the requested period and storage target."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3079,7 +3140,9 @@ def ariapp_api_admin_backups_delete_all(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_build_db_tunnel_runtime_params(self, tunnel_name, tunnel_def, mode):
+def ariapp_build_db_tunnel_runtime_params(
+    self: Any, tunnel_name: str, tunnel_def: dict[str, Any], mode: str
+) -> dict[str, Any]:
     """Build apero_async-compatible params for one tunnel definition."""
     _ = tunnel_name
     tdef = tunnel_def if isinstance(tunnel_def, dict) else {}
@@ -3109,7 +3172,7 @@ def ariapp_build_db_tunnel_runtime_params(self, tunnel_name, tunnel_def, mode):
     }
 
 
-def ariapp_list_ssh_config_hosts():
+def ariapp_list_ssh_config_hosts() -> list[dict[str, Any]]:
     """Return host aliases from ~/.ssh/config (excluding wildcards)."""
     cfg_path = Path.home() / ".ssh" / "config"
     if not cfg_path.exists() or not cfg_path.is_file():
@@ -3138,7 +3201,7 @@ def ariapp_list_ssh_config_hosts():
     return sorted(hosts)
 
 
-def ariapp_api_user_object_sections_toggle(self):
+def ariapp_api_user_object_sections_toggle(self: Any) -> Any:
     """Toggle a section id in the global object page pinned list."""
     user_info = self._require_user()
     if not user_info:
@@ -3167,7 +3230,8 @@ def ariapp_api_user_object_sections_toggle(self):
     )
 
 
-def ariapp_api_user_calendar_list(self):
+def ariapp_api_user_calendar_list(self: Any) -> Any:
+    """Return the user's calendar events, optionally merged by instrument."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3201,7 +3265,8 @@ def ariapp_api_user_calendar_list(self):
     return jsonify(success=True, events=events)
 
 
-def ariapp_api_admin_backups_delete(self):
+def ariapp_api_admin_backups_delete(self: Any) -> Any:
+    """Delete a selected backup from local or cloud storage."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3236,7 +3301,7 @@ def ariapp_api_admin_backups_delete(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_api_admin_sshfs_mounts_add(self):
+def ariapp_api_admin_sshfs_mounts_add(self: Any) -> Any:
     """Add a new SSHFS mount."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -3267,7 +3332,8 @@ def ariapp_api_admin_sshfs_mounts_add(self):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_mounts_update(self, mount_name):
+def ariapp_api_admin_sshfs_mounts_update(
+    self: Any, mount_name: str) -> Any:
     """Update an existing SSHFS mount."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -3298,7 +3364,8 @@ def ariapp_api_admin_sshfs_mounts_update(self, mount_name):
     return jsonify(**result)
 
 
-def ariapp_build_admin_sshfs_context(self, perms):
+def ariapp_build_admin_sshfs_context(
+    self: Any, perms: Any) -> dict[str, Any]:
     """Build context for admin SSHFS management page."""
     # Keep initial page render fast.  Live mount checks can be slow on
     # stale/broken SSHFS targets, so we only preload static config here
@@ -3330,7 +3397,7 @@ def ariapp_build_admin_sshfs_context(self, perms):
     }
 
 
-def ariapp_api_async_tasks_delete(self):
+def ariapp_api_async_tasks_delete(self: Any) -> Any:
     """Delete an async task configuration."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -3360,7 +3427,7 @@ def ariapp_api_async_tasks_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_async_tasks_toggle(self):
+def ariapp_api_async_tasks_toggle(self: Any) -> Any:
     """Toggle a task's active/inactive state."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -3380,7 +3447,8 @@ def ariapp_api_async_tasks_toggle(self):
     all_tasks = auth.load_async_tasks()
     inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
 
-    def _as_bool(value, default=True):
+    def _as_bool(value: Any, default: bool = True) -> bool:
+        """Interpret common string and numeric values as booleans."""
         if isinstance(value, bool):
             return value
         if isinstance(value, (int, float)):
@@ -3407,7 +3475,7 @@ def ariapp_api_async_tasks_toggle(self):
     return jsonify(success=False, error="Task not found"), 404
 
 
-def ariapp_api_user_favourite_objects_last_opened(self):
+def ariapp_api_user_favourite_objects_last_opened(self: Any) -> Any:
     """Update last-opened object for a profile for the current user."""
     user_info = self._require_user()
     if not user_info:
@@ -3435,7 +3503,7 @@ def ariapp_api_user_favourite_objects_last_opened(self):
     return jsonify(success=True, favourite_objects=flat)
 
 
-def ariapp_api_basket_jobs_extend(self):
+def ariapp_api_basket_jobs_extend(self: Any) -> Any:
     """Extend the expiry of a compilation job by 24 hours."""
     user_info, err = self._basket_access_check()
     if err:
@@ -3452,11 +3520,14 @@ def ariapp_api_basket_jobs_extend(self):
     if expiry_hours is not None:
         result = bk.set_download_job_expiry(username, job_id, expiry_hours)
     if not result.get("success"):
-        return jsonify(success=False, error=result.get("error", "Could not extend job")), 400
+        return jsonify(
+            success=False,
+            error=result.get("error", "Could not extend job"),
+        ), 400
     return jsonify(success=True, expires_at=result.get("expires_at"))
 
 
-def ariapp_api_basket_jobs_expiry(self):
+def ariapp_api_basket_jobs_expiry(self: Any) -> Any:
     """Set a compilation job's expiry duration."""
     user_info, err = self._basket_access_check()
     if err:
@@ -3471,11 +3542,14 @@ def ariapp_api_basket_jobs_expiry(self):
     username = user_info["username"]
     result = bk.set_download_job_expiry(username, job_id, expiry_hours)
     if not result.get("success"):
-        return jsonify(success=False, error=result.get("error", "Could not set expiry")), 400
+        return jsonify(
+            success=False,
+            error=result.get("error", "Could not set expiry"),
+        ), 400
     return jsonify(success=True, expires_at=result.get("expires_at"))
 
 
-def ariapp_api_basket_jobs_remove(self):
+def ariapp_api_basket_jobs_remove(self: Any) -> Any:
     """Remove one completed/failed compilation job for the user."""
     user_info, err = self._basket_access_check()
     if err:
@@ -3506,7 +3580,7 @@ def ariapp_api_basket_jobs_remove(self):
     )
 
 
-def ariapp_api_apero_profiles_reorder(self):
+def ariapp_api_apero_profiles_reorder(self: Any) -> Any:
     """Update the DISPLAY_ORDER of profiles after drag reorder."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -3533,7 +3607,8 @@ def ariapp_api_apero_profiles_reorder(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_calendar_save(self):
+def ariapp_api_admin_calendar_save(self: Any) -> Any:
+    """Save the admin calendar configuration from the request body."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3561,7 +3636,8 @@ def ariapp_api_admin_calendar_save(self):
     return jsonify(success=True, event=saved)
 
 
-def ariapp_api_admin_backups_download(self):
+def ariapp_api_admin_backups_download(self: Any) -> Any:
+    """Download a selected backup archive."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3594,7 +3670,7 @@ def ariapp_api_admin_backups_download(self):
     )
 
 
-def ariapp_doc_upload_image(self):
+def ariapp_doc_upload_image(self: Any) -> Any:
     """Handle image upload for the doc editor."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -3618,7 +3694,7 @@ def ariapp_doc_upload_image(self):
     return jsonify(success=True, filename=filename)
 
 
-def ariapp_api_db_ssh_tunnel_list(self):
+def ariapp_api_db_ssh_tunnel_list(self: Any) -> Any:
     """List DB tunnel definitions for setup UI and profile dropdowns."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -3668,7 +3744,8 @@ def ariapp_api_db_ssh_tunnel_list(self):
     return jsonify(success=True, tunnels=rows)
 
 
-def ariapp_api_user_todo_reorder(self):
+def ariapp_api_user_todo_reorder(self: Any) -> Any:
+    """Save the signed-in user's todo item order."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3698,7 +3775,8 @@ def ariapp_api_user_todo_reorder(self):
     return jsonify(success=True, items=items)
 
 
-def ariapp_build_admin_download_mgmt_context(self, perms):
+def ariapp_build_admin_download_mgmt_context(
+    self: Any, perms: Any) -> dict[str, Any]:
     """Build context for admin download-management page."""
     settings = dt.load_settings()
     api_usage = dt.list_all_usage("api")
@@ -3723,7 +3801,7 @@ def ariapp_build_admin_download_mgmt_context(self, perms):
     }
 
 
-def ariapp_save_health_cache_to_disk(self):
+def ariapp_save_health_cache_to_disk(self: Any) -> None:
     """Persist current in-memory admin health cache to disk."""
     try:
         with self._admin_health_cache_lock:
@@ -3745,7 +3823,7 @@ def ariapp_save_health_cache_to_disk(self):
         pass
 
 
-def ariapp_api_user_favourite_objects_get(self):
+def ariapp_api_user_favourite_objects_get(self: Any) -> Any:
     """Get favourites and last-opened object for a profile."""
     user_info = self._require_user()
     if not user_info:
@@ -3770,7 +3848,7 @@ def ariapp_api_user_favourite_objects_get(self):
     return jsonify(success=True, favourite_objects=result)
 
 
-def ariapp_api_user_db_access_health_check(self):
+def ariapp_api_user_db_access_health_check(self: Any) -> Any:
     """Run User DB Access health check and return detailed diagnostics."""
     user_info, perms = self._require_user_db_access_perm()
     if not user_info:
@@ -3800,7 +3878,7 @@ def ariapp_api_user_db_access_health_check(self):
         )
 
 
-def ariapp_api_database_setup_local_db_list(self):
+def ariapp_api_database_setup_local_db_list(self: Any) -> Any:
     """List reusable local database definitions."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -3843,7 +3921,8 @@ def ariapp_api_database_setup_local_db_list(self):
     return jsonify(success=True, local_databases=rows)
 
 
-def ariapp_api_user_todo_save(self):
+def ariapp_api_user_todo_save(self: Any) -> Any:
+    """Save a todo item for the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -3868,7 +3947,7 @@ def ariapp_api_user_todo_save(self):
     return jsonify(success=True, item=saved)
 
 
-def ariapp_api_admin_sshfs_interactive_start_test(self):
+def ariapp_api_admin_sshfs_interactive_start_test(self: Any) -> Any:
     """Start an interactive SSH test session with PTY."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -3893,7 +3972,8 @@ def ariapp_api_admin_sshfs_interactive_start_test(self):
     return jsonify(**result)
 
 
-def ariapp_build_admin_backup_context(self, perms):
+def ariapp_build_admin_backup_context(
+    self: Any, perms: Any) -> dict[str, Any]:
     """Build context for admin backup settings page."""
     import json as _json
 
@@ -3935,7 +4015,7 @@ def ariapp_build_admin_backup_context(self, perms):
     }
 
 
-def ariapp_api_admin_cache_reset_timings(self):
+def ariapp_api_admin_cache_reset_timings(self: Any) -> Any:
     """Zero timing stats for a profile without deleting cached data."""
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -3974,7 +4054,7 @@ def ariapp_api_admin_cache_reset_timings(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_cache_save(self):
+def ariapp_api_admin_cache_save(self: Any) -> Any:
     """Save cache settings (enable/disable, directory)."""
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -4001,7 +4081,7 @@ def ariapp_api_admin_cache_save(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_health_config_save(self):
+def ariapp_api_admin_health_config_save(self: Any) -> Any:
     """Persist health-status UI config."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4027,7 +4107,8 @@ def ariapp_api_admin_health_config_save(self):
     )
 
 
-def ariapp_api_basket_compile_status(self, job_id):
+def ariapp_api_basket_compile_status(
+    self: Any, job_id: str) -> Any:
     """Get the status of a compilation job."""
     user_info, err = self._basket_access_check()
     if err:
@@ -4053,7 +4134,7 @@ def ariapp_api_basket_compile_status(self, job_id):
     return jsonify(success=True, job=safe_meta)
 
 
-def ariapp_api_admin_health_update(self):
+def ariapp_api_admin_health_update(self: Any) -> Any:
     """Force-refresh cached admin health and return updated metadata."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4078,7 +4159,7 @@ def ariapp_api_admin_health_update(self):
     )
 
 
-def ariapp_api_admin_audit_log(self):
+def ariapp_api_admin_audit_log(self: Any) -> Any:
     """Return recent admin audit log entries (super-admin only)."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4104,7 +4185,7 @@ def ariapp_api_admin_audit_log(self):
     return jsonify(success=True, entries=entries, count=len(entries))
 
 
-def ariapp_api_admin_health_history(self):
+def ariapp_api_admin_health_history(self: Any) -> Any:
     """Return recent admin-health snapshots/trends (super-admin only)."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4136,7 +4217,7 @@ _PATCHABLE_HEALTH_KEYS = frozenset({
 })
 
 
-def ariapp_api_admin_health_patch(self):
+def ariapp_api_admin_health_patch(self: Any) -> Any:
     """Patch a single health-cache entry with a page-level result.
 
     Accepts ``{key, status, message}`` in the JSON body.  Only
@@ -4180,7 +4261,7 @@ def ariapp_api_admin_health_patch(self):
     return jsonify(success=True)
 
 
-def ariapp_load_user_pins(self, username):
+def ariapp_load_user_pins(self: Any, username: str) -> list[str]:
     """Load pins from per-user pins.yaml and migrate legacy users.yaml pins."""
     pins_data = ud.load_pins(username)
     file_pins = self._normalize_pinned_pages(pins_data.get("pins", []))
@@ -4203,8 +4284,8 @@ def ariapp_load_user_pins(self, username):
 
 
 def ariapp_build_finder_max_payload(
-    self, profile, objname, obj_props, preset, band_idx
-):
+        self: Any, profile: Any, objname: str, obj_props: dict[str, Any],
+        preset: Any, band_idx: int) -> dict[str, Any]:
     """Build the plot_payload dict for a finder chart maximize page."""
     from apero_ri.core.object_finder import generate_finder_charts
 
@@ -4230,7 +4311,7 @@ def ariapp_build_finder_max_payload(
     return {"has_plot": True, "script": "", "div": div_html, "message": ""}
 
 
-def ariapp_api_user_account_get(self):
+def ariapp_api_user_account_get(self: Any) -> Any:
     """Get current user's account profile."""
     user_info = self._require_user()
     if not user_info:
@@ -4254,7 +4335,7 @@ def ariapp_api_user_account_get(self):
     )
 
 
-def ariapp_api_profiles_list(self):
+def ariapp_api_profiles_list(self: Any) -> Any:
     """Return list of accessible profile IDs and basic metadata."""
     user_info = self._get_api_user()
     if user_info:
@@ -4279,18 +4360,11 @@ def ariapp_api_profiles_list(self):
 
 
 def ariapp_resolve_profile_db_test_target(
-    self,
-    mode,
-    host,
-    port,
-    username,
-    password,
-    db_name,
-    use_ssh_tunnel,
-    ssh_config_host,
-    ssh_local_port,
-    ssh_remote_port,
-):
+        self: Any, mode: str, host: str, port: Any, username: str,
+        password: str, db_name: str, use_ssh_tunnel: bool,
+        ssh_config_host: str, ssh_local_port: Any,
+        ssh_remote_port: Any) -> dict[str, Any]:
+    """Resolve connection parameters for a profile database test."""
     return apero_profiles_api_helpers.resolve_profile_db_test_target(
         self,
         mode=mode,
@@ -4306,7 +4380,8 @@ def ariapp_resolve_profile_db_test_target(
     )
 
 
-def ariapp_api_user_calendar_save(self):
+def ariapp_api_user_calendar_save(self: Any) -> Any:
+    """Save calendar events for the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -4328,7 +4403,8 @@ def ariapp_api_user_calendar_save(self):
     return jsonify(success=True, event=saved)
 
 
-def ariapp_api_admin_backups_sync_from_cloud(self):
+def ariapp_api_admin_backups_sync_from_cloud(self: Any) -> Any:
+    """Sync selected backup data from cloud storage."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -4354,7 +4430,7 @@ def ariapp_api_admin_backups_sync_from_cloud(self):
     )
 
 
-def ariapp_api_admin_sshfs_mounts_test_connection(self):
+def ariapp_api_admin_sshfs_mounts_test_connection(self: Any) -> Any:
     """Test SSH authentication/path before saving a mount."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4378,7 +4454,7 @@ def ariapp_api_admin_sshfs_mounts_test_connection(self):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_interactive_send(self):
+def ariapp_api_admin_sshfs_interactive_send(self: Any) -> Any:
     """Send input to an interactive SSH/SSHFS session."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4400,7 +4476,7 @@ def ariapp_api_admin_sshfs_interactive_send(self):
     return jsonify(**result)
 
 
-def ariapp_get_arguments():
+def ariapp_get_arguments() -> argparse.Namespace:
     """Parse command-line arguments for the ARI server."""
     parser = argparse.ArgumentParser(description="APERO reduction interface")
     parser.add_argument(
@@ -4452,15 +4528,10 @@ def ariapp_get_arguments():
 
 
 def ariapp_build_data_portal_sidebar_tree(
-    self,
-    accessible_profiles,
-    active_page_id,
-    user_permissions,
-    user_info,
-    current_profile_id,
-    objname,
-    include_children,
-):
+        self: Any, accessible_profiles: list[dict[str, Any]],
+        active_page_id: str, user_permissions: Any, user_info: Any,
+        current_profile_id: str, objname: str,
+        include_children: bool) -> dict[str, Any]:
     """Build data portal sidebar tree from pages.yaml templates."""
     return app_sidebar.build_data_portal_sidebar_tree(
         self,
@@ -4474,7 +4545,7 @@ def ariapp_build_data_portal_sidebar_tree(
     )
 
 
-def ariapp_api_admin_dm_save_settings(self):
+def ariapp_api_admin_dm_save_settings(self: Any) -> Any:
     """Save download management settings."""
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -4498,7 +4569,7 @@ def ariapp_api_admin_dm_save_settings(self):
     return jsonify(success=True)
 
 
-def ariapp_doc_save_view(self, page_ref):
+def ariapp_doc_save_view(self: Any, page_ref: str) -> Any:
     """Save edited markdown content for a doc page."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4519,7 +4590,7 @@ def ariapp_doc_save_view(self, page_ref):
     return jsonify(success=True)
 
 
-def ariapp_api_database_setup_local_db_delete(self):
+def ariapp_api_database_setup_local_db_delete(self: Any) -> Any:
     """Delete one reusable local database definition."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -4545,7 +4616,8 @@ def ariapp_api_database_setup_local_db_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_links_update(self):
+def ariapp_api_admin_links_update(self: Any) -> Any:
+    """Update an instrument link in an admin-managed section."""
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -4578,7 +4650,7 @@ def ariapp_api_admin_links_update(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_admin_sshfs_interactive_start_mount(self):
+def ariapp_api_admin_sshfs_interactive_start_mount(self: Any) -> Any:
     """Start an interactive SSHFS mount session with PTY."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4599,7 +4671,7 @@ def ariapp_api_admin_sshfs_interactive_start_mount(self):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_interactive_poll(self):
+def ariapp_api_admin_sshfs_interactive_poll(self: Any) -> Any:
     """Poll output from an interactive SSH/SSHFS session."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -4620,7 +4692,8 @@ def ariapp_api_admin_sshfs_interactive_poll(self):
     return jsonify(**result)
 
 
-def ariapp_build_home_sidebar_context(self, perms, user_info):
+def ariapp_build_home_sidebar_context(
+    self: Any, perms: Any, user_info: Any) -> dict[str, Any]:
     """Build sidebar context for the home page using pinned entries."""
     sidebar_tree = permissions_mod.get_pinned_sidebar_items(
         perms,
@@ -4640,7 +4713,7 @@ def ariapp_build_home_sidebar_context(self, perms, user_info):
     }
 
 
-def ariapp_api_user_object_sections_reorder(self):
+def ariapp_api_user_object_sections_reorder(self: Any) -> Any:
     """Save explicit order for globally pinned object sections."""
     user_info = self._require_user()
     if not user_info:
@@ -4660,7 +4733,7 @@ def ariapp_api_user_object_sections_reorder(self):
     return jsonify(success=True, object_section={"pinned": pinned})
 
 
-def ariapp_api_basket_summary(self):
+def ariapp_api_basket_summary(self: Any) -> Any:
     """Return basket summary: total files, size, missing files."""
     user_info, err = self._basket_access_check()
     if err:
@@ -4680,7 +4753,7 @@ def ariapp_api_basket_summary(self):
     return jsonify(success=True, **summary)
 
 
-def ariapp_api_basket_add(self):
+def ariapp_api_basket_add(self: Any) -> Any:
     """Add file entries to the basket (POST JSON {entries: [...]})."""
     user_info, err = self._basket_access_check()
     if err:
@@ -4701,7 +4774,9 @@ def ariapp_api_basket_add(self):
     )
 
 
-def ariapp_build_safe_select_query(table_access, query_spec, run_ids):
+def ariapp_build_safe_select_query(
+    table_access: Any, query_spec: dict[str, Any],
+    run_ids: list[str]) -> tuple[str, dict[str, Any]]:
     """Build a safe parameterized SELECT from a structured query spec.
 
     All table/column identifiers are validated against the whitelist in
@@ -4721,7 +4796,9 @@ def ariapp_build_safe_select_query(table_access, query_spec, run_ids):
     )
 
 
-def ariapp_build_safe_count_query(table_access, query_spec, run_ids):
+def ariapp_build_safe_count_query(
+    table_access: Any, query_spec: dict[str, Any],
+    run_ids: list[str]) -> tuple[str, dict[str, Any]]:
     """Build a safe parameterized COUNT(*) query."""
     return query_helpers.build_safe_count_query(
         table_access=table_access,
@@ -4730,7 +4807,7 @@ def ariapp_build_safe_count_query(table_access, query_spec, run_ids):
     )
 
 
-def ariapp_api_async_tasks_task_log(self):
+def ariapp_api_async_tasks_task_log(self: Any) -> Any:
     """Return current per-task async log content."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -4750,7 +4827,8 @@ def ariapp_api_async_tasks_task_log(self):
     return jsonify(success=True, **payload)
 
 
-def ariapp_validate_async_task_file_path(self, path):
+def ariapp_validate_async_task_file_path(
+    self: Any, path: str) -> tuple[Optional[Path], Any]:
     """Validate and resolve an async task output file path."""
     if not path:
         return None, (jsonify(success=False, error="No path"), 400)
@@ -4774,7 +4852,8 @@ def ariapp_validate_async_task_file_path(self, path):
     return resolved, None
 
 
-def ariapp_api_admin_links_add(self):
+def ariapp_api_admin_links_add(self: Any) -> Any:
+    """Add an instrument link to an admin-managed section."""
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -4805,7 +4884,8 @@ def ariapp_api_admin_links_add(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_admin_email_send_test(self):
+def ariapp_api_admin_email_send_test(self: Any) -> Any:
+    """Send a test email using the configured backend."""
     user_info, perms = self._require_admin_email_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -4828,7 +4908,8 @@ def ariapp_api_admin_email_send_test(self):
     return jsonify(success=True)
 
 
-def ariapp_get_user_accessible_run_ids(self, user_info, instrument):
+def ariapp_get_user_accessible_run_ids(
+    self: Any, user_info: Any, instrument: str) -> list[str]:
     """Return set of run_ids the user may see for this instrument.
 
     Users only see run_ids from science groups where they are listed.
@@ -4847,7 +4928,7 @@ def ariapp_get_user_accessible_run_ids(self, user_info, instrument):
     return accessible
 
 
-def ariapp_api_admin_dm_reset_user(self):
+def ariapp_api_admin_dm_reset_user(self: Any) -> Any:
     """Reset download counters for a user."""
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -4867,7 +4948,7 @@ def ariapp_api_admin_dm_reset_user(self):
     return jsonify(success=True)
 
 
-def ariapp_get_api_user():
+def ariapp_get_api_user() -> Optional[dict[str, Any]]:
     """Return user info from Bearer token or session (in that order).
 
     Checks the ``Authorization: Bearer <token>`` header first.
@@ -4886,7 +4967,9 @@ def ariapp_get_api_user():
     return auth.get_effective_user(session)
 
 
-def ariapp_refresh_admin_health_entry(self, cache_key, user_info, perms):
+def ariapp_refresh_admin_health_entry(
+    self: Any, cache_key: str, user_info: Any,
+    perms: Any) -> dict[str, Any]:
     """Refresh one admin-health cache entry synchronously."""
     health = self._build_admin_card_health_uncached(user_info, perms)
     with self._admin_health_cache_lock:
@@ -4907,7 +4990,7 @@ def ariapp_refresh_admin_health_entry(self, cache_key, user_info, perms):
         log.warning("Failed to record health history snapshot: %s", exc)
 
 
-def ariapp_normalize_object_section_pins(value):
+def ariapp_normalize_object_section_pins(value: Any) -> list[str]:
     """Normalize object section ids used for per-user pinned section order."""
     if not isinstance(value, list):
         return []
@@ -4926,7 +5009,8 @@ def ariapp_normalize_object_section_pins(value):
     return normalized
 
 
-def ariapp_save_user_object_section_pins(self, username, pins):
+def ariapp_save_user_object_section_pins(
+    self: Any, username: str, pins: list[dict[str, Any]]) -> None:
     """Persist object section pin order to file and legacy users.yaml field."""
     pins = self._normalize_object_section_pins(pins)
     ud.save_object_section(username, {"pinned": pins})
@@ -4943,7 +5027,7 @@ def ariapp_save_user_object_section_pins(self, username, pins):
         auth.save_users(users)
 
 
-def ariapp_basket_access_check(self):
+def ariapp_basket_access_check(self: Any) -> tuple[bool, Any, Any]:
     """
     Shared access-check helper for all basket routes.
     Returns (user_info, None) on success, (None, error_response) on failure.
@@ -4962,7 +5046,7 @@ def ariapp_basket_access_check(self):
     return user_info, None
 
 
-def ariapp_api_basket_jobs_clear(self):
+def ariapp_api_basket_jobs_clear(self: Any) -> Any:
     """Remove all completed/failed compilation jobs for the user."""
     user_info, err = self._basket_access_check()
     if err:
@@ -4982,7 +5066,7 @@ def ariapp_api_basket_jobs_clear(self):
     )
 
 
-def ariapp_api_basket_share_token(self):
+def ariapp_api_basket_share_token(self: Any) -> Any:
     """Return (or create) a public share token for a completed job."""
     user_info, err = self._basket_access_check()
     if err:
@@ -5002,7 +5086,8 @@ def ariapp_api_basket_share_token(self):
     return jsonify(success=True, token=token, share_url=share_url)
 
 
-def ariapp_api_admin_email_save(self):
+def ariapp_api_admin_email_save(self: Any) -> Any:
+    """Save email backend configuration."""
     user_info, perms = self._require_admin_email_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5030,7 +5115,8 @@ def ariapp_api_admin_email_save(self):
     return jsonify(success=True)
 
 
-def ariapp_build_admin_email_context(self, perms):
+def ariapp_build_admin_email_context(
+    self: Any, perms: Any) -> dict[str, Any]:
     """Build context for the admin email settings page."""
     import json as _json
 
@@ -5049,7 +5135,7 @@ def ariapp_build_admin_email_context(self, perms):
     }
 
 
-def ariapp_start_admin_health_refresher(self):
+def ariapp_start_admin_health_refresher(self: Any) -> None:
     """Start background hourly refresh; spawn async refresh of any
     entries loaded from the persisted disk cache at startup."""
     with self._admin_health_cache_lock:
@@ -5073,7 +5159,8 @@ def ariapp_start_admin_health_refresher(self):
     digest_thread.start()
 
 
-def ariapp_editable_groups_for_editor(self, user_info, perms):
+def ariapp_editable_groups_for_editor(
+    self: Any, user_info: Any, perms: Any) -> list[str]:
     """Return groups this editor may grant DB table access to."""
     all_groups = list(self.ari_groups.keys())
     editor_groups = set(user_info.get("groups", []))
@@ -5091,7 +5178,8 @@ def ariapp_editable_groups_for_editor(self, user_info, perms):
     return sorted(expanded)
 
 
-def ariapp_validate_profile_database(self, profile_cfg):
+def ariapp_validate_profile_database(
+    self: Any, profile_cfg: dict[str, Any]) -> tuple[bool, str]:
     """Validate one profile DB config using the shared runtime path."""
     db_params = self._profile_db_params(profile_cfg)
     return auth.validate_database_connection(
@@ -5109,7 +5197,9 @@ def ariapp_validate_profile_database(self, profile_cfg):
     )
 
 
-def ariapp_profile_db_access_health(self, entry, table_names):
+def ariapp_profile_db_access_health(
+    self: Any, entry: dict[str, Any],
+    table_names: list[str]) -> dict[str, Any]:
     """Return health status for one profile DB-access config."""
     groups_map = entry.get("groups", {}) if isinstance(entry, dict) else {}
     if not table_names:
@@ -5121,7 +5211,7 @@ def ariapp_profile_db_access_health(self, entry, table_names):
     return "ok"
 
 
-def ariapp_api_async_tasks_download_file(self):
+def ariapp_api_async_tasks_download_file(self: Any) -> Any:
     """Download an async task output file."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -5139,7 +5229,8 @@ def ariapp_api_async_tasks_download_file(self):
     )
 
 
-def ariapp_api_admin_backups_sync(self):
+def ariapp_api_admin_backups_sync(self: Any) -> Any:
+    """Start a backup synchronization job."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5160,7 +5251,7 @@ def ariapp_api_admin_backups_sync(self):
     return jsonify(success=True, data=result)
 
 
-def ariapp_api_admin_sshfs_keys_add(self):
+def ariapp_api_admin_sshfs_keys_add(self: Any) -> Any:
     """Add a new SSH key."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -5180,7 +5271,7 @@ def ariapp_api_admin_sshfs_keys_add(self):
     return jsonify(**result)
 
 
-def ariapp_load_or_create_secret():
+def ariapp_load_or_create_secret() -> str:
     """Load or create a persistent secret key in ARI_DIR/secret."""
     ari_dir = ss.get_ari_dir()
     secret_file = ss.resolve_secret_file(
@@ -5199,7 +5290,7 @@ def ariapp_load_or_create_secret():
     return key
 
 
-def ariapp_api_db_ssh_tunnel_status(self):
+def ariapp_api_db_ssh_tunnel_status(self: Any) -> Any:
     """List tunnel status for all saved DB tunnel definitions."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -5218,7 +5309,8 @@ def ariapp_api_db_ssh_tunnel_status(self):
     )
 
 
-def ariapp_api_user_links_update(self):
+def ariapp_api_user_links_update(self: Any) -> Any:
+    """Update a link owned by the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5244,7 +5336,8 @@ def ariapp_api_user_links_update(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_user_notes_save(self):
+def ariapp_api_user_notes_save(self: Any) -> Any:
+    """Save a note owned by the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5261,7 +5354,8 @@ def ariapp_api_user_notes_save(self):
     return jsonify(success=True, note=saved)
 
 
-def ariapp_api_admin_links_remove(self):
+def ariapp_api_admin_links_remove(self: Any) -> Any:
+    """Remove an instrument link from an admin-managed section."""
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5284,7 +5378,7 @@ def ariapp_api_admin_links_remove(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_basket_remove(self):
+def ariapp_api_basket_remove(self: Any) -> Any:
     """Remove entries from the basket (POST JSON {ids: [...]})."""
     user_info, err = self._basket_access_check()
     if err:
@@ -5300,7 +5394,7 @@ def ariapp_api_basket_remove(self):
     return jsonify(success=True, removed=removed)
 
 
-def ariapp_require_admin_user(self):
+def ariapp_require_admin_user(self: Any) -> tuple[Any, Any]:
     """Check that current user has view.admin permission.
 
     Returns (user_info, perms) or raises a JSON error response.
@@ -5316,7 +5410,7 @@ def ariapp_require_admin_user(self):
     return user_info, perms
 
 
-def ariapp_api_apero_profiles_validate(self):
+def ariapp_api_apero_profiles_validate(self: Any) -> Any:
     """Validate a path exists as a directory."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -5333,7 +5427,7 @@ def ariapp_api_apero_profiles_validate(self):
     return jsonify(success=True, **result)
 
 
-def ariapp_api_apero_profiles_ssh_tunnel_send(self):
+def ariapp_api_apero_profiles_ssh_tunnel_send(self: Any) -> Any:
     """Send input to an interactive SSH tunnel session."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -5349,7 +5443,7 @@ def ariapp_api_apero_profiles_ssh_tunnel_send(self):
     return jsonify(**send_input(token, data))
 
 
-def ariapp_api_async_tasks_clear_history(self):
+def ariapp_api_async_tasks_clear_history(self: Any) -> Any:
     """Clear recent async task history entries."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -5366,7 +5460,8 @@ def ariapp_api_async_tasks_clear_history(self):
     )
 
 
-def ariapp_api_user_links_add(self):
+def ariapp_api_user_links_add(self: Any) -> Any:
+    """Add a link to the signed-in user's link list."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5390,7 +5485,8 @@ def ariapp_api_user_links_add(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_admin_links_add_section(self):
+def ariapp_api_admin_links_add_section(self: Any) -> Any:
+    """Add an instrument link section to the admin configuration."""
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5412,7 +5508,8 @@ def ariapp_api_admin_links_add_section(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_admin_links_remove_section(self):
+def ariapp_api_admin_links_remove_section(self: Any) -> Any:
+    """Remove an instrument link section from the admin configuration."""
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5434,7 +5531,8 @@ def ariapp_api_admin_links_remove_section(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_admin_backups_list(self):
+def ariapp_api_admin_backups_list(self: Any) -> Any:
+    """List available backups for the admin interface."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5450,7 +5548,8 @@ def ariapp_api_admin_backups_list(self):
     return jsonify(success=True, data=inventory)
 
 
-def ariapp_api_admin_sshfs_mounts_delete(self, mount_name):
+def ariapp_api_admin_sshfs_mounts_delete(
+    self: Any, mount_name: str) -> Any:
     """Delete an SSHFS mount."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -5468,7 +5567,8 @@ def ariapp_api_admin_sshfs_mounts_delete(self, mount_name):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_mounts_mount(self, mount_name):
+def ariapp_api_admin_sshfs_mounts_mount(
+    self: Any, mount_name: str) -> Any:
     """Mount an SSHFS volume."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -5486,7 +5586,8 @@ def ariapp_api_admin_sshfs_mounts_mount(self, mount_name):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_mounts_unmount(self, mount_name):
+def ariapp_api_admin_sshfs_mounts_unmount(
+    self: Any, mount_name: str) -> Any:
     """Unmount an SSHFS volume."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -5504,7 +5605,8 @@ def ariapp_api_admin_sshfs_mounts_unmount(self, mount_name):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_mounts_unmount_lazy(self, mount_name):
+def ariapp_api_admin_sshfs_mounts_unmount_lazy(
+    self: Any, mount_name: str) -> Any:
     """Lazy-unmount an SSHFS volume."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -5522,7 +5624,7 @@ def ariapp_api_admin_sshfs_mounts_unmount_lazy(self, mount_name):
     return jsonify(**result)
 
 
-def ariapp_resolve_local_data_dir():
+def ariapp_resolve_local_data_dir() -> Path:
     """Resolve configured LOCAL_DATA_DIR, falling back to ARI_DIR."""
     params = perms.load_parameters() or {}
     local_data = params.get("LOCAL_DATA_DIR", "")
@@ -5538,7 +5640,8 @@ def ariapp_resolve_local_data_dir():
     )
 
 
-def ariapp_refresh_admin_health_after_change(self, user_info, perms):
+def ariapp_refresh_admin_health_after_change(
+    self: Any, user_info: Any, perms: Any) -> None:
     """Refresh admin-health cache after successful admin mutations.
 
     Best effort only: this must never break the primary API action.
@@ -5551,7 +5654,8 @@ def ariapp_refresh_admin_health_after_change(self, user_info, perms):
     )
 
 
-def ariapp_cleanup_expired_reset_tokens(self, users):
+def ariapp_cleanup_expired_reset_tokens(
+    self: Any, users: dict[str, Any]) -> bool:
     """Remove expired password-reset tokens. Returns True if modified."""
     now = datetime.now(timezone.utc)
     changed = False
@@ -5566,7 +5670,8 @@ def ariapp_cleanup_expired_reset_tokens(self, users):
     return changed
 
 
-def ariapp_parse_text_presets(text, replace_fn):
+def ariapp_parse_text_presets(
+    text: str, replace_fn: Any) -> list[str]:
     """Parse a ``================`` -delimited preset text file.
 
     Each preset block has the form::
@@ -5581,7 +5686,7 @@ def ariapp_parse_text_presets(text, replace_fn):
     return query_helpers.parse_text_presets(text, replace_fn)
 
 
-def ariapp_api_apero_profiles_ssh_tunnel_poll(self):
+def ariapp_api_apero_profiles_ssh_tunnel_poll(self: Any) -> Any:
     """Poll output from an interactive SSH tunnel session."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -5596,7 +5701,7 @@ def ariapp_api_apero_profiles_ssh_tunnel_poll(self):
     return jsonify(**poll_session(token))
 
 
-def ariapp_api_apero_profiles_ssh_tunnel_close(self):
+def ariapp_api_apero_profiles_ssh_tunnel_close(self: Any) -> Any:
     """Close and clean up an interactive SSH tunnel session."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -5611,7 +5716,7 @@ def ariapp_api_apero_profiles_ssh_tunnel_close(self):
     return jsonify(**close_session(token))
 
 
-def ariapp_api_async_tasks_cancel_task(self):
+def ariapp_api_async_tasks_cancel_task(self: Any) -> Any:
     """Cancel a single queued or running task by task_id."""
     user_info, perms = self._require_async_tasks_perm()
     if not user_info:
@@ -5626,7 +5731,8 @@ def ariapp_api_async_tasks_cancel_task(self):
     return jsonify(**result)
 
 
-def ariapp_api_user_notes_list(self):
+def ariapp_api_user_notes_list(self: Any) -> Any:
+    """List notes belonging to the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5641,7 +5747,8 @@ def ariapp_api_user_notes_list(self):
     return jsonify(success=True, notes=slim)
 
 
-def ariapp_api_admin_calendar_delete(self):
+def ariapp_api_admin_calendar_delete(self: Any) -> Any:
+    """Delete an event from the admin calendar."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5661,7 +5768,8 @@ def ariapp_api_admin_calendar_delete(self):
 # ICS feed API — User calendar
 # ---------------------------------------------------------------------------
 
-def ariapp_api_user_ics_list(self):
+def ariapp_api_user_ics_list(self: Any) -> Any:
+    """List the signed-in user's subscribed calendars."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5669,7 +5777,8 @@ def ariapp_api_user_ics_list(self):
     return jsonify(success=True, feeds=feeds)
 
 
-def ariapp_api_user_ics_add(self):
+def ariapp_api_user_ics_add(self: Any) -> Any:
+    """Add a calendar subscription for the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5695,7 +5804,8 @@ def ariapp_api_user_ics_add(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_api_user_ics_delete(self):
+def ariapp_api_user_ics_delete(self: Any) -> Any:
+    """Remove a calendar subscription owned by the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5711,7 +5821,8 @@ def ariapp_api_user_ics_delete(self):
     return jsonify(success=True, feeds=feeds)
 
 
-def ariapp_api_user_ics_refresh(self):
+def ariapp_api_user_ics_refresh(self: Any) -> Any:
+    """Refresh a calendar subscription owned by the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5730,7 +5841,8 @@ def ariapp_api_user_ics_refresh(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_api_user_ics_edit(self):
+def ariapp_api_user_ics_edit(self: Any) -> Any:
+    """Update settings for a calendar subscription."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5761,7 +5873,8 @@ def ariapp_api_user_ics_edit(self):
 # ICS feed API — Instrument / Admin calendar
 # ---------------------------------------------------------------------------
 
-def ariapp_api_admin_ics_list(self):
+def ariapp_api_admin_ics_list(self: Any) -> Any:
+    """List calendar subscriptions configured by administrators."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5774,7 +5887,8 @@ def ariapp_api_admin_ics_list(self):
     return jsonify(success=True, feeds=feeds)
 
 
-def ariapp_api_admin_ics_add(self):
+def ariapp_api_admin_ics_add(self: Any) -> Any:
+    """Add a calendar subscription to the admin configuration."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5806,7 +5920,8 @@ def ariapp_api_admin_ics_add(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_api_admin_ics_delete(self):
+def ariapp_api_admin_ics_delete(self: Any) -> Any:
+    """Delete a calendar subscription from the admin configuration."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5828,7 +5943,8 @@ def ariapp_api_admin_ics_delete(self):
     return jsonify(success=True, feeds=feeds)
 
 
-def ariapp_api_admin_ics_refresh(self):
+def ariapp_api_admin_ics_refresh(self: Any) -> Any:
+    """Refresh a calendar subscription in the admin configuration."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5855,7 +5971,8 @@ def ariapp_api_admin_ics_refresh(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_api_admin_ics_edit(self):
+def ariapp_api_admin_ics_edit(self: Any) -> Any:
+    """Update an admin-configured calendar subscription."""
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -5890,7 +6007,8 @@ def ariapp_api_admin_ics_edit(self):
         return jsonify(success=False, error=str(exc)), 400
 
 
-def ariapp_api_admin_email_test(self):
+def ariapp_api_admin_email_test(self: Any) -> Any:
+    """Send a test message using the configured email backend."""
     user_info, perms = self._require_admin_email_perm()
     if not user_info:
         return jsonify(ok=False, error="Unauthorized"), 401
@@ -5904,7 +6022,8 @@ def ariapp_api_admin_email_test(self):
     return jsonify(ok=result["ok"], error=result.get("error", ""), detail="")
 
 
-def ariapp_page_template_meta(self, template_id, **tokens):
+def ariapp_page_template_meta(
+    self: Any, template_id: str, **tokens: Any) -> dict[str, Any]:
     """Resolve label/icon from a dynamic page template in pages.yaml."""
     template = self._page_templates.get(template_id, {})
     label = str(template.get("label", ""))
@@ -5918,7 +6037,7 @@ def ariapp_page_template_meta(self, template_id, **tokens):
     }
 
 
-def ariapp_api_admin_health_config_get(self):
+def ariapp_api_admin_health_config_get(self: Any) -> Any:
     """Return persisted health-status UI config."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -5934,7 +6053,7 @@ def ariapp_api_admin_health_config_get(self):
     return jsonify(success=True, config=cfg)
 
 
-def ariapp_get_primary_contact_email(user):
+def ariapp_get_primary_contact_email(user: dict[str, Any]) -> str:
     """Return best email address to use for account notifications."""
     primary = str(user.get("primary_email", "")).strip()
     if primary:
@@ -5948,7 +6067,8 @@ def ariapp_get_primary_contact_email(user):
     return ""
 
 
-def ariapp_find_reset_user(self, token, users):
+def ariapp_find_reset_user(
+    self: Any, token: str, users: dict[str, Any]) -> Optional[str]:
     """Find username matching a valid reset token."""
     if not token:
         return None
@@ -5963,8 +6083,9 @@ def ariapp_find_reset_user(self, token, users):
 
 
 def ariapp_ri_qc_graphs_max_view(
-    self, profile_id, section, metric_key, view_key
-):
+        self: Any, profile_id: str, section: str, metric_key: str,
+        view_key: str) -> Any:
+    """Return the expanded QC graph view for one metric."""
     return data_portal_view_helpers.ri_qc_graphs_max_view(
         self,
         profile_id=profile_id,
@@ -5974,7 +6095,7 @@ def ariapp_ri_qc_graphs_max_view(
     )
 
 
-def ariapp_api_apero_profiles_overview(self):
+def ariapp_api_apero_profiles_overview(self: Any) -> Any:
     """Return all-instruments APERO profile readiness summary."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -5988,7 +6109,8 @@ def ariapp_api_apero_profiles_overview(self):
     )
 
 
-def ariapp_api_user_prefs_save(self):
+def ariapp_api_user_prefs_save(self: Any) -> Any:
+    """Save theme and timezone preferences for the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -6008,7 +6130,8 @@ def ariapp_api_user_prefs_save(self):
     return jsonify(success=True, prefs=prefs)
 
 
-def ariapp_api_user_todo_toggle(self):
+def ariapp_api_user_todo_toggle(self: Any) -> Any:
+    """Toggle completion for one of the user's todo items."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -6022,7 +6145,8 @@ def ariapp_api_user_todo_toggle(self):
     return jsonify(success=True, item=item)
 
 
-def ariapp_api_admin_backups_test_backup(self):
+def ariapp_api_admin_backups_test_backup(self: Any) -> Any:
+    """Test a backup round trip using the configured storage method."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(ok=False, error="Unauthorized"), 401
@@ -6040,7 +6164,7 @@ def ariapp_api_admin_backups_test_backup(self):
     return jsonify(result)
 
 
-def ariapp_api_admin_sshfs_keys_list(self):
+def ariapp_api_admin_sshfs_keys_list(self: Any) -> Any:
     """List available SSH keys."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6056,7 +6180,8 @@ def ariapp_api_admin_sshfs_keys_list(self):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_keys_delete(self, key_name):
+def ariapp_api_admin_sshfs_keys_delete(
+    self: Any, key_name: str) -> Any:
     """Delete an SSH key."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6072,7 +6197,7 @@ def ariapp_api_admin_sshfs_keys_delete(self, key_name):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_mounts_status(self):
+def ariapp_api_admin_sshfs_mounts_status(self: Any) -> Any:
     """Get status of all SSHFS mounts."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6088,7 +6213,8 @@ def ariapp_api_admin_sshfs_mounts_status(self):
     return jsonify(**result)
 
 
-def ariapp_api_admin_sshfs_mounts_log(self, mount_name):
+def ariapp_api_admin_sshfs_mounts_log(
+    self: Any, mount_name: str) -> Any:
     """Get the last saved log for a mount."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6104,7 +6230,7 @@ def ariapp_api_admin_sshfs_mounts_log(self, mount_name):
     return jsonify(**result)
 
 
-def ariapp_resolve_host(host):
+def ariapp_resolve_host(host: str) -> str:
     """Resolve 'auto' host to '::' (IPv6) or '0.0.0.0' (IPv4)."""
     if host != "auto":
         return host
@@ -6117,7 +6243,7 @@ def ariapp_resolve_host(host):
         return "0.0.0.0"
 
 
-def ariapp_admin_health_refresher_loop(self):
+def ariapp_admin_health_refresher_loop(self: Any) -> None:
     """Refresh all cached admin-health snapshots every hour."""
     while True:
         time.sleep(3600)
@@ -6130,7 +6256,7 @@ def ariapp_admin_health_refresher_loop(self):
             self._refresh_admin_health_entry(key, None, perms)
 
 
-def ariapp_admin_health_digest_loop(self):
+def ariapp_admin_health_digest_loop(self: Any) -> None:
     """Send a daily admin-health digest email to super-admins.
 
     Sleeps in short increments so it can react promptly to the first
@@ -6156,7 +6282,10 @@ def ariapp_admin_health_digest_loop(self):
             problems = {
                 key: info
                 for key, info in health.items()
-                if isinstance(info, dict) and info.get("status") in ("warning", "error")
+                if (
+                    isinstance(info, dict)
+                    and info.get("status") in ("warning", "error")
+                )
             }
             if not problems:
                 last_sent_date = today
@@ -6170,7 +6299,10 @@ def ariapp_admin_health_digest_loop(self):
             recipients = [
                 u.get("email", "").strip()
                 for u in auth.load_users().values()
-                if auth.user_is_super_admin(u.get("groups", [])) and u.get("email", "").strip()
+                if (
+                    auth.user_is_super_admin(u.get("groups", []))
+                    and u.get("email", "").strip()
+                )
             ]
             if not recipients:
                 last_sent_date = today
@@ -6179,21 +6311,32 @@ def ariapp_admin_health_digest_loop(self):
             lines = [f"Admin health digest for {today.isoformat()} (UTC)", ""]
             for key in sorted(problems):
                 info = problems[key]
-                lines.append(f"- [{info.get('status')}] {key}: {info.get('message', '')}")
+                lines.append(
+                    f"- [{info.get('status')}] {key}: "
+                    f"{info.get('message', '')}"
+                )
             body = "\n".join(lines)
-            subject = f"APERO RI: {len(problems)} admin health issue(s) - {today.isoformat()}"
+            subject = (
+                f"APERO RI: {len(problems)} admin health issue(s) - "
+                f"{today.isoformat()}"
+            )
 
             for addr in recipients:
                 err = eb.send_email(addr, subject, body, cfg=email_cfg)
                 if err:
-                    log.warning("Failed to send health digest to %s: %s", addr, err)
+                    log.warning(
+                        "Failed to send health digest to %s: %s",
+                        addr,
+                        err,
+                    )
 
             last_sent_date = today
         except Exception as exc:
             log.warning("Admin health digest loop iteration failed: %s", exc)
 
 
-def ariapp_prune_forgot_pw_rate_limit(self, now_ts):
+def ariapp_prune_forgot_pw_rate_limit(
+    self: Any, now_ts: float) -> None:
     """Drop old throttle records to keep in-memory state small."""
     stale_after = 3600.0
     to_delete = []
@@ -6206,7 +6349,9 @@ def ariapp_prune_forgot_pw_rate_limit(self, now_ts):
         self._forgot_pw_rate_limit.pop(ip, None)
 
 
-def ariapp_send_verification_email(recipient_email, code, purpose):
+def ariapp_send_verification_email(
+    recipient_email: str, code: str,
+    purpose: str) -> Optional[str]:
     """Send verification code email via configured email backend.
 
     Returns None on success, error string on failure.
@@ -6217,7 +6362,8 @@ def ariapp_send_verification_email(recipient_email, code, purpose):
     return eb.send_verification_email(recipient_email, code, purpose)
 
 
-def ariapp_save_user_pins(self, username, pins):
+def ariapp_save_user_pins(
+    self: Any, username: str, pins: list[str]) -> None:
     """Persist pins to per-user pins.yaml and mirror into legacy users.yaml."""
     pins = self._normalize_pinned_pages(pins)
     ud.save_pins(username, {"pins": pins})
@@ -6230,7 +6376,8 @@ def ariapp_save_user_pins(self, username, pins):
         auth.save_users(users)
 
 
-def ariapp_all_accessible_run_ids(self, user_info):
+def ariapp_all_accessible_run_ids(
+    self: Any, user_info: Any) -> list[str]:
     """Return the union of run_ids across all instruments the user can see."""
     accessible = auth.get_accessible_profiles(user_info, self.ari_groups)
     all_run_ids: set = set()
@@ -6243,7 +6390,7 @@ def ariapp_all_accessible_run_ids(self, user_info):
     return all_run_ids
 
 
-def ariapp_api_basket_clear(self):
+def ariapp_api_basket_clear(self: Any) -> Any:
     """Clear basket (POST JSON {profile_id?: ...})."""
     user_info, err = self._basket_access_check()
     if err:
@@ -6256,7 +6403,7 @@ def ariapp_api_basket_clear(self):
     return jsonify(success=True, removed=removed)
 
 
-def ariapp_require_sci_group_perm(self):
+def ariapp_require_sci_group_perm(self: Any) -> tuple[Any, Any]:
     """Check for any manage.sci_group.* permission."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6272,7 +6419,7 @@ def ariapp_require_sci_group_perm(self):
     return user_info, perms
 
 
-def ariapp_require_apero_profile_perm(self):
+def ariapp_require_apero_profile_perm(self: Any) -> tuple[Any, Any]:
     """Check for manage.apero_profile permission."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6285,7 +6432,7 @@ def ariapp_require_apero_profile_perm(self):
     return user_info, perms
 
 
-def ariapp_require_user_db_access_perm(self):
+def ariapp_require_user_db_access_perm(self: Any) -> tuple[Any, Any]:
     """Check for manage.admin.user_db_access permission."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6298,7 +6445,7 @@ def ariapp_require_user_db_access_perm(self):
     return user_info, perms
 
 
-def ariapp_require_async_tasks_perm(self):
+def ariapp_require_async_tasks_perm(self: Any) -> tuple[Any, Any]:
     """Check manage.apero_profile permission for async task management."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -6329,7 +6476,8 @@ def _default_clock_rows() -> list:
     ]
 
 
-def _normalise_custom_clock_rows(rows) -> list:
+def _normalise_custom_clock_rows(
+    rows: Any) -> list[dict[str, Any]]:
     """Validate and normalize editable custom clock rows."""
     clean = []
     if not isinstance(rows, list):
@@ -6390,13 +6538,13 @@ def _save_custom_clock_rows(local_data_dir: Path, custom_rows: list) -> None:
     os.replace(tmp_path, path)
 
 
-def ariapp_api_clocks_get(self):
+def ariapp_api_clocks_get(self: Any) -> Any:
     """Return configured clock rows for nav/user pages."""
     rows = _load_clock_rows(self._resolve_local_data_dir())
     return jsonify(success=True, clocks=rows)
 
 
-def ariapp_api_admin_clocks(self):
+def ariapp_api_admin_clocks(self: Any) -> Any:
     """Admin API for reading/updating custom clock rows."""
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
@@ -6471,7 +6619,8 @@ def ariapp_api_admin_clocks(self):
     return jsonify(success=True, clocks=_load_clock_rows(local_data_dir))
 
 
-def ariapp_api_user_links_remove(self):
+def ariapp_api_user_links_remove(self: Any) -> Any:
+    """Remove a link from the signed-in user's link list."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -6484,7 +6633,8 @@ def ariapp_api_user_links_remove(self):
     return jsonify(success=True, data=data)
 
 
-def ariapp_api_user_notes_get(self):
+def ariapp_api_user_notes_get(self: Any) -> Any:
+    """Return one note belonging to the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -6497,7 +6647,8 @@ def ariapp_api_user_notes_get(self):
     return jsonify(success=True, note=note)
 
 
-def ariapp_api_admin_backups_test(self):
+def ariapp_api_admin_backups_test(self: Any) -> Any:
+    """Test connectivity to a configured backup storage method."""
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(ok=False, error="Unauthorized"), 401
@@ -6566,7 +6717,8 @@ def _write_text_atomic(path: Path, text: str) -> None:
     os.replace(tmp_path, path)
 
 
-def ariapp_build_admin_manage_instruments_context(self, perms):
+def ariapp_build_admin_manage_instruments_context(
+    self: Any, perms: Any) -> dict[str, Any]:
     """Build context dict for the Manage Instruments admin page."""
     can_manage = "manage.instrument.super_admin" in (perms or set())
     can_add = "add.instrument" in (perms or set())
@@ -6587,7 +6739,8 @@ def ariapp_build_admin_manage_instruments_context(self, perms):
 
     all_users = auth.list_all_users()
 
-    def _users_in_group(group_name):
+    def _users_in_group(group_name: str) -> list[str]:
+        """Return usernames assigned to one group."""
         return [
             u["username"]
             for u in all_users
@@ -6629,7 +6782,7 @@ def ariapp_build_admin_manage_instruments_context(self, perms):
     }
 
 
-def ariapp_api_manage_instruments_yaml_get(self):
+def ariapp_api_manage_instruments_yaml_get(self: Any) -> Any:
     """Return one instrument YAML file as text."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6657,7 +6810,7 @@ def ariapp_api_manage_instruments_yaml_get(self):
     return jsonify(success=True, name=name, yaml_text=text)
 
 
-def ariapp_api_manage_instruments_yaml_save(self):
+def ariapp_api_manage_instruments_yaml_save(self: Any) -> Any:
     """Save one or more instrument YAML files from editor text."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6740,7 +6893,7 @@ def ariapp_api_manage_instruments_yaml_save(self):
     return jsonify(success=True, saved=saved)
 
 
-def ariapp_api_manage_instruments_groups_create(self):
+def ariapp_api_manage_instruments_groups_create(self: Any) -> Any:
     """Create per-instrument groups for a given instrument."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6777,7 +6930,7 @@ def ariapp_api_manage_instruments_groups_create(self):
     return jsonify(success=True, created=created)
 
 
-def ariapp_api_manage_instruments_groups_delete(self):
+def ariapp_api_manage_instruments_groups_delete(self: Any) -> Any:
     """Delete per-instrument groups for a given instrument."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6814,7 +6967,7 @@ def ariapp_api_manage_instruments_groups_delete(self):
     return jsonify(success=True, deleted=deleted)
 
 
-def ariapp_api_manage_instruments_add(self):
+def ariapp_api_manage_instruments_add(self: Any) -> Any:
     """Add a new instrument stub entry to apero_profiles."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6877,7 +7030,7 @@ def ariapp_api_manage_instruments_add(self):
     )
 
 
-def ariapp_api_manage_instruments_remove(self):
+def ariapp_api_manage_instruments_remove(self: Any) -> Any:
     """Remove an instrument: deletes its profile entry and all groups."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6944,7 +7097,7 @@ def ariapp_api_manage_instruments_remove(self):
     )
 
 
-def ariapp_api_manage_instruments_rename(self):
+def ariapp_api_manage_instruments_rename(self: Any) -> Any:
     """Rename an instrument across all ARI data stores."""
     user_info, cur_perms = self._require_admin_user()
     if not user_info:
@@ -6990,7 +7143,7 @@ def ariapp_api_manage_instruments_rename(self):
 # Upload management — Admin APIs
 # =============================================================================
 
-def ariapp_api_admin_uploads_config_get(self):
+def ariapp_api_admin_uploads_config_get(self: Any) -> Any:
     """Return all upload directory configurations."""
     user_info, user_perms = self._require_admin_user()
     if not user_info:
@@ -7020,7 +7173,7 @@ def ariapp_api_admin_uploads_config_get(self):
     )
 
 
-def ariapp_api_admin_uploads_dir_add(self):
+def ariapp_api_admin_uploads_dir_add(self: Any) -> Any:
     """Add a new upload directory."""
     user_info, _ = self._require_admin_user()
     if not user_info:
@@ -7076,7 +7229,7 @@ def ariapp_api_admin_uploads_dir_add(self):
     return jsonify(success=True, entry=entry)
 
 
-def ariapp_api_admin_uploads_dir_edit(self):
+def ariapp_api_admin_uploads_dir_edit(self: Any) -> Any:
     """Edit an existing upload directory."""
     user_info, _ = self._require_admin_user()
     if not user_info:
@@ -7139,7 +7292,7 @@ def ariapp_api_admin_uploads_dir_edit(self):
     return jsonify(success=True, entry=updated)
 
 
-def ariapp_api_admin_uploads_dir_delete(self):
+def ariapp_api_admin_uploads_dir_delete(self: Any) -> Any:
     """Delete an upload directory entry."""
     user_info, _ = self._require_admin_user()
     if not user_info:
@@ -7156,7 +7309,7 @@ def ariapp_api_admin_uploads_dir_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_admin_uploads_quota_get(self):
+def ariapp_api_admin_uploads_quota_get(self: Any) -> Any:
     """Return quota usage for all configured upload directories."""
     user_info, _ = self._require_admin_user()
     if not user_info:
@@ -7174,7 +7327,7 @@ def ariapp_api_admin_uploads_quota_get(self):
 # Upload management — User APIs
 # =============================================================================
 
-def _user_accessible_dirs(user_info):
+def _user_accessible_dirs(user_info: dict[str, Any]) -> list[dict[str, Any]]:
     """Return directories that the user has access to upload to."""
     user_groups = set(user_info.get("groups", []))
     accessible = []
@@ -7185,7 +7338,7 @@ def _user_accessible_dirs(user_info):
     return accessible
 
 
-def ariapp_api_user_uploads_list(self):
+def ariapp_api_user_uploads_list(self: Any) -> Any:
     """List user's uploaded files per accessible directory."""
     user_info = self._require_user()
     if not user_info:
@@ -7218,7 +7371,7 @@ def ariapp_api_user_uploads_list(self):
     return jsonify(success=True, directories=result)
 
 
-def ariapp_api_user_uploads_upload(self):
+def ariapp_api_user_uploads_upload(self: Any) -> Any:
     """Handle a file upload from a user."""
     user_info = self._require_user()
     if not user_info:
@@ -7261,7 +7414,7 @@ def ariapp_api_user_uploads_upload(self):
     )
 
 
-def ariapp_api_user_uploads_delete(self):
+def ariapp_api_user_uploads_delete(self: Any) -> Any:
     """Delete a file from a user's upload directory."""
     user_info = self._require_user()
     if not user_info:
@@ -7300,7 +7453,7 @@ def ariapp_api_user_uploads_delete(self):
     return jsonify(success=True, files=files, quota=quota_info)
 
 
-def ariapp_api_user_uploads_share(self):
+def ariapp_api_user_uploads_share(self: Any) -> Any:
     """Create or retrieve a share link for an uploaded file."""
     user_info = self._require_user()
     if not user_info:
@@ -7336,7 +7489,7 @@ def ariapp_api_user_uploads_share(self):
     return jsonify(success=True, token=token)
 
 
-def ariapp_uploads_share_download(self, token):
+def ariapp_uploads_share_download(self: Any, token: str) -> Any:
     """Serve a shared uploaded file by token."""
     result = upd.resolve_share_token(token)
     if result is None:
@@ -7506,7 +7659,8 @@ def _server_info_read_meminfo() -> Dict[str, Optional[int]]:
     return data
 
 
-def ariapp_build_admin_server_information_context(self, perms):
+def ariapp_build_admin_server_information_context(
+    self: Any, perms: Any) -> dict[str, Any]:
     """Build snapshot context for the Server Information admin page."""
     import importlib.metadata as _im
     import platform
@@ -7728,8 +7882,8 @@ def ariapp_build_admin_server_information_context(self, perms):
 # Vault — Admin portal
 # =============================================================================
 def ariapp_build_admin_vault_context(
-    self, resolved_perms: set
-) -> dict:
+        self: Any, resolved_perms: set[str]
+) -> dict[str, Any]:
     """Build template context for the Vault admin page."""
     from apero_ri.core import vault_store as vs
 
@@ -7749,7 +7903,7 @@ def ariapp_build_admin_vault_context(
     }
 
 
-def ariapp_api_vault_list(self):
+def ariapp_api_vault_list(self: Any) -> Any:
     """Return vault cards (no information) for user's levels."""
     from apero_ri.core import vault_store as vs
 
@@ -7768,7 +7922,7 @@ def ariapp_api_vault_list(self):
     return jsonify(success=True, entries=safe)
 
 
-def ariapp_api_vault_get(self):
+def ariapp_api_vault_get(self: Any) -> Any:
     """Return a single vault entry including information."""
     from apero_ri.core import vault_store as vs
 
@@ -7796,7 +7950,7 @@ def ariapp_api_vault_get(self):
     return jsonify(success=True, entry=entry)
 
 
-def ariapp_api_vault_add(self):
+def ariapp_api_vault_add(self: Any) -> Any:
     """Create a new vault entry."""
     from apero_ri.core import vault_store as vs
 
@@ -7842,7 +7996,7 @@ def ariapp_api_vault_add(self):
     return jsonify(success=True, entry=vs.strip_information(entry))
 
 
-def ariapp_api_vault_update(self):
+def ariapp_api_vault_update(self: Any) -> Any:
     """Update an existing vault entry."""
     from apero_ri.core import vault_store as vs
 
@@ -7902,7 +8056,7 @@ def ariapp_api_vault_update(self):
     return jsonify(success=True, entry=vs.strip_information(entry))
 
 
-def ariapp_api_vault_delete(self):
+def ariapp_api_vault_delete(self: Any) -> Any:
     """Delete a vault entry."""
     from apero_ri.core import vault_store as vs
 
@@ -7935,7 +8089,7 @@ def ariapp_api_vault_delete(self):
     return jsonify(success=True)
 
 
-def ariapp_api_vault_export(self):
+def ariapp_api_vault_export(self: Any) -> Any:
     """Export accessible vault entries as encrypted YAML."""
     import io
     from apero_ri.core import vault_store as vs
@@ -7977,7 +8131,7 @@ def ariapp_api_vault_export(self):
     )
 
 
-def ariapp_api_vault_import(self):
+def ariapp_api_vault_import(self: Any) -> Any:
     """Import vault entries from an encrypted YAML file."""
     from apero_ri.core import vault_store as vs
 

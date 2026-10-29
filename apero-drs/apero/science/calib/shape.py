@@ -9,7 +9,7 @@ Created on 2019-06-27 at 10:13
 """
 import os
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
@@ -354,6 +354,29 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
                                 ini_boxsize: Optional[int] = None,
                                 small_boxsize: Optional[int] = None
                                 ) -> LinTransRetrun:
+    """Estimate the affine transform aligning two Fabry-Perot images.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants, including peak-selection and iteration settings.
+    recipe : DrsRecipe
+        Calling recipe used for diagnostic plots.
+    image1, image2 : numpy.ndarray
+        Reference and input two-dimensional images with matching shapes.
+    maxn_percent, maxn_thres : float, optional
+        Peak-selection percentile and threshold overrides.
+    niterations : int, optional
+        Number of refinement iterations.
+    ini_boxsize, small_boxsize : int, optional
+        Initial and subsequent peak-search half-widths.
+
+    Returns
+    -------
+    tuple
+        The six affine coefficients and x/y residuals, or three ``None``
+        values when too few matched peaks remain.
+    """
     # set function name
     func_name = display_func('get_linear_transform_params', __NAME__)
     # get parameters from params/kwargs
@@ -534,7 +557,7 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     return lin_transform_vect, xres, yres
 
 
-def _spline_order_value(order):
+def _spline_order_value(order: Optional[Union[int, str]]) -> int:
     """Convert an APERO spline-order setting into a scipy order integer."""
     if order is None:
         return 2
@@ -543,8 +566,11 @@ def _spline_order_value(order):
     return int(order)
 
 
-def ea_transform(params, image, lin_transform_vect=None,
-                 dxmap=None, dymap=None, order=None):
+def ea_transform(params: ParamDict, image: np.ndarray,
+                 lin_transform_vect: Optional[np.ndarray] = None,
+                 dxmap: Optional[np.ndarray] = None,
+                 dymap: Optional[np.ndarray] = None,
+                 order: Optional[Union[int, str]] = None) -> np.ndarray:
     """
     Shifts / transforms image by three different transformations:
 
@@ -608,8 +634,12 @@ def ea_transform(params, image, lin_transform_vect=None,
                                    order=sorder)
 
 
-def ea_transform_reverse(params, image, lin_transform_vect=None,
-                         dxmap=None, dymap=None, niter=6, order=None):
+def ea_transform_reverse(
+    params: ParamDict, image: np.ndarray,
+    lin_transform_vect: Optional[np.ndarray] = None,
+    dxmap: Optional[np.ndarray] = None,
+    dymap: Optional[np.ndarray] = None, niter: int = 6,
+    order: Optional[Union[int, str]] = None) -> np.ndarray:
     """
     Reverse an ``ea_transform`` using the supplied shape calibrations
 
@@ -640,7 +670,9 @@ def ea_transform_reverse(params, image, lin_transform_vect=None,
                                   targs=[func_name]) from exc
 
 
-def ea_transform_coeff(image, coeffs, lin_transform_vect):
+def ea_transform_coeff(image: np.ndarray, coeffs: np.ndarray,
+                       lin_transform_vect: np.ndarray) -> np.ndarray:
+    """Transform order-profile polynomial coefficients with the image."""
     # get the number of orders
     nbo = coeffs.shape[0]
     # get the x pixel positions
@@ -669,7 +701,33 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
     return coeffs2
 
 
-def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
+def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
+                    lprops: Any, fiber: str, **kwargs: Any
+                    ) -> Tuple[np.ndarray, float, List[Any], List[float]]:
+    """Build the reference x-displacement map from localization profiles.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants and shape-calibration settings.
+    recipe : DrsRecipe
+        Calling recipe used for calibration lookups and diagnostic plots.
+    fpdata : numpy.ndarray
+        Two-dimensional Fabry-Perot image used to define detector geometry.
+    lprops : Any
+        Localization properties keyed by fiber; entries are read using the
+        existing ``NBO``, ``CENT_COEFFS``, and ``WID_COEFFS`` keys.
+    fiber : str
+        Fiber being calibrated.
+    **kwargs : Any
+        Optional overrides consumed by the existing parameter checks.
+
+    Returns
+    -------
+    tuple
+        The x-displacement map, its maximum standard deviation, associated
+        quality-control details, and per-order residuals.
+    """
     func_name = __NAME__ + '.calculate_dxmap()'
 
     # get parameters from params/kwargs
@@ -1209,7 +1267,29 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
     return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
+def calculate_dymap(params: ParamDict, recipe: DrsRecipe,
+                    fpimage: np.ndarray, fpheader: Any,
+                    **kwargs: Any) -> np.ndarray:
+    """Build the y-displacement map from fiber localization polynomials.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants, including the fibers used to construct the map.
+    recipe : DrsRecipe
+        Calling recipe used to load localization coefficients.
+    fpimage : numpy.ndarray
+        Two-dimensional reference image defining the detector shape.
+    fpheader : Any
+        Header passed to the existing localization calibration lookup.
+    **kwargs : Any
+        Optional parameter overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    numpy.ndarray
+        The y-displacement map with the same shape as ``fpimage``.
+    """
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
     fibers = pcheck(params, 'CAL.SHAPE.UFIBERS', 'fibers', kwargs, func_name)
@@ -1277,7 +1357,29 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     return ref_dymap
 
 
-def get_ref_fp(params, recipe, header, filename=None, database=None):
+def get_ref_fp(params: ParamDict, recipe: DrsRecipe, header: Any,
+               filename: Optional[str] = None,
+               database: Any = None) -> Tuple[str, np.ndarray]:
+    """Load the reference Fabry-Perot image selected for a calibration.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants.
+    recipe : DrsRecipe
+        Calling recipe, used to identify the calibration database context.
+    header : Any
+        Header used to select the applicable reference file.
+    filename : str, optional
+        Explicit file override passed to the calibration loader.
+    database : Any, optional
+        Existing calibration database, or ``None`` to load one here.
+
+    Returns
+    -------
+    tuple
+        The selected filename and reference image data.
+    """
     # get file definition
     out_fpref = drs_file.get_file_definition(params, 'REF_FP',
                                              block_kind='red')
@@ -1304,7 +1406,26 @@ def get_ref_fp(params, recipe, header, filename=None, database=None):
     return fpref_file, fpref
 
 
-def get_shape_calibs(params, recipe, header, database):
+def get_shape_calibs(params: ParamDict, recipe: DrsRecipe, header: Any,
+                     database: Any) -> ParamDict:
+    """Load shape-x, shape-y, and local-shape products into properties.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants.
+    recipe : DrsRecipe
+        Calling recipe, used for calibration database lookups.
+    header : Any
+        Header used to select applicable calibration products.
+    database : Any
+        Calibration database instance shared by the caller.
+
+    Returns
+    -------
+    ParamDict
+        Shape maps, source filenames and times, and inverse coordinate maps.
+    """
     # set function name
     func_name = __NAME__ + '.get_shape_calibs()'
     # get shape x
@@ -1350,7 +1471,29 @@ def get_shape_calibs(params, recipe, header, database):
     return sprops
 
 
-def get_shapex(params, recipe, header, filename=None, database=None):
+def get_shapex(params: ParamDict, recipe: DrsRecipe, header: Any,
+               filename: Optional[str] = None,
+               database: Any = None) -> Tuple[str, Any, np.ndarray]:
+    """Load the selected x-displacement calibration.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants.
+    recipe : DrsRecipe
+        Calling recipe, used for calibration database lookups.
+    header : Any
+        Header used to select the applicable calibration.
+    filename : str, optional
+        Explicit calibration filename override.
+    database : Any, optional
+        Existing calibration database, or ``None`` to load one here.
+
+    Returns
+    -------
+    tuple
+        Calibration filename, midpoint time, and x-displacement map.
+    """
     # get file definition
     out_shape_dxmap = drs_file.get_file_definition(params, 'SHAPE_X',
                                                    block_kind='red')
@@ -1380,7 +1523,29 @@ def get_shapex(params, recipe, header, filename=None, database=None):
     return shapex_file, shapetime, dxmap
 
 
-def get_shapey(params, recipe, header, filename=None, database=None):
+def get_shapey(params: ParamDict, recipe: DrsRecipe, header: Any,
+               filename: Optional[str] = None,
+               database: Any = None) -> Tuple[str, Any, np.ndarray]:
+    """Load the selected y-displacement calibration.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants.
+    recipe : DrsRecipe
+        Calling recipe, used for calibration database lookups.
+    header : Any
+        Header used to select the applicable calibration.
+    filename : str, optional
+        Explicit calibration filename override.
+    database : Any, optional
+        Existing calibration database, or ``None`` to load one here.
+
+    Returns
+    -------
+    tuple
+        Calibration filename, midpoint time, and y-displacement map.
+    """
     # get file definition
     out_shape_dymap = drs_file.get_file_definition(params, 'SHAPE_Y',
                                                    block_kind='red')
@@ -1410,7 +1575,29 @@ def get_shapey(params, recipe, header, filename=None, database=None):
     return shapey_file, shapetime, dymap
 
 
-def get_shapelocal(params, recipe, header, filename=None, database=None):
+def get_shapelocal(params: ParamDict, recipe: DrsRecipe, header: Any,
+                   filename: Optional[str] = None,
+                   database: Any = None) -> Tuple[str, Any, np.ndarray]:
+    """Load and flatten the selected local-shape calibration.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants.
+    recipe : DrsRecipe
+        Calling recipe, used for calibration database lookups.
+    header : Any
+        Header used to select the applicable calibration.
+    filename : str, optional
+        Explicit calibration filename override.
+    database : Any, optional
+        Existing calibration database, or ``None`` to load one here.
+
+    Returns
+    -------
+    tuple
+        Calibration filename, midpoint time, and flattened local map.
+    """
     # get file definition
     out_shape_local = drs_file.get_file_definition(params, 'SHAPEL',
                                                    block_kind='red')
@@ -1579,10 +1766,43 @@ def compute_shape_order_profiles(
 # =============================================================================
 # write file functions
 # =============================================================================
-def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
-                          rawhcfiles, dxmap, dymap, ref_fp, fp_table,
-                          fpprops, dxmap0, fpimage, fpimage2, hcimage,
-                          hcimage2, qc_params):
+def write_shape_ref_files(params: ParamDict, recipe: DrsRecipe, fpfile: Any,
+                          hcfile: Any, rawfpfiles: List[str],
+                          rawhcfiles: List[str], dxmap: np.ndarray,
+                          dymap: np.ndarray, ref_fp: np.ndarray,
+                          fp_table: Table, fpprops: Any, dxmap0: np.ndarray,
+                          fpimage: np.ndarray, fpimage2: np.ndarray,
+                          hcimage: np.ndarray, hcimage2: np.ndarray,
+                          qc_params: Any
+                          ) -> Tuple[Any, Any, Any]:
+    """Write reference shape products and their associated diagnostics.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling output and debug products.
+    recipe : DrsRecipe
+        Calling recipe that owns and indexes the output files.
+    fpfile, hcfile : Any
+        Input Fabry-Perot and hollow-cathode file objects.
+    rawfpfiles, rawhcfiles : list[str]
+        Source filenames recorded in the output headers.
+    dxmap, dymap, ref_fp, dxmap0 : numpy.ndarray
+        Shape maps and reference-image products to write.
+    fp_table : astropy.table.Table
+        File and transform metadata associated with the reference image.
+    fpprops : Any
+        Calibration properties consumed by the existing header writer.
+    fpimage, fpimage2, hcimage, hcimage2 : numpy.ndarray
+        Original and transformed images used for output and debug products.
+    qc_params : Any
+        Quality-control values written to the output headers and summary.
+
+    Returns
+    -------
+    tuple
+        The three primary output file objects.
+    """
     # ----------------------------------------------------------------------
     # Writing DXMAP to file
     # ----------------------------------------------------------------------
@@ -1849,7 +2069,27 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     return outfile1, outfile2, outfile3
 
 
-def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
+def shape_ref_qc(params: ParamDict, dxrms: Optional[List[float]] = None,
+                 qc_params: Any = None, **kwargs: Any
+                 ) -> Tuple[List[Any], int]:
+    """Evaluate reference-shape residuals and append their QC results.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants, including the reference residual threshold.
+    dxrms : list[float], optional
+        Per-order residual values; ``None`` records that this check was skipped.
+    qc_params : Any, optional
+        Existing four-list QC payload to extend, or ``None`` to start a new one.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    tuple
+        The four-list QC payload and an integer pass flag (1 or 0).
+    """
     func_name = __NAME__ + '.shape_ref_qc()'
     # set passed variable and fail message list
     fail_msg = []
@@ -1905,7 +2145,26 @@ def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
     return qc_params, passed
 
 
-def write_shape_ref_summary(recipe, params, fp_table, qc_params):
+def write_shape_ref_summary(recipe: DrsRecipe, params: ParamDict,
+                            fp_table: Table, qc_params: Any) -> None:
+    """Add reference-shape statistics and QC to the recipe summary.
+
+    Parameters
+    ----------
+    recipe : DrsRecipe
+        Calling recipe with an active summary plot.
+    params : ParamDict
+        APERO constants used for version/date statistics.
+    fp_table : astropy.table.Table
+        Reference Fabry-Perot input metadata.
+    qc_params : Any
+        QC payload passed to the summary document.
+
+    Returns
+    -------
+    None
+        The recipe summary is updated in place.
+    """
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
@@ -1915,7 +2174,24 @@ def write_shape_ref_summary(recipe, params, fp_table, qc_params):
     recipe.plot.summary_document(0, qc_params)
 
 
-def shape_local_qc(params, transform, xres, yres):
+def shape_local_qc(params: ParamDict, transform: Optional[np.ndarray],
+                    xres: float, yres: float) -> Tuple[List[Any], int]:
+    """Evaluate the local transform and its x/y residual quality checks.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants, including the local residual threshold.
+    transform : numpy.ndarray or None
+        Estimated affine transform; ``None`` indicates a failed image fit.
+    xres, yres : float
+        Residual scatter in the two detector axes.
+
+    Returns
+    -------
+    tuple
+        The four-list QC payload and an integer pass flag (1 or 0).
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ------------------------------------------------------------------
@@ -1971,10 +2247,43 @@ def shape_local_qc(params, transform, xres, yres):
     return qc_params, passed
 
 
-def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
-                            sprops, image, image2, qc_params,
-                            dxmap_no_shape=None,
-                            oprofile_props=None):
+def write_shape_local_files(params: ParamDict, recipe: DrsRecipe,
+                            infile: Any, combine: bool, rawfiles: List[str],
+                            props: Any, sprops: Any, image: np.ndarray,
+                            image2: np.ndarray, qc_params: Any,
+                            dxmap_no_shape: Optional[np.ndarray] = None,
+                            oprofile_props: Any = None) -> Any:
+    """Write local-shape products and optional embedded order profiles.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling output and debug products.
+    recipe : DrsRecipe
+        Calling recipe that owns and indexes the output files.
+    infile : Any
+        Input file object used to derive output names and copied headers.
+    combine : bool
+        Whether the output represents a combined input set.
+    rawfiles : list[str]
+        Raw source filenames recorded for combined inputs.
+    props, sprops : Any
+        Calibration and shape properties consumed by existing writer keys.
+    image, image2 : numpy.ndarray
+        Input and transformed images used by the output/debug products.
+    qc_params : Any
+        Quality-control payload written to the output header.
+    dxmap_no_shape : numpy.ndarray, optional
+        Unshaped x-displacement map to store as an additional extension.
+    oprofile_props : Any, optional
+        Optional order-profile and geometry products keyed as produced by
+        ``compute_shape_order_profiles``.
+
+    Returns
+    -------
+    Any
+        The primary local-shape output file object.
+    """
     # define outfile
     outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(params=params)
     # construct the filename from file instance
@@ -2125,7 +2434,29 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     return outfile
 
 
-def write_shape_local_summary(recipe, params, qc_params, it, transform):
+def write_shape_local_summary(recipe: DrsRecipe, params: ParamDict,
+                              qc_params: Any, it: int,
+                              transform: np.ndarray) -> None:
+    """Add local-transform values and QC to the recipe summary.
+
+    Parameters
+    ----------
+    recipe : DrsRecipe
+        Calling recipe with an active summary plot.
+    params : ParamDict
+        APERO constants used for version/date statistics.
+    qc_params : Any
+        QC payload passed to the summary document.
+    it : int
+        Summary iteration/index supplied by the calling recipe.
+    transform : numpy.ndarray
+        Six affine transform coefficients in the established APERO order.
+
+    Returns
+    -------
+    None
+        The recipe summary is updated in place.
+    """
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
@@ -2142,7 +2473,9 @@ def write_shape_local_summary(recipe, params, qc_params, it, transform):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def max_neighbour_mask(image, percent, thres):
+def max_neighbour_mask(image: np.ndarray, percent: float,
+                       thres: float) -> np.ndarray:
+    """Return a mask of pixels brighter than their eight neighbours."""
     # construct a cube with 8 slices that contain the 8 neighbours
     #   of any pixel. This is used to find pixels brighter that their
     #   neighbours
@@ -2171,7 +2504,9 @@ def max_neighbour_mask(image, percent, thres):
     return mask
 
 
-def xy_acc_peak(xpeak, ypeak, im):
+def xy_acc_peak(xpeak: np.ndarray, ypeak: np.ndarray,
+                im: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Refine peak coordinates from each peak and its adjacent pixel values."""
     # black magic arithmetic for replace a 2nd order polynomial by
     # some arithmetic directly on pixel values to find
     # the maxima in x and y for each peak

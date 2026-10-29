@@ -50,7 +50,10 @@ StartPage = gen_gui.StartPage
 # Define functions
 # =============================================================================
 class DeleteTables(ThemedTk):
+    """Window for selecting and confirming database table deletion."""
+
     def __init__(self, *args, **kwargs):
+        """Create the themed table-management window."""
         _ = args, kwargs
         # run the super
         ThemedTk.__init__(self, themebg=True)
@@ -72,7 +75,8 @@ class DeleteTables(ThemedTk):
         # create pages
         self.create_pages()
 
-    def create_pages(self):
+    def create_pages(self) -> None:
+        """Create the configured pages and display the first one."""
         for it, F in enumerate(self.all_pages):
             page = F(self.container, self)
             self.pages[it] = page
@@ -80,14 +84,16 @@ class DeleteTables(ThemedTk):
         # show the first page
         self.pages[0].show()
 
-    def destroy_pages(self):
+    def destroy_pages(self) -> None:
+        """Destroy all page widgets currently owned by this window."""
         for it in range(len(self.pages)):
             self.pages[it].destroy()
             # items = self.pages[it].grid_slaves()
             # for item in items:
             #     item.destroy()
 
-    def update(self):
+    def update(self) -> None:
+        """Collect current settings from each page into the window state."""
         for page in self.pages:
             if hasattr(self.pages[page], 'settings'):
                 self.pages[page].settings.get_results()
@@ -96,7 +102,8 @@ class DeleteTables(ThemedTk):
                 for key in results:
                     self.page_settings[key] = results[key]
 
-    def execute(self):
+    def execute(self) -> None:
+        """Prompt for selected tables, delete confirmed tables, refresh."""
         self.update()
         # delete table
         if 'delete' in self.page_settings:
@@ -128,12 +135,16 @@ class DeleteTables(ThemedTk):
             # recreate page (remove deleted database(s))
             self.create_pages()
 
-    def close(self):
+    def close(self) -> None:
+        """Close the table-management window."""
         self.destroy()
 
 
 class Page1(StartPage):
+    """Page containing the database table selection controls."""
+
     def __init__(self, parent, controller):
+        """Build the table-selection page in its parent frame."""
         ttk.Frame.__init__(self, parent)
         # page logo
         self.logo = widgets.PageLogo(self, logo_path=None)
@@ -168,7 +179,8 @@ class Page1(StartPage):
         controller.update()
 
 
-def get_db_tables():
+def get_db_tables() -> list:
+    """Return database table names, or an empty list when MySQL is disabled."""
     # get database parameters from base
     dparams = base.DPARAMS
     # construct a generic database manager
@@ -191,7 +203,8 @@ def get_db_tables():
         return []
 
 
-def delete_db_tables(tables):
+def delete_db_tables(tables: list) -> list:
+    """Delete each supplied database table and return the result list."""
     # get the database settings
     dparams = base.DPARAMS
     # construct a generic database manager
@@ -216,7 +229,7 @@ def run_delete_table_app(params: ParamDict) -> DeleteTables:
 
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return DeteleTables instance
+    :return: the table-management application after its event loop exits
     """
     # Log that we are running indexing
     # log: Running delete table app

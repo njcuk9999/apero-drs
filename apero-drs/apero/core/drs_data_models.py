@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-# CODE NAME HERE
+"""Define models that load APERO image and table FITS extensions.
 
-# CODE DESCRIPTION HERE
+Each model records an extension's data kind and provides the matching loader.
+Table models can also validate and construct tables from named columns.
 
 Created on 2025-07-17 at 14:04
 
@@ -70,33 +70,49 @@ AperoCodedWarning = drs_log.AperoCodedWarning
 class AperoDataModel:
     classname = 'AperoDataModel'
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
+        """Initialize a model for a named FITS extension.
+
+        :param name: Extension name used when loading the data
+        :return: None
+        """
         # some info
         self.name = name
         self.datatype = None
 
-    def __getstate__(self) -> dict:
+    def __getstate__(self) -> Dict[str, Any]:
         """
-        For when we have to pickle the class
-        :return:
+        Return this model's attributes for pickling.
+
+        :return: A shallow copy of the instance attribute dictionary
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
-        For when we have to unpickle the class
+        Restore model attributes from a pickled state dictionary.
 
-        :param state: dictionary from pickle
-        :return:
+        :param state: Previously serialized instance attributes
+        :return: None
         """
         # update dict with state
         self.__dict__.update(state)
 
     def load_data(self, params: ParamDict, filename: str,
-                  **kwargs) -> Any:
+                  **kwargs: Any) -> Any:
+        """Load data for this model's extension.
+
+        Subclasses implement loading for their specific data kind.
+
+        :param params: APERO parameter dictionary
+        :param filename: FITS file containing the extension
+        :param kwargs: Loader-specific options
+        :return: Loaded extension data
+        :raises NotImplementedError: This base method has no loader
+        """
         emsg = 'AperoDataModel.load_data not implemented'
         raise NotImplementedError(emsg)
 
@@ -110,9 +126,19 @@ class AperoTableModel(AperoDataModel):
     This can also be used to create a table - checking the format is correct
     """
 
-    def __init__(self, name: str, columns=None, units=None, descriptions=None):
+    def __init__(self, name: str, columns: Optional[List[str]] = None,
+                 units: Optional[
+                     List[Optional[Union[str, uu.Quantity]]]] = None,
+                 descriptions: Optional[List[Optional[str]]] = None
+                 ) -> None:
         """
-        Construct the AperoTableModel
+        Define the expected columns and their optional metadata.
+
+        :param name: FITS extension name for this table
+        :param columns: Required column names, in output order
+        :param units: Optional unit for each column
+        :param descriptions: Optional description for each column
+        :return: None
         """
         # some info
         super().__init__(name)
@@ -122,8 +148,9 @@ class AperoTableModel(AperoDataModel):
         self.units = [] if units is None else units
         self.descriptions = [] if descriptions is None else descriptions
 
-    def add_column(self, column: str, units: Optional[uu.Quantity] = None,
-                   description:  Optional[str] = None):
+    def add_column(self, column: str,
+                   units: Optional[Union[str, uu.Quantity]] = None,
+                   description: Optional[str] = None) -> None:
         """
         Add a column to this AperoTable model
 
@@ -131,16 +158,19 @@ class AperoTableModel(AperoDataModel):
         :param units: str, the units of the column (can be left blank)
         :param description: str, the description of the column (can be
                             left blank)
+        :return: None
         """
         self.columns.append(column)
         self.units.append(units)
         self.descriptions.append(description)
 
-    def create_table(self, **kwargs) -> Table:
+    def create_table(self, **kwargs: Any) -> Table:
         """
         Create a new astropy table using the defined AperoTable framework
 
-        :param kwargs: A list of columns to add to the table
+        :param kwargs: Column-name to data mappings for the required columns
+        :return: Astropy table populated with the model's columns and metadata
+        :raises AperoCodedException: If a required column is not provided
         """
         # create a table
         outtable = Table()
@@ -164,15 +194,15 @@ class AperoTableModel(AperoDataModel):
         return outtable
 
     def load_data(self, params: ParamDict, filename: str,
-                  **kwargs) -> Table:
+                  **kwargs: Any) -> Table:
         """
         Load a fits table from 'filename'
 
         :param params: ParamDict, parameter dictionary of constants
         :param filename: str, name of the fits file
-        :param kwargs: keyword arguments to send to drs_table.read_table
+        :param kwargs: Additional keyword arguments for ``read_table``
 
-        return: Table, the fits table
+        :return: Table read from this model's FITS extension
         """
         # make sure we don't duplicate this key (forced by Model)
         keys_passed = list(kwargs.keys())
@@ -187,14 +217,15 @@ class AperoTableModel(AperoDataModel):
 class AperoImageModel(AperoDataModel):
     classname = 'AperoImageModel'
 
-    def __init__(self, name: str, 
-                 shape: Optional[List[Union[str, int]]] = None):
+    def __init__(self, name: str,
+                 shape: Optional[List[Union[str, int]]] = None) -> None:
         """
         Construct the AperoImageModel
 
         :param name: str, name of the image model
         :param shape: List, the shape of the image (e.g. [2048, 2048])
                       or None for any shape
+        :return: None
         """
         # some info
         super().__init__(name)
@@ -202,16 +233,16 @@ class AperoImageModel(AperoDataModel):
         self.shape = shape
 
     def load_data(self, params: ParamDict, filename: str,
-                  **kwargs) -> Union[drs_fits.DataHdrType, np.ndarray, 
-                                     drs_fits.fits.Header, None]:
+                  **kwargs: Any) -> Union[drs_fits.DataHdrType, np.ndarray,
+                                          drs_fits.fits.Header, None]:
         """
         Load a fits image from 'filename'
 
         :param params: ParamDict, parameter dictionary of constants
         :param filename: str, name of the fits file
-        :param kwargs: keyword arguments to send to drs_table.read_table
+        :param kwargs: Additional keyword arguments for ``readfits``
 
-        return: Table, the fits table
+        :return: Image data, header data, or None as returned by ``readfits``
         """
         # make sure we don't duplicate this key (forced by Model)
         keys_passed = list(kwargs.keys())

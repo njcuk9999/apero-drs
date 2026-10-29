@@ -16,7 +16,7 @@ only from:
     - apero.base.drs_base
 
 """
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Union
 from decimal import Decimal
 
 import time
@@ -107,8 +107,9 @@ def _is_transient_table_error(exception: Exception) -> bool:
     return False
 
 
-def _retry_operation(func, max_retries: int = 5, retry_delay: float = None,
-                     retry_transient_table_errors: bool = True):
+def _retry_operation(func: Callable[[], Any], max_retries: int = 5,
+                     retry_delay: Optional[float] = None,
+                     retry_transient_table_errors: bool = True) -> Any:
     """
     Retry a database operation with bounded exponential backoff.
     
@@ -195,7 +196,7 @@ class AperoDatabaseException(Exception):
 class AperoDatabaseError(AperoDatabaseException):
     def __init__(self, message: Union[str, None] = None,
                  errorobj: Any = None, url: str = None,
-                 func_name: Union[str, None] = None):
+                 func_name: Union[str, None] = None) -> None:
         """
         Construct the Database Error instance
 
@@ -221,7 +222,7 @@ class AperoDatabaseError(AperoDatabaseException):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -231,7 +232,7 @@ class AperoDatabaseError(AperoDatabaseException):
         # update dict with state
         self.__dict__.update(state)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Standard __str__ return (used in raising as Exception)
         :return:
@@ -248,25 +249,34 @@ class AperoDatabaseError(AperoDatabaseException):
 class AperoFloat(sqlalchemy.types.TypeDecorator):
     impl = sqlalchemy.Float
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: Any,
+                           dialect: Dialect) -> Optional[float]:
+        """Convert non-null database-bound values to floats."""
         if value is not None:
             return float(value)
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Any,
+                             dialect: Dialect) -> Optional[float]:
+        """Convert non-null database values back to Python floats."""
         if value is not None:
             return float(value)
 
-    def result_processor(self, dialect: Dialect, coltype: Any):
-        def process(value):
+    def result_processor(
+            self, dialect: Dialect, coltype: Any
+            ) -> Callable[[Any], Optional[float]]:
+        """Return the row-value converter used by SQLAlchemy result rows."""
+        def process(value: Any) -> Optional[float]:
+            """Convert one non-null result value to a float."""
             if value is not None:
                 return float(value)
         return process
 
 
 class AperoDatabase:
-    def __init__(self, url, tablename: Union[str, None],
+    def __init__(self, url: Union[str, sqlalchemy.engine.URL],
+                 tablename: Optional[str],
                  verbose: bool = False,
-                 connect_args: Optional[Dict[str, Any]] = None):
+                 connect_args: Optional[Dict[str, Any]] = None) -> None:
         """
         APERO Database class
         """
@@ -280,7 +290,8 @@ class AperoDatabase:
         if connect_args is None:
             connect_args = dict()
         # define the engine to use with retry on OperationalError
-        def _create_engine():
+        def _create_engine() -> sqlalchemy.Engine:
+            """Build the SQLAlchemy engine configured for this database."""
             return sqlalchemy.create_engine(
                 url,
                 echo=verbose,
@@ -323,7 +334,7 @@ class AperoDatabase:
         # return dictionary state
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -335,7 +346,8 @@ class AperoDatabase:
         # update dict with state
         self.__dict__.update(state)
         # re-create engine after pickle with retry on OperationalError
-        def _create_engine():
+        def _create_engine() -> sqlalchemy.Engine:
+            """Rebuild the SQLAlchemy engine after unpickling."""
             return sqlalchemy.create_engine(
                 self.url,
                 echo=self.verbose,
@@ -353,14 +365,14 @@ class AperoDatabase:
         self._table_cache = {}
         self._unique_cols_cache = {}
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Standard string return
         :return:
         """
         return 'Database[{0}]'.format(self.url)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Standard string representation
         :return:
@@ -388,7 +400,8 @@ class AperoDatabase:
             return self._metadata_cache[cache_key]
 
         # Refresh metadata from database with retry on transient errors
-        def _reflect_metadata():
+        def _reflect_metadata() -> sqlalchemy.MetaData:
+            """Reflect the requested table or all tables from the database."""
             metadata = sqlalchemy.MetaData()
             if tablename is not None:
                 # Reflect specific table only
@@ -453,7 +466,7 @@ class AperoDatabase:
         self._table_cache[_tablename] = sqltable
         return sqltable
 
-    def clear_metadata_cache(self, tablename: Optional[str] = None):
+    def clear_metadata_cache(self, tablename: Optional[str] = None) -> None:
         """
         Clear the metadata cache for a specific table or all tables
 
@@ -473,8 +486,10 @@ class AperoDatabase:
             self._table_cache.clear()
             self._unique_cols_cache.clear()
 
-    def add_database(self):
-        def _check_and_create():
+    def add_database(self) -> None:
+        """Create the configured database when it does not already exist."""
+        def _check_and_create() -> None:
+            """Create the database only when it is not present."""
             if not database_exists(self.engine.url):
                 create_database(self.engine.url)
         _retry_operation(_check_and_create, max_retries=5)
@@ -482,7 +497,7 @@ class AperoDatabase:
     def add_table(self, tablename: str,
                   columns: List[sqlalchemy.Column],
                   indexes: List[sqlalchemy.Index] = None,
-                  uniques: List[str] = None):
+                  uniques: List[str] = None) -> None:
         """
         Add a table to the database
 
@@ -545,7 +560,8 @@ class AperoDatabase:
 
         # ----------------------------------------------------------------------
         # check to see if table name exists in database and create with retry
-        def _create_table():
+        def _create_table() -> None:
+            """Replace and create the table using the prepared schema."""
             inspector = sqlalchemy.inspect(self.engine)
             # remove current table if adding a table
             if inspector.has_table(tablename):
@@ -562,20 +578,21 @@ class AperoDatabase:
         # so a subsequent read reflects the newly-created schema
         self.clear_metadata_cache(tablename)
 
-    def get_tables(self):
+    def get_tables(self) -> List[str]:
         """
         Get a list of tables in the database
 
         :return:
         """
         # get inspector with retry
-        def _get_table_names():
+        def _get_table_names() -> List[str]:
+            """Read table names from the configured database."""
             inspector = sqlalchemy.inspect(self.engine)
             # get table names
             return inspector.get_table_names()
         return _retry_operation(_get_table_names, max_retries=5)
 
-    def has_table(self, tablename: str):
+    def has_table(self, tablename: str) -> bool:
         """
         Check if a table exists in the database
 
@@ -584,7 +601,8 @@ class AperoDatabase:
         :return: bool, True if table exists, False otherwise
         """
         # check if table exists with retry
-        def _check_table_exists():
+        def _check_table_exists() -> bool:
+            """Check the requested table through SQLAlchemy's inspector."""
             inspector = sqlalchemy.inspect(self.engine)
             # check if table exists
             return inspector.has_table(tablename)
@@ -609,7 +627,8 @@ class AperoDatabase:
         :return: int, the count
         """
         # define the meta data
-        def _execute_count():
+        def _execute_count() -> int:
+            """Run the count query for the selected table and condition."""
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # Build raw SQL to bypass the SQLAlchemy expression-language
@@ -646,7 +665,8 @@ class AperoDatabase:
         :return:
         """
         # define the meta data
-        def _execute_unique():
+        def _execute_unique() -> np.ndarray:
+            """Query, flatten, and deduplicate the selected column values."""
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # Build raw SQL to bypass the SQLAlchemy expression-language
@@ -728,7 +748,9 @@ class AperoDatabase:
             db.get("name", sortBy="radius", maxRows=5)
         """
         # define the meta data
-        def _execute_get():
+        def _execute_get() -> Union[list, pd.DataFrame, np.ndarray,
+                                   AstropyTable]:
+            """Execute the query and format rows as requested by the caller."""
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # Build raw SQL to bypass the SQLAlchemy expression-language
@@ -796,7 +818,7 @@ class AperoDatabase:
     def set_row(self, columns: Optional[Union[str, List[str]]] = None,
                 values: Optional[Union[str, List[str]]] = None,
                 tablename: Optional[str] = None, condition: Optional[str] = None,
-                update_dict: Optional[UpdateDictReturn] = None):
+                update_dict: Optional[UpdateDictReturn] = None) -> None:
         """
         Changes the data in existing rows.
 
@@ -828,7 +850,8 @@ class AperoDatabase:
             db.set(['mass', 'radius'], [b'null', b'null'], None)
         """
         # define the meta data and execute with retry
-        def _execute_set_row():
+        def _execute_set_row() -> None:
+            """Update matching rows using the normalized values."""
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # ---------------------------------------------------------------------
@@ -885,7 +908,7 @@ class AperoDatabase:
     def add_row(self, values: Optional[List[object]] = None,
                 tablename: Optional[str] = None,
                 columns: Union[str, List[str]] = "*",
-                insert_dict: Optional[UpdateDictReturn] = None):
+                insert_dict: Optional[UpdateDictReturn] = None) -> None:
         """
         Changes the data in existing rows.
 
@@ -984,7 +1007,7 @@ class AperoDatabase:
                 self.set_row(update_dict=insert_dict, condition=None)
 
     def add_rows(self, insert_dicts: List[dict],
-                 tablename: Optional[str] = None):
+                 tablename: Optional[str] = None) -> None:
         """
         Add multiple rows to a database table. Works across SQLAlchemy engines.
         If duplicates exist, falls back to row-by-row insertion that can update
@@ -1022,7 +1045,8 @@ class AperoDatabase:
         insert_query = sqlalchemy.insert(sqltable)
         # ---------------------------------------------------------------------
         # bulk insert with fallback for duplicates (with retry)
-        def _execute_bulk_insert():
+        def _execute_bulk_insert() -> None:
+            """Insert the prepared rows, updating duplicates individually."""
             try:
                 # Try bulk insert first
                 with self.engine.begin() as conn:
@@ -1035,7 +1059,7 @@ class AperoDatabase:
 
     def set_rows(self,
                  update_dicts: List[dict],
-                 tablename: Optional[str] = None):
+                 tablename: Optional[str] = None) -> None:
         """
         Changes the data in multiple existing rows.
 
@@ -1066,7 +1090,9 @@ class AperoDatabase:
                     expanded_unique_cols.append(col)
         unique_cols = sorted(set(expanded_unique_cols))
 
-        def _normalize_update_row(update_dict: dict):
+        def _normalize_update_row(
+            update_dict: dict
+            ) -> tuple[dict, Optional[str], bool, Optional[str]]:
             """
             Normalize a single update row without mutating caller state.
 
@@ -1144,7 +1170,9 @@ class AperoDatabase:
             is_batchable = explicit_condition is None and where_uhash is not None
             return row_update, fallback_condition, is_batchable, where_uhash
 
-        def _execute_row_update(row_update: dict, condition: Optional[str]):
+        def _execute_row_update(row_update: dict,
+                                condition: Optional[str]) -> None:
+            """Apply one update using its optional SQL condition."""
             # Build single-row UPDATE payload from normalized row dictionary.
             update_query = sqlalchemy.update(sqltable).values(row_update)
             # Apply WHERE clause only when supplied.
@@ -1154,7 +1182,9 @@ class AperoDatabase:
             with self.engine.begin() as conn:
                 conn.execute(update_query)
 
-        def _execute_batch_chunk(update_columns: List[str], rows: List[dict]):
+        def _execute_batch_chunk(update_columns: List[str],
+                                 rows: List[dict]) -> None:
+            """Execute one batch of updates sharing the same columns."""
             # Build bindparam mapping for the SET clause once per chunk shape.
             update_values = dict()
             for column in update_columns:
@@ -1180,7 +1210,8 @@ class AperoDatabase:
             with self.engine.begin() as conn:
                 conn.execute(update_query, batch_params)
 
-        def _execute_set_rows():
+        def _execute_set_rows() -> None:
+            """Group updates by shape and execute batch or fallback paths."""
             # Group rows by identical payload column shape.
             # executemany requires one SQL statement shape per batch.
             batch_groups = dict()
@@ -1231,7 +1262,7 @@ class AperoDatabase:
         _retry_operation(_execute_set_rows, max_retries=5)
 
     def delete_rows(self, tablename: Optional[str] = None,
-                    condition: Optional[str] = None):
+                    condition: Optional[str] = None) -> None:
         """
         Delete a row from the table
 
@@ -1260,12 +1291,13 @@ class AperoDatabase:
             delete_query = delete_query.where(sqlalchemy.text(condition))
         # ---------------------------------------------------------------------
         # execute the query with retry
-        def _execute_delete():
+        def _execute_delete() -> None:
+            """Delete rows selected by the prepared SQL expression."""
             with self.engine.begin() as conn:
                 conn.execute(delete_query)
         _retry_operation(_execute_delete, max_retries=5)
 
-    def delete_table(self, tablename: str):
+    def delete_table(self, tablename: str) -> None:
         """
         Deletes a table from the database, erasing all contained data
         permenantly!
@@ -1286,7 +1318,8 @@ class AperoDatabase:
                                       exception=func_name)
         # ---------------------------------------------------------------------
         # check to see if table name exists in database and delete with retry
-        def _delete_table():
+        def _delete_table() -> None:
+            """Drop the table if present before invalidating cached metadata."""
             inspector = sqlalchemy.inspect(self.engine)
             # cannot delete if table does not exist
             if not inspector.has_table(tablename):
@@ -1302,7 +1335,7 @@ class AperoDatabase:
         # invalidate caches for the dropped table
         self.clear_metadata_cache(tablename)
 
-    def rename_table(self, old_name: str, new_name: str):
+    def rename_table(self, old_name: str, new_name: str) -> None:
         """
         Renames a table.
 
@@ -1318,7 +1351,8 @@ class AperoDatabase:
         command = 'ALTER TABLE {} RENAME TO {}'.format(old_name, new_name)
         # ---------------------------------------------------------------------
         # execute the query with retry
-        def _execute_rename():
+        def _execute_rename() -> None:
+            """Run the prepared table rename statement."""
             with self.engine.begin() as conn:
                 conn.execute(sqlalchemy.text(command))
         _retry_operation(_execute_rename, max_retries=5)
@@ -1360,7 +1394,7 @@ class AperoDatabase:
     def add_from_pandas(self, dataframe: pd.DataFrame,
                         tablename: Optional[str] = None,
                         if_exists: Literal["fail", "replace", "append"] = 'append',
-                        index: bool = False):
+                        index: bool = False) -> None:
         """
         Use pandas to add rows to database
 
@@ -1393,7 +1427,8 @@ class AperoDatabase:
             dataframe = _hash_df(dataframe, unique_cols)
         # ---------------------------------------------------------------------
         # try to add pandas dataframe to table with retry
-        def _execute_add_from_pandas():
+        def _execute_add_from_pandas() -> None:
+            """Write the dataframe with pandas using the selected policy."""
             with self.engine.begin() as conn:
                 try:
                     dataframe.to_sql(tablename, conn, if_exists=if_exists,
@@ -1410,7 +1445,7 @@ class AperoDatabase:
                                               exception=AperoDatabaseError)
         _retry_operation(_execute_add_from_pandas, max_retries=5)
 
-    def backup(self):
+    def backup(self) -> None:
         """
         Backup the database to a csv file
         """
@@ -1422,7 +1457,7 @@ class AperoDatabase:
         # save as csv to backup path
         full_dataframe.to_csv(self.backup_path, index=False)
 
-    def reload_from_backup(self):
+    def reload_from_backup(self) -> None:
         """
         Reload the database from a csv file
         """
@@ -1434,7 +1469,7 @@ class AperoDatabase:
         # add to database
         self.add_from_pandas(full_dataframe, if_exists='replace')
 
-    def duplicate(self, old_database: 'AperoDatabase'):
+    def duplicate(self, old_database: 'AperoDatabase') -> None:
         """
         Duplicate the database from another database
 
@@ -1455,12 +1490,15 @@ class AperoDatabase:
         # create table
         metadata.create_all(self.engine)
         # copy data from old table to new table with retry
-        def _execute_copy():
+        def _execute_copy() -> None:
+            """Copy all rows from the source table to the new table."""
             with self.engine.begin() as conn:
                 conn.execute(new_table.insert().from_select('*', old_table.select()))
         _retry_operation(_execute_copy, max_retries=5)
 
-    def replace_paths(self, oldpath: str, newpath: str, colname: str):
+    def replace_paths(self, oldpath: str, newpath: str,
+                      colname: str) -> None:
+        """Replace values beginning with ``oldpath`` in the selected column."""
         # TODO: Test this (from 0.7.289) - UNTESTED
         # define the meta data
         # get metadata for only this specific table
@@ -1474,7 +1512,8 @@ class AperoDatabase:
         # create the update statement
         update_cmd = sqlalchemy.update(table).values(udict)
         # execute the update with retry
-        def _execute_replace_paths():
+        def _execute_replace_paths() -> None:
+            """Apply the prepared prefix-matching update."""
             with self.engine.begin() as conn:
                 conn.execute(update_cmd.where(table.c[colname].like(f'{oldpath}%')))
         _retry_operation(_execute_replace_paths, max_retries=5)
@@ -1495,7 +1534,8 @@ class AperoDatabase:
                                            '_infer_table_')
         # ---------------------------------------------------------------------
         # use an inspector to get a list of table names with retry
-        def _get_table_names():
+        def _get_table_names() -> List[str]:
+            """Read table names for table inference."""
             inspector = sqlalchemy.inspect(self.engine)
             return inspector.get_table_names()
         table_names = _retry_operation(_get_table_names, max_retries=5)
@@ -1560,7 +1600,8 @@ class AperoDatabase:
             return list(cached)
         # ---------------------------------------------------------------------
         # define an inspector and get unique constraints with retry
-        def _get_unique_constraints():
+        def _get_unique_constraints() -> List[dict]:
+            """Read the table's unique constraints from the database."""
             inspector = sqlalchemy.inspect(self.engine)
             return inspector.get_unique_constraints(tablename)
         unique_constraints = _retry_operation(_get_unique_constraints, max_retries=5)
@@ -1580,7 +1621,7 @@ class AperoDatabase:
 
 
 class AperoDatabaseColumns:
-    def __init__(self, name_prefix: Optional[str] = None):
+    def __init__(self, name_prefix: Optional[str] = None) -> None:
         """
         SQL database columns definition
 
@@ -1606,7 +1647,7 @@ class AperoDatabaseColumns:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -1617,7 +1658,8 @@ class AperoDatabaseColumns:
         self.__dict__.update(state)
 
     def add(self, name: str, datatype: Any, is_unique: bool = False,
-            is_index: bool = False, comment: Optional[str] = None):
+            is_index: bool = False,
+            comment: Optional[str] = None) -> None:
         """
         Add a column to the database
 
@@ -1644,7 +1686,8 @@ class AperoDatabaseColumns:
         if is_unique:
             self.uniques.append(name)
 
-    def __add__(self, other: 'AperoDatabaseColumns'):
+    def __add__(self, other: 'AperoDatabaseColumns'
+               ) -> 'AperoDatabaseColumns':
         """
         Add one Database Column list to another
 
@@ -1710,7 +1753,7 @@ class DatabaseManager:
     # define attribute types
     database: Union[AperoDatabase, None]
 
-    def __init__(self, params: Any = None, pconst: Any = None):
+    def __init__(self, params: Any = None, pconst: Any = None) -> None:
         """
         Construct the Database Manager
 
@@ -1745,7 +1788,8 @@ class DatabaseManager:
         # set unloaded database
         self.database = None
 
-    def load_db(self, check: bool = False, dparams: Optional[dict] = None):
+    def load_db(self, check: bool = False,
+                dparams: Optional[dict] = None) -> None:
         """
         Load the database class and connect to SQL database
 
@@ -1769,7 +1813,8 @@ class DatabaseManager:
         # load database
         self.database = AperoDatabase(self.dburl, tablename=self.dbtable)
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
+        """Restore saved fields and reset the parameter-constant reference."""
         # update dict with state
         self.__dict__.update(state)
         # read attributes not in state
@@ -1790,7 +1835,7 @@ class DatabaseManager:
         # return dictionary state
         return state
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
         :return:
@@ -1800,7 +1845,7 @@ class DatabaseManager:
         # return string representation
         return '{0}[{1}]'.format(self.classname, self.dburl)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Return the string representation of the class
         :return:
@@ -1811,7 +1856,7 @@ class DatabaseManager:
         return self.__str__()
 
     def database_settings(self, kind: Optional[str] = None,
-                          dparams: Optional[dict] = None):
+                          dparams: Optional[dict] = None) -> None:
         """
         Load the initial database settings
         :param kind: str, the database kind (mysql or sqlite3)
@@ -1858,12 +1903,13 @@ class DatabaseManager:
         # set url
         self.set_dburl()
 
-    def set_dburl(self):
+    def set_dburl(self) -> None:
+        """Build the connection URL from the configured database fields."""
         # set url
         self.dburl = (f'{self.dbtype}://{self.dbuser}:{self.dbpass}'
                       f'@{self.dbhost}:{self.dbport}/{self.dbname}')
 
-    def check_columns(self, dictionary: dict):
+    def check_columns(self, dictionary: dict) -> None:
         """
         Check the columns all exist in the database (based on pconst definition)
 
@@ -1889,6 +1935,7 @@ class DatabaseManager:
 # Working functions
 # =============================================================================
 def get_table_kind(table_name: str, dparams: Dict[str, Any] = None) -> str:
+    """Return the configured database kind for a table, or ``'unknown'``."""
     # load database yaml file
     if dparams is None:
         ddict = base.DPARAMS
@@ -2012,7 +2059,7 @@ def _hash_df(dataframe: pd.DataFrame, unique_cols: List[str]) -> pd.DataFrame:
     return dataframe
 
 
-def deal_with_null(value: Any = None):
+def deal_with_null(value: Any = None) -> Any:
     """
     Deal with null values in entry to database
 
@@ -2033,7 +2080,9 @@ def deal_with_null(value: Any = None):
     return value
 
 
-def _process_rows(rows, column_types=None):
+def _process_rows(rows: List[tuple],
+                  column_types: Optional[List[Any]] = None
+                  ) -> List[List[Any]]:
     """
     Process rows returned from database:
     - Convert Decimal instances to float

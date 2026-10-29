@@ -83,7 +83,7 @@ class UniqueEntryException(Exception):
 class DatabaseError(DatabaseException):
     def __init__(self, message: Union[str, None] = None,
                  errorobj: Any = None, path: Union[str, Path] = None,
-                 func_name: Union[str, None] = None):
+                 func_name: Union[str, None] = None) -> None:
         """
         Construct the Database Error instance
         
@@ -109,20 +109,20 @@ class DatabaseError(DatabaseException):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores the instance state from the pickle.
         """
         # update dict with state
         self.__dict__.update(state)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Standard __str__ return (used in raising as Exception)
-        :return:
+        :return: The formatted database error message.
         """
         emsg = drs_base.BETEXT['00-002-00028']
         if self.path is not None:
@@ -143,7 +143,8 @@ class Database:
                  database which will not be saved when the program closes.
     """
 
-    def __init__(self, *args, verbose: bool = False, **kwargs):
+    def __init__(self, *args: Any, verbose: bool = False,
+                 **kwargs: Any) -> None:
         """
         Construct the most basic database - overridden by MySQLDatabase and
         SQLiteDatabase (do not use Database directly)
@@ -172,7 +173,7 @@ class Database:
                    dbname: Union[str, None] = None,
                    connect_kind: str = 'None',
                    func: Union[str, None] = None,
-                   kind: Union[str, None] = None):
+                   kind: Union[str, None] = None) -> Any:
         """
         Connect to the database
         Only use within with statement (so connection is closed afterwards)
@@ -208,36 +209,37 @@ class Database:
         # return dictionary state
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores the instance state from the pickle.
         """
         # set function name
         _ = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Standard string return
-        :return:
+        :return: The database representation.
         """
         return 'Database[{0}]'.format(self.path)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Standard string representation
-        :return:
+        :return: The database representation.
         """
         return self.__str__()
 
-    def cursor(self, conn):
+    def cursor(self, conn: Any) -> Any:
         """
         Attempt to retrieve a database cursor
 
+        :param conn: An open database connection.
         :return: The cursor
         """
         return conn.cursor()
@@ -295,14 +297,14 @@ class Database:
         return result
 
     def _execute(self, cursor: sqlite3.Cursor, command: str,
-                 fetch: bool = True):
+                 fetch: bool = True) -> Any:
         """
         Dummy function to try to catch database locked errors
         (up to a max wait time)
 
         :param cursor: sqlite cursor (self.cursor())
         :param command: str, The SQL command to be run.
-        :return:
+        :return: Fetched database rows, or None when fetch is False.
         """
         cursor.execute(command)
         if fetch:
@@ -373,7 +375,7 @@ class Database:
                            https://www.sqlitetutorial.net/sqlite-where/.
                        If None, no results will be filtered out.
 
-        :return:
+        :return: An array of unique, non-null values from the column.
         """
         # set function name
         func_name = __NAME__ + '.Database.get()'
@@ -530,7 +532,7 @@ class Database:
 
     def set(self, columns: Union[str, List[str]], values: Union[str, List[str]],
             table: Optional[str] = None, condition: Optional[str] = None,
-            unique_cols: Optional[List[str]] = None):
+            unique_cols: Optional[List[str]] = None) -> None:
         """
         Changes the data in existing rows.
 
@@ -630,7 +632,7 @@ class Database:
 
     def add_row(self, values: List[object], table: Optional[str] = None,
                 columns: Union[str, List[str]] = "*",
-                unique_cols: Optional[List[str]] = None):
+                unique_cols: Optional[List[str]] = None) -> None:
         """
         Adds a row to the specified tables with the given values.
 
@@ -681,7 +683,7 @@ class Database:
         self.execute(command, fetch=False)
 
     def delete_rows(self, table: Optional[str] = None,
-                    condition: Optional[str] = None):
+                    condition: Optional[str] = None) -> None:
         """
         Delete a row from the table
 
@@ -712,7 +714,7 @@ class Database:
                   field_types: List[Union[str, type]],
                   unique_cols: Optional[List[str]] = None,
                   index_cols: Optional[List[str]] = None,
-                  index_groups: Optional[List[List[str]]] = None):
+                  index_groups: Optional[List[List[str]]] = None) -> None:
         """
         Adds a table to the database file.
 
@@ -811,19 +813,19 @@ class Database:
         # update the table list
         self._update_table_list_()
 
-    def add_unique_uhash_col(self, table: Optional[str] = None):
+    def add_unique_uhash_col(self, table: Optional[str] = None) -> None:
         """
         Need a way to update the unique column (uhash) if set -
         this is because pandas removes uniqueness from the column
 
         :param table: str or None, the table name
-        :return:
+        :return: None. The base implementation is not supported.
         """
         _ = table
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def delete_table(self, name: str):
+    def delete_table(self, name: str) -> None:
         """
         Deletes a table from the database, erasing all contained data
         permenantly!
@@ -847,7 +849,7 @@ class Database:
         # update the table list
         self._update_table_list_()
 
-    def rename_table(self, old_name: str, new_name: str):
+    def rename_table(self, old_name: str, new_name: str) -> None:
         """
         Renames a table.
 
@@ -874,16 +876,16 @@ class Database:
             return False
 
     # admin methods
-    def backup(self):
+    def backup(self) -> None:
         """
         Back up the database
 
-        :return:
+        :return: None. The base implementation is not supported.
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def reload_from_backup(self, pconst: Any = None):
+    def reload_from_backup(self, pconst: Any = None) -> None:
         """
         Reload database from back up the database
 
@@ -891,24 +893,24 @@ class Database:
                        required to get the unique columns - if unset assumes
                        there are no unique columns
 
-        :return:
+        :return: None. The base implementation is not supported.
         """
         _ = pconst
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def lock(self):
+    def lock(self) -> None:
         """
         Lock the database (until unlock is done)
-        :return:
+        :return: None. The base implementation is not supported.
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def unlock(self):
+    def unlock(self) -> None:
         """
         Unlock the database (when a lock was done)
-        :return:
+        :return: None. The base implementation is not supported.
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
@@ -920,7 +922,7 @@ class Database:
         Get the table information for a table name
 
         :param table: str, the name of the Table
-        :return:
+        :return: Column names and their database types.
         """
         _ = table
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
@@ -996,7 +998,7 @@ class Database:
 
         :param table: str or None - if None tries to infer the table name
                       (only if we have one table)
-        :return:
+        :return: The selected table name.
         """
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
@@ -1039,7 +1041,7 @@ class Database:
             return self.tables[0]
         return table
 
-    def _update_table_list_(self):
+    def _update_table_list_(self) -> None:
         """
         Reads the database for tables and updates the class members
         accordingly.
@@ -1047,12 +1049,13 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def _to_astropy_table(self, result, table: Optional[str] = None) -> Table:
+    def _to_astropy_table(self, result: Any,
+                          table: Optional[str] = None) -> Table:
         """
         Convert result to astropy table
 
-        :param result:
-        :return:
+        :param result: Rows returned by the database query.
+        :return: An Astropy table containing the query results.
         """
         # set function name
         func_name = __NAME__ + '.Database._to_astropy_table()'
@@ -1078,7 +1081,7 @@ class Database:
 
     def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
-                        unique_cols: Optional[List[str]] = None):
+                        unique_cols: Optional[List[str]] = None) -> None:
         """
         Use pandas to add rows to database
 
@@ -1097,7 +1100,7 @@ class Database:
                             are used to form the unique hash for specifying
                             unique rows
 
-        :return:
+        :return: None. The base implementation is not supported.
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
@@ -1106,14 +1109,14 @@ class Database:
         """
         Use pandas to get sql command
         :param command:
-        :return:
+        :return: The query result as a pandas DataFrame.
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
 
 class DatabaseColumns:
-    def __init__(self, name_prefix: Optional[str] = None):
+    def __init__(self, name_prefix: Optional[str] = None) -> None:
         """
         SQL database columns definition
 
@@ -1138,18 +1141,19 @@ class DatabaseColumns:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores the instance state from the pickle.
         """
         # update dict with state
         self.__dict__.update(state)
 
     def add(self, name: str, datatype: str, is_unique: bool = False,
-            is_index: bool = False, comment: Optional[str] = None):
+            is_index: bool = False,
+            comment: Optional[str] = None) -> None:
         """
         Add a column to the database
 
@@ -1174,13 +1178,13 @@ class DatabaseColumns:
         if self.name_prefix is not None:
             self.altnames.append('{0}{1}'.format(self.name_prefix, name))
 
-    def __add__(self, other: 'DatabaseColumns'):
+    def __add__(self, other: 'DatabaseColumns') -> 'DatabaseColumns':
         """
         Add one Database Column list to another
 
         :param other: DatabaseColumns instance to be added to self
 
-        :return: None
+        :return: A new column definition containing both sets of columns.
         """
         new = DatabaseColumns(name_prefix=self.name_prefix)
         # add to names
@@ -1195,7 +1199,7 @@ class DatabaseColumns:
         return new
 
     @staticmethod
-    def _dtyper(datatype):
+    def _dtyper(datatype: str) -> type:
         """
         Translate sql data types into python data types
         """
@@ -1213,7 +1217,7 @@ class DatabaseColumns:
     def get_index_groups(self) -> Union[List[List[str]], None]:
         """
         get the index groups - return None if empty
-        :return:
+        :return: None when no index groups are configured, else the groups.
         """
         if len(self.index_groups) == 0:
             return None
@@ -1223,7 +1227,7 @@ class DatabaseColumns:
 
 class SQLiteDatabase(Database):
     # A wrapper for an SQLite database.
-    def __init__(self, path: str, verbose: bool = False):
+    def __init__(self, path: str, verbose: bool = False) -> None:
         """
         Create an object for reading and writing to a SQLite database.
 
@@ -1250,7 +1254,7 @@ class SQLiteDatabase(Database):
                    dbname: Union[str, None] = None,
                    connect_kind: str = 'sqlite',
                    func: Union[str, None] = None,
-                   kind: Union[str, None] = None):
+                   kind: Union[str, None] = None) -> sqlite3.Connection:
         """
         Connect to the sqlite database
         Only use within with statement (so connection is closed afterwards)
@@ -1284,10 +1288,10 @@ class SQLiteDatabase(Database):
                                       exceptionname='DatabaseError',
                                       exception=DatabaseError)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Standard string return
-        :return: 
+        :return: The SQLite database representation.
         """
         return 'SQLiteDatabase[{0}]'.format(self.path)
 
@@ -1306,12 +1310,12 @@ class SQLiteDatabase(Database):
         # return dictionary state
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores the instance state and table list.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1323,7 +1327,7 @@ class SQLiteDatabase(Database):
                   field_types: List[Union[str, type]],
                   unique_cols: Optional[List[str]] = None,
                   index_cols: Optional[List[str]] = None,
-                  index_groups: Optional[List[List[str]]] = None):
+                  index_groups: Optional[List[List[str]]] = None) -> None:
         """
         Adds a table to the database file.
 
@@ -1440,7 +1444,7 @@ class SQLiteDatabase(Database):
         # update the table list
         self._update_table_list_()
 
-    def add_unique_uhash_col(self, table: Optional[str] = None):
+    def add_unique_uhash_col(self, table: Optional[str] = None) -> None:
         """
         Need a way to update the unique column (uhash) if set -
         this is because pandas removes uniqueness from the column
@@ -1449,7 +1453,7 @@ class SQLiteDatabase(Database):
         table with the correct types and then copy table across
 
         :param table: str or None, the table name
-        :return:
+        :return: None. Adds the unique hash constraint when applicable.
         """
         # get current column names and column types
         colnames, coltypes = self.table_info(table)
@@ -1469,14 +1473,14 @@ class SQLiteDatabase(Database):
         self.rename_table(tmp_name, table)
 
     def _execute(self, cursor: sqlite3.Cursor, command: str,
-                 fetch: bool = True):
+                 fetch: bool = True) -> Any:
         """
         Dummy function to try to catch database UNIQUE(col) error and
         catch locked errors (up to a max wait time)
 
         :param cursor: sqlite cursor (self.cursor())
         :param command: str, The SQL command to be run.
-        :return:
+        :return: Fetched database rows, or None when fetch is False.
         """
         # start a counter
         time_count = 0
@@ -1513,7 +1517,7 @@ class SQLiteDatabase(Database):
 
     def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
-                        unique_cols: Optional[List[str]] = None):
+                        unique_cols: Optional[List[str]] = None) -> None:
         """
         Use pandas to add rows to database
 
@@ -1532,7 +1536,7 @@ class SQLiteDatabase(Database):
                             are used to form the unique hash for specifying
                             unique rows
 
-        :return:
+        :return: None. Adds the DataFrame rows to the database.
         """
         # set function name
         func_name = __NAME__ + '.SQLiteDatabase.add_from_pandas()'
@@ -1580,7 +1584,7 @@ class SQLiteDatabase(Database):
         """
         Use pandas to get sql command
         :param command:
-        :return:
+        :return: The result as a pandas DataFrame.
         """
         # set function name
         func_name = __NAME__ + '.SQLiteDatabase._to_pandas()'
@@ -1609,7 +1613,7 @@ class SQLiteDatabase(Database):
         Get the table information for a table name
 
         :param table: str, the name of the Table
-        :return:
+        :return: Column names and their database types.
         """
         func_name = __NAME__ + '.Database.colnames()'
         # infer the table name if None
@@ -1648,11 +1652,11 @@ class SQLiteDatabase(Database):
         return colnames, coltypes
 
     # admin methods
-    def backup(self):
+    def backup(self) -> None:
         """
         Back up the database
 
-        :return:
+        :return: None. Writes a backup of the database.
         """
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'backup')
         # construct backup path
@@ -1674,7 +1678,7 @@ class SQLiteDatabase(Database):
                 backup_conn.close()
                 conn.close()
 
-    def reload_from_backup(self, pconst: Any = None):
+    def reload_from_backup(self, pconst: Any = None) -> None:
         """
         Reload database from back up the database
 
@@ -1682,7 +1686,7 @@ class SQLiteDatabase(Database):
                        required to get the unique columns - if unset assumes
                        there are no unique columns
 
-        :return:
+        :return: None. Restores the database from its backup.
         """
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'backup')
         # don't use pconst here
@@ -1699,21 +1703,21 @@ class SQLiteDatabase(Database):
                 backup_conn.close()
                 conn.close()
 
-    def lock(self):
+    def lock(self) -> None:
         """
         Lock the database (until unlock is done)
-        :return:
+        :return: None. Starts an exclusive database transaction.
         """
         self.execute('BEGIN EXCLUSIVE;', fetch=False)
 
-    def unlock(self):
+    def unlock(self) -> None:
         """
         Unlock the database (when a lock was done)
-        :return:
+        :return: None. Commits the active database transaction.
         """
         self.execute('COMMIT;', fetch=False)
 
-    def _update_table_list_(self):
+    def _update_table_list_(self) -> None:
         """
         Reads the database for tables and updates the class members
         accordingly.
@@ -1735,7 +1739,7 @@ class MySQLDatabase(Database):
     def __init__(self, path: str, host: str, user: str, passwd: str,
                  database: str, tablename: str, verbose: bool = False,
                  absolute_table_name: bool = False,
-                 tries: int = 20):
+                 tries: int = 20) -> None:
         """
         Create an object for reading and writing to a SQLite database.
 
@@ -1804,7 +1808,7 @@ class MySQLDatabase(Database):
                    dbname: Union[str, None] = None,
                    connect_kind: str = 'mysql.connect',
                    func: Union[str, None] = None,
-                   kind: Union[str, None] = None):
+                   kind: Union[str, None] = None) -> Any:
         """
         Connect to the mysql database
         Only use within with statement (so connection is closed afterwards)
@@ -1885,10 +1889,10 @@ class MySQLDatabase(Database):
                                   exceptionname='DatabaseError',
                                   exception=DatabaseError)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Standard string return
-        :return:
+        :return: The MySQL database representation.
         """
         return 'MySQLDatabase[{0}]'.format(self.path)
 
@@ -1907,12 +1911,12 @@ class MySQLDatabase(Database):
         # return dictionary state
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores the instance state and table list.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1971,7 +1975,7 @@ class MySQLDatabase(Database):
         # return the sql result
         return result
 
-    def add_database(self):
+    def add_database(self) -> None:
         """
         Check for 'database' in the MySQL Database construct and if not add
         'database' to MySQL
@@ -2040,7 +2044,7 @@ class MySQLDatabase(Database):
                                                   exceptionname='DatabaseError',
                                                   exception=DatabaseError)
 
-    def cursor(self, conn):
+    def cursor(self, conn: Any) -> Any:
         """
         Attempt to retrieve a database cursor and reconnect on failure
 
@@ -2049,13 +2053,13 @@ class MySQLDatabase(Database):
         return conn.cursor()
 
     def _execute(self, cursor: mysql.connection.MySQLCursor, command: str,
-                 fetch: bool = True):
+                 fetch: bool = True) -> Any:
         """
         Dummy function to try to catch database UNIQUE(col) error
 
         :param cursor: mysql cursor (self.cursor())
         :param command: str, The SQL command to be run.
-        :return:
+        :return: Fetched database rows, or None when fetch is False.
         """
         # while counter is less than maximum wait time
         try:
@@ -2079,7 +2083,7 @@ class MySQLDatabase(Database):
                   field_types: List[Union[str, type]],
                   unique_cols: Optional[List[str]] = None,
                   index_cols: Optional[List[str]] = None,
-                  index_groups: Optional[List[List[str]]] = None):
+                  index_groups: Optional[List[List[str]]] = None) -> None:
         """
         Adds a table to the database file.
 
@@ -2202,13 +2206,13 @@ class MySQLDatabase(Database):
         # update the table list
         self._update_table_list_()
 
-    def add_unique_uhash_col(self, table: Optional[str] = None):
+    def add_unique_uhash_col(self, table: Optional[str] = None) -> None:
         """
         Need a way to update the unique column (uhash) if set -
         this is because pandas removes uniqueness from the column
 
         :param table: str or None, the table name
-        :return:
+        :return: None. Adds the unique hash constraint to the table.
         """
         # infer table name
         table = self._infer_table_(table)
@@ -2224,7 +2228,7 @@ class MySQLDatabase(Database):
 
     def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
-                        unique_cols: Optional[List[str]] = None):
+                        unique_cols: Optional[List[str]] = None) -> None:
         """
         Use pandas to add rows to database
 
@@ -2243,7 +2247,7 @@ class MySQLDatabase(Database):
                             are used to form the unique hash for specifying
                             unique rows
 
-        :return:
+        :return: None. Adds the DataFrame rows to the database.
         """
         # set function name
         func_name = __NAME__ + '.Database.add_from_pandas()'
@@ -2291,7 +2295,7 @@ class MySQLDatabase(Database):
         """
         Use pandas to get sql command
         :param command:
-        :return:
+        :return: The result as a pandas DataFrame.
         """
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
@@ -2313,7 +2317,7 @@ class MySQLDatabase(Database):
         # return dataframe
         return df
 
-    def _update_table_list_(self):
+    def _update_table_list_(self) -> None:
         """
         Reads the database for tables and updates the class members
         accordingly.
@@ -2336,7 +2340,7 @@ class MySQLDatabase(Database):
         Get the table information for a table name
 
         :param table: str, the name of the Table
-        :return:
+        :return: Column names and their database types.
         """
         func_name = __NAME__ + '.Database.colnames()'
         # infer the table name if None
@@ -2375,11 +2379,11 @@ class MySQLDatabase(Database):
         return colnames, coltypes
 
     # admin methods
-    def backup(self):
+    def backup(self) -> None:
         """
         Back up the database
 
-        :return:
+        :return: None. Writes a backup of the database when configured.
         """
         # construct backup path
         if self.backup_path is None:
@@ -2399,7 +2403,7 @@ class MySQLDatabase(Database):
         # save to csv file
         df.to_csv(self.backup_path)
 
-    def reload_from_backup(self, pconst: Any = None):
+    def reload_from_backup(self, pconst: Any = None) -> None:
         """
         Reload database from back up the database
 
@@ -2407,7 +2411,7 @@ class MySQLDatabase(Database):
                        required to get the unique columns - if unset assumes
                        there are no unique columns
 
-        :return:
+        :return: None. Restores the database from its backup when configured.
         """
         # construct backup path
         if self.backup_path is None:
@@ -2542,8 +2546,9 @@ def _encode_value(value: str, dtype: Type) -> Union[str, None, float]:
     Convert an sql string into a python variable
 
     :param value: str, the sql value
+    :param dtype: Expected Python type used to interpret SQL NULL.
 
-    :return: str, None or float - depending on the sql string 'value'
+    :return: The decoded SQL value, with NULL mapped according to ``dtype``.
     """
     # return None
     if dtype is None and value == 'NULL':
@@ -2561,7 +2566,7 @@ def _proxy_table(tablename: str) -> str:
     also make sure it is ALWAYS lower case
 
     :param tablename: table name to change
-    :return:
+    :return: The lower-case table name, with ``_db`` appended when needed.
     """
     if tablename.endswith('_db'):
         return tablename.lower()
@@ -2609,9 +2614,9 @@ def _hash_col(columns: List[str], values: List[Any],
     :param columns: list of column names
     :param values: list of values (without the hash column)
     :param unique_cols: list of column names to construct the hash
+    :param return_string: If True, return only the generated hash string.
 
-    :return: either a str (if return_string is True) or a tuple, the
-             updated columns and values
+    :return: The generated hash string, or updated columns and values.
     """
 
     # store the positions in values of unique columns
@@ -2654,7 +2659,7 @@ def _hash_col(columns: List[str], values: List[Any],
 # Define base databases
 # =============================================================================
 class BaseDatabaseManager:
-    def __init__(self, check: bool = True):
+    def __init__(self, check: bool = True) -> None:
         """
         Constructor of the Base Database Manager class
 
@@ -2685,27 +2690,28 @@ class BaseDatabaseManager:
         # set path
         self.path = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
-        :return:
+        :return: The manager class and configured path.
         """
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__str__')
         # return string representation
         return '{0}[{1}]'.format(self.classname, self.path)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Return the string representation of the class
-        :return:
+        :return: The manager class and configured path.
         """
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__repr__')
         # return string representation
         return self.__str__()
 
-    def set_path(self, path: Union[Path, str], check: bool = True):
+    def set_path(self, path: Union[Path, str],
+                 check: bool = True) -> None:
         """
         Set the path for the database
 
@@ -2744,13 +2750,13 @@ class BaseDatabaseManager:
             emsg = 'Database type "{0}" invalid'
             raise DatabaseException(emsg.format(self.dbtype))
 
-    def load_db(self, check: bool = False):
+    def load_db(self, check: bool = False) -> None:
         """
         Load a database (using database_wrapper)
 
         :param check: bool, if we don't want to check, do nothing and assume
                       database is already loaded
-        :return:
+        :return: None. Loads the database when required.
         """
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'load_db')
@@ -2760,7 +2766,7 @@ class BaseDatabaseManager:
         # load database
         self.database = database_wrapper(self.kind, self.path)
 
-    def database_settings(self):
+    def database_settings(self) -> None:
         """
         Update the database settings using database yaml file
 
@@ -2783,7 +2789,7 @@ class BaseDatabaseManager:
 
 
 class LanguageDatabase(BaseDatabaseManager):
-    def __init__(self, check: bool = True):
+    def __init__(self, check: bool = True) -> None:
         """
         Constructor of the Language Database class
 
@@ -2821,10 +2827,10 @@ class LanguageDatabase(BaseDatabaseManager):
         # set path
         self.set_path(self.databasefile, check=check)
 
-    def path_definitions(self):
+    def path_definitions(self) -> None:
         """
         Sets up the path definitions required to load language database
-        :return:
+        :return: None. Sets the language database file paths.
         """
         # set function
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
@@ -2884,7 +2890,7 @@ class LanguageDatabase(BaseDatabaseManager):
 
     def add_entry(self, key: str, kind: str, comment: str,
                   arguments: Union[str, None] = None,
-                  textdict: Union[Dict[str, str], None] = None):
+                  textdict: Union[Dict[str, str], None] = None) -> None:
         """
         Add a language entry
 
@@ -2895,7 +2901,7 @@ class LanguageDatabase(BaseDatabaseManager):
         :param arguments: None or argument
         :param textdict:
 
-        :return:
+        :return: None. Adds or updates the language entry.
         """
         # set function
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
@@ -3002,21 +3008,21 @@ class LanguageDatabase(BaseDatabaseManager):
 # Function with annoying warning that need suppressing
 #    when we use base.WARN_TO_ERROR
 # =============================================================================
-def _ignore_warnings():
+def _ignore_warnings() -> None:
     """
     filter to ignore all warnings
 
-    :return:
+    :return: None. Sets the warning filter when configured.
     """
     if base.WARN_TO_ERROR:
         warnings.filterwarnings('ignore')
 
 
-def _unignore_warnings():
+def _unignore_warnings() -> None:
     """
     filter to turn all warnings back on
 
-    :return:
+    :return: None. Restores warnings as errors when configured.
     """
     if base.WARN_TO_ERROR:
         warnings.filterwarnings('error')
@@ -3097,7 +3103,7 @@ def _mysql_exectue(cursor: Any, command: str) -> Any:
 
     :param cursor: a MySQL cursor (from connection)
     :param command: str, the command to run
-    :return:
+    :return: The cursor after executing the command.
     """
     # catch all warnings at this point
     with warnings.catch_warnings():

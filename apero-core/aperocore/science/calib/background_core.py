@@ -452,7 +452,7 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
     full_vbas = np.stack([full_v ** q
                           for q in range(xorder + 1)]).T
 
-    def _solve(w):
+    def _solve(w: np.ndarray) -> np.ndarray:
         """the normal equations, as moments of the weights"""
         smom = (upow @ w) @ vpow.T
         rmom = (upow[:yorder + 1] @ (w * zc)) @ vpow[:xorder + 1].T
@@ -460,11 +460,11 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
         coef, *_ = np.linalg.lstsq(mat, rmom.ravel(), rcond=None)
         return coef.reshape(yorder + 1, xorder + 1)
 
-    def _surface(coef):
+    def _surface(coef: np.ndarray) -> np.ndarray:
         """evaluate the polynomial surface from its coefficients"""
         return (ubas @ coef) @ vbas.T
 
-    def _full_surface(coef):
+    def _full_surface(coef: np.ndarray) -> np.ndarray:
         """evaluate the polynomial surface on the full detector grid"""
         # basis arrays are precomputed once outside the fit loop
         return (full_ubas @ coef) @ full_vbas.T
@@ -495,7 +495,7 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
     # -------------------------------------------------------------------
     # anneal, then iterate to the fixed point
     # -------------------------------------------------------------------
-    def _run(fpos):
+    def _run(fpos: float) -> Tuple[np.ndarray, np.ndarray, int]:
         """anneal, then iterate the weighted fit to the fixed point"""
         coef = np.array(start)
         surf = _surface(coef)
@@ -519,7 +519,7 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
                 break
         return coef, surf, npass
 
-    def _balance(surf):
+    def _balance(surf: np.ndarray) -> float:
         """fraction of the believable pixels sitting below the surface"""
         n = np.where(ok, (zc - surf) / esafe, np.nan)
         near = ok & (np.abs(n) < 3.0)

@@ -12,6 +12,7 @@ import shutil
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -61,7 +62,8 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # =============================================================================
 class DatabaseHolder:
     def __init__(self, params, name, kind, path=None, df=None, url=None,
-                 tablename=None, hash_col: bool = False):
+                 tablename=None, hash_col: bool = False) -> None:
+        """Store the configuration and loaded state for one database."""
         self.name = name
         self.kind = kind
         self.path = path
@@ -75,7 +77,8 @@ class DatabaseHolder:
         self.tablename = tablename
         self.url = url
 
-    def load_dataframe(self, reload=False):
+    def load_dataframe(self, reload: bool = False) -> None:
+        """Load the database into ``self.df`` unless it is already loaded."""
         # if we already have the dataframe don't load it
         if isinstance(self.df, pd.DataFrame) and (not reload):
             return
@@ -112,7 +115,8 @@ class DatabaseHolder:
             else:
                 self.df = dataframe
 
-    def save_dataframe(self, df):
+    def save_dataframe(self, df: Optional[pd.DataFrame]) -> None:
+        """Replace the backing database table with the supplied dataframe."""
         # if dataframe is None do nothing
         if df is None:
             return
@@ -132,14 +136,16 @@ class DatabaseHolder:
         # log: Saved {0} database
         print(textentry('40-506-00011', args=margs))
 
-    def is_openable(self, rows, cols, datamodel):
+    def is_openable(self, rows: List[int], cols: List[int],
+                    datamodel: pd.DataFrame
+                    ) -> Tuple[bool, Optional[List[Union[Path, str]]]]:
         """
         Check whether we can open the file in this cell
 
         :param rows: list of integers - must be length=1 to open file
         :param cols: list of integers - must be length=1 to open file
         :param datamodel: a data frame (taken from the data model)
-        :return:
+        :return: Whether the selected cell is a FITS file and its path/type.
         """
         # only check if len rows and columns is 1
         if len(rows) != 1 or len(cols) != 1:
@@ -168,7 +174,9 @@ class DatabaseHolder:
         else:
             return False, None
 
-    def load_file(self, rows, cols, datamodel):
+    def load_file(self, rows: List[int], cols: List[int],
+                  datamodel: pd.DataFrame) -> None:
+        """Open a selected FITS file in DS9 when the cell supports it."""
         # double check we have a fits file
         cond, out = self.is_openable(rows, cols, datamodel)
         # deal with not being a openable file
@@ -184,11 +192,13 @@ class DatabaseHolder:
 
 class DatabaseTable(Table):
     def __init__(self, parent=None, database_holder: DatabaseHolder = None,
-                 **kwargs):
+                 **kwargs) -> None:
+        """Create a table view linked to its database holder."""
         Table.__init__(self, parent, **kwargs)
         self.db_hold = database_holder
 
-    def popupMenu(self, event, rows=None, cols=None, outside=None):
+    def popupMenu(self, event, rows=None, cols=None,
+                  outside=None) -> tk.Menu:
         """
         Same as parent just without file/edit/plot/table menus on right click
         :param event:
@@ -240,7 +250,8 @@ class DatabaseTable(Table):
         popupmenu = tk.Menu(self, tearoff=0)
 
         # noinspection PyPep8Naming
-        def popupFocusOut(_event):
+        def popupFocusOut(_event) -> None:
+            """Dismiss the context menu when it loses focus."""
             _ = _event
             popupmenu.unpost()
 
@@ -288,10 +299,11 @@ class DatabaseTable(Table):
 
     # noinspection PyPep8Naming
     def getaColor(self, oldcolor):
+        """Open the color picker initialized with the existing row color."""
         # TODO: may be removed if bug in pandas table fixed (Issue #183)
         return dialogs.pickColor(self, oldcolor=oldcolor)
 
-    def handleCellEntry(self, row, col):
+    def handleCellEntry(self, row, col) -> None:
         """Callback for cell entry"""
         super().handleCellEntry(row, col)
         self.prevdf = self.model.df.copy()
@@ -300,7 +312,8 @@ class DatabaseTable(Table):
 # noinspection PyUnresolvedReferences
 class DatabaseExplorer(tk.Frame):
 
-    def __init__(self, parent=None, databases=None):
+    def __init__(self, parent=None, databases=None) -> None:
+        """Create the database selector, table view, and application menu."""
         self._titletxt = 'APERO Database Explorer'
         # deal with database
         if databases is None:
@@ -353,7 +366,8 @@ class DatabaseExplorer(tk.Frame):
         # cannot make menu until table defined
         self.main.config(menu=self.menubar)
 
-    def make_selector(self):
+    def make_selector(self) -> None:
+        """Create the selector used to switch between databases."""
         self.selector_frame = tk.Frame(self.main)
         self.selector_frame.pack(fill=tk.X, anchor=tk.N)
         # add text box
@@ -370,7 +384,8 @@ class DatabaseExplorer(tk.Frame):
         # deal with a change in value
         self.database_option.trace('w', self.change_table)
 
-    def make_table(self, database_holder):
+    def make_table(self, database_holder) -> None:
+        """Display the selected database in the explorer table."""
         self.current_dataframe = database_holder.df
         self.has_data = True
         self.table_frame = tk.Frame(self.main)
@@ -383,7 +398,8 @@ class DatabaseExplorer(tk.Frame):
         self.table = DatabaseTable(self.table_frame, **kwargs)
         self.table.show()
 
-    def change_table(self, *args, reload=False):
+    def change_table(self, *args, reload=False) -> None:
+        """Save the current view state and load the selected database."""
         # do not use args
         _ = args
         # do not ask if no changes were made
@@ -415,7 +431,8 @@ class DatabaseExplorer(tk.Frame):
         # cannot make menu until table defined
         self.main.config(menu=self.menubar)
 
-    def update_database(self):
+    def update_database(self) -> None:
+        """Commit modified table data after user confirmation."""
         # update table_change
         if self.table.prevdf is not None:
             self.table_change = True
@@ -450,7 +467,8 @@ class DatabaseExplorer(tk.Frame):
             # now we have updated we can set table_changes to False
             self.table_change = False
 
-    def refresh_database(self):
+    def refresh_database(self) -> None:
+        """Reload all database views, prompting before discarding edits."""
         # see if we really want to refresh
         if self.table.prevdf is not None or self.table_change:
             refresh = self.refresh_warning()
@@ -464,7 +482,8 @@ class DatabaseExplorer(tk.Frame):
             # change table
             self.change_table(reload=True)
 
-    def menu(self):
+    def menu(self) -> None:
+        """Build the explorer's File, Edit, and Table menus."""
 
         # modified from Table.core populMenu
         defaultactions = {
@@ -512,7 +531,8 @@ class DatabaseExplorer(tk.Frame):
         self.menubar = tk.Menu(self.main)
 
         # noinspection PyPep8Naming
-        def createSubMenu(parent, label, commands):
+        def createSubMenu(parent, label, commands) -> tk.Menu:
+            """Add a labeled menu containing the supplied actions."""
             menu = tk.Menu(parent, tearoff=0)
             self.menubar.add_cascade(label=label, menu=menu)
             for _action in commands:
@@ -526,6 +546,7 @@ class DatabaseExplorer(tk.Frame):
         createSubMenu(self.menubar, 'Table', tablecommands)
 
     def update_warning(self) -> bool:
+        """Ask whether pending edits should be written to the databases."""
         # set up message box
         title = 'Update ALL SQL database(s)?'
         message = ('Are you sure you want to commit changes '
@@ -538,6 +559,7 @@ class DatabaseExplorer(tk.Frame):
             return False
 
     def refresh_warning(self) -> bool:
+        """Ask whether unsaved edits may be discarded during refresh."""
         # set up message box
         title = 'Refresh ALL SQL database(s)?'
         message = ('There are unsaved changes are you sure you want to refresh '
@@ -549,7 +571,8 @@ class DatabaseExplorer(tk.Frame):
         else:
             return False
 
-    def on_exit(self):
+    def on_exit(self) -> None:
+        """Close the explorer, confirming first if changes are pending."""
         # do not ask if no changes were made
         if self.table_change:
             # set up message box
@@ -563,7 +586,8 @@ class DatabaseExplorer(tk.Frame):
         else:
             self.main.destroy()
 
-    def set_icon(self):
+    def set_icon(self) -> None:
+        """Set the window icon from the package's bundled image."""
         # first database
         databasehldr = self.databases[list(self.databases.keys())[0]]
         # get pacakge name
@@ -581,7 +605,8 @@ class DatabaseExplorer(tk.Frame):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def open_ds9(path):
+def open_ds9(path: Union[str, Path]) -> None:
+    """Launch DS9 with the given file path when the executable is available."""
     # try to find ds9 path
     ds9_path = shutil.which('ds9')
     if drs_text.null_text(ds9_path, ['None', '']):

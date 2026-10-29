@@ -1,6 +1,7 @@
 """User DB access API helper functions for ARIApp."""
 
 from datetime import datetime, timezone
+from typing import Any, Dict
 
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -10,8 +11,12 @@ from apero_ri.core.auth import (
 from flask import jsonify, request
 
 
-def api_user_db_access_save(app):
-    """Persist group/column access for one profile into db_access.yaml."""
+def api_user_db_access_save(app: Any) -> Any:
+    """Persist group and column access rules for one profile.
+
+    :param app: Application facade for permission checks and profile access.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_user_db_access_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -169,8 +174,15 @@ def api_user_db_access_save(app):
     return jsonify(success=True)
 
 
-def build_user_db_access_health_report(app, user_info):
-    """Build detailed health report for User DB Access rules."""
+def build_user_db_access_health_report(
+    app: Any, user_info: Any
+) -> Dict[str, Any]:
+    """Build a health report for configured user database access rules.
+
+    :param app: Application facade providing profile and table metadata.
+    :param user_info: User record, or None to inspect all configured profiles.
+    :return: Status, message, counts, profile rows, and generation timestamp.
+    """
     if user_info is None:
         from apero_ri.core.auth import (
             _hydrate_profile_data,
@@ -321,8 +333,12 @@ def build_user_db_access_health_report(app, user_info):
     }
 
 
-def api_user_db_access_details(app):
-    """Get group toggles and DB columns for one selected profile."""
+def api_user_db_access_details(app: Any) -> Any:
+    """Return editable group and database-column settings for a profile.
+
+    :param app: Application facade for permission and profile lookups.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_user_db_access_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401

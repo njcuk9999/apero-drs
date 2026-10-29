@@ -50,7 +50,7 @@ _TIMING_RESET_FILENAME = "_timing_reset.json"
 # cache_config.yaml is read on every API call.  Cache it in-process with a
 # short TTL so the admin UI can still update it within ~10 seconds.
 _CFG_TTL: float = 10.0
-_cfg_cache: dict = {}  # str(data_dir) -> {'expires': float, 'cfg': dict}
+_cfg_cache: Dict[str, Dict[str, Any]] = {}
 _cfg_lock = threading.Lock()
 
 # Section keys (used in _meta.json, admin page, and API integration)
@@ -67,6 +67,7 @@ CACHE_SECTIONS = [
 # Configuration helpers
 # =========================================================================
 def _config_path(data_dir: Optional[Path] = None) -> Path:
+    """Return the cache configuration path for a data directory."""
     base = Path(data_dir) if data_dir else secret_store.get_ari_dir()
     return base / _DEFAULT_CACHE_DIR_NAME / _CONFIG_FILENAME
 
@@ -133,6 +134,7 @@ def resolve_cache_root(
 def is_cache_enabled(
     data_dir: Optional[Path] = None, cfg: Optional[Dict[str, Any]] = None
 ) -> bool:
+    """Return whether plot caching is enabled in the resolved config."""
     if cfg is None:
         cfg = load_cache_config(data_dir)
     return bool(cfg.get("enabled", False))
@@ -142,10 +144,12 @@ def is_cache_enabled(
 # Per-profile metadata (db fingerprint)
 # =========================================================================
 def _profile_dir(cache_root: Path, instrument: str, profile_id: str) -> Path:
+    """Return the cache directory for one instrument profile."""
     return cache_root / instrument / profile_id
 
 
 def _load_meta(profile_dir: Path) -> Dict[str, Any]:
+    """Load profile cache metadata, or return an empty mapping on failure."""
     meta_path = profile_dir / _META_FILENAME
     if not meta_path.exists():
         return {}
@@ -157,6 +161,7 @@ def _load_meta(profile_dir: Path) -> Dict[str, Any]:
 
 
 def _save_meta(profile_dir: Path, meta: Dict[str, Any]) -> None:
+    """Persist cache metadata for one profile."""
     profile_dir.mkdir(parents=True, exist_ok=True)
     meta_path = profile_dir / _META_FILENAME
     with open(meta_path, "w") as f:
@@ -210,6 +215,7 @@ def _db_fingerprint_matches(
 def _section_dir(
     cache_root: Path, instrument: str, profile_id: str, section: str
 ) -> Path:
+    """Return the directory for one profile's cache section."""
     return _profile_dir(cache_root, instrument, profile_id) / section
 
 
@@ -289,7 +295,7 @@ def invalidate_profile(
 
 
 def invalidate_all(cache_root: Path) -> int:
-    """Purge everything under the cache root (except config).  Returns count."""
+    """Purge cache contents except configuration and return removed count."""
     if not cache_root.exists():
         return 0
     removed = 0
@@ -332,7 +338,7 @@ def _dir_stats(directory: Path) -> Tuple[int, int]:
 
 
 def _format_size(nbytes: int) -> str:
-    """Human-readable byte size."""
+    """Format a byte count using a binary unit and one decimal place."""
     for unit in ("B", "KB", "MB", "GB"):
         if abs(nbytes) < 1024:
             return f"{nbytes:.1f} {unit}"

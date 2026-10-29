@@ -205,7 +205,7 @@ def get_most_recent(filelist: List[str]) -> Union[float, None]:
     return most_recent
 
 
-def makedirs(path: str):
+def makedirs(path: str) -> None:
     """
     Make directory 'path' and all sub-directories
 
@@ -226,7 +226,7 @@ def makedirs(path: str):
         raise AperoCodedException(None, '01-010-00002', targs=eargs)
 
 
-def copytree(src: Union[str, Path], dst: Union[str, Path]):
+def copytree(src: Union[str, Path], dst: Union[str, Path]) -> None:
     """
     Copy a file/directory tree - from path 'src' to 'dst'
 
@@ -265,7 +265,7 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
             shutil.copy(str(infile), str(outfile))
 
 
-def copyfile(src: str, dst: str, log: bool = True):
+def copyfile(src: str, dst: str, log: bool = True) -> None:
     """
     Copy a single file (catching exceptions where possible)
 
@@ -304,7 +304,7 @@ def copyfile(src: str, dst: str, log: bool = True):
         raise AperoCodedException(None, '00-004-00005', targs=eargs)
 
 
-def copy_element(old_element: str, new_element: str):
+def copy_element(old_element: str, new_element: str) -> None:
     """
     Copies element (path) from old_element to new_element
     The element can either be a directory or a file
@@ -437,7 +437,7 @@ def listdirs(rootdir: str) -> List[str]:
     return directories
 
 
-def get_dirs(path: str, relative=False) -> List[str]:
+def get_dirs(path: str, relative: bool = False) -> List[str]:
     """
     Get all directories under "path"
 
@@ -492,11 +492,12 @@ def nofiles(rootdir: str) -> bool:
         return False
 
 
-def listfiles(rootdir) -> List[str]:
+def listfiles(rootdir: str) -> List[str]:
     """
     Fast listing of files in a directory
+
     :param rootdir: str, the root path to search
-    :return:
+    :return: File paths directly contained in the directory
     """
     files = []
     for it in os.scandir(rootdir):
@@ -554,14 +555,14 @@ def recursive_path_glob(params: ParamDict,
     return valid_files
 
 
-def remove_broken_symlinks(params: ParamDict, path: str):
+def remove_broken_symlinks(params: ParamDict, path: str) -> None:
     """
     Removes broken symlinks recusively from the given directory
 
     :param params: ParamDict, parameter dictionary of constants
     :param path: str, path to remove all symlinks from
 
-    :return:
+    :return: None; removes broken links and logs the number removed
     """
     # if we don't have this directory just return - it will be created later
     if not os.path.exists(path):
@@ -604,7 +605,7 @@ def calculate_checksum(filename: str) -> str:
 
 def make_tarfile(output_filename: str, source_dir: str,
                  exclude_prefixes: Optional[List[str]] = None,
-                 exclude_suffixes: Optional[List[str]] = None):
+                 exclude_suffixes: Optional[List[str]] = None) -> None:
     """
     Make a tar file from a directory
 
@@ -613,7 +614,7 @@ def make_tarfile(output_filename: str, source_dir: str,
     :param exclude_prefixes: list of str, prefixes to exclude from the tar file
     :param exclude_suffixes: list of str, suffixes to exclude from the tar file
 
-    :return:
+    :return: None; writes a gzip-compressed tar archive
     """
     # deal with default values
     if exclude_prefixes is None:
@@ -648,13 +649,13 @@ def make_tarfile(output_filename: str, source_dir: str,
                 filter=should_be_excluded)
 
 
-def extract_tarfile(tar_filename: str, extract_dir: str):
+def extract_tarfile(tar_filename: str, extract_dir: str) -> None:
     """
     Extract a tar file to a directory
 
     :param tar_filename: str, the tar file to extract
     :param extract_dir: str, the directory to extract the tar file to
-    :return:
+    :return: None; extracts the archive into the target directory
     """
     with tarfile.open(tar_filename, "r:gz") as tar:
         tar.extractall(path=extract_dir)

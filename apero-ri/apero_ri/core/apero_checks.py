@@ -100,7 +100,7 @@ def load_config(local_data_dir: Path) -> dict:
     return _load_small_json_cached(path, default=dict())
 
 
-def _load_small_json_cached(path: Path, default):
+def _load_small_json_cached(path: Path, default: Any) -> Any:
     """Load a small JSON file, returning cached copy if mtime unchanged."""
     key = str(path)
     try:
@@ -401,7 +401,9 @@ def _scan_yaml_files(root_dir: Path) -> List[Path]:
         return []
 
 
-def _stat_mtime_with_timeout(path: Path, timeout: float):
+def _stat_mtime_with_timeout(
+    path: Path, timeout: float
+) -> Tuple[Optional[float], Optional[Exception]]:
     """Return (mtime_float, error) by running stat in a daemon thread.
 
     Returns (None, TimeoutError) if the stat blocks longer than *timeout*
@@ -409,7 +411,8 @@ def _stat_mtime_with_timeout(path: Path, timeout: float):
     """
     result: List = [None, None]  # [mtime, exception]
 
-    def _do_stat():
+    def _do_stat() -> None:
+        """Store the stat result or exception for the waiting caller."""
         try:
             result[0] = path.stat().st_mtime
         except Exception as exc:

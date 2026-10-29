@@ -44,10 +44,12 @@ _SHARES_DEFAULT: Dict = {}
 
 
 def _admin_uploads_config_path() -> Path:
+    """Return the path to the admin upload-directory configuration."""
     return ud.ARI_DIR / "admin" / "uploads_config.yaml"
 
 
 def _shares_path() -> Path:
+    """Return the path to the persisted upload share-token mapping."""
     return ud.ARI_DIR / "admin" / "uploads_shares.yaml"
 
 
@@ -305,11 +307,13 @@ def delete_file(
 
 
 def _load_shares() -> Dict:
+    """Load persisted share tokens, returning an empty mapping if invalid."""
     data = ud._load_yaml(_shares_path(), dict(_SHARES_DEFAULT))
     return data if isinstance(data, dict) else {}
 
 
 def _save_shares(shares: Dict) -> None:
+    """Persist the upload share-token mapping."""
     ud._save_yaml(_shares_path(), shares)
 
 

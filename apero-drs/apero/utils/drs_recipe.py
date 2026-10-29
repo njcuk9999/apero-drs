@@ -286,7 +286,7 @@ class DrsRecipe(object):
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.name)
 
-    def reload(self, instrument: str):
+    def reload(self, instrument: str) -> None:
         """
         Reload a recipe class after setting instrument
 

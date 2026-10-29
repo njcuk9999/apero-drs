@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-CODE DESCRIPTION HERE
+"""Fit telluric absorption models and write corrected spectra.
 
 Created on 2020-07-2020-07-15 17:55
 
@@ -10,7 +9,7 @@ Created on 2020-07-2020-07-15 17:55
 import os
 import time
 import warnings
-from typing import Optional
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
@@ -60,8 +59,35 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 # =============================================================================
 # General functions
 # =============================================================================
-def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
-                      tpreprops, **kwargs):
+def gen_abso_pca_calc(params: ParamDict, recipe: DrsRecipe,
+                      image: np.ndarray, transfiles: List[str], fiber: str,
+                      refprops: ParamDict, tpreprops: ParamDict,
+                      **kwargs: Any) -> ParamDict:
+    """Build telluric absorption principal components from transmission files.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling PCA construction and file selection.
+    recipe : DrsRecipe
+        Calling recipe used for cached files and diagnostic plots.
+    image : numpy.ndarray
+        Two-dimensional science image defining the flattened pixel count.
+    transfiles : list[str]
+        Candidate transmission-map filenames.
+    fiber : str
+        Fiber whose transmission maps are used.
+    refprops, tpreprops : ParamDict
+        Reference-wave and pre-clean properties accessed by the existing
+        property keys.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    ParamDict
+        Absorption maps, PCA components, fit settings, and selected-file data.
+    """
     func_name = __NAME__ + '.gen_abso_pca_calc()'
     # ----------------------------------------------------------------------
     # get constants from params/kwargs
@@ -319,8 +345,34 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     return props
 
 
-def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops,
-                       pca_props, tapas_props, **kwargs):
+def shift_all_to_frame(params: ParamDict, recipe: DrsRecipe,
+                       image: np.ndarray, template: Optional[np.ndarray],
+                       bprops: ParamDict, refprops: ParamDict,
+                       wprops: ParamDict, pca_props: ParamDict,
+                       tapas_props: ParamDict,
+                       **kwargs: Any) -> ParamDict:
+    """Shift template, PCA, and TAPAS data into the current wavelength frame.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling fit and interpolation behavior.
+    recipe : DrsRecipe
+        Calling recipe used to emit diagnostic plots.
+    image : numpy.ndarray
+        Two-dimensional image used for plot context and dimensions.
+    template : numpy.ndarray or None
+        Optional reference template to shift with the other model data.
+    bprops, refprops, wprops, pca_props, tapas_props : ParamDict
+        Existing property bundles accessed through their established keys.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    ParamDict
+        Shifted template, PCA components, and TAPAS species arrays.
+    """
     func_name = __NAME__ + '.shift_all_to_frame()'
     # ------------------------------------------------------------------
     # get constants from params/kwargs
@@ -469,8 +521,32 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     return props
 
 
-def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
-                           nprops, tpreprops, **kwargs):
+def calc_recon_and_correct(params: ParamDict, recipe: DrsRecipe,
+                           image: np.ndarray, wprops: ParamDict,
+                           pca_props: ParamDict, sprops: ParamDict,
+                           nprops: ParamDict, tpreprops: ParamDict,
+                           **kwargs: Any) -> ParamDict:
+    """Fit residual absorption and construct corrected and reconstructed data.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling the residual fit.
+    recipe : DrsRecipe
+        Calling recipe used for diagnostic plots.
+    image : numpy.ndarray
+        Input image used for fit dimensions and plot context.
+    wprops, pca_props, sprops, nprops, tpreprops : ParamDict
+        Wave, PCA, shifted-model, normalization, and pre-clean property
+        bundles accessed by their existing keys.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    ParamDict
+        Corrected spectrum, reconstructed absorption, and fit settings.
+    """
     func_name = __NAME__ + '.calc_recon_and_correct()'
     # ------------------------------------------------------------------
     # get constants from params/kwargs
@@ -773,8 +849,10 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     return props
 
 
-def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
-                   refprops, wprops, infile,
+def calc_res_model(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
+                   image1: np.ndarray, trans_props: ParamDict,
+                   tpreprops: ParamDict, refprops: ParamDict,
+                   wprops: ParamDict, infile: DrsFitsFile,
                    min_trans: Optional[float] = None) -> ParamDict:
     """
     Calculate the residual model and apply it to the image
@@ -790,7 +868,8 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     :param infile: DrsFitsFile, the input file instance
     :param min_trans: float, the minimum transmission value
 
-    :return:
+    :return: ParamDict containing the corrected spectrum and reconstructed
+             absorption image.
     """
     # set function name
     func_name = display_func('calc_res_model', __NAME__)
@@ -847,9 +926,41 @@ def calc_res_model(params, recipe, image, image1, trans_props, tpreprops,
     return cprops
 
 
-def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
-                          combine, qc_params, template_props, tpreprops,
-                          trans_props, database=None):
+def correct_other_science(params: ParamDict, recipe: DrsRecipe, fiber: str,
+                          infile: DrsFitsFile, cprops: ParamDict,
+                          rawfiles: List[str], combine: bool, qc_params: Any,
+                          template_props: ParamDict, tpreprops: ParamDict,
+                          trans_props: ParamDict,
+                          database: Any = None) -> None:
+    """Correct a non-primary fiber using the primary telluric model.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants.
+    recipe : DrsRecipe
+        Calling recipe that owns and indexes corrected outputs.
+    fiber : str
+        Fiber to correct.
+    infile : DrsFitsFile
+        Input multi-fiber file used to derive the fiber-specific input.
+    cprops, template_props, tpreprops, trans_props : ParamDict
+        Corrected-model, template, pre-clean, and transmission properties
+        accessed through their established keys.
+    rawfiles : list[str]
+        Source filenames recorded when the input is combined.
+    combine : bool
+        Whether the input represents a combined set of raw files.
+    qc_params : Any
+        Quality-control payload copied to the output.
+    database : Any, optional
+        Existing wavelength calibration database, if already loaded.
+
+    Returns
+    -------
+    None
+        Corrected E2DS and one-dimensional products are written and registered.
+    """
     # get the header
     header = infile.get_header()
     # ------------------------------------------------------------------
@@ -956,7 +1067,27 @@ def pclean_only(tpreprops: ParamDict) -> ParamDict:
 # =============================================================================
 # QC and summary functions
 # =============================================================================
-def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
+def fit_tellu_quality_control(params: ParamDict, infile: DrsFitsFile,
+                              tpreprops: ParamDict,
+                              **kwargs: Any) -> Tuple[List[Any], int]:
+    """Combine pre-clean checks with the configured order SNR check.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants, including the SNR order and threshold.
+    infile : DrsFitsFile
+        Input file whose per-order SNR header values are checked.
+    tpreprops : ParamDict
+        Pre-clean properties containing existing QC results.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    tuple
+        The four-list QC payload and an integer pass flag (1 or 0).
+    """
     func_name = __NAME__ + '.fit_tellu_quality_control()'
     # get parameters from params/kwargs
     snr_order = pcheck(params, 'OBJ.TELLU.FIT.QC_SNR_ORDER', 'snr_order', kwargs,
@@ -1018,7 +1149,31 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     return qc_params, passed
 
 
-def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
+def fit_tellu_summary(recipe: DrsRecipe, it: int, params: ParamDict,
+                      qc_params: Any, tpreprops: ParamDict,
+                      fiber: str) -> None:
+    """Add telluric fit statistics and QC to the recipe summary.
+
+    Parameters
+    ----------
+    recipe : DrsRecipe
+        Calling recipe with an active summary plot.
+    it : int
+        Summary iteration/index supplied by the calling recipe.
+    params : ParamDict
+        APERO constants used for version/date statistics.
+    qc_params : Any
+        QC payload recorded in the summary.
+    tpreprops : ParamDict
+        Pre-clean properties supplying exposure statistics.
+    fiber : str
+        Fiber label attached to the QC results.
+
+    Returns
+    -------
+    None
+        The active recipe summary is updated in place.
+    """
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
@@ -1035,9 +1190,41 @@ def fit_tellu_summary(recipe, it, params, qc_params, tpreprops, fiber):
 # =============================================================================
 # Write functions
 # =============================================================================
-def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
-                              nprops, wprops, trans_props, cprops,
-                              qc_params, template_props, tpreprops, **kwargs):
+def fit_tellu_write_corrected(
+        params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+        rawfiles: List[str], fiber: str, combine: bool, nprops: ParamDict,
+        wprops: ParamDict, trans_props: ParamDict, cprops: ParamDict,
+        qc_params: Any, template_props: ParamDict, tpreprops: ParamDict,
+        **kwargs: Any) -> DrsFitsFile:
+    """Write and register the telluric-corrected E2DS product.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling headers, snapshots, and output writing.
+    recipe : DrsRecipe
+        Calling recipe providing output definitions and registration.
+    infile : DrsFitsFile
+        Input file used to derive output naming and copied headers.
+    rawfiles : list[str]
+        Raw source filenames recorded for combined inputs.
+    fiber : str
+        Fiber associated with the output.
+    combine : bool
+        Whether the output represents a combined input set.
+    nprops, wprops, trans_props, cprops, template_props, tpreprops : ParamDict
+        Calibration and model property bundles accessed through their
+        established keys.
+    qc_params : Any
+        Quality-control payload written to the output header.
+    **kwargs : Any
+        Optional output overrides such as corrected data and scatter values.
+
+    Returns
+    -------
+    DrsFitsFile
+        The written corrected-spectrum file instance.
+    """
     # get parameters from cprops (if not overwritten)
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
     mp2p_tcorr = kwargs.get('MP2P_TCORR', cprops['MP2P_TCORR'])
@@ -1178,8 +1365,33 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     return corrfile
 
 
-def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
-                                  scwprops, scvprops):
+def fit_tellu_write_corrected_s1d(params: ParamDict, recipe: DrsRecipe,
+                                  infile: DrsFitsFile,
+                                  corrfile: DrsFitsFile, fiber: str,
+                                  scwprops: ParamDict,
+                                  scvprops: ParamDict) -> None:
+    """Write corrected wavelength- and velocity-grid one-dimensional spectra.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling headers, snapshots, and output writing.
+    recipe : DrsRecipe
+        Calling recipe providing output definitions and registration.
+    infile : DrsFitsFile
+        Original input used to derive the output filenames.
+    corrfile : DrsFitsFile
+        Corrected E2DS product whose headers and input list are copied.
+    fiber : str
+        Fiber associated with both outputs.
+    scwprops, scvprops : ParamDict
+        Wavelength-grid and velocity-grid spectrum properties.
+
+    Returns
+    -------
+    None
+        Both one-dimensional files are written and registered.
+    """
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
     sc1dwfile = recipe.outputs['SC1D_W_FILE'].newcopy(params=params,
@@ -1250,9 +1462,40 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     recipe.add_output_file(sc1dvfile)
 
 
-def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
-                          rcwprops, rcvprops, skycwprops, skycvprops,
-                          freswprops, fresvprops):
+def fit_tellu_write_recon(params: ParamDict, recipe: DrsRecipe,
+                          infile: DrsFitsFile, corrfile: DrsFitsFile,
+                          fiber: str, cprops: ParamDict, rcwprops: ParamDict,
+                          rcvprops: ParamDict, skycwprops: ParamDict,
+                          skycvprops: ParamDict, freswprops: ParamDict,
+                          fresvprops: ParamDict) -> DrsFitsFile:
+    """Write reconstructed absorption and its corrected 1D products.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling headers, snapshots, and output writing.
+    recipe : DrsRecipe
+        Calling recipe providing output definitions and registration.
+    infile : DrsFitsFile
+        Input file used to derive output filenames.
+    corrfile : DrsFitsFile
+        Corrected E2DS product whose headers and input list are copied.
+    fiber : str
+        Fiber associated with each output.
+    cprops : ParamDict
+        Residual-fit properties accessed through their established keys.
+    rcwprops, rcvprops : ParamDict
+        Reconstructed wavelength-grid and velocity-grid spectra.
+    skycwprops, skycvprops : ParamDict
+        Sky-corrected spectra on wavelength and velocity grids.
+    freswprops, fresvprops : ParamDict
+        Finite-resolution-corrected spectra on both grids.
+
+    Returns
+    -------
+    DrsFitsFile
+        The written reconstructed E2DS file instance.
+    """
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
     reconfile = recipe.outputs['TELLU_RECON'].newcopy(params=params,
@@ -1383,7 +1626,24 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _remove_absonpy_files(params, path, prefix):
+def _remove_absonpy_files(params: ParamDict, path: str,
+                          prefix: str) -> None:
+    """Remove cached absorption arrays matching a filename prefix.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants used for logging.
+    path : str
+        Directory containing cached arrays.
+    prefix : str
+        Filename prefix identifying the cache files to remove.
+
+    Returns
+    -------
+    None
+        Matching files are removed where filesystem permissions allow.
+    """
     # list files in path
     filelist = np.sort(os.listdir(path))
     # loop around files and decide whether to delete them or not

@@ -95,7 +95,8 @@ ValidFileType = Tuple[List[Union[Any, str]],
 class DrsArgumentParser(argparse.ArgumentParser):
     # argparse.ArgumentParser cannot be pickled
     #   so cannot pickle DrsArgumentParser either
-    def __init__(self, recipe: Any, indexdb: FileIndexDatabase, **kwargs):
+    def __init__(self, recipe: Any, indexdb: FileIndexDatabase,
+                 **kwargs) -> None:
         """
         Construct the Drs Argument parser
 
@@ -149,7 +150,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
             self.error(textentry('09-001-00002', args=[' '.join(argv)]))
         return args
 
-    def error(self, message: str):
+    def error(self, message: str) -> None:
         """
         Prints a usage message incorporating the message to stderr and
         exits. (Overrides argparse.Parser.error
@@ -173,7 +174,8 @@ class DrsArgumentParser(argparse.ArgumentParser):
         raise drs_log.AperoCodedException(params, '09-001-00001',
                                           targs=emsg_args)
 
-    def _print_message(self, message: str, file: Union[None, IO] = None):
+    def _print_message(self, message: str,
+                       file: Union[None, IO] = None) -> None:
         """
         Custom help text displayed after an error occurs overrides
         functionality of argparse.Parser._print_message
@@ -337,7 +339,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
 
 
 class DrsAction(argparse.Action):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the base DrsAction class (Abstract should not be used)
 
@@ -351,7 +353,7 @@ class DrsAction(argparse.Action):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Define an Abstract call to Action (required for overwriting)
         Should call setattr(namespace, destination, value) to set
@@ -375,7 +377,7 @@ class _CheckObsDir(DrsAction):
     # set the class name
     class_name: str = '_CheckObsDir'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Directory action (for checking a directory argument)
 
@@ -391,19 +393,19 @@ class _CheckObsDir(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -411,7 +413,7 @@ class _CheckObsDir(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '{0}[DrsAction]'.format(self.class_name)
 
@@ -457,7 +459,7 @@ class _CheckObsDir(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckDirectory() - sets the _CheckDirectory.dest
         to value if valid else raises exception
@@ -487,7 +489,7 @@ class _CheckObsDir(DrsAction):
 
 
 class _CheckFiles(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Files action (for checking a files argument)
 
@@ -508,7 +510,7 @@ class _CheckFiles(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # what to exclude from state
         exclude = ['parser']
@@ -520,12 +522,12 @@ class _CheckFiles(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -535,7 +537,7 @@ class _CheckFiles(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_CheckFiles[DrsAction]'
 
@@ -655,7 +657,7 @@ class _CheckFiles(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckFiles() - sets the _CheckFiles.dest
         to value if valid else raises exception
@@ -695,7 +697,7 @@ class _CheckFiles(DrsAction):
 
 
 class _CheckBool(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Boolean action (for checking a boolean argument)
 
@@ -712,19 +714,19 @@ class _CheckBool(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -732,11 +734,11 @@ class _CheckBool(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_CheckBool[DrsAction]'
 
-    def _check_bool(self, value) -> bool:
+    def _check_bool(self, value: Any) -> bool:
         """
         Check the value of the boolean is valid - raise exception if not
         valid, else return the value
@@ -791,7 +793,7 @@ class _CheckBool(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckBool() - sets the _CheckBool.dest
         to value if valid else raises exception
@@ -820,7 +822,7 @@ class _CheckBool(DrsAction):
 
 
 class _CheckType(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Type action (for checking a type argument)
 
@@ -837,19 +839,19 @@ class _CheckType(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -859,7 +861,7 @@ class _CheckType(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_CheckType[DrsAction]'
 
@@ -1045,7 +1047,7 @@ class _CheckType(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckType() - sets the _CheckType.dest
         to value if valid else raises exception
@@ -1078,7 +1080,7 @@ class _CheckType(DrsAction):
 
 
 class _CheckOptions(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Options action (for checking a options argument)
 
@@ -1093,19 +1095,19 @@ class _CheckOptions(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1113,7 +1115,7 @@ class _CheckOptions(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_CheckOptions[DrsAction]'
 
@@ -1147,7 +1149,7 @@ class _CheckOptions(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckOptions() - sets the _CheckOptions.dest
         to value if valid else raises exception
@@ -1176,7 +1178,7 @@ class _CheckOptions(DrsAction):
 
 
 class _CheckList(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Type action (for checking a type argument)
 
@@ -1193,19 +1195,19 @@ class _CheckList(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1215,7 +1217,7 @@ class _CheckList(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_CheckType[DrsAction]'
 
@@ -1385,7 +1387,7 @@ class _CheckList(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckType() - sets the _CheckType.dest
         to value if valid else raises exception
@@ -1418,7 +1420,7 @@ class _CheckList(DrsAction):
 
 
 class _CheckDict(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Check Type action (for checking a type argument)
 
@@ -1435,19 +1437,19 @@ class _CheckDict(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from the saved state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1457,7 +1459,7 @@ class _CheckDict(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_CheckType[DrsAction]'
 
@@ -1637,7 +1639,7 @@ class _CheckDict(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _CheckType() - sets the _CheckType.dest
         to value if valid else raises exception
@@ -1673,7 +1675,7 @@ class _CheckDict(DrsAction):
 # Define Special Actions
 # =============================================================================
 class _MakeListing(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Make Listing action (for checking a directory argument)
 
@@ -1694,7 +1696,7 @@ class _MakeListing(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this action's pickle state.
         """
         # what to exclude from state
         exclude = ['parser']
@@ -1706,12 +1708,12 @@ class _MakeListing(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action and clears its parser reference.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1721,11 +1723,11 @@ class _MakeListing(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_MakeListing[DrsAction]'
 
-    def _display_listing(self, namespace: argparse.Namespace):
+    def _display_listing(self, namespace: argparse.Namespace) -> None:
         """
         Display the listing for an input_dir and directory
         (taken from namespace)
@@ -1756,7 +1758,7 @@ class _MakeListing(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _MakeListing() - displays a directory listing
         to value if valid else raises exception
@@ -1790,7 +1792,8 @@ class _MakeAllListing(DrsAction):
     :param kwargs: keyword arguments passed to argparse.Action.__init__
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize listing state and delegate action setup to the base."""
         # set class name
         self.class_name = '_MakeAllListing'
         # define recipe as None (overwritten in __call__)
@@ -1805,7 +1808,7 @@ class _MakeAllListing(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary of this action's pickleable state.
         """
         # what to exclude from state
         exclude = ['parser']
@@ -1817,12 +1820,12 @@ class _MakeAllListing(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action from ``state``.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1832,16 +1835,16 @@ class _MakeAllListing(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_MakeListing[DrsAction]'
 
-    def _display_listing(self, namespace: argparse.Namespace):
+    def _display_listing(self, namespace: argparse.Namespace) -> None:
         """
         Display the listing for an input_dir and directory
         (taken from namespace)
 
-        :return: str: the valid directory (raises exception if invalid)
+        :return: None. Displays the requested directory listing.
         :raises: drs_exceptions.LogExit
         """
         # get input dir
@@ -1867,7 +1870,7 @@ class _MakeAllListing(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _MakeAllListing() - displays all directory listings
         to value if valid else raises exception
@@ -1894,7 +1897,7 @@ class _MakeAllListing(DrsAction):
 
 
 class _ActivateDebug(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Activate Debug action (for activating debug mode)
 
@@ -1911,19 +1914,19 @@ class _ActivateDebug(DrsAction):
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary of this argument's state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this action and clears its parser reference.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1933,7 +1936,7 @@ class _ActivateDebug(DrsAction):
     def __str__(self) -> str:
         """
         String representation of this class
-        :return:
+        :return: The action's display string.
         """
         return '_ActivateDebug[DrsAction]'
 
@@ -1972,7 +1975,7 @@ class _ActivateDebug(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _ActivateDebug() - sets the debug mode
         to value else raises exception
@@ -1998,7 +2001,7 @@ class _ActivateDebug(DrsAction):
 
 
 class _ExtendedHelp(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Activate Debug action (for activating debug mode)
 
@@ -2023,7 +2026,7 @@ class _ExtendedHelp(DrsAction):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2042,7 +2045,7 @@ class _ExtendedHelp(DrsAction):
         """
         return '_ExtendedHelp[DrsAction]'
 
-    def _print_extended_help(self):
+    def _print_extended_help(self) -> None:
         """
         Set the debug mode based on value
 
@@ -2061,7 +2064,7 @@ class _ExtendedHelp(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _ActivateDebug() - sets the debug mode
         to value else raises exception
@@ -2087,7 +2090,7 @@ class _ExtendedHelp(DrsAction):
 
 
 class _ForceInputDir(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Force Input Directory action (for forcing the input
         directory to a user argument)
@@ -2111,7 +2114,7 @@ class _ForceInputDir(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2161,7 +2164,7 @@ class _ForceInputDir(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _ForceInputDir() - sets the _ForceInputDir.dest
         to value if valid else raises exception
@@ -2186,7 +2189,7 @@ class _ForceInputDir(DrsAction):
 
 
 class _ForceOutputDir(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Force Input Directory action (for forcing the output
         directory to a user argument)
@@ -2211,7 +2214,7 @@ class _ForceOutputDir(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2261,7 +2264,7 @@ class _ForceOutputDir(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> Union[int, None]:
         """
         Call the action _ForceOutputDir() - sets the _ForceOutputDir.dest
         to value if valid else raises exception
@@ -2286,7 +2289,7 @@ class _ForceOutputDir(DrsAction):
 
 
 class _DisplayVersion(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Display Version action (for display version number)
 
@@ -2310,7 +2313,7 @@ class _DisplayVersion(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2327,7 +2330,7 @@ class _DisplayVersion(DrsAction):
         """
         return '_DisplayVersion[DrsAction]'
 
-    def _display_version(self):
+    def _display_version(self) -> None:
         """
         Display the version info print out
         :return:
@@ -2350,7 +2353,7 @@ class _DisplayVersion(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _DisplayVersion() - display the version info
 
@@ -2374,7 +2377,7 @@ class _DisplayVersion(DrsAction):
 
 
 class _DisplayInfo(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Display Info action (for display version number)
 
@@ -2398,7 +2401,7 @@ class _DisplayInfo(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2415,7 +2418,7 @@ class _DisplayInfo(DrsAction):
         """
         return '_DisplayInfo[DrsAction]'
 
-    def _display_info(self):
+    def _display_info(self) -> None:
         """
         Display the info print out
         :return:
@@ -2467,7 +2470,7 @@ class _DisplayInfo(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _DisplayInfo() - display the info print out
 
@@ -2490,7 +2493,7 @@ class _DisplayInfo(DrsAction):
 
 
 class _SetProgram(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Set Program action (for setting the drs program from an
         argument)
@@ -2515,7 +2518,7 @@ class _SetProgram(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2564,7 +2567,7 @@ class _SetProgram(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _SetProgram() - sets the drs program name
         to value if valid else raises exception
@@ -2589,7 +2592,7 @@ class _SetProgram(DrsAction):
 
 
 class _SetParallel(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Set Parallel action (for setting the parallelisation
         from an argument)
@@ -2614,7 +2617,7 @@ class _SetParallel(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2666,7 +2669,7 @@ class _SetParallel(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _SetRecipeKind() - sets the drs program name
         to value if valid else raises exception
@@ -2691,7 +2694,7 @@ class _SetParallel(DrsAction):
 
 
 class _SetRecipeKind(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Set Program action (for setting the recipe kind from an
         argument)
@@ -2716,7 +2719,7 @@ class _SetRecipeKind(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2762,7 +2765,7 @@ class _SetRecipeKind(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _SetRecipeKind() - sets the drs program name
         to value if valid else raises exception
@@ -2787,7 +2790,7 @@ class _SetRecipeKind(DrsAction):
 
 
 class _SetShortName(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Set Program action (for setting the drs program from an
         argument)
@@ -2812,7 +2815,7 @@ class _SetShortName(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2857,7 +2860,7 @@ class _SetShortName(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _SetProgram() - sets the drs program name
         to value if valid else raises exception
@@ -2882,7 +2885,7 @@ class _SetShortName(DrsAction):
 
 
 class _SetIPythonReturn(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Set IPython Return action (for setting IPYTHON_RETURN)
 
@@ -2906,7 +2909,7 @@ class _SetIPythonReturn(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2923,7 +2926,7 @@ class _SetIPythonReturn(DrsAction):
         """
         return '_SetIPythonReturn[DrsAction]'
 
-    def _set_return(self) -> True:
+    def _set_return(self) -> bool:
         """
         Set the IPYTHON_RETURN value to True if argument is present
 
@@ -2945,7 +2948,7 @@ class _SetIPythonReturn(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _SetIPythonReturn() - sets the _SetIPythonReturn.dest
         to True if argument is present
@@ -2969,7 +2972,7 @@ class _SetIPythonReturn(DrsAction):
 
 
 class _IsReference(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Is Reference action (for setting a recipe to a reference
         via an argument)
@@ -2994,7 +2997,7 @@ class _IsReference(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -3013,7 +3016,7 @@ class _IsReference(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _IsReference() - sets the _IsReference.dest
         to value if valid else raises exception
@@ -3041,7 +3044,7 @@ class _IsReference(DrsAction):
 
 
 class _SetCrunFile(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct set config run file action
 
@@ -3065,7 +3068,7 @@ class _SetCrunFile(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -3084,7 +3087,7 @@ class _SetCrunFile(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _IsReference() - sets the _IsReference.dest
         to value if valid else raises exception
@@ -3112,7 +3115,7 @@ class _SetCrunFile(DrsAction):
 
 
 class _SetQuiet(DrsAction):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the Set Quiet action (make a recipe quiet via argument)
 
@@ -3138,7 +3141,7 @@ class _SetQuiet(DrsAction):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -3155,7 +3158,7 @@ class _SetQuiet(DrsAction):
         """
         return '_SetQuiet[DrsAction]'
 
-    def _set_return(self) -> True:
+    def _set_return(self) -> bool:
         """
         Return True (and a debug message)
 
@@ -3173,7 +3176,7 @@ class _SetQuiet(DrsAction):
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
-                 option_string: Any = None):
+                 option_string: Any = None) -> None:
         """
         Call the action _SetQuiet() - sets the _SetQuiet.dest to True if
         argument is present
@@ -3475,12 +3478,12 @@ class DrsArgument(object):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this argument from ``state``.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -3507,7 +3510,7 @@ class DrsArgument(object):
         # return string representation
         return 'DrsArgument[{0}]'.format(self.name)
 
-    def make_properties(self):
+    def make_properties(self) -> dict:
         """
         Make the properties dictionary for argparser based on the
         "arg.dtype" assigned during construction.
@@ -3590,7 +3593,7 @@ class DrsArgument(object):
         # add help string
         self.props['help'] = self.helpstr
 
-    def assign_properties(self, props: dict):
+    def assign_properties(self, props: dict) -> None:
         """
         Assigns argparse properties from "props"
 
@@ -3613,7 +3616,7 @@ class DrsArgument(object):
             if prop in props:
                 self.props[prop] = props[prop]
 
-    def copy(self, argument: 'DrsArgument'):
+    def copy(self, argument: 'DrsArgument') -> 'DrsArgument':
         """
         Copies another DrsArgument into this DrsArgument
 

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+"""Reset APERO data directories and remove associated database records.
 
 Created on 2019-05-07 at 15:22
 
@@ -138,7 +135,7 @@ def is_empty(params: ParamDict, directory: str,
     return False
 
 
-def reset_title(params: ParamDict, name: str):
+def reset_title(params: ParamDict, name: str) -> None:
     """
     print / log the reset title
 
@@ -1056,7 +1053,7 @@ def remove_files(params, path, log=True, skipfiles=None):
 # =============================================================================
 # Define remove functions
 # =============================================================================
-def normalise_cli_csv_input(value) -> List[str]:
+def normalise_cli_csv_input(value: object) -> List[str]:
     """
     Normalise a CLI input that may be empty, a comma-separated string,
     or an already-parsed list of strings.

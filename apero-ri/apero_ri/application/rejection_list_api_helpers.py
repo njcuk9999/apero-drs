@@ -9,11 +9,11 @@ import io
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Any, List
 from typing import Optional
 
 import pandas as pd
-from flask import jsonify
+from flask import Response, jsonify
 from flask import request
 
 from apero_ri.application.astrometrics_api_helpers import _has_monitor_perm
@@ -30,40 +30,42 @@ HISTORY_FILENAME = 'rejection_list.jsonl'
 HISTORY_LOCKNAME = 'rejection_list.lock'
 DEFAULT_SYNC_USER = 'googlesheet'
 
+_ApiResponse = Response | tuple[Response, int]
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def _rejection_mod():
+def _rejection_mod() -> Any:
     """Return the DRS rejection module."""
     from apero.core import drs_rejection
 
     return drs_rejection
 
 
-def _local_data_dir(app) -> Path:
+def _local_data_dir(app: Any) -> Path:
     """Return the configured local ARI data directory."""
     return Path(app._resolve_local_data_dir())
 
 
-def _assets_dir(app) -> Path:
+def _assets_dir(app: Any) -> Path:
     """Return the local apero-assets directory."""
     return _local_data_dir(app) / 'apero-assets'
 
 
-def _history_path(app) -> Path:
+def _history_path(app: Any) -> Path:
     """Return the shared rejection-history file path."""
     return _assets_dir(app) / HISTORY_DIRNAME / HISTORY_FILENAME
 
 
-def _history_lock(app):
+def _history_lock(app: Any) -> Any:
     """Return the cross-process lock for the history JSONL file."""
     mod = _rejection_mod()
     lockpath = _assets_dir(app) / HISTORY_DIRNAME / HISTORY_LOCKNAME
     return mod._FileLock(str(lockpath))
 
 
-def _configured_tab_map() -> dict:
+def _configured_tab_map() -> dict[str, list[str]]:
     """Return the configured logical-tab to asset-dir mapping."""
     params = load_parameters() or {}
     raw_map = params.get('instrument_map', {})
@@ -107,7 +109,7 @@ def _tab_label(tab_key: str) -> str:
     return str(tab_key or '').strip().replace('_', '-').upper()
 
 
-def _expanded_tabs() -> List[dict]:
+def _expanded_tabs() -> List[dict[str, Any]]:
     """Return one tab entry per mapped asset directory."""
     tab_map = _configured_tab_map()
     tabs = []
@@ -123,7 +125,9 @@ def _expanded_tabs() -> List[dict]:
     return tabs
 
 
-def get_rejection_tabs(perms=None) -> List[dict]:
+def get_rejection_tabs(
+    perms: Any = None,
+) -> List[dict[str, Any]]:
     """Return visible rejection tabs for the current permission set."""
     tabs = []
     for row in _expanded_tabs():
@@ -147,7 +151,10 @@ def resolve_rejection_tab_key(instrument: str) -> str:
     return ''
 
 
-def get_rejection_rows_for_tab_key(app, tab_key: str) -> List[dict]:
+def get_rejection_rows_for_tab_key(
+    app: Any,
+    tab_key: str,
+) -> List[dict[str, Any]]:
     """Return normalized rejection-list rows for one tab key."""
     tab = _resolve_tab(tab_key)
     if tab is None:
@@ -160,7 +167,7 @@ def get_rejection_rows_for_tab_key(app, tab_key: str) -> List[dict]:
     return rows
 
 
-def _resolve_tab(raw_tab: str) -> Optional[dict]:
+def _resolve_tab(raw_tab: str) -> Optional[dict[str, Any]]:
     """Resolve one logical tab from the configured map."""
     requested = str(raw_tab or '').strip().lower()
     if not requested:
@@ -171,7 +178,7 @@ def _resolve_tab(raw_tab: str) -> Optional[dict]:
     return None
 
 
-def _csv_paths(app, tab: dict) -> List[Path]:
+def _csv_paths(app: Any, tab: dict[str, Any]) -> List[Path]:
     """Return every reject.csv path for a logical tab."""
     mod = _rejection_mod()
     paths = []
@@ -193,7 +200,7 @@ def _write_df(csv_path: Path, df: pd.DataFrame) -> None:
     mod._write_csv(str(csv_path), df)
 
 
-def _file_lock(csv_path: Path):
+def _file_lock(csv_path: Path) -> Any:
     """Return the cross-process lock for one reject CSV."""
     mod = _rejection_mod()
     lockdir = csv_path.parent / mod.LOCK_SUBDIR
@@ -201,7 +208,7 @@ def _file_lock(csv_path: Path):
     return mod._FileLock(str(lockpath))
 
 
-def _lock_all(paths: List[Path]):
+def _lock_all(paths: List[Path]) -> Any:
     """Acquire locks for all mapped CSV paths in stable order."""
     stack = contextlib.ExitStack()
     for path in sorted(paths, key=lambda item: str(item)):
@@ -252,7 +259,10 @@ def _normalize_metadata_frame(df: pd.DataFrame,
     return frame, changed
 
 
-def _ensure_tab_metadata_backfill(app, tab: dict) -> None:
+def _ensure_tab_metadata_backfill(
+    app: Any,
+    tab: dict[str, Any],
+) -> None:
     """Ensure legacy rows have WHO/LAST_UPDATE across all mapped files."""
     paths = _csv_paths(app, tab)
     now_iso = _utcnow_iso()
@@ -276,7 +286,9 @@ def _parse_binary_filter(raw_value: str) -> Optional[int]:
     return int(value)
 
 
-def _check_user(app):
+def _check_user(
+    app: Any,
+) -> tuple[Any, Any, _ApiResponse | None]:
     """Return the current API user and resolved permissions."""
     user_info = app._get_api_user()
     if not user_info:
@@ -289,7 +301,10 @@ def _check_user(app):
     return user_info, perms, None
 
 
-def _check_tab_perm(app, raw_tab: str):
+def _check_tab_perm(
+    app: Any,
+    raw_tab: str,
+) -> tuple[Any, Any, dict[str, Any] | None, _ApiResponse | None]:
     """Validate login, tab existence, and monitor permission."""
     user_info, perms, err = _check_user(app)
     if err is not None:
@@ -308,7 +323,7 @@ def _check_tab_perm(app, raw_tab: str):
     return user_info, perms, tab, None
 
 
-def _check_history_perm(app):
+def _check_history_perm(app: Any) -> tuple[Any, Any, _ApiResponse | None]:
     """Validate access to the global rejection history."""
     user_info, perms, err = _check_user(app)
     if err is not None:
@@ -321,7 +336,9 @@ def _check_history_perm(app):
     return user_info, perms, None
 
 
-def _check_history_admin(app):
+def _check_history_admin(
+    app: Any,
+) -> tuple[Any, Any, _ApiResponse | None]:
     """Validate admin-level access to history management actions."""
     user_info, perms, err = _check_history_perm(app)
     if err is not None:
@@ -337,7 +354,7 @@ def _check_history_admin(app):
     return user_info, perms, None
 
 
-def _parse_int_flag(value, default: int = 1) -> int:
+def _parse_int_flag(value: Any, default: int = 1) -> int:
     """Normalize one reject integer flag."""
     if value is None:
         return int(default)
@@ -407,7 +424,7 @@ def _row_payload(raw_row: dict,
     return payload
 
 
-def _row_to_dict(row) -> dict:
+def _row_to_dict(row: Any) -> dict[str, Any]:
     """Convert a DataFrame row to plain JSON-safe values."""
     mod = _rejection_mod()
     record = dict()
@@ -470,7 +487,7 @@ def _combine_frames(frames: List[pd.DataFrame]) -> pd.DataFrame:
     return merged.reset_index(drop=True)
 
 
-def _load_tab_df(app, tab: dict) -> pd.DataFrame:
+def _load_tab_df(app: Any, tab: dict[str, Any]) -> pd.DataFrame:
     """Load and merge all reject rows for one logical tab."""
     frames = []
     for path in _csv_paths(app, tab):
@@ -517,7 +534,7 @@ def _delete_all(paths: List[Path], identifier: str) -> None:
         _write_df(path, df)
 
 
-def _diff_fields(before, after) -> List[str]:
+def _diff_fields(before: Any, after: Any) -> List[str]:
     """Return the changed top-level fields between two rows."""
     keys = set()
     if isinstance(before, dict):
@@ -533,12 +550,14 @@ def _diff_fields(before, after) -> List[str]:
     return out
 
 
-def append_history(app,
-                   instrument: str,
-                   user: str,
-                   action: str,
-                   before: Optional[dict],
-                   after: Optional[dict]) -> Optional[str]:
+def append_history(
+    app: Any,
+    instrument: str,
+    user: str,
+    action: str,
+    before: Optional[dict[str, Any]],
+    after: Optional[dict[str, Any]],
+) -> Optional[str]:
     """Append one shared history record for the logical tab."""
     try:
         history_path = _history_path(app)
@@ -578,7 +597,7 @@ def append_history(app,
         return None
 
 
-def _history_records(app) -> List[dict]:
+def _history_records(app: Any) -> List[dict[str, Any]]:
     """Return all shared rejection-history records."""
     records = []
     history_path = _history_path(app)
@@ -612,7 +631,10 @@ def _history_records(app) -> List[dict]:
     return records
 
 
-def _write_history_records(app, records: List[dict]) -> None:
+def _write_history_records(
+    app: Any,
+    records: List[dict[str, Any]],
+) -> None:
     """Write the full rejection-history record list back to disk."""
     history_path = _history_path(app)
     history_path.parent.mkdir(parents=True, exist_ok=True)
@@ -624,9 +646,11 @@ def _write_history_records(app, records: List[dict]) -> None:
             out.write('\n')
 
 
-def _resolve_history_record(app,
-                            entry_id: str,
-                            username: str) -> Optional[dict]:
+def _resolve_history_record(
+    app: Any,
+    entry_id: str,
+    username: str,
+) -> Optional[dict[str, Any]]:
     """Mark one rejection-history record as resolved."""
     resolved = None
     with _history_lock(app):
@@ -649,7 +673,10 @@ def _resolve_history_record(app,
     return resolved
 
 
-def _history_record(app, entry_id: str) -> Optional[dict]:
+def _history_record(
+    app: Any,
+    entry_id: str,
+) -> Optional[dict[str, Any]]:
     """Return one shared rejection-history record by id."""
     if '::' not in str(entry_id or ''):
         return None
@@ -666,7 +693,7 @@ def _history_record(app, entry_id: str) -> Optional[dict]:
     return None
 
 
-def _history_identifier(row: Optional[dict]) -> str:
+def _history_identifier(row: Optional[dict[str, Any]]) -> str:
     """Return the identifier value from one history row snapshot."""
     if not isinstance(row, dict):
         return ''
@@ -674,7 +701,7 @@ def _history_identifier(row: Optional[dict]) -> str:
     return value
 
 
-def _decode_upload(uploaded) -> str:
+def _decode_upload(uploaded: Any) -> str:
     """Decode one uploaded CSV file to text."""
     raw = uploaded.read()
     try:
@@ -683,7 +710,7 @@ def _decode_upload(uploaded) -> str:
         return raw.decode('latin-1')
 
 
-def api_rejection_list_list(app):
+def api_rejection_list_list(app: Any) -> _ApiResponse:
     """List one logical rejection tab with pagination and filtering."""
     _, _, tab, err = _check_tab_perm(
         app, request.args.get('instrument', '')
@@ -790,7 +817,7 @@ def api_rejection_list_list(app):
     )
 
 
-def api_rejection_list_add(app):
+def api_rejection_list_add(app: Any) -> _ApiResponse:
     """Add one logical rejection row across the mapped CSV files."""
     body = request.get_json(silent=True) or {}
     user_info, _, tab, err = _check_tab_perm(
@@ -829,7 +856,7 @@ def api_rejection_list_add(app):
     return jsonify(success=True, instrument=tab['key'], row=payload)
 
 
-def api_rejection_list_update(app):
+def api_rejection_list_update(app: Any) -> _ApiResponse:
     """Update one logical rejection row across the mapped CSV files."""
     body = request.get_json(silent=True) or {}
     user_info, _, tab, err = _check_tab_perm(
@@ -879,7 +906,7 @@ def api_rejection_list_update(app):
     return jsonify(success=True, instrument=tab['key'], row=payload)
 
 
-def api_rejection_list_delete(app):
+def api_rejection_list_delete(app: Any) -> _ApiResponse:
     """Delete one logical rejection row from every mapped CSV file."""
     body = request.get_json(silent=True) or {}
     user_info, _, tab, err = _check_tab_perm(
@@ -911,7 +938,7 @@ def api_rejection_list_delete(app):
     return jsonify(success=True, instrument=tab['key'], identifier=identifier)
 
 
-def api_rejection_list_upload(app):
+def api_rejection_list_upload(app: Any) -> _ApiResponse:
     """Upload many rejection rows with explicit conflict confirmation."""
     user_info, _, tab, err = _check_tab_perm(
         app, request.form.get('instrument', '')
@@ -1013,7 +1040,7 @@ def api_rejection_list_upload(app):
     )
 
 
-def api_rejection_history_list(app):
+def api_rejection_history_list(app: Any) -> _ApiResponse:
     """Return the shared logical rejection history."""
     _, _, err = _check_history_perm(app)
     if err is not None:
@@ -1073,7 +1100,7 @@ def api_rejection_history_list(app):
     )
 
 
-def api_rejection_history_get(app):
+def api_rejection_history_get(app: Any) -> _ApiResponse:
     """Return one shared rejection-history record by id."""
     _, _, err = _check_history_perm(app)
     if err is not None:
@@ -1091,7 +1118,7 @@ def api_rejection_history_get(app):
     return jsonify(success=True, entry=record)
 
 
-def api_rejection_history_restore(app):
+def api_rejection_history_restore(app: Any) -> _ApiResponse:
     """Restore the row state represented by one history entry."""
     user_info, _, err = _check_history_perm(app)
     if err is not None:
@@ -1155,7 +1182,7 @@ def api_rejection_history_restore(app):
     return jsonify(success=True, instrument=tab['key'], row=restored)
 
 
-def api_rejection_history_delete(app):
+def api_rejection_history_delete(app: Any) -> _ApiResponse:
     """Delete one rejection history entry by id (admin-only)."""
     _, _, err = _check_history_admin(app)
     if err is not None:
@@ -1179,7 +1206,7 @@ def api_rejection_history_delete(app):
     return jsonify(success=True, deleted_id=entry_id)
 
 
-def api_rejection_history_clear(app):
+def api_rejection_history_clear(app: Any) -> _ApiResponse:
     """Clear all rejection history entries (admin-only)."""
     _, _, err = _check_history_admin(app)
     if err is not None:
@@ -1191,6 +1218,6 @@ def api_rejection_history_clear(app):
     return jsonify(success=True, cleared_entries=removed)
 
 
-def api_rejection_history_resolve(app):
+def api_rejection_history_resolve(app: Any) -> _ApiResponse:
     """Backward-compatible alias for history restore."""
     return api_rejection_history_restore(app)

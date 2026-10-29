@@ -10,6 +10,7 @@ Created on 2019-07-08 at 16:32
 @author: cook
 """
 from typing import Any, Dict, Optional
+from typing import List, Tuple
 
 import numpy as np
 
@@ -285,7 +286,9 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 #     return eprops
 
 
-def extraction(simage, orderp, pos, r1, r2, cosmic_sigcut):
+def extraction(simage: np.ndarray, orderp: np.ndarray, pos: np.ndarray,
+               r1: float, r2: float, cosmic_sigcut: float
+               ) -> Tuple[np.ndarray, np.ndarray, int, np.ndarray]:
     """
     Extract order using tilt and weight (sigdet and badpix) and cosmic
     correction
@@ -304,16 +307,25 @@ def extraction(simage, orderp, pos, r1, r2, cosmic_sigcut):
     :param orderp: numpy array (2D), the image with fit superposed (zero filled)
     :param cosmic_sigcut: float, the sigma cut for cosmic rays
 
-    :return spe: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return nbcos: int, the number of cosmic rays found
+    :return: The extracted spectrum, weighted pixel contributions, cosmic-ray
+             count, and per-pixel cosmic-ray weights.
     """
     # delegate numerical work to the profile-independent core module
     return extract_core.extraction(simage, orderp, pos, r1, r2,
                                    cosmic_sigcut)
 
 
-def calculate_snr(e2ds, blaze_width, r1, r2, eff_ron):
+def calculate_snr(e2ds: np.ndarray, blaze_width: int, r1: float, r2: float,
+                  eff_ron: float) -> Tuple[float, float]:
+    """Calculate an order's signal-to-noise ratio and mean blaze flux.
+
+    :param e2ds: One-dimensional extracted order.
+    :param blaze_width: Half-width of the central flux-measurement window.
+    :param r1: Extraction distance above the order center.
+    :param r2: Extraction distance below the order center.
+    :param eff_ron: Effective readout noise.
+    :return: Signal-to-noise ratio and mean flux in the blaze window.
+    """
     # delegate numerical work to the profile-independent core module
     return extract_core.calculate_snr(e2ds, blaze_width, r1, r2, eff_ron)
 
@@ -350,8 +362,10 @@ def measure_p2p_scat(params: ParamDict,
     return extract_core.measure_p2p_scat(wavemap, e2ds, blaze_width, bands)
 
 
-def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
-                      cosmic_threshold):
+def cosmic_correction(sx: np.ndarray, spe: np.ndarray, fx: np.ndarray,
+                      ic: int, weights: np.ndarray, cpt: int,
+                      cosmic_sigcut: float, cosmic_threshold: int
+                      ) -> Tuple[np.ndarray, int]:
     """
     Calculate the cosmic correction
     :param sx: numpy array (1D), the raw extracted "ic"th order pixels
@@ -366,9 +380,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     :param cosmic_sigcut: float, the sigma cut for cosmic rays
     :param cosmic_threshold: int, the number of allowed cosmic rays per corr
 
-    :return spe: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return cpt: int, the number of cosmic rays found
+    :return: The updated extracted spectrum and cosmic-ray count.
     """
     # delegate numerical work to the profile-independent core module
     return extract_core.cosmic_correction(sx, spe, fx, ic, weights, cpt,
@@ -378,7 +390,17 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _valid_orders(params, start_order, end_order, skip_orders=None):
+def _valid_orders(params: ParamDict, start_order: int, end_order: int,
+                  skip_orders: Optional[List[int]] = None) -> List[int]:
+    """Return the non-skipped orders, translating core validation errors.
+
+    :param params: APERO parameter dictionary used to format errors.
+    :param start_order: First order number to include.
+    :param end_order: Last order number to include.
+    :param skip_orders: Optional order numbers to exclude.
+    :return: Valid order numbers, including both endpoints when not skipped.
+    :raises AperoCodedException: If the order bounds or skip list are invalid.
+    """
     func_name = __NAME__ + '._valid_orders()'
     # delegate numerical work to the profile-independent core module
     try:
@@ -388,7 +410,18 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
         raise AperoCodedException(params, message=str(e), targs=eargs)
 
 
-def _get_range(params, rangedict, fiber, keys):
+def _get_range(params: ParamDict,
+               rangedict: Dict[str, Any], fiber: str,
+               keys: List[str]) -> float:
+    """Get a fiber-specific extraction range and translate lookup errors.
+
+    :param params: APERO parameter dictionary used to format errors.
+    :param rangedict: Mapping of fiber names to numeric range values.
+    :param fiber: Fiber whose range is requested.
+    :param keys: Two parameter names included in a missing-range error.
+    :return: The selected range as a float.
+    :raises AperoCodedException: If the fiber has no configured range.
+    """
     func_name = __NAME__ + '._get_range()'
     # delegate numerical work to the profile-independent core module
     try:

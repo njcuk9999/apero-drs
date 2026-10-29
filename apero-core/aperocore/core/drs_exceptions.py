@@ -13,7 +13,7 @@ only from
 - apero.base.*
 - apero.lang.*
 """
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 from aperocore.base import base
 from aperocore.drs_lang import textentry
@@ -55,7 +55,8 @@ class Exit(SystemExit):
 
 class LogExit(Exit):
     # This should only be used when exiting from a log message
-    def __init__(self, errormessage: str, *args, **kwargs):
+    def __init__(self, errormessage: str, *args: Any,
+                 **kwargs: Any) -> None:
         """
         A Log exit exception (stores error message)
 
@@ -76,7 +77,7 @@ class LogExit(Exit):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -89,7 +90,8 @@ class LogExit(Exit):
 
 class DebugExit(Exit):
     # This exception should only be used when exiting the debugger (ipdb/pdb)
-    def __init__(self, errormessage: str, *args, **kwargs):
+    def __init__(self, errormessage: str, *args: Any,
+                 **kwargs: Any) -> None:
         """
         A Debug exit exception (stores error message)
 
@@ -110,7 +112,7 @@ class DebugExit(Exit):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -133,7 +135,7 @@ class DrsCodedException(DrsException):
     def __init__(self, codeid: str, level: Union[str, None] = None,
                  targs: Union[None, list, str] = None,
                  func_name: Union[str, None] = None,
-                 message: Union[str, None] = None):
+                 message: Union[str, None] = None) -> None:
         """
         A Drs Coded Exception (normally to be caught and piped into a
         WLOG/TextEntry so that codeid can be converted to readable error
@@ -160,7 +162,7 @@ class DrsCodedException(DrsException):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -170,7 +172,7 @@ class DrsCodedException(DrsException):
         # update dict with state
         self.__dict__.update(state)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         The string representation of the error: used as message when raised
         :return:
@@ -179,21 +181,22 @@ class DrsCodedException(DrsException):
         # return the base printer version string represntation
         return message
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The string representation of the error class
-        :return:
+        :return: string representation of the coded exception
         """
         return self.__str__()
 
-    def get_text(self):
+    def get_text(self) -> str:
+        """Return the supplied message or resolve the language text key."""
         if self.message is not None:
             message = str(self.message)
         else:
             message = f'E[{self.codeid}]' + textentry(self.codeid, self.targs)
         return message
 
-    def get(self, key: str, default: Any):
+    def get(self, key: str, default: Any) -> Any:
         """
         Quick get attribute (codeid/level/targs/func_name) and give a default
         key if not present or set to None
@@ -227,7 +230,7 @@ class DrsCodedWarning:
     def __init__(self, codeid: str, level: Union[str, None] = None,
                  targs: Union[None, list, str] = None,
                  message: Union[str, None] = None,
-                 func_name: Union[str, None] = None):
+                 func_name: Union[str, None] = None) -> None:
         """
         A Drs Coded Exception (normally to be caught and piped into a
         WLOG/TextEntry so that codeid can be converted to readable error
@@ -262,7 +265,7 @@ class DrsCodedWarning:
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -272,28 +275,29 @@ class DrsCodedWarning:
         # update dict with state
         self.__dict__.update(state)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         The string representation of the error: used as message when raised
         :return:
         """
         return self.get_text()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The string representation of the error class
         :return:
         """
         return self.__str__()
 
-    def get_text(self):
+    def get_text(self) -> str:
+        """Return the supplied message or resolve the language text key."""
         if self.message is not None:
             message = str(self.message)
         else:
             message = f'E[{self.codeid}]' + textentry(self.codeid, self.targs)
         return message
 
-    def get(self, key: str, default: Any):
+    def get(self, key: str, default: Any) -> Any:
         """
         Quick get attribute (codeid/level/targs/func_name) and give a default
         key if not present or set to None
@@ -330,7 +334,7 @@ class DrsRecipeException(DrsCodedException):
 # Define functions
 # =============================================================================
 # define a function to clear out warnings (for exit script)
-def clear_warnings():
+def clear_warnings() -> None:
     """
     clear all globally set warnings
     :return:
@@ -348,7 +352,8 @@ def clear_warnings():
 #   i.e. within apero.lang or apero.constants
 #   Note this can't be language specific=
 def wlogbasic(_: Any, level: Union[str, None] = None,
-              message: Union[str, None] = None, **kwargs):
+              message: Union[str, None] = None,
+              **kwargs: Any) -> None:
     """
     Define a wlog basic (same inputs as the drs_log.wlog) but passed to the
     basic logger

@@ -117,7 +117,12 @@ def _human_dt(dt: Optional[datetime]) -> str:
 # =============================================================================
 # Define common request parsing
 # =============================================================================
-def _parse_common(app):
+def _parse_common(
+    app: Any,
+) -> Tuple[
+    Any, Any, Any, Any, str, str, str,
+    Optional[float], Optional[float], Optional[float], int,
+]:
     """
     Parse common query parameters and authorize the request.
 
@@ -165,7 +170,8 @@ def _parse_common(app):
             None, None, None, "", "", fmt, None, None, None, 100,
         )
 
-    def _maybe_float(name):
+    def _maybe_float(name: str) -> Optional[float]:
+        """Parse one optional query parameter as a float."""
         sval = request.args.get(name, "").strip()
         if not sval:
             return None
@@ -198,7 +204,12 @@ def _parse_common(app):
     )
 
 
-def _load_rows(app, profile, objname, kind):
+def _load_rows(
+    app: Any,
+    profile: Dict[str, Any],
+    objname: str,
+    kind: str,
+) -> Tuple[Any, Any, Any, Any, Any, Dict[str, str], Any, Dict[str, Any]]:
     """
     Load and access-filter htable + the relevant ftable rows.
 
@@ -753,7 +764,7 @@ def _build_lbl_bundle(
 # =============================================================================
 # Define public entry point
 # =============================================================================
-def api_object_download(app):
+def api_object_download(app: Any) -> Any:
     """
     Download the raw data behind an object-page plot.
 

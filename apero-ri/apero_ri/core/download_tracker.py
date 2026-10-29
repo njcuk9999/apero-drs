@@ -37,6 +37,7 @@ _DEFAULTS: Dict[str, Any] = {
 
 
 def set_ari_dir(path: Path) -> None:
+    """Set the base directory used for download tracking data."""
     global ARI_DIR
     ARI_DIR = Path(path)
 
@@ -45,6 +46,7 @@ def set_ari_dir(path: Path) -> None:
 # Low-level I/O
 # =============================================================================
 def _tracker_path() -> Path:
+    """Create and return the current download-tracker YAML path."""
     admin_dir = ARI_DIR / "admin"
     general_dir = admin_dir / "general"
     general_dir.mkdir(parents=True, exist_ok=True)
@@ -59,6 +61,7 @@ def _tracker_path() -> Path:
 
 
 def _load() -> Dict[str, Any]:
+    """Load tracker data and fill missing keys from the defaults."""
     path = _tracker_path()
     if not path.exists():
         return _deep_copy_defaults()
@@ -78,6 +81,7 @@ def _load() -> Dict[str, Any]:
 
 
 def _save(data: Dict[str, Any]) -> None:
+    """Write tracker data to its YAML file."""
     path = _tracker_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -85,6 +89,7 @@ def _save(data: Dict[str, Any]) -> None:
 
 
 def _deep_copy_defaults() -> Dict[str, Any]:
+    """Return a deep copy so callers can safely mutate default data."""
     import copy
 
     return copy.deepcopy(_DEFAULTS)
@@ -94,11 +99,13 @@ def _deep_copy_defaults() -> Dict[str, Any]:
 # Settings
 # =============================================================================
 def load_settings() -> Dict[str, Any]:
+    """Return a copy of the configured API and basket rate limits."""
     with _lock:
         return dict(_load().get("settings", _DEFAULTS["settings"]))
 
 
 def save_settings(updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Clamp and persist supported rate-limit and archive-size settings."""
     with _lock:
         data = _load()
         settings = data.get("settings", {})

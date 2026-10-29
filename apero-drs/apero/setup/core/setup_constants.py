@@ -28,6 +28,8 @@ DB_MODES = drs_setup.__YAML__['DB_MODES']
 # Get the available plot modes
 PLOT_MODES = drs_setup.__YAML__['PLOT_MODES']
 PLOT_DESCS = drs_setup.__YAML__['PLOT_DESCS']
+# allowed methods to link external raw files into the raw directory
+EXTERNAL_RAW_TYPES = drs_setup.EXTERNAL_RAW_TYPES
 # all punctuation except underscore + whitespaces
 EXC_CHARS = string.punctuation.replace('_', ' ').split()
 
@@ -164,6 +166,33 @@ SARGS['OTHERDIR'] = SetupArgument(name='OTHERDIR', default_value=None,
                                   depends='DATADIR',
                                   helpstr='The other directory to use',
                                   aperoname='PATH.OTHER')
+# whether to mirror an external raw directory into RAWDIR
+#   (asked via drs_setup.ask_external_raw)
+SARGS['USE_EXTERNAL_RAW'] = SetupArgument(name='USE_EXTERNAL_RAW',
+                                          argname='--use-external-raw',
+                                          default_value=False, dtype='bool',
+                                          ask=False,
+                                                                                  helpstr=str(drs_setup.textentry(
+                                                                                          '40-510-00047')))
+# the external raw directory (must exist, never created by setup)
+SARGS['EXTERNAL_RAW'] = SetupArgument(name='EXTERNAL_RAW',
+                                      argname='--external-raw',
+                                      default_value=None, dtype='str',
+                                      ask=False,
+                                                                          helpstr=str(drs_setup.textentry(
+                                                                                  '40-510-00048')),
+                                      aperoname='PATH.EXTERNAL_RAW')
+# how to link external raw files into RAWDIR
+SARGS['EXTERNAL_RAW_TYPE'] = SetupArgument(name='EXTERNAL_RAW_TYPE',
+                                           argname='--external-raw-type',
+                                           default_value='symlink',
+                                           dtype='str',
+                                           options=EXTERNAL_RAW_TYPES,
+                                           ask=False,
+                                                                                   helpstr=str(drs_setup.textentry(
+                                                                                           '40-510-00049')),
+                                           aperoname='IPATH.'
+                                                     'EXTERNAL_RAW_TYPE')
 # whether to always create nre directories without asking user
 SARGS['FORCE_DIR_CREATE'] = SetupArgument(name='FORCE_DIR_CREATE',
                                           argname='--always-create',

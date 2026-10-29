@@ -55,7 +55,7 @@ textentry = drs_lang.textentry
 # Basic logging functions
 # =============================================================================
 class Colors:
-    def __init__(self, theme: Union[str, None] = None):
+    def __init__(self, theme: Union[str, None] = None) -> None:
         """
         Constructor of the colour class (colours based on theme)
         :param theme: str, if set sets the theme ('DARK' or 'LIGHT') defaults
@@ -114,7 +114,7 @@ class Colors:
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -131,7 +131,7 @@ class Colors:
         """
         return 'Colors[{0}]'.format(self.theme)
 
-    def update_theme(self, theme: Union[str, None] = None):
+    def update_theme(self, theme: Union[str, None] = None) -> None:
         """
         Update themed object names
             header/okblue/okgreen/ok/warning/fail/debug
@@ -515,7 +515,7 @@ def download_file(url: str, local_filename: str) -> bool:
         return False
 
 
-def assign_pid(prefix='PID') -> Tuple[str, str]:
+def assign_pid(prefix: str = 'PID') -> Tuple[str, str]:
     """
     Assign a process id based on the time now and return it and the
     time now
@@ -660,7 +660,7 @@ def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
     :param time_value: astropy.Time, the time to bin (in UTC)
     :param day_frac: float, the fraction of the day to bin to (0 = midnight
                      before observation, 0.5 = noon, and 1.0 = midnight after
-    :return:
+    :return: the binned UTC time represented as an Astropy Time object
     """
     # get the longitude of the site
     longitude = params['OBS.LONG']
@@ -674,9 +674,12 @@ def bin_by_time(params: Any, time_value: Time, day_frac: float) -> Time:
     return Time(local_binned_time_value, format='mjd')
 
 
-def create_structure_like(d, value=''):
-    """Recursively create a dictionary structure with the same keys as `d`,
-    but with all values replaced by `value`.
+def create_structure_like(d: Dict[Any, Any], value: Any = '') -> Any:
+    """Mirror nested dictionary keys while replacing each leaf value.
+
+    :param d: nested dictionary structure to copy
+    :param value: value to place at each non-dictionary leaf
+    :return: dictionary with the same nested keys and replacement leaves
     """
     # If the current element is a dictionary
     if isinstance(d, dict):
@@ -686,10 +689,17 @@ def create_structure_like(d, value=''):
         return value
 
 
-def map_nested_attribute_dict(yaml_d, obj_d, attr_name, dict_types=(dict,)):
+def map_nested_attribute_dict(
+        yaml_d: Dict[str, Any], obj_d: Any, attr_name: str,
+        dict_types: Tuple[type, ...] = (dict,)) -> Dict[str, Any]:
     """
-    Recursively create a dictionary matching the structure of yaml_d,
-    but with values fetched from obj_d using the specified attribute.
+    Mirror a nested mapping and fill leaves from an object's mapping attribute.
+
+    :param yaml_d: mapping whose nested keys define the output structure
+    :param obj_d: object or mapping supplying values at each level
+    :param attr_name: attribute name used to retrieve leaf mappings
+    :param dict_types: mapping types treated as nested containers
+    :return: nested mapping with missing values represented as None
     """
     result = {}
     for key, yaml_value in yaml_d.items():
@@ -707,7 +717,12 @@ def map_nested_attribute_dict(yaml_d, obj_d, attr_name, dict_types=(dict,)):
 
 
 # clean identifier column
-def clean_reject_list(_reject_list) -> List[str]:
+def clean_reject_list(_reject_list: List[str]) -> List[str]:
+    """Normalize rejected FITS names to basenames without ``.fits``.
+
+    :param _reject_list: file names or paths from the rejection list
+    :return: cleaned file identifiers
+    """
     # storage for return
     reject_list = []
     # clean reject list

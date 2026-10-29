@@ -4,6 +4,7 @@ import csv
 import io
 import time as _time
 from pathlib import Path
+from typing import Any
 
 import astropy.io.fits as fits
 from apero_ri.base.base import BLOCK_KIND as block_kind_map
@@ -13,11 +14,19 @@ from apero_ri.core.auth import (
     load_db_access,
 )
 from apero_ri.core.permissions import resolve_user_permissions
-from flask import jsonify, request, send_file
+from flask import Response, jsonify, request, send_file
 
 
-def _render_sql_preview(sql: str, params: dict) -> str:
-    """Return SQL with all bound parameters substituted inline (for display only)."""
+def _render_sql_preview(sql: str, params: dict[str, Any]) -> str:
+    """Render bound values inline for display; do not use as executable SQL.
+
+    Args:
+        sql: Parameterized SQL statement.
+        params: Bound parameter names and values.
+
+    Returns:
+        Display-only SQL text with parameter placeholders replaced.
+    """
     out = sql
     # Substitute all params, longest keys first to avoid partial matches
     for key in sorted(params.keys(), key=len, reverse=True):
@@ -30,8 +39,15 @@ def _render_sql_preview(sql: str, params: dict) -> str:
     return out
 
 
-def api_query_db_run(app):
-    """Execute a structured, user-driven SELECT query safely."""
+def api_query_db_run(app: Any) -> Response | tuple[Response, int]:
+    """Execute an authorized structured SELECT query.
+
+    Args:
+        app: The ARI application providing query and access helpers.
+
+    Returns:
+        JSON query results or an error response with its HTTP status.
+    """
     user_info = app._get_api_user()
     if user_info:
         perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
@@ -115,8 +131,15 @@ def api_query_db_run(app):
     )
 
 
-def api_query_db_count(app):
-    """Execute a COUNT(*) version of the query without ORDER BY or LIMIT."""
+def api_query_db_count(app: Any) -> Response | tuple[Response, int]:
+    """Count rows matching the submitted query, without order or limit.
+
+    Args:
+        app: The ARI application providing query and access helpers.
+
+    Returns:
+        JSON count result or an error response with its HTTP status.
+    """
     user_info = app._get_api_user()
     if user_info:
         perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
@@ -151,7 +174,10 @@ def api_query_db_count(app):
         return (
             jsonify(
                 success=False,
-                error="No database tables are accessible with your current permissions.",
+                error=(
+                    "No database tables are accessible with your current "
+                    "permissions."
+                ),
             ),
             403,
         )
@@ -201,8 +227,15 @@ def api_query_db_count(app):
     )
 
 
-def api_query_db_schema(app):
-    """Return allowed tables and columns for a profile+user combination."""
+def api_query_db_schema(app: Any) -> Response | tuple[Response, int]:
+    """Return tables and columns allowed for the selected profile.
+
+    Args:
+        app: The ARI application providing profile and access helpers.
+
+    Returns:
+        JSON schema details or an error response with its HTTP status.
+    """
     user_info = app._get_api_user()
     if user_info:
         perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
@@ -242,8 +275,21 @@ def api_query_db_schema(app):
     return jsonify(success=True, tables=tables_out)
 
 
-def get_user_table_access(app, user_info, profile):
-    """Return tables the user may query for this profile."""
+def get_user_table_access(
+    app: Any,
+    user_info: dict[str, Any] | None,
+    profile: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """Return the configured tables and columns this user may query.
+
+    Args:
+        app: The ARI application providing DB/profile helpers.
+        user_info: Authenticated user data, or ``None`` for public access.
+        profile: Profile record containing its ID, instrument, and data.
+
+    Returns:
+        Mapping of table labels to table names and allowed columns.
+    """
     if user_info is None:
         return {}
 
@@ -312,8 +358,15 @@ def get_user_table_access(app, user_info, profile):
     return result
 
 
-def api_file_browser(app):
-    """Return filtered ftable_all rows for an object in one profile."""
+def api_file_browser(app: Any) -> Response | tuple[Response, int]:
+    """Return accessible file-table rows for an object and profile.
+
+    Args:
+        app: The ARI application providing profile and access helpers.
+
+    Returns:
+        JSON file rows and query metadata, or an HTTP error response.
+    """
     t_start = _time.time()
 
     user_info = app._get_api_user()
@@ -394,8 +447,22 @@ def api_file_browser(app):
     )
 
 
-def _resolve_file_header_request(app):
-    """Resolve and validate a file-header request for the file browser."""
+def _resolve_file_header_request(
+    app: Any,
+) -> tuple[
+    Path | None,
+    dict[str, str] | None,
+    tuple[Response, int] | None,
+]:
+    """Validate file-header access and resolve its path and context.
+
+    Args:
+        app: The ARI application providing profile and access helpers.
+
+    Returns:
+        A file path and request context on success, otherwise an error
+        response tuple in the third element.
+    """
     user_info = app._get_api_user()
     if user_info:
         perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
@@ -481,8 +548,18 @@ def _resolve_file_header_request(app):
     return file_path, context, None
 
 
-def _extract_fits_header_rows(file_path):
-    """Extract FITS header cards as serializable rows."""
+def _extract_fits_header_rows(
+    file_path: Path,
+) -> tuple[fits.Header, list[dict[str, Any]]]:
+    """Extract a primary FITS header and its serializable card rows.
+
+    Args:
+        file_path: Path to the FITS file.
+
+    Returns:
+        The primary header and rows containing each card's index, key,
+        value, and comment.
+    """
     header = fits.getheader(str(file_path), ext=0)
     rows = []
     for idx, card in enumerate(header.cards):
@@ -500,8 +577,15 @@ def _extract_fits_header_rows(file_path):
     return header, rows
 
 
-def api_file_header(app):
-    """Return FITS header rows for a file-browser row."""
+def api_file_header(app: Any) -> Response | tuple[Response, int]:
+    """Return the primary FITS header as JSON rows.
+
+    Args:
+        app: The ARI application providing profile and access helpers.
+
+    Returns:
+        JSON header cards and summary, or an HTTP error response.
+    """
     file_path, context, error_response = _resolve_file_header_request(app)
     if error_response is not None:
         return error_response
@@ -526,8 +610,17 @@ def api_file_header(app):
     )
 
 
-def api_file_header_download(app):
-    """Download a file header in CSV or FITS format."""
+def api_file_header_download(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Download the primary FITS header as CSV or FITS.
+
+    Args:
+        app: The ARI application providing profile and access helpers.
+
+    Returns:
+        A file response, or a JSON error response with its HTTP status.
+    """
     file_path, context, error_response = _resolve_file_header_request(app)
     if error_response is not None:
         return error_response

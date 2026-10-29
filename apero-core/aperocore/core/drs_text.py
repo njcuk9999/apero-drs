@@ -138,7 +138,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
 
 
 def save_text_file(filename: Union[str, None], array: np.ndarray,
-                   func_name: Union[str, None] = None):
+                   func_name: Union[str, None] = None) -> None:
     """
     Save text to a file using np.savetxt and catch exceptions
 
@@ -171,7 +171,9 @@ def common_text(stringlist: List[str],
 
     :param stringlist: a list of strings to test
     :param kind: string, either 'prefix' or 'suffix'
-    :return:
+
+    :return: the common prefix or suffix, or None when no shorter common
+             substring exists
     """
     # get the first sub string
     substring = stringlist[0]
@@ -532,7 +534,9 @@ def clean_strings(strings: Union[List[str], str]) -> Union[List[str], str]:
 
     :param strings: list of strings or string, the string or strings to
                     strip of whitespaces + upper case
-    :return:
+
+    :return: the input string or list with whitespace stripped and text
+             converted to uppercase
     """
     if isinstance(strings, str):
         return strings.strip().upper()
@@ -543,13 +547,14 @@ def clean_strings(strings: Union[List[str], str]) -> Union[List[str], str]:
         return outstrings
 
 
-def cprint(message: Union[drs_lang.Text, str], colour: str = 'g'):
+def cprint(message: Union[drs_lang.Text, str], colour: str = 'g') -> None:
     """
     print coloured message
 
     :param message: str, message to print
     :param colour: str, colour to print
-    :return:
+
+    :return: None
     """
     print(COLOURS.print(str(message), colour))
 
@@ -557,10 +562,10 @@ def cprint(message: Union[drs_lang.Text, str], colour: str = 'g'):
 def user_input(question: str, dtype: Union[str, type, None] = None,
                options: Union[List[Any], None] = None,
                default: Any = None,
-               required: bool = True, color='g',
+               required: bool = True, color: str = 'g',
                stringlimit: Optional[int] = None,
-               restricted_chars: List[str] = None,
-               optiondescs: List[str] = None) -> Any:
+               restricted_chars: Optional[List[str]] = None,
+               optiondescs: Optional[List[str]] = None) -> Any:
     """
     Ask user for an input
 
@@ -757,7 +762,9 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                 return False
             else:
                 # text: Response must be {0}
-                cprint(textentry('40-001-00039', args=[drs_lang.YES_OR_NO]), 'y')
+                response_text = textentry(
+                    '40-001-00039', args=[drs_lang.YES_OR_NO])
+                cprint(response_text, 'y')
                 check = True
                 continue
         # deal with options
@@ -877,16 +884,22 @@ def clean_ascii_text(text: str) -> str:
     return newtext.encode('ascii', 'ignore').decode('ascii')
 
 
-def clean_fits_table_column(table: Table, colname: str):
+def clean_fits_table_column(table: Table, colname: str) -> None:
     """
     Clean a FITS table column in-place for ASCII-safe content.
+
+    :param table: FITS table whose column will be cleaned
+    :param colname: name of the column to clean
+
+    :return: None; updates the column in-place
     """
     if colname not in table.colnames:
         raise ValueError(f"Column '{colname}' not found in table.")
     table[colname] = [clean_ascii_text(val) for val in table[colname]]
 
 
-def pattern_is_too_generic(pattern: str, extension: str = None) -> bool:
+def pattern_is_too_generic(pattern: str,
+                           extension: Optional[str] = None) -> bool:
     """
     Test if a file pattern is too generic
 

@@ -1,5 +1,7 @@
 """Documentation view helper functions for ARIApp."""
 
+from typing import Any
+
 from apero_ri.core import auth, docs
 from apero_ri.core.permissions import (
     has_view_permission,
@@ -82,8 +84,16 @@ def _cards_to_sidebar_items(cards: list, raw_ref: str, depth: int) -> list:
     return items
 
 
-def _resolve_docs_level(raw_ref: str, version: str):
-    """Resolve existence and the branch-expanded documentation sidebar."""
+def _resolve_docs_level(
+    raw_ref: str,
+    version: str,
+) -> tuple[Any, list[dict[str, Any]], bool]:
+    """Resolve the current version, sidebar entries, and page existence.
+
+    :param raw_ref: Documentation reference supplied by the page route.
+    :param version: Requested documentation version.
+    :returns: Current version, expanded sidebar items, and existence flag.
+    """
     _cards, current_ver, _ = docs.get_doc_cards(raw_ref, version)
     exists = docs.doc_exists(raw_ref, version)
 
@@ -111,7 +121,7 @@ def _resolve_docs_level(raw_ref: str, version: str):
     return current_ver, sidebar_items, exists
 
 
-def doc_dynamic_view(app, page_ref: str = ''):
+def doc_dynamic_view(app: Any, page_ref: str = '') -> Any:
     """Render one documentation page from its path ref."""
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -221,7 +231,7 @@ def doc_dynamic_view(app, page_ref: str = ''):
     ), 404
 
 
-def doc_edit_view(app, page_ref: str):
+def doc_edit_view(app: Any, page_ref: str) -> Any:
     """Show the split-view markdown editor for a doc page."""
     user_info = auth.get_effective_user(session)
     if not user_info:
@@ -278,7 +288,7 @@ def doc_edit_view(app, page_ref: str):
     return render_template("docs/doc_editor.html", **context)
 
 
-def doc_search_index_view(app):
+def doc_search_index_view(app: Any) -> Any:
     """Serve the client-side search index as JSON for one doc version.
 
     Backed by the same cached sidebar-tree walk used for navigation

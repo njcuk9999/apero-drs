@@ -201,7 +201,7 @@ class QueueLock:
         # whether we currently hold the lock
         self.locked = False
 
-    def acquire(self):
+    def acquire(self) -> None:
         """
         Acquire the queue lock (waits up to self.timeout seconds)
 
@@ -237,7 +237,7 @@ class QueueLock:
             # wait before trying again
             time.sleep(self.wait)
 
-    def release(self):
+    def release(self) -> None:
         """
         Release the queue lock (if we hold it)
         """
@@ -270,7 +270,7 @@ class QueueLock:
         # process is alive - lock is not stale
         return False
 
-    def _remove_lockfile(self):
+    def _remove_lockfile(self) -> None:
         """
         Remove the lock file (ignoring errors if already removed)
         """
@@ -284,7 +284,9 @@ class QueueLock:
         self.acquire()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any,
+                 exc_tb: Any) -> None:
+        """Release the queue lock when leaving its context manager."""
         # always release the lock on exiting the context
         self.release()
 
@@ -1168,7 +1170,7 @@ def move_run_file(queue_path: str, group: str, run_file: str,
     return True
 
 
-def _write_lines_atomic(path: str, lines: List[str]):
+def _write_lines_atomic(path: str, lines: List[str]) -> None:
     """
     Write a text file so readers only ever see the old or the new content
 

@@ -11,8 +11,9 @@ import uuid
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 # ── Per-call results cache for check_results endpoint ────────────────────────
 _RESULTS_CACHE: dict = {}
@@ -37,7 +38,10 @@ from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import task_runner
 
 
-def _api_user(app):
+_ApiResponse = Response | tuple[Response, int]
+
+
+def _api_user(app: Any) -> tuple[Any, Any]:
     """Return the current API user and permissions."""
     user_info = app._get_api_user()
     if user_info:
@@ -50,7 +54,7 @@ def _api_user(app):
 
 
 def _resolve_checks_path(
-    app,
+    app: Any,
     profile_id: str,
     obsdir: str,
     check_path: str = '',
@@ -102,7 +106,10 @@ def _resolve_checks_path(
     raise FileNotFoundError('APERO check file not found')
 
 
-def _resolve_accessible_profile(app, profile_id: str) -> dict:
+def _resolve_accessible_profile(
+    app: Any,
+    profile_id: str,
+) -> dict[str, Any]:
     """Return one accessible APERO profile by profile id."""
     profile = None
     user_info = app._get_api_user()
@@ -116,14 +123,14 @@ def _resolve_accessible_profile(app, profile_id: str) -> dict:
 
 
 def _queue_apero_check_run(
-    app,
+    app: Any,
     profile_id: str,
     obsdir: str,
-    check_names=None,
+    check_names: list[str] | None = None,
     history_user: str = '',
     history_source: str = '',
     verbose: int = 1,
-):
+) -> dict[str, str]:
     """Queue one APERO check task for a specific night/check selection."""
     profile = _resolve_accessible_profile(app, profile_id)
     instrument = str(profile.get('instrument') or '').strip()
@@ -215,11 +222,11 @@ def _queue_apero_check_run(
 
 
 def _queue_apero_check_profile_run(
-    app,
+    app: Any,
     profile_id: str,
     history_user: str = '',
     history_source: str = '',
-):
+) -> dict[str, str]:
     """Queue one full-profile APERO check rerun."""
     profile = _resolve_accessible_profile(app, profile_id)
     instrument = str(profile.get('instrument') or '').strip()
@@ -303,7 +310,9 @@ def _slug_task_token(value: str, max_len: int = 64) -> str:
     return text[:max(8, int(max_len))]
 
 
-def _manual_task_meta_from_task_cfg(task_cfg: dict) -> dict:
+def _manual_task_meta_from_task_cfg(
+    task_cfg: dict[str, Any],
+) -> dict[str, str]:
     """Infer manual APERO-check task details from TASK_CONFIG."""
     cfg = dict(task_cfg or {})
     checks = cfg.get('checks')
@@ -336,7 +345,7 @@ def _manual_task_meta_from_task_cfg(task_cfg: dict) -> dict:
     }
 
 
-def _manual_task_meta_from_id(task_id: str) -> dict:
+def _manual_task_meta_from_id(task_id: str) -> dict[str, str]:
     """Infer manual APERO-check metadata from encoded task id."""
     text = str(task_id or '')
     parts = text.split('__')
@@ -358,7 +367,7 @@ def _manual_task_meta_from_id(task_id: str) -> dict:
     if mode == 'check':
         out['mode'] = 'single_check'
         out['label'] = 'Individual test re-run'
-        # Uppercase to match the URL parameter / template variable (e.g. 'ASTROM').
+        # Match the uppercase URL parameter and template value (e.g. ASTROM).
         # The slug encodes lowercase so we normalise back here.
         out['check_key'] = '' if check_key == 'all' else check_key.upper()
     elif mode == 'night':
@@ -368,7 +377,7 @@ def _manual_task_meta_from_id(task_id: str) -> dict:
 
 
 def _task_matches_profile(
-    task_status: dict,
+    task_status: dict[str, Any],
     profile_id: str,
     task_id: str = '',
 ) -> bool:
@@ -415,7 +424,10 @@ def _task_matches_profile(
     return False
 
 
-def _queue_status_payload(app, profile_id: str) -> dict:
+def _queue_status_payload(
+    app: Any,
+    profile_id: str,
+) -> dict[str, Any]:
     """Build queue-status payload for one APERO profile."""
     status = task_runner.get_status()
     running = []
@@ -531,7 +543,7 @@ def _queue_status_payload(app, profile_id: str) -> dict:
     }
 
 
-def api_apero_checks_update_failure(app):
+def api_apero_checks_update_failure(app: Any) -> _ApiResponse:
     """Update one failure override or monitor event."""
     user_info = app._get_api_user()
     if not user_info:
@@ -621,7 +633,7 @@ def api_apero_checks_update_failure(app):
     return jsonify(success=True, check=loaded)
 
 
-def api_apero_checks_create_issue(app):
+def api_apero_checks_create_issue(app: Any) -> _ApiResponse:
     """Create an APERO-check issue from selected failures."""
     user_info = app._get_api_user()
     if not user_info:
@@ -667,7 +679,7 @@ def api_apero_checks_create_issue(app):
     return jsonify(success=True, issue=issue)
 
 
-def api_apero_checks_config_save(app):
+def api_apero_checks_config_save(app: Any) -> _ApiResponse:
     """Persist the APERO-check YAML directory configuration."""
     user_info = app._get_api_user()
     if not user_info:
@@ -717,7 +729,7 @@ def api_apero_checks_config_save(app):
     )
 
 
-def api_apero_checks_browse_dirs(app):
+def api_apero_checks_browse_dirs(app: Any) -> _ApiResponse:
     """List subdirectories for the APERO checks root browser."""
     user_info = app._get_api_user()
     if not user_info:
@@ -769,7 +781,10 @@ def api_apero_checks_browse_dirs(app):
     )
 
 
-def api_apero_checks_profile_page(app, profile_id):
+def api_apero_checks_profile_page(
+    app: Any,
+    profile_id: str,
+) -> _ApiResponse:
     """Return one or two pages of APERO-check cards as JSON."""
     user_info, perms = _api_user(app)
     can_monitor = _has_any_monitor_perm(perms)
@@ -827,7 +842,10 @@ def api_apero_checks_profile_page(app, profile_id):
     )
 
 
-def api_apero_checks_list_obsdirs(app, profile_id):
+def api_apero_checks_list_obsdirs(
+    app: Any,
+    profile_id: str,
+) -> _ApiResponse:
     """Return every obs-dir name for a profile (admin run picker).
 
     Unlike api_apero_checks_profile_page, this returns the full obs-dir
@@ -872,7 +890,7 @@ def api_apero_checks_list_obsdirs(app, profile_id):
     return jsonify(success=True, profile_id=profile_id, obsdirs=obsdirs)
 
 
-def api_apero_checks_policy_build_status(app):
+def api_apero_checks_policy_build_status(app: Any) -> _ApiResponse:
     """Return the current background policy-build status (lightweight poll)."""
     user_info = app._get_api_user()
     if not user_info:
@@ -892,7 +910,7 @@ def api_apero_checks_policy_build_status(app):
     )
 
 
-def api_apero_checks_policy_sections(app):
+def api_apero_checks_policy_sections(app: Any) -> _ApiResponse:
     """Return heavy APERO checks policy sections asynchronously."""
     user_info = app._get_api_user()
     if not user_info:
@@ -934,7 +952,7 @@ def api_apero_checks_policy_sections(app):
     )
 
 
-def api_apero_checks_view_yaml(app):
+def api_apero_checks_view_yaml(app: Any) -> _ApiResponse:
     """Return one APERO check YAML file content in read-only mode."""
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
@@ -998,7 +1016,7 @@ def api_apero_checks_view_yaml(app):
     )
 
 
-def api_apero_checks_rerun_night(app):
+def api_apero_checks_rerun_night(app: Any) -> _ApiResponse:
     """Queue an async APERO-check run for one profile night."""
     user_info = app._get_api_user()
     if not user_info:
@@ -1039,7 +1057,7 @@ def api_apero_checks_rerun_night(app):
     )
 
 
-def api_apero_checks_rerun_single_check(app):
+def api_apero_checks_rerun_single_check(app: Any) -> _ApiResponse:
     """Queue an async APERO-check run for one check on one night."""
     user_info = app._get_api_user()
     if not user_info:
@@ -1084,7 +1102,7 @@ def api_apero_checks_rerun_single_check(app):
     )
 
 
-def api_apero_checks_advanced_run(app):
+def api_apero_checks_advanced_run(app: Any) -> _ApiResponse:
     """Queue ONE batch APERO-check task for multiple obs-dirs and checks.
 
     Accepts a JSON body with:
@@ -1240,7 +1258,7 @@ def api_apero_checks_advanced_run(app):
     )
 
 
-def api_apero_checks_clean_reset_profile(app):
+def api_apero_checks_clean_reset_profile(app: Any) -> _ApiResponse:
     """Delete all profile YAMLs and queue one full rerun."""
     user_info = app._get_api_user()
     if not user_info:
@@ -1312,7 +1330,7 @@ def api_apero_checks_clean_reset_profile(app):
     )
 
 
-def api_apero_checks_delete_obsdir(app):
+def api_apero_checks_delete_obsdir(app: Any) -> _ApiResponse:
     """Delete one APERO-check YAML file for an obsdir (admin only)."""
     user_info = app._get_api_user()
     if not user_info:
@@ -1358,7 +1376,7 @@ def api_apero_checks_delete_obsdir(app):
     return jsonify(success=True, deleted_path=str(path))
 
 
-def api_apero_checks_exclude_obsdir(app):
+def api_apero_checks_exclude_obsdir(app: Any) -> _ApiResponse:
     """Permanently exclude an obsdir for a profile's instrument (admin only).
 
     Deletes any existing YAML for the obsdir and records it in the
@@ -1387,7 +1405,10 @@ def api_apero_checks_exclude_obsdir(app):
             profile = item
             break
     if profile is None:
-        return jsonify(success=False, error='Profile not found or access denied'), 404
+        return jsonify(
+            success=False,
+            error='Profile not found or access denied',
+        ), 404
     instrument = str(profile.get('instrument') or '').strip()
     if not instrument:
         return jsonify(success=False, error='Profile has no instrument'), 400
@@ -1418,8 +1439,8 @@ def api_apero_checks_exclude_obsdir(app):
     )
 
 
-def api_apero_checks_list_excluded_obsdirs(app):
-    """Return the persisted excluded-obsdirs map (instrument -> [obsdir,...])."""
+def api_apero_checks_list_excluded_obsdirs(app: Any) -> _ApiResponse:
+    """Return excluded observation directories grouped by instrument."""
     user_info = app._get_api_user()
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -1434,7 +1455,7 @@ def api_apero_checks_list_excluded_obsdirs(app):
     return jsonify(success=True, excluded_obsdirs=excluded)
 
 
-def api_apero_checks_remove_excluded_obsdir(app):
+def api_apero_checks_remove_excluded_obsdir(app: Any) -> _ApiResponse:
     """Remove one obsdir from the permanently-excluded set (admin only)."""
     user_info = app._get_api_user()
     if not user_info:
@@ -1457,7 +1478,7 @@ def api_apero_checks_remove_excluded_obsdir(app):
     return jsonify(success=True, excluded_obsdirs=excluded)
 
 
-def api_apero_checks_delete_test_from_yamls(app):
+def api_apero_checks_delete_test_from_yamls(app: Any) -> _ApiResponse:
     """Delete one test key from failures/passes across profile YAML files."""
     user_info = app._get_api_user()
     if not user_info:
@@ -1543,7 +1564,10 @@ def api_apero_checks_delete_test_from_yamls(app):
     )
 
 
-def api_apero_checks_queue_status(app, profile_id):
+def api_apero_checks_queue_status(
+    app: Any,
+    profile_id: str,
+) -> _ApiResponse:
     """Return APERO-check queue and history for one profile."""
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
@@ -1571,7 +1595,9 @@ def api_apero_checks_queue_status(app, profile_id):
             'apero_check_queue_len':   raw.get('apero_check_queue_length', 0),
             'global_current':          raw.get('current'),
             'apero_check_current':     raw.get('apero_check_current'),
-            'named_queue_names':       list((raw.get('named_queues') or {}).keys()),
+            'named_queue_names': list(
+                (raw.get('named_queues') or {}).keys()
+            ),
             'apero_check_queue_items': raw.get('apero_check_queue', []),
             'apero_check_current_info': raw.get('apero_check_current_info'),
         }
@@ -1579,7 +1605,10 @@ def api_apero_checks_queue_status(app, profile_id):
     return jsonify(success=True, **payload)
 
 
-def api_apero_checks_queue_cancel_task(app, profile_id):
+def api_apero_checks_queue_cancel_task(
+    app: Any,
+    profile_id: str,
+) -> _ApiResponse:
     """Cancel one queued/running APERO-check task for this profile."""
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
@@ -1605,7 +1634,10 @@ def api_apero_checks_queue_cancel_task(app, profile_id):
     return jsonify(success=True, result=result)
 
 
-def api_apero_checks_queue_kill_profile(app, profile_id):
+def api_apero_checks_queue_kill_profile(
+    app: Any,
+    profile_id: str,
+) -> _ApiResponse:
     """Cancel all queued/running APERO-check tasks for one profile."""
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
@@ -1634,7 +1666,10 @@ def api_apero_checks_queue_kill_profile(app, profile_id):
     )
 
 
-def api_apero_checks_queue_clear_history(app, profile_id):
+def api_apero_checks_queue_clear_history(
+    app: Any,
+    profile_id: str,
+) -> _ApiResponse:
     """Clear the per-profile APERO-check history for this profile."""
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
@@ -1649,7 +1684,7 @@ def api_apero_checks_queue_clear_history(app, profile_id):
     )
 
 
-def api_apero_checks_check_info_async(app):
+def api_apero_checks_check_info_async(app: Any) -> _ApiResponse:
     """Return counts + profile_options for one check key (async load).
 
     Called by the check-info page after first paint so the page itself can
@@ -1701,7 +1736,7 @@ def api_apero_checks_check_info_async(app):
     )
 
 
-def api_apero_checks_check_results(app):
+def api_apero_checks_check_results(app: Any) -> _ApiResponse:
     """Return all (profile_id, obsdir) rows where a check has a given state.
 
     Used by the check-info page to show which nights failed/monitored/mixed
@@ -1709,7 +1744,7 @@ def api_apero_checks_check_results(app):
 
     Query parameters:
         check_key  (required) – e.g. "ASTROM"
-        state      (required) – one of: failed, monitored, mixed, overridden, passed
+        state      (required) - failed, monitored, mixed, overridden, or passed
     """
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
@@ -1856,7 +1891,7 @@ def api_apero_checks_check_results(app):
     )
 
 
-def api_apero_checks_validate_obsdir(app):
+def api_apero_checks_validate_obsdir(app: Any) -> _ApiResponse:
     """Check whether a given obsdir name exists under the profile's raw dir."""
     user_info = app._get_api_user()
     if not user_info:

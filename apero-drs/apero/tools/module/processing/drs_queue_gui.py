@@ -38,7 +38,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler
 from http.server import ThreadingHTTPServer
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse
 
 from aperocore.base import base
@@ -226,6 +226,7 @@ class GuiState:
     log messages and the worker thread for the current action
     """
     def __init__(self):
+        """Initialize shared action, message, and cancellation state."""
         # whether an action is currently running
         self.busy = False
         # the activity log messages (most recent last)
@@ -256,7 +257,8 @@ class GuiState:
             if len(self.messages) > GUI_MAX_MESSAGES:
                 self.messages = self.messages[-GUI_MAX_MESSAGES:]
 
-    def start_action(self, name: str, target, args: tuple) -> bool:
+    def start_action(self, name: str, target: Callable[..., Any],
+                     args: tuple) -> bool:
         """
         Start an action in a background worker thread (if not busy)
 

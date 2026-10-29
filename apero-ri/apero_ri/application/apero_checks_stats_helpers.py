@@ -8,6 +8,7 @@ import hashlib
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 from flask import jsonify, render_template
 from flask import session, redirect, url_for, flash
@@ -158,8 +159,17 @@ def _save_stats_cache(cache_path: Path, signature: dict, payload: dict) -> None:
         return
 
 
-def _compute_obsdir_stats(files, ignored_checks, bin_by):
+def _compute_obsdir_stats(
+    files: list[Path],
+    ignored_checks: list[str],
+    bin_by: str,
+) -> dict[str, Any]:
     """Compute per-obs-dir summary stats and histogram bins.
+
+    :param files: Check YAML files to summarize.
+    :param ignored_checks: Check keys omitted from failure calculations.
+    :param bin_by: Histogram grouping mode (week, month, or year).
+    :returns: Counts and a time-ordered histogram.
 
     Returns a dict with:
       - counts: {passed, failed, overridden, monitored, total}
@@ -258,8 +268,17 @@ def _compute_obsdir_stats(files, ignored_checks, bin_by):
     return dict(counts=counts, histogram=histogram)
 
 
-def _compute_checks_stats(files, ignored_checks, bin_by):
+def _compute_checks_stats(
+    files: list[Path],
+    ignored_checks: list[str],
+    bin_by: str,
+) -> dict[str, Any]:
     """Compute per-check-key summary stats and histogram bins.
+
+    :param files: Check YAML files to summarize.
+    :param ignored_checks: Check keys omitted from the results.
+    :param bin_by: Histogram grouping mode (week, month, or year).
+    :returns: Per-check counts, histograms, and sorted check keys.
 
     Returns a dict with:
       - checks: dict of check_key ->
@@ -394,7 +413,7 @@ def _compute_checks_stats(files, ignored_checks, bin_by):
 # Define API functions
 # =============================================================================
 
-def api_apero_checks_stats(app, profile_id):
+def api_apero_checks_stats(app: Any, profile_id: str) -> Any:
     """Return obsdir and per-check stats for a profile as JSON.
 
     Query parameters:
@@ -480,7 +499,7 @@ def api_apero_checks_stats(app, profile_id):
 # Define view function
 # =============================================================================
 
-def monitor_apero_checks_stats_view(app, profile_id):
+def monitor_apero_checks_stats_view(app: Any, profile_id: str) -> Any:
     """Render the APERO-checks stats page for one profile.
 
     The page renders immediately as a skeleton; JS fetches the stats

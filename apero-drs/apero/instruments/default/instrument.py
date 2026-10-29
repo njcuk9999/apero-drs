@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Pseudo constants (function) definitions for NO INSTRUMENT
+"""Default instrument interface and shared instrument-level helpers.
 
 Created on 2019-01-18 at 14:44
 
@@ -137,7 +136,8 @@ class Instrument:
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
-    def copy(self):
+    def copy(self) -> 'Instrument':
+        """Return a new default instrument object with the same name."""
         return Instrument(instrument_name=self.instrument)
 
     def _not_implemented(self, method_name: str):

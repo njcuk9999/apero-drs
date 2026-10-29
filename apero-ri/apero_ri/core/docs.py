@@ -24,7 +24,7 @@ import time
 from html import unescape
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlsplit, urlunsplit
 
 import markdown
@@ -89,7 +89,7 @@ _DOC_SEARCH_CACHE: dict = dict()
 _DOC_RENDER_CACHE: dict = dict()
 
 
-def _cache_get(cache: dict, key):
+def _cache_get(cache: Dict[Any, Any], key: Any) -> Any:
     """Return cached value for key if not expired."""
     now = time.monotonic()
     with _DOC_CACHE_LOCK:
@@ -102,7 +102,7 @@ def _cache_get(cache: dict, key):
         return entry.get('value')
 
 
-def _cache_set(cache: dict, key, value):
+def _cache_set(cache: Dict[Any, Any], key: Any, value: Any) -> None:
     """Set cached value for key with shared TTL."""
     now = time.monotonic()
     with _DOC_CACHE_LOCK:
@@ -114,7 +114,7 @@ def _cache_set(cache: dict, key, value):
         }
 
 
-def _dir_signature(path: Path) -> tuple:
+def _dir_signature(path: Path) -> Tuple[Tuple[str, int], ...]:
     """Return a cheap (name, mtime_ns) signature for a directory's entries.
 
     Only stats the listing (no file reads), so it can be checked on
@@ -137,7 +137,9 @@ def _dir_signature(path: Path) -> tuple:
     return tuple(entries)
 
 
-def _clone_list_of_dict(rows: List[dict]) -> List[dict]:
+def _clone_list_of_dict(
+    rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     """Return shallow-cloned list of dict rows."""
     out = []
     for row in list(rows or []):
@@ -153,7 +155,9 @@ def _slug_to_label(name: str) -> str:
     return ' '.join(tok.capitalize() for tok in clean.split())
 
 
-def _split_front_matter(text: str) -> Tuple[dict, str]:
+def _split_front_matter(
+    text: str,
+) -> Tuple[Dict[str, Any], str]:
     """Split YAML front matter from markdown body.
 
     Front matter must be at the very top of the file and bounded by
@@ -180,7 +184,7 @@ def _split_front_matter(text: str) -> Tuple[dict, str]:
     return meta_obj, body
 
 
-def _card_meta_from_markdown(path: Path) -> dict:
+def _card_meta_from_markdown(path: Path) -> Dict[str, Any]:
     """Read optional card metadata from a markdown file."""
     if not path.exists() or not path.is_file():
         return dict()
@@ -189,7 +193,9 @@ def _card_meta_from_markdown(path: Path) -> dict:
     return meta
 
 
-def _merge_doc_child_item(existing: dict, incoming: dict) -> dict:
+def _merge_doc_child_item(
+    existing: Dict[str, Any], incoming: Dict[str, Any]
+) -> Dict[str, Any]:
     """Merge one docs child item, preferring file metadata when present."""
     merged = dict(existing)
     merged['dir_present'] = bool(existing.get('dir_present')) or bool(
@@ -354,6 +360,7 @@ def get_doc_sidebar_tree(
     tree: List[dict] = []
 
     def walk(rel_doc_dir: str, depth: int) -> None:
+        """Append the directory's children and recursively visit subdirs."""
         children = _get_doc_children(rel_doc_dir, version)
         for child in children:
             rel_path = child['rel_path']
@@ -797,6 +804,7 @@ def _normalize_relative_doc_links(text: str, doc_ref: str,
         base_ref = posixpath.dirname(normalized_ref)
 
     def replace_link(match: re.Match) -> str:
+        """Rewrite a local Markdown link when its target page exists."""
         label = match.group(1)
         raw_target = match.group(2).strip()
         target_part = raw_target.split(maxsplit=1)[0]
@@ -862,6 +870,7 @@ def _linkify_apero_commands(text: str, version: Optional[str]) -> str:
     placeholders = []
 
     def protect(value: str) -> str:
+        """Replace protected Markdown with a reversible placeholder."""
         placeholders.append(value)
         return '\x00APERO_LINK_BLOCK_{0}\x00'.format(
             len(placeholders) - 1)
@@ -869,6 +878,7 @@ def _linkify_apero_commands(text: str, version: Optional[str]) -> str:
     body = _FENCED_CODE_RE.sub(lambda match: protect(match.group(0)), text)
 
     def link_inline_code(match: re.Match) -> str:
+        """Link inline code when it names a known APERO command."""
         token = match.group(1).strip()
         command = commands.get(token.lower())
         if command is None:

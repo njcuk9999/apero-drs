@@ -1,5 +1,9 @@
 """Admin user management API helper functions for ARIApp."""
 
+from typing import Any, Dict, List
+
+from flask import jsonify, request, session
+
 from apero_ri.core import audit_log
 from apero_ri.core.auth import (
     get_effective_user,
@@ -17,10 +21,11 @@ from apero_ri.core.permissions import (
     load_parameters,
     resolve_user_permissions,
 )
-from flask import jsonify, request, session
 
 
-def _clean_redundant_groups(groups_list, ari_groups):
+def _clean_redundant_groups(
+    groups_list: List[str], ari_groups: Dict[str, Any]
+) -> List[str]:
     """
     Remove redundant group assignments.
 
@@ -54,8 +59,8 @@ def _clean_redundant_groups(groups_list, ari_groups):
     return result
 
 
-def api_user_search(app):
-    """Search users by username substring."""
+def api_user_search(app: Any) -> Any:
+    """Search users and return groups and permissions for the admin editor."""
     user_info, perms = app._require_admin_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -138,8 +143,8 @@ def api_user_search(app):
     )
 
 
-def api_user_update_groups(app):
-    """Update a target user's groups."""
+def api_user_update_groups(app: Any) -> Any:
+    """Update a user's groups after checking admin permissions."""
     user_info, perms = app._require_admin_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -221,8 +226,8 @@ def api_user_update_groups(app):
     )
 
 
-def api_user_update_instruments(app):
-    """Update a target user's instruments."""
+def api_user_update_instruments(app: Any) -> Any:
+    """Update a user's instrument access after checking admin permissions."""
     user_info, perms = app._require_admin_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -310,8 +315,8 @@ def api_user_update_instruments(app):
     return jsonify(success=True)
 
 
-def api_login_as_search(app):
-    """Search users that the editor can impersonate."""
+def api_login_as_search(app: Any) -> Any:
+    """List users the current editor is permitted to impersonate."""
     user_info = get_effective_user(session)
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -347,8 +352,8 @@ def api_login_as_search(app):
     )
 
 
-def api_login_as_set(app):
-    """Set the login-as user in the session."""
+def api_login_as_set(app: Any) -> Any:
+    """Set the session's impersonated user after checking permissions."""
     real_user = session.get("user")
     if not real_user:
         return jsonify(success=False, error="Not logged in"), 401

@@ -94,6 +94,10 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
+    # ----------------------------------------------------------------------
+    # Mirror the external raw directory into PATH.RAW (if set)
+    # ----------------------------------------------------------------------
+    drs_processing.sync_external_raw(params)
     # get run file from inputs
     runfile = params['INPUTS']['RUNFILE']
     # set up drs group (for logging)

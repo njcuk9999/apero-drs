@@ -181,7 +181,8 @@ class Text(str):
     Special text container (so we can store text entry key)
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize string data and metadata for a language text entry."""
         str.__init__(*args, **kwargs)
         self.tkey = None
         self.tvalue = str(args[0])
@@ -200,7 +201,7 @@ class Text(str):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -210,7 +211,7 @@ class Text(str):
         # update dict with state
         self.__dict__.update(state)
 
-    def __add__(self, other: Union['Text', str]):
+    def __add__(self, other: Union['Text', str]) -> 'Text':
         """
         string-like addition (returning a Text instance)
 
@@ -231,7 +232,7 @@ class Text(str):
         msg.set_text_props(self.tkey)
         return msg
 
-    def __radd__(self, other: Union['Text', str]):
+    def __radd__(self, other: Union['Text', str]) -> 'Text':
         """
         string-like addition (returning a Text instance)
 
@@ -283,7 +284,7 @@ class Text(str):
 
     def set_text_props(self, key: str,
                        args: Union[List[Any], str, None] = None,
-                       kwargs: Union[Dict[str, Any], None] = None):
+                       kwargs: Union[Dict[str, Any], None] = None) -> None:
         """
         Add the text properties to the Text (done so init is like str)
 
@@ -345,7 +346,7 @@ class Text(str):
         # ---------------------------------------------------------------------
         return valuestr
 
-    def get_formatting(self, force=False):
+    def get_formatting(self, force: bool = False) -> None:
         """
         set the formatting (of self.tvalue) based on self.tkwargs and self.targs
 

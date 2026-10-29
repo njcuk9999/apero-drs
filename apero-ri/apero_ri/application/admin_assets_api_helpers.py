@@ -1,8 +1,16 @@
 """Admin Asset Management API helper functions for ARIApp."""
 
 import os
+from typing import Any
 
-from flask import abort, jsonify, request, send_from_directory, url_for
+from flask import (
+    Response,
+    abort,
+    jsonify,
+    request,
+    send_from_directory,
+    url_for,
+)
 
 from apero_ri.core import asset_management as am
 from apero_ri.core.permissions import resolve_user_permissions
@@ -11,7 +19,9 @@ from apero_ri.core.permissions import resolve_user_permissions
 _DEFAULT_MAX_UPLOAD_MB = 4096
 
 
-def _require_asset_admin(app):
+def _require_asset_admin(
+    app: Any,
+) -> tuple[dict[str, Any] | None, tuple[Response, int] | None]:
     """
     Resolve the session/Bearer-token user and check asset permission.
 
@@ -26,7 +36,7 @@ def _require_asset_admin(app):
     return user_info, None
 
 
-def _setup_required_response():
+def _setup_required_response() -> tuple[Response, int]:
     """Return the response telling clients the admin must set a path."""
     setup_url = url_for(
         am.ASSET_PAGE_ID.replace(".", "_"), _external=True
@@ -39,13 +49,21 @@ def _setup_required_response():
                    setup_url=setup_url), 409
 
 
-def _public_base_url():
+def _public_base_url() -> str:
     """Return the public download base url (for AURLS.URLS)."""
     return request.url_root.rstrip("/") + am.PUBLIC_URL_PREFIX
 
 
-def api_admin_assets_status(app):
-    """Return the configured assets path and the hosted file index."""
+def api_admin_assets_status(app: Any) -> Response | tuple[Response, int]:
+    """Return the configured assets path and hosted-file index.
+
+    Args:
+        app: The ARI application providing the current API user.
+
+    Returns:
+        JSON response with asset configuration and files, or an error
+        response with its HTTP status.
+    """
     _, err = _require_asset_admin(app)
     if err:
         return err
@@ -58,8 +76,16 @@ def api_admin_assets_status(app):
                    public_url=_public_base_url(), files=files)
 
 
-def api_admin_assets_config(app):
-    """Set the directory on this server that hosts the assets."""
+def api_admin_assets_config(app: Any) -> Response | tuple[Response, int]:
+    """Set the server's asset directory and public-download setting.
+
+    Args:
+        app: The ARI application providing the current API user.
+
+    Returns:
+        JSON response with the saved configuration, or an error response
+        with its HTTP status.
+    """
     _, err = _require_asset_admin(app)
     if err:
         return err
@@ -74,7 +100,7 @@ def api_admin_assets_config(app):
                    public_download=public_download)
 
 
-def _send_asset(assets_dir, filename):
+def _send_asset(assets_dir: str | os.PathLike, filename: str) -> Response:
     """Send a hosted asset file as an attachment (404 if invalid)."""
     try:
         name = am.validate_filename(filename)
@@ -83,16 +109,35 @@ def _send_asset(assets_dir, filename):
     return send_from_directory(assets_dir, name, as_attachment=True)
 
 
-def public_assets_download(app, filename):
-    """Public (no login) download of a hosted asset file."""
+def public_assets_download(app: Any, filename: str) -> Response:
+    """Download a hosted asset without requiring login.
+
+    Args:
+        app: The ARI application serving the asset route.
+        filename: Hosted asset filename to download.
+
+    Returns:
+        A file response. Aborts with HTTP 404 when public downloads are
+        disabled or the file is unavailable.
+    """
     assets_dir = am.get_assets_dir()
     if assets_dir is None or not am.load_config()["public_download"]:
         abort(404)
     return _send_asset(assets_dir, filename)
 
 
-def api_assets_download(app, filename):
-    """Download a hosted asset file with any valid session/API token."""
+def api_assets_download(
+    app: Any, filename: str,
+) -> Response | tuple[Response, int]:
+    """Download a hosted asset for an authenticated caller.
+
+    Args:
+        app: The ARI application providing the current API user.
+        filename: Hosted asset filename to download.
+
+    Returns:
+        A file response or a JSON error response with its HTTP status.
+    """
     if not app._get_api_user():
         return jsonify(success=False, error="Unauthorized"), 401
     assets_dir = am.get_assets_dir()
@@ -101,8 +146,15 @@ def api_assets_download(app, filename):
     return _send_asset(assets_dir, filename)
 
 
-def api_admin_assets_delete(app):
-    """Delete a hosted asset file from disk."""
+def api_admin_assets_delete(app: Any) -> Response | tuple[Response, int]:
+    """Delete a hosted asset selected in the JSON request body.
+
+    Args:
+        app: The ARI application providing the current API user.
+
+    Returns:
+        JSON success or error response with its HTTP status.
+    """
     _, err = _require_asset_admin(app)
     if err:
         return err
@@ -119,12 +171,18 @@ def api_admin_assets_delete(app):
     return jsonify(success=True)
 
 
-def api_admin_assets_upload(app):
+def api_admin_assets_upload(app: Any) -> Response | tuple[Response, int]:
     """
     Receive an asset file as a raw request body (used by apero_assets.py).
 
     Query args: ``filename`` (required), ``overwrite`` (``1``/``0``).
     Optional header ``X-Content-MD5`` is verified against the upload.
+
+    Args:
+        app: The ARI application providing the current API user.
+
+    Returns:
+        JSON upload result or error response with its HTTP status.
     """
     _, err = _require_asset_admin(app)
     if err:

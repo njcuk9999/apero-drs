@@ -19,7 +19,7 @@ import os
 import sys
 import time
 from collections import UserDict
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 # import duckdb
 import numpy as np
@@ -61,7 +61,7 @@ class CaseInsensitiveDict(dict):
     # the print format
     pfmt = '\t{0:30s}{1:45s}'
 
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg: Any, **kw: Any) -> None:
         """
         Construct the case insensitive dictionary class
         :param arg: arguments passed to dict
@@ -96,7 +96,7 @@ class CaseInsensitiveDict(dict):
         # return super(CaseInsensitiveDict, self).__getitem__(key)
         return dict.__getitem__(self, key)
 
-    def __setitem__(self, key: str, value: Any):
+    def __setitem__(self, key: str, value: Any) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -139,7 +139,7 @@ class CaseInsensitiveDict(dict):
         # return super(CaseInsensitiveDict, self).__contains__(key)
         return key in self.data
 
-    def __delitem__(self, key: str):
+    def __delitem__(self, key: str) -> None:
         """
         Deletes the "key" from CaseInsensitiveDict instance, case insensitive
 
@@ -158,7 +158,7 @@ class CaseInsensitiveDict(dict):
         del self.data[key]
         dict.__delitem__(self, key)
 
-    def get(self, key: str, default: Union[None, object] = None):
+    def get(self, key: str, default: Any = None) -> Any:
         """
         Overrides the dictionary get function
         If "key" is in CaseInsensitiveDict instance then returns this value,
@@ -188,7 +188,7 @@ class CaseInsensitiveDict(dict):
         else:
             return default
 
-    def __capitalise_keys__(self):
+    def __capitalise_keys__(self) -> None:
         """
         Capitalizes all keys in ParamDict (used to make ParamDict case
         insensitive), only if keys entered are strings
@@ -218,7 +218,7 @@ class CaseInsensitiveDict(dict):
                 self.data[key] = value
                 dict.__setitem__(self, key, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
         :return: str, the string representation
@@ -244,7 +244,7 @@ class CaseInsensitiveDict(dict):
 
 class StrCaseINSDict(CaseInsensitiveDict):
     # Case insensitive dictionary only containing strings
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg: Any, **kw: Any) -> None:
         """
         Construct the string elements case insensitive dictionary class
         :param arg: arguments passed to dict
@@ -257,7 +257,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         # super from dict
         super(StrCaseINSDict, self).__init__(*arg, **kw)
 
-    def __getitem__(self, key: str) -> Union[None, str]:
+    def __getitem__(self, key: str) -> List[str]:
         """
         Method used to get the value of an item using "key"
         used as x.__getitem__(y) <==> x[y]
@@ -275,7 +275,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         # noinspection PyTypeChecker
         return list(super(StrCaseINSDict, self).__getitem__(key))
 
-    def __setitem__(self, key: str, value: Union[None, str]):
+    def __setitem__(self, key: str, value: Union[None, str]) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -292,7 +292,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         # then do the normal dictionary setting
         super(StrCaseINSDict, self).__setitem__(key, list(value))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
         :return: str, the string representation
@@ -308,7 +308,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
 
 
 class ListCaseINSDict(CaseInsensitiveDict):
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg: Any, **kw: Any) -> None:
         """
         Construct the list elements case insensitive dictionary class
         :param arg: arguments passed to dict
@@ -339,7 +339,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
         # noinspection PyTypeChecker
         return list(super(ListCaseINSDict, self).__getitem__(key))
 
-    def __setitem__(self, key: str, value: list):
+    def __setitem__(self, key: str, value: list) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -356,7 +356,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
         # then do the normal dictionary setting
         super(ListCaseINSDict, self).__setitem__(key, list(value))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
         :return: str, the string representation
@@ -372,7 +372,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
 
 
 class ListDict(UserDict):
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg: Any, **kw: Any) -> None:
         """
         Construct the list elements dictionary class
         :param arg: arguments passed to dict
@@ -402,7 +402,7 @@ class ListDict(UserDict):
         # return from supers dictionary storage
         return list(super(ListDict, self).__getitem__(key))
 
-    def __setitem__(self, key: str, value: list):
+    def __setitem__(self, key: str, value: list) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -419,7 +419,7 @@ class ListDict(UserDict):
         # then do the normal dictionary setting
         super(ListDict, self).__setitem__(key, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
         :return: str, the string representation
@@ -435,7 +435,8 @@ class ListDict(UserDict):
 
 
 class FlatYamlDict:
-    def __init__(self, yaml_dict: Dict[str, Any], max_level=3):
+    def __init__(self, yaml_dict: Dict[str, Any],
+                 max_level: int = 3) -> None:
         """
         Initialize the FlatYamlDict object
 
@@ -459,7 +460,7 @@ class FlatYamlDict:
         """
         return key in self.flatten_dict
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """
         Return the iterator of the flattened dictionary
 
@@ -513,7 +514,7 @@ class FlatYamlDict:
         # also update the flattened version
         self.flatten_dict[key] = value
 
-    def flatten(self, max_level=3):
+    def flatten(self, max_level: int = 3) -> None:
         """
         Flatten the dictionary
 
@@ -527,7 +528,9 @@ class FlatYamlDict:
         # run the flattening
         self._flatten_dict(self.yaml_dict, 0, max_level)
 
-    def _flatten_dict(self, my_dict, level, max_level, path=None):
+    def _flatten_dict(self, my_dict: Dict[str, Any], level: int,
+                      max_level: int,
+                      path: Optional[List[str]] = None) -> None:
         """
         Recursively flatten the dictionary to a max level
 
@@ -567,7 +570,7 @@ class Path2Dict:
     i.e. if we have a dictionary like: {'a': {'b': {'c': 1}}} we can access
     the value of 'c' using 'a.b.c'
     """
-    def __init__(self, data: dict):
+    def __init__(self, data: Dict[str, Any]) -> None:
         """
         Construct the Path2Dict class
 
@@ -599,13 +602,13 @@ class Path2Dict:
         # return the value
         return mydict
 
-    def __setitem__(self, key: str, value: Any):
+    def __setitem__(self, key: str, value: Any) -> None:
         """
         Cannot set a value using Path2Dict - this is a read only class
         """
         raise NotImplementedError('Path2Dict does not support item assignment')
 
-    def __contains__(self, path: str):
+    def __contains__(self, path: str) -> bool:
         """
         Check if the path is in the dictionary
         """
@@ -629,23 +632,30 @@ class Path2Dict:
 # Define Custom classes
 # =============================================================================
 class BinaryMatrix():
-    def __init__(self, shape):
+    def __init__(self, shape: Union[int, Tuple[int, ...]]) -> None:
+        """Create an unsigned-integer matrix for encoded boolean masks.
+
+        :param shape: dimensions of the matrix
+        """
         # store the matrix
         self.data = np.zeros(shape, dtype=np.uint64)
         # store keys
         self.keys = []
 
-    def add_key(self, key):
+    def add_key(self, key: Any) -> None:
+        """Register a key whose masks are stored as individual bits."""
         if key not in self.keys:
             self.keys.append(key)
 
-    def decode(self, key):
+    def decode(self, key: Any) -> np.ndarray:
+        """Decode the boolean mask associated with a registered key."""
         # get position in array
         pos = self.keys.index(key)
         # return the mask for this key
         return self.data >> pos == 1
 
-    def encode(self, key, mask: np.ndarray):
+    def encode(self, key: Any, mask: np.ndarray) -> None:
+        """OR a boolean mask into the bit assigned to ``key``."""
         # make a bit mask of uint64
         bits = np.zeros(mask.shape, dtype=np.uint64)
         bits[mask] = 1
@@ -659,7 +669,7 @@ class BinaryMatrix():
 
 
 class BinaryDict(UserDict):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Construct the binary dictionary
 
@@ -681,7 +691,7 @@ class BinaryDict(UserDict):
             num += self.data[key] << kit
         return num
 
-    def encode(self, number: int):
+    def encode(self, number: int) -> None:
         """
         Encode a single decimal number into binary dictionary
 
@@ -712,7 +722,7 @@ class BinaryDict(UserDict):
         fmt = '{0:0' + str(digits) + 'b}'
         return fmt.format(self.decode())
 
-    def add_keys(self, keys: List[str]):
+    def add_keys(self, keys: List[str]) -> None:
         """
         Add a set of keys to the data and set their value all to False
 
@@ -745,7 +755,7 @@ class BinaryDict(UserDict):
         """
         return self.__str__()
 
-    def __setitem__(self, key: str, value: bool):
+    def __setitem__(self, key: str, value: bool) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -797,7 +807,8 @@ class ImportModule:
     # set class name
     class_name = 'ImportModule'
 
-    def __init__(self, name: str, path: str, mod: Any = None):
+    def __init__(self, name: str, path: str,
+                 mod: Any = None) -> None:
         """
         Constructor of the import module class - this is how we can keep
         a module open (and not re-import it) but also pickle it when required
@@ -841,7 +852,7 @@ class ImportModule:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -921,7 +932,7 @@ class ImportModule:
 
 
 class PandasLikeDatabase:
-    def __init__(self, data: pd.DataFrame):
+    def __init__(self, data: pd.DataFrame) -> None:
         """
         Construct a database just using a pandas dataframe stored in the memory
 
@@ -978,7 +989,7 @@ class PandasLikeDatabase:
         return int(count)
 
     def get_index_entries(self, columns: str,
-                          condition: Optional[str] = None):
+                          condition: Optional[str] = None) -> pd.DataFrame:
         """
         Proxy for index database get_entries method
 
@@ -1062,11 +1073,14 @@ class HiddenPrints:
 
     from: https://stackoverflow.com/a/45669280
     """
-    def __enter__(self):
+    def __enter__(self) -> None:
+        """Redirect standard output to the null device for the context."""
         self._original_stdout = sys.stdout
         sys.stdout = open(os.devnull, 'w')
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any,
+                 exc_tb: Any) -> None:
+        """Restore the original standard output after the context exits."""
         sys.stdout.close()
         sys.stdout = self._original_stdout
 
@@ -1075,7 +1089,7 @@ class Printer:
     """Print things to stdout on one line dynamically"""
 
     def __init__(self, params: Any, level: Union[str, None],
-                 message: Union[list, np.ndarray, str]):
+                 message: Union[list, np.ndarray, str]) -> None:
         """
         Dynamically print text to stdout, flushing the line so it appears
         to come from only one line (does not have new lines)
@@ -1114,7 +1128,7 @@ class Printer:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 

@@ -31,7 +31,7 @@ class AperoCheck:
     """Class to represent an APERO check."""
 
     def __init__(self, name: str, string_name: str,
-                 check_type: str, instruments: List[str]):
+                 check_type: str, instruments: List[str]) -> None:
         # the name of this test which should be used in the check_dict
         self.name = name
         # the string name of this test (for internal use)
@@ -59,14 +59,26 @@ class AperoCheck:
         # must return a tuple of (passed: bool, message: str)
         self.func = no_function
 
-    def clone(self):
-        """Return a per-run copy of this check instance."""
+    def clone(self) -> 'AperoCheck':
+        """Return an independent copy for one check run.
+
+        Runtime status and message fields are copied along with the check
+        definition so each run can update its own state.
+        """
         # Copy the instance so runtime state is not shared between runs.
         return copy.deepcopy(self)
         
     def __call__(self, instrument, obs_dir: str, aparams: dict,
-                 dbparams: dict, check_dict: Dict[str, bool]):
-        """Run the check."""
+                 dbparams: dict, check_dict: Dict[str, bool]) -> None:
+        """Run this check when its instrument and dependencies are valid.
+
+        :param instrument: Instrument currently being checked.
+        :param obs_dir: Observation directory identifier.
+        :param aparams: APERO profile parameters passed to the check callback.
+        :param dbparams: Database parameters passed to the check callback.
+        :param check_dict: Results of prerequisite checks, keyed by check name.
+        :return: None. Outcome is stored in this object's state fields.
+        """
         # Reset runtime state before every execution.
         self.message = ''
         self.wrong_instrument = False
@@ -99,8 +111,13 @@ class AperoCheck:
         else:
             self.message = "No function defined for this check"
     
-    def create_yaml_entry(self):
-        """Create the YAML bucket name and entry for this check."""
+    def create_yaml_entry(
+        self,
+    ) -> Optional[Tuple[str, str, Dict[str, str]]]:
+        """Build the YAML bucket, check key, and entry for this check.
+
+        :return: ``(bucket, check_name, entry)`` or None for skipped checks.
+        """
         # Skip checks that are not valid for this instrument.
         if self.wrong_instrument:
             return None
@@ -116,8 +133,8 @@ class AperoCheck:
         # Return the bucket, key, and payload for the writer.
         return bucket, str(self.name), entry
         
-    def report(self):
-        """Create a report for this check."""
+    def report(self) -> str:
+        """Return a human-readable status line for this check."""
         status = "PASSED" if self.passed else "FAILED"
         if self.wrong_instrument:
             status = "SKIPPED (wrong instrument)"
@@ -126,8 +143,15 @@ class AperoCheck:
         
 
 def no_function(instrument: str, obs_dir: str,
-                aparams: dict, dbparams: dict) -> (bool, str):
-    """Default function for checks that have no function defined."""
+                aparams: dict, dbparams: dict) -> Tuple[bool, str]:
+    """Return a failed result for an unconfigured check.
+
+    :param instrument: Instrument currently being checked.
+    :param obs_dir: Observation directory identifier.
+    :param aparams: APERO profile parameters supplied to check callbacks.
+    :param dbparams: Database parameters supplied to check callbacks.
+    :return: False and a message explaining that no check is configured.
+    """
     
     _ = instrument, obs_dir, aparams, dbparams
     
@@ -171,8 +195,12 @@ def format_time_string(value: Any) -> str:
     return text
 
 
-def load_yaml_file(filename: Path) -> dict:
-    """Load an existing APERO-check YAML file if it exists."""
+def load_yaml_file(filename: Path) -> Dict:
+    """Load an APERO-check YAML mapping, or return an empty mapping.
+
+    :param filename: Check YAML file to read.
+    :return: Parsed mapping, or an empty mapping for absent/non-mapping data.
+    """
     # Return an empty payload when the file does not exist.
     if not filename.exists() or not filename.is_file():
         return dict()
@@ -202,8 +230,14 @@ def make_obsdir_filename(root_dir: Path, obs_dir: str) -> Path:
 
 def build_history_entry(user: Optional[str] = None,
                         source: Optional[str] = None,
-                        date_str: Optional[str] = None) -> dict:
-    """Create one history entry for a check run."""
+                        date_str: Optional[str] = None) -> Dict[str, str]:
+    """Create one history entry for a check run.
+
+    :param user: Optional user name; the runtime user is used when omitted.
+    :param source: Optional host name; the runtime host is used when omitted.
+    :param date_str: Optional timestamp; current UTC time is used if omitted.
+    :return: History entry with date, user, and source strings.
+    """
     # Build the ordered event mapping used in the YAML output.
     entry = dict()
     entry['date'] = str(date_str or now_str())
@@ -213,7 +247,12 @@ def build_history_entry(user: Optional[str] = None,
 
 
 def append_history_entry(data: dict, history_entry: dict) -> dict:
-    """Append a history entry and return the updated history mapping."""
+    """Append an entry to copied history data and return the updated mapping.
+
+    :param data: Existing APERO-check payload.
+    :param history_entry: History record to append.
+    :return: Updated history mapping with a zero-padded entry key.
+    """
     # Copy the existing history so callers do not mutate shared state.
     history = dict(data.get('history', {}) or {})
     # Work out the next zero-padded entry number.
@@ -249,7 +288,13 @@ def build_obsdir_payload(obs_dir: str,
 def add_check_entry(payload: dict,
                     check_entry: Optional[Tuple[str, str, dict]],
                     existing_data: Optional[dict] = None) -> None:
-    """Add one check entry to the in-memory YAML payload."""
+    """Replace a check's prior result in the payload, preserving annotations.
+
+    :param payload: APERO-check payload whose passes/failures are updated.
+    :param check_entry: Bucket, check key, and new entry; None means skipped.
+    :param existing_data: Prior persisted payload for retaining annotations.
+    :return: None. The payload is updated in place.
+    """
     # Ignore empty or skipped check entries.
     if check_entry is None:
         return

@@ -775,6 +775,13 @@ def get_all_params(name: str, description: str, inputargs: List[str],
 
 def get_param_file(params: ParamDict, param_file_path: str,
                    func_name: str) -> str:
+    """Resolve, validate, and store a parameter file path.
+
+    :param params: parameter dictionary receiving the resolved path
+    :param param_file_path: key used to retrieve and update the path
+    :param func_name: function name included in error reporting
+    :return: absolute path to the parameter file
+    """
     # deal with no param file path
     if param_file_path is None:
         emsg = 'For {0} from_file is True must provide param_file_path'
@@ -909,6 +916,13 @@ def ask_for_missing_args(params: ParamDict,
 def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
                         external_const: Dict[str, Union[ConstDict, KeywordDict]]
                         ) -> List[Union[ConstDict, KeywordDict]]:
+    """Append nested external constant dictionaries to a config list.
+
+    :param config_list: existing configuration dictionaries, or None
+    :param external_const: mapping of external keys to constant dictionaries
+    :return: updated configuration list
+    :raises AperoCodedException: if an external entry is not a ConstDict
+    """
 
     # deal with no config list
     if config_list is None:
@@ -1043,7 +1057,8 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
     return params
 
 
-def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
+def _print_info(params: ParamDict, it: int,
+                info_dict: Dict[str, str]) -> None:
     """
     Print info about a demo mode
 
@@ -1254,7 +1269,7 @@ def _filter_demo_choices(params: ParamDict,
         WLOG(params, 'warning', msg)
 
 
-def _load_info(params: ParamDict, demo_inst) -> ParamDict:
+def _load_info(params: ParamDict, demo_inst: Any) -> ParamDict:
     """
     Load the info from a demo
 
@@ -1336,7 +1351,14 @@ def _validate_url(url: str, params: ParamDict = None) -> bool:
             WLOG(params, 'warning', msg)
         return False
 
-def ask_about_download_data(params, url):
+def ask_about_download_data(params: Any, url: str) -> Any:
+    """Prompt for remote or local demo data, or let the user skip.
+
+    :param params: parameter dictionary used for user-facing log messages
+    :param url: default demo-data URL
+    :return: selected URL, local path, and symlink choice; cancellation may
+        return None
+    """
     # set initial values
     demolocal = None
     demosymlink = False
@@ -1426,7 +1448,7 @@ def ask_about_download_data(params, url):
 
 
 def download_data(params: ParamDict, demolocal: str = None,
-                  demosymlink: bool = False):
+                  demosymlink: bool = False) -> None:
     """
     Download the data from a demo or copy from a local repository
 
@@ -1563,7 +1585,7 @@ def download_data(params: ParamDict, demolocal: str = None,
                 drs_misc.download_file(purl, localpath)
 
 
-def _print_parameters(key: str, value: Any):
+def _print_parameters(key: str, value: Any) -> None:
     """
     Print a parameter similar to how it would appear in a yaml dict
     
@@ -1592,7 +1614,7 @@ def _print_parameters(key: str, value: Any):
 # Config loading private functions
 # =============================================================================
 def warninglogger(instruments: Dict[str, Any], warnlist: Any,
-                  funcname: Union[str, None] = None):
+                  funcname: Union[str, None] = None) -> None:
     """
     Warning logger - takes "w" - a list of caught warnings and pipes them on
     to the log functions. If "funcname" is not None then t "funcname" is
@@ -1725,7 +1747,14 @@ def _get_file_names(params: ParamDict,
     return config_files
 
 
-def _to_flat_dict(nested_dict, parent_key=''):
+def _to_flat_dict(nested_dict: Dict[str, Any],
+                  parent_key: str = '') -> Dict[str, Any]:
+    """Flatten nested mappings into dot-separated keys.
+
+    :param nested_dict: mapping to flatten recursively
+    :param parent_key: prefix accumulated from parent mappings
+    :return: flat mapping from dotted key paths to leaf values
+    """
 
     flat_dict = {}
     for key, value in nested_dict.items():

@@ -4,6 +4,7 @@ import json
 import os
 import traceback
 from pathlib import Path
+from typing import Any
 
 from apero_ri.core import secret_store
 from apero_ri.core import task_runner
@@ -16,7 +17,7 @@ from apero_ri.application import async_task_helpers
 from flask import jsonify, redirect, request, session, url_for
 
 
-def _coerce_bool(value):
+def _coerce_bool(value: Any) -> bool:
     """Coerce common JSON/UI values to bool."""
     if isinstance(value, bool):
         return value
@@ -24,13 +25,13 @@ def _coerce_bool(value):
     return text in ['1', 'true', 'yes', 'on', 'y']
 
 
-def _normalize_instrument_key(value):
+def _normalize_instrument_key(value: Any) -> str:
     """Normalize instrument key for map-based task config lookups."""
     text = str(value or '').strip().upper()
     return text.replace('-', '_')
 
 
-def _instrument_profile_names(instrument):
+def _instrument_profile_names(instrument: str) -> list[str]:
     """Return ordered APERO profile names for one instrument."""
     profiles = load_apero_profiles(enabled_only=True).get(instrument, {})
     if not isinstance(profiles, dict):
@@ -38,7 +39,8 @@ def _instrument_profile_names(instrument):
     return list(profiles.keys())
 
 
-def _validate_sync_profiles(raw, instrument):
+def _validate_sync_profiles(
+    raw: Any, instrument: str) -> dict[str, dict[str, str]]:
     """Validate and normalize per-profile sync settings from the client."""
     if not isinstance(raw, dict):
         raise ValueError("sync_profiles must be an object")
@@ -82,7 +84,7 @@ def _validate_sync_profiles(raw, instrument):
     return cleaned
 
 
-def _validate_sync_source_path(pname, sync_source):
+def _validate_sync_source_path(pname: str, sync_source: str) -> None:
     """Ensure sync_source resolves to a dir that contains ``objects/``.
 
     Mirrors the candidate resolution used at run time by
@@ -142,7 +144,7 @@ REQUIRED_GOOGLE_OAUTH_KEYS = [
 ]
 
 
-def _validate_google_secret_name(value):
+def _validate_google_secret_name(value: Any) -> str:
     """Validate oauth filename to prevent path traversal."""
     secret_name = str(value or '').strip() or DEFAULT_GOOGLE_SECRET_NAME
     if secret_name != Path(secret_name).name:
@@ -160,7 +162,7 @@ _SERVICE_ACCOUNT_REQUIRED_KEYS = [
 ]
 
 
-def _normalize_google_oauth_payload(raw_payload):
+def _normalize_google_oauth_payload(raw_payload: Any) -> dict[str, Any]:
     """Validate and normalise a Google credentials JSON upload.
 
     Accepts two formats:
@@ -236,14 +238,14 @@ def _normalize_google_oauth_payload(raw_payload):
     return payload
 
 
-def _legacy_admin_secret_path(app, secret_name):
+def _legacy_admin_secret_path(app: Any, secret_name: str) -> Path:
     """Return LOCAL_DATA_DIR/admin/<secret_name>."""
     local_data_dir = Path(app._resolve_local_data_dir())
     admin_dir = local_data_dir / 'admin'
     return admin_dir / secret_name
 
 
-def api_async_tasks_save(app):
+def api_async_tasks_save(app: Any) -> Any:
     """Update an async task configuration from the fixed task catalog."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -613,7 +615,9 @@ def api_async_tasks_save(app):
                 if sheet_url:
                     # Extract sheet ID from URL if a full URL was pasted
                     import re as _re
-                    m = _re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', sheet_url)
+                    m = _re.search(
+                        r'/spreadsheets/d/([a-zA-Z0-9_-]+)', sheet_url
+                    )
                     t["sheet_id"] = m.group(1) if m else sheet_url
                 else:
                     t.pop("sheet_id", None)
@@ -733,7 +737,7 @@ def api_async_tasks_save(app):
     return jsonify(success=True, id=task_id, warnings=warnings)
 
 
-def api_async_tasks_list(app):
+def api_async_tasks_list(app: Any) -> Any:
     """List async task configs for an instrument with runtime state."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -814,7 +818,7 @@ def api_async_tasks_list(app):
     )
 
 
-def api_async_tasks_global_list(app):
+def api_async_tasks_global_list(app: Any) -> Any:
     """Load global tasks from registry defaults and overrides."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -896,7 +900,7 @@ def api_async_tasks_global_list(app):
     return jsonify(success=True, tasks=result, queue=queue_status)
 
 
-def api_async_tasks_task_list(app):
+def api_async_tasks_task_list(app: Any) -> Any:
     """Return available task classes from apero_ri.tasks.TASK_LIST."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -949,7 +953,7 @@ def api_async_tasks_task_list(app):
     )
 
 
-def api_async_tasks_run_now(app):
+def api_async_tasks_run_now(app: Any) -> Any:
     """Enqueue a single task to run immediately."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -1013,7 +1017,7 @@ def api_async_tasks_run_now(app):
     return jsonify(success=True)
 
 
-def api_async_tasks_status(app):
+def api_async_tasks_status(app: Any) -> Any:
     """Poll runtime status for a set of task ids and queue state."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -1089,7 +1093,7 @@ def api_async_tasks_status(app):
     return jsonify(success=True, statuses=statuses, queue=queue_status)
 
 
-def api_async_tasks_run_all(app):
+def api_async_tasks_run_all(app: Any) -> Any:
     """Enqueue all active tasks for an instrument."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -1179,7 +1183,7 @@ def api_async_tasks_run_all(app):
     return jsonify(success=True, added=added, blocked=blocked)
 
 
-def api_async_tasks_read_file(app):
+def api_async_tasks_read_file(app: Any) -> Any:
     """Return a preview of the first lines of an async task output file."""
     user_info, perms = app._require_async_tasks_perm()
     if not user_info:
@@ -1241,10 +1245,12 @@ def api_async_tasks_read_file(app):
         return jsonify(success=False, error=str(exc)), 500
 
 
-def build_json_preview_table(data, max_rows: int = 200) -> dict:
+def build_json_preview_table(
+    data: Any, max_rows: int = 200) -> dict[str, Any]:
     """Convert JSON data into a compact table payload for UI rendering."""
 
-    def _cell(value) -> str:
+    def _cell(value: Any) -> str:
+        """Convert one JSON value to a displayable table cell."""
         if value is None:
             return ""
         if isinstance(value, (dict, list)):
@@ -1252,8 +1258,9 @@ def build_json_preview_table(data, max_rows: int = 200) -> dict:
         return str(value)
 
     def _rows_to_table(
-        rows_data: list, columns_hint=None, row_count_hint=None
-    ) -> dict:
+            rows_data: list[Any], columns_hint: Any = None,
+            row_count_hint: Any = None) -> dict[str, Any]:
+        """Build a table payload from row data and optional metadata."""
         columns = []
         seen = set()
         if isinstance(columns_hint, list):
@@ -1340,7 +1347,7 @@ _GSHEET_OAUTH_SCOPES = [
 ]
 
 
-def api_async_tasks_gsheet_oauth_start(app):
+def api_async_tasks_gsheet_oauth_start(app: Any) -> Any:
     """Begin the Google OAuth flow for a legacy gsheet task.
 
     Expects a JSON body:
@@ -1361,7 +1368,10 @@ def api_async_tasks_gsheet_oauth_start(app):
         return jsonify(ok=False, error=str(exc)), 400
 
     if not isinstance(client_secret, dict):
-        return jsonify(ok=False, error='client_secret must be a JSON object'), 400
+        return (
+            jsonify(ok=False, error='client_secret must be a JSON object'),
+            400,
+        )
     if 'installed' not in client_secret and 'web' not in client_secret:
         return jsonify(
             ok=False,
@@ -1397,7 +1407,7 @@ def api_async_tasks_gsheet_oauth_start(app):
     return jsonify(ok=True, auth_url=auth_url)
 
 
-def api_async_tasks_gsheet_oauth_callback(app):
+def api_async_tasks_gsheet_oauth_callback(app: Any) -> Any:
     """Handle Google OAuth callback and save the credential file."""
     if request.args.get('error'):
         err = str(request.args.get('error', '')).strip()

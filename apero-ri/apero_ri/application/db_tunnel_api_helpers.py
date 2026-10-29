@@ -1,14 +1,19 @@
 """DB tunnel API helper functions for ARIApp."""
 
 import re
+from typing import Any
 
 from apero_ri.core.auth import validate_database_connection
 from apero_ri.tasks import apero_async
 from flask import jsonify, request
 
 
-def api_db_ssh_tunnel_test(app):
-    """Test one DB SSH tunnel definition with supplied credentials."""
+def api_db_ssh_tunnel_test(app: Any) -> Any:
+    """Test a database SSH tunnel using supplied or saved credentials.
+
+    :param app: Application facade for permission and tunnel operations.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -197,8 +202,12 @@ def api_db_ssh_tunnel_test(app):
     )
 
 
-def api_db_ssh_tunnel_close(app):
-    """Close one selected named DB tunnel or all saved DB tunnels."""
+def api_db_ssh_tunnel_close(app: Any) -> Any:
+    """Close a selected database tunnel or all saved tunnels.
+
+    :param app: Application facade for permission and tunnel operations.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -263,8 +272,12 @@ def api_db_ssh_tunnel_close(app):
     return jsonify(success=bool(result.get("ok")), **result), status_code
 
 
-def api_database_setup_local_db_save(app):
-    """Create/update one reusable local database definition."""
+def api_database_setup_local_db_save(app: Any) -> Any:
+    """Create or update a reusable local database definition.
+
+    :param app: Application facade for permission and configuration access.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401

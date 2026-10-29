@@ -10,6 +10,7 @@ Created on 2020-02-04 at 13:37
 @author: cook
 """
 import sys
+from typing import List, Optional, Set
 
 from aperocore.base import base
 from apero.base import base as apero_base
@@ -55,20 +56,26 @@ CURRENT_PATH = ''
 # Define classes
 # =============================================================================
 class TmpRecipe(DrsRecipe):
-    def __init__(self, instrument='None', name=None, filemod=None):
+    """Recipe instance used by developer tools and demonstrations."""
+
+    def __init__(self, instrument: str = 'None', name: Optional[str] = None,
+                 filemod=None) -> None:
         # load super class
         super().__init__(instrument, name, filemod)
 
 
 class RecipeDefinition:
-    def __init__(self, instrument='None'):
+    """Expose instrument recipe definitions with temporary additions."""
+
+    def __init__(self, instrument: str = 'None') -> None:
         self.instrument = instrument
         self.recipes = []
         self.mod = None
         # populate recipes using instrument
         self.populate_recipes()
 
-    def populate_recipes(self):
+    def populate_recipes(self) -> None:
+        """Load the active instrument's recipe-definition module."""
         # need to update filemod and recipe mod
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # update filemod
@@ -90,32 +97,44 @@ class RecipeDefinition:
 
 
 class TmpInputFile(DrsFitsFile):
+    """Temporary FITS input-file definition used in developer tooling."""
+
     def __init__(self, name, **kwargs):
+        """Initialize a temporary FITS file with the supplied definition."""
         # load super class
         super().__init__(name, **kwargs)
 
 
 class TmpFitsFile(DrsFitsFile):
+    """Temporary FITS output-file definition used in developer tooling."""
+
     def __init__(self, name, **kwargs):
+        """Initialize a temporary FITS file with the supplied definition."""
         # load super class
         super().__init__(name, **kwargs)
 
 
 class TmpNpyFile(DrsFitsFile):
+    """Temporary NumPy-file definition used in developer tooling."""
+
     def __init__(self, name, **kwargs):
+        """Initialize a temporary NumPy file with the supplied definition."""
         # load super class
         super().__init__(name, **kwargs)
 
 
 class FileDefinition:
-    def __init__(self, instrument='None'):
+    """Expose the active instrument's input and output file definitions."""
+
+    def __init__(self, instrument: str = 'None') -> None:
         self.instrument = instrument
         self.files = None
         self.out = None
         # populate files using instrument
         self.populate_files()
 
-    def populate_files(self):
+    def populate_files(self) -> None:
+        """Load this instrument's file-definition module."""
         # need to update filemod and recipe mod
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # update filemod
@@ -130,7 +149,7 @@ class Demo:
     Holder of demonstration functions (to keep demo clean)
     """
 
-    def __init__(self, params=None):
+    def __init__(self, params: Optional[ParamDict] = None) -> None:
         # get parameters
         if params is None:
             self.params = load_functions.load_config(select.INSTRUMENTS)
@@ -140,7 +159,8 @@ class Demo:
         self.package = params['DRS.PACKAGE']
 
     @staticmethod
-    def setup():
+    def setup() -> List[str]:
+        """Ensure demo arguments exist and return the current argv values."""
         # deal with arguments
         if isinstance(sys.argv, list):
             args = list(sys.argv)
@@ -151,18 +171,21 @@ class Demo:
             sys.argv = ['demo', '1']
         return args
 
-    def get_lang_db_loc(self):
+    def get_lang_db_loc(self) -> str:
+        """Return the absolute path to the package language database."""
         # get language database relative path
         relpath = base.LANG_DEFAULT_PATH
         # return absolute language database path
         return drs_misc.get_relative_folder(self.package, relpath)
 
-    def change_lang(self, params, language):
+    def change_lang(self, params: ParamDict, language: str) -> None:
+        """Set the language on this demo and the supplied parameters."""
         # update the language
         self.params.set('GLOBAL.LANGUAGE', language)
         params.set('GLOBAL.LANGUAGE', language)
 
-    def test_data(self, params):
+    def test_data(self, params: ParamDict) -> None:
+        """Placeholder for loading packaged demonstration data."""
         # TODO: get test data from data/spirou/demo
         pass
 
@@ -170,9 +193,13 @@ class Demo:
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_size(obj, seen=None):
+def get_size(obj: object, seen: Optional[Set[int]] = None) -> int:
     """
     Recursively finds size of objects
+
+    :param obj: Object whose recursive in-memory size is measured.
+    :param seen: Object identities already counted to prevent cycles.
+    :return: Estimated size in bytes, counting each referenced object once.
 
     from: https://goshippo.com/blog/measure-real-size-any-python-object/
     """

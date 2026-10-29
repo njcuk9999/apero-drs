@@ -27,7 +27,7 @@ import json
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qs, urlparse
 
 import yaml
@@ -199,8 +199,10 @@ def _load_google_oauth_payload(
     )
 
 
-def _open_spreadsheet(payload: Dict[str, Any], sheet_id: str):
-    """Open a gspread spreadsheet using service-account or OAuth2 credentials."""
+def _open_spreadsheet(
+    payload: Dict[str, Any], sheet_id: str
+) -> Any:
+    """Open a sheet using service-account or OAuth2 credentials."""
     import gspread
 
     scopes = payload.get('scopes')
@@ -230,8 +232,10 @@ def _open_spreadsheet(payload: Dict[str, Any], sheet_id: str):
     return client.open_by_key(sheet_id)
 
 
-def _open_worksheet_by_gid(spreadsheet, gid: int, label: str):
-    """Return the worksheet whose numeric GID matches *gid*."""
+def _open_worksheet_by_gid(
+    spreadsheet: Any, gid: int, label: str
+) -> Any:
+    """Return the worksheet with the requested GID or raise if it is absent."""
     for ws in spreadsheet.worksheets():
         if ws.id == gid:
             return ws
@@ -258,13 +262,13 @@ def _build_obsdir_index(
 
 
 def _sync_overrides(
-    spreadsheet,
+    spreadsheet: Any,
     override_gid: int,
     yaml_by_obsdir: Dict[str, Path],
     monitor_checks: dict,
     instrument_dash: str,
     dry_run: bool,
-    tlog,
+    tlog: Callable[[str], None],
 ) -> Tuple[int, int, int]:
     """Apply override events from the OVERRIDES sheet tab.
 
@@ -366,12 +370,12 @@ def _sync_overrides(
 
 
 def _sync_monitoring(
-    spreadsheet,
+    spreadsheet: Any,
     monitoring_gid: int,
     yaml_by_obsdir: Dict[str, Path],
     instrument_dash: str,
     dry_run: bool,
-    tlog,
+    tlog: Callable[[str], None],
 ) -> Tuple[int, int, int]:
     """Apply monitor events from the instrument monitoring sheet tab.
 
@@ -501,6 +505,7 @@ class LegacyCheckGSheetTask(apero_async.AperoAsyncTask):
         super().__init__(name, description, status)
 
     def run_job(self, params: Dict[str, Any]) -> None:  # noqa: C901
+        """Sync configured override and monitoring tabs into check YAMLs."""
         from apero_ri.apero_monitoring import CHECKS as MONITOR_CHECKS
         from apero_ri.core.auth import load_apero_profiles
         from apero_ri.core.apero_checks import resolve_checks_root
@@ -517,6 +522,7 @@ class LegacyCheckGSheetTask(apero_async.AperoAsyncTask):
         task_logger = params.get('TASK_LOGGER')
 
         def tlog(message: str) -> None:
+            """Forward task messages to the configured task logger."""
             if callable(task_logger):
                 try:
                     task_logger(message)

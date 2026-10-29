@@ -3,14 +3,19 @@
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 from apero_ri.core import basket_funcs as bk
 from apero_ri.core.auth import get_accessible_profiles
 from flask import jsonify, request, url_for
 
 
-def api_basket_share_email(app):
-    """Email a share link for a completed job to a recipient."""
+def api_basket_share_email(app: Any) -> Any:
+    """Email a completed job's share link and return the JSON response.
+
+    :param app: Application facade for access checks and contact details.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, err = app._basket_access_check()
     if err:
         return err
@@ -93,8 +98,12 @@ def api_basket_share_email(app):
         return jsonify(success=False, error=f"Failed to send email: {exc}"), 500
 
 
-def api_basket_compile(app):
-    """Start background download compilation."""
+def api_basket_compile(app: Any) -> Any:
+    """Start a basket download job and return the JSON response.
+
+    :param app: Application facade for access checks and job configuration.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, err = app._basket_access_check()
     if err:
         return err
@@ -159,8 +168,12 @@ def api_basket_compile(app):
     return jsonify(success=True, job_id=job_id)
 
 
-def api_basket_add_from_ftable(app):
-    """Add accessible files for one obs_dir + fkind to the basket."""
+def api_basket_add_from_ftable(app: Any) -> Any:
+    """Add accessible files from an observation table to the basket.
+
+    :param app: Application facade for access checks and basket storage.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, err = app._basket_access_check()
     if err:
         return err

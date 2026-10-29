@@ -116,6 +116,18 @@ Examples:
 
 @.github/instructions/python-apero.instructions.md
 
+## User-facing text
+
+- New prompts, log messages, warnings, errors, and command-line help text in
+  `apero-drs` and `apero-ri` must use language-database entries rather than
+  inline English strings. Define entries in the appropriate language table
+  under `apero-core/aperocore/drs_lang/tables/` (normally `default_text.py`
+  for shared text), include translations, argument metadata, and a usage
+  comment, then retrieve them in code with `textentry()`.
+- When changing existing user-facing text, preserve the entry-based language
+  lookup and update its language-table definition rather than adding a
+  hard-coded replacement.
+
 - Prefer `np.array(x)` over `np.asarray(x)`. `np.asarray` avoids a copy when
   `x` is already an array, which can cause hard-to-trace mutations of the
   caller's data. Use `np.array(x)` (which always copies) unless you have

@@ -9,7 +9,7 @@ Created on 2019-05-15 at 12:24
 """
 import copy
 import warnings
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -174,7 +174,7 @@ def fit2dpoly(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     return coeff
 
 
-def cal_med_abs_dev(data: np.ndarray) -> np.ndarray:
+def cal_med_abs_dev(data: np.ndarray) -> float:
     """
     Calculate the median absolute deviation of a dataset.
 
@@ -217,7 +217,7 @@ def inv_normal_fraction(sigma: float = 1.0) -> float:
     return sigma * np.sqrt(2) * erfinv(0.5)
 
 
-def largest_divisor_below(n1: int, n2: int) -> float:
+def largest_divisor_below(n1: int, n2: int) -> Union[int, float]:
     """
     finds the largest divisor of a large number below a certain limit
     for 4088 and 9, we would get 8 (511*8 = 4088)
@@ -235,7 +235,7 @@ def largest_divisor_below(n1: int, n2: int) -> float:
     return np.nan
 
 
-def estimate_sigma(tmp: np.ndarray, sigma=1.0) -> float:
+def estimate_sigma(tmp: np.ndarray, sigma: float = 1.0) -> float:
     """
     Return a robust estimate of N sigma away from the mean
 
@@ -363,7 +363,16 @@ def linear_minimization(vector: np.ndarray, sample: np.ndarray,
     return amp_out, recon_out
 
 
-def lin_mini_errors(y0, yerr0, sample):
+def lin_mini_errors(
+        y0: np.ndarray, yerr0: np.ndarray,
+        sample: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Fit sample components by weighted least squares and reconstruct data.
+
+    :param y0: observed values, in the shape used for reconstruction
+    :param yerr0: per-value uncertainties used as inverse-variance weights
+    :param sample: candidate components, with one component per column
+    :return: fitted amplitudes, amplitude uncertainties, reconstructed data
+    """
     y = y0.ravel()
 
     if sample.shape[1] == y.shape[0]:
@@ -390,7 +399,8 @@ def lin_mini_errors(y0, yerr0, sample):
     return amps, errs, recon
 
 
-def get_magic_grid(wave0: float, wave1: float, dv_grid: float = 500):
+def get_magic_grid(wave0: float, wave1: float,
+                   dv_grid: float = 500) -> np.ndarray:
     """
     magic grid is a standard way of representing a wavelength vector it is set
     so that each element is exactly dv_grid step in velocity. If you shift
@@ -424,7 +434,8 @@ def get_magic_grid(wave0: float, wave1: float, dv_grid: float = 500):
 
 class NanSpline:
     def __init__(self, emsg: str, x: Union[np.ndarray, None] = None,
-                 y: Union[np.ndarray, None] = None, **kwargs):
+                 y: Union[np.ndarray, None] = None,
+                 **kwargs: Any) -> None:
         """
         This is used in place of scipy.interpolateInterpolatedUnivariateSpline
         (Any spline following this will return all NaNs)
@@ -484,7 +495,7 @@ class NanSpline:
         return np.repeat(np.nan, len(x))
 
 
-def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
+def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs: Any
                ) -> Union[InterpolatedUnivariateSpline, NanSpline]:
     """
     Do an Interpolated Univariate Spline taking into account NaNs (with masks)
@@ -694,7 +705,8 @@ def robust_nanstd(x: np.ndarray) -> float:
     return (high - low) / 2.0
 
 
-def fuzzy_curve_fit(func, xvector: np.ndarray, yvector: np.ndarray,
+def fuzzy_curve_fit(func: Callable[..., np.ndarray],
+                    xvector: np.ndarray, yvector: np.ndarray,
                     p0: List[float], nsigcut: float = 5.0
                     ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -1011,7 +1023,8 @@ def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
 
 
 def lowpassfilter(input_vect: np.ndarray, width: int = 101,
-                  k=1, frac_valid_min=0, trim_valid: bool = False
+                  k: int = 1, frac_valid_min: float = 0,
+                  trim_valid: bool = False
                   ) -> np.ndarray:
     """
     Computes a low-pass filter of an input vector.
@@ -1172,7 +1185,7 @@ def percentile_bin(image: np.ndarray, bx: int, by: int,
     return outimage
 
 
-def get_circular_mask(width: int):
+def get_circular_mask(width: int) -> np.ndarray:
     """
     create a circular mask
 
@@ -1191,9 +1204,11 @@ def get_circular_mask(width: int):
 
 
 def polyfit_odd_ratio(xvector: np.ndarray, yvector: np.ndarray,
-                      yerr: np.array,
-                      degree: int, odd_ratio=1e-3, force_sigma=False,
-                      max_iteration=50) -> Tuple[np.ndarray, np.ndarray]:
+                      yerr: np.ndarray, degree: int,
+                      odd_ratio: float = 1e-3,
+                      force_sigma: bool = False,
+                      max_iteration: int = 50
+                      ) -> Tuple[np.ndarray, np.ndarray]:
     """
     A robust polyfit function that iteratively fits a polynomial to the
     data until the dispersion of values is accounted for by a weight vector.
@@ -1439,7 +1454,7 @@ def relativistic_waveshift(dv: Union[float, np.ndarray],
 
 def fit_cheby(xvector: np.ndarray, yvector: np.ndarray, deg: int,
               domain: List[float], weight: Optional[np.ndarray] = None
-              ) -> Union[np.ndarray, Any]:
+              ) -> np.ndarray:
     """
     Fit a chebyshev polynomial in form y(x) = T0(x) + T1(x) + ... Tn(x)
     returns the chebyshev polynomial coefficients
@@ -1492,7 +1507,8 @@ def val_cheby(coeffs: np.ndarray, xvector: Union[np.ndarray, int, float],
 
 def covariance_vs_distance(xvector: np.ndarray, yvector: np.ndarray,
                            distances: np.ndarray,
-                           dx_tol: float = None):
+                           dx_tol: Optional[float] = None
+                           ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute covariance of y as a function of distance in x for non-uniformly
     sampled data.

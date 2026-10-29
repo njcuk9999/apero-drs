@@ -2,6 +2,7 @@
 
 import secrets
 from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
 from apero_ri.core import email_backend as eb
 from apero_ri.core.auth import (
@@ -21,8 +22,12 @@ from flask import (
 )
 
 
-def api_auth_register_start(app):
-    """Start user registration by sending a 6-digit verification code."""
+def api_auth_register_start(app: Any) -> Any:
+    """Start registration and send a six-digit verification code.
+
+    :param app: Application facade used to validate and email registrations.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     data = request.get_json()
     if not data:
         return jsonify(success=False, error="Missing data"), 400
@@ -137,8 +142,12 @@ def api_auth_register_start(app):
     return jsonify(success=True)
 
 
-def api_auth_register_verify(app):
-    """Verify registration code and create user account."""
+def api_auth_register_verify(app: Any) -> Any:
+    """Verify the registration code and create the account.
+
+    :param app: Application facade for registration-related operations.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     data = request.get_json()
     if not data:
         return jsonify(success=False, error="Missing data"), 400
@@ -193,8 +202,12 @@ def api_auth_register_verify(app):
     return jsonify(success=True)
 
 
-def forgot_password_view(app):
-    """Request a password reset email without revealing account existence."""
+def forgot_password_view(app: Any) -> Any:
+    """Request a password reset without revealing account existence.
+
+    :param app: Application facade for reset rate limits and token handling.
+    :return: Redirect response after a POST or the reset-request page.
+    """
     if request.method == "POST":
         ip = app._get_request_ip()
         wait_seconds = app._register_forgot_pw_attempt(ip)
@@ -284,8 +297,12 @@ def forgot_password_view(app):
     )
 
 
-def api_user_account_update(app):
-    """Update account fields except primary email change verification."""
+def api_user_account_update(app: Any) -> Any:
+    """Update the current user's account fields and password.
+
+    :param app: Application facade for user authentication and validation.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -394,8 +411,12 @@ def api_user_account_update(app):
     return jsonify(success=True)
 
 
-def api_user_account_request_primary_email(app):
-    """Send a verification code to confirm a new primary email address."""
+def api_user_account_request_primary_email(app: Any) -> Any:
+    """Send a verification code for a proposed primary email address.
+
+    :param app: Application facade for authentication and email delivery.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -446,8 +467,12 @@ def api_user_account_request_primary_email(app):
     return jsonify(success=True)
 
 
-def api_user_account_confirm_primary_email(app):
-    """Verify code and update the user's primary email."""
+def api_user_account_confirm_primary_email(app: Any) -> Any:
+    """Verify the pending code and update the primary email address.
+
+    :param app: Application facade for authentication and account handling.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -509,8 +534,13 @@ def api_user_account_confirm_primary_email(app):
     return jsonify(success=True)
 
 
-def register_forgot_pw_attempt(app, ip: str):
-    """Record forgot-password attempt and return wait seconds if blocked."""
+def register_forgot_pw_attempt(app: Any, ip: str) -> Optional[int]:
+    """Record a reset attempt and return remaining wait seconds if blocked.
+
+    :param app: Application rate-limit state and policy settings.
+    :param ip: Client address used as the rate-limit key.
+    :returns: Wait duration when blocked, otherwise ``None``.
+    """
     now_ts = datetime.now(timezone.utc).timestamp()
     app._prune_forgot_pw_rate_limit(now_ts)
 

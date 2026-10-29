@@ -21,7 +21,7 @@ import re
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import yaml
 from apero_ri.base import base
@@ -480,7 +480,8 @@ def _compute_lbl_flavor_stats(
     except Exception:
         return {}
 
-    def _col(name: str) -> list:
+    def _col(name: str) -> List[Any]:
+        """Return a table column as a list, or an empty list if absent."""
         if name in rdb_table.colnames:
             return list(rdb_table[name])
         return []
@@ -835,7 +836,10 @@ def build_object_page_stats(
     lbl_flavors: List[Dict[str, Any]] = []
     _obj_up = (objname or '').upper()
 
-    def _lbl_flavor_sort_key(item):
+    def _lbl_flavor_sort_key(
+        item: Tuple[str, Dict[str, Any]],
+    ) -> Tuple[int, str]:
+        """Sort the object's self-flavor before other LBL flavors."""
         # Self-flavor ({obj}_{obj}) first, then alphabetical
         _fname, _ = item
         fid, _ = _parse_lbl_rdb_flavor(_fname)
@@ -1160,10 +1164,12 @@ if __name__ == "__main__":
 
 
 def _is_dict_row(row: Any) -> bool:
+    """Return whether a decoded row is a dictionary."""
     return isinstance(row, dict)
 
 
 def _first_present(row: Dict[str, Any], keys: Sequence[str]) -> Any:
+    """Return the first mapped value that is neither None nor empty text."""
     for key in keys:
         if key in row and row.get(key) not in (None, ""):
             return row.get(key)
@@ -1171,6 +1177,7 @@ def _first_present(row: Dict[str, Any], keys: Sequence[str]) -> Any:
 
 
 def _safe_float(value: Any) -> Optional[float]:
+    """Convert a value to float, rejecting invalid values and NaN."""
     try:
         fval = float(value)
     except (TypeError, ValueError):
@@ -1181,6 +1188,7 @@ def _safe_float(value: Any) -> Optional[float]:
 
 
 def _percentile(sorted_values: Sequence[float], pct: float) -> Optional[float]:
+    """Interpolate a percentile from an ascending sequence."""
     if not sorted_values:
         return None
     if len(sorted_values) == 1:
@@ -1197,11 +1205,13 @@ def _percentile(sorted_values: Sequence[float], pct: float) -> Optional[float]:
 
 
 def _nanmedian(values: Iterable[Any]) -> Optional[float]:
+    """Return the median of numeric values, ignoring invalid values."""
     vals = sorted(v for v in (_safe_float(x) for x in values) if v is not None)
     return _percentile(vals, 50)
 
 
 def _mean(values: Iterable[Any]) -> Optional[float]:
+    """Return the mean of numeric values, or None when none are valid."""
     vals = [v for v in (_safe_float(x) for x in values) if v is not None]
     if not vals:
         return None
@@ -1209,6 +1219,7 @@ def _mean(values: Iterable[Any]) -> Optional[float]:
 
 
 def _sum(values: Iterable[Any]) -> Optional[float]:
+    """Return the sum of numeric values, or None when none are valid."""
     vals = [v for v in (_safe_float(x) for x in values) if v is not None]
     if not vals:
         return None
@@ -1216,12 +1227,14 @@ def _sum(values: Iterable[Any]) -> Optional[float]:
 
 
 def _format_number(value: Optional[float], ndp: int = 3) -> Optional[str]:
+    """Format a numeric value to the requested decimal places."""
     if value is None:
         return None
     return f"{value:.{ndp}f}"
 
 
 def _join_unique(values: Iterable[Any]) -> Optional[str]:
+    """Join unique non-empty string values in encounter order."""
     seen = set()
     ordered = []
     for value in values:
@@ -1237,20 +1250,24 @@ def _join_unique(values: Iterable[Any]) -> Optional[str]:
 
 
 def _min_time(rows: Iterable[Dict[str, Any]], key: str) -> Optional[str]:
+    """Return the smallest non-empty string value for a row field."""
     vals = [str(r.get(key)) for r in rows if r.get(key)]
     return min(vals) if vals else None
 
 
 def _max_time(rows: Iterable[Dict[str, Any]], key: str) -> Optional[str]:
+    """Return the largest non-empty string value for a row field."""
     vals = [str(r.get(key)) for r in rows if r.get(key)]
     return max(vals) if vals else None
 
 
 def _fmt_count(n_accessible: int, n_total: int) -> str:
+    """Format accessible and total counts for display."""
     return f"{n_accessible} ({n_total})"
 
 
 def _qc_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
+    """Count total, passed, and failed quality-control rows."""
     rows_list = list(rows)
     total = len(rows_list)
     passed = sum(1 for r in rows_list if int(r.get("PASSED_ALL_QC", 1) or 0) == 1)
@@ -1276,6 +1293,7 @@ _json_rows_lock = threading.Lock()
 
 
 def _load_json_rows(path: Path) -> List[Dict[str, Any]]:
+    """Load dictionary rows from JSON, returning an empty list on error."""
     key = str(path)
     now = time.monotonic()
     # Check the cache first (under lock to avoid torn reads).
@@ -1307,6 +1325,7 @@ _instrument_profile_cache: Dict[str, Dict[str, Any]] = {}
 
 
 def _load_instrument_profile(instrument_profile_file: str) -> Dict[str, Any]:
+    """Load a cached instrument profile, or return an empty mapping."""
     if not instrument_profile_file:
         return {}
     # Return the already-loaded dict without touching the file system.
@@ -1335,6 +1354,7 @@ def _load_instrument_profile(instrument_profile_file: str) -> Dict[str, Any]:
 def _header_label(
     profile_data: Dict[str, Any], section: str, key: str, default: str
 ) -> str:
+    """Resolve a configured display label with a caller-provided fallback."""
     headers = {}
     if isinstance(profile_data, dict):
         headers = profile_data.get(
@@ -1427,7 +1447,8 @@ def _compute_lbl_flavor_stats(
         return {}
 
     # pull required columns (guard or missing columns gracefully)
-    def _col(name: str) -> list:
+    def _col(name: str) -> List[Any]:
+        """Return a table column as a list, or an empty list if absent."""
         if name in rdb_table.colnames:
             return list(rdb_table[name])
         return []
@@ -1770,7 +1791,10 @@ def build_object_page_stats(
     lbl_flavors: List[Dict[str, Any]] = []
     _obj_up = (objname or '').upper()
 
-    def _lbl_flavor_sort_key(item):
+    def _lbl_flavor_sort_key(
+        item: Tuple[str, Dict[str, Any]],
+    ) -> Tuple[int, str]:
+        """Sort the object's self-flavor before other LBL flavors."""
         # Self-flavor ({obj}_{obj}) first, then alphabetical
         _fname, _ = item
         fid, _ = _parse_lbl_rdb_flavor(_fname)

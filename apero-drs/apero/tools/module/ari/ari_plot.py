@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+"""Generate spectrum, calibration, and diagnostic plots for the ARI.
 
 Created on 2024-01-23 at 10:56
 
@@ -59,7 +56,8 @@ PLOT_BACKGROUND_COLOR = '#FEFDE1'
 # Define classes
 # =============================================================================
 class DebugPlot:
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize an inactive diagnostic plot descriptor."""
         self.name = None
         self.basename = None
         self.path = None
@@ -69,19 +67,11 @@ class DebugPlot:
 
 
 def add_zoom_inset(main_frame, zoom_frame, xvector, yvector, plotfunc,
-                   zoom_frac=0.05, **kwargs):
-    """
-    Add an inset zoom to the last `zoom_frac` of the data.
+                   zoom_frac: float = 0.05, **kwargs) -> None:
+    """Plot sorted data on two axes, zooming the second to the final fraction.
 
-    Parameters:
-        ax : matplotlib.axes.Axes
-            Main axis to which inset is added.
-        x, y : array-like
-            Data arrays.
-        zoom_frac : float
-            Fraction of data to zoom into (from the end).
-        inset_position : list of float
-            Position of the inset [x0, y0, width, height] in axis coordinates.
+    ``plotfunc`` names the plotting method used on both axes. Additional
+    keyword arguments are passed to each plotting method.
     """
     num = len(xvector)
     start_idx = int((1 - zoom_frac) * num)
@@ -105,7 +95,9 @@ def add_zoom_inset(main_frame, zoom_frame, xvector, yvector, plotfunc,
 # =============================================================================
 # Define functions
 # =============================================================================
-def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
+def spec_plot(spec_props: Dict[str, Any], plot_path: str,
+              plot_title: str) -> None:
+    """Save the extracted and corrected spectrum with BERV coverage plots."""
     # get parameters from props
     mjd = spec_props['mjd']
     ext_y = spec_props['EXT_Y']
@@ -268,6 +260,7 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
 def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
              plot_title: str, fig: Any = None,
              frames: Any = None) -> Dict[str, Any]:
+    """Draw LBL radial-velocity and SNR panels, optionally on supplied axes."""
     # setup the figure
     if fig is None or frames is None:
         fig, frames = plt.subplots(3, 1, figsize=(12, 9), sharex='all')
@@ -466,7 +459,9 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     return lbl_props
 
 
-def ccf_plot(ccf_props: Dict[str, Any], plot_path: str, plot_title: str):
+def ccf_plot(ccf_props: Dict[str, Any], plot_path: str,
+             plot_title: str) -> None:
+    """Save the CCF, fit, residual, and bisector diagnostic panels."""
     # get parameters from props
     mjd = ccf_props['mjd']
     vrad = ccf_props['dv']
@@ -648,7 +643,8 @@ def ccf_plot(ccf_props: Dict[str, Any], plot_path: str, plot_title: str):
 # Calibration plots
 # =============================================================================
 def shape_qc_plot_plot(calib_props: Dict[str, Any], plot_path: str,
-                       plot_title: str):
+                       plot_title: str) -> None:
+    """Plot shape-calibration quality-control values over time."""
 
     # get shape props
     shape_props = calib_props['SHAPEL']
@@ -710,7 +706,8 @@ def shape_qc_plot_plot(calib_props: Dict[str, Any], plot_path: str,
 
 
 def calib_mjd_wfpdrift_plot(calib_props: Dict[str, Any], plot_path: str,
-                            plot_title: str):
+                            plot_title: str) -> None:
+    """Plot wavelength-solution FP drift against observation date."""
 
     wave_props = calib_props['WAVE_NIGHT']
 
@@ -718,7 +715,8 @@ def calib_mjd_wfpdrift_plot(calib_props: Dict[str, Any], plot_path: str,
 
 
 def calib_mjd_wcav000_plot(calib_props: Dict[str, Any], plot_path: str,
-                           plot_title: str):
+                           plot_title: str) -> None:
+    """Plot wavelength-solution cavity width against observation date."""
     # get the wave night props
     wave_props = calib_props['WAVE_NIGHT']
 
@@ -726,7 +724,8 @@ def calib_mjd_wcav000_plot(calib_props: Dict[str, Any], plot_path: str,
 
 
 def calib_mjd_wcent_plot(calib_props: Dict[str, Any], plot_path: str,
-                         plot_title: str):
+                         plot_title: str) -> None:
+    """Plot wavelength-center offsets and their change by observation date."""
     # get the wave night props
     wave_props = calib_props['WAVE_NIGHT']
     # get hdict and label descriptions
@@ -786,7 +785,8 @@ def calib_mjd_wcent_plot(calib_props: Dict[str, Any], plot_path: str,
 
 def calib_mjd_plot(prop_name: str, cal_props: Dict[str, Any],
                    plot_title: str, plot_path: str,
-                   mjd_key: str = 'KW_MID_OBS_TIME'):
+                   mjd_key: str = 'KW_MID_OBS_TIME') -> None:
+    """Plot one calibration property against date with a zoomed panel."""
     # get hdict and header yaml descriptions
     hdict = cal_props['HDICT']
     label = cal_props['LABEL']
@@ -825,18 +825,21 @@ def calib_mjd_plot(prop_name: str, cal_props: Dict[str, Any],
 # Debug plots
 # =============================================================================
 def debug_mjd_extsmax_plot(debug_props: Dict[str, Any], plot_path: str,
-                           plot_title: str):
+                           plot_title: str) -> None:
+    """Plot the extraction maximum statistic against observation date."""
     debug_mjd_plot('EXT_EXTSMAX', debug_props, plot_title, plot_path)
 
 
 def debug_mjd_effron_plot(debug_props: Dict[str, Any], plot_path: str,
-                          plot_title: str):
+                          plot_title: str) -> None:
+    """Plot the extraction effective read-noise statistic against date."""
     debug_mjd_plot('EXT_EFFRON', debug_props, plot_title, plot_path)
 
 
 def debug_mjd_plot(prop_name: str, debug_props: Dict[str, Any],
                    plot_title: str, plot_path: str, ykind: str = 'ext',
-                   mjd_key: str = 'EXT_MJD'):
+                   mjd_key: str = 'EXT_MJD') -> None:
+    """Plot a debug header property against its observation date."""
     # get hdict and header yaml descriptions
     hdict = debug_props['HDICT']
     ext_headers = debug_props['HYAML'][ykind]
@@ -864,7 +867,8 @@ def debug_mjd_plot(prop_name: str, debug_props: Dict[str, Any],
 
 
 def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
-                         plot_title: str):
+                         plot_title: str) -> None:
+    """Plot telluric correction maps for the available one-dimensional files."""
     # set function name
     func_name = f'{__NAME__}.debug_tcorr_map_plot'
     # get pconstants
@@ -1085,7 +1089,8 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
 
 
 def debug_version_plot(debug_props: Dict[str, Any], plot_path: str,
-                       plot_title: str):
+                       plot_title: str) -> None:
+    """Plot software-version metadata for the selected debug products."""
     # get hdict and header yaml descriptions
     hdict = debug_props['HDICT']
     ext_headers = debug_props['HYAML']['ext']
@@ -1123,7 +1128,8 @@ def debug_version_plot(debug_props: Dict[str, Any], plot_path: str,
 
 
 def debug_mjd_cdt_plot(debug_props: Dict[str, Any], plot_path: str,
-                       plot_title: str):
+                       plot_title: str) -> None:
+    """Plot calibration-database timestamp metadata against observation date."""
     # get hdict and header yaml descriptions
     hdict = debug_props['HDICT']
     ext_headers = debug_props['HYAML']['ext']

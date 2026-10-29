@@ -28,7 +28,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -80,6 +80,7 @@ def get_notes_dir(username: str) -> Path:
 
 
 def _instruments_dir() -> Path:
+    """Return the instrument-data directory, creating it when needed."""
     INSTRUMENTS_DIR.mkdir(parents=True, exist_ok=True)
     return INSTRUMENTS_DIR
 
@@ -88,6 +89,12 @@ def _instruments_dir() -> Path:
 # YAML helpers
 # =============================================================================
 def _load_yaml(path: Path, default: Any = None) -> Any:
+    """Load YAML from ``path`` or return ``default`` on missing/invalid data.
+
+    :param path: YAML file to read.
+    :param default: Value returned when the file is absent or unreadable.
+    :return: Parsed YAML data, or the supplied default value.
+    """
     if default is None:
         default = {}
     if not path.exists():
@@ -101,16 +108,24 @@ def _load_yaml(path: Path, default: Any = None) -> Any:
 
 
 def _save_yaml(path: Path, data: Any) -> None:
+    """Write data as YAML, creating the parent directory if necessary.
+
+    :param path: Destination YAML file.
+    :param data: Value to serialise.
+    :return: None.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 
 
 def _new_id() -> str:
+    """Return a new UUID4 identifier as text."""
     return str(uuid.uuid4())
 
 
 def _now_iso() -> str:
+    """Return the current UTC time in ISO 8601 format."""
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -121,6 +136,11 @@ _LINKS_DEFAULT: Dict = {"sections": [], "types": {}, "links": {}}
 
 
 def load_links(username: str) -> Dict:
+    """Load a user's link sections, using the empty schema when absent.
+
+    :param username: User whose links should be loaded.
+    :return: Link data with ``sections``, ``types`` and ``links`` keys.
+    """
     path = get_user_dir(username) / "links.yaml"
     data = _load_yaml(path, dict(_LINKS_DEFAULT))
     data.setdefault("sections", [])
@@ -130,6 +150,12 @@ def load_links(username: str) -> Dict:
 
 
 def save_links(username: str, data: Dict) -> None:
+    """Save a user's link data.
+
+    :param username: User whose links should be saved.
+    :param data: Link data mapping.
+    :return: None.
+    """
     _save_yaml(get_user_dir(username) / "links.yaml", data)
 
 
@@ -164,6 +190,17 @@ def update_link(
     link_type: str = "",
     description: str = "",
 ) -> Dict:
+    """Replace or rename a link and return the updated user's link data.
+
+    :param username: User whose link should be updated.
+    :param section: Section containing the link.
+    :param name: Existing link name.
+    :param new_name: Name to store the updated link under.
+    :param url: Link destination.
+    :param link_type: Optional link category.
+    :param description: Optional link description.
+    :return: Updated link data mapping.
+    """
     data = load_links(username)
     section_links = data["links"].get(section, {})
     if name in section_links:
@@ -179,6 +216,13 @@ def update_link(
 
 
 def remove_link(username: str, section: str, name: str) -> Dict:
+    """Remove a user's link and any now-empty section.
+
+    :param username: User whose link should be removed.
+    :param section: Section containing the link.
+    :param name: Link name to remove.
+    :return: Updated link data mapping.
+    """
     data = load_links(username)
     section_links = data["links"].get(section, {})
     section_links.pop(name, None)
@@ -194,6 +238,12 @@ def remove_link(username: str, section: str, name: str) -> Dict:
 
 
 def add_link_section(username: str, section: str) -> Dict:
+    """Add a link section if missing and return the updated data.
+
+    :param username: User whose sections should be updated.
+    :param section: Section name to add.
+    :return: Updated link data mapping.
+    """
     data = load_links(username)
     if section not in data["sections"]:
         data["sections"].append(section)
@@ -202,6 +252,12 @@ def add_link_section(username: str, section: str) -> Dict:
 
 
 def remove_link_section(username: str, section: str) -> Dict:
+    """Remove a user's section and all links stored in it.
+
+    :param username: User whose section should be removed.
+    :param section: Section name to remove.
+    :return: Updated link data mapping.
+    """
     data = load_links(username)
     if section in data["sections"]:
         data["sections"].remove(section)
@@ -214,6 +270,11 @@ def remove_link_section(username: str, section: str) -> Dict:
 # Instrument links
 # =============================================================================
 def load_instrument_links(instrument: str) -> Dict:
+    """Load link data shared by an instrument's users.
+
+    :param instrument: Instrument identifier used in the storage filename.
+    :return: Link data with ``sections``, ``types`` and ``links`` keys.
+    """
     path = _instruments_dir() / f"{instrument}_links.yaml"
     data = _load_yaml(path, dict(_LINKS_DEFAULT))
     data.setdefault("sections", [])
@@ -223,6 +284,12 @@ def load_instrument_links(instrument: str) -> Dict:
 
 
 def save_instrument_links(instrument: str, data: Dict) -> None:
+    """Save instrument-wide link data.
+
+    :param instrument: Instrument identifier used in the storage filename.
+    :param data: Link data mapping.
+    :return: None.
+    """
     _save_yaml(_instruments_dir() / f"{instrument}_links.yaml", data)
 
 
@@ -234,6 +301,16 @@ def add_instrument_link(
     link_type: str = "",
     description: str = "",
 ) -> Dict:
+    """Add or replace a named link in an instrument section.
+
+    :param instrument: Instrument whose shared links should be updated.
+    :param section: Section in which to store the link.
+    :param name: Display name for the link.
+    :param url: Link destination.
+    :param link_type: Optional link category.
+    :param description: Optional link description.
+    :return: Updated instrument link data.
+    """
     data = load_instrument_links(instrument)
     if section not in data["sections"]:
         data["sections"].append(section)
@@ -256,6 +333,17 @@ def update_instrument_link(
     link_type: str = "",
     description: str = "",
 ) -> Dict:
+    """Replace or rename a link in an instrument section.
+
+    :param instrument: Instrument whose shared link should be updated.
+    :param section: Section containing the link.
+    :param name: Existing link name.
+    :param new_name: Name to store the updated link under.
+    :param url: Link destination.
+    :param link_type: Optional link category.
+    :param description: Optional link description.
+    :return: Updated instrument link data.
+    """
     data = load_instrument_links(instrument)
     sec = data["links"].get(section, {})
     sec.pop(name, None)
@@ -266,6 +354,13 @@ def update_instrument_link(
 
 
 def remove_instrument_link(instrument: str, section: str, name: str) -> Dict:
+    """Remove an instrument link and discard its empty section if needed.
+
+    :param instrument: Instrument whose link should be removed.
+    :param section: Section containing the link.
+    :param name: Link name to remove.
+    :return: Updated instrument link data.
+    """
     data = load_instrument_links(instrument)
     sec = data["links"].get(section, {})
     sec.pop(name, None)
@@ -280,6 +375,12 @@ def remove_instrument_link(instrument: str, section: str, name: str) -> Dict:
 
 
 def add_instrument_link_section(instrument: str, section: str) -> Dict:
+    """Add an instrument link section if missing.
+
+    :param instrument: Instrument whose sections should be updated.
+    :param section: Section name to add.
+    :return: Updated instrument link data.
+    """
     data = load_instrument_links(instrument)
     if section not in data["sections"]:
         data["sections"].append(section)
@@ -288,6 +389,12 @@ def add_instrument_link_section(instrument: str, section: str) -> Dict:
 
 
 def remove_instrument_link_section(instrument: str, section: str) -> Dict:
+    """Remove an instrument section and all links stored in it.
+
+    :param instrument: Instrument whose section should be removed.
+    :param section: Section name to remove.
+    :return: Updated instrument link data.
+    """
     data = load_instrument_links(instrument)
     if section in data["sections"]:
         data["sections"].remove(section)
@@ -297,8 +404,11 @@ def remove_instrument_link_section(instrument: str, section: str) -> Dict:
 
 
 def get_merged_links(username: str, instrument: str) -> Dict:
-    """
-    Return user links with instrument links appended as read-only section.
+    """Return user links with instrument links appended as read-only sections.
+
+    :param username: User whose personal links should be included.
+    :param instrument: Instrument whose shared links should be included.
+    :return: Combined link mapping with instrument section labels.
     """
     user_data = load_links(username)
     instr_data = load_instrument_links(instrument)
@@ -323,10 +433,16 @@ _PINS_DEFAULT: Dict = {"pins": []}
 
 
 def _pins_path(username: str) -> Path:
+    """Return the path to one user's pin data file."""
     return get_user_dir(username) / "pins.yaml"
 
 
 def load_pins(username: str) -> Dict:
+    """Load a user's pinned pages, normalizing legacy list data.
+
+    :param username: User whose pins should be loaded.
+    :return: Mapping containing the user's ``pins`` list.
+    """
     data = _load_yaml(_pins_path(username), dict(_PINS_DEFAULT))
     if isinstance(data, list):
         data = {"pins": data}
@@ -340,6 +456,12 @@ def load_pins(username: str) -> Dict:
 
 
 def save_pins(username: str, data: Dict) -> None:
+    """Save a user's pinned pages using the canonical mapping format.
+
+    :param username: User whose pins should be saved.
+    :param data: Pin data mapping.
+    :return: None.
+    """
     payload = data if isinstance(data, dict) else dict(_PINS_DEFAULT)
     pins = payload.get("pins", [])
     if not isinstance(pins, list):
@@ -349,10 +471,17 @@ def save_pins(username: str, data: Dict) -> None:
 
 
 def list_pins(username: str) -> List[Dict]:
+    """Return the user's pinned page entries."""
     return load_pins(username).get("pins", [])
 
 
 def reorder_pins(username: str, ordered_ids: List[str]) -> List[Dict]:
+    """Reorder a user's pins and retain entries omitted from ``ordered_ids``.
+
+    :param username: User whose pins should be reordered.
+    :param ordered_ids: Page identifiers in the requested order.
+    :return: Reordered pin entries.
+    """
     data = load_pins(username)
     pins = data.get("pins", [])
     id_map = {}
@@ -383,10 +512,16 @@ _OBJECT_SECTION_DEFAULT: Dict = {"pinned": []}
 
 
 def _object_section_path(username: str) -> Path:
+    """Return the path to one user's object-section preferences."""
     return get_user_dir(username) / "object_section.yaml"
 
 
 def load_object_section(username: str) -> Dict:
+    """Load and normalize the user's pinned object-page sections.
+
+    :param username: User whose section preferences should be loaded.
+    :return: Mapping containing the normalized ``pinned`` list.
+    """
     data = _load_yaml(
         _object_section_path(username), dict(_OBJECT_SECTION_DEFAULT)
     )
@@ -400,6 +535,12 @@ def load_object_section(username: str) -> Dict:
 
 
 def save_object_section(username: str, data: Dict) -> None:
+    """Save the user's pinned object-page sections.
+
+    :param username: User whose section preferences should be saved.
+    :param data: Object-section preference mapping.
+    :return: None.
+    """
     payload = data if isinstance(data, dict) else dict(_OBJECT_SECTION_DEFAULT)
     pinned = payload.get("pinned", [])
     if not isinstance(pinned, list):
@@ -409,12 +550,19 @@ def save_object_section(username: str, data: Dict) -> None:
 
 
 def list_object_section_pins(username: str) -> List[str]:
+    """Return the user's pinned object-page section identifiers."""
     return load_object_section(username).get("pinned", [])
 
 
 def reorder_object_section_pins(
     username: str, ordered_ids: List[str]
 ) -> List[str]:
+    """Reorder pinned sections, ignoring unknown and repeated identifiers.
+
+    :param username: User whose section preferences should be reordered.
+    :param ordered_ids: Section identifiers in the requested order.
+    :return: Reordered section identifiers.
+    """
     data = load_object_section(username)
     pins = data.get("pinned", [])
     pin_set = set(pins)
@@ -444,6 +592,11 @@ _FAVOURITE_OBJECTS_DEFAULT: Dict = {"profiles": {}}
 
 
 def _favourite_objects_path(username: str) -> Path:
+    """Return the YAML path storing a user's favourite objects.
+
+    :param username: User whose favourite-object file is requested.
+    :return: Path to the per-user favourite-object YAML file.
+    """
     return get_user_dir(username) / "favourite_objects.yaml"
 
 
@@ -558,6 +711,11 @@ def _normalize_favourite_objects_data(data: Any) -> Dict:
 
 
 def load_favourite_objects(username: str) -> Dict:
+    """Load normalized favourite-object sections for a user.
+
+    :param username: User whose favourite objects should be loaded.
+    :return: Normalized profile-keyed favourite-object data.
+    """
     data = _load_yaml(
         _favourite_objects_path(username), dict(_FAVOURITE_OBJECTS_DEFAULT)
     )
@@ -565,6 +723,12 @@ def load_favourite_objects(username: str) -> Dict:
 
 
 def save_favourite_objects(username: str, data: Dict) -> None:
+    """Normalize and save a user's favourite-object data.
+
+    :param username: User whose favourite objects should be saved.
+    :param data: Favourite-object mapping, including supported legacy data.
+    :return: None.
+    """
     payload = _normalize_favourite_objects_data(data)
     _save_yaml(_favourite_objects_path(username), payload)
 
@@ -803,6 +967,12 @@ def load_notes(username: str) -> List[Dict]:
 
 
 def get_note(username: str, note_id: str) -> Optional[Dict]:
+    """Load one note by identifier, returning None when it does not exist.
+
+    :param username: User who owns the note.
+    :param note_id: Note identifier and markdown filename stem.
+    :return: Parsed note mapping, or None if absent or unreadable.
+    """
     path = get_notes_dir(username) / f"{note_id}.md"
     if not path.exists():
         return None
@@ -822,6 +992,12 @@ def save_note(username: str, note: Dict) -> Dict:
 
 
 def delete_note(username: str, note_id: str) -> bool:
+    """Delete one note file if present.
+
+    :param username: User who owns the note.
+    :param note_id: Note identifier and markdown filename stem.
+    :return: True when a file was deleted, otherwise False.
+    """
     path = get_notes_dir(username) / f"{note_id}.md"
     if path.exists():
         path.unlink()
@@ -845,10 +1021,20 @@ _PREFS_DEFAULT: Dict = {"timezone": "UTC", "theme": "default"}
 
 
 def _prefs_path(username: str) -> Path:
+    """Return the YAML path storing a user's preferences.
+
+    :param username: User whose preference file is requested.
+    :return: Path to the per-user preferences YAML file.
+    """
     return get_user_dir(username) / "prefs.yaml"
 
 
 def load_user_prefs(username: str) -> Dict:
+    """Load user preferences and supply defaults for missing settings.
+
+    :param username: User whose preferences should be loaded.
+    :return: Preference mapping containing timezone and theme values.
+    """
     data = _load_yaml(_prefs_path(username), dict(_PREFS_DEFAULT))
     if not isinstance(data, dict):
         data = dict(_PREFS_DEFAULT)
@@ -858,12 +1044,19 @@ def load_user_prefs(username: str) -> Dict:
 
 
 def save_user_prefs(username: str, data: Dict) -> None:
+    """Merge and save user preference values.
+
+    :param username: User whose preferences should be saved.
+    :param data: Preference values to merge into the saved mapping.
+    :return: None.
+    """
     current = load_user_prefs(username)
     current.update(data)
     _save_yaml(_prefs_path(username), current)
 
 
 def get_user_timezone(username: str) -> str:
+    """Return the user's configured timezone, defaulting to UTC."""
     return load_user_prefs(username).get("timezone", "UTC")
 
 
@@ -876,20 +1069,37 @@ _STATUS_VALUES = {"confirmed", "tentative"}
 
 
 def _cal_path(username: str) -> Path:
+    """Return the YAML path storing a user's calendar.
+
+    :param username: User whose calendar file is requested.
+    :return: Path to the per-user calendar YAML file.
+    """
     return get_user_dir(username) / "calendar.yaml"
 
 
 def load_calendar(username: str) -> Dict:
+    """Load a user's calendar, supplying an empty event list if absent.
+
+    :param username: User whose calendar should be loaded.
+    :return: Calendar mapping containing the user's events.
+    """
     data = _load_yaml(_cal_path(username), dict(_CAL_DEFAULT))
     data.setdefault("events", [])
     return data
 
 
 def save_calendar(username: str, data: Dict) -> None:
+    """Save a user's calendar mapping.
+
+    :param username: User whose calendar should be saved.
+    :param data: Calendar data mapping.
+    :return: None.
+    """
     _save_yaml(_cal_path(username), data)
 
 
 def list_events(username: str) -> List[Dict]:
+    """Return the user's calendar events."""
     return load_calendar(username).get("events", [])
 
 
@@ -914,6 +1124,12 @@ def save_event(username: str, event: Dict) -> Dict:
 
 
 def delete_event(username: str, event_id: str) -> bool:
+    """Delete a personal calendar event by identifier.
+
+    :param username: User whose event should be deleted.
+    :param event_id: Identifier of the event to remove.
+    :return: True when an event was removed, otherwise False.
+    """
     data = load_calendar(username)
     before = len(data["events"])
     data["events"] = [e for e in data["events"] if e.get("id") != event_id]
@@ -925,20 +1141,38 @@ def delete_event(username: str, event_id: str) -> bool:
 
 # Instrument calendar
 def _instr_cal_path(instrument: str) -> Path:
+    """Return the path to one instrument's calendar file."""
     return _instruments_dir() / f"{instrument}_calendar.yaml"
 
 
 def load_instrument_calendar(instrument: str) -> Dict:
+    """Load an instrument calendar, defaulting to an empty event list.
+
+    :param instrument: Instrument whose calendar should be loaded.
+    :return: Calendar mapping containing the instrument's events.
+    """
     data = _load_yaml(_instr_cal_path(instrument), dict(_CAL_DEFAULT))
     data.setdefault("events", [])
     return data
 
 
 def save_instrument_calendar(instrument: str, data: Dict) -> None:
+    """Save an instrument calendar mapping.
+
+    :param instrument: Instrument whose calendar should be saved.
+    :param data: Calendar data mapping.
+    :return: None.
+    """
     _save_yaml(_instr_cal_path(instrument), data)
 
 
 def save_instrument_event(instrument: str, event: Dict) -> Dict:
+    """Create or replace an event in an instrument calendar.
+
+    :param instrument: Instrument calendar to update.
+    :param event: Event mapping; an identifier is assigned when missing.
+    :return: The saved event mapping.
+    """
     if not event.get("id"):
         event["id"] = _new_id()
     event.setdefault("recurrence", "none")
@@ -958,6 +1192,12 @@ def save_instrument_event(instrument: str, event: Dict) -> Dict:
 
 
 def delete_instrument_event(instrument: str, event_id: str) -> bool:
+    """Delete an instrument calendar event by identifier.
+
+    :param instrument: Instrument calendar to update.
+    :param event_id: Identifier of the event to remove.
+    :return: True when an event was removed, otherwise False.
+    """
     data = load_instrument_calendar(instrument)
     before = len(data["events"])
     data["events"] = [e for e in data["events"] if e.get("id") != event_id]
@@ -1008,8 +1248,8 @@ def get_merged_calendar(
 # ICS Feed helpers — User Calendar
 # ---------------------------------------------------------------------------
 
-def _import_ics_funcs():
-    # Deferred import so icalendar is optional at import time
+def _import_ics_funcs() -> Any:
+    """Import ICS helpers on demand to keep their dependency optional."""
     from apero_ri.core import ics_funcs
     return ics_funcs
 
@@ -1024,10 +1264,14 @@ def add_ics_feed(
     name: str,
     url: str,
     color: str = "#4a90d9",
-) -> tuple:
+) -> Tuple[Dict, int]:
     """Add an ICS feed and immediately refresh it.
 
-    :returns: ``(feed_dict, imported_count)``
+    :param username: User whose calendar receives the feed.
+    :param name: Display name for the feed.
+    :param url: ICS feed URL.
+    :param color: Display color assigned to imported events.
+    :return: Feed mapping and the number of imported events.
     """
     ics = _import_ics_funcs()
     data = load_calendar(username)
@@ -1047,7 +1291,14 @@ def update_ics_feed(
     name: str | None = None,
     color: str | None = None,
 ) -> dict:
-    """Update the name and/or colour of a user ICS feed."""
+    """Update a user ICS feed's name and/or color.
+
+    :param username: User who owns the feed.
+    :param feed_id: Identifier of the feed to update.
+    :param name: Optional replacement display name.
+    :param color: Optional replacement event color.
+    :return: Updated feed mapping.
+    """
     ics = _import_ics_funcs()
     data = load_calendar(username)
     feed = ics.update_feed(data, feed_id, name=name, color=color)
@@ -1056,7 +1307,12 @@ def update_ics_feed(
 
 
 def delete_ics_feed(username: str, feed_id: str) -> None:
-    """Remove an ICS feed and its events from a user calendar."""
+    """Remove a user ICS feed and its events.
+
+    :param username: User who owns the feed.
+    :param feed_id: Identifier of the feed to remove.
+    :return: None.
+    """
     ics = _import_ics_funcs()
     data = load_calendar(username)
     ics.delete_feed(data, feed_id)
@@ -1064,7 +1320,12 @@ def delete_ics_feed(username: str, feed_id: str) -> None:
 
 
 def refresh_ics_feed(username: str, feed_id: str) -> Dict:
-    """Re-sync one ICS feed for a user calendar."""
+    """Refresh one feed and persist its events in the user calendar.
+
+    :param username: User who owns the feed.
+    :param feed_id: Identifier of the feed to refresh.
+    :return: Updated feed mapping.
+    """
     ics = _import_ics_funcs()
     data = load_calendar(username)
     feed = ics.refresh_feed(data, feed_id)
@@ -1073,7 +1334,11 @@ def refresh_ics_feed(username: str, feed_id: str) -> Dict:
 
 
 def refresh_all_ics_feeds(username: str) -> Dict[str, str]:
-    """Re-sync all enabled ICS feeds for a user calendar."""
+    """Refresh all enabled ICS feeds in the user's calendar.
+
+    :param username: User whose feeds should be refreshed.
+    :return: Per-feed refresh result messages.
+    """
     ics = _import_ics_funcs()
     data = load_calendar(username)
     results = ics.refresh_all_feeds(data)
@@ -1097,11 +1362,14 @@ def add_instrument_ics_feed(
     name: str,
     url: str,
     color: str = "#7b5ea7",
-) -> tuple:
-    """Add an ICS feed to an instrument calendar and immediately
-    refresh it.
+) -> Tuple[Dict, int]:
+    """Add and refresh an ICS feed in an instrument calendar.
 
-    :returns: ``(feed_dict, imported_count)``
+    :param instrument: Instrument whose calendar receives the feed.
+    :param name: Display name for the feed.
+    :param url: ICS feed URL.
+    :param color: Display color assigned to imported events.
+    :return: Feed mapping and the number of imported events.
     """
     ics = _import_ics_funcs()
     data = load_instrument_calendar(instrument)
@@ -1120,8 +1388,12 @@ def add_instrument_ics_feed(
 def delete_instrument_ics_feed(
     instrument: str, feed_id: str
 ) -> None:
-    """Remove an ICS feed and its events from an instrument
-    calendar."""
+    """Remove an ICS feed and its events from an instrument calendar.
+
+    :param instrument: Instrument whose calendar contains the feed.
+    :param feed_id: Identifier of the feed to remove.
+    :return: None.
+    """
     ics = _import_ics_funcs()
     data = load_instrument_calendar(instrument)
     ics.delete_feed(data, feed_id)
@@ -1134,7 +1406,14 @@ def update_instrument_ics_feed(
     name: str | None = None,
     color: str | None = None,
 ) -> dict:
-    """Update the name and/or colour of an instrument ICS feed."""
+    """Update an instrument ICS feed's name and/or color.
+
+    :param instrument: Instrument whose calendar contains the feed.
+    :param feed_id: Identifier of the feed to update.
+    :param name: Optional replacement display name.
+    :param color: Optional replacement event color.
+    :return: Updated feed mapping.
+    """
     ics = _import_ics_funcs()
     data = load_instrument_calendar(instrument)
     feed = ics.update_feed(
@@ -1147,7 +1426,12 @@ def update_instrument_ics_feed(
 def refresh_instrument_ics_feed(
     instrument: str, feed_id: str
 ) -> Dict:
-    """Re-sync one ICS feed for an instrument calendar."""
+    """Refresh one ICS feed in an instrument calendar.
+
+    :param instrument: Instrument whose feed should be refreshed.
+    :param feed_id: Identifier of the feed to refresh.
+    :return: Updated feed mapping.
+    """
     ics = _import_ics_funcs()
     data = load_instrument_calendar(instrument)
     feed = ics.refresh_feed(data, feed_id)
@@ -1158,7 +1442,11 @@ def refresh_instrument_ics_feed(
 def refresh_all_instrument_ics_feeds(
     instrument: str,
 ) -> Dict[str, str]:
-    """Re-sync all enabled ICS feeds for an instrument calendar."""
+    """Refresh all enabled ICS feeds in an instrument calendar.
+
+    :param instrument: Instrument whose feeds should be refreshed.
+    :return: Per-feed refresh result messages.
+    """
     ics = _import_ics_funcs()
     data = load_instrument_calendar(instrument)
     results = ics.refresh_all_feeds(data)
@@ -1180,10 +1468,16 @@ _TODO_SIZE_VALUES = {"xs", "sm", "md", "lg", "xl"}
 
 
 def _todo_path(username: str) -> Path:
+    """Return the path to one user's todo data file."""
     return get_user_dir(username) / "todo.yaml"
 
 
 def _normalize_todo_labels(values: Any) -> List[str]:
+    """Normalize labels to unique, non-empty strings with a default value.
+
+    :param values: Stored label value or collection of values.
+    :return: Clean labels, or ``['Unknown']`` when none are provided.
+    """
     if isinstance(values, str):
         values = [values]
     if not isinstance(values, list):
@@ -1202,6 +1496,11 @@ def _normalize_todo_labels(values: Any) -> List[str]:
 
 
 def _normalize_todo_priority(value: Any) -> int:
+    """Convert named or numeric priority values to an integer rank.
+
+    :param value: Named priority or value convertible to an integer.
+    :return: High/urgent as 2, normal as 0, low as -1, or parsed integer.
+    """
     text = str(value).strip().lower()
     if text in {"high", "urgent"}:
         return 2
@@ -1216,14 +1515,21 @@ def _normalize_todo_priority(value: Any) -> int:
 
 
 def _normalize_todo_item(item: Dict) -> Dict:
+    """Normalize todo fields and derive legacy status compatibility data.
+
+    :param item: Todo item mapping from storage or an API request.
+    :return: Canonical todo item mapping with defaults applied.
+    """
     item_id = str(item.get("id", "")).strip() or _new_id()
     title = str(item.get("title", "")).strip() or "Untitled"
 
+    # Derive status from the old boolean field when no valid status is stored.
     status = str(item.get("status", "")).strip().lower()
     if status not in _TODO_STATUS_VALUES:
         status = "done" if bool(item.get("done", False)) else "todo"
 
     created = str(item.get("created", "")).strip() or _now_iso()
+    # Older items may only have a creation timestamp, so reuse its date.
     date_added = str(item.get("date_added", "")).strip()
     if not date_added:
         date_added = created[:10] if len(created) >= 10 else _now_iso()[:10]
@@ -1250,6 +1556,11 @@ def _normalize_todo_item(item: Dict) -> Dict:
 
 
 def load_todo(username: str) -> Dict:
+    """Load and normalize todo items and their project/tag metadata.
+
+    :param username: User whose todo data should be loaded.
+    :return: Normalized todo data mapping.
+    """
     data = _load_yaml(_todo_path(username), dict(_TODO_DEFAULT))
     data.setdefault("items", [])
     data.setdefault("projects", ["Unknown"])
@@ -1273,14 +1584,22 @@ def load_todo(username: str) -> Dict:
 
 
 def save_todo(username: str, data: Dict) -> None:
+    """Save a user's todo data mapping.
+
+    :param username: User whose todo data should be saved.
+    :param data: Todo data mapping.
+    :return: None.
+    """
     _save_yaml(_todo_path(username), data)
 
 
 def list_todo_items(username: str) -> List[Dict]:
+    """Return normalized todo items for a user."""
     return load_todo(username).get("items", [])
 
 
 def get_todo_metadata(username: str) -> Dict:
+    """Return normalized project and tag options for a user's todo list."""
     data = load_todo(username)
     return {
         "projects": _normalize_todo_labels(data.get("projects", [])),
@@ -1289,6 +1608,14 @@ def get_todo_metadata(username: str) -> Dict:
 
 
 def manage_todo_metadata(username: str, kind: str, op: str, value: str) -> Dict:
+    """Add or remove one project/tag option and return updated metadata.
+
+    :param username: User whose todo metadata should be changed.
+    :param kind: ``projects`` or ``tags``; other values select tags.
+    :param op: ``add`` or ``remove``.
+    :param value: Label to add or remove.
+    :return: Updated project and tag metadata.
+    """
     data = load_todo(username)
     key = "projects" if kind == "projects" else "tags"
     current = set(_normalize_todo_labels(data.get(key, [])))
@@ -1340,6 +1667,12 @@ def save_todo_item(username: str, item: Dict) -> Dict:
 
 
 def toggle_todo(username: str, item_id: str) -> Optional[Dict]:
+    """Toggle a todo item's done state and return it if found.
+
+    :param username: User whose item should be changed.
+    :param item_id: Identifier of the todo item.
+    :return: Updated item, or None when no matching item exists.
+    """
     data = load_todo(username)
     for item in data["items"]:
         if item.get("id") == item_id:
@@ -1352,6 +1685,12 @@ def toggle_todo(username: str, item_id: str) -> Optional[Dict]:
 
 
 def delete_todo_item(username: str, item_id: str) -> bool:
+    """Delete a todo item by identifier.
+
+    :param username: User whose item should be deleted.
+    :param item_id: Identifier of the todo item.
+    :return: True when an item was removed, otherwise False.
+    """
     data = load_todo(username)
     before = len(data["items"])
     data["items"] = [it for it in data["items"] if it.get("id") != item_id]
@@ -1383,10 +1722,12 @@ ISSUE_TODO_PROJECT = "monitor.issues"
 
 
 def _issue_todo_id(issue_id: Any) -> str:
+    """Build the deterministic todo identifier for a monitor issue."""
     return f"issue-{issue_id}"
 
 
 def _issue_todo_tag(issue: Dict) -> str:
+    """Build a todo tag from an issue's kind and optional type."""
     kind = str(issue.get("kind") or "issue").strip() or "issue"
     typ = str(issue.get("type") or "").strip()
     return f"{kind}.{typ}" if typ else kind
@@ -1434,6 +1775,12 @@ def upsert_issue_todo(username: str, issue: Dict) -> Optional[Dict]:
 
 
 def remove_issue_todo(username: str, issue_id: Any) -> bool:
+    """Remove the todo item linked to a monitor issue, if present.
+
+    :param username: User whose linked todo should be removed.
+    :param issue_id: Identifier of the monitor issue.
+    :return: True when a todo item was removed, otherwise False.
+    """
     if not username or issue_id is None:
         return False
     return delete_todo_item(username, _issue_todo_id(issue_id))
@@ -1446,12 +1793,22 @@ _SAVED_FILTERS_DEFAULT: Dict = {"filters": []}
 
 
 def _saved_filters_path(username: str) -> Path:
+    """Return the path to one user's saved table-filter data."""
     return get_user_dir(username) / "saved_filters.yaml"
 
 
-def load_saved_filters(username: str, table_id: Optional[str] = None) -> List[Dict]:
-    """Return saved filter sets for a user, optionally scoped to one table_id."""
-    data = _load_yaml(_saved_filters_path(username), dict(_SAVED_FILTERS_DEFAULT))
+def load_saved_filters(
+    username: str, table_id: Optional[str] = None
+) -> List[Dict]:
+    """Return saved filter sets, optionally scoped to one table.
+
+    :param username: User whose filters should be loaded.
+    :param table_id: Optional table identifier used to filter the results.
+    :return: Matching saved filter mappings.
+    """
+    data = _load_yaml(
+        _saved_filters_path(username), dict(_SAVED_FILTERS_DEFAULT)
+    )
     items = data.get("filters") or []
     if table_id:
         items = [it for it in items if it.get("table_id") == table_id]
@@ -1466,7 +1823,16 @@ def save_filter_set(
     sort_col: str = "",
     sort_dir: str = "asc",
 ) -> Dict:
-    """Create (or replace by name+table_id) a saved filter set. Returns the entry."""
+    """Create or replace a named saved filter set for a table.
+
+    :param username: User who owns the filter set.
+    :param table_id: Identifier of the table using the filter set.
+    :param name: Display name, compared case-insensitively for replacement.
+    :param filters: Column filter values to save.
+    :param sort_col: Optional column used for sorting.
+    :param sort_dir: Sort direction, defaulting to ascending.
+    :return: The saved filter entry.
+    """
     path = _saved_filters_path(username)
     data = _load_yaml(path, dict(_SAVED_FILTERS_DEFAULT))
     items = data.get("filters") or []
@@ -1474,8 +1840,11 @@ def save_filter_set(
     # Replace existing entry with same table_id + name (case-insensitive).
     items = [
         it for it in items
-        if not (it.get("table_id") == table_id
-                and str(it.get("name", "")).strip().lower() == name.strip().lower())
+        if not (
+            it.get("table_id") == table_id
+            and str(it.get("name", "")).strip().lower()
+            == name.strip().lower()
+        )
     ]
 
     entry = {
@@ -1494,7 +1863,12 @@ def save_filter_set(
 
 
 def delete_filter_set(username: str, filter_id: str) -> bool:
-    """Delete a saved filter set by id. Returns True if something was removed."""
+    """Delete a saved filter set by identifier.
+
+    :param username: User who owns the filter set.
+    :param filter_id: Identifier of the saved filter set.
+    :return: True when an entry was removed, otherwise False.
+    """
     path = _saved_filters_path(username)
     data = _load_yaml(path, dict(_SAVED_FILTERS_DEFAULT))
     items = data.get("filters") or []

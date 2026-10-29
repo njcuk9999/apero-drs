@@ -48,7 +48,8 @@ FILTERS = ["APERO_PROFILE_INCLUDE", "APERO_PROFILE_EXCLUDE"]
 class AperoObjectTableTask(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
 
-    def __init__(self, status="pending"):
+    def __init__(self, status: str = "pending") -> None:
+        """Initialize the scheduled APERO object-table task."""
         name = "APERO Object Table Task"
         description = (
             "Generate the object table for the "
@@ -56,7 +57,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
         )
         super().__init__(name, description, status)
 
-    def run_job(self, params: Dict[str, Any]):
+    def run_job(self, params: Dict[str, Any]) -> None:
         """
         Create a file that can be used to populate the object table in the
         APERO reduction interface.
@@ -112,6 +113,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
         stop_event = params.get("STOP_EVENT")
 
         def tlog(message: str) -> None:
+            """Forward task progress when a logger is available."""
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -274,7 +276,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
         else:
             tlog("APERO_OBJECT_TABLE completed.")
 
-    def test_query(self, params: Dict[str, Any]):
+    def test_query(self, params: Dict[str, Any]) -> None:
         """
         Create a file that can be used to populate the object table in the
         APERO reduction interface.
@@ -342,7 +344,8 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
 # =============================================================================
 # Define functions
 # =============================================================================
-def check_required(aparams) -> Dict[str, Any]:
+def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate required profile settings and flatten query parameters."""
     required_params = [
         "ASTROM_TABLENAME",
         "CALIB_TABLENAME",
@@ -375,12 +378,14 @@ def check_required(aparams) -> Dict[str, Any]:
     return rparams
 
 
-def group_concat(col_in: str, col_out: str):
+def group_concat(col_in: str, col_out: str) -> str:
+    """Build a SQL GROUP_CONCAT expression with the requested alias."""
     # group concat for a column (e.g. to get all unique dprtypes or run_ids)
     return f'GROUP_CONCAT(DISTINCT {col_in} SEPARATOR ", ") AS {col_out}'
 
 
-def sub_commands(rparams):
+def sub_commands(rparams: Dict[str, Any]) -> Dict[str, Any]:
+    """Add SQL aggregates and the science-type filter to query parameters."""
     # Build simple aggregation queries for the core columns
     all_dprtypes = 'GROUP_CONCAT(DISTINCT fdb.KW_DPRTYPE SEPARATOR ", ")'
     all_run_ids = 'GROUP_CONCAT(DISTINCT fdb.KW_RUN_ID SEPARATOR ", ")'
@@ -404,7 +409,8 @@ def sub_commands(rparams):
     return rparams
 
 
-def construct_query(rparams):
+def construct_query(rparams: Dict[str, Any]) -> str:
+    """Format the object-table SQL template with prepared parameters."""
     # Simple, lean query for object table
     query = """
     SELECT
@@ -450,7 +456,8 @@ def construct_query(rparams):
     return query.format(**rparams)
 
 
-def meta_columns():
+def meta_columns() -> Dict[str, Dict[str, Any]]:
+    """Return display and filter metadata for object-table columns."""
     cols = dict()
     # -------------------------------------------------------------------------
     # Object name

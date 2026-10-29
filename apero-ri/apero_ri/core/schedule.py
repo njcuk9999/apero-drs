@@ -7,7 +7,7 @@ import sqlite3
 import threading
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 __NAME__ = 'apero_ri.core.schedule'
@@ -19,18 +19,22 @@ _LOCK = threading.Lock()
 # Define helpers
 # =============================================================================
 def _utc_now() -> str:
+    """Return the current UTC time as an ISO timestamp."""
     return datetime.now(timezone.utc).isoformat(timespec='seconds')
 
 
 def _norm_text(value: Optional[str]) -> str:
+    """Strip surrounding whitespace, treating missing text as empty."""
     return str(value or '').strip()
 
 
 def _norm_instrument(instrument: str) -> str:
+    """Normalize an instrument name for schedule storage."""
     return _norm_text(instrument).upper()
 
 
 def _parse_date(value: str) -> Optional[date]:
+    """Parse an ISO calendar date, returning None for invalid input."""
     text = _norm_text(value)
     if not text:
         return None
@@ -46,6 +50,7 @@ def _days_overlap(
     since_day: date,
     until_day: date,
 ) -> int:
+    """Count inclusive days shared by two date ranges."""
     lo = max(start_day, since_day)
     hi = min(end_day, until_day)
     if lo > hi:
@@ -54,12 +59,14 @@ def _days_overlap(
 
 
 def _db_path(data_dir: Path) -> Path:
+    """Return the schedule database path, creating its parent directory."""
     path = Path(data_dir) / 'shared' / 'schedule.db'
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def _connect(data_dir: Path) -> sqlite3.Connection:
+    """Open the schedule database and ensure its tables exist."""
     con = sqlite3.connect(str(_db_path(data_dir)), timeout=30)
     con.row_factory = sqlite3.Row
     _init_schema(con)
@@ -67,6 +74,7 @@ def _connect(data_dir: Path) -> sqlite3.Connection:
 
 
 def _init_schema(con: sqlite3.Connection) -> None:
+    """Create schedule tables when they are not already present."""
     con.execute(
         'CREATE TABLE IF NOT EXISTS schedule_tasks ('
         ' id INTEGER PRIMARY KEY AUTOINCREMENT,'
@@ -128,6 +136,7 @@ def get_instrument_setting(
     key: str,
     default: str = '',
 ) -> str:
+    """Read an instrument-specific setting or return its default."""
     inst = _norm_instrument(instrument)
     key_str = _norm_text(key)
     with _connect(data_dir) as con:
@@ -149,6 +158,7 @@ def set_instrument_setting(
     value: str,
     updated_by: str = 'system',
 ) -> None:
+    """Insert or update one instrument-specific setting."""
     inst = _norm_instrument(instrument)
     key_str = _norm_text(key)
     val_str = _norm_text(value)
@@ -183,7 +193,8 @@ def list_tasks(
     data_dir: Path,
     instrument: str,
     include_inactive: bool = False,
-) -> List[Dict]:
+) -> List[Dict[str, Any]]:
+    """List tasks for an instrument, optionally including inactive tasks."""
     inst = _norm_instrument(instrument)
     query = (
         'SELECT id, instrument, name, description, active '
@@ -204,7 +215,8 @@ def upsert_task(
     name: str,
     description: str = '',
     active: bool = True,
-) -> Dict:
+) -> Dict[str, Any]:
+    """Create or update a task and return its stored row."""
     inst = _norm_instrument(instrument)
     task_name = _norm_text(name)
     if not inst or not task_name:
@@ -238,7 +250,8 @@ def rename_task(
     old_name: str,
     new_name: str,
     description: str = '',
-) -> Dict:
+) -> Dict[str, Any]:
+    """Rename a task and update its existing schedule entries."""
     inst = _norm_instrument(instrument)
     old_task = _norm_text(old_name)
     new_task = _norm_text(new_name)
@@ -280,6 +293,7 @@ def set_task_active(
     name: str,
     active: bool,
 ) -> None:
+    """Set whether a task is active for its instrument."""
     inst = _norm_instrument(instrument)
     task_name = _norm_text(name)
     with _LOCK:
@@ -306,7 +320,8 @@ def add_entry(
     hours: float,
     comment: str,
     created_by: str,
-) -> Dict:
+) -> Dict[str, Any]:
+    """Create a schedule entry, reusing a matching recent submission."""
     inst = _norm_instrument(instrument)
     task_name = _norm_text(task)
     uname = _norm_text(username)
@@ -368,14 +383,15 @@ def list_entries(
     data_dir: Path,
     instrument: str,
     filters: Optional[Dict[str, str]] = None,
-) -> List[Dict]:
+) -> List[Dict[str, Any]]:
+    """List schedule entries matching the supplied text filters."""
     inst = _norm_instrument(instrument)
     query = (
         'SELECT id, instrument, task, username, who, date_start, date_end, '
         'hours, comment, created_by, created_at, updated_at '
         'FROM schedule_entries WHERE instrument = ?'
     )
-    args: List = [inst]
+    args: List[Any] = [inst]
     fmap = filters or dict()
     for col in ('task', 'username', 'who', 'date_start',
                 'date_end', 'comment'):
@@ -398,7 +414,8 @@ def list_entries_overlap(
     instrument: str,
     start_day: date,
     end_day: date,
-) -> List[Dict]:
+) -> List[Dict[str, Any]]:
+    """List entries whose date range overlaps the requested interval."""
     inst = _norm_instrument(instrument)
     with _connect(data_dir) as con:
         rows = con.execute(
@@ -414,7 +431,8 @@ def get_entry(
     data_dir: Path,
     instrument: str,
     entry_id: int,
-) -> Optional[Dict]:
+) -> Optional[Dict[str, Any]]:
+    """Return one schedule entry, or None when it does not exist."""
     inst = _norm_instrument(instrument)
     with _connect(data_dir) as con:
         row = con.execute(
@@ -438,7 +456,8 @@ def update_entry(
     date_end: str,
     hours: float,
     comment: str,
-) -> Optional[Dict]:
+) -> Optional[Dict[str, Any]]:
+    """Update an entry and return its row when it exists."""
     inst = _norm_instrument(instrument)
     task_name = _norm_text(task)
     uname = _norm_text(username)
@@ -487,6 +506,7 @@ def delete_entry(
     instrument: str,
     entry_id: int,
 ) -> bool:
+    """Delete an entry and report whether a row was removed."""
     inst = _norm_instrument(instrument)
     with _LOCK:
         with _connect(data_dir) as con:
@@ -506,6 +526,7 @@ def get_stats_visibility_map(
     data_dir: Path,
     instrument: str,
 ) -> Dict[str, bool]:
+    """Return per-user schedule-stat visibility for an instrument."""
     inst = _norm_instrument(instrument)
     with _connect(data_dir) as con:
         rows = con.execute(
@@ -526,6 +547,7 @@ def set_stats_user_visibility(
     visible: bool,
     updated_by: str,
 ) -> None:
+    """Set one user's visibility in the instrument schedule statistics."""
     inst = _norm_instrument(instrument)
     uname = _norm_text(username)
     if not uname:
@@ -553,7 +575,8 @@ def compute_stats(
     since: str,
     until: str,
     task: str = '',
-) -> Dict:
+) -> Dict[str, Any]:
+    """Summarize completed and proposed schedule days over a date range."""
     since_day = _parse_date(since)
     until_day = _parse_date(until)
     if since_day is None or until_day is None:
@@ -569,7 +592,7 @@ def compute_stats(
         'FROM schedule_entries '
         'WHERE instrument = ? AND date_end >= ? AND date_start <= ?'
     )
-    args: List = [inst, since_day.isoformat(), until_day.isoformat()]
+    args: List[Any] = [inst, since_day.isoformat(), until_day.isoformat()]
     if task_name and task_name.lower() != 'all':
         query += ' AND task = ?'
         args.append(task_name)
@@ -638,6 +661,7 @@ def compute_stats(
 # Define calendar helpers
 # =============================================================================
 def week_window(anchor: str, offset_weeks: int = 0) -> Dict[str, str]:
+    """Return ISO start and end dates for the anchor's adjusted week."""
     anchor_day = _parse_date(anchor) or date.today()
     start = anchor_day - timedelta(days=anchor_day.weekday())
     start = start + timedelta(days=7 * int(offset_weeks or 0))
@@ -649,6 +673,7 @@ def week_window(anchor: str, offset_weeks: int = 0) -> Dict[str, str]:
 
 
 def month_window(anchor: str, offset_months: int = 0) -> Dict[str, str]:
+    """Return ISO start and end dates for the anchor's adjusted month."""
     anchor_day = _parse_date(anchor) or date.today()
     first = anchor_day.replace(day=1)
     month_index = (first.year * 12 + first.month - 1) + int(offset_months)
@@ -670,7 +695,8 @@ def week_calendar_rows(
     data_dir: Path,
     instrument: str,
     week_start: str,
-) -> Dict:
+) -> Dict[str, Any]:
+    """Group overlapping schedule entries under each day of a week."""
     start_day = _parse_date(week_start)
     if start_day is None:
         start_day = date.today() - timedelta(days=date.today().weekday())
@@ -703,7 +729,8 @@ def month_calendar_rows(
     data_dir: Path,
     instrument: str,
     month_start: str,
-) -> Dict:
+) -> Dict[str, Any]:
+    """Group overlapping schedule entries under each day of a month."""
     bounds = month_window(month_start, 0)
     month_day = _parse_date(bounds['month_start'])
     if month_day is None:
@@ -716,7 +743,7 @@ def month_calendar_rows(
     grid_end = month_end + timedelta(days=(6 - month_end.weekday()))
 
     rows = list_entries_overlap(data_dir, instrument, grid_start, grid_end)
-    by_day: Dict[str, List[Dict]] = dict()
+    by_day: Dict[str, List[Dict[str, Any]]] = dict()
     day_cursor = grid_start
     while day_cursor <= grid_end:
         by_day[day_cursor.isoformat()] = []
@@ -734,8 +761,8 @@ def month_calendar_rows(
                 by_day[key].append(dict(row))
             day_cursor += timedelta(days=1)
 
-    weeks: List[List[Dict]] = []
-    week_days: List[Dict] = []
+    weeks: List[List[Dict[str, Any]]] = []
+    week_days: List[Dict[str, Any]] = []
     day_cursor = grid_start
     while day_cursor <= grid_end:
         key = day_cursor.isoformat()
@@ -772,7 +799,7 @@ def weeks_calendar_rows(
 ) -> Dict:
     """Return calendar data for *weeks* consecutive weeks.
 
-    week_start_day: 0 = Monday … 6 = Sunday (ISO weekday).
+    ``week_start_day`` uses Monday = 0 through Sunday = 6.
     """
     wsd = int(week_start_day) % 7
     start_day = _parse_date(week_start)

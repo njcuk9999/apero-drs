@@ -338,6 +338,7 @@ def root_username() -> str:
 # Define issued-token functions (tokens other servers use to reach us)
 # =============================================================================
 def _issued_path() -> Path:
+    """Return the path to the locally issued sync-token registry."""
     return secret_dir() / 'issued_tokens.json'
 
 
@@ -468,10 +469,12 @@ def check_nonce(key_id: str, nonce: str) -> bool:
 # Define peer functions (servers we sync with)
 # =============================================================================
 def _peers_path() -> Path:
+    """Return the path to the configured peer registry."""
     return sync_dir() / 'peers.yaml'
 
 
 def _peer_tokens_path() -> Path:
+    """Return the path to the locally stored peer-token registry."""
     return secret_dir() / 'peer_tokens.json'
 
 

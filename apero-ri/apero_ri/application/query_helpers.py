@@ -14,7 +14,14 @@ def build_safe_select_query(
     query_spec: Dict[str, Any],
     run_ids: Iterable[str],
 ) -> Tuple[str, Dict[str, Any], List[str]]:
-    """Build a safe parameterized SELECT from a structured query spec."""
+    """Build a parameterized SELECT restricted to accessible tables/columns.
+
+    :param table_access: Allowed columns and physical names, keyed by label.
+    :param query_spec: Requested tables, joins, filters, ordering, and limit.
+    :param run_ids: Allowed run identifiers when FINDEX is selected.
+    :returns: SQL text, bound parameters, and selected column labels.
+    :raises ValueError: If the query references inaccessible identifiers.
+    """
     allowed_ops = frozenset(
         {"=", "!=", "<", ">", "<=", ">=", "LIKE", "NOT LIKE"}
     )
@@ -192,7 +199,14 @@ def build_safe_count_query(
     query_spec: Dict[str, Any],
     run_ids: Iterable[str],
 ) -> Tuple[str, Dict[str, Any]]:
-    """Build a SELECT COUNT(*) version of the query (no ORDER BY, no LIMIT)."""
+    """Build a parameterized count query using the requested query filters.
+
+    :param table_access: Allowed columns and physical names, keyed by label.
+    :param query_spec: Requested tables, joins, and filters.
+    :param run_ids: Allowed run identifiers when FINDEX is selected.
+    :returns: SQL text and bound parameters.
+    :raises ValueError: If the query references inaccessible identifiers.
+    """
     allowed_ops = frozenset(
         {"=", "!=", "<", ">", "<=", ">=", "LIKE", "NOT LIKE"}
     )
@@ -318,7 +332,12 @@ def build_safe_count_query(
 def parse_text_presets(
     text: str, replace_fn: Callable[[str], str]
 ) -> List[Dict[str, str]]:
-    """Parse a delimiter-based query preset text file."""
+    """Parse delimited preset names and SQL, applying substitutions.
+
+    :param text: Preset text containing delimiter-separated names and SQL.
+    :param replace_fn: Function used to replace placeholders in each query.
+    :returns: Presets represented by name/query mappings.
+    """
     delim = re.compile(r"^={4,}\s*$")
     presets: List[Dict[str, str]] = []
     lines = str(text or "").splitlines()
@@ -357,7 +376,14 @@ def load_query_db_presets(
     db_access_table_keys: Dict[str, str],
     profile_get_db: Callable[[dict, str, Any], Any],
 ) -> List[Dict[str, str]]:
-    """Load query-db presets and replace table placeholders."""
+    """Load profile query presets and substitute configured values.
+
+    :param profile: Profile mapping containing data and profile identifiers.
+    :param package_dir: ARI package directory containing preset resources.
+    :param db_access_table_keys: Preset labels mapped to database keys.
+    :param profile_get_db: Helper that reads a database value from a profile.
+    :returns: Presets represented by name/query mappings.
+    """
     cfg = (
         profile.get("data", {}) if isinstance(profile.get("data"), dict) else {}
     )

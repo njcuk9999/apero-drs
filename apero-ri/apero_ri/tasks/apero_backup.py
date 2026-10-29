@@ -6,7 +6,7 @@ import os
 import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from apero_ri.core import backup_backend as bb
 from apero_ri.core import secret_store
@@ -66,7 +66,7 @@ FILTERS = []
 class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
     """Create retained daily and weekly backups of LOCAL_DATA_DIR."""
 
-    def __init__(self, status="pending"):
+    def __init__(self, status: str = "pending") -> None:
         name = "Local Data Backup Task"
         description = (
             "Create compressed backups of LOCAL_DATA_DIR and keep "
@@ -74,7 +74,13 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         )
         super().__init__(name, description, status)
 
-    def run_job(self, params: Dict[str, Any]):
+    def run_job(self, params: Dict[str, Any]) -> None:
+        """Create retained local backups and synchronize configured targets.
+
+        :param params: Task settings, logger, and cancellation event.
+        :raises ValueError: If the source directory is unsafe or exceeds
+            the configured size limit, or no retained copies are enabled.
+        """
         local_data_dir = (
             Path(params.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
             .expanduser()
@@ -372,6 +378,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
     @staticmethod
     def _validate_source_dir(source_dir: Path) -> None:
+        """Reject unsafe paths and directories lacking expected ARI folders."""
         if source_dir in {Path("/"), Path.home()}:
             raise ValueError(f"Unsafe backup source directory: {source_dir}")
 
@@ -404,6 +411,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         exclude_dirs: List[str],
         exclude_paths: List[str],
     ) -> str:
+        """Create an archive, replacing an existing copy transactionally."""
         if not destination.exists():
             AperoLocalDataBackupTask._create_archive(
                 source_dir, destination, exclude_dirs, exclude_paths
@@ -432,6 +440,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         exclude_dirs: List[str],
         exclude_paths: List[str],
     ) -> None:
+        """Write selected source files into a gzip-compressed tar archive."""
         destination.parent.mkdir(parents=True, exist_ok=True)
         with tarfile.open(destination, "w:gz") as handle:
             for file_path in AperoLocalDataBackupTask._iter_source_files(
@@ -444,7 +453,8 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
     @staticmethod
     def _iter_source_files(
         source_dir: Path, exclude_dirs: List[str], exclude_paths: List[str]
-    ):
+    ) -> Iterable[Path]:
+        """Yield source files not covered by the configured exclusions."""
         excluded = set(exclude_dirs)
         excluded_paths = set(exclude_paths)
         for root, dirs, files in os.walk(source_dir):
@@ -468,6 +478,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
     def _estimate_archive_input_size(
         source_dir: Path, exclude_dirs: List[str], exclude_paths: List[str]
     ) -> int:
+        """Return the total readable file size selected for archiving."""
         total = 0
         for file_path in AperoLocalDataBackupTask._iter_source_files(
             source_dir, exclude_dirs, exclude_paths
@@ -480,6 +491,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
     @staticmethod
     def _format_bytes(size: int) -> str:
+        """Format a byte count using a binary unit and two decimals."""
         units = ["B", "KB", "MB", "GB", "TB"]
         value = float(size)
         for unit in units:
@@ -490,6 +502,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
     @staticmethod
     def _normalize_relative_path(path_value: Any) -> str:
+        """Normalize a relative path, returning empty for parent traversal."""
         parts = []
         for part in Path(str(path_value)).parts:
             if part in {"", "."}:
@@ -501,6 +514,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
     @staticmethod
     def _prune_archives(directory: Path, keep_count: int) -> List[Path]:
+        """Delete and return archives older than the requested retention."""
         if keep_count <= 0:
             paths = sorted(directory.glob("*.tar.gz"))
             for path in paths:

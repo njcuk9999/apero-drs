@@ -1,9 +1,10 @@
 """User page context helper functions for ARIApp."""
 
 from pathlib import Path
+from typing import Any, Iterable
 from urllib.parse import quote
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from apero_ri.core.auth import get_accessible_profiles
 from apero_ri.core.auth import load_users
@@ -20,8 +21,19 @@ from apero_ri.core.issues import create_issue, list_issues
 from apero_ri.application import instrument_color_helpers
 
 
-def build_user_data_access_context(app, user_info):
-    """Build summary of user's data access by instrument."""
+def build_user_data_access_context(
+    app: Any, user_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build the user's science-group and run access by instrument.
+
+    Args:
+        app: The ARI application providing group configuration.
+        user_info: Authenticated user data.
+
+    Returns:
+        Template data containing instrument access rows and management
+        permission state.
+    """
     perms = resolve_user_permissions(
         user_info.get('groups', []), app.ari_groups
     )
@@ -85,8 +97,17 @@ def build_user_data_access_context(app, user_info):
     }
 
 
-def api_user_data_access_request(app):
-    """Create a monitor issue from user data-access request form."""
+def api_user_data_access_request(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Create or find an issue for a user's run-access request.
+
+    Args:
+        app: The ARI application providing authentication and data paths.
+
+    Returns:
+        JSON issue result or validation/authentication error response.
+    """
     user_info = app._get_api_user()
     if not user_info:
         return jsonify(success=False, error='Login required'), 401
@@ -173,8 +194,18 @@ def api_user_data_access_request(app):
     return jsonify(success=True, issue=issue)
 
 
-def build_user_support_context(app, user_info):
-    """Build support contact lists grouped by instrument and role."""
+def build_user_support_context(
+    app: Any, user_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build support contacts grouped by instrument and role.
+
+    Args:
+        app: The ARI application providing group configuration.
+        user_info: Authenticated user data used to select instruments.
+
+    Returns:
+        Template data containing support contacts and the support email.
+    """
     instruments = get_user_instruments(
         user_info.get('groups', []), app.ari_groups
     )
@@ -275,8 +306,21 @@ def build_user_support_context(app, user_info):
     }
 
 
-def build_ri_context(app, user_info, user_permissions):
-    """Build template context for the data portal page."""
+def build_ri_context(
+    app: Any,
+    user_info: dict[str, Any] | None,
+    user_permissions: Iterable[str],
+) -> dict[str, Any]:
+    """Build profile cards and navigation for the data portal.
+
+    Args:
+        app: The ARI application providing profile and navigation helpers.
+        user_info: Current user data, or ``None`` for public access.
+        user_permissions: Resolved permissions used for portal navigation.
+
+    Returns:
+        Template context for the data portal home page.
+    """
     params = load_parameters()
     all_instruments = params.get('instruments', {}).get('value', [])
     colors = app._instrument_colors()
@@ -332,8 +376,18 @@ def build_ri_context(app, user_info, user_permissions):
     }
 
 
-def build_user_links_context(app, user_info):
-    """Build context for user links page."""
+def build_user_links_context(
+    app: Any, user_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build personal and instrument link data for the links page.
+
+    Args:
+        app: The ARI application providing group configuration.
+        user_info: Authenticated user data.
+
+    Returns:
+        Template context containing links and available instruments.
+    """
     username = user_info['username']
     instruments = get_user_instruments(
         user_info.get('groups', []), app.ari_groups
@@ -355,14 +409,24 @@ def build_user_links_context(app, user_info):
     }
 
 
-def build_user_api_access_context(user_info):
-    """Build context for user API access page."""
+def build_user_api_access_context(
+    user_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build token and download-usage data for the API access page.
+
+    Args:
+        user_info: Authenticated user data.
+
+    Returns:
+        Template context containing token information and usage totals.
+    """
     username = user_info['username']
     api_usage = dt.get_user_usage(username, 'api')
     basket_usage = dt.get_user_usage(username, 'basket')
     token_info = at.get_user_token_info(username)
 
-    def _fmt_ts(raw):
+    def _fmt_ts(raw: Any) -> str:
+        """Format an ISO timestamp for display, or a fallback value."""
         if not raw:
             return 'Never'
         try:
@@ -391,8 +455,18 @@ def build_user_api_access_context(user_info):
     }
 
 
-def build_user_calendar_context(app, user_info):
-    """Build context for user calendar page."""
+def build_user_calendar_context(
+    app: Any, user_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build personal and instrument calendar data for the user.
+
+    Args:
+        app: The ARI application providing group configuration.
+        user_info: Authenticated user data.
+
+    Returns:
+        Template context containing events, feeds, instruments, and timezone.
+    """
     username = user_info['username']
     instruments = get_user_instruments(
         user_info.get('groups', []), app.ari_groups
@@ -423,14 +497,19 @@ def build_user_calendar_context(app, user_info):
 
 
 def build_admin_instrument_context(
-    user_info, perms, manage_prefix
-):
+    user_info: dict[str, Any],
+    perms: Iterable[str],
+    manage_prefix: str,
+) -> dict[str, Any]:
     """Build instruments context for admin calendar/links pages.
 
     :param manage_prefix: e.g. ``'manage.admin.calendar'`` or
         ``'manage.admin.links'``.  Per-instrument management is
         determined by ``{manage_prefix}.{INSTRUMENT}`` in
         *perms*.
+
+    Returns:
+        All instruments and the subset the user may manage.
     """
     params = load_parameters()
     all_instr = params.get('instruments', {}).get(

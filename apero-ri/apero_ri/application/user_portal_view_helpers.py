@@ -13,6 +13,8 @@ Created on 2026-04-24
 """
 from __future__ import annotations
 
+from typing import Any
+
 from flask import (flash, redirect, render_template,
                    session, url_for)
 
@@ -29,9 +31,22 @@ from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
 __NAME__ = 'apero_ri.application.user_portal_view_helpers'
 
 
-def _require_logged_in(app, page_id, page_label, page_icon,
-                       template):
-    """Shared boilerplate for the three user-portal sub-pages."""
+def _require_logged_in(
+    app: Any,
+    page_id: str,
+    page_label: str,
+    page_icon: str,
+    template: str,
+) -> Any:
+    """Render a user-portal page for the current logged-in user.
+
+    :param app: ARI application providing permissions and sidebar context.
+    :param page_id: Registered page identifier used for sidebar context.
+    :param page_label: Page title displayed in the rendered template.
+    :param page_icon: Icon class displayed with the page title.
+    :param template: Template path to render.
+    :returns: Rendered response, or a redirect when login is required.
+    """
     user_info = get_effective_user(session)
     if not user_info:
         flash('Login required.', 'warning')
@@ -60,7 +75,7 @@ def _require_logged_in(app, page_id, page_label, page_icon,
     return render_template(template, **context)
 
 
-def user_portal_users_view(app):
+def user_portal_users_view(app: Any) -> Any:
     """Render the users directory page."""
     return _require_logged_in(
         app,
@@ -71,7 +86,7 @@ def user_portal_users_view(app):
     )
 
 
-def user_portal_messages_view(app):
+def user_portal_messages_view(app: Any) -> Any:
     """Render the messages inbox page."""
     return _require_logged_in(
         app,
@@ -82,7 +97,7 @@ def user_portal_messages_view(app):
     )
 
 
-def user_portal_notifications_view(app):
+def user_portal_notifications_view(app: Any) -> Any:
     """Render the notifications + preferences page."""
     return _require_logged_in(
         app,
@@ -93,7 +108,7 @@ def user_portal_notifications_view(app):
     )
 
 
-def user_portal_user_card_view(app, username):
+def user_portal_user_card_view(app: Any, username: str) -> Any:
     """Render a dedicated user profile card page."""
     user_info = get_effective_user(session)
     if not user_info:

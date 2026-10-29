@@ -117,7 +117,7 @@ class Const:
                  output: bool = True, not_none: bool = False,
                  modes: str = '', length: int = None, cmd_arg: str = None,
                  cmd_kwargs: Dict[str, Any] = None,
-                 tex_arg: bool = False):
+                 tex_arg: bool = False) -> None:
         """
         Construct the constant instance
 
@@ -234,7 +234,7 @@ class Const:
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -468,7 +468,8 @@ class ConstantsDict:
     Basic container for constants
     """
     # title for output yaml
-    def __init__(self, source: str):
+    def __init__(self, source: str) -> None:
+        """Create an empty constant registry owned by ``source``."""
         # groups for output yaml
         self.title = ' '
         self.groups: Dict[str, str] = dict()
@@ -493,7 +494,7 @@ class ConstantsDict:
                  not_none: bool = False,
                  modes: str = '', length: int = None,
                  cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None,
-                 tex_arg: bool = False):
+                 tex_arg: bool = False) -> None:
         """
         Add a constant instance to the dict
 
@@ -546,16 +547,18 @@ class ConstantsDict:
             self.storage[f'{group}.{name}'] = constants
 
     def get(self, key: str) -> Const:
-        # just return the Const
+        """Return the constant definition stored under ``key``."""
         return self.storage[key]
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Any:
+        """Return a group's storage or a constant's current value."""
         if isinstance(self.storage[item], ConstantsDict):
             return self.storage[item].storage
         else:
             return self.storage[item].value
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
+        """Return whether the registry contains ``item``."""
         return item in self.storage
 
     def set(self, name: str, value: Any = None,
@@ -575,7 +578,7 @@ class ConstantsDict:
             output: bool = True, not_none: bool = False,
             modes: str = None, length: int = None,
             cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None,
-            tex_arg: bool = None):
+            tex_arg: bool = None) -> None:
         """
         Add a constant instance to the dict
 
@@ -708,6 +711,7 @@ class ConstantsDict:
             self.storage[name].tex_arg = tex_arg
 
     def copy(self, source: str) -> 'ConstantsDict':
+        """Copy all constant definitions with the requested owner source."""
         # create new storage
         new_storage = dict()
         # loop around storage
@@ -870,7 +874,7 @@ class ConstantsDict:
         return new_constants
 
     def add_sub_cdict(self, key: str, cdict: 'ConstantsDict',
-                      source: str):
+                      source: str) -> None:
         """
         Take one constants dictionary and push it into this one
         (as a sub-dictionary)
@@ -948,6 +952,13 @@ class ConstantsDict:
 
     def add_to_yaml(self, data: CommentedMap, params: Any,
                     mode: str = None) -> CommentedMap:
+        """Add this registry's active constants to a round-trip YAML map.
+
+        :param data: YAML mapping receiving the constants
+        :param params: parameter values used to resolve output values
+        :param mode: optional output mode used to filter constants
+        :return: updated YAML mapping
+        """
         # loop around stored constants so user-active defaults are exported
         # even when they are not explicitly present in params.
         for it, key in enumerate(self.storage.keys()):
@@ -1082,8 +1093,9 @@ class ConstantsDict:
         comment += '\n' + '=' * 77 + '\n'
         return comment
 
-    def add_group(self, groupname, description, source: str = None,
-                  user: bool = False, active: bool = False):
+    def add_group(self, groupname: str, description: str,
+                  source: Optional[str] = None, user: bool = False,
+                  active: bool = False) -> None:
         """
         Add a group for the yaml file
 
@@ -1125,7 +1137,7 @@ class Keyword(Const):
                  description: Union[str, None] = None,
                  post_exclude: bool = False,
                  user: bool = False,
-                 active: bool = False):
+                 active: bool = False) -> None:
         """
         Construct the keyword instance
 
@@ -1212,7 +1224,7 @@ class Keyword(Const):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -1243,7 +1255,7 @@ class Keyword(Const):
             author: Union[str, List[str], None] = None,
             parent: Union[str, None] = None,
             combine_method: Union[str, None] = None,
-            post_exclude: Union[bool, None] = None):
+            post_exclude: Union[bool, None] = None) -> None:
         """
         Set attributes of the Keyword instance
 
@@ -1426,13 +1438,15 @@ class KeywordDict:
     """
     Basic container for constants
     """
-    def __init__(self, source: str):
+    def __init__(self, source: str) -> None:
+        """Create an empty keyword registry owned by ``source``."""
         self.title = ' '
         self.groups: Dict[str, str] = dict()
         self.storage: Dict[str, Keyword] = dict()
         self.source = source
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Any:
+        """Return the current header-key value for ``item``."""
         return self.storage[item].value
 
     def add(self, name: str, key: Union[str, None] = None,
@@ -1451,7 +1465,7 @@ class KeywordDict:
             combine_method: Union[str, None] = None,
             description: Union[str, None] = None,
             post_exclude: bool = False,
-            user: bool = False, active: bool = False):
+            user: bool = False, active: bool = False) -> None:
         """
         Construct the keyword instance
 
@@ -1503,8 +1517,8 @@ class KeywordDict:
         # add to storage
         self.storage[name] = constants
 
-    def get(self, key: str) -> Const:
-        # just return the Const
+    def get(self, key: str) -> Keyword:
+        """Return the keyword definition stored under ``key``."""
         return self.storage[key]
 
     def set(self, name: str, key: str = None, value: Any = None,
@@ -1523,7 +1537,7 @@ class KeywordDict:
             combine_method: Union[str, None] = None,
             description: Union[str, None] = None,
             post_exclude: Union[bool, None] = None,
-            user: bool = None, active: bool = None):
+            user: bool = None, active: bool = None) -> None:
         """
         Set attributes of the Keyword instance
 
@@ -1634,6 +1648,7 @@ class KeywordDict:
             self.storage[name].active = active
 
     def copy(self, source: str) -> 'KeywordDict':
+        """Copy all keyword definitions with the requested owner source."""
         # create new storage
         new_storage = dict()
         # loop around storage
@@ -1648,7 +1663,12 @@ class KeywordDict:
         return new_keywords
 
     def unpack(self, values: Dict[str, Any], sources: Dict[str, str],
-               instances: Dict[str, Union[Keyword]]):
+               instances: Dict[str, Union[Keyword]]) -> Tuple[
+                   Dict[str, Any], Dict[str, str], Dict[str, Union[Keyword]]]:
+        """Fill value, source, and instance mappings from this registry.
+
+        Existing keys in ``values`` are preserved.
+        """
         # loop around all keys stored in dictionary
         for key in self.storage.keys():
             # do not add keys that are already in values
@@ -1727,6 +1747,13 @@ class KeywordDict:
 
     def add_to_yaml(self, data: CommentedMap, params: Any,
                     mode: str = None) -> CommentedMap:
+        """Add this registry's active keywords to a round-trip YAML map.
+
+        :param data: YAML mapping receiving the keywords
+        :param params: parameter values used to resolve output values
+        :param mode: optional output mode used to filter keywords
+        :return: updated YAML mapping
+        """
         # loop around stored constants so user-active defaults are exported
         # even when they are not explicitly present in params.
         for it, key in enumerate(self.storage.keys()):
@@ -1859,8 +1886,9 @@ class KeywordDict:
         comment += '\n' + '=' * 77 + '\n'
         return comment
 
-    def add_group(self, groupname, description, source: str = None,
-                  user: bool = False, active: bool = False):
+    def add_group(self, groupname: str, description: str,
+                  source: str = None, user: bool = False,
+                  active: bool = False) -> None:
         """
         Add a group for the yaml file
 
@@ -1874,7 +1902,7 @@ class KeywordDict:
 
 
 class CKCaseINSDict(base_class.CaseInsensitiveDict):
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg: Any, **kw: Any) -> None:
         """
         Construct the Const/Keyword elements case insensitive dictionary class
         :param arg: arguments passed to dict
@@ -1903,7 +1931,8 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         # noinspection PyTypeChecker
         return super(CKCaseINSDict, self).__getitem__(key)
 
-    def __setitem__(self, key: str, value: Union[None, Const, Keyword]):
+    def __setitem__(self, key: str,
+                    value: Union[None, Const, Keyword]) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -2094,7 +2123,7 @@ def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
     return keys, values
 
 
-def update_file(filename: str, dictionary: dict):
+def update_file(filename: str, dictionary: dict) -> None:
     """
     Updates a config/constants file with key/value pairs in the `dictionary`
     If key not found in config/constants file does not add key/value to file
@@ -2416,7 +2445,7 @@ def _validate_value(name: str, dtype: Union[str, type, None],
 
 
 def _validate_text_file(filename: Union[str, Path],
-                        comments: str = '#'):
+                        comments: str = '#') -> None:
     """
     Validation on any text file, makes sure all non commented lines have
     valid characters (i.e. are either letters, digits, punctuation or
@@ -2464,7 +2493,7 @@ def _validate_text_file(filename: Union[str, Path],
             raise AperoCodedException(None, '00-003-00020', message=emsg)
 
 
-def _comment_wrap(comment: str, width: int = 4096):
+def _comment_wrap(comment: Optional[str], width: int = 4096) -> str:
     """
     Wrap the comment to the width provided
     """

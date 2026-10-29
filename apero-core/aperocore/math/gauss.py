@@ -308,7 +308,8 @@ def gaussian_slope(x: np.ndarray, cen: float, ew: float, depth: float,
     return gauss * (1 - slope * xpix - curv * xpix ** 2) * amp
 
 
-def gauss_floor(x: np.ndarray, a: float, sigma: float):
+def gauss_floor(x: np.ndarray, a: float,
+                sigma: float) -> np.ndarray:
     """
     Gaussian function with zero floor and centered at zero.
 

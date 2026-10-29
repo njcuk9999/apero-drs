@@ -7,7 +7,7 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from apero_ri.core import auth
 from apero_ri.core import email_backend as eb
@@ -48,7 +48,13 @@ USERNAME_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 class SetupApp(Flask):
     """Flask app for first-run setup."""
 
-    def __init__(self, local_data_dir: Path, test_mode: bool = False, **kwargs):
+    def __init__(
+        self,
+        local_data_dir: Path,
+        test_mode: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the setup app and register its routes and context."""
         super().__init__(
             __name__,
             template_folder=str(TEMPLATE_DIR),
@@ -93,8 +99,10 @@ class SetupApp(Flask):
         return completed
 
     def _register_context_processors(self) -> None:
+        """Register template context values for the setup wizard."""
         @self.context_processor
         def inject_setup_context() -> Dict[str, object]:
+            """Provide setup progress and configuration to templates."""
             email_cfg = eb.load_email_config()
             state = load_setup_state(self.local_data_dir)
             active_routes = {
@@ -120,6 +128,7 @@ class SetupApp(Flask):
             }
 
     def _register_routes(self) -> None:
+        """Bind setup wizard views and the directory-browsing endpoint."""
         self.add_url_rule("/", "setup_index", self._index)
         self.add_url_rule(
             "/welcome",
@@ -140,6 +149,7 @@ class SetupApp(Flask):
 
     @staticmethod
     def _split_list(raw_value: str) -> List[str]:
+        """Split comma- or newline-separated values and remove duplicates."""
         values = []
         for item in raw_value.replace("\n", ",").split(","):
             cleaned = item.strip()
@@ -149,6 +159,7 @@ class SetupApp(Flask):
 
     @staticmethod
     def _email_configured(email_cfg: Dict[str, object]) -> bool:
+        """Return whether the selected email provider is configured."""
         if not email_cfg:
             return False
         if not email_cfg.get("enabled", False):
@@ -159,7 +170,8 @@ class SetupApp(Flask):
         return bool(str(email_cfg.get("smtp_user", "")).strip())
 
     @staticmethod
-    def _build_email_config(form_data) -> Dict[str, object]:
+    def _build_email_config(form_data: Any) -> Dict[str, object]:
+        """Build email settings from submitted form data and defaults."""
         provider = str(form_data.get("provider", "gmail")).strip().lower()
         defaults = eb.PROVIDER_DEFAULTS.get(
             provider, eb.PROVIDER_DEFAULTS["custom"]
@@ -210,12 +222,14 @@ class SetupApp(Flask):
             return []
         return [str(item) for item in values if str(item).strip()]
 
-    def _index(self):
+    def _index(self) -> Any:
+        """Redirect to the completed page or the first setup step."""
         if is_setup_complete(self.local_data_dir):
             return redirect(url_for("setup_complete"))
         return redirect(url_for("setup_welcome"))
 
-    def _welcome_step(self):
+    def _welcome_step(self) -> Any:
+        """Select the local data directory during the welcome step."""
         if request.method == "POST":
             target_dir = self._normalize_data_dir(
                 request.form.get("local_data_dir", "")
@@ -250,7 +264,7 @@ class SetupApp(Flask):
             selected_dir=str(self.local_data_dir),
         )
 
-    def _browse_dirs(self):
+    def _browse_dirs(self) -> Any:
         """Return a list of sub-directories for server-side path browsing."""
         raw_path = str(request.args.get("path", "") or "").strip()
         if not raw_path:
@@ -291,7 +305,8 @@ class SetupApp(Flask):
             dirs=dirs[:500],
         )
 
-    def _email_step(self):
+    def _email_step(self) -> Any:
+        """Configure and test outgoing email for the setup wizard."""
         email_cfg = eb.load_email_config()
         if request.method == "POST":
             cfg = self._build_email_config(request.form)
@@ -349,7 +364,8 @@ class SetupApp(Flask):
             "setup/email.html", page_title="Setup Email", email_cfg=email_cfg
         )
 
-    def _admin_step(self):
+    def _admin_step(self) -> Any:
+        """Verify email ownership and create the initial admin account."""
         email_cfg = eb.load_email_config()
         if not self._email_configured(email_cfg):
             flash(
@@ -616,7 +632,8 @@ class SetupApp(Flask):
             existing_user=existing_user,
         )
 
-    def _complete_step(self):
+    def _complete_step(self) -> Any:
+        """Render the final setup state and current email configuration."""
         state = load_setup_state(self.local_data_dir)
         email_cfg = eb.load_email_config()
         return render_template(
@@ -630,8 +647,10 @@ class SetupApp(Flask):
 # =============================================================================
 # Define functions
 # =============================================================================
-def create_setup_app(local_data_dir: Path, test_mode: bool = False) -> SetupApp:
-    """Factory for the first-run setup app."""
+def create_setup_app(
+    local_data_dir: Path, test_mode: bool = False
+) -> SetupApp:
+    """Create the Flask app for the first-run setup wizard."""
     return SetupApp(local_data_dir, test_mode=test_mode)
 
 

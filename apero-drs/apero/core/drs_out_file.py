@@ -43,9 +43,11 @@ class OutFile:
     """
     Do not use OutFile directly - use one of the children classes
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the generic output file class
+
+        :return: None
         """
         self.classname = 'OutFile'
         self.reference = False
@@ -54,6 +56,7 @@ class OutFile:
         self.tellu = False
 
     def __str__(self) -> str:
+        """Return the class name and enabled output-file flags."""
         # storage for flags
         flags = []
         # add flags
@@ -69,6 +72,7 @@ class OutFile:
         return f'{self.classname}[{",".join(flags)}]'
 
     def __repr__(self) -> str:
+        """Return the same concise summary used by :meth:`__str__`."""
         return self.__str__()
 
     def copy(self) -> 'OutFile':
@@ -195,10 +199,12 @@ class OutFile:
 
 
 class GeneralOutFile(OutFile):
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the General output file class - this is used in most
         non-special cases
+
+        :return: None
         """
         super().__init__()
         self.classname = 'GeneralOutFile'
@@ -323,9 +329,11 @@ class NpyOutFile(GeneralOutFile):
     """
     Output file for numpy save files (npy files)
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the numpy save file output class
+
+        :return: None
         """
         super().__init__()
         self.classname = 'NpyOutFile'
@@ -387,9 +395,11 @@ class DebugOutFile(GeneralOutFile):
     """
     Output file for debug files (fits files)
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the output file for debug files
+
+        :return: None
         """
         super().__init__()
         self.debug = True
@@ -451,9 +461,11 @@ class BlankOutFile(OutFile):
     """
     Blank output file - output file matches input file
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the blank output file
+
+        :return: None
         """
         super().__init__()
         self.classname = 'BlankOutFile'
@@ -510,9 +522,11 @@ class SetOutFile(OutFile):
     """
     Output file where output filename is set manually
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the output file where output filename is set manually
+
+        :return: None
         """
         super().__init__()
         self.classname = 'SetOutFile'
@@ -608,9 +622,11 @@ class StaticFile(OutFile):
     """
     Output file where output filename is set manually
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the output file where output filename is set manually
+
+        :return: None
         """
         super().__init__()
         self.classname = 'StaticFile'
@@ -716,9 +732,11 @@ class LBLOutFile(OutFile):
     """
     LBL output file class
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
-        Construct the post process output file
+        Construct an output-file helper for LBL products.
+
+        :return: None
         """
         super().__init__()
         self.classname = 'LBLOutFile'
@@ -793,9 +811,11 @@ class PostOutFile(OutFile):
     """
     Post process output file class
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the post process output file
+
+        :return: None
         """
         super().__init__()
         self.classname = 'PostOutFile'
@@ -815,8 +835,8 @@ class PostOutFile(OutFile):
         Generate a post processed filename
 
         :param params: ParamDict, the parameter dictionary of constants
-        :param drsfile: DrsOutFile instance, the drs out file associated with this
-                        post processed file
+        :param drsfile: DrsOutFile instance associated with this post-processed
+                file
         :param identifier: str, an identifier to the required output filename
         :param obs_dir: str, the observation directory
         :return:
@@ -856,9 +876,11 @@ class CalibOutFile(GeneralOutFile):
     """
     Calibration output file
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct a calibration file output
+
+        :return: None
         """
         super().__init__()
         self.classname = 'CalibOutFile'
@@ -919,9 +941,11 @@ class TelluOutFile(GeneralOutFile):
     """
     A telluric output file class
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct a telluric output file
+
+        :return: None
         """
         super().__init__()
         self.classname = 'TelluOutFile'
@@ -982,9 +1006,11 @@ class RefCalibOutFile(CalibOutFile):
     """
     A reference calibration output file
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct a reference calibration output file
+
+        :return: None
         """
         super().__init__()
         self.classname = 'RefCalibOutFile'
@@ -1004,9 +1030,11 @@ class RefTelluOutFile(CalibOutFile):
     """
     A reference telluric output file
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
-        Copy a reference telluric output file
+        Construct a reference telluric output file.
+
+        :return: None
         """
         super().__init__()
         self.classname = 'RefTelluOutFile'
@@ -1026,9 +1054,11 @@ class TelluSetOutFile(SetOutFile):
     """
     Special telluric output file where filename is set manually
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the special set-filename telluric output file
+
+        :return: None
         """
         super().__init__()
         self.classname = 'TelluSetOutFile'

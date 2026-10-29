@@ -42,13 +42,14 @@ _ARI_DIR: Optional[Path] = None
 
 
 def _ari_dir() -> Path:
+    """Return the configured ARI data directory or its default location."""
     if _ARI_DIR is not None:
         return _ARI_DIR
     return secret_store.get_ari_dir()
 
 
 def set_ari_dir(path: Optional[str]) -> None:
-    """Allow overriding the base ARI directory."""
+    """Set or clear the base directory used for shared object groups."""
     global _ARI_DIR
     if path:
         _ARI_DIR = Path(path).expanduser()
@@ -57,12 +58,14 @@ def set_ari_dir(path: Optional[str]) -> None:
 
 
 def _shared_dir(profile_id: str) -> Path:
+    """Create and return the shared-data directory for a profile."""
     d = _ari_dir() / 'shared' / profile_id
     d.mkdir(parents=True, exist_ok=True)
     return d
 
 
 def _groups_path(profile_id: str) -> Path:
+    """Return the object-group YAML path for a profile."""
     return _shared_dir(profile_id) / 'object_groups.yaml'
 
 
@@ -70,6 +73,7 @@ def _groups_path(profile_id: str) -> Path:
 # YAML helpers
 # ================================================================
 def _load_yaml(path: Path, default: Any = None) -> Any:
+    """Load YAML data, falling back to default for missing or bad files."""
     if default is None:
         default = {}
     if not path.exists():
@@ -83,6 +87,7 @@ def _load_yaml(path: Path, default: Any = None) -> Any:
 
 
 def _save_yaml(path: Path, data: Any) -> None:
+    """Write YAML through a temporary file before replacing the target."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_name(
         '{0}.{1}.tmp'.format(path.name, uuid.uuid4().hex)
@@ -99,13 +104,15 @@ def _save_yaml(path: Path, data: Any) -> None:
 
 
 def _now_iso() -> str:
+    """Return the current UTC timestamp in ISO 8601 format."""
     return datetime.now(timezone.utc).isoformat()
 
 
 # ================================================================
 # Internal helpers
 # ================================================================
-def _load_groups_data(profile_id: str) -> dict:
+def _load_groups_data(profile_id: str) -> Dict[str, Any]:
+    """Load profile groups and ensure the groups field is a list."""
     path = _groups_path(profile_id)
     data = _load_yaml(path, {'groups': []})
     if not isinstance(data, dict):
@@ -115,13 +122,14 @@ def _load_groups_data(profile_id: str) -> dict:
     return data
 
 
-def _save_groups_data(profile_id: str, data: dict) -> None:
+def _save_groups_data(profile_id: str, data: Dict[str, Any]) -> None:
+    """Persist the profile's object-group mapping."""
     _save_yaml(_groups_path(profile_id), data)
 
 
 def _find_group(
-    groups: List[dict], name: str
-) -> Optional[dict]:
+    groups: List[Dict[str, Any]], name: str
+) -> Optional[Dict[str, Any]]:
     """Find a group dict by name (case-sensitive)."""
     for g in groups:
         if g.get('name') == name:
@@ -132,7 +140,7 @@ def _find_group(
 # ================================================================
 # Public API — group CRUD
 # ================================================================
-def list_groups(profile_id: str) -> List[dict]:
+def list_groups(profile_id: str) -> List[Dict[str, Any]]:
     """Return all groups for a profile."""
     data = _load_groups_data(profile_id)
     return data['groups']
@@ -141,7 +149,7 @@ def list_groups(profile_id: str) -> List[dict]:
 def get_group(
     profile_id: str,
     name: str,
-) -> Optional[dict]:
+) -> Optional[Dict[str, Any]]:
     """Return one group for a profile or None when missing."""
     data = _load_groups_data(profile_id)
     return _find_group(data['groups'], name)
@@ -149,7 +157,7 @@ def get_group(
 
 def create_group(
     profile_id: str, name: str, username: str
-) -> Optional[dict]:
+) -> Optional[Dict[str, Any]]:
     """Create a new named group. Returns it or None if exists."""
     data = _load_groups_data(profile_id)
     groups = data['groups']
@@ -246,7 +254,7 @@ def add_object_to_group(
 def add_objects_bulk(
     profile_id: str, group_name: str,
     objnames: List[str], username: str
-) -> dict:
+) -> Dict[str, List[str]]:
     """Add multiple objects to a group.
 
     Returns dict with keys 'added', 'already_exists',
@@ -399,7 +407,7 @@ def set_summary_aliases(
 def get_summary_custom_columns(
     profile_id: str,
     group_name: str,
-) -> List[dict]:
+) -> List[Dict[str, Any]]:
     """Return persisted custom summary columns for a group."""
     group = get_group(profile_id, group_name)
     if not isinstance(group, dict):
@@ -437,7 +445,7 @@ def get_summary_custom_columns(
 def set_summary_custom_columns(
     profile_id: str,
     group_name: str,
-    custom_columns: List[dict],
+    custom_columns: List[Dict[str, Any]],
 ) -> bool:
     """Persist custom summary columns for a group."""
     data = _load_groups_data(profile_id)

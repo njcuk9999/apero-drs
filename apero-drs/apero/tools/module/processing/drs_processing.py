@@ -12,8 +12,11 @@ Created on 2019-08-06 at 11:57
 
 
 """
+import hashlib
 import itertools
+import json
 import os
+import shutil
 import time
 import sys
 import warnings
@@ -108,9 +111,12 @@ FOUND_SPECIAL_DICT = dict()
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, indexdb: FileIndexDatabase, runstring: str,
+    def __init__(self, params: ParamDict, indexdb: FileIndexDatabase,
+                 runstring: str,
                  mod: Union[base_class.ImportModule, None] = None,
-                 priority: int = 0, inrecipe=None):
+                 priority: int = 0,
+                 inrecipe: Union[DrsRecipe, None] = None) -> None:
+        """Set up one recipe run from its command string and context."""
         self.params = params
         self.indexdb = indexdb
         self.runstring = runstring
@@ -136,14 +142,14 @@ class Run:
         # pickle recipe name (only used for pickling)
         self.pickle_recipe_name = None
 
-    def filename_args(self):
+    def filename_args(self) -> None:
         """
-        deal with file arguments in kwargs (returned from recipe_setup as
-            [filenames, file instances]
+        Normalize file arguments returned by ``recipe_setup`` in place.
 
-        we only want the filenames (not the instances)
+        File values contain filenames and file instances; this keeps the
+        filename component and removes absent optional file arguments.
 
-        :return:
+        :return: None; updates ``self.kwargs``.
         """
         # loop around positional arguments
         for argname in self.recipe.args:
@@ -192,12 +198,12 @@ class Run:
 
     FindRecipeReturn = Tuple[drs_recipe.DrsRecipe, base_class.ImportModule]
 
-    def find_recipe(self, mod=None) -> FindRecipeReturn:
-        """
+    def find_recipe(self, mod: Optional[base_class.ImportModule] = None
+                    ) -> FindRecipeReturn:
+        """Resolve this run's recipe definition and its owning module.
 
-        :param mod: Module
-        :return:
-        :rtype: Tuple[DrsRecipe, Module]
+        :param mod: Optional recipe module to search before loading one.
+        :return: Recipe definition and the module containing it.
         """
         # find the recipe definition
         recipe, mod = drs_startup.find_recipe(self.recipename,
@@ -211,7 +217,8 @@ class Run:
         # else return
         return recipe, mod
 
-    def get_recipe_kind(self):
+    def get_recipe_kind(self) -> None:
+        """Set the input block kind from the associated recipe definition."""
         # the first argument must be the recipe name
         self.recipename = self.args[0]
         # make sure recipe does not have .py on the end
@@ -228,7 +235,8 @@ class Run:
             emsg2 = '\t Line: {0} {1}'.format(self.priority, self.runstring)
             WLOG(self.params, 'error', [emsg1, emsg2])
 
-    def get_obs_dir(self):
+    def get_obs_dir(self) -> None:
+        """Set the observation directory from the recipe arguments."""
         if 'obs_dir' in self.recipe.args:
             # get directory position
             pos = int(self.recipe.args['obs_dir'].pos) + 1
@@ -237,12 +245,10 @@ class Run:
         else:
             self.obs_dir = ''
 
-    def update(self, update_runstring: bool = False):
-        """
-        Update the runstring, args and kwargs
+    def update(self, update_runstring: bool = False) -> None:
+        """Parse the run command and refresh its recipe-derived state.
 
-        :param update_runstring:
-        :return:
+        :param update_runstring: Append generated control options to runstring.
         """
         # get args
         self.args = self.runstring.split(' ')
@@ -316,12 +322,9 @@ class Run:
                 self.reprocess_args.append(kwarg)
 
     def prerun_test(self):
-        """
-        Just before running test that all files required are present
-        Due to the way users can skip tests this is needed and this
-        knowledge will not be known apriori
+        """Check that the run's input directory and required files exist.
 
-        :return:
+        :return: True when all checked paths exist, otherwise False.
         """
         # get params and recipe
         params, recipe = self.params, self.recipe
@@ -407,10 +410,12 @@ class Run:
         # if all have passed we return True
         return True
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return this run's compact representation."""
         return self.__repr__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return the run label containing its command string."""
         return 'Run[{0}]'.format(self.runstring)
 
     def __getstate__(self) -> dict:
@@ -445,7 +450,8 @@ class Run:
         # need to re-find and set recipe and recipe modd
         self.reload_recipe()
 
-    def reload_recipe(self):
+    def reload_recipe(self) -> None:
+        """Restore the recipe references omitted from serialized run state."""
         # deal with no pickable recipe name
         if self.pickle_recipe_name is None:
             return
@@ -461,7 +467,8 @@ class Run:
 # =============================================================================
 # Define pickle functions
 # =============================================================================
-def reload_recipe(params, recipename):
+def reload_recipe(params: ParamDict, recipename: str) -> DrsRecipe:
+    """Reload and return a named recipe for the active instrument."""
     # reload excluded attributes
     pconst = load_functions.load_pconfig(select.INSTRUMENTS,
                                          params['OBS.INSTRUMENT'])
@@ -480,8 +487,10 @@ def reload_recipe(params, recipename):
 # Define user functions
 # =============================================================================
 def run_process(params: ParamDict, recipe: DrsRecipe,
-                findexdbm: FileIndexDatabase, module: Any, *gargs,
-                terminate=False, **gkwargs):
+                findexdbm: FileIndexDatabase, module: Any, *gargs: Any,
+                terminate: bool = False,
+                **gkwargs: Any) -> Dict[Any, Any]:
+    """Build and execute a recipe run list, returning per-run results."""
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
@@ -507,7 +516,9 @@ def run_process(params: ParamDict, recipe: DrsRecipe,
     return outlist
 
 
-def combine_outlist(name, goutlist, outlist):
+def combine_outlist(name: str, goutlist: Dict[Any, Any],
+                    outlist: Dict[Any, Any]) -> Dict[Any, Any]:
+    """Merge run results into the shared output mapping with prefixed keys."""
     # loop around keys in outlist
     for key in outlist:
         # construct new unique key using name
@@ -899,6 +910,294 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             WLOG(params, '', textentry('40-502-00013', args=['Plot']))
 
 
+def sync_external_raw(params: ParamDict) -> None:
+    """
+    Mirror PATH.EXTERNAL_RAW into PATH.RAW. Sub-directories are created
+    as real directories and each file is linked individually using
+    IPATH.EXTERNAL_RAW_TYPE ('symlink' or 'hardlink', hard links fall
+    back to a copy across filesystems). Files that are already up to date
+    are skipped. Skipped quietly if PATH.EXTERNAL_RAW is unset or missing.
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None, links/copies files into PATH.RAW
+    """
+    # get the external raw directory (skip quietly if not set / missing)
+    external_raw = params['PATH.EXTERNAL_RAW']
+    if drs_text.null_text(external_raw, ['None', 'Null', '']):
+        return
+    external_raw = os.path.abspath(os.path.expanduser(str(external_raw)))
+    if not os.path.isdir(external_raw):
+        return
+    # get the raw directory and link type
+    raw_dir = os.path.abspath(params['PATH.RAW'])
+    link_type = str(params['IPATH.EXTERNAL_RAW_TYPE']).lower()
+    # nothing to do if both point at the same place
+    real_raw = os.path.realpath(raw_dir)
+    if os.path.realpath(external_raw) == real_raw:
+        return
+    # load prior ownership state before any mirror changes
+    manifest_path = _external_raw_manifest_path(params, raw_dir)
+    manifest = _read_external_raw_manifest(manifest_path)
+    previous_files = manifest.get('files', dict())
+    previous_dirs = manifest.get('dirs', [])
+    # -------------------------------------------------------------------------
+    WLOG(params, '', textentry('40-510-00050',
+                               args=[external_raw, raw_dir, link_type]))
+    # collect files and directories without following ancestor loops
+    jobs = dict()
+    current_dirs = set()
+    owned_dirs = set(previous_dirs)
+    skipped_loops = []
+    root_real = os.path.realpath(external_raw)
+    stack = [(external_raw, '', frozenset([root_real]))]
+    while stack:
+        source_dir, rel_dir, ancestors = stack.pop()
+        output_dir = _external_raw_destination(raw_dir, rel_dir)
+        was_created = _ensure_external_raw_directory(output_dir)
+        current_dirs.add(rel_dir)
+        if was_created and rel_dir not in ['', '.']:
+            owned_dirs.add(rel_dir)
+        try:
+            entries = list(os.scandir(source_dir))
+        except OSError:
+            raise
+        for entry in entries:
+            src = entry.path
+            relpath = os.path.normpath(os.path.join(rel_dir, entry.name))
+            if entry.is_dir(follow_symlinks=True):
+                real_path = os.path.realpath(src)
+                if _path_within(real_path, real_raw):
+                    continue
+                if real_path in ancestors:
+                    skipped_loops.append(src)
+                    continue
+                stack.append((src, relpath,
+                              ancestors.union([real_path])))
+            elif entry.is_file(follow_symlinks=True):
+                dst = _external_raw_destination(raw_dir, relpath)
+                jobs[relpath] = (src, dst)
+    # log and skip cyclic directory links
+    for loop_path in skipped_loops:
+        WLOG(params, 'warning', textentry('40-510-00053',
+                                          args=[loop_path]))
+    # remove stale files that this sync previously managed
+    stale_files = set(previous_files) - set(jobs)
+    removed_count = 0
+    for relpath in stale_files:
+        record = previous_files[relpath]
+        dst = _external_raw_destination(raw_dir, relpath)
+        if _external_raw_owned(dst, record):
+            os.remove(dst)
+            removed_count += 1
+    # remove stale empty directories, deepest paths first
+    for relpath in sorted(set(previous_dirs) - current_dirs,
+                          key=lambda value: value.count(os.sep), reverse=True):
+        if relpath in ['', '.']:
+            continue
+        dst = _external_raw_destination(raw_dir, relpath)
+        if os.path.isdir(dst) and not os.path.islink(dst):
+            try:
+                os.rmdir(dst)
+                owned_dirs.discard(relpath)
+            except OSError:
+                pass
+        elif not os.path.lexists(dst):
+            owned_dirs.discard(relpath)
+    if removed_count:
+        WLOG(params, '', textentry('40-510-00054',
+                                   args=[removed_count]))
+    # link changed/new files and build the next ownership manifest
+    current_files = dict()
+    pending = []
+    for relpath, (src, dst) in jobs.items():
+        if _external_raw_up_to_date(src, dst, link_type):
+            mode = _external_raw_mode(src, dst, link_type)
+        else:
+            pending.append((relpath, src, dst))
+    if pending:
+        WLOG(params, '', textentry('40-510-00052',
+                                   args=[len(pending), link_type]))
+    progress_desc = textentry('40-510-00055')
+    for relpath, src, dst in tqdm(pending, desc=progress_desc):
+        mode = _external_raw_link(src, dst, link_type)
+        current_files[relpath] = _external_raw_record(src, dst, mode)
+    # record existing files too, including unchanged managed paths
+    for relpath, (src, dst) in jobs.items():
+        if relpath not in current_files:
+            current_files[relpath] = _external_raw_record(
+                src, dst, _external_raw_mode(src, dst, link_type))
+    _write_external_raw_manifest(manifest_path, current_files, owned_dirs)
+    if not pending and not removed_count:
+        WLOG(params, '', textentry('40-510-00051'))
+
+
+def _external_raw_manifest_path(params: ParamDict, raw_dir: str) -> str:
+    """Return a manifest path unique to the configured PATH.RAW."""
+    other_dir = os.path.abspath(params['PATH.OTHER'])
+    raw_hash = hashlib.sha256(raw_dir.encode('utf-8')).hexdigest()[:16]
+    filename = '.apero_external_raw_{0}.json'.format(raw_hash)
+    return os.path.join(other_dir, filename)
+
+
+def _read_external_raw_manifest(path: str) -> dict:
+    """Read the ownership manifest, returning an empty state if absent."""
+    if not os.path.exists(path):
+        return dict(files=dict(), dirs=[])
+    with open(path, 'r', encoding='utf-8') as manifest_file:
+        manifest = json.load(manifest_file)
+    if not isinstance(manifest.get('files'), dict):
+        raise AperoCodedException(None, '00-510-00009', targs=[path])
+    if not isinstance(manifest.get('dirs'), list):
+        raise AperoCodedException(None, '00-510-00009', targs=[path])
+    return manifest
+
+
+def _write_external_raw_manifest(path: str, files: dict,
+                                 directories: set) -> None:
+    """Atomically write file ownership and mirrored directories."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    temporary_path = path + '.tmp'
+    manifest = dict(files=files, dirs=sorted(directories))
+    with open(temporary_path, 'w', encoding='utf-8') as manifest_file:
+        json.dump(manifest, manifest_file, sort_keys=True)
+    os.replace(temporary_path, path)
+
+
+def _external_raw_destination(raw_dir: str, relpath: str) -> str:
+    """Resolve a manifest/tree relative path without allowing traversal."""
+    destination = os.path.abspath(os.path.join(raw_dir, relpath))
+    if not _path_within(destination, raw_dir):
+        raise ValueError('Invalid external raw relative path: {0}'.format(
+            relpath))
+    return destination
+
+
+def _path_within(path: str, root: str) -> bool:
+    """Return whether path is equal to or nested under root."""
+    try:
+        return os.path.commonpath([path, root]) == root
+    except ValueError:
+        return False
+
+
+def _ensure_external_raw_directory(path: str) -> bool:
+    """Ensure mirrored directories are real directories, not symlinks."""
+    created = not os.path.lexists(path)
+    if os.path.islink(path):
+        os.remove(path)
+        created = True
+    elif os.path.lexists(path) and not os.path.isdir(path):
+        os.remove(path)
+        created = True
+    os.makedirs(path, exist_ok=True)
+    return created
+
+
+def _external_raw_record(src: str, dst: str, mode: str) -> dict:
+    """Record enough file identity to safely remove stale managed files."""
+    stat_result = os.stat(dst)
+    record = dict(source=src, mode=mode, size=stat_result.st_size,
+                  mtime_ns=stat_result.st_mtime_ns,
+                  device=stat_result.st_dev, inode=stat_result.st_ino)
+    if mode == 'copy':
+        record['sha256'] = _external_raw_checksum(dst)
+    return record
+
+
+def _external_raw_owned(dst: str, record: dict) -> bool:
+    """Check that dst still matches its recorded managed-file identity."""
+    if not os.path.lexists(dst):
+        return False
+    if record.get('mode') == 'symlink':
+        return (os.path.islink(dst) and
+                os.readlink(dst) == record.get('source'))
+    if os.path.islink(dst) or not os.path.isfile(dst):
+        return False
+    stat_result = os.stat(dst)
+    if record.get('mode') == 'hardlink':
+        return (stat_result.st_dev == record.get('device') and
+                stat_result.st_ino == record.get('inode'))
+    matches_stat = (stat_result.st_size == record.get('size') and
+                    stat_result.st_mtime_ns == record.get('mtime_ns'))
+    if record.get('mode') == 'copy':
+        return (matches_stat and
+                _external_raw_checksum(dst) == record.get('sha256'))
+    return matches_stat
+
+
+def _external_raw_checksum(path: str) -> str:
+    """Return a SHA-256 digest for a file using bounded memory."""
+    digest = hashlib.sha256()
+    with open(path, 'rb') as input_file:
+        for chunk in iter(lambda: input_file.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _external_raw_mode(src: str, dst: str, link_type: str) -> str:
+    """Return the actual stored mode for an up-to-date destination."""
+    if link_type == 'symlink':
+        return 'symlink'
+    src_stat, dst_stat = os.stat(src), os.stat(dst)
+    same_device = src_stat.st_dev == dst_stat.st_dev
+    same_inode = src_stat.st_ino == dst_stat.st_ino
+    if same_device and same_inode:
+        return 'hardlink'
+    return 'copy'
+
+
+def _external_raw_up_to_date(src: str, dst: str, link_type: str) -> bool:
+    """
+    Check whether dst already mirrors src for the given link type
+
+    :param src: str, the external raw file
+    :param dst: str, the file in PATH.RAW
+    :param link_type: str, 'symlink' or 'hardlink'
+
+    :return: bool, True if dst does not need to be (re)created
+    """
+    if link_type == 'symlink':
+        return os.path.islink(dst) and os.readlink(dst) == src
+    # hardlink (or copy fallback): must be a real file
+    if os.path.islink(dst) or not os.path.isfile(dst):
+        return False
+    src_stat, dst_stat = os.stat(src), os.stat(dst)
+    # same inode means it is already a hard link
+    same_ino = src_stat.st_ino == dst_stat.st_ino
+    if same_ino and src_stat.st_dev == dst_stat.st_dev:
+        return True
+    # a copy is up to date if size and modified time match
+    same_size = src_stat.st_size == dst_stat.st_size
+    same_mtime = abs(src_stat.st_mtime - dst_stat.st_mtime) < 1
+    return same_size and same_mtime
+
+
+def _external_raw_link(src: str, dst: str, link_type: str) -> str:
+    """
+    Link (or copy) src to dst, replacing any stale dst
+
+    :param src: str, the external raw file
+    :param dst: str, the file in PATH.RAW
+    :param link_type: str, 'symlink' or 'hardlink'
+
+    :return: str, the resulting mode ('symlink', 'hardlink', or 'copy')
+    """
+    # remove stale file / link (lexists catches broken symlinks)
+    if os.path.lexists(dst):
+        os.remove(dst)
+    if link_type == 'symlink':
+        os.symlink(src, dst)
+        return 'symlink'
+    try:
+        os.link(src, dst)
+        return 'hardlink'
+    except OSError:
+        # hard links cannot cross filesystems - copy (keeping mtime)
+        shutil.copy2(src, dst)
+        return 'copy'
+
+
 def update_index_db(params: ParamDict, shortname: str):
     """
     Update the index database
@@ -1029,7 +1328,8 @@ def get_raw_obs_dirs(params, includelist: List[str] = None,
     return base_dirs
 
 
-def update_header_fix(params, shortname):
+def update_header_fix(params: ParamDict, shortname: str) -> None:
+    """Update indexed header metadata for the selected observation set."""
     # get include list
     includelist = params['INCLUDE_OBS_DIRS']
     # get exclude list
@@ -1224,7 +1524,10 @@ def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
                 WLOG(params, '', textentry('40-502-00058', args=margs))
 
 
-def process_run_list(params: ParamDict, shortname, runlist, group=None):
+def process_run_list(params: ParamDict, shortname: str, runlist: List[Run],
+                     group: Optional[str] = None
+                     ) -> Tuple[OrderedDict, bool, float]:
+    """Execute runs and return ordered results, error status, and duration."""
     # start a timer
     process_start = time.time()
     # get number of cores
@@ -1296,7 +1599,9 @@ def process_run_list(params: ParamDict, shortname, runlist, group=None):
     return odict, errors, process_time
 
 
-def display_timing(params, outlist, ptime):
+def display_timing(params: ParamDict, outlist: Dict[Any, Any],
+                   ptime: float) -> None:
+    """Log per-run and aggregate timing information."""
     # get number of cores
     cores = drs_utils.get_cores(params)
     # display the timings
@@ -1338,7 +1643,8 @@ def display_timing(params, outlist, ptime):
     WLOG(params, '', '')
 
 
-def display_errors(params, outlist):
+def display_errors(params: ParamDict, outlist: Dict[Any, Any]) -> None:
+    """Log errors and tracebacks stored in per-run results."""
     # log error title
     WLOG(params, '', '')
     WLOG(params, '', params['LOG.HEADER'])
@@ -1390,7 +1696,8 @@ def display_errors(params, outlist):
     WLOG(params, '', '')
 
 
-def save_stats(params, outlist):
+def save_stats(params: ParamDict, outlist: Dict[Any, Any]) -> None:
+    """Write processing run statistics to the configured run directory."""
     # set function name
     func_name = __NAME__ + '.save_stats()'
     # get save directory
@@ -1471,7 +1778,9 @@ def save_stats(params, outlist):
              sublevel=4)
 
 
-def generate_run_table(params, recipe, *args, **kwargs):
+def generate_run_table(params: ParamDict, recipe: DrsRecipe,
+                       *args: Any, **kwargs: Any) -> OrderedDict:
+    """Expand positional and keyword inputs into indexed recipe commands."""
     func_name = __NAME__ + '.generate_run_table()'
     # set length initially to None
     length = None
@@ -1703,7 +2012,19 @@ def _group_gen_ids(inkeylist: List[int], inrecipelist: List[DrsRecipe],
     return groups
 
 
-def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
+def skip_run_object(params: ParamDict, runobj: Run, skiptable: Any,
+                    skip_storage: Dict[str, Any],
+                    input_recipe: DrsRecipe
+                    ) -> Tuple[bool, Union[str, None]]:
+    """Decide whether a run can be skipped using settings and prior results.
+
+    :param params: APERO parameters controlling the processing run.
+    :param runobj: Run whose skip status is being checked.
+    :param skiptable: Prior-run table, or None when no history is available.
+    :param skip_storage: Cache of cleaned run strings keyed by recipe.
+    :param input_recipe: Recipe definition controlling QC skip behavior.
+    :return: Skip flag and an optional reason string.
+    """
     # get recipe and runstring
     recipe = runobj.recipe
     # ----------------------------------------------------------------------
@@ -1777,7 +2098,12 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
         return False, '{0} not present'.format(skip_name)
 
 
-def _remove_py(innames):
+def _remove_py(innames: Union[str, List[str]]) -> Union[str, List[str]]:
+    """Remove trailing ``.py`` suffixes from one or more recipe names.
+
+    :param innames: A recipe name or list of recipe names.
+    :return: A name or list matching the input form, without ``.py`` suffixes.
+    """
     if isinstance(innames, str):
         names = [innames]
     else:
@@ -1796,7 +2122,14 @@ def _remove_py(innames):
 # =============================================================================
 # Define "from sequence" functions
 # =============================================================================
-def check_for_sequences(rvalues, mod):
+def check_for_sequences(rvalues: List[str], mod: Any
+                        ) -> Union[List[List[Any]], None]:
+    """Find sequence definitions named in the normalized run values.
+
+    :param rvalues: Uppercase recipe or sequence names from a run table.
+    :param mod: Instrument recipe module providing sequence definitions.
+    :return: Matching name/sequence pairs, or None when there are no matches.
+    """
     # find sequences
     all_sequences = mod.sequences
     # get sequences names
@@ -1832,6 +2165,20 @@ def gen_run_from_seq(params: ParamDict, sequence,
                      current_tstars: Union[List[str], None] = None,
                      reject_list: Union[np.ndarray, List[str], None] = None,
                      ref_condition: str = '') -> RunSeqReturn:
+    """Expand a configured sequence into recipe runs or its recipe list.
+
+    :param params: APERO parameters used to generate and validate runs.
+    :param sequence: Sequence name and sequence definition pair.
+    :param indexdb: File index database used to check sequence inputs.
+    :param return_recipes: Return the sequence's recipe list without runs.
+    :param logmsg: Whether sequence processing should emit progress messages.
+    :param tstars: Optional telluric-star names used by sequence conditions.
+    :param ostars: Optional other-star names used by sequence conditions.
+    :param current_tstars: Optional telluric-star list for the current run.
+    :param reject_list: Optional observation list excluded from processing.
+    :param ref_condition: Additional database condition for reference files.
+    :return: Generated run/verification data or the sequence recipe list.
+    """
     func_name = __NAME__ + '.gen_run_from_seq()'
     # -------------------------------------------------------------------------
     # deal with verification
@@ -2134,7 +2481,18 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
     return runlist
 
 
-def update_run_table(sequence, runtable, newruns, rlist=None):
+def update_run_table(sequence: Any, runtable: Dict[Any, str],
+                     newruns: List[Tuple[str, Any]],
+                     rlist: Optional[Dict[Any, Any]] = None
+                     ) -> Tuple[OrderedDict, OrderedDict]:
+    """Replace a sequence row with generated runs and aligned recipe entries.
+
+    :param sequence: Sequence identifier and the run-table name to replace.
+    :param runtable: Existing indexed run strings.
+    :param newruns: Generated command and recipe pairs for insertion.
+    :param rlist: Optional recipe mapping aligned with the existing run table.
+    :return: Updated run strings and their recipe mapping.
+    """
     # define output runtable
     outruntable = OrderedDict()
     recipe_list = OrderedDict()
@@ -2164,7 +2522,13 @@ def update_run_table(sequence, runtable, newruns, rlist=None):
     return outruntable, recipe_list
 
 
-def prompt(params, message: str = None):
+def prompt(params: ParamDict, message: Optional[str] = None) -> int:
+    """Ask for a yes/no response, returning zero in non-interactive mode.
+
+    :param params: APERO parameters used to report the prompt status.
+    :param message: Optional text-entry key for the prompt message.
+    :return: One for yes and zero for no or a non-interactive session.
+    """
 
     # deal with no message - use deafult message
     if message is None:
@@ -2449,10 +2813,26 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
 #      - a multiprocessing using "pathos" function
 # =============================================================================
 def _linear_process(params: ParamDict, runlist: List[Run],
-                    number=0, cores=1, event=None,
-                    group=None, return_dict=None,
+                    number: int = 0, cores: int = 1, event: Any = None,
+                    group: Any = None, return_dict: Any = None,
                     stop_at_exception: bool = False,
-                    test_run: bool = False, groupnum=-1, groupname='None'):
+                    test_run: bool = False, groupnum: int = -1,
+                    groupname: str = 'None') -> Dict[Any, Any]:
+    """Execute a run group serially and collect results by run priority.
+
+    :param params: APERO parameters used by the recipes and logger.
+    :param runlist: Runs assigned to this worker.
+    :param number: Worker number recorded in each run result.
+    :param cores: Total worker count recorded in each run result.
+    :param event: Optional multiprocessing event used to stop workers.
+    :param group: Optional group label attached to recipe arguments.
+    :param return_dict: Mutable result mapping shared with the caller.
+    :param stop_at_exception: Whether recipe errors stop further processing.
+    :param test_run: Whether to record simulated rather than executed results.
+    :param groupnum: Index of this group in the processing sequence.
+    :param groupname: Name associated with this group.
+    :return: Per-run result records keyed by priority.
+    """
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -2711,7 +3091,18 @@ def _linear_process(params: ParamDict, runlist: List[Run],
     return return_dict
 
 
-def _multi_process_process(params, shortname, runlist, cores, groupname=None):
+def _multi_process_process(params: ParamDict, shortname: str,
+                           runlist: List[Run], cores: int,
+                           groupname: Optional[str] = None) -> Dict[Any, Any]:
+    """Execute recipe groups with individual multiprocessing processes.
+
+    :param params: APERO parameters used by workers and the logger.
+    :param shortname: Name used to open the recipe index database.
+    :param runlist: Runs to distribute across processes.
+    :param cores: Maximum number of worker processes.
+    :param groupname: Optional group label recorded for each run.
+    :return: Per-run result records keyed by priority.
+    """
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # import multiprocessing
@@ -2768,7 +3159,18 @@ def _multi_process_process(params, shortname, runlist, cores, groupname=None):
     return dict(return_dict)
 
 
-def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
+def _multi_process_pool(params: ParamDict, shortname: str,
+                        runlist: List[Run], cores: int,
+                        groupname: Optional[str] = None) -> Dict[Any, Any]:
+    """Execute recipe groups using a multiprocessing pool.
+
+    :param params: APERO parameters used by workers and the logger.
+    :param shortname: Name used to open the recipe index database.
+    :param runlist: Runs to distribute across pool workers.
+    :param cores: Maximum number of pool workers.
+    :param groupname: Optional group label recorded for each run.
+    :return: Per-run result records keyed by priority.
+    """
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist)
     # deal with Pool specific imports
@@ -2844,7 +3246,19 @@ def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
     return dict(return_dict)
 
 
-def _multi_process_pathos(params, shortname, runlist, cores, groupname=None):
+def _multi_process_pathos(params: ParamDict, shortname: str,
+                          runlist: List[Run], cores: int,
+                          groupname: Optional[str] = None
+                          ) -> Dict[Any, Any]:
+    """Execute recipe groups with pathos, falling back to a standard pool.
+
+    :param params: APERO parameters used by workers and the logger.
+    :param shortname: Name used to open the recipe index database.
+    :param runlist: Runs to distribute across workers.
+    :param cores: Maximum number of workers.
+    :param groupname: Optional group label recorded for each run.
+    :return: Per-run result records keyed by priority.
+    """
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist)
     # set up the dictionary
@@ -3238,7 +3652,17 @@ def _multi_process_gen_ids_process(params: ParamDict,
 # =============================================================================
 def _linear_findex(params: ParamDict, block_kind: str, shortname: str,
                    raw_obs_dirs: List[str],
-                  job: int = None, total_jobs: int = None):
+                   job: Optional[int] = None,
+                   total_jobs: Optional[int] = None) -> None:
+    """Update the file index for a subset of raw observation directories.
+
+    :param params: APERO parameters used to configure the index database.
+    :param block_kind: Data block to index.
+    :param shortname: Name used to open the index database.
+    :param raw_obs_dirs: Observation directories included in this update.
+    :param job: Optional one-based worker number for progress messages.
+    :param total_jobs: Optional total worker count for progress messages.
+    """
     # start a message if job and total_jobs given
     if (job is not None) and (total_jobs is not None):
         job_msg = ' [{0}/{1}] '.format(job, total_jobs)
@@ -3379,8 +3803,17 @@ def _multi_process_findex_process(params: ParamDict, block_kind:str,
 #      - a multiprocessing using "pool" function
 #      - a multiprocessing using "pathos" function
 # =============================================================================
-def _linear_headerfix(params, obs_dirs, shortname,
-                     job: int = None, total_jobs: int = None):
+def _linear_headerfix(params: ParamDict, obs_dirs: List[str],
+                      shortname: str, job: Optional[int] = None,
+                      total_jobs: Optional[int] = None) -> None:
+    """Apply indexed header corrections for a subset of observations.
+
+    :param params: APERO parameters used to load the databases.
+    :param obs_dirs: Observation directories to update.
+    :param shortname: Name used to open the relevant databases.
+    :param job: Optional one-based worker number for progress messages.
+    :param total_jobs: Optional total worker count for progress messages.
+    """
     # start a message if job and total_jobs given
     if (job is not None) and (total_jobs is not None):
         job_msg = ' [{0}/{1}] '.format(job, total_jobs)
@@ -3746,7 +4179,13 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
 
 
 def _index_dict_from_table(ftable: Table.Row, dtypes: Dict[str, type]
-                           ) -> Dict[str, Union[float, str]]:
+                           ) -> Dict[str, Any]:
+    """Convert one index-table row to plain values using requested dtypes.
+
+    :param ftable: Row from the file-index table.
+    :param dtypes: Column names and requested Python value types.
+    :return: Column values with masked/null entries normalized.
+    """
     # set up storage
     fdict = dict()
     # loop around column
@@ -4271,7 +4710,14 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # Define working functions
 # =============================================================================
 # TODO: Remove or replace with _group_tasks
-def _group_tasks1(runlist, cores):
+def _group_tasks1(runlist: List[Run], cores: int
+                  ) -> Tuple[List[List[List[Run]]], List[str]]:
+    """Group consecutive runs by recipe and split each group across workers.
+
+    :param runlist: Ordered runs to group.
+    :param cores: Maximum number of subgroups per recipe group.
+    :return: Nested run groups and their corresponding recipe names.
+    """
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names
@@ -4323,7 +4769,13 @@ def _group_tasks1(runlist, cores):
 
 
 # TODO: Remove or replace with _group_tasks
-def _group_tasks2(runlist):
+def _group_tasks2(runlist: List[Run]
+                  ) -> Tuple[Dict[int, List[Run]], Dict[int, str]]:
+    """Group consecutive runs by recipe shortname.
+
+    :param runlist: Ordered runs to group.
+    :return: Run groups and recipe names keyed by group number.
+    """
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names
@@ -4372,11 +4824,11 @@ def group_tasks2(runlist: List[Run]) -> GroupTasksReturn:
     return _group_tasks2(runlist)
 
 
-def close_all_plots():
+def close_all_plots() -> None:
     """
-    Close all plots (by importing matplotlib)
+    Close all plots, loading the plotting backend only when necessary.
 
-    :return:
+    :return: None.
     """
     global PLT_MOD
     if PLT_MOD is not None:
@@ -4394,6 +4846,13 @@ def close_all_plots():
 def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
                           req_obs_dirs: Optional[List[str]] = None
                           ) -> List[str]:
+    """Return unique object names matching the configured index criteria.
+
+    :param params: APERO parameters defining object DPR types and conditions.
+    :param indexdb: Loaded file-index database to query.
+    :param req_obs_dirs: Optional observation-directory filter.
+    :return: Unique raw object names found in the index.
+    """
     # ----------------------------------------------------------------------
     # define the conditions for objects
     dprtypes = params['PP.OBJ_DPRTYPES']
@@ -4469,7 +4928,15 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     return list(np.sort(other_objects))
 
 
-def get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
+def get_recipe_module(params: ParamDict, logmsg: bool = True,
+                      **kwargs: Any) -> Any:
+    """Load and return the active instrument's recipe module.
+
+    :param params: APERO parameters used for optional progress logging.
+    :param logmsg: Whether to log the module-loading message.
+    :param kwargs: Accepted legacy keyword arguments; currently unused.
+    :return: Instrument recipe module with the active recipe definitions.
+    """
     # log progress: loading recipe module files
     if logmsg:
         # log: Loading recipe module files...
@@ -4480,11 +4947,23 @@ def get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
     return pconst.RECIPEMOD()
 
 
-def get_rvalues(runtable):
+def get_rvalues(runtable: Dict[Any, str]) -> List[str]:
+    """Return uppercase run-table command strings in table order.
+
+    :param runtable: Indexed mapping of run IDs to command strings.
+    :return: Uppercase command strings.
+    """
     return list(map(lambda x: x.upper(), runtable.values()))
 
 
-def _check_runtable(params, runtable, recipemod):
+def _check_runtable(params: ParamDict, runtable: Dict[Any, str],
+                    recipemod: Any) -> None:
+    """Validate that every run-table command starts with a known recipe.
+
+    :param params: APERO parameters used to report invalid recipe names.
+    :param runtable: Indexed mapping of run IDs to command strings.
+    :param recipemod: Recipe module defining the available recipes.
+    """
     func_name = __NAME__ + '._check_runtable()'
     # get recipe list
     recipelist = list(map(lambda x: x.name, recipemod.recipes))
@@ -4838,7 +5317,15 @@ def _split_string_list(string: str, allow_whitespace: bool = True):
         return string.split(' ')
 
 
-def _group_progress(params, g_it, grouplist, groupname):
+def _group_progress(params: ParamDict, g_it: int, grouplist: List[Any],
+                    groupname: str) -> None:
+    """Log progress for one processing group.
+
+    :param params: APERO parameters providing log formatting and settings.
+    :param g_it: Zero-based group index.
+    :param grouplist: All groups in the current processing operation.
+    :param groupname: Recipe or group label to display.
+    """
     # get message
     wargs = [' * ', g_it + 1, len(grouplist), groupname]
     # log
@@ -4851,7 +5338,14 @@ def _group_progress(params, g_it, grouplist, groupname):
     WLOG(params, 'info', '', colour='magenta')
 
 
-def _group_tasks(runlist, cores):
+def _group_tasks(runlist: List[Run], cores: int
+                 ) -> Tuple[List[List[List[Run]]], List[str]]:
+    """Group consecutive runs by recipe and split each group across workers.
+
+    :param runlist: Ordered runs to group.
+    :param cores: Maximum number of subgroups per recipe group.
+    :return: Nested run groups and their corresponding recipe names.
+    """
     # individual runs of the same recipe are independent of each other
 
     # get all recipe names
@@ -4899,7 +5393,15 @@ def _group_tasks(runlist, cores):
     return out_groups, out_names
 
 
-def _remove_engineering(params, indexdb, condition):
+def _remove_engineering(params: ParamDict, indexdb: FileIndexDatabase,
+                       condition: str) -> Union[List[str], str]:
+    """Filter engineering observation directories from an index query.
+
+    :param params: APERO parameters controlling trigger-run behavior.
+    :param indexdb: Database queried for observation directories and types.
+    :param condition: SQL condition applied to the database query.
+    :return: Rejected observation directories, or an empty string on trigger.
+    """
     global REMOVE_ENG_DIRS
 
     # if we are dealing with the trigger run do not do this -- user has

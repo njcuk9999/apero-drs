@@ -24655,6 +24655,179 @@ item.comment = 'Used in: setup/core/drs_setup.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-510-00043
+# =============================================================================
+item = langlist.create('40-510-00043', kind='all-code')
+item.value['ENG'] = '\nUse an external raw directory? [USE_EXTERNAL_RAW]'
+item.value['FR'] = '\nUtiliser un répertoire raw externe ? [USE_EXTERNAL_RAW]'
+item.value['ES'] = '\n¿Usar un directorio raw externo? [USE_EXTERNAL_RAW]'
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/drs_setup.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00044
+# =============================================================================
+item = langlist.create('40-510-00044', kind='all-code')
+item.value['ENG'] = ('\nDefine the external raw directory (leave blank to '
+                     'not use one) [EXTERNAL_RAW]')
+item.value['FR'] = ('\nDéfinir le répertoire raw externe (laisser vide pour '
+                    'ne pas en utiliser) [EXTERNAL_RAW]')
+item.value['ES'] = ('\nDefina el directorio raw externo (deje vacío para '
+                    'no usar uno) [EXTERNAL_RAW]')
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/drs_setup.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00045
+# =============================================================================
+item = langlist.create('40-510-00045', kind='all-code')
+item.value['ENG'] = 'Directory does not exist: {0}. Please try again.'
+item.value['FR'] = 'Le répertoire n’existe pas : {0}. Réessayez.'
+item.value['ES'] = 'El directorio no existe: {0}. Inténtelo de nuevo.'
+item.arguments = '{0}=external_raw'
+item.comment = 'Used in: setup/core/drs_setup.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00046
+# =============================================================================
+item = langlist.create('40-510-00046', kind='all-code')
+item.value['ENG'] = ('\nHow should files be linked? [EXTERNAL_RAW_TYPE] '
+                     '(symlink or hardlink)')
+item.value['FR'] = ('\nComment lier les fichiers ? [EXTERNAL_RAW_TYPE] '
+                    '(symlink ou hardlink)')
+item.value['ES'] = ('\n¿Cómo enlazar los archivos? [EXTERNAL_RAW_TYPE] '
+                    '(symlink o hardlink)')
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/drs_setup.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00047
+# =============================================================================
+item = langlist.create('40-510-00047', kind='all-code')
+item.value['ENG'] = 'Use an external raw directory'
+item.value['FR'] = 'Utiliser un répertoire raw externe'
+item.value['ES'] = 'Usar un directorio raw externo'
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/setup_constants.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00048
+# =============================================================================
+item = langlist.create('40-510-00048', kind='all-code')
+item.value['ENG'] = 'External raw directory to link into PATH.RAW'
+item.value['FR'] = 'Répertoire raw externe à lier dans PATH.RAW'
+item.value['ES'] = 'Directorio raw externo para enlazar en PATH.RAW'
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/setup_constants.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00049
+# =============================================================================
+item = langlist.create('40-510-00049', kind='all-code')
+item.value['ENG'] = 'How to link external raw files'
+item.value['FR'] = 'Comment lier les fichiers raw externes'
+item.value['ES'] = 'Cómo enlazar los archivos raw externos'
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/setup_constants.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00050
+# =============================================================================
+item = langlist.create('40-510-00050', kind='all-code')
+item.value['ENG'] = 'Syncing external raw directory {0} -> {1} (mode={2})'
+item.value['FR'] = ('Synchronisation du répertoire raw externe {0} -> {1} '
+                    '(mode={2})')
+item.value['ES'] = ('Sincronizando directorio raw externo {0} -> {1} '
+                    '(modo={2})')
+item.arguments = 'external_raw, raw_dir, link_type'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00051
+# =============================================================================
+item = langlist.create('40-510-00051', kind='all-code')
+item.value['ENG'] = 'All external raw files are up to date'
+item.value['FR'] = 'Tous les fichiers raw externes sont à jour'
+item.value['ES'] = 'Todos los archivos raw externos están actualizados'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00052
+# =============================================================================
+item = langlist.create('40-510-00052', kind='all-code')
+item.value['ENG'] = 'Linking {0} external raw files ({1})'
+item.value['FR'] = 'Liaison de {0} fichiers raw externes ({1})'
+item.value['ES'] = 'Enlazando {0} archivos raw externos ({1})'
+item.arguments = 'file_count, link_type'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00053
+# =============================================================================
+item = langlist.create('40-510-00053', kind='all-code')
+item.value['ENG'] = 'Skipped cyclic directory link: {0}'
+item.value['FR'] = 'Lien de répertoire cyclique ignoré : {0}'
+item.value['ES'] = 'Se omitió el enlace cíclico del directorio: {0}'
+item.arguments = '{0}=loop_path'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00054
+# =============================================================================
+item = langlist.create('40-510-00054', kind='all-code')
+item.value['ENG'] = 'Removed {0} stale external raw files'
+item.value['FR'] = '{0} fichiers raw externes obsolètes supprimés'
+item.value['ES'] = 'Se eliminaron {0} archivos raw externos obsoletos'
+item.arguments = '{0}=removed_count'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00055
+# =============================================================================
+item = langlist.create('40-510-00055', kind='all-code')
+item.value['ENG'] = 'Linking external raw files'
+item.value['FR'] = 'Liaison des fichiers raw externes'
+item.value['ES'] = 'Enlazando archivos raw externos'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 00-510-00008
+# =============================================================================
+item = langlist.create('00-510-00008', kind='error-code')
+item.value['ENG'] = 'External raw directory does not exist: {0}'
+item.value['FR'] = 'Le répertoire raw externe n’existe pas : {0}'
+item.value['ES'] = 'El directorio raw externo no existe: {0}'
+item.arguments = '{0}=external_raw'
+item.comment = 'Used in: setup/core/drs_setup.py'
+langlist.add(item)
+
+# =============================================================================
+# 00-510-00009
+# =============================================================================
+item = langlist.create('00-510-00009', kind='error-code')
+item.value['ENG'] = 'Invalid external raw sync manifest: {0}'
+item.value['FR'] = 'Manifeste de synchronisation raw externe invalide : {0}'
+item.value['ES'] = 'Manifiesto de sincronización raw externo no válido: {0}'
+item.arguments = '{0}=manifest_path'
+item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-511-00001
 # =============================================================================
 item = langlist.create('40-511-00001', kind='all-code')

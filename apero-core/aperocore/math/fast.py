@@ -9,7 +9,7 @@ Created on 2019-09-18 at 10:53
 
 @author: cook
 """
-from typing import Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import numpy as np
 
@@ -133,7 +133,7 @@ def nanargmin(a: Union[list, np.ndarray],
 
 def nanmax(a: Union[list, np.ndarray],
            axis: Union[None, int, Tuple[int]] = None,
-           **kwargs) -> Union[int, float, np.ndarray]:
+           **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmax depending on imports
 
@@ -162,7 +162,7 @@ def nanmax(a: Union[list, np.ndarray],
 
 def nanmin(a: Union[list, np.ndarray],
            axis: Union[None, int, Tuple[int]] = None,
-           **kwargs) -> Union[int, float, np.ndarray]:
+           **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmin depending on imports
 
@@ -191,7 +191,7 @@ def nanmin(a: Union[list, np.ndarray],
 
 def nanmean(a: Union[list, np.ndarray],
             axis: Union[None, int, Tuple[int]] = None,
-            **kwargs) -> Union[int, float, np.ndarray]:
+            **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmean depending on imports
 
@@ -220,7 +220,7 @@ def nanmean(a: Union[list, np.ndarray],
 
 def nanmedian(a: Union[list, np.ndarray],
               axis: Union[None, int, Tuple[int]] = None,
-              **kwargs) -> Union[int, float, np.ndarray]:
+              **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmedian depending on imports
 
@@ -249,7 +249,7 @@ def nanmedian(a: Union[list, np.ndarray],
 
 def nanstd(a: Union[list, np.ndarray],
            axis: Union[None, int, Tuple[int]] = None, ddof: int = 0,
-           **kwargs) -> Union[int, float, np.ndarray]:
+           **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanstd depending on imports
 
@@ -282,7 +282,7 @@ def nanstd(a: Union[list, np.ndarray],
 
 def nansum(a: Union[list, np.ndarray],
            axis: Union[None, int, Tuple[int]] = None,
-           **kwargs) -> Union[int, float, np.ndarray]:
+           **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nansum depending on imports
 
@@ -320,7 +320,7 @@ def nansum(a: Union[list, np.ndarray],
 
 def median(a: Union[list, np.ndarray],
            axis: Union[None, int, Tuple[int]] = None,
-           **kwargs) -> Union[int, float, np.ndarray]:
+           **kwargs: Any) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of median depending on imports
 
@@ -389,7 +389,7 @@ def medfilt_1d(a: Union[list, np.ndarray],
 # =============================================================================
 # must catch if we do not have the jit decorator and define our own
 if not HAS_NUMBA:
-    def jit(**options):
+    def jit(**options: Any) -> Callable[..., Any]:
         """
         Proxy jit class - used to replace jit when no jit from numba is
         available - decorator just returns original function
@@ -403,9 +403,11 @@ if not HAS_NUMBA:
         _ = options
 
         # define decorator
-        def decorator(func):
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            """Return a wrapper that preserves the original callable."""
             # define wrapper
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                """Forward arguments to the uncompiled function."""
                 return func(*args, **kwargs)
             # return wrapper
             return wrapper
@@ -416,7 +418,7 @@ if not HAS_NUMBA:
 # Set "nopython" mode for best performance, equivalent to @nji
 @jit(nopython=True, fastmath=False)
 def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
-             v: np.ndarray, sz_sample: Tuple[int], case: int,
+             v: np.ndarray, sz_sample: Tuple[int, ...], case: int,
              recon: np.ndarray, amps: np.ndarray,
              no_recon: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -503,7 +505,7 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
 @jit(nopython=True, fastmath=False)
 def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
                    odd_ratio: float = 2e-4, nmax: int = 10,
-                   conv_cut=1e-2) -> Tuple[float, float]:
+                   conv_cut: float = 1e-2) -> Tuple[float, float]:
     """
     Provide values and corresponding errors and compute a weighted mean
 
@@ -565,7 +567,8 @@ def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
 # =============================================================================
 # numexpr functions
 # =============================================================================
-def super_gauss_fast(xvector: np.ndarray, ew: np.ndarray, expo: np.ndarray):
+def super_gauss_fast(xvector: np.ndarray, ew: np.ndarray,
+                     expo: np.ndarray) -> np.ndarray:
     """
     Super gaussian using numexpr if possible
 
@@ -596,7 +599,8 @@ def super_gauss_fast(xvector: np.ndarray, ew: np.ndarray, expo: np.ndarray):
 # =============================================================================
 # Define a faster nanpercentile function
 # =============================================================================
-def _zvalue_from_index(arr, ind):
+def _zvalue_from_index(arr: np.ndarray,
+                       ind: np.ndarray) -> np.ndarray:
     """
     work around the limitation of np.choose() by employing np.take()
         arr has to be a 3D array
@@ -613,7 +617,9 @@ def _zvalue_from_index(arr, ind):
 
 
 # TODO: Don't use until tested
-def maybe_nanpercentile(arr, q, axis=0):
+def maybe_nanpercentile(arr: np.ndarray,
+                        q: Union[float, List[float], np.ndarray],
+                        axis: int = 0) -> np.ndarray:
     """
     Fast implementation of nanpercentile function
     """

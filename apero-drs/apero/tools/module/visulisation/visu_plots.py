@@ -10,6 +10,7 @@ Created on 2022-02-22
 @author: cook
 """
 import warnings
+from typing import Any
 
 import bokeh
 import numpy as np
@@ -48,6 +49,7 @@ e2ds_span = """
 # Define test functions
 # =============================================================================
 def test_plot(**kwargs) -> bokeh.models.Model:
+    """Build a demo Bokeh plot using power and axis-label keyword values."""
     plot1 = figure(height=400, width=800,
                    tools="crosshair,pan,reset,save,wheel_zoom",
                    x_range=[0, 4 * np.pi], y_range=[-2.5, 2.5])
@@ -65,7 +67,8 @@ def test_plot(**kwargs) -> bokeh.models.Model:
 # =============================================================================
 # noinspection PyUnresolvedReferences
 class SpectrumPlot:
-    def __init__(self, figureinst):
+    def __init__(self, figureinst) -> None:
+        """Set up the interactive spectrum plot and its Bokeh controls."""
         # figure this is part of
         self.figure = figureinst
         # values to change by the user
@@ -139,7 +142,8 @@ class SpectrumPlot:
         # create the graph
         self.create()
 
-    def create(self):
+    def create(self) -> None:
+        """Create and connect the plot's controls and metadata table."""
         # add hover tool
         self.hover = HoverTool(tooltips=self.tooltip())
 
@@ -222,7 +226,8 @@ class SpectrumPlot:
     # =========================================================================
     # Update functions
     # =========================================================================
-    def update_obs_dir(self, event):
+    def update_obs_dir(self, event: Any) -> None:
+        """Update the selected observation directory from a menu event."""
         self.obs_dir = str(event.item)
         # update
         if self.obs_dir not in [None, 'None', '', 'Null']:
@@ -230,15 +235,18 @@ class SpectrumPlot:
             menu = [(key, key) for key in new_identifiers]
             self.identifier_widget.menu = menu
 
-    def update_identifier(self, event):
+    def update_identifier(self, event: Any) -> None:
+        """Update the selected observation identifier from a menu event."""
         self.identifier = str(event.item)
 
-    def update_order_num(self, attrname, old, new):
+    def update_order_num(self, attrname, old, new) -> None:
+        """Store the selected order and refresh displayed header values."""
         _ = attrname, old, new
         self.order_num = int(self.order_num_widget.value)
         self.update_hkeys()
 
-    def update_waveord_limits(self):
+    def update_waveord_limits(self) -> None:
+        """Set wavelength slider bounds from the current order's wave map."""
         # get wavemap for current order
         key = 'wavemap[{0}]'.format(self.order_num)
         if key not in self.source.data:
@@ -254,7 +262,8 @@ class SpectrumPlot:
         self.wave_widget.step = self.xstep
         self.wave_widget.value = (self.xmin, self.xmax)
 
-    def update_wave_axis(self, attrname, old, new):
+    def update_wave_axis(self, attrname, old, new) -> None:
+        """Apply the selected wavelength interval to the plot's x axis."""
         _ = attrname, old, new
         low, high = self.wave_widget.value
         # self.figure.x_range.bounds = (low, high)
@@ -267,18 +276,22 @@ class SpectrumPlot:
         # self.figure.y_range = self.yrange
         # self.figure.x_range = self.xrange
 
-    def update_fiber(self, event):
+    def update_fiber(self, event) -> None:
+        """Store the fiber selected from the dropdown menu."""
         self.fiber = event.item
 
-    def update_lines(self, attrname, old, new):
+    def update_lines(self, attrname, old, new) -> None:
+        """Refresh plotted line visibility after checkbox selection changes."""
         _ = attrname, old, new
         self.update_line_visibility()
 
-    def update_graph_on_click(self):
+    def update_graph_on_click(self) -> None:
+        """Refresh the spectrum and wavelength limits from the controls."""
         self.update_graph()
         self.update_waveord_limits()
 
-    def update_graph(self):
+    def update_graph(self) -> None:
+        """Load changed inputs, redraw the spectrum, and update line states."""
         self.update_hkeys()
         # get loaded params
         lparams = dict(identifier=self.identifier, obs_dir=self.obs_dir,
@@ -309,7 +322,7 @@ class SpectrumPlot:
             # update line visibility
             self.update_line_visibility()
 
-    def update_line_visibility(self):
+    def update_line_visibility(self) -> None:
         """
         Update the line visibility (turn them on or off)
         :return:
@@ -328,7 +341,8 @@ class SpectrumPlot:
         # update tool tip
         self.hover.tooltips = self.tooltip()
 
-    def update_hkeys(self, header=None):
+    def update_hkeys(self, header=None) -> None:
+        """Refresh the displayed object metadata from an optional header."""
         # deal with not having header
         if header is None:
             header = self.object_header
@@ -375,7 +389,7 @@ class SpectrumPlot:
         sdict = dict(keys=new_keys, values=new_values)
         self.object_source.data = sdict
 
-    def update_files(self):
+    def update_files(self) -> None:
         """
         Find files and update graph if possible
         :return:
@@ -514,7 +528,8 @@ class SpectrumPlot:
     # =========================================================================
     # Features
     # =========================================================================
-    def plot(self):
+    def plot(self) -> None:
+        """Draw each active spectrum series for the current selection."""
 
         # reset ymin and ymax
         self.ymin, self.ymax = 0, 1
@@ -527,7 +542,8 @@ class SpectrumPlot:
         for it in range(len(self.line_labels)):
             self.plot_line(it)
 
-    def plot_line(self, it):
+    def plot_line(self, it) -> None:
+        """Create the selected spectrum line and add it to the plot."""
         # get which checkboxs are active
         switch = self.lines_widget.active
         # get order number
@@ -564,14 +580,17 @@ class SpectrumPlot:
             # keep lines
             self.lines[it] = line
 
-    def logger(self, text):
+    def logger(self, text) -> None:
+        """Append a status message to the plot's log display."""
         print(text)
         self.log_widget.text = str(LOG_HTML) + text
 
-    def reset_logger(self):
+    def reset_logger(self) -> None:
+        """Reset the log display to its initial heading."""
         self.log_widget.text = str(LOG_HTML)
 
     def tooltip(self) -> str:
+        """Build hover markup for the currently enabled spectrum lines."""
         # deal with no line widget yet
         if self.lines_widget is None:
             return ''
@@ -595,6 +614,7 @@ class SpectrumPlot:
 
 
 def e2ds_plot(**kwargs) -> bokeh.models.Model:
+    """Create the full-page interactive E2DS spectrum plotting layout."""
     _ = kwargs
     # -------------------------------------------------------------------------
     plotwindow = figure(height=512, width=768)

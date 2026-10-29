@@ -51,7 +51,7 @@ import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -173,7 +173,7 @@ def _fetch_url_bytes(url: str, timeout: int = HTTP_TIMEOUT,
 def _probe_servers(
         servers: List[str],
         tar_filename: str,
-        tlog) -> List[str]:
+    tlog: Callable[[str], None]) -> List[str]:
     """
     Test each server by sending a HEAD request for ``tar_filename``.
 
@@ -232,7 +232,7 @@ def _download_and_extract(
         servers: List[str],
         tar_filename: str,
         assets_dir: Path,
-        tlog) -> bool:
+    tlog: Callable[[str], None]) -> bool:
     """
     Download ``tar_filename`` from the first reachable server and extract
     into ``assets_dir``.
@@ -357,8 +357,11 @@ def _find_apero_assets_script() -> Optional[Path]:
     return candidate if candidate.is_file() else None
 
 
-def _run_subprocess(cmd: List[str], tlog,
-                    extra_env: Optional[dict] = None) -> Tuple[int, str]:
+def _run_subprocess(
+    cmd: List[str],
+    tlog: Callable[[str], None],
+    extra_env: Optional[Dict[str, str]] = None,
+) -> Tuple[int, str]:
     """Run ``cmd`` capturing combined output; stream lines to ``tlog``."""
     tlog('Running: ' + ' '.join(cmd))
     env = None
@@ -388,8 +391,11 @@ def _run_subprocess(cmd: List[str], tlog,
     return rc, '\n'.join(captured)
 
 
-def _run_remote_sync(assets_dir: Path, tlog,
-                     drs_uconfig: Optional[str] = None) -> List[str]:
+def _run_remote_sync(
+    assets_dir: Path,
+    tlog: Callable[[str], None],
+    drs_uconfig: Optional[str] = None,
+) -> List[str]:
     """Drive ``apero_assets.py update-local`` then ``update-remote``.
 
     :return: list of human-readable status lines for the task ``info``
@@ -449,7 +455,7 @@ def _run_remote_sync(assets_dir: Path, tlog,
     return summary
 
 
-def _iter_files(root: Path):
+def _iter_files(root: Path) -> Iterator[Tuple[str, Path]]:
     """Yield ``(rel_posix_path, abs_path)`` for every file under root."""
     for parent, _dirs, files in os.walk(root):
         for fname in files:
@@ -507,9 +513,13 @@ def validate_local_assets_source(source_dir: Path) -> Optional[str]:
     return None
 
 
-def _run_local_sync(source_dir: Path, assets_dir: Path,
-                    tlog, stop_event,
-                    progress_cb=None) -> Dict[str, int]:
+def _run_local_sync(
+    source_dir: Path,
+    assets_dir: Path,
+    tlog: Callable[[str], None],
+    stop_event: Any,
+    progress_cb: Optional[Callable[[float], None]] = None,
+) -> Dict[str, int]:
     """Bidirectional newest-wins copy between two local trees.
 
     :param progress_cb: optional callable ``f(fraction)`` invoked with a
@@ -629,7 +639,7 @@ def _run_local_sync(source_dir: Path, assets_dir: Path,
 
 def _upload_via_rsync(tar_path: Path, ssh_user: str, ssh_host: str,
                        ssh_options: str, ssh_assets_path: str,
-                       tlog) -> bool:
+                       tlog: Callable[[str], None]) -> bool:
     """
     Upload ``tar_path`` to the remote server via rsync.
 
@@ -663,7 +673,8 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
       - Extracts the versioned tar only when something has changed.
 
     In ``mode='upload'`` mode:
-      - Builds a fresh checksum YAML and tar from ``TASK_CONFIG['local_indir']``.
+            - Builds a fresh checksum YAML and tar from
+                ``TASK_CONFIG['local_indir']``.
       - Uploads via rsync to the configured SSH host.
     """
 
@@ -704,6 +715,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         stop_event = params.get('STOP_EVENT')
 
         def tlog(message: str) -> None:
+            """Forward task messages to the configured task logger."""
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -752,6 +764,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
             self.progress = 0.1
 
             def _progress_cb(frac: float) -> None:
+                """Update task progress while local files are compared."""
                 try:
                     f = float(frac)
                 except (TypeError, ValueError):
@@ -824,8 +837,8 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
                     assets_dir: Path,
                     servers: List[str],
                     checksum_file: str,
-                    tlog,
-                    stop_event) -> None:
+                    tlog: Callable[[str], None],
+                    stop_event: Any) -> None:
         """
         Build a checksums YAML + tar file from ``local_indir`` and upload
         via rsync to the configured SSH host.
@@ -929,7 +942,10 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
             self.info += f'\n**ERROR**: {msg}\n'
             raise ValueError(msg)
 
-        tlog(f'Uploading {tar_path.name} → {ssh_user}@{ssh_host}:{ssh_assets_path}')
+        tlog(
+            f'Uploading {tar_path.name} → '
+            f'{ssh_user}@{ssh_host}:{ssh_assets_path}'
+        )
         ok = _upload_via_rsync(
             tar_path=tar_path,
             ssh_user=ssh_user,

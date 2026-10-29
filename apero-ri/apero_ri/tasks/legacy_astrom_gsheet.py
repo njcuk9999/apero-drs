@@ -89,6 +89,7 @@ _ASTROM_LEGACY_COLUMNS = [
 # Define helpers
 # =============================================================================
 def _normalize_name(value: Any) -> str:
+    """Normalize object names for case/punctuation-insensitive matching."""
     text = str(value or '').strip().upper()
     if not text:
         return ''
@@ -96,6 +97,7 @@ def _normalize_name(value: Any) -> str:
 
 
 def _split_aliases(value: Any) -> List[str]:
+    """Split alias text or sequences and retain unique non-empty names."""
     if isinstance(value, (list, tuple)):
         raw_values = list(value)
     else:
@@ -115,6 +117,7 @@ def _split_aliases(value: Any) -> List[str]:
 
 
 def _dedupe_names(values: Sequence[Any]) -> List[str]:
+    """Return unique non-empty names in their original order."""
     out: List[str] = []
     seen: Set[str] = set()
     for value in values:
@@ -130,6 +133,7 @@ def _dedupe_names(values: Sequence[Any]) -> List[str]:
 
 
 def _as_float(value: Any) -> Optional[float]:
+    """Convert a sheet cell to float, returning None for invalid text."""
     text = str(value or '').strip()
     if text in ['', 'None', 'none', 'null', 'nan']:
         return None
@@ -140,6 +144,7 @@ def _as_float(value: Any) -> Optional[float]:
 
 
 def _as_bool(value: Any) -> bool:
+    """Interpret common affirmative cell values as True."""
     if isinstance(value, bool):
         return value
     text = str(value or '').strip().lower()
@@ -147,6 +152,7 @@ def _as_bool(value: Any) -> bool:
 
 
 def _nested_value(entry: Dict[str, Any], key: str) -> Any:
+    """Read a direct field or its nested ``value`` from an entry."""
     value = entry.get(key)
     if isinstance(value, dict):
         return value.get('value')
@@ -154,6 +160,7 @@ def _nested_value(entry: Dict[str, Any], key: str) -> Any:
 
 
 def _nested_source(entry: Dict[str, Any], key: str) -> str:
+    """Read the source label for a nested astrometric field."""
     value = entry.get(key)
     if isinstance(value, dict):
         return str(value.get('source') or '')
@@ -161,6 +168,7 @@ def _nested_source(entry: Dict[str, Any], key: str) -> str:
 
 
 def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """Load the configured OAuth JSON object from the ARI admin directory."""
     secret_name = str(
         task_cfg.get('google_secret_name', DEFAULT_GOOGLE_SECRET_NAME)
         or DEFAULT_GOOGLE_SECRET_NAME
@@ -184,8 +192,10 @@ def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
-def _open_spreadsheet(payload: Dict[str, Any],
-                      sheet_id: str):
+def _open_spreadsheet(
+    payload: Dict[str, Any], sheet_id: str
+) -> Any:
+    """Authorize a Google client and open the requested spreadsheet."""
     import gspread
 
     scopes = payload.get('scopes')
@@ -215,6 +225,7 @@ def _open_spreadsheet(payload: Dict[str, Any],
 
 def _sheet_name_candidates(value: Any,
                            defaults: Sequence[str]) -> List[str]:
+    """Combine configured and fallback worksheet names without duplicates."""
     if isinstance(value, (list, tuple)):
         raw = list(value)
     else:
@@ -235,9 +246,10 @@ def _sheet_name_candidates(value: Any,
     return out
 
 
-def _open_first_matching_sheet(spreadsheet,
+def _open_first_matching_sheet(spreadsheet: Any,
                                name_candidates: Sequence[str],
-                               label: str):
+                               label: str) -> Tuple[Any, str]:
+    """Open the first available worksheet and return it with its name."""
     for sheet_name in name_candidates:
         try:
             return spreadsheet.worksheet(sheet_name), sheet_name
@@ -253,14 +265,18 @@ def _open_first_matching_sheet(spreadsheet,
     raise RuntimeError(emsg)
 
 
-def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
+def _sheet_to_dataframe(worksheet: Any) -> pd.DataFrame:
+    """Read worksheet records into a dataframe with the legacy columns."""
     rows = worksheet.get_all_records(default_blank='')
     if not rows:
         return pd.DataFrame(columns=_ASTROM_LEGACY_COLUMNS)
     return pd.DataFrame(rows)
 
 
-def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
+def _write_dataframe_to_sheet(
+    worksheet: Any, dataframe: pd.DataFrame
+) -> None:
+    """Replace worksheet contents with the dataframe header and rows."""
     worksheet.clear()
     header = dataframe.columns.tolist()
     rows = dataframe.fillna('').values.tolist()
@@ -270,6 +286,7 @@ def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
 
 
 def _normalize_astrom_sheet_df(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Add missing legacy columns and order the astrometry sheet fields."""
     if dataframe is None or len(dataframe.columns) == 0:
         return pd.DataFrame(columns=_ASTROM_LEGACY_COLUMNS)
     frame = dataframe.copy()
@@ -280,6 +297,7 @@ def _normalize_astrom_sheet_df(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 def _entry_to_legacy_row(entry: Dict[str, Any]) -> Dict[str, Any]:
+    """Map an ARI astrometry entry to the legacy sheet's column names."""
     aliases = entry.get('ALIASES')
     if isinstance(aliases, (list, tuple)):
         aliases_txt = '|'.join(_dedupe_names(aliases))
@@ -314,6 +332,7 @@ def _entry_to_legacy_row(entry: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _resolve_online_entry(name: str) -> Optional[Dict[str, Any]]:
+    """Resolve an object name using the DRS-backed online resolver."""
     from apero_ri.application.astrometrics_api_helpers import (
         _resolve_online_using_drs,
     )
@@ -324,11 +343,12 @@ def _resolve_online_entry(name: str) -> Optional[Dict[str, Any]]:
 def _add_sheet_object_to_ari(
     astrom_root: Path,
     sheet_row: Dict[str, Any],
-    task_logger,
+    task_logger: Any,
     tolerance_arcsec: float,
     created_by: str,
     dry_run: bool,
 ) -> Dict[str, Any]:
+    """Resolve and optionally import one legacy sheet object into ARI."""
     from apero.core import drs_astrometrics as dra
     from apero_ri.core import issues as issues_core
 
@@ -462,6 +482,7 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
     """Bi-directional sync between ARI astrometrics and legacy sheet."""
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the scheduled legacy astrometry sync task."""
         name = 'Legacy Astrometric GSheet Sync'
         description = (
             'Sync legacy v0.7 astrometric Google Sheet main/pending tabs '
@@ -470,6 +491,7 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
         super().__init__(name, description, status)
 
     def run_job(self, params: Dict[str, Any]) -> None:
+        """Synchronize ARI astrometry entries with the legacy sheet tabs."""
         task_cfg = dict(params.get('TASK_CONFIG') or {})
         dry_run = _as_bool(task_cfg.get('DRY_RUN', task_cfg.get('dry_run')))
         local_data_dir = Path(
@@ -509,6 +531,7 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
         task_logger = params.get('TASK_LOGGER')
 
         def tlog(message: str) -> None:
+            """Forward task progress when a logger is available."""
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -567,6 +590,7 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
                      progress_mark: List[int],
                      base: float,
                      width: float) -> None:
+            """Update progress and periodically log scan completion."""
             if total <= 0:
                 self.subprogress = 1.0
                 self.progress = base + width

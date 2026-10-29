@@ -11,7 +11,7 @@ Created on 2019-08-21 at 12:28
 """
 import os
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -283,7 +283,12 @@ def fwhm_fp_airy(popt: np.ndarray) -> float:
     return velocity_core.fwhm_fp_airy(popt)
 
 
-def fit_fp_peaks(x, y, size, return_model=False):
+def fit_fp_peaks(x: np.ndarray, y: np.ndarray, size: float,
+                 return_model: bool = False) -> Union[
+                     Tuple[List[float], np.ndarray, Any, Optional[str]],
+                     Tuple[List[float], np.ndarray, Any, Optional[str],
+                           np.ndarray]]:
+    """Fit one Fabry-Perot peak using the supplied pixel samples and width."""
     # delegate numerical work to the profile-independent core module
     return velocity_core.fit_fp_peaks(x, y, size, return_model=return_model)
 
@@ -490,8 +495,30 @@ def get_ccf_teff_mask(params: ParamDict,
     return default_maskfile, default_datatype
 
 
-def get_ccf_mask(params, filename, mask_width, mask_units='nm',
-                 fmt=None):
+def get_ccf_mask(params: ParamDict, filename: str, mask_width: float,
+                 mask_units: str = 'nm',
+                 fmt: Optional[str] = None
+                 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Load a CCF line mask and convert its wavelength data to nanometers.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants used for loading and error reporting.
+    filename : str
+        Mask filename or configured mask identifier.
+    mask_width : float
+        Optional velocity width used to replace line widths.
+    mask_units : str, optional
+        Astropy wavelength unit name for the input mask values.
+    fmt : str, optional
+        Explicit table format passed to the mask loader.
+
+    Returns
+    -------
+    tuple
+        Line widths, line centers, and weights as NumPy arrays.
+    """
     func_name = __NAME__ + '.get_ccf_mask()'
     # load table
     table, absfilename = drs_data.load_ccf_mask(params, filename=filename,
@@ -532,7 +559,9 @@ def get_ccf_mask(params, filename, mask_width, mask_units='nm',
     return ll_mask_d, ll_mask_ctr, w_mask
 
 
-def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
+def delta_v_rms_2d(spe: np.ndarray, wave: np.ndarray, sigdet: float,
+                   threshold: float, size: int
+                   ) -> Tuple[np.ndarray, float, float]:
     """
     Compute the photon noise uncertainty for all orders (for the 2D image)
 
@@ -553,7 +582,26 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     return velocity_core.delta_v_rms_2d(spe, wave, sigdet, threshold, size)
 
 
-def remove_telluric_domain(params, infile, fiber, **kwargs):
+def remove_telluric_domain(params: ParamDict, infile: DrsFitsFile,
+                           fiber: str, **kwargs: Any) -> np.ndarray:
+    """Mask pixels below the configured telluric transmission threshold.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants, including the transmission cutoff.
+    infile : DrsFitsFile
+        Input extracted file whose telluric reconstruction is loaded.
+    fiber : str
+        Fiber used to construct the corresponding reconstruction filename.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    numpy.ndarray
+        A copy of the input image with rejected transmission pixels set to NaN.
+    """
     func_name = __NAME__ + '.remove_telluric_domain()'
     # get parameters from params/kwargs
     ccf_tellu_thres = pcheck(params, 'OBJ.CCF.TELLU_THRES', 'ccf_tellu_thres',
@@ -602,7 +650,24 @@ def remove_telluric_domain(params, infile, fiber, **kwargs):
     return image
 
 
-def fill_e2ds_nans(params, image, **kwargs):
+def fill_e2ds_nans(params: ParamDict, image: np.ndarray,
+                   **kwargs: Any) -> np.ndarray:
+    """Fill NaN runs in each order by locally normalized convolution.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling the smoothing kernel.
+    image : numpy.ndarray
+        Two-dimensional extracted spectrum.
+    **kwargs : Any
+        Optional overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    numpy.ndarray
+        The input image when it contains no NaNs, otherwise a filled copy.
+    """
     func_name = __NAME__ + '.fill_e2ds_nans()'
     # get parameters from params/kwargs
     kernel_size = pcheck(params, 'OBJ.CCF.FILL_NAN_KERN_SIZE', 'kernel_size',
@@ -647,8 +712,35 @@ def fill_e2ds_nans(params, image, **kwargs):
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================
-def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
-                        fiber, **kwargs):
+def compute_ccf_science(params: ParamDict, recipe: Any,
+                        infile: DrsFitsFile, image: np.ndarray,
+                        blaze: np.ndarray, wavemap: np.ndarray,
+                        bprops: ParamDict, fiber: str,
+                        **kwargs: Any) -> ParamDict:
+    """Calculate per-order and stacked CCF products for a science spectrum.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants and recipe inputs controlling the CCF calculation.
+    recipe : Any
+        Calling recipe used for diagnostic and summary plots.
+    infile : DrsFitsFile
+        Science file supplying header values and output context.
+    image, blaze, wavemap : numpy.ndarray
+        Extracted spectrum, blaze, and wavelength arrays.
+    bprops : ParamDict
+        Barycentric properties accessed through the existing ``USE_BERV`` key.
+    fiber : str
+        Science fiber used in the calculation.
+    **kwargs : Any
+        Optional parameter overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    ParamDict
+        Per-order and stacked CCFs, fit results, noise estimates, and settings.
+    """
     func_name = __NAME__ + '.compute_ccf()'
     # get parameters from params/kwargs
     noise_sigdet = pcheck(params, 'OBJ.CCF.NOISE_SIGDET', 'noise_sigdet', kwargs,
@@ -839,8 +931,32 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     return props
 
 
-def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
-                   **kwargs):
+def compute_ccf_fp(params: ParamDict, recipe: Any,
+                   infile: DrsFitsFile, image: np.ndarray,
+                   blaze: np.ndarray, wavemap: np.ndarray, fiber: str,
+                   **kwargs: Any) -> ParamDict:
+    """Calculate per-order and stacked CCF products for an FP spectrum.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling the calibration CCF calculation.
+    recipe : Any
+        Calling recipe used for diagnostic and summary plots.
+    infile : DrsFitsFile
+        Calibration file supplying header values and output context.
+    image, blaze, wavemap : numpy.ndarray
+        Extracted spectrum, blaze, and wavelength arrays.
+    fiber : str
+        Fiber used in the calibration.
+    **kwargs : Any
+        Optional parameter overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    ParamDict
+        Per-order and stacked CCFs, fit results, noise estimates, and settings.
+    """
     func_name = __NAME__ + '.compute_ccf_fp()'
     # get constants from params/kwargs
     noise_sigdet = pcheck(params, 'CAL.WAVE.CCF.NOISE_SIGDET', 'sigdet', kwargs,
@@ -973,9 +1089,40 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     return props
 
 
-def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
-                              ccfwidth, ccfstep, mask_centers, mask_weights,
-                              fit_type, fiber, ccfnormmode, **kwargs):
+def ccf_calculation_per_order(
+        params: ParamDict, image: np.ndarray, blaze: np.ndarray,
+        wavemap: np.ndarray, berv: float, targetrv: float,
+        ccfwidth: float, ccfstep: float, mask_centers: np.ndarray,
+        mask_weights: np.ndarray, fit_type: int, fiber: str,
+        ccfnormmode: str, **kwargs: Any) -> ParamDict:
+    """Calculate and fit the CCF independently for each spectral order.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling normalization and fit behavior.
+    image, blaze, wavemap : numpy.ndarray
+        Extracted flux, blaze, and wavelength arrays.
+    berv, targetrv : float
+        Barycentric correction and CCF velocity center in km/s.
+    ccfwidth, ccfstep : float
+        Velocity span and sampling step in km/s.
+    mask_centers, mask_weights : numpy.ndarray
+        Wavelength centers and weights of the selected line mask.
+    fit_type : int
+        CCF model selector (absorption or emission).
+    fiber : str
+        Fiber label used for progress reporting.
+    ccfnormmode : str
+        Normalization mode for mask weights.
+    **kwargs : Any
+        Optional parameter overrides consumed by the parameter checks.
+
+    Returns
+    -------
+    ParamDict
+        Per-order CCF arrays, fits, line counts, and noise estimates.
+    """
     # set function name
     func_name = display_func('ccf_calculation_per_order', __NAME__)
     # get properties from params
@@ -1187,7 +1334,9 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
 
 
 def ccf_calculation_stack(params: ParamDict, props: ParamDict, fit_type: int,
-                          fit_params: int, wavemap: np.ndarray):
+                          fit_params: int,
+                          wavemap: np.ndarray) -> ParamDict:
+    """Combine per-order CCFs, fit the stack, and estimate its noise."""
     # set function name
     func_name = display_func('ccf_calculation_stack', __NAME__)
     # ----------------------------------------------------------------------
@@ -1259,7 +1408,9 @@ def ccf_calculation_stack(params: ParamDict, props: ParamDict, fit_type: int,
 
 
 def update_per_order_ccfs(params: ParamDict, props: ParamDict, nbo: int,
-                          fit_type: int, fit_params: int, wavemap: np.ndarray):
+                          fit_type: int, fit_params: int,
+                          wavemap: np.ndarray) -> ParamDict:
+    """Refit each order using the stacked CCF as the fit prior."""
     # set function name
     func_name = display_func('update_per_order_ccfs', __NAME__)
     # storage for outputs
@@ -1321,21 +1472,24 @@ def update_per_order_ccfs(params: ParamDict, props: ParamDict, nbo: int,
     return props
 
 
-def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
-               guess_dict=None) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+def fit_ccf_ea(params: ParamDict, order_num: Union[int, str],
+               rv: np.ndarray, ccf: np.ndarray, sig: np.ndarray,
+               fit_type: int, fit_params: int,
+               guess_dict: Optional[Dict[str, Any]] = None
+               ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
     """
     Fit the CCF to a guassian function with a slope.
     Allow priors on some of the guess functions
 
-    :param params:
-    :param order_num:
-    :param rv:
-    :param ccf:
-    :param sig:
-    :param fit_type:
-    :param fit_params:
-    :param guess_dict:
-    :return:
+    :param params: APERO constants, including image pixel size.
+    :param order_num: Order index or ``'stack'`` for the combined fit.
+    :param rv: Radial-velocity sample positions.
+    :param ccf: CCF values to fit; non-finite values are handled here.
+    :param sig: Per-sample uncertainties used as fit weights.
+    :param fit_type: Model selector (0 for absorption, otherwise emission).
+    :param fit_params: Number of coefficients in the selected model.
+    :param guess_dict: Optional initial-guess overrides keyed by fit parameter.
+    :return: Fit coefficients, evaluated fit, and coefficient names.
     """
     func_name = __NAME__ + '.fit_ccf()'
     # resolution element in m/s
@@ -1496,7 +1650,7 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
 def estimate_photon_noise(wavemap: np.ndarray, rv_ccf: np.ndarray,
                           ccf_fit_ord: np.ndarray, ccf_coeffs_ord: np.ndarray,
                           sig_ord: np.ndarray, fit_type: int,
-                          norm=1) -> Tuple[float, float]:
+                          norm: float = 1) -> Tuple[float, float]:
     """
     Estimate the photon noise using the gradients of wave, dv and ccf
 
@@ -1570,9 +1724,37 @@ def get_coeff_dict(coeffs: np.ndarray, names: List[str]
 # =============================================================================
 # Define writing functions
 # =============================================================================
-def write_ccf(params: ParamDict, recipe, infile: DrsFitsFile,
-              props: ParamDict, rawfiles, combine: bool, qc_params,
-              fiber: str, fit_type: int):
+def write_ccf(params: ParamDict, recipe: Any, infile: DrsFitsFile,
+              props: ParamDict, rawfiles: List[str], combine: bool,
+              qc_params: Any, fiber: str, fit_type: int) -> None:
+    """Write and register the CCF table and its per-order fit statistics.
+
+    Parameters
+    ----------
+    params : ParamDict
+        APERO constants controlling file headers and output writing.
+    recipe : Any
+        Calling recipe providing output definitions and registration.
+    infile : DrsFitsFile
+        Input file used to derive the output filename and copied headers.
+    props : ParamDict
+        CCF properties consumed by the established output keys.
+    rawfiles : list[str]
+        Source filenames recorded when the inputs are combined.
+    combine : bool
+        Whether the output represents a combined input set.
+    qc_params : Any
+        Quality-control payload copied to the output file.
+    fiber : str
+        Fiber associated with the CCF product.
+    fit_type : int
+        CCF model selector used to report width and contrast.
+
+    Returns
+    -------
+    None
+        The CCF product is written and registered with the recipe.
+    """
     # ----------------------------------------------------------------------
     # produce CCF table
     table1 = Table()

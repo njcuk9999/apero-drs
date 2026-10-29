@@ -11,6 +11,10 @@ Permissions
   who has the ``monitor.{INSTRUMENT}`` group (resolved via
   inherited groups).
 """
+from typing import Any, Dict
+
+from flask import jsonify, request, session
+
 from apero_ri.core import object_comments as oc
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -20,7 +24,6 @@ from apero_ri.core.permissions import (
     get_inherited_groups,
     resolve_user_permissions,
 )
-from flask import jsonify, request, session
 
 # ================================================================
 # Module name
@@ -31,8 +34,10 @@ __NAME__ = 'apero_ri.core.object_comments_api_helpers'
 # ================================================================
 # Helpers
 # ================================================================
-def _can_moderate(user_info, app, instrument):
-    """Check if user has monitor.{instrument} privileges."""
+def _can_moderate(
+    user_info: Dict[str, Any], app: Any, instrument: str
+) -> bool:
+    """Return whether the user inherits the instrument monitor group."""
     user_groups = set(user_info.get('groups', []))
     all_groups = set(user_groups)
     for g in list(user_groups):
@@ -41,8 +46,10 @@ def _can_moderate(user_info, app, instrument):
     return target in all_groups
 
 
-def _resolve_profile(app, user_info, profile_id):
-    """Find an accessible profile or return None."""
+def _resolve_profile(
+    app: Any, user_info: Dict[str, Any], profile_id: str
+) -> Any:
+    """Return the matching accessible profile, or None when unavailable."""
     accessible = get_accessible_profiles(
         user_info, app.ari_groups
     )
@@ -55,8 +62,8 @@ def _resolve_profile(app, user_info, profile_id):
 # ================================================================
 # API endpoints
 # ================================================================
-def api_object_comments_list(app):
-    """GET  list comments for (profile, object)."""
+def api_object_comments_list(app: Any) -> Any:
+    """List comments for an accessible profile object, including edit flags."""
     user_info = get_effective_user(session)
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -91,8 +98,8 @@ def api_object_comments_list(app):
     return jsonify(success=True, comments=items)
 
 
-def api_object_comments_add(app):
-    """POST  add a comment."""
+def api_object_comments_add(app: Any) -> Any:
+    """Add a comment to an accessible profile object."""
     user_info = get_effective_user(session)
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -122,8 +129,8 @@ def api_object_comments_add(app):
     return jsonify(success=True, comment=entry)
 
 
-def api_object_comments_edit(app):
-    """POST  edit a comment."""
+def api_object_comments_edit(app: Any) -> Any:
+    """Edit a comment when the user owns it or can moderate the instrument."""
     user_info = get_effective_user(session)
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -177,8 +184,8 @@ def api_object_comments_edit(app):
     return jsonify(success=True, comment=updated)
 
 
-def api_object_comments_delete(app):
-    """POST  delete a comment."""
+def api_object_comments_delete(app: Any) -> Any:
+    """Delete a comment when the user owns it or can moderate the instrument."""
     user_info = get_effective_user(session)
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401

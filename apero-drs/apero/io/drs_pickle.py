@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-# CODE NAME HERE
+"""Write and read APERO's numbered pickle files under ``PATH.OTHER``.
 
-# CODE DESCRIPTION HERE
+Files are grouped by prefix in the ``pickles`` directory. A read can load one
+numbered object or return all objects for the prefix in suffix order.
 
 Created on 2024-12-04 at 10:21
 
@@ -39,14 +39,15 @@ textentry = drs_lang.textentry
 # Define functions
 # =============================================================================
 def make_pickle(params: ParamDict, instance: Any, prefix: str, suffix: int,
-                log: bool = True):
+                log: bool = True) -> None:
     """
     Make a pickle file from any pickle-able object
 
     :param params: ParamDict, the parameter dictionary of constants
     :param instance: Any object
     :param prefix: str, the prefix of the pickle file
-    :param suffix: str, the suffix of the pickle file
+    :param suffix: int, the numeric suffix of the pickle filename
+    :param log: bool, whether to log the output filename
 
     :return: None, writes file to DRS_DATA_OTHER/pickles/{prefix}/
     """
@@ -73,10 +74,11 @@ def get_pickle(params: ParamDict, prefix: str, suffix: Optional[int] = None,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param prefix: str, the prefix of the pickle file
-    :param suffix: str, the suffix of the pickle file
+    :param suffix: int or None, load one numbered file or all files
     :param remove: bool, if True removes prefix directory after reading
 
-    :return: The loaded pickle file (or list of loaded pickle files)
+    :return: The requested object, or a suffix-keyed dictionary when loading
+             all files
     """
     # get the output directory
     outdir = os.path.join(params['PATH.OTHER'], 'pickles', prefix)

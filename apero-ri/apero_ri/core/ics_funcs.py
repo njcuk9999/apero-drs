@@ -21,6 +21,7 @@ import hashlib
 import logging
 import uuid
 from datetime import datetime
+from typing import Any
 
 import requests
 
@@ -88,7 +89,9 @@ def _map_rrule(rrule_prop: object) -> str:
 # Fetch + parse a single ICS URL
 # ---------------------------------------------------------------------------
 
-def _expand_rrule(start_prop: object, rrule_prop: object) -> list:
+def _expand_rrule(
+    start_prop: object, rrule_prop: object
+) -> list[datetime]:
     """Expand *rrule_prop* from *start_prop* into a list of naive
     datetime occurrences.  Falls back to ``[dtstart]`` on error.
 
@@ -124,7 +127,7 @@ def fetch_and_parse(
     feed_id: str,
     color: str = "#4a90d9",
     category: str = "personal",
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Download *url*, parse every VEVENT, return a list of event
     dicts compatible with the apero-ri calendar schema.
 
@@ -174,9 +177,10 @@ def fetch_and_parse(
                     uid_str, set()
                 ).add(d)
 
-    events: list[dict] = []
+    events: list[dict[str, Any]] = []
 
-    def _tz_str(start) -> str:
+    def _tz_str(start: Any) -> str:
+        """Return the timezone label for one DTSTART property."""
         if (
             hasattr(start, "dt")
             and hasattr(start.dt, "tzinfo")
@@ -192,7 +196,8 @@ def fetch_and_parse(
         tzone: str,
         title: str,
         notes: str,
-    ) -> dict:
+    ) -> dict[str, Any]:
+        """Build one calendar event mapping from normalized values."""
         return {
             "id": _event_id(feed_id, uid_key),
             "title": title,
@@ -295,13 +300,17 @@ def fetch_and_parse(
 # Feed CRUD helpers (operate on in-memory data dicts)
 # ---------------------------------------------------------------------------
 
-def get_feeds(data: dict) -> list[dict]:
-    """Return the ``ics_feeds`` list from a calendar data dict."""
+def get_feeds(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return the ``ics_feeds`` list from a calendar data mapping.
+
+    :param data: Calendar mapping containing feed records.
+    :returns: Feed records, preserving their dynamic fields.
+    """
     return list(data.get("ics_feeds", []))
 
 
 def add_feed(
-    data: dict,
+    data: dict[str, Any],
     name: str,
     url: str,
     color: str = "#4a90d9",
@@ -310,6 +319,13 @@ def add_feed(
     """Add a new feed entry to *data* (does not fetch yet).
 
     Returns the existing feed dict if *url* is already registered.
+
+    :param data: Calendar mapping to update.
+    :param name: Display name for the feed.
+    :param url: Feed URL used for fetching and identity.
+    :param color: Display color assigned to imported events.
+    :param category: Calendar category assigned to imported events.
+    :returns: Existing or newly created feed mapping.
     """
     fid = _feed_id(url)
     for existing in data.get("ics_feeds", []):
@@ -330,7 +346,7 @@ def add_feed(
 
 
 def update_feed(
-    data: dict,
+    data: dict[str, Any],
     feed_id: str,
     name: str | None = None,
     color: str | None = None,
@@ -340,6 +356,11 @@ def update_feed(
     Also updates the colour on all events already imported from that
     feed so the calendar view reflects the change immediately.
 
+    :param data: Calendar mapping containing feeds and events.
+    :param feed_id: Stable identifier of the feed to update.
+    :param name: Optional replacement display name.
+    :param color: Optional replacement event color.
+    :returns: Updated feed mapping.
     :raises ValueError: if *feed_id* is not found.
     """
     feeds = data.get("ics_feeds", [])
@@ -361,8 +382,12 @@ def update_feed(
     return feed
 
 
-def delete_feed(data: dict, feed_id: str) -> None:
-    """Remove *feed_id* and all its imported events from *data*."""
+def delete_feed(data: dict[str, Any], feed_id: str) -> None:
+    """Remove *feed_id* and all its imported events from *data*.
+
+    :param data: Calendar mapping to update.
+    :param feed_id: Stable identifier of the feed to remove.
+    """
     data["ics_feeds"] = [
         f for f in data.get("ics_feeds", [])
         if f.get("id") != feed_id
@@ -376,11 +401,14 @@ def delete_feed(data: dict, feed_id: str) -> None:
     ]
 
 
-def refresh_feed(data: dict, feed_id: str) -> dict:
+def refresh_feed(data: dict[str, Any], feed_id: str) -> dict[str, Any]:
     """Re-fetch one ICS feed and replace its events in *data*.
 
     Mutates *data* in-place.
 
+    :param data: Calendar mapping containing feeds and events.
+    :param feed_id: Stable identifier of the feed to refresh.
+    :returns: Refreshed feed mapping.
     :raises ValueError: if *feed_id* is not found in ``ics_feeds``
     """
     feeds = data.setdefault("ics_feeds", [])
@@ -424,12 +452,13 @@ def refresh_feed(data: dict, feed_id: str) -> dict:
     return feed
 
 
-def refresh_all_feeds(data: dict) -> dict[str, str]:
+def refresh_all_feeds(data: dict[str, Any]) -> dict[str, str]:
     """Refresh every enabled ICS feed in *data* in-place.
 
     Errors per feed are stored in ``feed['last_error']`` but do not
     abort processing of remaining feeds.
 
+    :param data: Calendar mapping containing feed and event records.
     :returns: mapping ``{feed_id: 'ok' | 'disabled' | error_message}``
     """
     results: dict[str, str] = {}

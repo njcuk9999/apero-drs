@@ -32,14 +32,19 @@ TIME_NOW = Time.now().iso
 # Define classes
 # =============================================================================
 class AperoElement:
-    def __init__(self, name, path):
+    """Describe a file-system element to create or copy for an instrument."""
+
+    def __init__(self, name: str, path: str) -> None:
+        """Initialize an element from its name and dotted relative path."""
         self.name = name
         self.path = path
         self.kind = None
         self.wildcard = None
         self.edits = dict()
 
-    def process(self, instrument_name, class_name, author, starting_point):
+    def process(self, instrument_name: str, class_name: str, author: str,
+                starting_point: str) -> None:
+        """Process this element using values for the target instrument."""
 
         # deal with kwargsdict
         kwargsdict = dict()
@@ -88,7 +93,9 @@ class AperoElement:
         # process single file copy and update
         self.process_single_file_copy(inpath, outpath, kwargdict)
 
-    def process_single_file_copy(self, inpath, outpath, kwargdict):
+    def process_single_file_copy(self, inpath: str, outpath: str,
+                                 kwargdict: Dict[str, str]) -> None:
+        """Copy one file, applying this element's configured text edits."""
         # print progress
         print(f'Editing with {outpath}')
         # deal with input file not existing
@@ -209,7 +216,9 @@ class AperoElement:
 
 
 class AperoEdit:
-    def __init__(self, name, kind='replace'):
+    """Describe a line or text replacement to apply to an instrument file."""
+
+    def __init__(self, name: str, kind: str = 'replace') -> None:
         """
         Edit class to store edit information
 
@@ -229,7 +238,8 @@ class AperoEdit:
         self.current_content = None
         self.new_content = None
 
-    def process(self, content, kwargsdict):
+    def process(self, content: str, kwargsdict: Dict[str, str]) -> str:
+        """Apply this edit to content and return the resulting text."""
         # deal with line edits
         if self.kind == 'replace':
             if self.line is not None:
@@ -334,7 +344,8 @@ class AperoEdit:
 
         return inkwargsdict
 
-    def get_pos(self, content) -> int:
+    def get_pos(self, content: str) -> int:
+        """Find this edit's configured insertion point in the content."""
         if self.before is not None:
             # get the index of the before line
             before = content.index(self.before)

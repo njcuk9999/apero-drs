@@ -46,7 +46,8 @@ INSTRUMENTS = apero_base.INSTRUMENTS
 # Define classes
 # =============================================================================
 class TestApp(ThemedTk):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
+        """Create the themed settings application and its page stack."""
         _ = args, kwargs
         # run the super
         ThemedTk.__init__(self, themebg=True)
@@ -76,7 +77,8 @@ class TestApp(ThemedTk):
         # show the first page
         self.pages[0].show()
 
-    def update(self):
+    def update(self) -> None:
+        """Collect values from all page setting widgets."""
         for page in self.pages:
             if hasattr(self.pages[page], 'settings'):
                 self.pages[page].settings.get_results()
@@ -84,7 +86,8 @@ class TestApp(ThemedTk):
                 for key in results:
                     self.page_settings[key] = results[key]
 
-    def execute(self):
+    def execute(self) -> None:
+        """Print the collected settings and close the application."""
         self.update()
         # log: Settings Entered:
         print(textentry('40-511-00002'))
@@ -92,21 +95,25 @@ class TestApp(ThemedTk):
             print('\n{0} = {1}'.format(key, self.page_settings[key]))
         self.close()
 
-    def close(self):
+    def close(self) -> None:
+        """Destroy the application window."""
         self.destroy()
 
 
 class StartPage(ttk.Frame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller) -> None:
+        """Initialize the base frame used by the sample settings pages."""
         _ = controller
         ttk.Frame.__init__(self, parent)
 
-    def show(self):
+    def show(self) -> None:
+        """Raise this page above the other pages in the stack."""
         self.tkraise()
 
 
 class Page1(StartPage):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller) -> None:
+        """Create the introductory page and its navigation controls."""
         ttk.Frame.__init__(self, parent)
         # page logo
         self.logo = widgets.PageLogo(self, logo_path=None)
@@ -124,7 +131,8 @@ class Page1(StartPage):
 
 
 class Page2(StartPage):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller) -> None:
+        """Create the general settings page and its navigation controls."""
         ttk.Frame.__init__(self, parent)
 
         # page logo
@@ -163,7 +171,8 @@ class Page2(StartPage):
 
 
 class Page3(StartPage):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller) -> None:
+        """Create the additional settings page and its navigation controls."""
         ttk.Frame.__init__(self, parent)
 
         # page logo
@@ -210,7 +219,7 @@ class Page3(StartPage):
 # =============================================================================
 # Define functions
 # =============================================================================
-def test(instrument=None):
+def test(instrument=None) -> TestApp:
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the

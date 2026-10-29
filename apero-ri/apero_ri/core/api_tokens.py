@@ -51,6 +51,11 @@ def _tokens_path() -> Path:
 
 
 def _load() -> Dict[str, Any]:
+    """Load stored API token metadata.
+
+    :return: Token-to-metadata mapping, or an empty mapping when the file is
+        missing, invalid, or unreadable.
+    """
     path = _tokens_path()
     if not path.exists():
         return {}
@@ -63,6 +68,12 @@ def _load() -> Dict[str, Any]:
 
 
 def _save(tokens: Dict[str, Any]) -> None:
+    """Write API token metadata with owner-only file permissions.
+
+    :param tokens: Token-to-metadata mapping to persist.
+    :return: None.
+    :raises OSError: If the token file cannot be created or written.
+    """
     path = _tokens_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:

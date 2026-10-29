@@ -19,14 +19,23 @@ TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 # =============================================================================
 class AperoCheckContactList:
     """Class to represent a list of contacts for a check."""
-    
-    def __init__(self):
-        self.starred = []
-        self.contact_names = []
-        self.contact_emails = []
 
-    def add(self, contact: 'AperoCheckContact', starred: bool = False):
-        """Add a contact to the list."""
+    def __init__(self) -> None:
+        """Initialize an empty contact list and its starred names."""
+        self.starred: List[str] = []
+        self.contact_names: List[str] = []
+        self.contact_emails: List[str] = []
+
+    def add(
+        self,
+        contact: 'AperoCheckContact',
+        starred: bool = False,
+    ) -> None:
+        """Add a contact once, optionally marking it as starred.
+
+        :param contact: Contact to add.
+        :param starred: Whether to include the contact name in ``starred``.
+        """
         if contact.name not in self.contact_names:
             self.contact_names.append(contact.name)
             self.contact_emails.append(contact.email)
@@ -35,8 +44,13 @@ class AperoCheckContactList:
 
 class AperoCheckContact:
     """Class to represent a contact for a check."""
-    
-    def __init__(self, name: str, email: str):
+
+    def __init__(self, name: str, email: str) -> None:
+        """Store a contact's display name and email address.
+
+        :param name: Contact display name.
+        :param email: Contact email address or contact instructions.
+        """
         self.name = name
         self.email = email
 

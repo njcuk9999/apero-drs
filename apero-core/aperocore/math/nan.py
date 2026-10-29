@@ -147,7 +147,8 @@ def nanchebyfit(xvector: np.ndarray, yvector: np.ndarray, deg: int,
 
 
 def nanpolyfit(xvector: np.ndarray, yvector: np.ndarray, deg: int,
-               weight: Union[np.ndarray, None] = None, **kwargs) -> Any:
+               weight: Union[np.ndarray, None] = None,
+               **kwargs: Any) -> Any:
     """
     A polyfit that takes into account NaNs in the array (masks them)
 

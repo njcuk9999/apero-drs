@@ -380,6 +380,7 @@ class UsersAdapter(Adapter):
                    'and emails. The root (setup) admin is never synced.')
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export non-root accounts without volatile login fields."""
         ts = mtime(auth.USERS_FILE)
         out = dict()
         for username, info in auth.load_users().items():
@@ -398,6 +399,7 @@ class UsersAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply account changes while retaining local volatile fields."""
         errors = dict()
         users = auth.load_users()
         for key, data in upserts.items():
@@ -431,6 +433,7 @@ class UserFilesAdapter(Adapter):
 
     @staticmethod
     def _path(username: str, rel: str) -> Path:
+        """Resolve a supported user file to its local storage path."""
         # basket_funcs keeps its own users directory
         if rel == 'basket.json':
             return basket_funcs.users_dir() / username / rel
@@ -438,6 +441,7 @@ class UserFilesAdapter(Adapter):
 
     @staticmethod
     def _check(username: str, rel: str) -> None:
+        """Reject user-file paths outside the supported file set."""
         safe_name(username)
         if rel in USER_FILES:
             return
@@ -449,6 +453,7 @@ class UserFilesAdapter(Adapter):
         raise ValueError(f'Unsupported user file: {rel!r}')
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export supported files for users other than the root admin."""
         out = dict()
         for username in auth.load_users():
             if username == ctx.root or not _SAFE_NAME.match(username):
@@ -468,6 +473,7 @@ class UserFilesAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Safely write or remove supported non-root user files."""
         errors = dict()
         for key, text in upserts.items():
             username, rel = split_key(key, 2)
@@ -503,6 +509,7 @@ class ApiTokensAdapter(Adapter):
     default_enabled = False
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export personal tokens for users other than the root admin."""
         out = dict()
         with api_tokens._lock:
             tokens = api_tokens._load()
@@ -518,6 +525,7 @@ class ApiTokensAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Replace each user's token, rejecting root and malformed tokens."""
         errors = dict()
         with api_tokens._lock:
             tokens = api_tokens._load()
@@ -554,6 +562,7 @@ class ScienceGroupsAdapter(Adapter):
     description = 'Science group membership and RUN ID assignments.'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export science-group membership for configured instruments."""
         out = dict()
         for inst in instruments():
             ts = mtime(auth._sci_groups_file(inst))
@@ -564,6 +573,7 @@ class ScienceGroupsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply science-group changes only for configured instruments."""
         errors = dict()
         known = set(instruments())
         changes = _group_by_first(upserts, deletes, 2, known, errors)
@@ -585,6 +595,7 @@ class RunIdsAdapter(Adapter):
     description = 'PI names and comments for every RUN ID.'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export RUN ID catalogue records for configured instruments."""
         out = dict()
         for inst in instruments():
             path = ctx.ari_dir / 'apero-assets' / 'run_ids'
@@ -597,6 +608,7 @@ class RunIdsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply RUN ID changes using the catalogue's atomic transaction."""
         errors = dict()
         known = set(instruments())
         changes = _group_by_first(upserts, deletes, 2, known, errors)
@@ -619,6 +631,7 @@ class InstrumentDataAdapter(Adapter):
                    'definitions and link collections.')
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export instrument calendar events, settings, and named links."""
         out = dict()
         for inst in instruments():
             cal_path = Path(user_data.INSTRUMENTS_DIR) / f'{inst}_calendar.yaml'
@@ -652,6 +665,7 @@ class InstrumentDataAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply instrument calendar and link changes by record kind."""
         errors = dict()
         known = set(instruments())
         changes = _group_by_first(upserts, deletes, 3, known, errors)
@@ -700,9 +714,11 @@ class AstrometricsAdapter(Adapter):
 
     @staticmethod
     def _root(ctx: SyncContext) -> Path:
+        """Return the local astrometric asset directory."""
         return ctx.ari_dir / 'apero-assets' / 'astrometrics'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export astrometry entries and per-object history lines."""
         root = self._root(ctx)
         out = dict()
         for status in ASTROM_STATUS:
@@ -728,6 +744,7 @@ class AstrometricsAdapter(Adapter):
         return out
 
     def merge(self, key: str, local: Any, remote: Any) -> Optional[Any]:
+        """Merge history by union; leave catalogue entries to conflict rules."""
         if split_key(key, 2)[0] != 'history':
             return None
         # history is append-only: keep the union, ordered by timestamp
@@ -736,6 +753,7 @@ class AstrometricsAdapter(Adapter):
             seen.setdefault(line, None)
 
         def _order(line: str) -> str:
+            """Extract a history timestamp for stable ordering."""
             try:
                 return str(json.loads(line).get('timestamp') or '')
             except ValueError:
@@ -745,6 +763,7 @@ class AstrometricsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply astrometry entries and history after validating their keys."""
         errors = dict()
         root = self._root(ctx)
         for key in list(upserts) + list(deletes):
@@ -814,30 +833,36 @@ class RejectionListAdapter(Adapter):
     HISTORY_LOCK = 'rejection_list.lock'
 
     @staticmethod
-    def _mod():
+    def _mod() -> Any:
+        """Load the APERO rejection module used by this adapter."""
         from apero.core import drs_rejection
         return drs_rejection
 
     @staticmethod
     def _assets(ctx: SyncContext) -> Path:
+        """Return the local APERO assets directory."""
         return ctx.ari_dir / 'apero-assets'
 
     def _csv(self, ctx: SyncContext, asset_dir: str) -> Path:
+        """Resolve an asset's rejection CSV path after name validation."""
         mod = self._mod()
         return (self._assets(ctx) / safe_name(asset_dir) / mod.REJECT_SUBDIR
                 / mod.REJECT_CSV)
 
-    def _lock(self, path: Path):
+    def _lock(self, path: Path) -> Any:
+        """Create the APERO file lock associated with a rejection CSV."""
         mod = self._mod()
         return mod._FileLock(str(path.parent / mod.LOCK_SUBDIR
                                  / 'reject.lock'))
 
     def _read(self, path: Path) -> List[Dict[str, Any]]:
+        """Read rejection CSV rows as JSON-compatible dictionaries."""
         df = self._mod()._read_csv(str(path))
         # to_json maps NaN -> null and numpy scalars -> plain JSON types
         return json.loads(df.to_json(orient='records'))
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export rejection rows and shared append-only history."""
         mod = self._mod()
         out = dict()
         pattern = f'*/{mod.REJECT_SUBDIR}/{mod.REJECT_CSV}'
@@ -861,6 +886,7 @@ class RejectionListAdapter(Adapter):
         return out
 
     def merge(self, key: str, local: Any, remote: Any) -> Optional[Any]:
+        """Merge rejection history by identity, preferring resolved copies."""
         if split_key(key, 3)[0] != 'history':
             return None
         # union by record identity; a resolved copy beats an unresolved one
@@ -873,6 +899,7 @@ class RejectionListAdapter(Adapter):
                 merged[ident] = line
 
         def _order(line: str) -> str:
+            """Extract a history timestamp for stable ordering."""
             try:
                 return str(json.loads(line).get('timestamp') or '')
             except (ValueError, AttributeError):
@@ -882,6 +909,7 @@ class RejectionListAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply rejection row changes and replace shared history."""
         import pandas as pd
 
         mod = self._mod()
@@ -917,6 +945,7 @@ class RejectionListAdapter(Adapter):
 
     def _apply_history(self, ctx: SyncContext,
                        lines: Optional[List[str]]) -> None:
+        """Atomically replace or remove the shared rejection history file."""
         mod = self._mod()
         path = self._assets(ctx).joinpath(*self.HISTORY)
         with mod._FileLock(str(path.parent / self.HISTORY_LOCK)):
@@ -938,6 +967,7 @@ class ChecksPolicyAdapter(Adapter):
     LIST_KEYS = ('ignored_checks', 'override_allowed')
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export shared checks lists and instrument exclusions."""
         path = apero_checks.config_path(ctx.ari_dir)
         if not path.exists():
             return dict()
@@ -956,6 +986,7 @@ class ChecksPolicyAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply checks policy records while keeping the checks root local."""
         errors = dict()
         # copy: load_config returns the shared cached dict
         cfg = json.loads(json.dumps(apero_checks.load_config(ctx.ari_dir)))
@@ -1004,6 +1035,7 @@ class ObjectCommentsAdapter(Adapter):
     description = 'Comments left on object pages.'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export comments keyed by profile, object, and comment ID."""
         out = dict()
         base = object_comments._ari_dir()
         for pid in _shared_profiles(base, 'object_comments.yaml'):
@@ -1020,6 +1052,7 @@ class ObjectCommentsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply profile object-comment changes and preserve creation order."""
         errors = dict()
         changes = _group_by_first(upserts, deletes, 3, None, errors)
         for pid, (ups, dels) in changes.items():
@@ -1048,6 +1081,7 @@ class ObjectGroupsAdapter(Adapter):
     description = 'Named object groups and their summary-table settings.'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export object groups and their profile-level settings."""
         out = dict()
         base = object_groups._ari_dir()
         for pid in _shared_profiles(base, 'object_groups.yaml'):
@@ -1066,6 +1100,7 @@ class ObjectGroupsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply object-group and settings changes for each profile."""
         errors = dict()
         changes = _group_by_first(upserts, deletes, 3, None, errors)
         for pid, (ups, dels) in changes.items():
@@ -1094,6 +1129,7 @@ class IssuesAdapter(Adapter):
                    'each server; issues are matched by a sync uid.')
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export monitor issues with server-local numeric IDs removed."""
         out = dict()
         path = ctx.ari_dir / 'shared' / 'issues.yaml'
         ts_file = mtime(path)
@@ -1117,6 +1153,7 @@ class IssuesAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply issues by sync UID and allocate IDs local to this server."""
         with issues._LOCK:
             rows = issues._load(ctx.ari_dir)
             by_uid = {r.get('sync_uid'): r for r in rows}
@@ -1149,6 +1186,7 @@ class KnownErrorsAdapter(Adapter):
     description = 'The known-errors catalogue used by the monitor portal.'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export the known-error catalogue keyed by its stable IDs."""
         out = dict()
         for row in known_errors.list_known_errors_raw():
             ts = max_ts(row.get('updated_at'), row.get('date_reported'))
@@ -1158,6 +1196,7 @@ class KnownErrorsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Write valid known-error records and remove deleted records."""
         errors = dict()
         for key, data in upserts.items():
             error_id = split_key(key, 1)[0]
@@ -1187,6 +1226,7 @@ class DbAccessAdapter(Adapter):
     description = 'Which groups may query which tables/columns per profile.'
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export profile database-access rules with their update times."""
         out = dict()
         ts_file = mtime(auth.DB_ACCESS_FILE)
         for inst, profiles in (auth.load_db_access() or {}).items():
@@ -1197,6 +1237,7 @@ class DbAccessAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply profile database-access rules."""
         data = auth.load_db_access() or dict()
         for key, rule in upserts.items():
             inst, pid = split_key(key, 2)
@@ -1217,6 +1258,7 @@ class VaultAdapter(Adapter):
     default_enabled = False
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export shared vault entries without constraining their payloads."""
         out = dict()
         for entry in vault_store._load_raw().get('entries', []):
             if not entry.get('id'):
@@ -1228,6 +1270,7 @@ class VaultAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply shared vault entry updates and removals."""
         raw = vault_store._load_raw()
         entries = {e.get('id'): e for e in raw.get('entries', [])}
         for key, entry in upserts.items():
@@ -1250,6 +1293,7 @@ class AperoProfilesAdapter(Adapter):
     needs_setup = True
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export non-temporary profiles without host-local path settings."""
         out = dict()
         ts = mtime(auth.APERO_PROFILES_FILE)
         kwargs = dict(hydrate=False, include_temporary=True)
@@ -1265,6 +1309,7 @@ class AperoProfilesAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply profiles while preserving local paths and enabled state."""
         kwargs = dict(hydrate=False, include_temporary=True)
         profiles = auth.load_apero_profiles(**kwargs)
         for key, data in upserts.items():
@@ -1302,6 +1347,7 @@ class AsyncSettingsAdapter(Adapter):
     default_enabled = False
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export only enabled state and frequency for syncable tasks."""
         out = dict()
         ts = mtime(auth.ASYNC_TASKS_FILE)
         for scope, rows in auth.load_async_tasks().items():
@@ -1316,6 +1362,7 @@ class AsyncSettingsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply settings only to tasks already configured on this server."""
         errors = dict()
         tasks = auth.load_async_tasks()
         for key, data in upserts.items():
@@ -1344,6 +1391,7 @@ class EmailAdapter(Adapter):
     default_enabled = False
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export SMTP settings, including the resolved password value."""
         path = email_backend._get_email_config_path()
         if not path.exists():
             return dict()
@@ -1354,6 +1402,7 @@ class EmailAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Save incoming SMTP configuration through the email backend."""
         for data in upserts.values():
             # save_email_config pops and stores smtp_password itself
             email_backend.save_email_config(dict(data))
@@ -1372,6 +1421,7 @@ class SshKeysAdapter(Adapter):
     default_enabled = False
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export locally stored private SSH keys."""
         out = dict()
         folder = sshfs_backend._get_ssh_keys_dir()
         for path in sorted(folder.glob('*.key')):
@@ -1381,6 +1431,7 @@ class SshKeysAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Write validated SSH keys with restrictive file permissions."""
         errors = dict()
         folder = sshfs_backend._get_ssh_keys_dir()
         for key, text in upserts.items():
@@ -1409,6 +1460,7 @@ class SshfsMountsAdapter(Adapter):
     needs_setup = True
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export SSHFS mounts with host-specific fields kept local."""
         out = dict()
         path = sshfs_backend._get_sshfs_config_path()
         ts = mtime(path)
@@ -1421,6 +1473,7 @@ class SshfsMountsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply SSHFS mount records while preserving local mount settings."""
         cfg = sshfs_backend.load_sshfs_config()
         mounts = {m.get('name'): m for m in cfg.get('mounts', [])}
         for key, data in upserts.items():
@@ -1449,6 +1502,7 @@ class DbDefinitionsAdapter(Adapter):
     needs_setup = True
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export database and tunnel definitions without local fields."""
         out = dict()
         ts = mtime(auth.DB_TUNNELS_FILE)
         data = auth.load_db_tunnels() or dict()
@@ -1462,6 +1516,7 @@ class DbDefinitionsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply tunnel and database records while retaining local fields."""
         errors = dict()
         data = auth.load_db_tunnels() or dict()
         sections = dict(tunnel='tunnels', local='local_databases')
@@ -1548,6 +1603,7 @@ class NotificationsAdapter(Adapter):
     )
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export notification tables while excluding root-owned records."""
         notifications._init_schema()
         out = dict()
         con = notifications._connect()
@@ -1566,6 +1622,7 @@ class NotificationsAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply notification-table changes after validating table and owner."""
         errors = dict()
         notifications._init_schema()
         con = notifications._connect()
@@ -1612,6 +1669,7 @@ class ScheduleAdapter(Adapter):
 
     @staticmethod
     def _connect(ctx: SyncContext) -> sqlite3.Connection:
+        """Open the schedule DB and assign stable IDs to existing entries."""
         con = schedule._connect(ctx.ari_dir)
         # entries only have local autoincrement ids: add a global uid
         cols = _sqlite_columns(con, 'schedule_entries')
@@ -1627,6 +1685,7 @@ class ScheduleAdapter(Adapter):
         return con
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export schedule tables by natural key, not local row ID."""
         out = dict()
         with schedule._LOCK:
             con = self._connect(ctx)
@@ -1644,6 +1703,7 @@ class ScheduleAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Apply schedule table changes using their natural keys."""
         errors = dict()
         with schedule._LOCK:
             con = self._connect(ctx)
@@ -1695,13 +1755,16 @@ class TaskFilesAdapter(Adapter):
 
     @staticmethod
     def _root(ctx: SyncContext) -> Path:
+        """Return the local derived-task output directory."""
         return ctx.ari_dir / 'tasks'
 
     @staticmethod
     def _cache_path() -> Path:
+        """Return the task-file hash cache path."""
         return store.sync_dir() / 'task_files_hashes.json'
 
     def _check(self, ctx: SyncContext, rel: str) -> Path:
+        """Validate a relative task-output path and resolve it locally."""
         parts = rel.split('/')
         for part in parts:
             safe_name(part)
@@ -1710,6 +1773,7 @@ class TaskFilesAdapter(Adapter):
         return self._root(ctx).joinpath(*parts)
 
     def export(self, ctx: SyncContext) -> Dict[str, Rec]:
+        """Export eligible JSON task outputs using cached content hashes."""
         root = self._root(ctx)
         if not root.is_dir():
             return dict()
@@ -1742,6 +1806,7 @@ class TaskFilesAdapter(Adapter):
         return out
 
     def load(self, ctx: SyncContext, keys: Iterable[str]) -> Dict[str, Any]:
+        """Read requested task outputs as text for transfer to a peer."""
         out = dict()
         for key in keys:
             rel = split_key(key, 1)[0]
@@ -1752,6 +1817,7 @@ class TaskFilesAdapter(Adapter):
 
     def apply(self, ctx: SyncContext, upserts: Dict[str, Any],
               deletes: List[str]) -> Dict[str, str]:
+        """Write validated task-output files; deletions are not propagated."""
         errors = dict()
         for key, text in upserts.items():
             try:

@@ -79,7 +79,7 @@ DEFAULT_RECENT_HOURS = 48.0
 class AperoCheckTask(apero_async.AperoAsyncTask):
     """Run APERO checks and write monitor-portal YAML files."""
 
-    def __init__(self, status='pending'):
+    def __init__(self, status: str = 'pending') -> None:
         # Set the task name shown in the UI.
         name = 'APERO Check Task'
         # Set the task description shown in the UI.
@@ -1259,7 +1259,9 @@ def _run_single_obsdir_check(check_key: str,
     return result
 
 
-def _get_db_params_safe(aparams: dict, tlog) -> dict:
+def _get_db_params_safe(
+    aparams: dict, tlog: Optional[Any]
+) -> dict:
     """Resolve DB params and fall back to an empty mapping on failure."""
     try:
         return apero_async.get_db_params(aparams)

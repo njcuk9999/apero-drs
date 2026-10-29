@@ -70,7 +70,8 @@ FILTERS = [
 class AperoObjectQueryTask(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
 
-    def __init__(self, status="pending"):
+    def __init__(self, status: str = "pending") -> None:
+        """Initialize the task with its starting status."""
         name = "APERO Object Query Task"
         description = (
             "Generate the object query for the "
@@ -81,7 +82,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
     # -----------------------------------------------------------------
     # Main entry point
     # -----------------------------------------------------------------
-    def run_job(self, params: Dict[str, Any]):
+    def run_job(self, params: Dict[str, Any]) -> None:
         """Run per-object DB+header queries for every configured profile.
 
         Required keys in *params*:
@@ -144,7 +145,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
     # -----------------------------------------------------------------
     # Per-profile processing
     # -----------------------------------------------------------------
-    def _run_profile(self, ctx: dict, a_it: int, profile_name: str):
+    def _run_profile(
+        self, ctx: Dict[str, Any], a_it: int, profile_name: str,
+    ) -> None:
         """Process one APERO profile: skip check, query objects, run jobs."""
         tlog = ctx["tlog"]
         stop_event = ctx["stop_event"]
@@ -227,7 +230,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
     # Helpers: init, skip check, object loop, reporting, persistence
     # -----------------------------------------------------------------
     @staticmethod
-    def _init_run_context(params: Dict[str, Any]) -> dict:
+    def _init_run_context(
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """Extract commonly used values from *params* into a context dict."""
         task_config = params.get("TASK_CONFIG", {})
         filters = _normalize_filters(task_config.get("filters", {}))
@@ -240,6 +245,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         task_logger = params.get("TASK_LOGGER")
 
         def tlog(message: str) -> None:
+            """Send a progress message when a task logger is available."""
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -260,7 +266,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         }
 
     @staticmethod
-    def _check_db_skip(aparams, force_run):
+    def _check_db_skip(
+        aparams: Dict[str, Any], force_run: bool,
+    ) -> tuple[Dict[str, Any], bool, str]:
         """Return (db_updates, should_skip, reason)."""
         db_updates = {}
         try:
@@ -276,11 +284,11 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 
     def _query_object_names(
         self,
-        aparams,
-        profile_name,
-        tlog,
+        aparams: Dict[str, Any],
+        profile_name: str,
+        tlog: Any,
         task_filters: Optional[Dict[str, str]] = None,
-    ):
+    ) -> tuple[list[str], float]:
         """Query distinct object names from the file index table."""
         obj_query = _construct_obj_query(aparams)
         db_params = apero_async.get_db_params(aparams)
@@ -323,7 +331,13 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             names.append(name)
         return names, elapsed
 
-    def _run_object_loop(self, ctx, aparams, profile_name, object_names):
+    def _run_object_loop(
+        self,
+        ctx: Dict[str, Any],
+        aparams: Dict[str, Any],
+        profile_name: str,
+        object_names: list[str],
+    ) -> tuple[list[float], list[str], int]:
         """Execute per-object jobs, returning timing, files, header count."""
         tlog = ctx["tlog"]
         stop_event = ctx["stop_event"]
@@ -364,15 +378,15 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 
     def _run_parallel(
         self,
-        aparams,
-        profile_name,
-        object_names,
-        mp_cfg,
-        tlog,
-        stop_event,
-        total,
-        force_run,
-    ):
+        aparams: Dict[str, Any],
+        profile_name: str,
+        object_names: list[str],
+        mp_cfg: Dict[str, Any],
+        tlog: Any,
+        stop_event: Any,
+        total: int,
+        force_run: bool,
+    ) -> tuple[list[float], list[str], int]:
         """Run object jobs in parallel using a configured executor."""
         tlog(
             f"Profile {profile_name}: parallel object loop "
@@ -468,14 +482,14 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 
     def _run_serial(
         self,
-        aparams,
-        profile_name,
-        object_names,
-        tlog,
-        stop_event,
-        total,
-        force_run,
-    ):
+        aparams: Dict[str, Any],
+        profile_name: str,
+        object_names: list[str],
+        tlog: Any,
+        stop_event: Any,
+        total: int,
+        force_run: bool,
+    ) -> tuple[list[float], list[str], int]:
         """Run object jobs serially."""
         tlog(f"Profile {profile_name}: serial mode.")
         timing = []
@@ -505,12 +519,12 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 
     def _report_profile_results(
         self,
-        profile_name,
-        obj_query_time,
-        timing_per_obj,
-        header_rows_total,
-        tlog,
-    ):
+        profile_name: str,
+        obj_query_time: float,
+        timing_per_obj: list[float],
+        header_rows_total: int,
+        tlog: Any,
+    ) -> None:
         """Append summary markdown and log final profile stats."""
         ave = (
             sum(timing_per_obj) / len(timing_per_obj) if timing_per_obj else 0.0
@@ -529,8 +543,13 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         )
 
     def _persist_db_updates(
-        self, aparams, instrument, profile_name, db_updates, tlog
-    ):
+        self,
+        aparams: Dict[str, Any],
+        instrument: str,
+        profile_name: str,
+        db_updates: Dict[str, Any],
+        tlog: Any,
+    ) -> None:
         """Persist DB fingerprint and invalidate stale plot cache."""
         if not db_updates:
             return
@@ -573,7 +592,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         except Exception:
             pass
 
-    def test_query(self, params: Dict[str, Any], objnames: str):
+    def test_query(self, params: Dict[str, Any], objnames: str) -> None:
         """
         Create a file that can be used to populate the object table in the
         APERO reduction interface.
@@ -671,7 +690,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 # =============================================================================
 # Define main functions (used in run_job)
 # =============================================================================
-def _resolve_objects_dir(aparams: Dict[str, Any], profile_name: str) -> Path:
+def _resolve_objects_dir(
+    aparams: Dict[str, Any], profile_name: str,
+) -> Path:
     """Return the per-profile objects output directory."""
     instrument = aparams.get("general", {}).get(
         "INSTRUMENT", aparams.get("INSTRUMENT", "unknown")
@@ -689,8 +710,22 @@ def _resolve_objects_dir(aparams: Dict[str, Any], profile_name: str) -> Path:
 # Define functions
 # =============================================================================
 def object_query_db(
-    aparams, objname, apero_profile_name, return_query: bool = False
+    aparams: Dict[str, Any],
+    objname: str,
+    apero_profile_name: str,
+    return_query: bool = False,
 ) -> dict[str, Any]:
+    """Query APERO tables and optionally save per-object file tables.
+
+    Args:
+        aparams: Hydrated APERO profile parameters.
+        objname: Object name to query; an empty name returns empty results.
+        apero_profile_name: Profile name used for output files and metadata.
+        return_query: Print query strings instead of executing them.
+
+    Returns:
+        Mapping with ``queries``, ``timings``, and ``results`` entries.
+    """
     if not objname:
         outputs = dict()
         outputs["queries"] = dict()
@@ -859,7 +894,9 @@ def _parse_objname_list(raw_value: Any) -> set[str]:
     return values
 
 
-def _make_executor(backend: str, ncores: int, start_method: str, tlog):
+def _make_executor(
+    backend: str, ncores: int, start_method: str, tlog: Any,
+) -> tuple[Any, str]:
     """Build executor and return (executor, mode) with fallback to threads."""
     if backend == "processes":
         try:
@@ -969,7 +1006,9 @@ def _extract_raw_last_modified_fingerprint(raw_rows: Any) -> str:
     return f"{max(values)}:{len(values)}"
 
 
-def _raw_change_query(rparams, objname: str) -> str:
+def _raw_change_query(
+    rparams: Dict[str, Any], objname: str,
+) -> str:
     """Construct a compact per-object raw change fingerprint query."""
     objname_safe = objname.replace("'", "''")
     scitype_list = ", ".join([
@@ -991,7 +1030,9 @@ def _raw_change_query(rparams, objname: str) -> str:
     )
 
 
-def _raw_change_fingerprint(aparams, objname: str) -> str:
+def _raw_change_fingerprint(
+    aparams: Dict[str, Any], objname: str,
+) -> str:
     """Return a stable raw-change fingerprint from a compact DB query."""
     rparams = _check_required(aparams)
     query = _raw_change_query(rparams, objname)
@@ -1097,8 +1138,23 @@ def _needs_lbl_security_rebuild(local_dir: Path, objname: str) -> bool:
     return False
 
 
-def object_query_headers(aparams, objname, apero_profile_name, outputs):
+def object_query_headers(
+    aparams: Dict[str, Any],
+    objname: str,
+    apero_profile_name: str,
+    outputs: Dict[str, Any],
+) -> float:
+    """Read configured FITS cards and save one object's header table.
 
+    Args:
+        aparams: Hydrated APERO profile parameters.
+        objname: Object name whose file headers are collected.
+        apero_profile_name: Profile name used for output files and metadata.
+        outputs: Query results grouped by file kind.
+
+    Returns:
+        Time spent reading headers, in seconds.
+    """
     # get results
     results = outputs["results"]
     # output table
@@ -1194,7 +1250,19 @@ def object_query_headers(aparams, objname, apero_profile_name, outputs):
 # -------------------------------------------------------------------------
 # Define helper functions
 # -------------------------------------------------------------------------
-def _construct_obj_query(aparams):
+def _construct_obj_query(aparams: Dict[str, Any]) -> str:
+    """Build the distinct raw-object query for a profile.
+
+    Args:
+        aparams: Profile settings containing science types and file-index
+            table name.
+
+    Returns:
+        SQL selecting distinct raw object names.
+
+    Raises:
+        ValueError: If the file-index table name is missing.
+    """
     general = aparams.get("general", {})
     if not isinstance(general, dict):
         general = {}
@@ -1226,13 +1294,26 @@ def _construct_obj_query(aparams):
 
 
 def _file_col_query(
-    rparams,
-    objname,
+    rparams: Dict[str, Any],
+    objname: str,
     block_kind: Optional[str] = None,
     fiber: Optional[str] = None,
-    scitype: Optional[str] = None,
+    scitype: Any = None,
     output: Optional[str] = None,
 ) -> str:
+    """Build a file-index query for one object and optional filters.
+
+    Args:
+        rparams: Required table names and science settings.
+        objname: Object name to select.
+        block_kind: Optional file block kind filter.
+        fiber: Optional fiber filter.
+        scitype: Whether to apply the profile's science-type filter.
+        output: Optional output-type filter.
+
+    Returns:
+        SQL query string for the selected file rows.
+    """
     objname_safe = objname.replace("'", "''")
     # deal with optional conditions
     condition = []
@@ -1274,7 +1355,27 @@ def _file_col_query(
     return rquery
 
 
-def _file_col_cmd(aparams, rquery, apero_profile_name, objname, fkind, outputs):
+def _file_col_cmd(
+    aparams: Dict[str, Any],
+    rquery: str,
+    apero_profile_name: str,
+    objname: str,
+    fkind: str,
+    outputs: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Execute a file query, backfill security fields, and store its rows.
+
+    Args:
+        aparams: Hydrated APERO profile parameters.
+        rquery: SQL statement for the file table.
+        apero_profile_name: Profile name used in saved metadata.
+        objname: Object name used to name the output file.
+        fkind: File-table kind used to label results and output.
+        outputs: Accumulated query, timing, and result mappings.
+
+    Returns:
+        Updated output mappings containing this query's rows and timing.
+    """
     db_params = apero_async.get_db_params(aparams)
     start = time.time()
     results = apero_async.database_query(db_params, rquery)
@@ -1330,15 +1431,28 @@ def _file_col_cmd(aparams, rquery, apero_profile_name, objname, fkind, outputs):
     return outputs
 
 
-def _backfill_lbl_security_fields(lbl_rows, all_rows, tfits_rows):
-    """Fill missing LBL KW_RUN_ID/KW_PI_NAME from all rows, then t.fits."""
+def _backfill_lbl_security_fields(
+    lbl_rows: Any, all_rows: Any, tfits_rows: Any,
+) -> Any:
+    """Fill missing LBL run and PI fields from matching source rows.
+
+    Args:
+        lbl_rows: LBL result rows to patch.
+        all_rows: Combined file-table rows used as the primary source.
+        tfits_rows: T.fits rows used as the fallback source.
+
+    Returns:
+        The original LBL input when it is not a non-empty list; otherwise
+        rows with missing security fields filled where a match is found.
+    """
     if not isinstance(lbl_rows, list) or not lbl_rows:
         return lbl_rows
 
     by_identifier = dict()
     by_obs_dir = dict()
 
-    def _ingest_source_rows(source_rows):
+    def _ingest_source_rows(source_rows: Any) -> None:
+        """Index source security fields by identifier and observation dir."""
         if not isinstance(source_rows, list):
             return
         for row in source_rows:
@@ -1393,7 +1507,18 @@ def _backfill_lbl_security_fields(lbl_rows, all_rows, tfits_rows):
     return patched
 
 
-def _check_required(aparams) -> Dict[str, Any]:
+def _check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract required database and science settings from a profile.
+
+    Args:
+        aparams: Hydrated APERO profile parameters.
+
+    Returns:
+        Flat mapping of table names, science fiber, and science types.
+
+    Raises:
+        ValueError: If a required profile parameter is absent.
+    """
     required_params = [
         "ASTROM_TABLENAME",
         "CALIB_TABLENAME",
@@ -1426,7 +1551,7 @@ def _check_required(aparams) -> Dict[str, Any]:
     return rparams
 
 
-def _acquire_directory_lock(directory: Path):
+def _acquire_directory_lock(directory: Path) -> Any:
     """Acquire an exclusive lock for a directory using a sidecar lock file."""
     import fcntl
 
@@ -1438,10 +1563,14 @@ def _acquire_directory_lock(directory: Path):
     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
 
     class _DirectoryLock:
-        def __enter__(self):
+        def __enter__(self) -> Any:
+            """Return the open sidecar lock file while holding its lock."""
             return lock_handle
 
-        def __exit__(self, exc_type, exc, tb):
+        def __exit__(
+            self, exc_type: Any, exc: Any, tb: Any,
+        ) -> None:
+            """Release the lock and close its sidecar file."""
             try:
                 fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
             finally:

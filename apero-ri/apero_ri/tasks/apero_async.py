@@ -14,7 +14,7 @@ import time
 from datetime import datetime, timezone
 from hashlib import sha1
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from astropy.io import fits
 
@@ -38,7 +38,15 @@ DB_UPDATE_TABLE_KEYS = (
 class AperoAsyncTask:
     """Class representing an asynchronous task in APERO RI."""
 
-    def __init__(self, name, description, status="pending"):
+    def __init__(
+        self, name: str, description: str, status: str = "pending"
+    ) -> None:
+        """Initialize task display and runtime state.
+
+        :param name: Human-readable task name.
+        :param description: Short description shown in the task interface.
+        :param status: Initial task status.
+        """
         # name and description
         self.name = name
         self.description = description
@@ -58,7 +66,7 @@ class AperoAsyncTask:
         # number of times this task has been run
         self.run_count = 0
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the task to a dictionary for JSON serialization."""
         return {
             "name": self.name,
@@ -73,7 +81,14 @@ class AperoAsyncTask:
             "run_count": self.run_count,
         }
 
-    def run_job(self, params: Dict[str, Any]):
+    def run_job(self, params: Dict[str, Any]) -> None:
+        """Run this task with its resolved parameter mapping.
+
+        Subclasses provide the task implementation.
+
+        :param params: Task inputs and runtime services.
+        :raises NotImplementedError: When a subclass has no implementation.
+        """
         raise NotImplementedError(
             "Subclasses must implement the " "run_job method."
         )
@@ -153,22 +168,17 @@ def database_query(
     params: Dict[str, Any],
     query: str,
     bind_params: Optional[Dict[str, Any]] = None,
-):
-    """
-    Execute a database query with the given parameters.
+) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+    """Execute a database query and return rows or an affected-row count.
 
-    parameters:
-    - DATABASE_MODE: str, mysql+pymysql
-    - DATABASE_HOST: str, the database host, e.g. localhost
-    - DATABASE_USER: str, the database user, e.g. root
-    - DATABASE_PASSWORD: str, the database password, e.g. password
-    - DATABASE_NAME: str, the database name to connect to
+    Connection settings are read from ``params``. Row-returning queries yield
+    a list of row dictionaries; other statements yield a ``rowcount`` mapping.
 
-    :param params: A dictionary of connection parameters for the database.
-    :param query: The SQL query string (use :name placeholders for bound values).
-    :param bind_params: Optional dict of bound parameter values for the query.
-    :return: For row-returning queries, a list of dictionaries.
-             For non-row-returning queries, a dictionary with ``rowcount``.
+    :param params: Database connection settings.
+    :param query: SQL statement using named placeholders for bound values.
+    :param bind_params: Optional mapping of values for named placeholders.
+    :returns: Query rows or a mapping containing the statement row count.
+    :raises ValueError: If required connection settings are missing.
     """
     from urllib.parse import quote_plus
 
@@ -206,7 +216,12 @@ def database_query(
         engine.dispose()
 
 
-def get_db_params(aparams: Dict[str, Any]):
+def get_db_params(aparams: Dict[str, Any]) -> Dict[str, Any]:
+    """Build database settings from a profile and saved definitions.
+
+    :param aparams: APERO profile parameters, including optional DB config.
+    :returns: Flattened connection settings for database helpers.
+    """
     db_cfg = aparams.get("database", {})
     if not isinstance(db_cfg, dict):
         db_cfg = {}
@@ -303,7 +318,15 @@ def get_db_params(aparams: Dict[str, Any]):
     return db_params
 
 
-def fill_dict_null(mykeys, mydict: Optional[dict] = None):
+def fill_dict_null(
+    mykeys: Iterable[str], mydict: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Set each named mapping entry to ``None`` and return the mapping.
+
+    :param mykeys: Keys to initialize.
+    :param mydict: Optional mapping to update in place.
+    :returns: The supplied mapping or a new mapping.
+    """
     # deal with no input dictionary
     if mydict is None:
         mydict = dict()
@@ -313,7 +336,17 @@ def fill_dict_null(mykeys, mydict: Optional[dict] = None):
     return mydict
 
 
-def get_hdr_key(hdr: fits.Header, keyname: str, hkey: Dict[str, Any]):
+def get_hdr_key(
+    hdr: fits.Header, keyname: str, hkey: Dict[str, Any]
+) -> Any:
+    """Read and cast one configured FITS header keyword.
+
+    :param hdr: FITS header to inspect.
+    :param keyname: Logical name used in missing-key error messages.
+    :param hkey: Keyword configuration containing card name and data type.
+    :returns: The cast header value, or ``None`` when the card is absent.
+    :raises ValueError: If reading or casting the header value fails.
+    """
     header_key = hkey.get("key", "Unknown")
     dtype = hkey.get("dtype", "str")
     # try to open and type cast header key
@@ -970,18 +1003,14 @@ def check_profile_paths_accessible(
 
 def save_results(
     filename: Path, results: Any, metadata: Optional[Dict[str, Any]] = None
-):
-    """
-    Save results to a file. This can be used to store results of a task for
-    later retrieval by the UI.
+) -> None:
+    """Save task results and metadata as an atomically replaced JSON file.
 
-    :param filename: The path to the file where results should be saved.
-    :param results: The results data to save (e.g. list of dicts, or any
-                    serializable data).
-    :param metadata: Optional metadata dictionary stored with results.
+    :param filename: Destination path for the JSON document.
+    :param results: JSON-compatible result data.
+    :param metadata: Optional task metadata stored beside the results.
     """
-
-    def _json_default(value: Any):
+    def _json_default(value: Any) -> Any:
         """Fallback serializer for common non-JSON-native values."""
         if isinstance(value, Path):
             return str(value)

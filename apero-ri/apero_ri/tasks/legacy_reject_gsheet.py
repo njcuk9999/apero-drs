@@ -62,6 +62,7 @@ _INSTRUMENT_TAB_MAP = {
 # Define helpers
 # =============================================================================
 def _normalize_identifier(value: Any) -> str:
+    """Normalize a rejection identifier by trimming whitespace and suffix."""
     text = str(value or '').strip()
     if text.endswith('.fits'):
         text = text[:-5]
@@ -69,6 +70,7 @@ def _normalize_identifier(value: Any) -> str:
 
 
 def _as_bool(value: Any) -> bool:
+    """Interpret common affirmative task-configuration values as True."""
     if isinstance(value, bool):
         return value
     text = str(value or '').strip().lower()
@@ -76,6 +78,7 @@ def _as_bool(value: Any) -> bool:
 
 
 def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """Load the configured OAuth JSON object from the ARI admin directory."""
     secret_name = str(
         task_cfg.get('google_secret_name', DEFAULT_GOOGLE_SECRET_NAME)
         or DEFAULT_GOOGLE_SECRET_NAME
@@ -100,7 +103,8 @@ def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
 
 def _open_worksheet(payload: Dict[str, Any],
                     sheet_id: str,
-                    sheet_name: str):
+                    sheet_name: str) -> Any:
+    """Authorize Google access and open the requested worksheet."""
     import gspread
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -123,7 +127,8 @@ def _open_worksheet(payload: Dict[str, Any],
     return spreadsheet.worksheet(sheet_name)
 
 
-def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
+def _sheet_to_dataframe(worksheet: Any) -> pd.DataFrame:
+    """Read worksheet records into a dataframe with rejection columns."""
     rows = worksheet.get_all_records(default_blank='')
     if not rows:
         return pd.DataFrame(
@@ -133,7 +138,10 @@ def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
+def _write_dataframe_to_sheet(
+    worksheet: Any, dataframe: pd.DataFrame
+) -> None:
+    """Replace worksheet contents with the dataframe header and rows."""
     worksheet.clear()
     header = dataframe.columns.tolist()
     rows = dataframe.fillna('').values.tolist()
@@ -143,7 +151,8 @@ def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
 
 
 def _normalize_reject_df(dataframe: pd.DataFrame,
-                         mod) -> pd.DataFrame:
+                         mod: Any) -> pd.DataFrame:
+    """Normalize columns, identifiers, timestamps, and duplicate rows."""
     if dataframe is None or len(dataframe.columns) == 0:
         frame = pd.DataFrame(columns=mod.CSV_COLUMNS)
     else:
@@ -235,14 +244,15 @@ def _pick_newest_row(
 
 def _merge_reject_frames(local_df: pd.DataFrame,
                          sheet_df: pd.DataFrame,
-                         mod,
-                         progress_cb=None) -> Tuple[
+                         mod: Any,
+                         progress_cb: Any = None) -> Tuple[
                              pd.DataFrame,
                              int,
                              int,
                              List[str],
                              List[str],
                          ]:
+    """Merge reject rows by identifier using their latest available times."""
     local_map = {
         _normalize_identifier(row[mod.ID_COLUMN]): dict(row)
         for row in local_df.to_dict(orient='records')
@@ -325,6 +335,7 @@ def _merge_reject_frames(local_df: pd.DataFrame,
 
 
 def _sheet_name_map(task_cfg: Dict[str, Any]) -> Dict[str, str]:
+    """Apply configured worksheet names to the supported instrument tabs."""
     user_map = task_cfg.get('sheet_names')
     out = dict(_INSTRUMENT_TAB_MAP)
     if isinstance(user_map, dict):
@@ -343,6 +354,7 @@ class LegacyRejectGSheetTask(apero_async.AperoAsyncTask):
     """Bi-directional sync between ARI reject CSVs and legacy sheet tabs."""
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the scheduled legacy rejection sync task."""
         name = 'Legacy Reject GSheet Sync'
         description = (
             'Sync legacy v0.7 reject Google Sheet tabs with ARI reject '
@@ -351,6 +363,7 @@ class LegacyRejectGSheetTask(apero_async.AperoAsyncTask):
         super().__init__(name, description, status)
 
     def run_job(self, params: Dict[str, Any]) -> None:
+        """Merge legacy rejection tabs with local instrument CSV files."""
         task_cfg = dict(params.get('TASK_CONFIG') or {})
         dry_run = _as_bool(task_cfg.get('DRY_RUN', task_cfg.get('dry_run')))
         local_data_dir = Path(
@@ -361,6 +374,7 @@ class LegacyRejectGSheetTask(apero_async.AperoAsyncTask):
         task_logger = params.get('TASK_LOGGER')
 
         def tlog(message: str) -> None:
+            """Forward task progress when a logger is available."""
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -414,6 +428,7 @@ class LegacyRejectGSheetTask(apero_async.AperoAsyncTask):
             progress_mark = [0]
 
             def merge_progress(done: int, total: int) -> None:
+                """Update progress and periodically log merge completion."""
                 if total <= 0:
                     self.subprogress = 1.0
                     return

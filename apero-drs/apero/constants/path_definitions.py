@@ -52,7 +52,8 @@ class BlockPath:
     argname: str = None
 
     def __init__(self, params: ParamDict, name: str, key: str,
-                 indexing: bool, logging: bool, check: bool = True):
+                 indexing: bool, logging: bool,
+                 check: bool = True) -> None:
         """
         Construct the block path
 
@@ -63,6 +64,7 @@ class BlockPath:
         :param indexing: bool, if True this block is indexed
         :param logging: bool, if True this block is logged
         :param check: if True raises error when path does not exist
+        :return: None. Initializes this block path.
         """
         # convert block path to real path (remove symbolic links)
         try:
@@ -115,12 +117,12 @@ class BlockPath:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores the instance state.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -132,12 +134,13 @@ class RawPath(BlockPath):
     key: str = 'PATH.RAW'
     argname: str = 'rawdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
         Construct the raw block path (input data)
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the raw-data path.
         """
         super().__init__(params, self.name, self.key, indexing=True,
                          logging=False, check=check)
@@ -151,12 +154,13 @@ class TmpPath(BlockPath):
     key: str = 'PATH.PP'
     argname: str = 'tmpdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the temporary-processing block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the temporary-processing path.
         """
         super().__init__(params, self.name, self.key, indexing=True,
                          logging=True, check=check)
@@ -170,12 +174,13 @@ class ReducedPath(BlockPath):
     key: str = 'PATH.RED'
     argname: str = 'reddir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the reduced-data block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the reduced-data path.
         """
         super().__init__(params, self.name, self.key, indexing=True,
                          logging=True, check=check)
@@ -189,12 +194,13 @@ class CalibPath(BlockPath):
     key: str = 'PATH.CALIB'
     argname: str = 'calibdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the calibration-data block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the calibration-data path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
@@ -208,12 +214,13 @@ class TelluPath(BlockPath):
     key: str = 'PATH.TELLU'
     argname: str = 'telludir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the telluric-data block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the telluric-data path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
@@ -227,12 +234,13 @@ class OutPath(BlockPath):
     key: str = 'PATH.OUT'
     argname: str = 'outdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the output-data block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the output-data path.
         """
         super().__init__(params, self.name, self.key, indexing=True,
                          logging=False, check=check)
@@ -246,12 +254,13 @@ class OtherPath(BlockPath):
     key: str = 'PATH.OTHER'
     argname: str = 'otherdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the other-data block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the other-data path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
@@ -264,12 +273,13 @@ class LBLPath(BlockPath):
     key: str = 'PATH.LBL'
     argname: str = 'lbldir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the line-by-line reduction block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the line-by-line path.
         """
         super().__init__(params, self.name, self.key, indexing=True,
                          logging=False, check=check)
@@ -283,12 +293,13 @@ class AssetPath(BlockPath):
     key: str = 'PATH.ASSETS'
     argname: str = 'assetsdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the static-assets block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the assets path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
@@ -302,12 +313,13 @@ class PlotPath(BlockPath):
     key: str = 'PATH.PLOT'
     argname: str = 'plotdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the plotting-output block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the plotting path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
@@ -320,12 +332,13 @@ class RunPath(BlockPath):
     key: str = 'PATH.RUN'
     argname: str = 'rundir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the run-data block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the run-data path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
@@ -338,12 +351,13 @@ class LogPath(BlockPath):
     key: str = 'PATH.LOG'
     argname: str = 'logdir'
 
-    def __init__(self, params, check: bool = True):
+    def __init__(self, params: ParamDict, check: bool = True) -> None:
         """
-        Construct the raw block path (input data)
+        Construct the log-output block path.
 
         :param params: ParamDict, the parameter dictionary of constants
         :param check: if True raises error when path does not exist
+        :return: None. Initializes the log path.
         """
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)

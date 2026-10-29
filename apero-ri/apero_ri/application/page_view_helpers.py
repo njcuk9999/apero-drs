@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import threading
 import time as _time
+from typing import Any
 
 import yaml
 from apero_ri.core import secret_store
@@ -72,7 +73,8 @@ _POLICY_BUILD_STATUS: dict = {
 }
 
 
-def _build_apero_checks_setup_status(data_dir=None) -> dict:
+def _build_apero_checks_setup_status(
+    data_dir: Any = None) -> dict[str, Any]:
     """Return completion state for the server-side APERO checks setup."""
     local_data_dir = Path(data_dir or "").expanduser()
     if not str(local_data_dir):
@@ -142,7 +144,9 @@ def _build_apero_checks_setup_status(data_dir=None) -> dict:
     }
 
 
-def _build_first_time_guide_steps(app, user_info, perms):
+def _build_first_time_guide_steps(
+    app: Any, user_info: dict[str, Any], perms: Any
+) -> list[dict[str, Any]]:
     """Build admin first-time guide steps with completion status."""
     health, _, _ = app._get_admin_health(
         user_info=user_info,
@@ -342,7 +346,9 @@ def _safe_mtime_ns(path_obj: Path) -> int:
         return 0
 
 
-def _collect_policy_roots(local_data_dir, checks_cfg):
+def _collect_policy_roots(
+    local_data_dir: Path, checks_cfg: dict[str, Any]
+) -> list[dict[str, Any]]:
     """Collect profile entries and their resolved checks roots."""
     out = []
     profiles_data = load_apero_profiles(hydrate=True)
@@ -381,7 +387,9 @@ def _collect_policy_roots(local_data_dir, checks_cfg):
     return out
 
 
-def _collect_root_signatures(profile_rows):
+def _collect_root_signatures(
+    profile_rows: list[dict[str, Any]],
+) -> tuple[tuple, dict[str, list[Path]]]:
     """Collect per-root YAML files and mtime signatures."""
     root_files = dict()
     root_signature = []
@@ -436,7 +444,8 @@ def _disk_cache_age_s(data: dict) -> float:
     return _time.time() - built_at
 
 
-def _load_policy_disk_cache(local_data_dir: Path):
+def _load_policy_disk_cache(
+    local_data_dir: Path) -> dict[str, Any] | None:
     """Load persistent policy payload when still fresh (within TTL)."""
     data = _load_policy_disk_cache_raw(local_data_dir)
     if data is None:
@@ -476,7 +485,7 @@ def _save_policy_disk_cache(local_data_dir: Path, payload: dict) -> None:
     tmp_path.replace(path)
 
 
-def invalidate_policy_cache(local_data_dir) -> None:
+def invalidate_policy_cache(local_data_dir: Path) -> None:
     """Drop both the in-memory and disk policy caches.
 
     Call this whenever the APERO-checks config is saved so the next
@@ -497,7 +506,7 @@ def invalidate_policy_cache(local_data_dir) -> None:
         pass
 
 
-def _empty_check_stats():
+def _empty_check_stats() -> dict[str, int]:
     """Return a blank counters mapping for one check."""
     out = dict()
     out['passed'] = 0
@@ -524,7 +533,9 @@ def _row_state(bucket: str, row: dict) -> str:
     return 'failed'
 
 
-def _policy_obsdir_counts(loaded: dict, ignored_set) -> dict:
+def _policy_obsdir_counts(
+    loaded: dict[str, Any], ignored_set: set[str]
+) -> dict[str, str]:
     """Return lightweight per-obsdir state counters for policy page."""
     failures = loaded.get('failures', dict())
     if not isinstance(failures, dict):
@@ -564,7 +575,7 @@ def _policy_obsdir_counts(loaded: dict, ignored_set) -> dict:
     return dict(card_color=card_color)
 
 
-def _dominant_state(counts):
+def _dominant_state(counts: dict[str, int]) -> str:
     """Return dominant state key for color coding."""
     values = dict()
     values['passed'] = int(counts.get('passed', 0) or 0)
@@ -586,7 +597,7 @@ def _dominant_state(counts):
     return 'neutral'
 
 
-def _policy_text(value) -> str:
+def _policy_text(value: Any) -> str:
     """Convert one policy-view value to a compact text string."""
     if isinstance(value, list):
         parts = [str(item or '').strip() for item in value]
@@ -611,7 +622,7 @@ def _admin_section(title: str, rows: list) -> dict:
     return dict(title=str(title or '').strip(), rows=clean_rows)
 
 
-def _check_metadata_status(check_obj) -> dict:
+def _check_metadata_status(check_obj: Any) -> dict[str, Any]:
     """Return documentation-metadata completeness for one check."""
     missing_fields = []
     description = str(getattr(check_obj, 'description', '') or '').strip()
@@ -632,7 +643,8 @@ def _check_metadata_status(check_obj) -> dict:
     )
 
 
-def _build_check_info_payload(check_obj, profiles_data=None) -> dict:
+def _build_check_info_payload(
+    check_obj: Any, profiles_data: Any = None) -> dict[str, Any]:
     """Build admin-check info sections and rendered logic payload."""
     info_sections = []
     metadata = _check_metadata_status(check_obj)
@@ -738,9 +750,8 @@ def _build_check_info_payload(check_obj, profiles_data=None) -> dict:
 
 
 def _build_checks_policy_health(
-    checks_catalog: list,
-    ignored_checks,
-) -> dict:
+        checks_catalog: list[dict[str, Any]], ignored_checks: Any,
+) -> dict[str, Any]:
     """Summarise APERO checks-policy health from the checks catalog."""
     ignored_set = {
         str(k or '').strip().upper()
@@ -792,8 +803,8 @@ def _build_checks_policy_health(
 
 
 def _build_bootstrap_payload(
-    ignored_checks, override_allowed
-) -> dict:
+        ignored_checks: Any, override_allowed: Any
+) -> dict[str, Any]:
     """Return a minimal payload built from MONITOR_CHECKS (no file I/O).
 
     Used when the disk cache is absent so the UI renders immediately while
@@ -842,7 +853,8 @@ def _build_bootstrap_payload(
 
 
 def _run_policy_build(
-    local_data_dir, checks_cfg, ignored_checks, override_allowed
+        local_data_dir: Path, checks_cfg: dict[str, Any],
+        ignored_checks: Any, override_allowed: Any
 ) -> None:
     """Execute the full YAML-scanning policy build and update the caches.
 
@@ -1089,7 +1101,8 @@ def _run_policy_build(
 
 
 def _start_background_build(
-    local_data_dir, checks_cfg, ignored_checks, override_allowed
+        local_data_dir: Path, checks_cfg: dict[str, Any],
+        ignored_checks: Any, override_allowed: Any
 ) -> None:
     """Kick off a background thread to (re)build the policy payload.
 
@@ -1097,7 +1110,8 @@ def _start_background_build(
     """
     if _POLICY_BUILD_LOCK.locked():
         return  # already building
-    def _worker():
+    def _worker() -> None:
+        """Build the policy payload while holding the build lock."""
         with _POLICY_BUILD_LOCK:
             _run_policy_build(
                 local_data_dir, checks_cfg, ignored_checks, override_allowed
@@ -1108,11 +1122,9 @@ def _start_background_build(
 
 
 def _build_apero_policy_payload(
-    local_data_dir,
-    checks_cfg,
-    ignored_checks,
-    override_allowed,
-):
+        local_data_dir: Path, checks_cfg: dict[str, Any],
+        ignored_checks: Any, override_allowed: Any
+) -> dict[str, Any]:
     """Build cached payload for the APERO checks policy page."""
     # Fast path: if we have a valid cached payload built within the
     # TTL window, skip the expensive network-mount filesystem scan.
@@ -1171,7 +1183,8 @@ def _build_apero_policy_payload(
     return bootstrap
 
 
-def make_page_view(app, page_id: str, package_dir: Path):
+def make_page_view(
+    app: Any, page_id: str, package_dir: Path) -> Any:
     """Create a page view function from pages.yaml entry."""
     page_def = app.ari_pages[page_id]
     view_perm = str(page_def.get("view-permission", "") or "").strip()
@@ -1180,7 +1193,8 @@ def make_page_view(app, page_id: str, package_dir: Path):
         "/index.html"
     )
 
-    def view_func():
+    def view_func() -> Any:
+        """Render the configured page after checking view permissions."""
         if page_id == 'home.docs':
             return app._doc_dynamic_view('')
 
@@ -1396,7 +1410,9 @@ def make_page_view(app, page_id: str, package_dir: Path):
             # needs per-profile resolved values for its logic tabs).  For plain
             # AperoCheck objects (like ASTROM) this is not needed and would be
             # slow on a network-mounted profile directory.
-            needs_profiles = getattr(check_obj, 'simple_check', None) is not None
+            needs_profiles = (
+                getattr(check_obj, 'simple_check', None) is not None
+            )
             profiles_data = (
                 load_apero_profiles(hydrate=True)
                 if needs_profiles
@@ -1408,9 +1424,15 @@ def make_page_view(app, page_id: str, package_dir: Path):
             # asynchronously via api_apero_checks_check_info_async.
             selected = {
                 'check_key':        requested_key,
-                'check_name':       str(getattr(check_obj, 'name', '') or requested_key),
-                'check_human_name': str(getattr(check_obj, 'string_name', '') or requested_key),
-                'check_type':       str(getattr(check_obj, 'check_type', '') or ''),
+                'check_name': str(
+                    getattr(check_obj, 'name', '') or requested_key
+                ),
+                'check_human_name': str(
+                    getattr(check_obj, 'string_name', '') or requested_key
+                ),
+                'check_type': str(
+                    getattr(check_obj, 'check_type', '') or ''
+                ),
                 'instruments':      sorted({
                     str(i or '').strip()
                     for i in list(getattr(check_obj, 'instruments', []) or [])
@@ -1421,9 +1443,13 @@ def make_page_view(app, page_id: str, package_dir: Path):
                     for d in list(getattr(check_obj, 'dependencies', []) or [])
                     if str(d or '').strip()
                 ],
-                'description':      str(getattr(check_obj, 'description', '') or ''),
+                'description': str(
+                    getattr(check_obj, 'description', '') or ''
+                ),
                 'is_ignored':       requested_key in set(ignored_checks or []),
-                'override_allowed': requested_key in set(override_allowed or []),
+                'override_allowed': (
+                    requested_key in set(override_allowed or [])
+                ),
                 'doc_url':          url_for(
                     'doc_dynamic_view',
                     page_ref='monitor/checks/' + str(requested_key).lower(),

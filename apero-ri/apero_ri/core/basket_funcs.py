@@ -24,7 +24,7 @@ import uuid
 import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Collection, Dict, List, Optional, Set
 
 from apero_ri.base.base import BLOCK_KIND
 from apero_ri.core import secret_store as ss
@@ -62,6 +62,7 @@ def downloads_dir() -> Path:
 
 
 def _share_tokens_path() -> Path:
+    """Return the managed path for download-share token data."""
     return ss.resolve_secret_file(
         "share_tokens.json",
         legacy_paths=[ss.get_ari_dir() / "share_tokens.json"],
@@ -69,6 +70,7 @@ def _share_tokens_path() -> Path:
 
 
 def _load_share_tokens() -> Dict[str, Any]:
+    """Load share-token records, returning an empty mapping on failure."""
     path = _share_tokens_path()
     if not path.exists():
         return {}
@@ -80,6 +82,7 @@ def _load_share_tokens() -> Dict[str, Any]:
 
 
 def _save_share_tokens(tokens: Dict[str, Any]) -> None:
+    """Persist share-token records and restrict the file permissions."""
     path = _share_tokens_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
@@ -154,6 +157,7 @@ def get_share_job(token: str) -> Optional[Dict[str, Any]]:
 
 
 def _basket_path(username: str) -> Path:
+    """Return the JSON path for one user's download basket."""
     return users_dir() / username / "basket.json"
 
 
@@ -338,6 +342,7 @@ def basket_summary(
 
 
 def _jobs_dir(username: str) -> Path:
+    """Return the user's job directory, migrating any legacy jobs."""
     new_dir = downloads_dir() / username
     legacy_dir = users_dir() / username / "downloads"
 
@@ -362,10 +367,12 @@ def _jobs_dir(username: str) -> Path:
 
 
 def _job_meta_path(username: str, job_id: str) -> Path:
+    """Return the metadata JSON path for one download job."""
     return _jobs_dir(username) / job_id / "meta.json"
 
 
 def _load_job_meta(username: str, job_id: str) -> Optional[Dict[str, Any]]:
+    """Load a job's metadata, or return None when it is unavailable."""
     path = _job_meta_path(username, job_id)
     if not path.exists():
         return None
@@ -377,6 +384,7 @@ def _load_job_meta(username: str, job_id: str) -> Optional[Dict[str, Any]]:
 
 
 def _save_job_meta(username: str, job_id: str, meta: Dict[str, Any]) -> None:
+    """Persist metadata for one download job."""
     path = _job_meta_path(username, job_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
@@ -404,7 +412,8 @@ def _normalize_expiry_hours(expiry_hours: Any) -> int:
 
 def _job_expiry_hours(meta: Dict[str, Any]) -> int:
     """Return the per-job expiry hours, falling back to the default."""
-    return _normalize_expiry_hours(meta.get("expiry_hours", _DOWNLOAD_EXPIRY_HOURS))
+    expiry_hours = meta.get("expiry_hours", _DOWNLOAD_EXPIRY_HOURS)
+    return _normalize_expiry_hours(expiry_hours)
 
 
 def _job_expires_at(meta: Dict[str, Any]) -> datetime:
@@ -529,8 +538,14 @@ def list_recent_jobs(username: str, limit: int = 10) -> List[Dict[str, Any]]:
     return metas[:limit]
 
 
-def get_downloads_storage_limit_bytes(groups=None) -> int:
-    """Return max allowed compiled-download storage per user."""
+def get_downloads_storage_limit_bytes(
+    groups: Optional[Collection[str]] = None,
+) -> int:
+    """Return max allowed compiled-download storage per user.
+
+    :param groups: Optional group names used to select the elevated limit.
+    :returns: Storage limit in bytes.
+    """
     if groups and set(groups) & _ELEVATED_DOWNLOAD_GROUPS:
         return _DOWNLOAD_STORAGE_LIMIT_ELEVATED_BYTES
     return _DOWNLOAD_STORAGE_LIMIT_BYTES
@@ -857,10 +872,11 @@ def load_ftable_rows(
     profile_id: str,
     objname: str,
     fkind: str = "all",
-) -> tuple:
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any], Optional[str]]:
     """
-    Load rows from ftable_{fkind}_{objname}.json.
-    Returns (rows, metadata, generated_at).
+    Load table rows and metadata from one object's ftable JSON file.
+
+    :return: Rows, metadata, and generation timestamp; empty values if missing.
     """
     objects_dir = base_dir / "tasks" / instrument / profile_id / "objects"
     json_path = objects_dir / f"ftable_{fkind}_{objname}.json"
@@ -918,7 +934,9 @@ def backfill_lbl_run_ids(
     by_obs_dir: Dict[str, Dict[str, str]] = {}
     has_missing_lbl = False
 
-    def _ingest(source_rows, lbl_ok: bool):
+    def _ingest(
+        source_rows: List[Dict[str, Any]], lbl_ok: bool
+    ) -> None:
         for r in source_rows or []:
             if not isinstance(r, dict):
                 continue
@@ -1002,7 +1020,7 @@ def backfill_lbl_run_ids(
 def apply_preset_filter(
     rows: List[Dict[str, Any]], preset: str) -> List[Dict[str, Any]]:
     """
-    Filter rows by a named preset.
+    Filter table rows by product type and, where applicable, QC status.
 
     preset values:
       'ext2d'   – DRS_POST_E  block=out  QC=1
@@ -1016,7 +1034,7 @@ def apply_preset_filter(
       'default' – block=out  QC=1
     """
 
-    def _qc(r: Dict) -> bool:
+    def _qc(r: Dict[str, Any]) -> bool:
         v = r.get("PASSED_ALL_QC", 1)
         try:
             return int(v) == 1
@@ -1084,17 +1102,15 @@ def apply_preset_filter(
 def group_rows(
     rows: List[Dict[str, Any]], group_by: str
 ) -> List[Dict[str, Any]]:
-    """
-    Collapse rows into groups keyed by group_by column.
-    Each group dict has:
-      group_value, file_count, rows (list of grouped row dicts,
-        with group_by column as first key)
+    """Collapse rows by a selected column, preserving each group's rows.
+
+    Each result includes the group value, key column, file count, and rows.
     """
     if not group_by:
         return rows
     from collections import OrderedDict
 
-    groups: Dict[str, List] = OrderedDict()
+    groups: Dict[str, List[Dict[str, Any]]] = OrderedDict()
     for r in rows:
         key = str(r.get(group_by, "") or "")
         groups.setdefault(key, []).append(r)
@@ -1118,7 +1134,7 @@ def group_rows(
 
 def cleanup_expired_downloads(username: str) -> int:
     """
-    Delete job directories older than _DOWNLOAD_EXPIRY_HOURS. Returns count.
+    Delete expired job directories and their share tokens; return the count.
     """
     jobs_dir = _jobs_dir(username)
     if not jobs_dir.exists():

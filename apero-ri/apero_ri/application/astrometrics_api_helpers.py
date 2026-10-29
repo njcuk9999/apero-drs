@@ -10,7 +10,7 @@ from apero_ri.core.auth import (
     get_public_permissions,
 )
 from apero_ri.core.permissions import resolve_user_permissions
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 
 _FTABLE_KINDS = (
@@ -23,8 +23,10 @@ _FTABLE_KINDS = (
     'lbl_rdb',
 )
 
+_ApiResponse = Response | tuple[Response, int]
 
-def _load_json_rows(path: Path):
+
+def _load_json_rows(path: Path) -> list[Any]:
     """Load rows from a JSON file with top-level {'rows': [...]} or list."""
     try:
         with open(path, encoding='utf-8') as fhandle:
@@ -37,7 +39,12 @@ def _load_json_rows(path: Path):
     return data if isinstance(data, list) else []
 
 
-def _matches_advanced_value(raw_value, mode, value, value2):
+def _matches_advanced_value(
+    raw_value: Any,
+    mode: str,
+    value: str,
+    value2: str,
+) -> bool:
     """Apply advanced match mode to one candidate value."""
     text = str(raw_value if raw_value is not None else '').strip()
     mode = str(mode or 'value').strip().lower()
@@ -74,7 +81,13 @@ def _matches_advanced_value(raw_value, mode, value, value2):
     return False
 
 
-def _advanced_match_in_rows(rows, prop, mode, value, value2):
+def _advanced_match_in_rows(
+    rows: list[Any],
+    prop: str,
+    mode: str,
+    value: str,
+    value2: str,
+) -> bool:
     """Return True if any row has prop and passes match criteria."""
     prop = str(prop or '').strip()
     if prop == '':
@@ -92,9 +105,9 @@ def _advanced_match_in_rows(rows, prop, mode, value, value2):
 def _advanced_property_catalog(
     app: Any,
     base_dir: Path,
-    accessible: list,
+    accessible: list[dict[str, Any]],
     user_info: Any,
-) -> dict:
+) -> dict[str, Any]:
     """Merge indexed properties from currently accessible object data.
 
     :param app: ARI application with RUN ID access checks.
@@ -118,7 +131,7 @@ def _advanced_property_catalog(
     return search_index.catalog(*catalog_args, background=background)
 
 
-def api_astrometrics_find_object(app: Any) -> Any:
+def api_astrometrics_find_object(app: Any) -> _ApiResponse:
     """Find objects across authorized profiles and RUN IDs.
 
     :param app: ARI application providing user and profile access checks.
@@ -155,7 +168,8 @@ def api_astrometrics_find_object(app: Any) -> Any:
     profiles = {}
 
     # Helper function to normalize names for matching
-    def _norm_variants(value: str):
+    def _norm_variants(value: str) -> set[str]:
+        """Return normalized alphanumeric variants of a target name."""
         text = str(value or "").strip().lower()
         if not text:
             return set()
@@ -166,7 +180,10 @@ def api_astrometrics_find_object(app: Any) -> Any:
         return {v for v in variants if v}
 
     # Helper function to get row RA/Dec in degrees
-    def _row_ra_dec_deg(row):
+    def _row_ra_dec_deg(
+        row: dict[str, Any],
+    ) -> tuple[float, float] | None:
+        """Return row coordinates in degrees when both values are present."""
         ra_keys = ("RA [Deg]", "RA", "OBJRA", "OBJ_RA")
         dec_keys = ("Dec [Deg]", "DEC", "Dec", "OBJDEC", "OBJ_DEC")
         ra_val = None
@@ -190,7 +207,7 @@ def api_astrometrics_find_object(app: Any) -> Any:
         return ra_val, dec_val
 
     # Helper to parse coordinates
-    def _parse_coord(value, is_ra=True):
+    def _parse_coord(value: Any, is_ra: bool = True) -> float | None:
         """Parse coordinate in deg or HH:MM:SS format."""
         value = str(value).strip()
         if ":" in value:
@@ -397,7 +414,9 @@ def api_astrometrics_find_object(app: Any) -> Any:
                     continue
 
                 matching_rows.append(row)
-                matched_values[id(row)] = [dict(property='date', value=row_date)]
+                matched_values[id(row)] = [
+                    dict(property='date', value=row_date)
+                ]
 
         elif search_type == "advanced":
             prop = request.args.get("property", "").strip()
@@ -419,7 +438,10 @@ def api_astrometrics_find_object(app: Any) -> Any:
             ftable_cache = {}
             htable_cache = {}
 
-            def _accessible_ftable_rows(obj):
+            def _accessible_ftable_rows(
+                obj: str,
+            ) -> list[dict[str, Any]]:
+                """Load file-table rows visible through authorized run IDs."""
                 rows = []
                 for fkind in _FTABLE_KINDS:
                     key = (obj, fkind)
@@ -434,7 +456,10 @@ def api_astrometrics_find_object(app: Any) -> Any:
                     in accessible_run_ids
                 ]
 
-            def _accessible_htable_rows(obj):
+            def _accessible_htable_rows(
+                obj: str,
+            ) -> list[dict[str, Any]]:
+                """Load header rows matching visible file identifiers."""
                 if obj not in htable_cache:
                     path = objects_dir / f'htable_{obj}.json'
                     htable_cache[obj] = _load_json_rows(path)
@@ -534,7 +559,7 @@ def api_astrometrics_find_object(app: Any) -> Any:
 # under ``<data_dir>/apero-assets/astrometrics``.
 
 
-def _astrom_dir(app) -> Path:
+def _astrom_dir(app: Any) -> Path:
     """Return the on-disk path to the astrometric YAML database.
 
     :param app: the ARI application object
@@ -545,12 +570,12 @@ def _astrom_dir(app) -> Path:
 
 
 def _entry_status_from_path(
-        dra,
-        astrom_root: str,
-        yaml_path: str,
-        entry,
-        apero_name: str,
-):
+    dra: Any,
+    astrom_root: str,
+    yaml_path: str,
+    entry: Any,
+    apero_name: str,
+) -> str:
     """Infer entry status from path, then yaml STATUS, then lookup.
 
     :param dra: imported ``drs_astrometrics`` module
@@ -580,7 +605,9 @@ def _entry_status_from_path(
     return dra.STATUS_VERIFIED
 
 
-def _check_view_perm(app):
+def _check_view_perm(
+    app: Any,
+) -> tuple[Any, _ApiResponse | None]:
     """Check that the caller has ``view.data_portal`` permission.
 
     :param app: the ARI application object
@@ -602,7 +629,7 @@ def _check_view_perm(app):
     return user_info, None
 
 
-def _build_payload(entry):
+def _build_payload(entry: Any) -> dict[str, Any]:
     """Build the shared target-info payload for an astrometric entry.
 
     Imported lazily to keep the top-level import graph small.
@@ -618,7 +645,7 @@ def _build_payload(entry):
     return build_target_info_payload(entry)
 
 
-def api_astrometrics_resolve_by_name(app):
+def api_astrometrics_resolve_by_name(app: Any) -> _ApiResponse:
     """Resolve a single target by APERO/SIMBAD name or alias.
 
     Query string parameters:
@@ -677,7 +704,7 @@ def api_astrometrics_resolve_by_name(app):
     )
 
 
-def api_astrometrics_resolve_by_coords(app):
+def api_astrometrics_resolve_by_coords(app: Any) -> _ApiResponse:
     """Resolve targets by sky coordinates within a search radius.
 
     Query string parameters:
@@ -736,7 +763,7 @@ def api_astrometrics_resolve_by_coords(app):
                    ra=ra_deg, dec=dec_deg, radius_arcsec=radius)
 
 
-def api_astrometrics_resolve_by_filter(app):
+def api_astrometrics_resolve_by_filter(app: Any) -> _ApiResponse:
     """Resolve targets by an arbitrary column-value filter.
 
     Query string parameters:
@@ -790,7 +817,7 @@ def api_astrometrics_resolve_by_filter(app):
                    column=column, value=value, match=match_mode)
 
 
-def api_astrometrics_columns(app: Any) -> Any:
+def api_astrometrics_columns(app: Any) -> _ApiResponse:
     """List the union of YAML keys across all astrometric entries.
 
     Used to populate the column dropdown of the advanced (filter)
@@ -842,7 +869,7 @@ def api_astrometrics_columns(app: Any) -> Any:
     )
 
 
-def api_astrometrics_list_all(app):
+def api_astrometrics_list_all(app: Any) -> _ApiResponse:
     """Return a summary row per astrometric entry across all statuses.
 
     Used by the "Astrometric database" tab on the astrometrics page.
@@ -932,7 +959,7 @@ def api_astrometrics_list_all(app):
     return jsonify(success=True, rows=rows, count=len(rows))
 
 
-def api_astrometrics_list_rejected(app):
+def api_astrometrics_list_rejected(app: Any) -> _ApiResponse:
     """Return all entries currently in the ``rejected/`` sub-folder.
 
     Used by the "Rejected object names" tab on the astrometrics page.
@@ -989,7 +1016,7 @@ def api_astrometrics_list_rejected(app):
     return jsonify(success=True, rows=rows, count=len(rows))
 
 
-def api_astrometrics_add_rejected(app):
+def api_astrometrics_add_rejected(app: Any) -> _ApiResponse:
     """Manually add a new entry to the ``rejected/`` list.
 
     JSON body:
@@ -1105,7 +1132,7 @@ def api_astrometrics_add_rejected(app):
     )
 
 
-def api_astrometrics_update_rejected(app):
+def api_astrometrics_update_rejected(app: Any) -> _ApiResponse:
     """Edit an existing entry in the ``rejected/`` list.
 
     JSON body:
@@ -1212,7 +1239,7 @@ def api_astrometrics_update_rejected(app):
     )
 
 
-def api_astrometrics_delete_rejected(app):
+def api_astrometrics_delete_rejected(app: Any) -> _ApiResponse:
     """Delete an existing entry from the ``rejected/`` list.
 
     JSON body:
@@ -1344,12 +1371,22 @@ _MANUAL_SCALAR_FIELDS = ('EPOCH', 'SPT', 'GAIA_SOURCE_ID')
 # and never block a save. This keeps the contract stable so a real
 # implementation can drop in later without touching call sites.
 # ---------------------------------------------------------------------
-def _astro_check_lock_for_save(app, apero_name, user_info, perms):
+def _astro_check_lock_for_save(
+    app: Any,
+    apero_name: str,
+    user_info: Any,
+    perms: Any,
+) -> tuple[bool, None]:
     """Return ``(True, None)`` — always allow saves (no-op stub)."""
     return True, None
 
 
-def api_astrometrics_lock_acquire(app):
+def api_astrometrics_lock_acquire(app: Any) -> _ApiResponse:
+    """Return the current lock owner without acquiring a persistent lock.
+
+    :param app: ARI application providing the current API user.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info = app._get_api_user()
     if not user_info:
         return jsonify(success=False, error="Login required"), 401
@@ -1360,21 +1397,31 @@ def api_astrometrics_lock_acquire(app):
     )
 
 
-def api_astrometrics_lock_heartbeat(app):
+def api_astrometrics_lock_heartbeat(app: Any) -> _ApiResponse:
+    """Acknowledge a lock heartbeat; lock storage is currently a no-op.
+
+    :param app: ARI application providing the current API user.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info = app._get_api_user()
     if not user_info:
         return jsonify(success=False, error="Login required"), 401
     return jsonify(success=True)
 
 
-def api_astrometrics_lock_release(app):
+def api_astrometrics_lock_release(app: Any) -> _ApiResponse:
+    """Acknowledge lock release; lock storage is currently a no-op.
+
+    :param app: ARI application providing the current API user.
+    :return: JSON response, optionally paired with an HTTP status code.
+    """
     user_info = app._get_api_user()
     if not user_info:
         return jsonify(success=False, error="Login required"), 401
     return jsonify(success=True)
 
 
-def _coerce_optional_float(raw):
+def _coerce_optional_float(raw: Any) -> float | None:
     """Return ``float(raw)`` or ``None`` (empty / 'null' -> None).
 
     Raises ``ValueError`` with a friendly message on bad numeric input
@@ -1394,7 +1441,10 @@ def _coerce_optional_float(raw):
             "expected a number or blank, got {0!r}".format(raw))
 
 
-def _apply_manual_extra_fields(entry, extra_fields):
+def _apply_manual_extra_fields(
+    entry: dict[str, Any],
+    extra_fields: Any,
+) -> None:
     """Apply optional extra_fields values onto a manual target entry.
 
     :param entry: dict, mutable yaml entry being built
@@ -1440,7 +1490,10 @@ def _apply_manual_extra_fields(entry, extra_fields):
         entry[yaml_key] = sval
 
 
-def _normalize_manual_entry_for_recompute(entry, dra):
+def _normalize_manual_entry_for_recompute(
+    entry: dict[str, Any],
+    dra: Any,
+) -> None:
     """Normalize block/scalar types before running DRS derivations.
 
     :param entry: dict, mutable entry
@@ -1468,7 +1521,7 @@ def _normalize_manual_entry_for_recompute(entry, dra):
             entry[key] = dict(value=val, source='manual')
 
 
-def _recompute_manual_fields(entry, dra):
+def _recompute_manual_fields(entry: dict[str, Any], dra: Any) -> None:
     """Force-refresh derived fields in a manual entry.
 
     :param entry: dict, mutable yaml entry
@@ -1480,7 +1533,7 @@ def _recompute_manual_fields(entry, dra):
     dra._derive_fields(entry)
 
 
-def api_astrometrics_add_manual(app):
+def api_astrometrics_add_manual(app: Any) -> _ApiResponse:
     """Manually add a new astrometric entry under ``pending/``.
 
     JSON body:
@@ -1793,7 +1846,7 @@ def api_astrometrics_add_manual(app):
     )
 
 
-def api_astrometrics_recompute_manual(app):
+def api_astrometrics_recompute_manual(app: Any) -> _ApiResponse:
     """Preview recomputed derived fields for a manual-target payload.
 
     Accepts the same core numeric/scalar payload as add-manual and
@@ -1900,7 +1953,7 @@ def api_astrometrics_recompute_manual(app):
 # =============================================================================
 # Edit / upload endpoints (moderator+ / monitor+)
 # =============================================================================
-def _check_perm(app, perm):
+def _check_perm(app: Any, perm: str) -> bool:
     """Return ``(user_info, err)`` enforcing a single named permission.
 
     :param app: the ARI application object
@@ -1925,7 +1978,7 @@ def _check_perm(app, perm):
     return user_info, None
 
 
-def _coerce_value(raw):
+def _coerce_value(raw: Any) -> Any:
     """Best-effort coercion of a JSON-supplied value.
 
     - Empty string / None -> None
@@ -1953,7 +2006,7 @@ def _coerce_value(raw):
         return s
 
 
-def api_astrometrics_update_field(app):
+def api_astrometrics_update_field(app: Any) -> _ApiResponse:
     """POST one field update to an existing astrometric YAML entry.
 
     JSON body:
@@ -2023,7 +2076,7 @@ def api_astrometrics_update_field(app):
     )
 
 
-def api_astrometrics_upload_yaml(app):
+def api_astrometrics_upload_yaml(app: Any) -> _ApiResponse:
     """POST a brand-new astrometric YAML entry.
 
     JSON body either:
@@ -2092,7 +2145,7 @@ def api_astrometrics_upload_yaml(app):
     )
 
 
-def _has_monitor_perm(perms, instrument):
+def _has_monitor_perm(perms: Any, instrument: str) -> bool:
     """Return True if ``perms`` grants verify rights for ``instrument``.
 
     Accepted: ``manage.astrometrics`` (admin override), bare
@@ -2131,7 +2184,7 @@ def _has_monitor_perm(perms, instrument):
     return False
 
 
-def api_astrometrics_status(app):
+def api_astrometrics_status(app: Any) -> _ApiResponse:
     """Return the on-disk status of an astrometric entry by name.
 
     Query string parameters:
@@ -2182,7 +2235,12 @@ def api_astrometrics_status(app):
                    status=status, found=True)
 
 
-def _close_verify_issues(app, apero_name, instrument, author):
+def _close_verify_issues(
+    app: Any,
+    apero_name: str,
+    instrument: str,
+    author: str,
+) -> int:
     """Close any open ``astrometric-verify`` issues for this entry.
 
     Best-effort: silently ignores any failure (the verify itself is
@@ -2237,7 +2295,7 @@ def _close_verify_issues(app, apero_name, instrument, author):
     return closed
 
 
-def api_astrometrics_verify(app):
+def api_astrometrics_verify(app: Any) -> _ApiResponse:
     """Flip a pending astrometric entry to ``verified``.
 
     JSON body:
@@ -2317,7 +2375,7 @@ def api_astrometrics_verify(app):
 # SED + HR diagram (yaml-only, shared between both pages)
 # =============================================================
 
-def _shared_cache_dir(app, kind: str) -> Path:
+def _shared_cache_dir(app: Any, kind: str) -> Path:
     """Return the shared cache dir for a yaml-based artefact.
 
     The directory layout ``<cache_root>/_shared/<kind>/`` is keyed
@@ -2350,7 +2408,10 @@ def _safe_name(name: str) -> str:
                   str(name)).strip('_') or 'unknown'
 
 
-def _resolve_yaml_entry(app, name: str):
+def _resolve_yaml_entry(
+    app: Any,
+    name: str,
+) -> dict[str, Any] | None:
     """Resolve a name to its astrometric YAML entry.
 
     Tries the on-disk APERO astrometric store first; if no match is
@@ -2379,7 +2440,7 @@ def _resolve_yaml_entry(app, name: str):
     return tastro.get(username, name)
 
 
-def api_astrometrics_sed(app):
+def api_astrometrics_sed(app: Any) -> _ApiResponse:
     """Generate (or return cached) SED plot for a target.
 
     Query string parameters:
@@ -2446,7 +2507,7 @@ def api_astrometrics_sed(app):
     return jsonify(**result)
 
 
-def api_astrometrics_hr(app):
+def api_astrometrics_hr(app: Any) -> _ApiResponse:
     """Generate (or return cached) HR diagram for a target.
 
     Query string parameters:
@@ -2526,7 +2587,9 @@ def api_astrometrics_hr(app):
 # Resolve online (SIMBAD / Vizier) - delegates to drs_astrometrics
 # =============================================================
 
-def api_astrometrics_resolve_online_by_name(app):
+def api_astrometrics_resolve_online_by_name(
+    app: Any,
+) -> _ApiResponse:
     """Query SIMBAD/Gaia/Vizier for a name and return parameters.
 
     Returns a yaml-shaped entry dict (NOT yet stored) so the
@@ -2582,7 +2645,7 @@ def api_astrometrics_resolve_online_by_name(app):
     )
 
 
-def _resolve_online_using_drs(name):
+def _resolve_online_using_drs(name: str) -> dict[str, Any] | None:
     """Use ``drs_astrometrics`` low-level helpers to build a yaml entry.
 
     Calls ``_resolve_from_name`` (SIMBAD + Gaia + VizieR), then folds
@@ -2613,7 +2676,9 @@ def _resolve_online_using_drs(name):
     return entry
 
 
-def api_astrometrics_resolve_online_by_coords(app):
+def api_astrometrics_resolve_online_by_coords(
+    app: Any,
+) -> _ApiResponse:
     """SIMBAD cone-search by sky coordinates.
 
     Query string parameters:
@@ -2674,7 +2739,7 @@ def api_astrometrics_resolve_online_by_coords(app):
     return jsonify(success=True, matches=matches, transient=True)
 
 
-def _tap_rows_from_json(raw):
+def _tap_rows_from_json(raw: Any) -> list[dict[str, Any]]:
     """Convert a TAP JSON response (column/data form) to row dicts.
 
     :param raw: the parsed JSON from ``_simbad_json`` / ``_vizier_json``
@@ -2699,7 +2764,7 @@ def _tap_rows_from_json(raw):
     return out
 
 
-def _row_to_entry(row, name):
+def _row_to_entry(row: dict[str, Any], name: str) -> dict[str, Any]:
     """Convert a SIMBAD row dict to a yaml-shaped entry."""
     from apero.core import drs_astrometrics as dra
 

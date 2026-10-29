@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Core potting functionality
+"""Core plotting orchestration and summary-document generation for APERO.
 
 Created on 2019-01-19 at 13:45
 
@@ -553,7 +552,8 @@ class Plotter:
                     # break out of while
                     break
 
-    def closeall(self):
+    def closeall(self) -> None:
+        """Close all active matplotlib figures managed by this plotter."""
         """
         Close all matplotlib plots currently open
 

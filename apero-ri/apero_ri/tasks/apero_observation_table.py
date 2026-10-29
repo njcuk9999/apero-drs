@@ -48,7 +48,11 @@ FILTERS = ["APERO_PROFILE_INCLUDE", "APERO_PROFILE_EXCLUDE"]
 class AperoObservationTableTask(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
 
-    def __init__(self, status="pending"):
+    def __init__(self, status: str = "pending") -> None:
+        """Initialize the scheduled observation-table task.
+
+        :param status: Initial asynchronous task status.
+        """
         name = "APERO Observation Table Task"
         description = (
             "Generate the observation table for the "
@@ -56,7 +60,7 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         )
         super().__init__(name, description, status)
 
-    def run_job(self, params: Dict[str, Any]):
+    def run_job(self, params: Dict[str, Any]) -> None:
         """
         Create a file that can be used to populate the observation table in the
         APERO reduction interface.
@@ -112,6 +116,7 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         stop_event = params.get("STOP_EVENT")
 
         def tlog(message: str) -> None:
+            """Forward progress messages when a task logger is available."""
             if callable(task_logger):
                 try:
                     task_logger(message)
@@ -276,7 +281,7 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         else:
             tlog("APERO_OBSERVATION_TABLE completed.")
 
-    def test_query(self, params: Dict[str, Any]):
+    def test_query(self, params: Dict[str, Any]) -> None:
         """
         Create a file that can be used to populate the object table in the
         APERO reduction interface.
@@ -345,6 +350,12 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
 # Define functions
 # =============================================================================
 def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate and select profile settings needed for the SQL query.
+
+    :param aparams: APERO profile settings.
+    :returns: Flattened table names and science selection settings.
+    :raises ValueError: If a required table or science setting is missing.
+    """
     required_params = [
         "ASTROM_TABLENAME",
         "CALIB_TABLENAME",
@@ -376,7 +387,12 @@ def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     return rparams
 
 
-def sub_commands(rparams):
+def sub_commands(rparams: Dict[str, Any]) -> Dict[str, Any]:
+    """Add SQL aggregate expressions used by the observation query.
+
+    :param rparams: Validated profile settings, updated in place.
+    :returns: The same mapping with aggregate expressions added.
+    """
     # ---------------------------------------------------------------------
     # get parameters only needed for sub-commands
     fiber = f'"{rparams["SCIENCE_FIBER"]}"'
@@ -419,7 +435,12 @@ def sub_commands(rparams):
     return rparams
 
 
-def construct_query(rparams):
+def construct_query(rparams: Dict[str, Any]) -> str:
+    """Build the observation-table SQL query from validated settings.
+
+    :param rparams: Table names and aggregate expressions for the query.
+    :returns: Formatted SQL statement.
+    """
     # construct the SQL query
     query = """
     SELECT
@@ -452,7 +473,8 @@ def construct_query(rparams):
     return rquery
 
 
-def meta_columns():
+def meta_columns() -> Dict[str, Dict[str, Any]]:
+    """Return display and filtering metadata for observation-table columns."""
     cols = dict()
     # Night
     cols["NIGHT"] = dict()

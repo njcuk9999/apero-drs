@@ -24,10 +24,12 @@ LEGACY_LOCAL_USER = "njcuk9999"
 # Define functions
 # =============================================================================
 def _default_data_dir() -> Path:
+    """Return the default per-user ARI data directory."""
     return Path.home() / ".ari"
 
 
 def load_bootstrap_config() -> Dict[str, Any]:
+    """Load persisted bootstrap settings, or return an empty mapping."""
     if not BOOTSTRAP_FILE.exists():
         return {}
     try:
@@ -39,6 +41,10 @@ def load_bootstrap_config() -> Dict[str, Any]:
 
 
 def save_bootstrap_config(local_data_dir: str) -> None:
+    """Persist the selected local data directory and update timestamp.
+
+    :param local_data_dir: Filesystem path selected for ARI data.
+    """
     BOOTSTRAP_FILE.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "local_data_dir": str(Path(local_data_dir).expanduser()),
@@ -51,6 +57,11 @@ def save_bootstrap_config(local_data_dir: str) -> None:
 
 
 def resolve_local_data_dir(explicit: Optional[str] = None) -> Path:
+    """Resolve ARI's data directory from explicit, environment, or saved data.
+
+    :param explicit: Optional path that takes precedence over saved settings.
+    :returns: The selected data directory, without requiring it to exist.
+    """
     if explicit:
         return Path(explicit).expanduser()
     env_path = os.environ.get("ARI_DIR", "").strip()
@@ -64,10 +75,12 @@ def resolve_local_data_dir(explicit: Optional[str] = None) -> Path:
 
 
 def get_setup_state_path(local_data_dir: Path) -> Path:
+    """Return the setup-state YAML path beneath the data directory."""
     return Path(local_data_dir).expanduser() / "admin" / "setup_state.yaml"
 
 
 def load_setup_state(local_data_dir: Path) -> Dict[str, Any]:
+    """Load setup state, returning an empty mapping when unavailable."""
     path = get_setup_state_path(local_data_dir)
     if not path.exists():
         return {}
@@ -82,6 +95,12 @@ def load_setup_state(local_data_dir: Path) -> Dict[str, Any]:
 def save_setup_state(
     local_data_dir: Path, admin_username: str, email_configured: bool = True
 ) -> None:
+    """Mark setup complete and persist the initial administrator details.
+
+    :param local_data_dir: Root directory for ARI data and setup state.
+    :param admin_username: Username of the configured administrator.
+    :param email_configured: Whether email settings are configured.
+    """
     path = get_setup_state_path(local_data_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -97,11 +116,13 @@ def save_setup_state(
 
 
 def is_setup_complete(local_data_dir: Path) -> bool:
+    """Return whether setup state marks the installation complete."""
     state = load_setup_state(local_data_dir)
     return bool(state.get("completed", False))
 
 
 def _load_yaml_file(path: Path) -> Dict[str, Any]:
+    """Load a YAML mapping, returning an empty mapping on failure."""
     if not path.exists():
         return {}
     try:
@@ -113,6 +134,7 @@ def _load_yaml_file(path: Path) -> Dict[str, Any]:
 
 
 def get_users_file(local_data_dir: Path) -> Path:
+    """Select the current or legacy users YAML path under the data directory."""
     admin_dir = Path(local_data_dir).expanduser() / "admin"
     new_path = admin_dir / "general" / "users.yaml"
     legacy_path = admin_dir / "users.yaml"
@@ -124,6 +146,7 @@ def get_users_file(local_data_dir: Path) -> Path:
 
 
 def get_email_file(local_data_dir: Path) -> Path:
+    """Select the current or legacy email YAML path under the data directory."""
     admin_dir = Path(local_data_dir).expanduser() / "admin"
     new_path = admin_dir / "email" / "email.yaml"
     legacy_path = admin_dir / "email.yaml"
@@ -137,6 +160,11 @@ def get_email_file(local_data_dir: Path) -> Path:
 def has_admin_user(
     local_data_dir: Path, preferred_username: Optional[str] = None
 ) -> bool:
+    """Return whether a configured user belongs to an administrator group.
+
+    :param local_data_dir: Root directory containing ARI's admin files.
+    :param preferred_username: Optional account to check before other users.
+    """
     users = _load_yaml_file(get_users_file(local_data_dir))
     if preferred_username and preferred_username in users:
         groups = users.get(preferred_username, {}).get("groups", [])
@@ -151,6 +179,7 @@ def has_admin_user(
 
 
 def is_legacy_local_install(local_data_dir: Path) -> bool:
+    """Return whether the legacy local administrator setup is present."""
     users = _load_yaml_file(get_users_file(local_data_dir))
     email_cfg = _load_yaml_file(get_email_file(local_data_dir))
     if LEGACY_LOCAL_USER not in users:
@@ -166,12 +195,18 @@ def is_legacy_local_install(local_data_dir: Path) -> bool:
 
 
 def can_start_main_app(local_data_dir: Path) -> bool:
+    """Return whether setup permits starting the main application."""
     return is_setup_complete(local_data_dir) or is_legacy_local_install(
         local_data_dir
     )
 
 
 def ensure_directory_layout(local_data_dir: Path) -> None:
+    """Create required ARI data directories and verify write access.
+
+    :param local_data_dir: Root directory for local ARI data.
+    :raises OSError: If a directory cannot be created or written to.
+    """
     base = Path(local_data_dir).expanduser()
     paths = [
         base,

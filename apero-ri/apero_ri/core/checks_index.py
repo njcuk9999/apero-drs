@@ -54,16 +54,19 @@ _INDEX_LOCK = threading.Lock()
 # Path helpers
 # =============================================================================
 def _ari_dir() -> Path:
+    """Return the configured ARI data directory or the user's default."""
     env = os.environ.get('ARI_DIR')
     return Path(env).expanduser() if env else Path.home() / '.ari'
 
 
 def _index_path(profile_id: str) -> Path:
+    """Return the per-profile checks-index JSON path."""
     safe = str(profile_id or 'default').replace('/', '_').replace('\\', '_')
     return _ari_dir() / 'cache' / ('checks_index_%s.json' % safe)
 
 
 def _lock_path(profile_id: str) -> Path:
+    """Return the lock-file path associated with a profile index."""
     return _index_path(profile_id).with_suffix('.lock')
 
 
@@ -77,14 +80,16 @@ class _FileLock:
         self._path = path
         self._fh = None
 
-    def __enter__(self):
+    def __enter__(self) -> '_FileLock':
+        """Acquire the lock file and return this context manager."""
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._fh = open(self._path, 'w')
         if _HAS_FCNTL:
             _fcntl.flock(self._fh, _fcntl.LOCK_EX)
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_: Any) -> None:
+        """Release the cross-process lock and close its file handle."""
         if self._fh:
             if _HAS_FCNTL:
                 _fcntl.flock(self._fh, _fcntl.LOCK_UN)
@@ -130,6 +135,7 @@ def load_index(profile_id: str) -> Dict[str, Any]:
 
 
 def _empty_index(profile_id: str) -> Dict[str, Any]:
+    """Build a fresh index payload with no observation directories."""
     return {
         'schema': _SCHEMA,
         'profile_id': profile_id,
@@ -161,12 +167,13 @@ def _make_obsdir_record(
     """Return a compact per-obsdir index record."""
     return {
         'm': mtime_ns,           # st_mtime_ns for invalidation
-        'c': card_color,         # e.g. 'failed', 'ok', 'overridden', 'monitored'
+        'c': card_color,         # failed, ok, overridden, or monitored
         's': check_states,       # {check_key: state}
     }
 
 
 def _obsdir_mtime_ns(yaml_path: Path) -> int:
+    """Return a YAML file's nanosecond mtime, or zero if it is unavailable."""
     try:
         return int(yaml_path.stat().st_mtime_ns)
     except Exception:

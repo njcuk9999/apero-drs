@@ -22,7 +22,7 @@ import sys
 import warnings
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, CommentedSet
@@ -178,7 +178,8 @@ class BaseAperoError(Exception):
     give a clear indiciation on what the user should do. No traceback will be
     given to keep it clear and consise.
     """
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
+        """Initialize an actionable error message without a traceback."""
         # remove traceback - we want a clear message to the user
         sys.tracebacklimit = 0
         super().__init__(message)
@@ -249,8 +250,12 @@ def load_install_yaml(required: bool = True) -> Union[dict, None]:
         return D_IPARAMS
 
 
-def to_plain_data(obj):
-    """Recursively convert ruamel.yaml data structures to plain Python types."""
+def to_plain_data(obj: Any) -> Any:
+    """Convert ruamel YAML containers and scalars to native Python values.
+
+    Nested mappings, sequences, and sets are converted recursively; native
+    values pass through unchanged.
+    """
     # --- container types ---
     if isinstance(obj, CommentedMap):
         # stays as dict (or OrderedDict)
@@ -320,13 +325,14 @@ def enable_scientific_floats(yaml: YAML) -> None:
     )
 
 
-def write_yaml(dictionary: dict, filename: str,
-               width: float = None):
+def write_yaml(dictionary: Dict[Any, Any], filename: str,
+               width: Optional[Union[float, int]] = None) -> None:
     """
     Write a yaml file from a dictionary
 
     :param dictionary: dict, the dictionary to write
     :param filename: str, the filename (absolute path) of the yaml file
+    :param width: optional output line width passed to the YAML dumper
 
     :return: None - writes yaml file 'filename'
     """
@@ -335,14 +341,17 @@ def write_yaml(dictionary: dict, filename: str,
         yaml.dump(dictionary, yfile, width=width)
 
 
-def tqdm_module(use: bool = True):
+def tqdm_module(use: bool = True) -> Callable[..., Any]:
     """
     Get the tqdm module in on or off mode
 
-    :return: function, the tqdm method (or class with a call)
+    :param use: whether the configured progress-bar setting may enable tqdm
+
+    :return: tqdm when enabled, otherwise a no-op adapter
     """
     # this will replace tqdm with the return of the first arg
-    def _tqdm(*args, **kwargs):
+    def _tqdm(*args: Any, **kwargs: Any) -> Any:
+        """Return the first positional item when progress bars are disabled."""
         _ = kwargs
         return args[0]
     # if we want to use tqdm then use it

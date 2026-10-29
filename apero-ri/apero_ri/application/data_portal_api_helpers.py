@@ -7,6 +7,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 from apero_ri.core.auth import (
@@ -32,6 +33,9 @@ from flask import (
 )
 
 
+_ApiResponse = Response | tuple[Response, int]
+
+
 # In-process TTL cache for api_object_page responses. Keyed by
 # (profile_id, objname_lower, rid_tag); value is
 # (expires_at_epoch, payload_dict). Page data changes only when
@@ -44,13 +48,13 @@ _OBJECT_PAGE_CACHE_TTL = 60.0  # seconds
 
 
 def _run_tessilator_stream_worker(
-    objname,
-    cache_root,
-    instrument,
-    aliases,
-    log_q,
-    result_q,
-):
+    objname: str,
+    cache_root: str | Path,
+    instrument: str,
+    aliases: list[str],
+    log_q: Any,
+    result_q: Any,
+) -> None:
     """Run tessilator in an isolated process for clean log streaming."""
     try:
         from apero_ri.core.run_tessilator import run_tessilator
@@ -73,7 +77,14 @@ def _run_tessilator_stream_worker(
         log_q.put(None)
 
 
-def _object_page_cache_get(key):
+def _object_page_cache_get(
+    key: tuple[Any, ...],
+) -> dict[str, Any] | None:
+    """Return a cached object-page payload when its entry is still fresh.
+
+    :param key: Cache key identifying the requested object page.
+    :return: Cached payload, or ``None`` when absent or expired.
+    """
     with _OBJECT_PAGE_CACHE_LOCK:
         hit = _OBJECT_PAGE_CACHE.get(key)
         if hit is None:
@@ -108,7 +119,15 @@ def _set_request_theme_from_args() -> str:
     return theme
 
 
-def _object_page_cache_set(key, payload):
+def _object_page_cache_set(
+    key: tuple[Any, ...],
+    payload: dict[str, Any],
+) -> None:
+    """Store an object-page payload in the in-process cache.
+
+    :param key: Cache key identifying the requested object page.
+    :param payload: Response payload to cache.
+    """
     with _OBJECT_PAGE_CACHE_LOCK:
         # Bound the cache (LRU-style by simple eviction)
         if len(_OBJECT_PAGE_CACHE) > 256:
@@ -117,7 +136,7 @@ def _object_page_cache_set(key, payload):
             time.time() + _OBJECT_PAGE_CACHE_TTL, payload)
 
 
-def api_ri_profile_health(app):
+def api_ri_profile_health(app: Any) -> _ApiResponse:
     """Run database and path health checks for a profile."""
     user_info = app._require_user()
     if not user_info:
@@ -174,7 +193,7 @@ def api_ri_profile_health(app):
     )
 
 
-def api_debug_plots(app):
+def api_debug_plots(app: Any) -> _ApiResponse:
     """Generate debug plots on demand (called via AJAX)."""
     user_info = app._get_api_user()
     if user_info:
@@ -297,7 +316,7 @@ def api_debug_plots(app):
     return jsonify(**result)
 
 
-def api_tcorr_map_generate(app):
+def api_tcorr_map_generate(app: Any) -> _ApiResponse:
     """Generate the telluric correction map on demand (called via AJAX)."""
     user_info = app._get_api_user()
     if user_info:
@@ -370,7 +389,7 @@ def api_tcorr_map_generate(app):
     return jsonify(**result)
 
 
-def api_object_lbl_plots(app):
+def api_object_lbl_plots(app: Any) -> _ApiResponse:
     """Return Bokeh JSON plot payloads for all LBL flavors of an object."""
     user_info = app._get_api_user()
     if user_info:
@@ -493,7 +512,7 @@ def api_object_lbl_plots(app):
     return jsonify(**result)
 
 
-def api_filename_plot(app):
+def api_filename_plot(app: Any) -> _ApiResponse:
     """Return a Bokeh JSON plot for a single file (filename-click feature)."""
     from apero_ri.base.base import BLOCK_KIND as block_kind_map
     from apero_ri.plots.plots_filename import build_filename_plot_json
@@ -584,7 +603,11 @@ def api_filename_plot(app):
     return jsonify(success=True, **result)
 
 
-def _resolve_target_context(app, user_info, accessible):
+def _resolve_target_context(
+    app: Any,
+    user_info: Any,
+    accessible: list[dict[str, Any]],
+) -> Any:
     """Resolve target context from either ``(profile_id, objname)`` or
     ``name=``.
 
@@ -713,7 +736,7 @@ def _resolve_target_context(app, user_info, accessible):
     )
 
 
-def api_finder_chart(app):
+def api_finder_chart(app: Any) -> _ApiResponse:
     """Generate finder charts on demand (called via AJAX)."""
     user_info = app._get_api_user()
     if user_info:
@@ -790,7 +813,7 @@ def api_finder_chart(app):
     return jsonify(**result)
 
 
-def api_finder_chart_stream(app):
+def api_finder_chart_stream(app: Any) -> _ApiResponse:
     """SSE endpoint: stream finder chart generation live.
 
     Each event is a JSON object with a ``type`` field:
@@ -864,7 +887,8 @@ def api_finder_chart_stream(app):
                     dict(type='done', result=hit)
                 )
 
-                def _cached():
+                def _cached() -> Any:
+                    """Yield the completed cached finder-chart event."""
                     yield f'data: {payload}\n\n'
 
                 return Response(
@@ -877,7 +901,8 @@ def api_finder_chart_stream(app):
     # holder for result from the background thread
     result_holder = [None]
 
-    def _worker():
+    def _worker() -> None:
+        """Generate finder charts and send completion through the queue."""
         from apero_ri.core.object_finder import (
             generate_finder_charts,
         )
@@ -899,7 +924,8 @@ def api_finder_chart_stream(app):
     )
     t.start()
 
-    def _generate():
+    def _generate() -> Any:
+        """Stream finder-chart logs and the final result as events."""
         while True:
             try:
                 item = log_q.get(timeout=30)
@@ -971,7 +997,7 @@ def api_finder_chart_stream(app):
     )
 
 
-def api_object_table(app):
+def api_object_table(app: Any) -> _ApiResponse:
     """Return object table rows for a profile, filtered by science group."""
     import concurrent.futures as _futures
     import json as _json
@@ -1072,7 +1098,8 @@ def api_object_table(app):
         str(request.args.get("separation_unit", "arcsec") or "").strip().lower()
     )
 
-    def _norm_variants(value: str):
+    def _norm_variants(value: str) -> set[str]:
+        """Return normalized alphanumeric variants of a target name."""
         text = str(value or "").strip().lower()
         if not text:
             return set()
@@ -1082,7 +1109,8 @@ def api_object_table(app):
         }
         return {v for v in variants if v}
 
-    def _name_match_row(row, query):
+    def _name_match_row(row: dict[str, Any], query: str) -> bool:
+        """Match a query against an object row's name and aliases."""
         qvars = _norm_variants(query)
         if not qvars:
             return True
@@ -1099,7 +1127,10 @@ def api_object_table(app):
                 return True
         return False
 
-    def _row_ra_dec_deg(row):
+    def _row_ra_dec_deg(
+        row: dict[str, Any],
+    ) -> tuple[float, float] | None:
+        """Return row coordinates in degrees when both values are present."""
         ra_keys = ("RA [Deg]", "RA", "OBJRA", "OBJ_RA")
         dec_keys = ("Dec [Deg]", "DEC", "Dec", "OBJDEC", "OBJ_DEC")
         ra_val = None
@@ -1217,7 +1248,8 @@ def api_object_table(app):
         for row in filtered
     ]
 
-    def _date_only(value):
+    def _date_only(value: Any) -> Any:
+        """Strip a timestamp to its date component when present."""
         if value is None:
             return value
         text = str(value).strip()
@@ -1248,7 +1280,11 @@ def api_object_table(app):
 
     _objects_dir = tasks_dir / profile_id / "objects"
 
-    def _read_ftable(objname, fkind):
+    def _read_ftable(
+        objname: str,
+        fkind: str,
+    ) -> tuple[int | None, int | None]:
+        """Count total and accessible rows in one file table."""
         _path = _objects_dir / f"ftable_{fkind}_{objname}.json"
         try:
             with open(_path, encoding="utf-8") as _fh:
@@ -1328,7 +1364,7 @@ def api_object_table(app):
     return jsonify(**payload)
 
 
-def api_object_plots(app):
+def api_object_plots(app: Any) -> _ApiResponse:
     """Return Bokeh JSON plot payloads for object plots."""
     user_info = app._get_api_user()
     if user_info:
@@ -1536,7 +1572,8 @@ def api_object_plots(app):
     _no_plot = {"has_plot": False, "message": "Plot build failed"}
     timings_ms = {}
 
-    def _timed_build(name, func):
+    def _timed_build(name: str, func: Any) -> Any:
+        """Build one plot payload while recording its elapsed time."""
         t0 = time.perf_counter()
         ok = True
         try:
@@ -1717,7 +1754,7 @@ def api_object_plots(app):
     return jsonify(**result)
 
 
-def api_object_page(app):
+def api_object_page(app: Any) -> _ApiResponse:
     """Return object-page data for a profile/object."""
     import json as _json
 
@@ -1794,7 +1831,8 @@ def api_object_page(app):
 
     all_rows = object_table.get("rows", [])
 
-    def _row_accessible(row):
+    def _row_accessible(row: dict[str, Any]) -> bool:
+        """Check whether an object row intersects accessible run IDs."""
         raw = str(row.get("RUN_ID", "") or "")
         row_rids = {r.strip() for r in raw.split(",") if r.strip()}
         return bool(row_rids & accessible_run_ids)
@@ -1947,13 +1985,23 @@ def api_object_page(app):
 
 
 def _build_rejected_section(
-    app,
+    app: Any,
     base_dir: Path,
     profile_id: str,
     objname: str,
     instrument: str,
-    accessible_run_ids,
-):
+    accessible_run_ids: set[str],
+) -> dict[str, Any]:
+    """Build visible rejection-list rows for one object page.
+
+    :param app: ARI application used to load rejection-list rows.
+    :param base_dir: Data directory containing the profile object tables.
+    :param profile_id: Profile whose object data is displayed.
+    :param objname: Object name used to load observation rows.
+    :param instrument: Instrument associated with the profile.
+    :param accessible_run_ids: Run IDs the current user may view.
+    :return: Section key and rejection rows visible to the user.
+    """
     from apero_ri.application import rejection_list_api_helpers as _rlh
 
     section = dict(
@@ -2023,7 +2071,7 @@ def _build_rejected_section(
     return section
 
 
-def api_object_rejection_issue(app):
+def api_object_rejection_issue(app: Any) -> _ApiResponse:
     """Create an issue from a rejected observation flag action."""
     from apero_ri.application import issues_api_helpers as _ih
     from apero_ri.application import rejection_list_api_helpers as _rlh
@@ -2113,7 +2161,7 @@ def api_object_rejection_issue(app):
     return jsonify(success=True, issue=issue, action_url=action_url)
 
 
-def api_obs_table(app):
+def api_obs_table(app: Any) -> _ApiResponse:
     """Return observation table rows for a profile."""
     import json as _json
 
@@ -2241,7 +2289,7 @@ def api_obs_table(app):
 # TESS rotation periods (tessilator)
 # ====================================================================
 
-def api_tess_rotation(app):
+def api_tess_rotation(app: Any) -> _ApiResponse:
     """Generate TESS rotation period plots on demand."""
     user_info = app._get_api_user()
     if user_info:
@@ -2306,7 +2354,7 @@ def api_tess_rotation(app):
     return jsonify(**result)
 
 
-def api_tess_rotation_lc(app):
+def api_tess_rotation_lc(app: Any) -> _ApiResponse:
     """Download a cached TESS light-curve CSV for one sector."""
     user_info = app._get_api_user()
     if user_info:
@@ -2383,7 +2431,7 @@ def api_tess_rotation_lc(app):
     )
 
 
-def api_tess_rotation_data(app):
+def api_tess_rotation_data(app: Any) -> _ApiResponse:
     """Download a cached TESS data file (light curve, etc.)."""
     user_info = app._get_api_user()
     if user_info:
@@ -2461,7 +2509,7 @@ def api_tess_rotation_data(app):
     )
 
 
-def api_tess_rotation_stream(app):
+def api_tess_rotation_stream(app: Any) -> _ApiResponse:
     """SSE endpoint: stream tessilator console output live.
 
     Each event is a JSON object with a ``type`` field:
@@ -2521,7 +2569,8 @@ def api_tess_rotation_stream(app):
                 dict(type='done', result=hit)
             )
 
-            def _cached():
+            def _cached() -> Any:
+                """Yield the completed cached tessilator event."""
                 yield f'data: {payload}\n\n'
 
             return Response(
@@ -2555,7 +2604,8 @@ def api_tess_rotation_stream(app):
     )
     proc.start()
 
-    def _generate():
+    def _generate() -> Any:
+        """Stream tessilator progress and its final result as events."""
         while True:
             try:
                 item = log_q.get(timeout=30)

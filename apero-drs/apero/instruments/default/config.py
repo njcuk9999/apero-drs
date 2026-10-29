@@ -90,6 +90,16 @@ CDict.add('RAW', dtype='path', source=__NAME__, user=True,
           description='Define the directory with the raw data '
                       'files in  (block directory)')
 
+#   Define an external raw directory to mirror into PATH.RAW (None to
+#   disable) - files are linked using IPATH.EXTERNAL_RAW_TYPE
+CDict.add('EXTERNAL_RAW', dtype=str, source=__NAME__, user=True,
+          active=True, group=cgroup, value=None,
+          description='Define an external raw directory to mirror into '
+                      'PATH.RAW (None to disable). Sub-directories are '
+                      'created in PATH.RAW and files are linked using '
+                      'IPATH.EXTERNAL_RAW_TYPE (by apero_processing and '
+                      'apero_precheck)')
+
 #   Define the directory that the reduced data should be saved to/read from
 CDict.add('RED', dtype='path', source=__NAME__,
           user=True,
@@ -370,6 +380,17 @@ CDict.add('RESET_RUN', dtype=str, source=__NAME__,
           description=('for run files (within assets '
                        'directory)'),
           output=False)
+
+# How files in PATH.EXTERNAL_RAW are linked into PATH.RAW
+#   'symlink' = symbolic link per file
+#   'hardlink' = hard link per file (copies if on a different filesystem)
+CDict.add('EXTERNAL_RAW_TYPE', value=None, dtype=str,
+          options=['symlink', 'hardlink'], source=__NAME__,
+          user=True, active=True, group=cgroup,
+          description=('How files in PATH.EXTERNAL_RAW are linked into '
+                       'PATH.RAW: "symlink" = symbolic link per file, '
+                       '"hardlink" = hard link per file (copies the '
+                       'file if on a different filesystem)'))
 
 # =============================================================================
 # DRS ASSETS URLS

@@ -27,7 +27,7 @@ import datetime as _dt
 import json
 import os
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple
 
 from flask import jsonify, request
 
@@ -66,7 +66,7 @@ def _has_history_perm(perms: Iterable[str]) -> bool:
     return "manage.astrometrics.history" in set(perms or [])
 
 
-def _has_history_admin(user_info: dict) -> bool:
+def _has_history_admin(user_info: dict[str, Any]) -> bool:
     """Return True if the caller is an admin/super_admin."""
     groups = []
     if isinstance(user_info, dict):
@@ -79,7 +79,10 @@ def _utcnow_iso() -> str:
     return _dt.datetime.utcnow().isoformat(timespec="seconds")
 
 
-def _diff_field_keys(before, after) -> List[str]:
+def _diff_field_keys(
+    before: Optional[dict[str, Any]],
+    after: Optional[dict[str, Any]],
+) -> List[str]:
     """Return a sorted list of top-level keys that differ.
 
     :param before: dict or None
@@ -104,10 +107,10 @@ def append_history(
         apero_name: str,
         user: str,
         action: str,
-        before: Optional[dict],
-        after: Optional[dict],
+        before: Optional[dict[str, Any]],
+        after: Optional[dict[str, Any]],
         previous_apero_name: Optional[str] = None,
-) -> Optional[str]:
+    ) -> Optional[str]:
     """Append a single history record. Returns the entry id or None.
 
     Best-effort: any I/O error is swallowed so it never breaks a save.
@@ -173,7 +176,7 @@ def _iter_history_files(astrom_root: Path) -> Iterable[Path]:
 
 def _read_history_file(
         fpath: Path,
-) -> List[Tuple[int, dict]]:
+) -> List[Tuple[int, dict[str, Any]]]:
     """Return [(line_index, record), ...] for a single file."""
     out = []
     try:
@@ -201,7 +204,7 @@ def _read_history_file(
     return out
 
 
-def _build_summary(rec: dict) -> dict:
+def _build_summary(rec: dict[str, Any]) -> dict[str, Any]:
     """Strip heavy before/after blobs from a record for list views."""
     return {
         "id": rec.get("id"),
@@ -217,13 +220,14 @@ def _build_summary(rec: dict) -> dict:
 # --------------------------------------------------------------------
 # Flask endpoints
 # --------------------------------------------------------------------
-def _astrom_root(app) -> Path:
+def _astrom_root(app: Any) -> Path:
+    """Return the configured astrometrics data directory."""
     base_dir = Path(
         app.args.data_dir or str(Path.home() / ".ari"))
     return base_dir / "apero-assets" / "astrometrics"
 
 
-def _check_history_perm(app):
+def _check_history_perm(app: Any) -> tuple[Any, Any, Any]:
     """Authorise the caller. Returns ``(user_info, perms, error)``."""
     user_info = app._get_api_user()
     if not user_info:
@@ -243,7 +247,7 @@ def _check_history_perm(app):
     return user_info, perms, None
 
 
-def _check_history_admin(app):
+def _check_history_admin(app: Any) -> tuple[Any, Any, Any]:
     """Authorise admin-only history management endpoints."""
     user_info, perms, err = _check_history_perm(app)
     if err is not None:
@@ -257,7 +261,7 @@ def _check_history_admin(app):
     return user_info, perms, None
 
 
-def api_astrometrics_history_list(app):
+def api_astrometrics_history_list(app: Any) -> Any:
     """List history entries (newest first) with optional filtering.
 
     Query parameters:
@@ -350,7 +354,7 @@ def _load_history_record(astrom_root: Path,
     return None
 
 
-def api_astrometrics_history_get(app):
+def api_astrometrics_history_get(app: Any) -> Any:
     """Return the full record (with before/after) for a single id.
 
     Body / query params: ``id``.
@@ -369,7 +373,7 @@ def api_astrometrics_history_get(app):
     return jsonify(success=True, entry=rec)
 
 
-def api_astrometrics_history_delete(app):
+def api_astrometrics_history_delete(app: Any) -> Any:
     """Delete one astrometrics history entry by id (admin-only)."""
     _, _, err = _check_history_admin(app)
     if err is not None:
@@ -403,7 +407,7 @@ def api_astrometrics_history_delete(app):
     return jsonify(success=True, deleted_id=entry_id)
 
 
-def api_astrometrics_history_clear(app):
+def api_astrometrics_history_clear(app: Any) -> Any:
     """Clear all astrometrics history files (admin-only)."""
     _, _, err = _check_history_admin(app)
     if err is not None:

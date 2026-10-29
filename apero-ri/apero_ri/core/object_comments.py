@@ -39,13 +39,14 @@ _ARI_DIR: Optional[Path] = None
 
 
 def _ari_dir() -> Path:
+    """Return the configured ARI data directory or its default location."""
     if _ARI_DIR is not None:
         return _ARI_DIR
     return secret_store.get_ari_dir()
 
 
 def set_ari_dir(path: Optional[str]) -> None:
-    """Allow overriding the base ARI directory."""
+    """Set or clear the base directory used for shared object comments."""
     global _ARI_DIR
     if path:
         _ARI_DIR = Path(path).expanduser()
@@ -54,12 +55,14 @@ def set_ari_dir(path: Optional[str]) -> None:
 
 
 def _shared_dir(profile_id: str) -> Path:
+    """Create and return the shared-data directory for a profile."""
     d = _ari_dir() / 'shared' / profile_id
     d.mkdir(parents=True, exist_ok=True)
     return d
 
 
 def _comments_path(profile_id: str) -> Path:
+    """Return the object-comment YAML path for a profile."""
     return _shared_dir(profile_id) / 'object_comments.yaml'
 
 
@@ -67,6 +70,7 @@ def _comments_path(profile_id: str) -> Path:
 # YAML helpers
 # ================================================================
 def _load_yaml(path: Path, default: Any = None) -> Any:
+    """Load YAML data, falling back to default for missing or bad files."""
     if default is None:
         default = {}
     if not path.exists():
@@ -80,6 +84,7 @@ def _load_yaml(path: Path, default: Any = None) -> Any:
 
 
 def _save_yaml(path: Path, data: Any) -> None:
+    """Write YAML data to the requested path, creating its parent directory."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
         yaml.dump(
@@ -89,17 +94,21 @@ def _save_yaml(path: Path, data: Any) -> None:
 
 
 def _new_id() -> str:
+    """Return a new UUID string for a comment record."""
     return str(uuid.uuid4())
 
 
 def _now_iso() -> str:
+    """Return the current UTC timestamp in ISO 8601 format."""
     return datetime.now(timezone.utc).isoformat()
 
 
 # ================================================================
 # Public API
 # ================================================================
-def load_comments(profile_id: str) -> Dict[str, List[dict]]:
+def load_comments(
+    profile_id: str,
+) -> Dict[str, List[Dict[str, Any]]]:
     """Load all object comments for a profile."""
     path = _comments_path(profile_id)
     data = _load_yaml(path, {})
@@ -109,7 +118,7 @@ def load_comments(profile_id: str) -> Dict[str, List[dict]]:
 
 
 def save_comments(
-    profile_id: str, data: Dict[str, List[dict]]
+    profile_id: str, data: Dict[str, List[Dict[str, Any]]]
 ) -> None:
     """Save all object comments for a profile."""
     _save_yaml(_comments_path(profile_id), data)
@@ -117,7 +126,7 @@ def save_comments(
 
 def list_comments(
     profile_id: str, objname: str
-) -> List[dict]:
+) -> List[Dict[str, Any]]:
     """Return comments for a specific object, newest first."""
     all_comments = load_comments(profile_id)
     items = all_comments.get(objname, [])
@@ -133,7 +142,7 @@ def list_comments(
 def add_comment(
     profile_id: str, objname: str,
     username: str, comment: str
-) -> dict:
+) -> Dict[str, Any]:
     """Add a comment and return the new comment dict."""
     all_comments = load_comments(profile_id)
     items = all_comments.setdefault(objname, [])
@@ -151,7 +160,7 @@ def add_comment(
 def edit_comment(
     profile_id: str, objname: str,
     comment_id: str, new_text: str
-) -> Optional[dict]:
+) -> Optional[Dict[str, Any]]:
     """Edit a comment's text. Returns updated comment or None."""
     all_comments = load_comments(profile_id)
     items = all_comments.get(objname, [])
@@ -183,7 +192,7 @@ def delete_comment(
 
 def get_comment_by_id(
     profile_id: str, objname: str, comment_id: str
-) -> Optional[dict]:
+) -> Optional[Dict[str, Any]]:
     """Look up a single comment by its ID."""
     all_comments = load_comments(profile_id)
     items = all_comments.get(objname, [])

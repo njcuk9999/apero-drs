@@ -83,6 +83,7 @@ _SCOPES = [
 # Define helpers
 # =============================================================================
 def _as_bool(value: Any) -> bool:
+    """Interpret common configuration values as booleans."""
     if isinstance(value, bool):
         return value
     text = str(value or '').strip().lower()
@@ -90,14 +91,17 @@ def _as_bool(value: Any) -> bool:
 
 
 def _safe(value: Any) -> str:
+    """Convert a possibly empty cell value to trimmed text."""
     return str(value or '').strip()
 
 
 def _now() -> str:
+    """Return the current UTC time in the sheet's timestamp format."""
     return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
 
 def _parse_ts(value: Any) -> Optional[datetime]:
+    """Parse supported sheet timestamps, returning ``None`` if invalid."""
     text = _safe(value)
     if not text:
         return None
@@ -110,6 +114,12 @@ def _parse_ts(value: Any) -> Optional[datetime]:
 
 
 def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """Load OAuth credentials from the configured ARI admin secret file.
+
+    :param task_cfg: Task configuration containing an optional secret name.
+    :returns: Parsed OAuth credential mapping.
+    :raises FileNotFoundError: If the credential file is missing or invalid.
+    """
     secret_name = str(
         task_cfg.get('google_secret_name', DEFAULT_GOOGLE_SECRET_NAME)
         or DEFAULT_GOOGLE_SECRET_NAME
@@ -134,7 +144,14 @@ def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
 
 def _open_worksheet(payload: Dict[str, Any],
                     sheet_id: str,
-                    sheet_name: Optional[str]):
+                    sheet_name: Optional[str]) -> Any:
+    """Authorize Google Sheets and select a worksheet by name or position.
+
+    :param payload: Dynamic OAuth credential mapping.
+    :param sheet_id: Google spreadsheet identifier.
+    :param sheet_name: Optional worksheet name; the first sheet is default.
+    :returns: Authorized worksheet object.
+    """
     import gspread
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -160,7 +177,8 @@ def _open_worksheet(payload: Dict[str, Any],
     return spreadsheet.get_worksheet(0)
 
 
-def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
+def _sheet_to_dataframe(worksheet: Any) -> pd.DataFrame:
+    """Convert worksheet values into a dataframe with normalized rows."""
     all_values = worksheet.get_all_values()
     if not all_values:
         return pd.DataFrame(columns=KNOWN_ERROR_COLUMNS)
@@ -183,7 +201,10 @@ def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
-def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
+def _write_dataframe_to_sheet(
+    worksheet: Any, dataframe: pd.DataFrame
+) -> None:
+    """Replace worksheet contents with the dataframe's header and rows."""
     worksheet.clear()
     header = dataframe.columns.tolist()
     rows = dataframe.fillna('').astype(str).values.tolist()
@@ -233,7 +254,10 @@ def _merge(local_map: Dict[str, Dict[str, Any]],
                List[str]]:
     """Reconcile local + sheet records by id and updated_at.
 
-    :return: (merged_map, to_ari_ids, to_sheet_ids, conflict_ids)
+    :param local_map: ARI records indexed by identifier.
+    :param sheet_map: Identified Google Sheet rows.
+    :param sheet_new: Sheet rows that do not yet have identifiers.
+    :returns: Merged rows, ids to ARI, ids to sheet, and conflicting ids.
     """
     merged: Dict[str, Dict[str, Any]] = dict()
     to_ari: List[str] = []
@@ -283,6 +307,10 @@ class LegacyKnownErrorsGSheetTask(apero_async.AperoAsyncTask):
     """Bi-directional sync between ARI known-errors YAMLs and a Google Sheet."""
 
     def __init__(self, status: str = 'pending') -> None:
+        """Initialize the scheduled known-errors synchronization task.
+
+        :param status: Initial asynchronous task status.
+        """
         name = 'Legacy Known Errors GSheet Sync'
         description = (
             'Sync the monitor known-errors list with a Google Sheet in both '
@@ -291,11 +319,16 @@ class LegacyKnownErrorsGSheetTask(apero_async.AperoAsyncTask):
         super().__init__(name, description, status)
 
     def run_job(self, params: Dict[str, Any]) -> None:
+        """Synchronize ARI known-error records with the configured sheet.
+
+        :param params: Task settings, logger, and optional dry-run config.
+        """
         task_cfg = dict(params.get('TASK_CONFIG') or {})
         dry_run = _as_bool(task_cfg.get('DRY_RUN', task_cfg.get('dry_run')))
         task_logger = params.get('TASK_LOGGER')
 
         def tlog(message: str) -> None:
+            """Forward progress messages when a task logger is available."""
             if callable(task_logger):
                 try:
                     task_logger(message)

@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from apero_ri.core import audit_log
 from apero_ri.core import backup_backend as bb
@@ -11,8 +12,12 @@ from flask import jsonify, request, session, url_for
 from werkzeug.utils import secure_filename
 
 
-def api_admin_backups_oauth_callback(app):
-    """Handle Google OAuth callback for backup configuration."""
+def api_admin_backups_oauth_callback(app: Any) -> Any:
+    """Handle the Google OAuth callback for backup configuration.
+
+    :param app: Application facade for permission and health refreshes.
+    :return: HTML response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_admin_backup_perm()
     if not user_info:
         return "Unauthorized", 401
@@ -120,8 +125,12 @@ def api_admin_backups_oauth_callback(app):
     )
 
 
-def api_admin_backups_upload_json(app):
-    """Upload and validate JSON secret files for backup configuration."""
+def api_admin_backups_upload_json(app: Any) -> Any:
+    """Validate and store a JSON secret file for backup configuration.
+
+    :param app: Application facade for permission and health refreshes.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -188,8 +197,12 @@ def api_admin_backups_upload_json(app):
     )
 
 
-def api_admin_backups_save(app):
-    """Save admin backup configuration settings."""
+def api_admin_backups_save(app: Any) -> Any:
+    """Save permitted backup settings and record the update.
+
+    :param app: Application facade for permission and health refreshes.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info, perms = app._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401

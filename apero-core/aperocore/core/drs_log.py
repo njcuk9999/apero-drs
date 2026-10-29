@@ -68,9 +68,12 @@ class Log:
     """
     Log class to handle logging messages
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """
-        Initialize the log class - overrides the logging module functionality
+        Configure the APERO logger and attach its default console handler.
+
+        :param kwargs: optional ``theme``, ``program``, ``code``, and
+            ``filename`` values for formatting and file logging
         """
         # get the logger
         self.logger = logging.getLogger(base.__package__)
@@ -104,7 +107,8 @@ class Log:
         if kwargs.get('filename', False):
             self.add_log_file(kwargs['filename'])
 
-    def _add_console(self, verbose: int, level: int):
+    def _add_console(self, verbose: int, level: int) -> None:
+        """Replace existing handlers with a configured console handler."""
         # set console verbosity level
         self.console_verbosity = verbose
         # clean any handlers in logging currently
@@ -126,7 +130,7 @@ class Log:
                         colour: Union[str, None] = None,
                         counter: int = 0,
                         to_console: bool = True,
-                        to_file: bool = True):
+                        to_file: bool = True) -> None:
         """
         Update the console
 
@@ -161,7 +165,8 @@ class Log:
             lhandler.setFormatter(self.filefmt)
             self.logger.addHandler(lhandler)
 
-    def add_log_file(self, filepath: str, level: Union[str, int, None] = None):
+    def add_log_file(self, filepath: str,
+                     level: Union[str, int, None] = None) -> None:
         """
         Updates the file_handler with the new file path and level
 
@@ -188,7 +193,7 @@ class Log:
             self.file_handler.setLevel(self.baselevel)
 
     def set_level(self, name: str = 'console',
-                  level: Union[int, str, None] = 'DEBUG'):
+                  level: Union[int, str, None] = 'DEBUG') -> None:
         """
         Set the level of either "console" (for standard output) or "file"
         (for log file) - will print all messages at this level and above
@@ -216,14 +221,14 @@ class Log:
                     # update handler level
                     handler.setLevel(record)
 
-    def general(self, message: str, *args,
+    def general(self, message: str, *args: Any,
                 code: Union[str, None] = None,
                 program: Union[str, None] = None,
                 rmessage: Union[str, None] = None,
                 colour: Union[str, None] = None,
                 key: Union[str, None] = None,
                 to_console: bool = True, to_file: bool = True,
-                counter: int = 0, **kwargs):
+                counter: int = 0, **kwargs: Any) -> None:
         """
         Log a message at the GENERAL level
 
@@ -252,14 +257,14 @@ class Log:
         # noinspection PyProtectedMember
         self.logger._log(self.GENERAL, message, args, **kwargs)
 
-    def debug(self, message: str, *args,
+    def debug(self, message: str, *args: Any,
               code: Union[str, None] = None,
               program: Union[str, None] = None,
               rmessage: Union[str, None] = None,
               colour: Union[str, None] = None,
               key: Union[str, None] = None,
               to_console: bool = True, to_file: bool = True,
-              counter: int = 0, **kwargs):
+              counter: int = 0, **kwargs: Any) -> None:
         """
         Log a message at the GENERAL level
 
@@ -288,14 +293,14 @@ class Log:
         # run logger
         self.logger.debug(message, *args, **kwargs)
 
-    def info(self, message: str, *args,
+    def info(self, message: str, *args: Any,
              code: Union[str, None] = None,
              program: Union[str, None] = None,
              rmessage: Union[str, None] = None,
              colour: Union[str, None] = None,
              key: Union[str, None] = None,
              to_console: bool = True, to_file: bool = True,
-             counter: int = 0, **kwargs):
+             counter: int = 0, **kwargs: Any) -> None:
         """
         Log a message at the GENERAL level
 
@@ -324,14 +329,14 @@ class Log:
         # run logger
         self.logger.info(message, *args, **kwargs)
 
-    def warning(self, message: str, *args,
+    def warning(self, message: str, *args: Any,
                 code: Union[str, None] = None,
                 program: Union[str, None] = None,
                 rmessage: Union[str, None] = None,
                 colour: Union[str, None] = None,
                 key: Union[str, None] = None,
                 to_console: bool = True, to_file: bool = True,
-                counter: int = 0, **kwargs):
+                counter: int = 0, **kwargs: Any) -> None:
         """
         Log a message at the GENERAL level
 
@@ -360,14 +365,14 @@ class Log:
         # run logger
         self.logger.warning(message, *args, **kwargs)
 
-    def error(self, message: str, *args,
+    def error(self, message: str, *args: Any,
               code: Union[str, None] = None,
               program: Union[str, None] = None,
               rmessage: Union[str, None] = None,
               colour: Union[str, None] = None,
               key: Union[str, None] = None,
               to_console: bool = True, to_file: bool = True,
-              counter: int = 0, **kwargs):
+              counter: int = 0, **kwargs: Any) -> None:
         """
         Log a message at the GENERAL level
 
@@ -402,7 +407,8 @@ class Log:
                        rmessage: Union[str, None] = None,
                        colour: Union[str, None] = None,
                        to_console: bool = True,
-                       to_file: bool = True, counter: int = 0):
+                       to_file: bool = True,
+                       counter: int = 0) -> None:
         """
         Update the text printed to console
             0=only warnings/errors
@@ -461,11 +467,12 @@ class ConsoleFormat(logging.Formatter):
     """
     Custom formatter for console output
     """
-    def __init__(self, fmt: str = "%(levelno)s: %(msg)s", theme=None,
+    def __init__(self, fmt: str = "%(levelno)s: %(msg)s",
+                 theme: Union[str, None] = None,
                  code: Union[str, None] = None,
                  program: Union[str, None] = None,
                  colour: Union[str, None] = None,
-                 counter: int = 0):
+                 counter: int = 0) -> None:
         """
         Initialize the formatter
 
@@ -518,7 +525,7 @@ class ConsoleFormat(logging.Formatter):
         else:
             logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """
         Format the record (using the level to determine the format)
 
@@ -555,11 +562,12 @@ class FileFormat(logging.Formatter):
     """
     Custom formatter for file output
     """
-    def __init__(self, fmt: str = "%(levelno)s: %(msg)s", theme=None,
+    def __init__(self, fmt: str = "%(levelno)s: %(msg)s",
+                 theme: Union[str, None] = None,
                  code: Union[str, None] = None,
                  program: Union[str, None] = None,
                  rmessage: Union[str, None] = None,
-                 counter: int = 0):
+                 counter: int = 0) -> None:
         """
         Initialize the formatter for log file output
 
@@ -620,7 +628,7 @@ class FileFormat(logging.Formatter):
         else:
             logging.Formatter.__init__(self, fmt, datefmt='%Y-%m-%d %H:%M:%S')
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """
         Format the record (using the level to determine the format)
         """
@@ -686,7 +694,7 @@ class Colors:
     debug: str = None
 
     def __init__(self, theme: Union[str, None] = None,
-                 override: Union[str, None] = None):
+                 override: Union[str, None] = None) -> None:
         """
         Initialize the color class
         """
@@ -699,7 +707,7 @@ class Colors:
         self.update_theme(override=override)
 
     def update_theme(self, theme: Union[str, None] = None,
-                     override: Union[str, None] = None):
+                     override: Union[str, None] = None) -> None:
         """
         Update the attributes based on theme choice
         """
@@ -770,7 +778,8 @@ class Colors:
             start = self.endc
         return start
 
-    def print(self, message: str, colour: Union[str, None] = None):
+    def print(self, message: str,
+              colour: Union[str, None] = None) -> str:
         """
         Get a string representaion of a message in a given colour
 
@@ -799,7 +808,7 @@ class Wlog:
                  printonly: bool = False, logonly: bool = False,
                  wrap: bool = True, option: str = None, colour: str = None,
                  raise_exception: bool = True, sublevel: Optional[int] = None,
-                 no_timestamp: bool = False):
+                 no_timestamp: bool = False) -> None:
         """
         Main function to log messages from the code
         """
@@ -945,14 +954,26 @@ class Wlog:
         return storage
 
     def logger_storage(self, params: Any, key: str, ttime: str,
-                       message: str, program: str):
+                       message: str, program: str) -> None:
+        """Cache a formatted log entry for later retrieval by key.
+
+        :param params: parameter dictionary used to resolve the log instance
+        :param key: storage key and message code identifier
+        :param ttime: formatted timestamp associated with the entry
+        :param message: rendered message to store
+        :param program: program name associated with the entry
+        """
         # get the log
         log = self.get_log(params)
         # push to cache
         cache_logger(log.filepath, message, code=key, timestr=ttime,
                      key=key, program=program)
 
-    def clean_log(self, params: Any = None):
+    def clean_log(self, params: Any = None) -> None:
+        """Clear cached entries for the selected log instance.
+
+        :param params: optional parameter dictionary used to resolve the log
+        """
         # get the log
         log = self.get_log(params)
         # clear this cache
@@ -968,7 +989,7 @@ class AperoCodedException(DrsCodedException):
     def __init__(self, params: Any = None,
                  code: Union[str, None] = None,
                  message: Union[str, None] = None,
-                 targs: Union[list, None] = None):
+                 targs: Union[list, None] = None) -> None:
         """
         Initialize the exception
 
@@ -1005,7 +1026,7 @@ class AperoCodedException(DrsCodedException):
         else:
             self.params = params
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         The string representation of the error: used as message when raised
         :return:
@@ -1032,7 +1053,7 @@ class AperoCodedWarning():
                  code: Union[str, None] = None,
                  message: Union[str, None] = None,
                  targs: Union[list, None] = None,
-                 sublevel: Optional[int] = None):
+                 sublevel: Optional[int] = None) -> None:
         """
         Initialize the exception
 
@@ -1075,7 +1096,7 @@ class AperoCodedWarning():
 def cache_logger(filepath: str, message: str, code: Union[str, None] = None,
                  program: Union[str, None] = None,
                  key: Union[str, None] = None,
-                 timestr: Union[str, None] = None):
+                 timestr: Union[str, None] = None) -> None:
     """
     Store message formated properly to cache (for return to lbl code)
 

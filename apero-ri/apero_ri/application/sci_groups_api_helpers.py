@@ -2,6 +2,7 @@
 
 import re
 from io import StringIO
+from typing import Any
 
 import yaml
 from apero_ri.core.auth import (
@@ -16,7 +17,10 @@ from apero_ri.core import run_ids as run_id_catalog
 from flask import Response, jsonify, request
 
 
-def api_sci_groups_list(app):
+_ApiResponse = Response | tuple[Response, int]
+
+
+def api_sci_groups_list(app: Any) -> _ApiResponse:
     """List science group names for an instrument."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -162,7 +166,7 @@ def api_sci_groups_list(app):
     )
 
 
-def api_sci_groups_save(app):
+def api_sci_groups_save(app: Any) -> _ApiResponse:
     """Save run_ids and users for a science group."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -219,7 +223,7 @@ def api_sci_groups_save(app):
     return jsonify(success=True, group=groups.get(canonical_name, {}))
 
 
-def api_sci_groups_save_all(app):
+def api_sci_groups_save_all(app: Any) -> _ApiResponse:
     """Save multiple science-group edits in one request."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -319,7 +323,7 @@ def api_sci_groups_save_all(app):
     return jsonify(success=True, saved=saved_entries)
 
 
-def api_sci_groups_create(app):
+def api_sci_groups_create(app: Any) -> _ApiResponse:
     """Create a new science group."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -365,7 +369,7 @@ def api_sci_groups_create(app):
     return jsonify(success=True)
 
 
-def api_sci_groups_delete(app):
+def api_sci_groups_delete(app: Any) -> _ApiResponse:
     """Delete a science group."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -408,7 +412,9 @@ def api_sci_groups_delete(app):
     return jsonify(success=True)
 
 
-def _normalize_group_payload(payload):
+def _normalize_group_payload(
+    payload: Any,
+) -> dict[str, dict[str, list[str]]]:
     """Normalize uploaded science-group YAML payload."""
     if not isinstance(payload, dict):
         raise ValueError("YAML root must be a mapping of group names")
@@ -441,7 +447,7 @@ def _normalize_group_payload(payload):
     return normalized
 
 
-def api_sci_groups_export(app):
+def api_sci_groups_export(app: Any) -> _ApiResponse:
     """Export science groups for an instrument as YAML."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -506,7 +512,7 @@ def api_sci_groups_export(app):
     return Response(content, mimetype="text/yaml", headers=headers)
 
 
-def api_sci_groups_import(app):
+def api_sci_groups_import(app: Any) -> _ApiResponse:
     """Import science groups YAML with merge/replace behavior."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -516,7 +522,10 @@ def api_sci_groups_import(app):
     mode = str(request.form.get("mode", "merge") or "merge").strip()
     mode = mode.lower()
     if mode not in {"merge", "replace"}:
-        return jsonify(success=False, error="Mode must be merge or replace"), 400
+        return jsonify(
+            success=False,
+            error="Mode must be merge or replace",
+        ), 400
     if not instrument:
         return jsonify(success=False, error="No instrument"), 400
 
@@ -601,7 +610,11 @@ def api_sci_groups_import(app):
     )
 
 
-def _check_sci_group_access(app, instrument, perms):
+def _check_sci_group_access(
+    app: Any,
+    instrument: str,
+    perms: Any,
+) -> bool:
     """Return an error response tuple or None for valid access."""
     if not instrument:
         return jsonify(success=False, error='No instrument'), 400
@@ -617,7 +630,9 @@ def _check_sci_group_access(app, instrument, perms):
     return None
 
 
-def _normalize_group_entry_payload(raw_entry):
+def _normalize_group_entry_payload(
+    raw_entry: Any,
+) -> dict[str, list[str]]:
     """Normalize one per-group payload entry."""
     if not isinstance(raw_entry, dict):
         raise ValueError('Group payload must be a mapping')
@@ -638,7 +653,7 @@ def _normalize_group_entry_payload(raw_entry):
     return dict(run_ids=run_ids, users=users)
 
 
-def _normalize_global_users_payload(raw_payload):
+def _normalize_global_users_payload(raw_payload: Any) -> list[str]:
     """Normalize global users payload to user->set(groups)."""
     if not isinstance(raw_payload, dict):
         raise ValueError('YAML root must be a user mapping')
@@ -659,7 +674,7 @@ def _normalize_global_users_payload(raw_payload):
     return normalized
 
 
-def _normalize_global_run_ids_payload(raw_payload):
+def _normalize_global_run_ids_payload(raw_payload: Any) -> list[str]:
     """Normalize global run-id payload to run_id->set(groups)."""
     if not isinstance(raw_payload, dict):
         raise ValueError('YAML root must be a run-id mapping')
@@ -682,7 +697,10 @@ def _normalize_global_run_ids_payload(raw_payload):
     return normalized
 
 
-def _collect_assignment_state(app, instrument):
+def _collect_assignment_state(
+    app: Any,
+    instrument: str,
+) -> dict[str, Any]:
     """Collect groups and assignment maps for one instrument."""
     run_ids = app._get_instrument_run_ids(instrument)
     groups = load_science_groups(instrument)
@@ -726,7 +744,7 @@ def _collect_assignment_state(app, instrument):
     )
 
 
-def api_sci_groups_io_export(app):
+def api_sci_groups_io_export(app: Any) -> _ApiResponse:
     """Export YAML for global users/run IDs or selected group."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -842,7 +860,7 @@ def api_sci_groups_io_export(app):
     )
 
 
-def api_sci_groups_io_import(app):
+def api_sci_groups_io_import(app: Any) -> _ApiResponse:
     """Import YAML for global users/run IDs or selected group."""
     user_info, perms = app._require_sci_group_perm()
     if not user_info:
@@ -858,7 +876,10 @@ def api_sci_groups_io_import(app):
     mode = str(request.form.get('mode', 'merge') or '').strip().lower()
     raw_group = str(request.form.get('group', '') or '').strip()
     if mode not in {'merge', 'replace'}:
-        return jsonify(success=False, error='Mode must be merge or replace'), 400
+        return jsonify(
+            success=False,
+            error='Mode must be merge or replace',
+        ), 400
 
     up_file = request.files.get('file')
     if up_file is None:

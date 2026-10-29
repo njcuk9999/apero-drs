@@ -25,7 +25,9 @@ _AWARDS_CACHE_LOCK = threading.Lock()
 _AWARDS_CACHE_TTL = 300  # seconds
 
 
-def _get_awards_cached(data_dir: Path, instruments: list) -> dict:
+def _get_awards_cached(
+        data_dir: Path, instruments: list[str]) -> Dict[str, Any]:
+    """Return cached award summaries, computing them when the cache expires."""
     cache_key = str(data_dir)
     now = time.monotonic()
     with _AWARDS_CACHE_LOCK:
@@ -44,7 +46,8 @@ def _get_awards_cached(data_dir: Path, instruments: list) -> dict:
 # ---------------------------------------------------------------------------
 # Notifications
 # ---------------------------------------------------------------------------
-def api_notifications_list(app):
+def api_notifications_list(app: Any) -> Any:
+    """List the signed-in user's notifications and unread counts."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -72,7 +75,7 @@ def api_notifications_list(app):
     )
 
 
-def api_notifications_unread_count(app):
+def api_notifications_unread_count(app: Any) -> Any:
     """Lightweight endpoint hit by the bell poller."""
     user_info = app._require_user()
     if not user_info:
@@ -85,7 +88,8 @@ def api_notifications_unread_count(app):
     )
 
 
-def api_notifications_mark_read(app):
+def api_notifications_mark_read(app: Any) -> Any:
+    """Mark selected notifications, or all notifications, as read."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -101,7 +105,8 @@ def api_notifications_mark_read(app):
     return jsonify(success=True, updated=n)
 
 
-def api_notifications_dismiss(app):
+def api_notifications_dismiss(app: Any) -> Any:
+    """Dismiss selected notifications or all notifications in a channel."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -118,7 +123,8 @@ def api_notifications_dismiss(app):
     return jsonify(success=True, dismissed=n)
 
 
-def api_notification_prefs_get(app):
+def api_notification_prefs_get(app: Any) -> Any:
+    """Return notification preferences for the signed-in user."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -130,7 +136,8 @@ def api_notification_prefs_get(app):
     )
 
 
-def api_notification_prefs_save(app):
+def api_notification_prefs_save(app: Any) -> Any:
+    """Save notification channel preferences from the request body."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -154,6 +161,7 @@ def api_notification_prefs_save(app):
 # Messages
 # ---------------------------------------------------------------------------
 def _user_exists(username: str) -> bool:
+    """Return whether the username is present in the user store."""
     try:
         users = auth.load_users() or {}
     except Exception:  # noqa: BLE001
@@ -161,7 +169,8 @@ def _user_exists(username: str) -> bool:
     return username in users
 
 
-def api_messages_list(app):
+def api_messages_list(app: Any) -> Any:
+    """List the user's messages for the selected mailbox."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -174,7 +183,8 @@ def api_messages_list(app):
                    unread=notif.count_unread_messages(username))
 
 
-def api_messages_send(app):
+def api_messages_send(app: Any) -> Any:
+    """Send a message to another registered user."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -195,7 +205,8 @@ def api_messages_send(app):
     return jsonify(success=True, id=mid)
 
 
-def api_messages_get(app, mid: str):
+def api_messages_get(app: Any, mid: str) -> Any:
+    """Return one message and its flag state."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -209,7 +220,8 @@ def api_messages_get(app, mid: str):
     return jsonify(success=True, message=msg, flag=flag)
 
 
-def api_messages_delete(app, mid: str):
+def api_messages_delete(app: Any, mid: str) -> Any:
+    """Delete one message for the signed-in user."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -220,7 +232,8 @@ def api_messages_delete(app, mid: str):
     return jsonify(success=True)
 
 
-def api_messages_mark_unread(app, mid: str):
+def api_messages_mark_unread(app: Any, mid: str) -> Any:
+    """Mark a received message as unread."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -239,7 +252,8 @@ def api_messages_mark_unread(app, mid: str):
     return jsonify(success=True, marked=int(bool(changed)), unread=unread)
 
 
-def api_messages_mark_all_read(app):
+def api_messages_mark_all_read(app: Any) -> Any:
+    """Mark every message in the inbox as read."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -257,7 +271,8 @@ def api_messages_mark_all_read(app):
     return jsonify(success=True, marked=marked, unread=unread)
 
 
-def api_messages_delete_all(app):
+def api_messages_delete_all(app: Any) -> Any:
+    """Delete messages from the requested mailbox."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -271,7 +286,7 @@ def api_messages_delete_all(app):
     return jsonify(success=True, deleted=deleted, unread=unread)
 
 
-def api_messages_flag_as_issue(app, mid: str):
+def api_messages_flag_as_issue(app: Any, mid: str) -> Any:
     """Flag a message into the monitor-portal issues queue."""
     user_info = app._require_user()
     if not user_info:
@@ -312,7 +327,8 @@ def api_messages_flag_as_issue(app, mid: str):
 # ---------------------------------------------------------------------------
 # Users (lightweight directory used by the user_portal/users page)
 # ---------------------------------------------------------------------------
-def api_users_directory(app):
+def api_users_directory(app: Any) -> Any:
+    """Return the user directory with contact visibility for this viewer."""
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -391,6 +407,7 @@ def api_users_directory(app):
 
 
 def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
+    """Return the display fields for one user's award record."""
     entry = awards.get(uname)
     if not entry:
         return {

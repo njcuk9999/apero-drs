@@ -9,7 +9,7 @@ Created on 2024-07-29 at 14:40
 
 @author: cook
 """
-from typing import Dict
+from typing import Dict, Optional
 
 from aperocore.base import base
 
@@ -44,7 +44,8 @@ class DrsLanguageException(Exception):
 
 
 class DrsLanguageError(DrsLanguageException):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
+        """Store the message describing a language-list validation error."""
         self.message = message
 
     def __getstate__(self) -> dict:
@@ -57,7 +58,7 @@ class DrsLanguageError(DrsLanguageException):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -67,7 +68,7 @@ class DrsLanguageError(DrsLanguageException):
         # update dict with state
         self.__dict__.update(state)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation used for raise Exception message printing
         :return:
@@ -93,9 +94,15 @@ class LanguageItem:
     comment: str
 
     def __init__(self, key: str, kind: str,
-                 value: Dict[str, str] = None, comment: str = ''):
+                 value: Optional[Dict[str, str]] = None,
+                 comment: str = '') -> None:
         """
-        Construct a language item
+        Store the translated values and metadata for one language key.
+
+        :param key: language key identifying this item
+        :param kind: category used to validate and display the item
+        :param value: mapping of language codes to translated strings
+        :param comment: description associated with the language item
         """
         # deal with key and kind
         self.key = key
@@ -106,9 +113,13 @@ class LanguageItem:
         # deal with comment
         self.comment = comment
 
-    def validate(self):
+    def validate(self) -> Optional[bool]:
         """
-        Validate the language item
+        Validate the key, kind, and default-language value.
+
+        :return: False for a non-string key, otherwise None on success
+        :raises DrsLanguageError: if the kind, default value, or code key is
+            invalid
         """
         # check key is a string
         if not isinstance(self.key, str):
@@ -149,7 +160,7 @@ class LanguageItem:
                         '(NN-NNN-NNNNN)')
                 raise DrsLanguageError(emsg.format(self.key))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation of the language item
         """
@@ -169,11 +180,18 @@ class LanguageList:
     Can have multiple of these that compile in Language class to overwrite
     each other
     """
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
+        """Create an empty language list with the given source name."""
         self.name = name
         self.language_dict: Dict[str, LanguageItem] = dict()
 
-    def get(self, language: str, key: str):
+    def get(self, language: str, key: str) -> Optional[str]:
+        """Return a translation, or None for an unsupported/missing key.
+
+        :param language: supported language code to retrieve
+        :param key: language key held in this list
+        :return: translated string when available, otherwise None
+        """
         if language in SUPPORTED_LANGUAGES:
             item = self.language_dict.get(key, None)
             if item is not None:
@@ -185,18 +203,26 @@ class LanguageList:
 
     @staticmethod
     def create(key: str, kind: str) -> LanguageItem:
+        """Create an empty item that can be populated before adding.
+
+        :param key: language key identifying the item
+        :param kind: category of language item
+        :return: a new, empty language item
+        """
         return LanguageItem(key, kind)
 
-    def add(self, item: LanguageItem):
+    def add(self, item: LanguageItem) -> None:
         """
-        Add a Language Item to the this language list
+        Validate and add an item, replacing any item with the same key.
+
+        :param item: language item to validate and store
         """
         # validate item
         item.validate()
         # add to the language dictionary
         self.language_dict[item.key] = item
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation of the language item
         """

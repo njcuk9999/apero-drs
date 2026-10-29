@@ -17,7 +17,7 @@ import traceback
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -49,6 +49,7 @@ _worker_threads: Dict[str, Optional[threading.Thread]] = {}
 # Legacy aliases kept so existing code that reads _queue / _current directly
 # still works.  They always point at the 'global' queue / current.
 def _global_queue() -> List[Tuple[str, str]]:
+    """Return the global queue, creating it when it does not yet exist."""
     return _queues.setdefault("global", [])
 
 # task_id -> full traceback string on failure
@@ -66,9 +67,13 @@ def _get_queue(name: str) -> List[Tuple[str, str]]:
     return _queues.setdefault(name, [])
 
 def _get_current(name: str) -> Optional[Tuple[str, str]]:
+    """Return the currently running entry for a named queue."""
+    """Return the active task entry for a named queue, if present."""
     return _currents.get(name)
 
 def _set_current(name: str, val: Optional[Tuple[str, str]]) -> None:
+    """Set the current task entry for a named queue."""
+    """Set or clear the active task entry for a named queue."""
     _currents[name] = val
 
 def _all_queued() -> List[Tuple[str, str]]:
@@ -98,13 +103,19 @@ _shutdown_event = threading.Event()
 class _TaskLogTeeStream:
     """Tee stream that forwards output and writes timestamped log lines."""
 
-    def __init__(self, path: Path, sink: Any, stream_tag: str):
+    def __init__(self, path: Path, sink: Any, stream_tag: str) -> None:
+        """Initialize a stream tee that also persists tagged log lines."""
         self._path = path
         self._sink = sink
         self._stream_tag = stream_tag
         self._buffer = ""
 
     def write(self, data: Any) -> int:
+        """Forward text and append complete lines to the task log.
+
+        :param data: Text-like value received from the wrapped stream.
+        :returns: Number of characters accepted from the input.
+        """
         text = str(data or "")
         if not text:
             return 0
@@ -124,6 +135,7 @@ class _TaskLogTeeStream:
         return len(text)
 
     def flush(self) -> None:
+        """Persist a buffered partial line and flush the wrapped stream."""
         if self._buffer.strip():
             _append_task_log_line(
                 self._path, f"[{self._stream_tag}] {self._buffer.rstrip()}"
@@ -197,8 +209,11 @@ def _sanitize_run_params(value: Any) -> Any:
 
 
 def _load_aprofile_preset(profile_file: str) -> dict:
-    """
-    Load one APERO instrument profile YAML from resources/aprofile_instruments.
+    """Load a cached instrument preset from the packaged resource directory.
+
+    :param profile_file: Preset YAML filename under
+        ``resources/aprofile_instruments``.
+    :returns: Parsed preset mapping, or an empty mapping when unavailable.
     """
     if not profile_file:
         return {}
@@ -333,7 +348,9 @@ def get_profile_check_history(profile_id: str,
                 out.append({
                     "timestamp": str(row.get("timestamp", "")),
                     "task_id": str(row.get("task_id", "")),
-                    "task_name": str(row.get("task_name", "") or row.get("task_id", "")),
+                    "task_name": str(
+                        row.get("task_name", "") or row.get("task_id", "")
+                    ),
                     "status": str(row.get("status", "")),
                     "details": str(row.get("details", "")),
                     "log_path": str(row.get("log_path", "")),
@@ -413,10 +430,15 @@ def _prepare_task_log(instrument: str, task_id: str, task_name: str) -> Path:
     return path
 
 
-def _make_task_logger(log_path: Path):
+def _make_task_logger(log_path: Path) -> Callable[[Any], None]:
     """Build a callable logger injected into task run params."""
 
     def _log_fn(message: Any) -> None:
+        """Append one message to this task's log.
+
+        :param message: Value to convert to text and append to the task log.
+        :return: None. Writes the message to the associated task log.
+        """
         _append_task_log_line(log_path, str(message or ""))
 
     return _log_fn
@@ -681,7 +703,11 @@ def clear_recent_history() -> Dict[str, Any]:
         except Exception:
             pass
         logs_removed = _prune_old_task_logs()
-        return {"success": True, "removed": removed, "logs_removed": logs_removed}
+        return {
+            "success": True,
+            "removed": removed,
+            "logs_removed": logs_removed,
+        }
     except Exception as exc:
         return {"success": False, "error": str(exc)}
 
@@ -1125,7 +1151,9 @@ def _execute_task(_inst: str, task_id: str) -> None:
         if str(task_id or "").startswith("manual_apero_check__"):
             try:
                 task_cfg = dict(
-                    getattr(instance, "_run_params", {}).get("TASK_CONFIG", {}) or {}
+                    getattr(instance, "_run_params", {}).get(
+                        "TASK_CONFIG", {}
+                    ) or {}
                 )
                 filters = task_cfg.get("filters", {}) or {}
                 profile_id = str(
@@ -1133,10 +1161,12 @@ def _execute_task(_inst: str, task_id: str) -> None:
                 ).strip()
                 if profile_id:
                     # Decode obsdir/check from task_id slug
-                    # Format: manual_apero_check__{profile}__{obsdir}__{mode}__{check}__uuid
+                    # Format: manual_apero_check__{profile}__{obsdir}__
+                    # {mode}__{check}__uuid
                     parts = task_id.split("__")
                     # parts[0]='manual_apero_check', parts[1]=profile_slug,
-                    # parts[2]=obsdir_slug, parts[3]=mode, parts[4]=check, parts[5]=uuid
+                    # parts[2]=obsdir, parts[3]=mode, parts[4]=check,
+                    # parts[5]=uuid
                     obs_dir = ""
                     check_key = ""
                     task_mode = ""
@@ -1146,7 +1176,11 @@ def _execute_task(_inst: str, task_id: str) -> None:
                         task_mode = parts[3]
                     if len(parts) >= 6:
                         check_key_raw = parts[4]
-                        check_key = "" if check_key_raw.lower() == "all" else check_key_raw.upper()
+                        check_key = (
+                            ""
+                            if check_key_raw.lower() == "all"
+                            else check_key_raw.upper()
+                        )
                     append_profile_check_history(
                         profile_id=profile_id,
                         task_id=task_id,
@@ -1165,9 +1199,17 @@ def _execute_task(_inst: str, task_id: str) -> None:
         # NOTE: the caller (worker loop) clears _current / _apero_check_current.
 
 
-def _make_worker(queue_name: str):
-    """Return a daemon-worker function that processes the named queue."""
+def _make_worker(queue_name: str) -> Callable[[], None]:
+    """Create a daemon worker for one named task queue.
+
+    :param queue_name: Queue whose pending tasks the worker will process.
+    :return: Worker callable that processes queued tasks until shutdown.
+    """
     def _worker() -> None:
+        """Process queued tasks until the shared shutdown event is set.
+
+        :return: None. Executes queued tasks and updates queue state.
+        """
         while not _shutdown_event.is_set():
             entry: Optional[Tuple[str, str]] = None
             with _lock:
@@ -1258,9 +1300,17 @@ def _ensure_queue_worker(queue_name: str) -> None:
 
 # Back-compat shims
 def _ensure_worker() -> None:
+    """Ensure the global task queue has a running worker.
+
+    :return: None. Starts the worker when no live worker exists.
+    """
     _ensure_queue_worker("global")
 
 def _ensure_apero_check_worker() -> None:
+    """Ensure the APERO-check queue has a running worker.
+
+    :return: None. Starts the worker when no live worker exists.
+    """
     _ensure_queue_worker("apero_checks")
 
 
@@ -1339,8 +1389,15 @@ def _task_is_due(task_cfg: dict, now: datetime) -> bool:
     return elapsed_seconds >= frequency_hours * 3600.0
 
 
-def _normalize_task_frequency(value, default: float = 24.0) -> float:
-    """Normalize a task frequency value in hours."""
+def _normalize_task_frequency(
+    value: Any, default: float = 24.0
+) -> float:
+    """Normalize a task frequency value in hours.
+
+    :param value: Configured frequency value to convert to hours.
+    :param default: Positive fallback frequency when value is invalid.
+    :return: A positive frequency in hours.
+    """
     try:
         freq = float(value)
         if freq > 0:
@@ -1350,8 +1407,15 @@ def _normalize_task_frequency(value, default: float = 24.0) -> float:
     return float(default)
 
 
-def _normalize_task_enabled(value, default: bool = False) -> bool:
-    """Normalize a task enabled flag."""
+def _normalize_task_enabled(
+    value: Any, default: bool = False
+) -> bool:
+    """Normalize a task enabled flag.
+
+    :param value: Configured value representing the enabled state.
+    :param default: Value to use when the setting is None.
+    :return: The normalized enabled state.
+    """
     if isinstance(value, bool):
         return value
     if value is None:
@@ -1652,7 +1716,11 @@ def _scheduler_poll(local_data_dir: str) -> None:
                 )
                 # Route APERO check tasks to their dedicated queue so they
                 # are never blocked by long-running general async tasks.
-                check_queue = "apero_checks" if task_key == "APERO_CHECK_TASK" else "default"
+                check_queue = (
+                    "apero_checks"
+                    if task_key == "APERO_CHECK_TASK"
+                    else "default"
+                )
                 enqueue(instrument, task_id, instance, run_params,
                         queue=check_queue)
 
@@ -1780,13 +1848,19 @@ def shutdown_background_services(
 def build_run_params(
     instrument: str,
     local_data_dir: str,
-    all_profiles: dict,
-    task_cfg: Optional[dict] = None,
-) -> dict:
-    """Build the ``params`` dict expected by ``AperoAsyncTask.run_job``.
+    all_profiles: Dict[str, Any],
+    task_cfg: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build the parameter mapping expected by ``AperoAsyncTask.run_job``.
 
     Maps ``DATABASE_USERNAME`` → ``DATABASE_USER`` for each profile so that
     ``apero_async.database_query`` can find the correct key.
+
+    :param instrument: Instrument profile key to prepare.
+    :param local_data_dir: Root path used by task persistence.
+    :param all_profiles: Instrument-keyed APERO profile definitions.
+    :param task_cfg: Optional task-specific configuration.
+    :returns: Runtime task parameters including normalized profiles.
     """
     profiles = all_profiles.get(instrument, {})
     mapped: Dict[str, dict] = {}

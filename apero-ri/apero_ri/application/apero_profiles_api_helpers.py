@@ -3,16 +3,17 @@
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 from apero_ri.core import audit_log
 from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 from apero_ri.core.permissions import load_parameters
 from apero_ri.application import profile_utils
 from apero_ri.tasks import apero_async
-from flask import jsonify, request, url_for
+from flask import Response, jsonify, request, url_for
 
 
-def _to_bool(value):
+def _to_bool(value: Any) -> bool:
     """Coerce request values to bool."""
     if isinstance(value, bool):
         return value
@@ -20,13 +21,13 @@ def _to_bool(value):
     return text in ['1', 'true', 'yes', 'on', 'y']
 
 
-def _profile_disabled(cfg: dict) -> bool:
+def _profile_disabled(cfg: dict[str, Any]) -> bool:
     """Return True if a profile is disabled."""
     raw = cfg.get('disabled', cfg.get('DISABLED', False))
     return _to_bool(raw)
 
 
-def _optional_path_is_enabled(cfg: dict, key: str) -> bool:
+def _optional_path_is_enabled(cfg: dict[str, Any], key: str) -> bool:
     """Return True when one optional path is configured and enabled."""
     value = profile_utils.profile_get_path(cfg, key, None)
     if value is None:
@@ -35,8 +36,19 @@ def _optional_path_is_enabled(cfg: dict, key: str) -> bool:
     return bool(value)
 
 
-def resolve_db_payload_for_test(app, data: dict) -> dict:
-    """Resolve request DB payload into concrete test connection params."""
+def resolve_db_payload_for_test(
+    app: Any, data: dict[str, Any],
+) -> dict[str, Any]:
+    """Resolve submitted DB settings to test parameters or an error.
+
+    Args:
+        app: The ARI application providing database configuration helpers.
+        data: Submitted profile database settings.
+
+    Returns:
+        Mapping containing ``ok`` and either connection parameters or
+        an error, with tunnel guidance when required.
+    """
     mode = str(data.get("DATABASE_MODE", "") or "").strip()
     source = app._normalize_db_source(data.get("DATABASE_SOURCE", ""))
     local_name = str(data.get("DATABASE_LOCAL_NAME", "") or "").strip()
@@ -151,8 +163,18 @@ def resolve_db_payload_for_test(app, data: dict) -> dict:
     }
 
 
-def profile_db_params(app, profile_cfg: dict) -> dict:
-    """Build runtime DB params for one APERO profile."""
+def profile_db_params(
+    app: Any, profile_cfg: dict[str, Any],
+) -> dict[str, Any]:
+    """Build runtime database connection parameters for a profile.
+
+    Args:
+        app: The ARI application providing profile and tunnel helpers.
+        profile_cfg: APERO profile configuration.
+
+    Returns:
+        Database connection settings resolved from local or tunnel config.
+    """
     username = str(
         app._profile_get_db(profile_cfg, "DATABASE_USERNAME", "")
     ).strip()
@@ -256,7 +278,7 @@ def profile_db_params(app, profile_cfg: dict) -> dict:
 
 
 def resolve_profile_db_test_target(
-    app,
+    app: Any,
     mode: str,
     host: str,
     port: str,
@@ -267,8 +289,25 @@ def resolve_profile_db_test_target(
     ssh_config_host: str,
     ssh_local_port: str,
     ssh_remote_port: str,
-):
-    """Resolve DB test target while keeping tunnel setup on admin page."""
+) -> dict[str, Any]:
+    """Resolve a connection target for testing a profile database.
+
+    Args:
+        app: The ARI application providing tunnel status helpers.
+        mode: Database driver or connection mode.
+        host: Database host.
+        port: Database port as submitted by the client.
+        username: Database username.
+        password: Database password.
+        db_name: Database name.
+        use_ssh_tunnel: Whether the profile uses an SSH tunnel.
+        ssh_config_host: SSH configuration host name.
+        ssh_local_port: Local forwarded port.
+        ssh_remote_port: Remote database port.
+
+    Returns:
+        Connection target details or tunnel-administration guidance.
+    """
     if not use_ssh_tunnel:
         return {
             "mode": mode,
@@ -323,8 +362,22 @@ def resolve_profile_db_test_target(
     }
 
 
-def fetch_table_columns(app, profile_cfg: dict, table_name: str):
-    """Fetch ordered column names from a profile DB/table."""
+def fetch_table_columns(
+    app: Any, profile_cfg: dict[str, Any], table_name: str,
+) -> list[str]:
+    """Fetch ordered column names after checking table access.
+
+    Args:
+        app: The ARI application providing DB/profile helpers.
+        profile_cfg: APERO profile database configuration.
+        table_name: Database table, optionally qualified by schema.
+
+    Returns:
+        Column names in database ordinal order.
+
+    Raises:
+        ValueError: If connection settings or the table identifier is invalid.
+    """
     db_params = app._profile_db_params(profile_cfg)
     if (
         "DATABASE_USER" not in db_params
@@ -376,8 +429,17 @@ def fetch_table_columns(app, profile_cfg: dict, table_name: str):
     return out
 
 
-def api_apero_profiles_list_tables(app):
-    """List available tables in the selected APERO profile database."""
+def api_apero_profiles_list_tables(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """List database tables using the submitted connection settings.
+
+    Args:
+        app: The ARI application providing authorization and DB helpers.
+
+    Returns:
+        JSON table list or validation/error response.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -442,8 +504,17 @@ def api_apero_profiles_list_tables(app):
         return jsonify(success=True, valid=False, error=str(exc), tables=[])
 
 
-def api_apero_profiles_list(app):
-    """List APERO profiles for an instrument."""
+def api_apero_profiles_list(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """List profile configuration and readiness for an instrument.
+
+    Args:
+        app: The ARI application providing authorization and profile helpers.
+
+    Returns:
+        JSON profile list and status, or an HTTP error response.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -532,7 +603,11 @@ def api_apero_profiles_list(app):
                 if not val:
                     entry[key + "_exists"] = False
                     continue
-                entry[key + "_exists"] = Path(val).is_file() if key == "PATH_TRIGGER_LOG" else Path(val).is_dir()
+                entry[key + "_exists"] = (
+                    Path(val).is_file()
+                    if key == "PATH_TRIGGER_LOG"
+                    else Path(val).is_dir()
+                )
                 continue
             if val:
                 entry[key + "_exists"] = Path(val).is_dir()
@@ -601,8 +676,17 @@ def api_apero_profiles_list(app):
     return jsonify(success=True, profiles=profiles, status=status)
 
 
-def api_apero_profiles_test_tables(app):
-    """Test table names and fetch available fibers / DPRTYPE options."""
+def api_apero_profiles_test_tables(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Validate configured tables and list fiber and DPRTYPE values.
+
+    Args:
+        app: The ARI application providing authorization and DB helpers.
+
+    Returns:
+        JSON validation result with available values or an HTTP error.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -650,7 +734,8 @@ def api_apero_profiles_test_tables(app):
             )
         tables[key] = val
 
-    def qtable(name):
+    def qtable(name: str) -> str:
+        """Quote each component of a validated table name."""
         return ".".join(f"`{part}`" for part in name.split("."))
 
     db_params = {
@@ -718,8 +803,15 @@ def api_apero_profiles_test_tables(app):
         )
 
 
-def build_apero_profiles_overview_status(app) -> dict:
-    """Build all-instruments APERO profile readiness and issue details."""
+def build_apero_profiles_overview_status(app: Any) -> dict[str, Any]:
+    """Summarize profile readiness and issues across instruments.
+
+    Args:
+        app: The ARI application providing database and path validators.
+
+    Returns:
+        Status, issue messages, profile count, and per-instrument details.
+    """
     profiles_by_instrument = load_apero_profiles(enabled_only=True)
     path_keys = [
         "PATH_RAW",
@@ -812,8 +904,18 @@ def build_apero_profiles_overview_status(app) -> dict:
     }
 
 
-def api_apero_profiles_save(app, package_dir: Path):
-    """Create or update an APERO profile."""
+def api_apero_profiles_save(
+    app: Any, package_dir: Path,
+) -> Response | tuple[Response, int]:
+    """Validate and save an APERO profile from the JSON request.
+
+    Args:
+        app: The ARI application providing authorization and profile helpers.
+        package_dir: APERO package root used to validate preset files.
+
+    Returns:
+        JSON success or validation/error response.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -1071,8 +1173,18 @@ def api_apero_profiles_save(app, package_dir: Path):
     return jsonify(success=True)
 
 
-def api_apero_profiles_save_temporary(app, package_dir: Path):
-    """Save a single temporary APERO profile draft."""
+def api_apero_profiles_save_temporary(
+    app: Any, package_dir: Path,
+) -> Response | tuple[Response, int]:
+    """Save the submitted temporary APERO profile draft.
+
+    Args:
+        app: The ARI application providing authorization and profile helpers.
+        package_dir: APERO package root, retained for API compatibility.
+
+    Returns:
+        JSON success or authorization/error response.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401
@@ -1104,8 +1216,17 @@ def api_apero_profiles_save_temporary(app, package_dir: Path):
     return jsonify(success=True)
 
 
-def api_apero_profiles_toggle_disabled(app):
-    """Toggle a profile's disabled flag."""
+def api_apero_profiles_toggle_disabled(
+    app: Any,
+) -> Response | tuple[Response, int]:
+    """Set or toggle a profile's disabled flag.
+
+    Args:
+        app: The ARI application providing authorization and profile helpers.
+
+    Returns:
+        JSON disabled state or an HTTP error response.
+    """
     user_info, perms = app._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error='Unauthorized'), 401

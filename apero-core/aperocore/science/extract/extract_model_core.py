@@ -141,14 +141,14 @@ def _mad_from_sorted(sorted_box: np.ndarray, count: np.ndarray,
     nleft = pivot + 1
     nright = np.maximum(count - pivot - 1, 0)
 
-    def arm_left(offset):
+    def arm_left(offset: np.ndarray) -> np.ndarray:
         """Sorted absolute deviations on the left side of the median."""
         index = np.clip(pivot[..., None] - offset, 0, nlast - 1)
         value = median[..., None] - np.take_along_axis(sorted_box, index, -1)
         return np.where((offset >= 0) & (offset < nleft[..., None]),
                         value, np.inf)
 
-    def arm_right(offset):
+    def arm_right(offset: np.ndarray) -> np.ndarray:
         """Sorted absolute deviations on the right side of the median."""
         index = np.clip(pivot[..., None] + 1 + offset, 0, nlast - 1)
         value = np.take_along_axis(sorted_box, index, -1) - median[..., None]
@@ -157,7 +157,7 @@ def _mad_from_sorted(sorted_box: np.ndarray, count: np.ndarray,
 
     npass = int(np.ceil(np.log2(max(nlast, 2)))) + 1
 
-    def kth(order_index):
+    def kth(order_index: np.ndarray) -> np.ndarray:
         """The order_index-th smallest value in the merged arms."""
         low = np.maximum(0, order_index + 1 - nright)
         high = np.minimum(order_index + 1, nleft)
@@ -181,7 +181,10 @@ def _mad_from_sorted(sorted_box: np.ndarray, count: np.ndarray,
 
 def background_model(image: np.ndarray, size: Tuple[int, int] = (31, 7),
                      stride_frac: float = 0.5, chunk: int = 128,
-                     coarse: bool = False):
+               coarse: bool = False
+               ) -> Union[Tuple[np.ndarray, np.ndarray],
+                      Tuple[np.ndarray, np.ndarray,
+                          np.ndarray, np.ndarray]]:
     """
     Background model and uncertainty from a NaN-aware coarse median filter
 
@@ -383,7 +386,8 @@ def _solve3(profile1: np.ndarray, profile2: np.ndarray, science: np.ndarray,
 
 def _blank_unfittable(amp1: np.ndarray, amp2: np.ndarray,
                       zero_point: np.ndarray,
-                      fittable: np.ndarray) -> Tuple[np.ndarray, ...]:
+                      fittable: np.ndarray
+                      ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Set unsupported fit columns to NaN."""
     if fittable.all():
         return amp1, amp2, zero_point
@@ -506,7 +510,12 @@ def extract_orders(image: np.ndarray, profile1: np.ndarray,
                    nsig_clip: float, zp_mad_cut: float, robust: bool,
                    nu: float, n_iter: int, trim_keep: float,
                    trace_nan_frac: float, products: bool, extras: bool
-                   ) -> Tuple[Any, ...]:
+                   ) -> Tuple[
+                       np.ndarray, np.ndarray, np.ndarray,
+                       Optional[np.ndarray], Optional[np.ndarray],
+                       Optional[np.ndarray], Optional[np.ndarray],
+                       Optional[np.ndarray], Optional[np.ndarray],
+                       Optional[np.ndarray]]:
     """
     Fit every order ribbon as two profiles plus a zero point.
 
@@ -689,7 +698,8 @@ def extract_spectra(image: np.ndarray, error: np.ndarray,
                     order_map: np.ndarray, xmap: np.ndarray,
                     profiles: Dict[str, np.ndarray],
                     ranges: Dict[str, Tuple[int, int]], xgrid: np.ndarray,
-                    groupings: Optional[List[Tuple[str, List[List[int]]]]] = None,
+                    groupings: Optional[
+                        List[Tuple[str, List[List[int]]]]] = None,
                     window: float = 0.45, polyorder: int = 2,
                     cut: float = 3.0, weight_kind: str = 'gauss',
                     minpts: int = 3

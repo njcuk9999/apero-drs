@@ -2,9 +2,18 @@
 
 import time
 from pathlib import Path
+from typing import Any
 
-from flask import (flash, get_flashed_messages, redirect, render_template,
-                   request, session, url_for)
+from flask import (
+    Response,
+    flash,
+    get_flashed_messages,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 
 from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core.auth import get_effective_user
@@ -23,8 +32,8 @@ from apero_ri.plots.plots_filename import (
 )
 
 
-def ri_profile_view(app, profile_id):
-    """View function for dynamic data portal profile sub-pages."""
+def ri_profile_view(app: Any, profile_id: str) -> str | Response:
+    """Render the data portal landing page for an accessible profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -137,8 +146,10 @@ def ri_profile_view(app, profile_id):
                            **context)
 
 
-def ri_object_page_view(app, profile_id, objname):
-    """Serve placeholder page for a specific object within a profile."""
+def ri_object_page_view(
+    app: Any, profile_id: str, objname: str,
+) -> str | Response:
+    """Render the object page within an accessible profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -265,8 +276,8 @@ def ri_object_page_view(app, profile_id, objname):
     return render_template('data_portal/object_page.html', **context)
 
 
-def ri_object_table_view(app, profile_id):
-    """Serve the astrophysical object table page for a profile."""
+def ri_object_table_view(app: Any, profile_id: str) -> str | Response:
+    """Render the astrophysical object table page for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -323,8 +334,8 @@ def ri_object_table_view(app, profile_id):
     return render_template('data_portal/object_table.html', **context)
 
 
-def ri_obs_table_view(app, profile_id):
-    """Serve the observation table page for a profile."""
+def ri_obs_table_view(app: Any, profile_id: str) -> str | Response:
+    """Render the observation table page for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -381,8 +392,8 @@ def ri_obs_table_view(app, profile_id):
     return render_template('data_portal/obs_table.html', **context)
 
 
-def ri_qc_graphs_view(app, profile_id):
-    """Serve interactive quality-control graphs for a profile."""
+def ri_qc_graphs_view(app: Any, profile_id: str) -> str | Response:
+    """Render the interactive quality-control graphs for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -477,8 +488,14 @@ def ri_qc_graphs_view(app, profile_id):
     return render_template('data_portal/qc_graphs.html', **context)
 
 
-def ri_qc_graphs_max_view(app, profile_id, section, metric_key, view_key):
-    """Serve a standalone maximized QC plot page."""
+def ri_qc_graphs_max_view(
+    app: Any,
+    profile_id: str,
+    section: str,
+    metric_key: str,
+    view_key: str,
+) -> str | Response:
+    """Render a standalone maximized quality-control plot."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
@@ -519,8 +536,8 @@ def ri_qc_graphs_max_view(app, profile_id, section, metric_key, view_key):
     return render_template('data_portal/qc_graphs_max.html', **context)
 
 
-def ri_query_db_view(app, profile_id):
-    """Serve the database query explorer page for a profile."""
+def ri_query_db_view(app: Any, profile_id: str) -> str | Response:
+    """Render the database query explorer page for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -581,8 +598,8 @@ def ri_query_db_view(app, profile_id):
     return render_template('data_portal/query_db.html', **context)
 
 
-def ri_basket_view(app, profile_id):
-    """Serve the download basket page for a profile."""
+def ri_basket_view(app: Any, profile_id: str) -> str | Response:
+    """Render the download basket page for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -637,8 +654,10 @@ def ri_basket_view(app, profile_id):
     return render_template('data_portal/basket.html', **context)
 
 
-def ri_favourites_objects_view(app, profile_id):
-    """Serve per-profile favourite and last-viewed object cards."""
+def ri_favourites_objects_view(
+    app: Any, profile_id: str,
+) -> str | Response:
+    """Render favourite sections and the last-viewed object for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -738,8 +757,8 @@ def ri_favourites_objects_view(app, profile_id):
                            **context)
 
 
-def ri_object_groups_view(app, profile_id):
-    """Serve per-profile shared object groups page."""
+def ri_object_groups_view(app: Any, profile_id: str) -> str | Response:
+    """Render the shared object-groups page for a profile."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -803,10 +822,10 @@ def ri_object_groups_view(app, profile_id):
 
 
 def ri_object_group_summary_view(
-    app,
-    profile_id,
-    group_name,
-):
+    app: Any,
+    profile_id: str,
+    group_name: str,
+) -> str | Response:
     """Serve the summary-table page for one object group."""
     user_info = get_effective_user(session)
     if user_info:
@@ -898,10 +917,10 @@ def ri_object_group_summary_view(
 
 
 def ri_favourites_summary_view(
-    app,
-    profile_id,
-    section_name,
-):
+    app: Any,
+    profile_id: str,
+    section_name: str,
+) -> str | Response:
     """Serve the summary-table page for one favourites section."""
     user_info = get_effective_user(session)
     if user_info:
@@ -1006,8 +1025,10 @@ def ri_favourites_summary_view(
     )
 
 
-def ri_object_plot_max_view(app, profile_id, objname, plot_key):
-    """Serve a standalone maximized object plot page."""
+def ri_object_plot_max_view(
+    app: Any, profile_id: str, objname: str, plot_key: str,
+) -> str | Response:
+    """Render a standalone maximized plot for an accessible object."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(

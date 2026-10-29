@@ -284,7 +284,7 @@ def group_error_blocks(
             'count':       <number of block occurrences>,
             'recipe_count': <number of distinct recipes affected>,
             'block_lines': <representative raw block (list of strings)>,
-            'message':     <first stripped content line of representative block>,
+            'message':     <first content line of the representative block>,
             'recipes':     [<distinct recipe labels>],
             'sample_blocks': [<up to 2 raw sample blocks>],
         }
@@ -463,6 +463,7 @@ def _report_tokens_path() -> Path:
 
 
 def _load_report_tokens() -> Dict[str, Any]:
+    """Load report-share tokens, returning an empty mapping on failure."""
     path = _report_tokens_path()
     if not path.exists():
         return {}
@@ -474,6 +475,7 @@ def _load_report_tokens() -> Dict[str, Any]:
 
 
 def _save_report_tokens(tokens: Dict[str, Any]) -> None:
+    """Persist report-share tokens and restrict the file permissions."""
     path = _report_tokens_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
@@ -489,6 +491,7 @@ def _report_index_path() -> Path:
 
 
 def _load_report_index() -> Dict[str, Any]:
+    """Load the report index, or return an empty mapping on failure."""
     path = _report_index_path()
     if not path.exists():
         return {}
@@ -500,6 +503,7 @@ def _load_report_index() -> Dict[str, Any]:
 
 
 def _save_report_index(index: Dict[str, Any]) -> None:
+    """Persist the generated-report index as JSON."""
     path = _report_index_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
@@ -507,6 +511,7 @@ def _save_report_index(index: Dict[str, Any]) -> None:
 
 
 def _report_cache_key(profile_id: str, pid: str) -> str:
+    """Build the normalized key used for a profile and processing PID."""
     return "%s:%s" % (str(profile_id or "").strip(),
                       str(pid or "").strip())
 

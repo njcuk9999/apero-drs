@@ -136,7 +136,7 @@ class DrsPath:
                  obs_dir: Union[str, None] = None,
                  basename: Union[str, None] = None,
                  _update: bool = True,
-                 check: bool = True):
+                 check: bool = True) -> None:
         """
         Class for controlling paths in the drs (and sorting them into raw,
         tmp, reduced etc)
@@ -185,16 +185,15 @@ class DrsPath:
                       basenames: Union[List[str], np.ndarray, str, None]
                       ) -> Union[List[str], str, None]:
         """
-        Get the aboslute path for every entry given.
-        If block_kind, obs_dirs and basenames are a string one string is 
-        returned
+        Resolve absolute paths for the supplied block, observation, and file
+        names. A scalar path is returned when all three inputs are strings.
         
         :param params: ParamDict, parameter dictionary of constants
         :param block_kinds: Union[List[str], np.ndarray, str], the block kinds
         :param obs_dirs: Union[List[str], np.ndarray, str], the observation directories
         :param basenames: Union[List[str], np.ndarray, str], the basenames
         
-        :return: Absolute paths for every entry given
+        :return: A scalar path, a path list, or None for absent path inputs.
         """
         # cached so we don't do this lots of times
         global PATH_CACHE
@@ -260,7 +259,7 @@ class DrsPath:
         :param params: ParamDict, parameter dictionary of constants
         :param check: bool, if True raises exception when path does not
                       exist on disk
-        :return:
+        :return: The configured block paths.
         """
         blocks = []
         for block in pathdef.BLOCKS:
@@ -330,7 +329,7 @@ class DrsPath:
         """
         String representation of DrsPath
 
-        :return:
+        :return: A concise string identifying this path.
         """
         # get the basic name
         _str = 'DrsPath'
@@ -348,26 +347,26 @@ class DrsPath:
         """
         String representation of DrsPath
 
-        :return:
+        :return: The same representation as ``str(self)``.
         """
         return self.__str__()
 
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary of this instance's state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this instance from ``state``.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -375,17 +374,17 @@ class DrsPath:
     def copy(self) -> 'DrsPath':
         """
         Copy the DrsPath
-        :return:
+        :return: A copy of this path.
         """
         new = DrsPath(self.params, self.abspath, self.block_kind,
                       self.block_path, self.obs_dir, self.basename)
         return new
 
     def update(self, obs_dir: Union[str, None] = None,
-               basename: Union[str, None] = None):
+               basename: Union[str, None] = None) -> None:
         """
         Update values (if one changes others may change)
-        :return:
+        :return: None. Updates this path's derived fields.
         """
         # set function name
         func_name = drs_misc.display_func('update', __NAME__, self.classname)
@@ -425,14 +424,14 @@ class DrsPath:
     def block_names(self) -> List[str]:
         """
         Get a list of block names
-        :return:
+        :return: The names of all configured blocks.
         """
         return self.get_block_names(blocks=self.blocks)
 
     def blocks_with_obs_dirs(self) -> List[str]:
         """
         Get all block names that have obs_dirs
-        :return:
+        :return: The names of blocks that contain observation directories.
         """
         names = []
         for block in self.blocks:
@@ -443,7 +442,7 @@ class DrsPath:
     def to_path(self) -> Path:
         """
         Get the path instance for the absolute path
-        :return:
+        :return: The absolute path as a ``Path`` instance.
         """
         # set function name
         func_name = drs_misc.display_func('to_path', __NAME__, self.classname)
@@ -454,14 +453,14 @@ class DrsPath:
             # Log error: DrsPath does not have absolute path set
             raise AperoCodedException(None, '00-004-00008')
 
-    def _clean_obs_dir(self):
+    def _clean_obs_dir(self) -> None:
         """
         obs dir should not be a full path (i.e. should not contain
         block_path or a path coming from block kind)
 
         thus we need to clean obs dir before the next steps
 
-        :return:
+        :return: None. Cleans the observation directory in place.
         """
         # don't clean if not set
         if self.obs_dir is None:
@@ -482,14 +481,14 @@ class DrsPath:
                 while obs_dir.startswith(os.sep):
                     obs_dir = obs_dir[1:]
 
-    def _update_abspath(self):
+    def _update_abspath(self) -> None:
         """
         Assuming obs dir is clean make the absolute path if:
         1. block path, obs dir are set and basename is None
         2. block path, obs dir and basename are set
 
         else abspath is not updated
-        :return:
+        :return: None. Updates the absolute path when enough fields are set.
         """
         # we need either obs_dir or basename to continue
         if self.obs_dir is None and self.basename is None:
@@ -511,12 +510,12 @@ class DrsPath:
             self.abspath = os.path.join(self.block_path, self.obs_dir,
                                         self.basename)
 
-    def _from_abspath(self):
+    def _from_abspath(self) -> None:
         """
         Scans through our directories and see's if abspath belongs to one of
         the block directories (defined in self.blocks)
 
-        :return:
+        :return: None. Updates path fields or raises for an invalid path.
         """
         # set function name
         func_name = drs_misc.display_func('_from_abspath', __NAME__,
@@ -576,9 +575,9 @@ class DrsPath:
 
     def _blocks_error(self) -> str:
         """
-        Add to block errors (emsg and eargs)
+        Format the configured block names and paths for an error message.
 
-        :return: tuple, 1. updated emsg, 2. update eargs
+        :return: A newline-separated list of block names and paths.
         """
         # add the possible block types
         emsg = ''
@@ -586,10 +585,10 @@ class DrsPath:
             emsg += '\n\t\t{0}: {1}'.format(block.name, block.path)
         return emsg
 
-    def _from_block_path(self):
+    def _from_block_path(self) -> None:
         """
         Set abspath and block_kind from block_path
-        :return:
+        :return: None. Updates path fields or raises for an invalid block.
         """
         # set function name
         func_name = drs_misc.display_func('_from_block_path', __NAME__,
@@ -663,10 +662,10 @@ class DrsPath:
         # return found
         return found
 
-    def _from_block_kind(self):
+    def _from_block_kind(self) -> None:
         """
         Set abspath and block_path from block_kind
-        :return:
+        :return: None. Updates path fields or raises for an invalid block.
         """
         # set function name
         func_name = drs_misc.display_func('_from_block_kind', __NAME__,
@@ -702,11 +701,10 @@ class DrsPath:
             #     are: {1}
             raise AperoCodedException(None, '00-004-00011', targs=eargs)
 
-    def get_block(self):
-        """
-        Get the block for this instances block kind
+    def get_block(self) -> Union[BlockPath, None]:
+        """Return the block definition matching this path's block kind.
 
-        :return:
+        :return: Matching block definition, or None when no block matches.
         """
         # deal with no block kind
         if self.block_kind is None:
@@ -725,7 +723,7 @@ class DrsInputFile:
     # set class name
     class_name = 'DrsInputFile'
 
-    def __init__(self, name, filetype: str = '',
+    def __init__(self, name: str, filetype: str = '',
                  suffix: str = '',
                  remove_insuffix: Union[bool, None] = None,
                  prefix: str = '',
@@ -763,7 +761,7 @@ class DrsInputFile:
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
                  required: Union[bool, None] = None,
-                 hdulist: Dict[str, AperoDataModel] = None):
+                 hdulist: Dict[str, AperoDataModel] = None) -> None:
         """
         Create a DRS Input File object
 
@@ -930,19 +928,19 @@ class DrsInputFile:
     def __getstate__(self) -> dict:
         """
         For when we have to pickle the class
-        :return:
+        :return: A dictionary containing this file's pickle state.
         """
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
         :param state: dictionary from pickle
-        :return:
+        :return: None. Restores this file from ``state``.
         """
         # update dict with state
         self.__dict__.update(state)
@@ -1068,7 +1066,7 @@ class DrsInputFile:
         # return a dictionary of values
         return dict(zip(columns, values))
 
-    def set_filename(self, filename: str):
+    def set_filename(self, filename: Union[str, None]) -> None:
         """
         Set the filename, basename and directory name from an absolute path
 
@@ -1086,7 +1084,7 @@ class DrsInputFile:
         self.basename = os.path.basename(filename)
         self.path = os.path.dirname(filename)
 
-    def check_filename(self):
+    def check_filename(self) -> None:
         """
         Check filename - does nothing for DrsInputFile - but classes that
         inherit from this use this method - note for DrsInputFile we
@@ -1123,7 +1121,7 @@ class DrsInputFile:
         # return whether file was found
         return found
 
-    def set_params(self, params: ParamDict):
+    def set_params(self, params: ParamDict) -> None:
         """
         Set the associated parameter dictionary for the file
 
@@ -1137,7 +1135,9 @@ class DrsInputFile:
 
     def no_save(self) -> bool:
         """
-        Check for the no save special argument
+        Check the input parameters for the no-save special argument.
+
+        :return: True when no-save is enabled; otherwise False.
         """
         # check for INPUTS in params
         if 'INPUTS' in self.params:
@@ -1286,7 +1286,7 @@ class DrsInputFile:
                             instrument, nosave, description, inpath, required,
                             hdulist)
 
-    def check_params(self, func):
+    def check_params(self, func: Any) -> None:
         """
         Check that params is set - if not return an error
         :return:
@@ -1305,7 +1305,7 @@ class DrsInputFile:
             # text: No params set for {0}: filename={1}. Run {2} first.
             self.__error__(textentry('00-001-00003', args=eargs))
 
-    def __error__(self, messages: Union[Text, str]):
+    def __error__(self, messages: Union[Text, str]) -> None:
         """
         Raise an Logger message (level = error)
         :param messages: string of the messages to add
@@ -1316,7 +1316,7 @@ class DrsInputFile:
         # run the log method: error mode
         self.__log__(messages, 'error')
 
-    def __warning__(self, messages: Union[Text, str]):
+    def __warning__(self, messages: Union[Text, str]) -> None:
         """
         Log a Logger message (level = warning)
         :param messages:  string of the messages to add
@@ -1327,7 +1327,7 @@ class DrsInputFile:
         # run the log method: warning mode
         self.__log__(messages, 'warning')
 
-    def __message__(self, messages: Union[Text, str]):
+    def __message__(self, messages: Union[Text, str]) -> None:
         """
         Log a Logger message (level = '')
         :param messages:  string of the messages to add
@@ -1338,7 +1338,7 @@ class DrsInputFile:
         # print and log via wlogger
         drs_base.base_printer('None', message=messages, level='')
 
-    def __log__(self, messages: Union[Text, str], kind: str):
+    def __log__(self, messages: Union[Text, str], kind: str) -> None:
         """
         Generate a logger message for level = kind
         :param messages: string of the messages to add
@@ -1355,7 +1355,7 @@ class DrsInputFile:
         # print and log via wlogger
         drs_base.base_printer('None', message=messages, level=kind)
 
-    def addset(self, drsfile: Any, optional: bool = False):
+    def addset(self, drsfile: Any, optional: bool = False) -> None:
         """
         For generic Input files only
         Add to a list of associated drs files (fileset) and the names to
@@ -2074,7 +2074,7 @@ class DrsFitsFile(DrsInputFile):
     # set class name
     class_name = 'DrsFitsFile'
 
-    def __init__(self, name, filetype: str = '.fits',
+    def __init__(self, name: str, filetype: str = '.fits',
                  suffix: str = '',
                  remove_insuffix: Union[bool, None] = None,
                  prefix: str = '',
@@ -2300,7 +2300,7 @@ class DrsFitsFile(DrsInputFile):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -2332,7 +2332,7 @@ class DrsFitsFile(DrsInputFile):
         # return the string output
         return self.string_output()
 
-    def get_header_keys(self, hkeys: Union[Dict[str, str], None]):
+    def get_header_keys(self, hkeys: Union[Dict[str, str], None]) -> None:
         """
         The rest of the kwargs from dictionary, search for keys starting with
         "KW_" and push them into required_header_keys (these are used to
@@ -2508,7 +2508,7 @@ class DrsFitsFile(DrsInputFile):
         else:
             return '{0}[{1}_{2}]'.format(self.class_name, self.name, self.fiber)
 
-    def set_required_key(self, key: str, value: Any):
+    def set_required_key(self, key: str, value: Any) -> None:
         """
         Set a required key
 
@@ -3056,13 +3056,13 @@ class DrsFitsFile(DrsInputFile):
         # return found (bool) and errors
         return found, errors
 
-    def has_fiber(self, header: Union[drs_fits.Header, None] = None):
+    def has_fiber(self, header: Union[drs_fits.Header, None] = None) -> None:
         """
         Checks for fiber key in header and sets self.fiber based on this key
         if fiber key not found in header self.fiber is None
 
         :param header: drs_fits.Header - the header file to check
-        :return: None
+        :return: None. Sets ``self.fiber`` when the header contains a fiber.
         """
         # set function name
         func_name = display_func('has_fiber', __NAME__,
@@ -3805,10 +3805,10 @@ class DrsFitsFile(DrsInputFile):
         if self.data is not None:
             self.shape = self.data.shape
 
-    def update_header_with_hdict(self):
+    def update_header_with_hdict(self) -> None:
         """
         Updates header with hdict entries
-        :return:
+        :return: None. Applies the pending header dictionary to the header.
         """
 
         # set function name
@@ -3843,7 +3843,7 @@ class DrsFitsFile(DrsInputFile):
                 value = self._only_printable(self.hdict[key])
                 self.header[key] = (value, comment)
 
-    def _only_printable(self, value: str):
+    def _only_printable(self, value: str) -> str:
         """
         Fix for FITS header values must contain standard printable
         ASCII characters
@@ -5381,7 +5381,7 @@ class DrsFitsFile(DrsInputFile):
             # add to header dictionary
             self.hdict[keyname] = (value, comm)
 
-    def add_core_hkeys(self, _params: Optional[ParamDict] = None):
+    def add_core_hkeys(self, _params: Optional[ParamDict] = None) -> None:
         """
         Add the core header keys to the header (every DRS fits file should
         have at least these)
@@ -5424,7 +5424,7 @@ class DrsFitsFile(DrsInputFile):
         # finally set value in header
         self.add_hkey('KW_CRUNFILE', value=crunfile)
 
-    def add_qckeys(self, qcparams: Union[QCParamList, None] = None):
+    def add_qckeys(self, qcparams: Union[QCParamList, None] = None) -> None:
         """
         Add the quality control keys to the header, if None passed a single
         empty qc parameter is added with 'None' for all values
@@ -5603,7 +5603,12 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # hdu list functionality
     # -------------------------------------------------------------------------
-    def get_hdulist_attribute(self, attribute: str):
+    def get_hdulist_attribute(self, attribute: str) -> List[Any]:
+        """Return one named attribute from every HDU-list extension.
+
+        :param attribute: Attribute name to read from each extension.
+        :return: Attribute values in extension order, or an empty list.
+        """
         if len(self.hdulist) == 0:
             return []
         else:
@@ -5612,10 +5617,12 @@ class DrsFitsFile(DrsInputFile):
                 outlist.append(getattr(self.hdulist[entry], attribute))
             return outlist
 
-    def get_hdulist_names(self):
+    def get_hdulist_names(self) -> List[Any]:
+        """Return the names of all HDU-list extensions."""
         return self.get_hdulist_attribute('name')
 
-    def get_hdulist_datatypes(self):
+    def get_hdulist_datatypes(self) -> List[Any]:
+        """Return the datatypes of all HDU-list extensions."""
         return self.get_hdulist_attribute('datatype')
 
     def hdulist_load(self, params: ParamDict, name: str,
@@ -5852,7 +5859,7 @@ class DrsNpyFile(DrsInputFile):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -6002,7 +6009,8 @@ class DrsNpyFile(DrsInputFile):
         else:
             return self.data
 
-    def write_npy(self, block_kind: str, runstring: Union[str, None] = None):
+    def write_npy(self, block_kind: str,
+                  runstring: Union[str, None] = None) -> None:
         """
         Write a npy file (using np.save)
 
@@ -6317,7 +6325,7 @@ class DrsFileGroup:
     A way to group a set of Drs Files
     """
 
-    def __init__(self, name: str, files: List[DrsInputFile]):
+    def __init__(self, name: str, files: List[DrsInputFile]) -> None:
         """
         Construct a new drs file group
         :param name: str, the name of the file group
@@ -6329,7 +6337,7 @@ class DrsFileGroup:
     def copy(self) -> 'DrsFileGroup':
         """
         Copy a drs file group
-        :return: 
+        :return: A new group containing the same file instances.
         """
         return DrsFileGroup(self.name, self.files)
 
@@ -6355,7 +6363,7 @@ class DrsOutFileExtension:
                  extname: Union[str, None] = None,
                  hdr_extname: Union[str, None] = None,
                  datatype: Union[str, None] = None,
-                 override: bool = False):
+                 override: bool = False) -> None:
         """
         Properties for an extension of a POST PROCESS file
 
@@ -6384,7 +6392,7 @@ class DrsOutFileExtension:
                             the extension named here (otherwise uses primary)
         :param datatype: str, force 'image' or 'table' for extension
 
-        :return:
+        :return: None. Initializes this extension definition.
         """
         # set basic parameters
         self.name = name
@@ -6498,7 +6506,7 @@ class DrsOutFileExtension:
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -6533,7 +6541,8 @@ class DrsOutFileExtension:
     def add_table_column(self, drsfile: DrsFitsFile,
                          incol: str, outcol: str, fiber: Union[str, None],
                          units: Union[str, None], required: bool = True,
-                         block_kind: str = 'red', clear_file: bool = False):
+                         block_kind: str = 'red', clear_file: bool = False
+                         ) -> None:
         """
         Add a table column to an extension
 
@@ -6547,7 +6556,7 @@ class DrsOutFileExtension:
         :param clear_file: bool, sets whether the file that creates this column
                            should be cleared if/when we are clearing red files
 
-        :return:
+        :return: None. Adds the column definition to this extension.
         """
         self.table_drsfiles.append(drsfile)
         self.table_in_colnames.append(incol)
@@ -6558,7 +6567,7 @@ class DrsOutFileExtension:
         self.table_kind.append(block_kind)
         self.table_clears.append(clear_file)
 
-    def copy(self):
+    def copy(self) -> 'DrsOutFileExtension':
         """
         Copies the extension to a new extension
         """
@@ -6604,7 +6613,7 @@ class DrsOutFileExtension:
 
     def set_infile(self, params: ParamDict, row: Union[int, None] = None,
                    table: Union[Table, None] = None,
-                   filename: Union[str, None] = None):
+                   filename: Union[str, None] = None) -> None:
         """
         Set infile name from "filename" or from "row" in table (note table
         must have column "BLOCK_KIND", "OBS_DIR", "FILENAME"
@@ -6657,7 +6666,7 @@ class DrsOutFileExtension:
             else:
                 self.datatype = None
 
-    def load_infile(self, params: ParamDict):
+    def load_infile(self, params: ParamDict) -> None:
         """
         Load infile for this extension
 
@@ -7031,7 +7040,7 @@ class DrsOutFile(DrsInputFile):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -7078,7 +7087,7 @@ class DrsOutFile(DrsInputFile):
                 extname: Union[str, None] = None,
                 hdr_extname: Union[str, None] = None,
                 datatype: Union[str, None] = None,
-                override: bool = False):
+                override: bool = False) -> None:
         """
         Add a fits extension
 
@@ -7114,7 +7123,7 @@ class DrsOutFile(DrsInputFile):
                             the extension named here (otherwise uses primary)
         :param datatype: str, force 'image' or 'table' for extension
 
-        :return:
+        :return: None. Adds the configured FITS extension.
         """
         # set function name
         func_name = display_func('__str__', __NAME__,
@@ -7139,7 +7148,8 @@ class DrsOutFile(DrsInputFile):
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
                    units: Union[str, None] = None, required: bool = True,
-                   block_kind: str = 'red', clear_file: bool = False):
+                   block_kind: str = 'red', clear_file: bool = False
+                   ) -> None:
         """
         If an extension is a table add a column from a table fits file
 
@@ -7153,7 +7163,8 @@ class DrsOutFile(DrsInputFile):
         :param block_kind: str, the blcok kind (raw/tmp/red/out)
         :param clear_file: bool, sets whether the file that creates this column
                            should be cleared if/when we are clearing red files
-        :return:
+        :return: None. Adds the configured table column when the extension
+             is a table.
         """
         # get extension
         extension = self.extensions[self._pos_from_name(extname)]
@@ -7166,7 +7177,8 @@ class DrsOutFile(DrsInputFile):
             extension.add_table_column(drsfile, incol, outcol, fiber, units,
                                        required, block_kind, clear_file)
 
-    def add_hkey(self, key: str, inheader: str, outheader: str):
+    def add_hkey(self, key: str, inheader: str,
+                 outheader: str) -> None:
         """
         Flag that we need to add/replace a header key from "inheader"
         to "outheader" (both of these should be extension names added by
@@ -7179,11 +7191,16 @@ class DrsOutFile(DrsInputFile):
         :param outheader: str, the output extension (copy header key to this
                           extensions header)
 
-        :return:
+        :return: None. Records the header key transfer between extensions.
         """
         self.header_add[key] = [inheader, outheader]
 
-    def _pos_from_name(self, name):
+    def _pos_from_name(self, name: str) -> Union[int, None]:
+        """Resolve an extension name to its position, if it is registered.
+
+        :param name: Extension name to look up.
+        :return: Extension position, or None when the name is unknown.
+        """
         # get positions
         positions = list(self.extensions.keys())
         # get DrsOutExtension instances
@@ -7733,7 +7750,7 @@ class DrsOutFile(DrsInputFile):
         # return that we linked successfully
         return True, None
 
-    def process_header(self, params: ParamDict):
+    def process_header(self, params: ParamDict) -> None:
         """
         Process the headers now they are all present
 
@@ -7809,7 +7826,7 @@ class DrsOutFile(DrsInputFile):
         # return whether we should skip file
         return skip
 
-    def set_db_infiles(self, block_kind: str, database: Any):
+    def set_db_infiles(self, block_kind: str, database: Any) -> None:
         """
         Set the "infiles" for use in indexing - this takes the
         index database entry for extension 1 (or 0 if 1 not present) and
@@ -7850,20 +7867,20 @@ class DrsOutFile(DrsInputFile):
         # set the infiles
         self.infiles = list(infiles)
 
-    def add_core_hkeys(self, params: Optional[ParamDict] = None):
+    def add_core_hkeys(self, params: Optional[ParamDict] = None) -> None:
         """
         Add the core header keys to the header (every DRS fits file should
         have at least these)
 
-        :param _params: Optional ParamDict, if we have the parameter dictionary
-                       use it to get the parameters, otherwise guess them
+        :param params: Optional APERO parameters used to resolve keyword cards.
 
-        :return: None, updates the header
+        :return: None; adds standard metadata cards to the primary header.
         """
         # get primary header
         header = self.extensions[0].header
 
-        def _add_hkeys(key, value):
+        def _add_hkeys(key: str, value: Any) -> None:
+            """Add a value and its configured comment to the primary header."""
             # get header key and header comment
             hkey, _, hcomment = params[key]
             # push into header
@@ -7899,13 +7916,13 @@ class DrsOutFile(DrsInputFile):
         # finally set value in header
         _add_hkeys('KW_CRUNFILE', value=crunfile)
 
-    def _add_header_keys(self, params: ParamDict):
+    def _add_header_keys(self, params: ParamDict) -> None:
         """
         Add header keys from one extension to another
 
         :param params ParamDict, the parameter dictionary of constants
 
-        :return:
+        :return: None. Copies configured keys between extension headers.
         """
         # loop around all header keys
         for key in self.header_add:
@@ -7973,14 +7990,14 @@ class DrsOutFile(DrsInputFile):
             # push it back into header
             self.extensions[outpos].header = outheader
 
-    def _remove_drs_keys(self, params: ParamDict):
+    def _remove_drs_keys(self, params: ParamDict) -> None:
         """
         For each extension if remove_drs_keys is True we need to go through
         and remove drs keys that are flagged for removal
 
         :param params ParamDict, the parameter dictionary of constants
 
-        :return:
+        :return: None. Removes configured APERO keys from flagged headers.
         """
         # get all Keyword parameters
         keywords = []
@@ -8034,14 +8051,14 @@ class DrsOutFile(DrsInputFile):
                 # push header back to extension
                 self.extensions[pos].header = header
 
-    def _remove_standard_keys(self, params: ParamDict):
+    def _remove_standard_keys(self, params: ParamDict) -> None:
         """
         Remove standard keys from a header if extension was flagged as having
         remove_std_hkeys
 
         :param pconst: PsuedoConst, the instrument pseudo constants
 
-        :return:
+        :return: None. Removes standard keys from flagged headers.
         """
         # get standard keys from pconst
         remove_keys = params['HEADER.FORBIDDEN_OUT_KEYS']
@@ -8063,14 +8080,14 @@ class DrsOutFile(DrsInputFile):
                 # push header back to extension
                 self.extensions[pos].header = header
 
-    def _remove_duplicate_keys(self, params: ParamDict):
+    def _remove_duplicate_keys(self, params: ParamDict) -> None:
         """
         Remove keys that are both in primary and extension
 
         :param params ParamDict, the parameter dictionary of constants
         :param pconst: PsuedoConst, the instrument pseudo constants
 
-        :return:
+        :return: None. Removes duplicate header keys from extensions.
         """
         # get keys not to check
         skip_keys = params['HEADER.NON_CHECK_DUPLICATE_KEYS']
@@ -8108,12 +8125,12 @@ class DrsOutFile(DrsInputFile):
                     WLOG(params, 'warning',
                          textentry('10-090-00004', args=wargs), sublevel=2)
 
-    def _add_extensions_names_to_primary(self, params: ParamDict):
+    def _add_extensions_names_to_primary(self, params: ParamDict) -> None:
         """
         Add extensions as comments to primary header
 
         :param params:
-        :return:
+        :return: None. Adds extension comments and metadata to primary header.
         """
         # get primary header
         header = self.extensions[0].header
@@ -8153,7 +8170,7 @@ class DrsOutFile(DrsInputFile):
         # add header back to extensions
         self.extensions[0].header = header
 
-    def _add_to_clear_files(self, ext: DrsOutFileExtension):
+    def _add_to_clear_files(self, ext: DrsOutFileExtension) -> None:
         """
         Check whether file is flagged to be cleaned and add it to the list
         to remove (only removed at the end of the processes)
@@ -8179,7 +8196,13 @@ class DrsOutFile(DrsInputFile):
                 if filename not in self.clear_files:
                     self.clear_files.append(filename)
 
-    def write_file(self, block_kind: str, runstring: Union[str, None] = None):
+    def write_file(self, block_kind: str,
+                   runstring: Union[str, None] = None):
+        """Write the configured output extensions to a data-block path.
+
+        :param block_kind: Output data block to write into.
+        :param runstring: Optional recipe command recorded with the file.
+        """
         # set function name
         func_name = display_func('write_file', __NAME__,
                                  self.class_name)
@@ -8394,6 +8417,16 @@ class DrsLBLFile(DrsFitsFile):
                  description: Union[str, None] = None,
                  inpath: Union[str, None] = None,
                  required: Union[bool, None] = None):
+        """Initialize an LBL output file from its file and instrument settings.
+
+        :param name: Name identifying the output file definition.
+        :param params: Optional APERO parameter dictionary.
+        :param filename: Optional explicit output filename.
+        :param data: Optional in-memory output data.
+        :param header: Optional FITS header for the output.
+        Other optional values configure naming, paths, extensions, database
+        metadata, and instrument-specific output properties.
+        """
         # set function name
         # _ = display_func('__init__', __NAME__, self.class_name)
         # define a name
@@ -8421,7 +8454,7 @@ class DrsLBLFile(DrsFitsFile):
         # return dictionary state
         return state
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -9720,7 +9753,8 @@ def get_mid_obs_time(params: ParamDict,
         raise drs_log.AperoCodedException(params, '00-001-00030', targs=eargs)
 
 
-def locate_calibfiber_file(params: ParamDict, infile: DrsFitsFile):
+def locate_calibfiber_file(params: ParamDict,
+                           infile: DrsFitsFile) -> DrsFitsFile:
     """
     Locate a reference fiber file for science fiber file
 

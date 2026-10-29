@@ -378,6 +378,18 @@ textarea#tpl-activation.cli-box { padding-right: 12px; color: #e6edf3; }
 .segmented button.active { background: #fff; color: #1f2f46;
                            box-shadow: 0 1px 3px rgba(20, 35, 60, 0.15); }
 .segmented.small button { padding: 3px 10px; font-size: 12px; }
+.gen-choices { display: grid; gap: 12px; margin-top: 12px;
+               grid-template-columns: repeat(auto-fill,
+                                             minmax(260px, 1fr)); }
+.gen-choice { display: flex; flex-direction: column; gap: 6px;
+              text-align: left; padding: 14px 16px; border-radius: 10px;
+              white-space: normal; }
+.gen-choice-title { font-size: 16px; font-weight: 700; }
+.gen-choice-desc { font-size: 13px; font-weight: 400; color: #6b7a90; }
+#gen-collapsed { margin-top: 8px; }
+#console-section { margin-top: 16px; }
+#console-section h2 { margin: 0 0 4px 0; }
+html[data-theme="dark"] .gen-choice-desc { color: #8b949e; }
 .coming-soon { margin-top: 14px; padding: 22px; text-align: center;
                border: 1px dashed #b9c7db; border-radius: 10px;
                color: #6b7a90; background: #f8fbff; }
@@ -440,7 +452,7 @@ textarea#tpl-activation.cli-box { padding-right: 12px; color: #e6edf3; }
                border-radius: 10px; max-height: 520px; overflow: auto;
                font-size: 12px; }
 /* generate / reset command output */
-.job-card { margin-top: 16px; border: 1px solid #30363d;
+.job-card { margin-top: 8px; border: 1px solid #30363d;
             border-radius: 10px; overflow: hidden; background: #0d1117; }
 .job-head { display: flex; align-items: center; gap: 10px;
             padding: 8px 12px; background: #161b22; color: #c9d1d9; }
@@ -699,15 +711,34 @@ XX_INFO_XX
 Fill the queue with <code>apero_processing</code> (always in queue mode).
 </div>
 <div class="panelrow"><div class="panel">
-<div class="gen-head">
+<div id="gen-choose">
 <h2>Generate queue</h2>
-<div class="segmented" role="tablist">
-<button id="gen-mode-static" class="active"
-        onclick="setGenerateMode('static')">Static</button>
-<button id="gen-mode-dynamic"
-        onclick="setGenerateMode('dynamic')">Dynamic</button>
+<div class="muted">Choose how to fill the queue:</div>
+<div class="gen-choices">
+<button class="gen-choice" onclick="setGenerateMode('static')">
+<span class="gen-choice-title">1. Static</span>
+<span class="gen-choice-desc">Run <code>apero_processing</code> once on a
+run file (always in queue mode) - every recipe it would run is added to the
+queue in order.</span>
+</button>
+<button class="gen-choice" onclick="setGenerateMode('dynamic')">
+<span class="gen-choice-title">2. Dynamic
+<span class="pill">coming soon</span></span>
+<span class="gen-choice-desc">Keep the queue filled as new data and
+results appear.</span>
+</button>
 </div>
 </div>
+<div id="gen-page" style="display:none">
+<div class="gen-head">
+<h2 id="gen-page-title">Generate queue</h2>
+<span class="field-actions">
+<button id="gen-expand" style="display:none"
+        onclick="setGenerateCollapsed(false)">&#9660; Show options</button>
+<button onclick="setGenerateMode(null)">&#8592; Generate methods</button>
+</span>
+</div>
+<div id="gen-collapsed" class="muted" style="display:none"></div>
 <div id="gen-dynamic" class="coming-soon" style="display:none">
 <div class="coming-soon-title">Coming soon</div>
 Dynamic queue generation is not available yet - use Static (a run file
@@ -746,6 +777,7 @@ with apero_processing in queue mode).
 </div>
 <div id="gen-runfile-view" class="runfile-view"></div>
 <pre id="gen-runfile-raw" class="runfile-raw" style="display:none"></pre>
+</div>
 </div>
 </div></div></div>
 
@@ -989,7 +1021,9 @@ source apero_profile.sh my_profile</pre>
 
 </div>
 
-<div id="job-card" class="job-card" style="display:none">
+<div id="console-section" style="display:none">
+<h2>Console</h2>
+<div id="job-card" class="job-card">
 <div class="job-head">
 <span id="job-badge" class="pill"></span>
 <span id="job-title" class="job-title"></span>
@@ -997,6 +1031,7 @@ source apero_profile.sh my_profile</pre>
 <button onclick="toggleJobOutput()" id="job-toggle">Hide output</button>
 </div>
 <pre id="job-output" class="job-output"></pre>
+</div>
 </div>
 
 <div class="section-divider"></div>
@@ -1983,7 +2018,7 @@ function refreshJob() {
     apiGet('/api/job', function (job) {
         if (!job || !job.kind) { return; }
         jobShown = true;
-        document.getElementById('job-card').style.display = 'block';
+        document.getElementById('console-section').style.display = 'block';
         var badge = document.getElementById('job-badge');
         if (job.running) {
             badge.textContent = 'running';
@@ -2788,15 +2823,39 @@ function renderPerf() {
 }
 
 function setGenerateMode(mode) {
-    generateMode = mode;
-    document.getElementById('gen-mode-static').classList.toggle(
-        'active', mode === 'static');
-    document.getElementById('gen-mode-dynamic').classList.toggle(
-        'active', mode === 'dynamic');
+    // mode null goes back to the generate method chooser
+    generateMode = mode || 'static';
+    document.getElementById('gen-choose').style.display =
+        mode ? 'none' : 'block';
+    document.getElementById('gen-page').style.display =
+        mode ? 'block' : 'none';
+    document.getElementById('gen-page-title').textContent =
+        mode === 'dynamic' ? 'Generate queue: Dynamic' :
+                             'Generate queue: Static';
     document.getElementById('gen-static').style.display =
         mode === 'static' ? 'block' : 'none';
     document.getElementById('gen-dynamic').style.display =
         mode === 'dynamic' ? 'block' : 'none';
+    setGenerateCollapsed(false);
+}
+
+// after starting a generate only its summary + the console stay visible
+function setGenerateCollapsed(collapsed, summary) {
+    var body = document.getElementById(generateMode === 'dynamic' ?
+                                       'gen-dynamic' : 'gen-static');
+    if (document.getElementById('gen-page').style.display === 'none') {
+        return;
+    }
+    body.style.display = collapsed ? 'none' : 'block';
+    document.getElementById('gen-expand').style.display =
+        collapsed ? '' : 'none';
+    var note = document.getElementById('gen-collapsed');
+    note.style.display = collapsed ? 'block' : 'none';
+    if (summary) { note.textContent = summary; }
+    if (collapsed) {
+        document.getElementById('console-section').scrollIntoView(
+            {behavior: 'smooth', block: 'start'});
+    }
 }
 
 function refreshRunfiles() {
@@ -3005,8 +3064,12 @@ function doGenerate() {
             {runfile: runfile, options: generateOptions(),
              mode: generateMode},
             function (data) {
-                if (!data.started) { alert(data.message); }
+                if (!data.started) { alert(data.message); return; }
                 jobShown = true;
+                document.getElementById('console-section').style.display =
+                    'block';
+                setGenerateCollapsed(true, 'Generating the queue from ' +
+                                     runfile + ' - see the console below.');
                 refreshState();
             });
 }

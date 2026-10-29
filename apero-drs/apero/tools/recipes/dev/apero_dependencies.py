@@ -82,6 +82,7 @@ def main(**kwargs):
 
 
 def __main__(recipe, params):
+    """Collect and log package import statements and source statistics."""
     # Note: no instrument defined so do not use instrument only features
 
     # ----------------------------------------------------------------------
@@ -124,7 +125,8 @@ def __main__(recipe, params):
     return locals()
 
 
-def get_python_files(path):
+def get_python_files(path: str) -> np.ndarray:
+    """Return sorted Python source paths beneath ``path``."""
     pyfiles = []
     for path, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
@@ -144,6 +146,7 @@ def get_python_files(path):
 
 
 def get_import_statements(params, files):
+    """Collect source imports and aggregate line statistics for each file."""
     # get package list
     package = params['DRS.PACKAGE']
     # get import list
@@ -239,7 +242,8 @@ def get_import_statements(params, files):
     return importslist, statsdict, infodict
 
 
-def deal_with_doc_strings(line, docstring_skip):
+def deal_with_doc_strings(line: str, docstring_skip: bool) -> bool:
+    """Update whether a source line is inside a triple-quoted docstring."""
     # find doc strings
     docstart = line.strip().startswith('\"\"\"')
     docstart |= line.strip().startswith('\'\'\'')
@@ -257,7 +261,8 @@ def deal_with_doc_strings(line, docstring_skip):
     return docstring_skip
 
 
-def clean_imports(rawimports):
+def clean_imports(rawimports: list) -> list:
+    """Normalize import statements to unique top-level module names."""
     # clean up (keep unique only)
     uimports = np.unique(rawimports)
     # loop around unique imports
@@ -289,7 +294,8 @@ def clean_imports(rawimports):
 
 
 # get current versions
-def get_current_versions(importslist):
+def get_current_versions(importslist: list) -> list:
+    """Return installed-version strings for modules, in input order."""
     versionslist = []
     for imp in importslist:
         try:

@@ -1263,6 +1263,7 @@ def _load_ccf_data(
     """
 
     def _row_mid_obs_mjd(row: Dict[str, Any]) -> Optional[float]:
+        """Read an observation time as MJD, accepting ISO or numeric text."""
         raw = row.get("MID_OBS_TIME")
         if raw is None:
             return None
@@ -1278,6 +1279,7 @@ def _load_ccf_data(
                 return None
 
     def _equally_spaced_indices(nvals: int, nout: int) -> List[int]:
+        """Choose up to ``nout`` unique indices across a sequence."""
         if nvals <= 0 or nout <= 0:
             return []
         if nout >= nvals:
@@ -2232,7 +2234,11 @@ def _load_ccf_rv_from_htable(
 def _build_ccf_rv_layout(
     htable_rows: List[Dict[str, Any]],
 ) -> Tuple[Optional[Any], str, Dict[str, Any]]:
-    """Build the fast CCF RV-vs-time layout from htable only."""
+    """Build the fast CCF RV-vs-time layout from htable rows only.
+
+    :param htable_rows: Observation-table rows containing CCF RV values.
+    :returns: Layout or ``None``, a status message, and sampling details.
+    """
     t0 = time.perf_counter()
     out = _load_ccf_rv_from_htable(htable_rows)
     load_ms = (time.perf_counter() - t0) * 1000.0
@@ -2277,7 +2283,15 @@ def _build_ccf_profile_layout(
     ccf_nobs: int = 100,
 ) -> Tuple[Optional[Any], str, Dict[str, Any]]:
     """
-    Build the heavy CCF profile/residual/spread layout (no RV panel).
+    Build the CCF profile, residual, and spread layout without the RV panel.
+
+    :param htable_rows: Observation-table rows used to align CCF metadata.
+    :param ftable_ccf_rows: File-table rows identifying CCF FITS files.
+    :param paths: Mapping of path keys to data directories.
+    :param ccf_mjd_start: Optional inclusive lower MJD bound.
+    :param ccf_mjd_end: Optional inclusive upper MJD bound.
+    :param ccf_nobs: Maximum number of observations to load.
+    :returns: Layout or ``None``, a status message, and sampling details.
     """
     from bokeh.layouts import column as bk_column
 
@@ -2500,7 +2514,11 @@ def build_ccf_rv_plot_json(
     preset: Dict[str, Any],
     target_id: str = "op-ccf-rv-plot-div",
 ) -> Dict[str, Any]:
-    """Build fast CCF RV-vs-time plot JSON from htable only."""
+    """Build the htable-only CCF RV-versus-time plot payload.
+
+    The result contains Bokeh components and sampling details, or an error
+    message when the plot cannot be built.
+    """
     layout, msg, summary = _build_ccf_rv_layout(htable_rows)
     if layout is None:
         return {"has_plot": False, "message": msg, "sample_info": summary}
@@ -2518,7 +2536,10 @@ def build_ccf_rv_plot_components(
     htable_rows: List[Dict[str, Any]],
     preset: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Build fast CCF RV-vs-time plot as components from htable only."""
+    """Build the htable-only CCF RV-versus-time plot components.
+
+    Returns the script, div, sample details, and any build error message.
+    """
     layout, msg, summary = _build_ccf_rv_layout(htable_rows)
     if layout is None:
         return {
@@ -2548,7 +2569,7 @@ def build_ccf_profile_plot_json(
     ccf_nobs: int = 100,
     target_id: str = "op-ccf-profile-plot-div",
 ) -> Dict[str, Any]:
-    """Build CCF median profile/residual/spread plot JSON."""
+    """Build CCF profile, residual, and spread plot components for JSON use."""
     layout, msg, summary = _build_ccf_profile_layout(
         htable_rows,
         ftable_ccf_rows,
@@ -2578,7 +2599,7 @@ def build_ccf_profile_plot_components(
     ccf_mjd_end: Optional[float] = None,
     ccf_nobs: int = 100,
 ) -> Dict[str, Any]:
-    """Build CCF median profile/residual/spread plot as components."""
+    """Build CCF profile, residual, and spread plot components for a page."""
     layout, msg, summary = _build_ccf_profile_layout(
         htable_rows,
         ftable_ccf_rows,
@@ -3261,6 +3282,7 @@ def _build_lbl_layout(
     ]
 
     def _wave_nm_from_col(colname: str) -> float:
+        """Extract the integer wavelength label from a column name."""
         m = re.match(r".*_(\d+)nm", str(colname))
         if m:
             return float(m.group(1))
@@ -3495,6 +3517,7 @@ def _make_ts_snr_figure(
     snr_y = [d[1].get("EXT_Y", float("nan")) for d in obs_data]
 
     def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
+        """Parse an observation-directory name as a UTC date."""
         text = str(obs_dir or "").strip()
         m = re.match(r"^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$", text)
         if not m:
@@ -3639,6 +3662,7 @@ def _make_ts_airmass_figure(
     airmass: List[float] = []
 
     def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
+        """Parse an observation-directory name as a UTC date."""
         text = str(obs_dir or "").strip()
         m = re.match(r"^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$", text)
         if not m:

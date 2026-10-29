@@ -103,7 +103,7 @@ _CAT_STORE: Dict[tuple, Any] = {}
 _CAT_TTL = 86400.0  # seconds (24 h)
 
 
-def _cat_get(key: tuple) -> Any:
+def _cat_get(key: Tuple[Any, ...]) -> Any:
     """Return cached catalog data, or None if stale/absent."""
     with _CAT_LOCK:
         entry = _CAT_STORE.get(key)
@@ -117,7 +117,7 @@ def _cat_get(key: tuple) -> Any:
     return data
 
 
-def _cat_put(key: tuple, data: Any) -> None:
+def _cat_put(key: Tuple[Any, ...], data: Any) -> None:
     """Store *data* under *key* in the catalog cache."""
     with _CAT_LOCK:
         _CAT_STORE[key] = (_time.monotonic(), data)
@@ -152,6 +152,7 @@ def generate_finder_charts(
     """
     # helper: emit a log line if callback provided
     def _log(msg: str) -> None:
+        """Send progress text to the optional caller-provided logger."""
         if log_func is not None:
             log_func(msg)
 
@@ -319,7 +320,8 @@ def generate_finder_charts(
     # when the catalogue cross-match returned NaN (e.g. when
     # the 2MASS query timed out).  Falls back gracefully to the
     # catalogue value when present.
-    def _pick_mag(cat_arr, key):
+    def _pick_mag(cat_arr: np.ndarray, key: str) -> Any:
+        """Use a catalogue magnitude, falling back to the object row."""
         cat_v = cat_arr[closest] if len(cat_arr) else float('nan')
         if isinstance(cat_v, float) and not np.isnan(cat_v):
             return cat_v
@@ -338,7 +340,8 @@ def generate_finder_charts(
     _pick_mag(gaia_sources['H'], 'H_MAG')
     _pick_mag(gaia_sources['K'], 'KS_MAG')
 
-    def _fmt_mag(v):
+    def _fmt_mag(v: Any) -> str:
+        """Format a magnitude for the chart title, or show ``n/a``."""
         try:
             f = float(v)
             if np.isnan(f):
@@ -910,10 +913,18 @@ def _setup_wcs(
 
 # ---- image seeding -----------------------------------------
 def _seed_image(
-    gaia_sources, pixel_scale, obs_coords, fwhm,
-    field_of_view, sigma_limit, band,
-    rotation, flip_x, flip_y, scale_factor,
-):
+    gaia_sources: Dict[str, np.ndarray],
+    pixel_scale: Any,
+    obs_coords: SkyCoord,
+    fwhm: Any,
+    field_of_view: Any,
+    sigma_limit: float,
+    band: str,
+    rotation: Any,
+    flip_x: bool,
+    flip_y: bool,
+    scale_factor: float,
+) -> Tuple[np.ndarray, WCS]:
     """Create a synthetic sky image with Gaussian PSFs."""
     fov_scaled = field_of_view * scale_factor
     npixel_x = int(

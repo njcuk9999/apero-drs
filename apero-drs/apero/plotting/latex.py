@@ -67,13 +67,15 @@ SYMBOLS[']'] = r'\]'
 # =============================================================================
 class LatexDocument:
     def __init__(self, params: ParamDict, filename: str,
-                 extension: str = '.pdf'):
+                 extension: str = '.pdf') -> None:
         """
         Construct Latex instance
 
         :param params: ParamDict, parameter dictionary of constants
         :param filename: str, the filename to save the html document to
         :param extension: str, the extension to save the html file to
+
+        :return: None. Initializes an empty LaTeX document.
         """
         # save params
         self.params = params
@@ -101,7 +103,7 @@ class LatexDocument:
     # ----------------------------------------------------------------------
     # user functions
     # ----------------------------------------------------------------------
-    def print(self):
+    def print(self) -> None:
         """
         Print the text storage
 
@@ -109,7 +111,7 @@ class LatexDocument:
         """
         print(self._t_)
 
-    def write_latex(self):
+    def write_latex(self) -> None:
         """
         Write the latex file using writing function
 
@@ -121,7 +123,7 @@ class LatexDocument:
         # write file to disk
         write_file(self.latexfilename, self._t_)
 
-    def openpdf(self):
+    def openpdf(self) -> None:
         """
         Open the latex using okular
 
@@ -135,7 +137,7 @@ class LatexDocument:
             # log: Cannot run command: {0}
             print(textentry('40-003-00006', args=margs))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Remove all temporary files from the filename
 
@@ -158,7 +160,7 @@ class LatexDocument:
     # top level latex functions
     # ----------------------------------------------------------------------
     def preamble(self, documentclass: Union[str, None] = None,
-                 packages: Union[Dict[str, str], None] = None):
+                 packages: Union[Dict[str, str], None] = None) -> None:
         """
         Add the latex preamble text (head and body)
 
@@ -201,7 +203,7 @@ class LatexDocument:
                     self._t_ += cmd('usepackage', pname, options)
         self.newline()
 
-    def begin(self):
+    def begin(self) -> None:
         """
         The latex begin document text
 
@@ -221,7 +223,7 @@ class LatexDocument:
         self.newline()
 
     def add_title(self, title: str,
-                  authors: Union[List[str], str, None] = None):
+                  authors: Union[List[str], str, None] = None) -> None:
         """
         Add a title to the html page
 
@@ -246,7 +248,7 @@ class LatexDocument:
         self.newline(2)
         self._t_ += cmd('maketitle')
 
-    def newline(self, number: int = 1):
+    def newline(self, number: int = 1) -> None:
         """
         Add some new lines to the text storage
 
@@ -257,7 +259,7 @@ class LatexDocument:
         for _ in range(number):
             self._t_ += '\n'
 
-    def end(self):
+    def end(self) -> None:
         """
         The final code to add to the latex document (end, document)
 
@@ -279,7 +281,7 @@ class LatexDocument:
     # ----------------------------------------------------------------------
     # document latex functions
     # ----------------------------------------------------------------------
-    def section(self, text: str):
+    def section(self, text: str) -> None:
         """
         Add a section title to the section
 
@@ -291,7 +293,7 @@ class LatexDocument:
         self._t_ += cmd('section', text)
         self.newline()
 
-    def subsection(self, text: str):
+    def subsection(self, text: str) -> None:
         """
         Add a sub-section title to the section
 
@@ -303,7 +305,7 @@ class LatexDocument:
         self._t_ += cmd('subsection', text)
         self.newline()
 
-    def subsubsection(self, text: str):
+    def subsubsection(self, text: str) -> None:
         """
         Add a sub-sub-section title to the section
 
@@ -315,7 +317,7 @@ class LatexDocument:
         self._t_ += cmd('subsubsection', text)
         self.newline()
 
-    def add_text(self, text: str):
+    def add_text(self, text: str) -> None:
         """
         Add a text block to the latex document
 
@@ -331,17 +333,17 @@ class LatexDocument:
         for text_it in text:
             self._t_ += text_it
 
-    def insert(self, text: str):
+    def insert(self, text: str) -> None:
         """
         insert a single line of text
 
         :param text: str
-        :return:
+        :return: None. Appends the text to the document storage.
         """
         self.newline()
         self._t_ += text
 
-    def insert_latex(self, filename: str):
+    def insert_latex(self, filename: str) -> None:
         """
         inserts latex code from "filename" into the text storage
 
@@ -359,7 +361,7 @@ class LatexDocument:
                      units: Union[Dict[str, str], None] = None,
                      caption: Union[str, None] = None,
                      label: Union[str, None] = None,
-                     colormask: Union[np.ndarray, list, None] = None):
+                     colormask: Union[np.ndarray, list, None] = None) -> None:
         """
         Insert a table into the html document
 
@@ -419,7 +421,7 @@ class LatexDocument:
 
     def add_command(self, command: str,
                     inputs: Union[str, None] = None,
-                    options: Union[str, None] = None):
+                    options: Union[str, None] = None) -> None:
         """
         Add a latex command to the text storage
 
@@ -443,7 +445,8 @@ class LatexDocument:
     # ----------------------------------------------------------------------
     # environment latex functions
     # ----------------------------------------------------------------------
-    def equation(self, text: str, label: Union[str, None] = None):
+    def equation(self, text: str,
+                 label: Union[str, None] = None) -> None:
         """
         Add equation to the latex document
 
@@ -469,7 +472,7 @@ class LatexDocument:
 
     def figure(self, filename: str, height: Union[int, None] = None,
                width: Union[int, None] = None, caption: Union[str, None] = None,
-               label: Union[str, None] = None):
+               label: Union[str, None] = None) -> None:
         """
         Add a figure (image from source "filename") to the latex document,
         can set height, width and caption
@@ -533,7 +536,7 @@ def cmd(command: str, inputs: Union[str, None] = None,
     :param inputs: str or None, if set the string of inputs (valid for latex)
     :param options: str or None, if set the string of options (valid for latex)
 
-    :return: None, updates text storage
+    :return: Formatted LaTeX command string.
     """
     # set up keywords
     kwargs = dict(command=command, input=inputs, options=options)
@@ -632,7 +635,7 @@ def open_file(filename: str) -> List[str]:
     return lines
 
 
-def write_file(filename: str, text: Union[List[str], str]):
+def write_file(filename: str, text: Union[List[str], str]) -> None:
     """
     Write the "text" to "filename"
 

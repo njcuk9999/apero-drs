@@ -67,6 +67,8 @@ SETUP_PATH = __PATH__.joinpath('tools', 'resources', 'setup')
 SETUP_FILES = dict()
 SETUP_FILES['setup.sh'] = 'apero_bash.sh'
 SETUP_FILES['setup.bat'] = 'apero_win.bat'
+# allowed methods to link external raw files into the raw directory
+EXTERNAL_RAW_TYPES = ['symlink', 'hardlink']
 
 
 # =============================================================================
@@ -405,8 +407,83 @@ def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
                 # update value in params
                 params.set(key, value, source=f'set[{arg.name}')
     # -------------------------------------------------------------------------
+    # external raw directory (conditional questions)
+    params = ask_external_raw(params)
+    # -------------------------------------------------------------------------
     # specific arguments
     params = fix_config_path(params)
+    # -------------------------------------------------------------------------
+    return params
+
+
+def ask_external_raw(params: ParamDict) -> ParamDict:
+    """
+    Ask whether to use an external raw directory, which directory to use
+    (must exist) and how to link its files into the raw directory.
+    Command line values are used instead of asking where given.
+
+    :param params: ParamDict, the setup parameters
+
+    :return: ParamDict, the updated setup parameters (USE_EXTERNAL_RAW,
+             EXTERNAL_RAW, EXTERNAL_RAW_TYPE)
+    """
+    # get the sources (command line values are not asked again)
+    use_cmd = params.sources['USE_EXTERNAL_RAW'] == 'command_line'
+    path_cmd = params.sources['EXTERNAL_RAW'] == 'command_line'
+    type_cmd = params.sources['EXTERNAL_RAW_TYPE'] == 'command_line'
+    # -------------------------------------------------------------------------
+    # 1. do we want to use an external raw directory
+    # -------------------------------------------------------------------------
+    # an external raw path on the command line implies we use it
+    if path_cmd:
+        use_external = True
+    elif use_cmd:
+        use_external = bool(params['USE_EXTERNAL_RAW'])
+    else:
+        question = textentry('40-510-00043')
+        use_external = user_input(question, dtype='YN', color='magenta')
+    # deal with not using an external raw directory
+    if not use_external:
+        params.set('USE_EXTERNAL_RAW', False, source='user_input')
+        params.set('EXTERNAL_RAW', None, source='user_input')
+        return params
+    params.set('USE_EXTERNAL_RAW', True, source='user_input')
+    # -------------------------------------------------------------------------
+    # 2. the external raw directory (must already exist)
+    # -------------------------------------------------------------------------
+    if path_cmd:
+        external_raw = os.path.expanduser(str(params['EXTERNAL_RAW']))
+        # we never create the external directory
+        if not os.path.isdir(external_raw):
+            raise AperoCodedException(None, '00-510-00008',
+                                      targs=[external_raw])
+    else:
+        question = textentry('40-510-00044')
+        while True:
+            uinput = user_input(question, dtype='str', color='magenta')
+            # a blank answer disables the external raw directory
+            if uinput in ['', 'None']:
+                params.set('USE_EXTERNAL_RAW', False, source='user_input')
+                params.set('EXTERNAL_RAW', None, source='user_input')
+                return params
+            external_raw = os.path.expanduser(uinput)
+            if os.path.isdir(external_raw):
+                break
+            WLOG(None, 'warning', textentry('40-510-00045',
+                                            args=[external_raw]))
+    # store as an absolute path string (links point at this path)
+    external_raw = os.path.abspath(external_raw)
+    params.set('EXTERNAL_RAW', external_raw, source='user_input')
+    # -------------------------------------------------------------------------
+    # 3. how to link the files
+    # -------------------------------------------------------------------------
+    if not type_cmd:
+        question = textentry('40-510-00046')
+        link_type = user_input(question, dtype='str', color='magenta',
+                               options=EXTERNAL_RAW_TYPES,
+                               default=params['EXTERNAL_RAW_TYPE'])
+        params.set('EXTERNAL_RAW_TYPE', str(link_type).lower(),
+                   source='user_input')
     # -------------------------------------------------------------------------
     return params
 

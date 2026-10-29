@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from flask import jsonify, request
 
 from apero_ri.core.auth import get_public_permissions
@@ -11,7 +13,8 @@ from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import known_errors as ke
 
 
-def _is_monitor_perm(p) -> bool:
+def _is_monitor_perm(p: Any) -> bool:
+    """Return whether a permission grants access to monitor features."""
     if not isinstance(p, str):
         return False
     if p in ('view.monitor_portal', 'view.monitor', 'manage.astrometrics'):
@@ -25,7 +28,8 @@ def _is_monitor_perm(p) -> bool:
     return False
 
 
-def _require_monitor(app):
+def _require_monitor(app: Any) -> tuple[Any, Any, Any, Any]:
+    """Return the caller and permission check result for monitor access."""
     user_info = app._get_api_user()
     if user_info:
         perms = resolve_user_permissions(
@@ -36,15 +40,22 @@ def _require_monitor(app):
 
     has_monitor = any(_is_monitor_perm(p) for p in set(perms or ()))
     if not has_monitor:
-        return None, None, jsonify(success=False, error='Monitor access required'), 403
+        return (
+            None,
+            None,
+            jsonify(success=False, error='Monitor access required'),
+            403,
+        )
     return user_info, perms, None, None
 
 
-def api_known_errors_list(app):
+def api_known_errors_list(app: Any) -> Any:
+    """Return known error rows for the monitor page."""
     return jsonify(success=True, rows=ke.list_known_errors())
 
 
-def api_known_errors_create(app):
+def api_known_errors_create(app: Any) -> Any:
+    """Create a known error from the request body."""
     user_info, _, err, status = _require_monitor(app)
     if err is not None:
         return err, status
@@ -72,7 +83,8 @@ def api_known_errors_create(app):
     return jsonify(success=True, row=row)
 
 
-def api_known_errors_update(app):
+def api_known_errors_update(app: Any) -> Any:
+    """Update a known error selected by its request-body id."""
     _, _, err, status = _require_monitor(app)
     if err is not None:
         return err, status
@@ -101,7 +113,8 @@ def api_known_errors_update(app):
     return jsonify(success=True, row=row)
 
 
-def api_known_errors_delete(app):
+def api_known_errors_delete(app: Any) -> Any:
+    """Delete a known error selected by its request-body id."""
     _, _, err, status = _require_monitor(app)
     if err is not None:
         return err, status

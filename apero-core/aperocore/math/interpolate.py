@@ -48,7 +48,8 @@ def fill_nans_nearest(image: Union[np.ndarray, List[np.ndarray]],
     return outs[0] if single else outs
 
 
-def finite_spline(xpos: np.ndarray, values: np.ndarray):
+def finite_spline(xpos: np.ndarray,
+                  values: np.ndarray) -> Optional[CubicSpline]:
     """
     Build a cubic spline through finite samples when enough points exist.
 
@@ -324,7 +325,7 @@ class GaussianKernel(Kernel):
     :param fwhm: float, full-width at half-maximum in x units
     """
 
-    def __init__(self, fwhm: float):
+    def __init__(self, fwhm: float) -> None:
         """
         Initialise a Gaussian kernel.
 

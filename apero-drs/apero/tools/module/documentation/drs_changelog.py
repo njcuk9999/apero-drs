@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+"""Interactive helpers for updating APERO release and changelog files.
 
 Created on 2019-05-01 at 17:02
 
@@ -13,6 +10,7 @@ Created on 2019-05-01 at 17:02
 import os
 import shutil
 from datetime import datetime
+from typing import Optional
 
 from aperocore.base import base
 from aperocore import drs_lang
@@ -51,7 +49,8 @@ YES_OR_NO = '{0} {1} {2}'.format(textentry('Q_YES'), textentry('OR_TEXT'),
 # =============================================================================
 # Define functions
 # =============================================================================
-def ask_for_new_version():
+def ask_for_new_version() -> Optional[str]:
+    """Prompt for a matching, confirmed version string, or return ``None``."""
     # log current version
     # log: Current version is '{0}'
     print(textentry('40-501-00001', args=[__version__]))
@@ -93,16 +92,18 @@ def ask_for_new_version():
         return None
 
 
-def git_tag_head(version):
+def git_tag_head(version: str) -> None:
+    """Create a Git tag for the current HEAD using ``version`` as its name."""
 
     os.system('git tag {0}'.format(version))
 
 
-def git_remove_tag(version):
+def git_remove_tag(version: str) -> None:
+    """Delete the local Git tag named by ``version``."""
     os.system('git tag -d {0}'.format(version))
 
 
-def git_change_log(filename):
+def git_change_log(filename: str) -> None:
     """
     Generate changelog using gitchangelog with commit dates
 
@@ -115,7 +116,8 @@ def git_change_log(filename):
     os.system('gitchangelog > {0}'.format(filename))
 
 
-def update_version_file(filename, version):
+def update_version_file(filename: str, version: str) -> None:
+    """Replace the first line of a version file with the supplied version."""
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -132,7 +134,8 @@ def update_version_file(filename, version):
     os.remove(filename + '.backup')
 
 
-def update_py_version(filename, version):
+def update_py_version(filename: str, version: str) -> None:
+    """Update ``__version__`` and ``__date__`` assignments in a Python file."""
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -169,11 +172,13 @@ def update_py_version(filename, version):
     os.remove(filename + '.backup')
 
 
-def preview_log(filename):
+def preview_log(filename: str) -> None:
+    """Display a changelog file in the user's pager."""
     os.system('more {0}'.format(filename))
 
 
-def update_file(filename, prefix, suffix):
+def update_file(filename: str, prefix: str, suffix: str) -> None:
+    """Replace text after each matching line prefix in a file."""
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -197,7 +202,8 @@ def update_file(filename, prefix, suffix):
             f.write(outline)
 
 
-def format_rst(filename, special=None):
+def format_rst(filename: str, special: Optional[str] = None) -> None:
+    """Format changelog markup in an RST file, including its HTML section."""
 
     n_entries = NUMBER_OF_CHANGELOG_ENTRIES_LATEX
     # ----------------------------------------------------------------------
@@ -243,7 +249,8 @@ def format_rst(filename, special=None):
             f.write(outline)
 
 
-def _special_chars(line):
+def _special_chars(line: str) -> str:
+    """Apply the changelog's inline-code formatting to one line."""
     # replace tabs with spaces
     line = line.replace('\t', ' ' * 4)
     # need to remove all accent quotes

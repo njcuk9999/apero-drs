@@ -66,7 +66,8 @@ PAGE_NAV_HTML = '../documentation/working/_templates/layout.html'
 # Define classes
 # =============================================================================
 class TableFile:
-    def __init__(self, name: str, params: ParamDict):
+    def __init__(self, name: str, params: ParamDict) -> None:
+        """Set up paths and references for one generated ARI table page."""
         if name == 'null':
             self.null = True
             return
@@ -96,11 +97,13 @@ class TableFile:
 
     @staticmethod
     def null_table(params: ParamDict) -> 'TableFile':
+        """Create a table-file marker for an absent table."""
         new = TableFile('null', params)
         new.null = True
         return new
 
-    def make_table(self, table: Union[Table, None]):
+    def make_table(self, table: Union[Table, None]) -> None:
+        """Write the table's reStructuredText page and CSV data when present."""
         # set where this page is relative to the ari/home directory
         rel_root = '../../../ari/home/'
         # make a markdown page for the table
@@ -161,6 +164,7 @@ class TableFile:
 # =============================================================================
 def make_obj_table(params: ParamDict, object_classes: Dict
                    ) -> TableFile:
+    """Build and write the ARI summary table for observed objects."""
     # get the ari user
     ari_user = params['TOOLS.ARI.USER']
     # storage dictionary for conversion to table
@@ -256,6 +260,7 @@ def make_obj_table(params: ParamDict, object_classes: Dict
 # Define Observation Table functions
 # =============================================================================
 def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
+    """Build and write the ARI observation-night table."""
     # get the ari user
     ari_user = params['TOOLS.ARI.USER']
     # -------------------------------------------------------------------------
@@ -347,6 +352,7 @@ def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
 def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
                   object_classes: Dict[str, AriObject]
                   ) -> Dict[str, Tuple[bool, str]]:
+    """Generate one object's page and record success or its failure detail."""
     # set where this page is relative to the ari/home directory
     rel_root = '../../../../../ari/home/'
     # get object
@@ -487,7 +493,10 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         return rdict
 
 
-def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
+def add_obj_pages(params: ParamDict,
+                  object_classes: Dict[str, AriObject]
+                  ) -> Dict[str, AriObject]:
+    """Generate pages for objects that are new or marked for refresh."""
     # -------------------------------------------------------------------------
     # deal with no entries in object table
     if len(object_classes) == 0:
@@ -613,7 +622,8 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
 
 
 def objpage_targetinfo(params: ParamDict, page: Any, name: str, ref: str,
-                       object_instance: AriObject):
+                       object_instance: AriObject) -> None:
+    """Add target metadata and astrometric database statistics to a page."""
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -638,7 +648,8 @@ def objpage_targetinfo(params: ParamDict, page: Any, name: str, ref: str,
 
 
 def objpage_spectrum(params: ParamDict, page: Any, name: str, ref: str,
-                     object_instance: AriObject):
+                     object_instance: AriObject) -> None:
+    """Add spectrum plots, statistics, and links to an object page."""
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -690,7 +701,8 @@ def objpage_spectrum(params: ParamDict, page: Any, name: str, ref: str,
 
 
 def objpage_lbl(params: ParamDict, page: Any, name: str, ref: str,
-                object_instance: AriObject):
+                object_instance: AriObject) -> None:
+    """Add LBL plots, statistics, and links for available combinations."""
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -748,7 +760,8 @@ def objpage_lbl(params: ParamDict, page: Any, name: str, ref: str,
 
 
 def objpage_ccf(params: ParamDict, page: Any, name: str, ref: str,
-                object_instance: AriObject):
+                object_instance: AriObject) -> None:
+    """Add CCF plots, statistics, and links to an object page."""
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -800,7 +813,8 @@ def objpage_ccf(params: ParamDict, page: Any, name: str, ref: str,
 
 
 def objpage_timeseries(params: ParamDict, page: Any, name: str, ref: str,
-                       object_instance: AriObject):
+                       object_instance: AriObject) -> None:
+    """Add time-series statistics and download links to an object page."""
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -828,7 +842,8 @@ def objpage_timeseries(params: ParamDict, page: Any, name: str, ref: str,
 
 
 def objpage_debug(params: ParamDict, page: Any, name: str, ref: str,
-                  object_instance: AriObject):
+                  object_instance: AriObject) -> None:
+    """Add enabled diagnostic plots and descriptions to an object page."""
     # add divider
     # page.add_divider(color=DIVIDER_COLOR, height=DIVIDER_HEIGHT)
     # add a reference to this section
@@ -917,7 +932,8 @@ def recipe_date_table(table: Table, machine_name: str
 # =============================================================================
 # Finder functions
 # =============================================================================
-def html_page_nav():
+def html_page_nav() -> str:
+    """Read and return the navigation block from the shared ARI layout."""
     layout_path = drs_misc.get_relative_folder(__PACKAGE__, PAGE_NAV_HTML)
     # read the file
     with open(layout_path, 'r') as lpage:
@@ -929,7 +945,8 @@ def html_page_nav():
     return nav_html
 
 
-def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
+def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]) -> None:
+    """Write the HTML table linking targets to their finder charts."""
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
@@ -1054,7 +1071,9 @@ def add_finder_table(params: ParamDict, data_dict: Dict[str, Any]):
     params.set('TOOLS.ARI.EXTRAS', ari_extras, source=funcname)
 
 
-def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
+def add_recipe_tables(params: ParamDict, table: Table,
+                      machine_name: str) -> None:
+    """Write per-date recipe log tables and register their HTML directory."""
     # set function name
     funcname = __NAME__ + '.add_recipe_tables()'
     # get the ari user
@@ -1237,7 +1256,8 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 # =============================================================================
 # Object index page
 # =============================================================================
-def make_finder_page(params: ParamDict):
+def make_finder_page(params: ParamDict) -> None:
+    """Update finder charts as configured and write the ARI finder page."""
     # load object database (yaml-backed)
     objdbm = drs_astrometrics.AstrometricDatabase(params, shortname='ARI')
     objdbm.load_db()
@@ -1310,7 +1330,8 @@ def make_finder_page(params: ParamDict):
 # =============================================================================
 # General functions
 # =============================================================================
-def make_index_page(params: ParamDict):
+def make_index_page(params: ParamDict) -> None:
+    """Write the ARI landing page with profile and finder-chart links."""
     # set where this page is relative to the ari/home directory
     rel_root = '../../ari/home/'
     # get ari user
@@ -1361,7 +1382,9 @@ def make_index_page(params: ParamDict):
     index_page.write_page(os.path.join(index_path, 'index.rst'))
 
 
-def make_profile_page(params: ParamDict, tables: List[TableFile]):
+def make_profile_page(params: ParamDict,
+                      tables: List[TableFile]) -> None:
+    """Write a profile page linking its generated tables and reports."""
     # set where this page is relative to the ari/home directory
     rel_root = '../../../ari/home/'
     # get ari user
@@ -1432,7 +1455,8 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     profile_page.write_page(os.path.join(profile_path, profile_name))
 
 
-def sphinx_compile(params: ParamDict):
+def sphinx_compile(params: ParamDict) -> None:
+    """Build the ARI documentation site and copy generated HTML extras."""
     # get the working directory path
     working_dir = os.path.dirname(params['TOOLS.ARI.DIR'])
     # get the resources default working directory path
@@ -1496,7 +1520,8 @@ def sphinx_compile(params: ParamDict):
     os.chdir(cwd)
 
 
-def add_other_reductions(params: ParamDict):
+def add_other_reductions(params: ParamDict) -> None:
+    """Update the ARI index with reductions available for this instrument."""
     # get the base_path page (above ari_dir level)
     base_path = str(os.path.join(params['PATH.OTHER'], 'ari',
                                  '_build', 'html'))

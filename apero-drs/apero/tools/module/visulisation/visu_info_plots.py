@@ -86,7 +86,9 @@ EXTENSIONS = ['.png']
 # =============================================================================
 # Define general functions
 # =============================================================================
-def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
+def plotend(params: ParamDict, filename: str,
+            thumbnail: bool = False) -> None:
+    """Save the current summary plot beside its source file and close it."""
     # deal with show vs save
     pkind = 'summary'
     # get path
@@ -127,7 +129,8 @@ def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
         pass
 
 
-def draw_kv_table(ax, title, data):
+def draw_kv_table(ax: Any, title: str, data: Dict[str, Any]) -> None:
+    """Draw a two-column key/value table in a Matplotlib axes."""
     ax.axis('off')
 
     rows = [[k, str(v)] for k, v in data.items()]
@@ -155,6 +158,7 @@ def draw_kv_table(ax, title, data):
 def make_target_dict(params: ParamDict, filename: str,
                      header: fits.Header = None,
                      tdict: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Build plot labels from a filename, optional FITS header and values."""
     # get all keys from header in the parameter format
     hdict = dict()
     if header is not None:
@@ -178,6 +182,7 @@ def make_target_dict(params: ParamDict, filename: str,
 
 
 def get_main_fiber() -> str:
+    """Return the instrument's first science fiber for summary plots."""
     # load pconst
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get science fiber
@@ -193,6 +198,7 @@ def get_main_fiber() -> str:
 # =============================================================================
 def spec_plus_zoom_page(target_dict: Dict[str, Any],
                         zooms: List[List[float]]) -> Dict[str, Any]:
+    """Create target, main-spectrum and wavelength-zoom axes for a plot."""
     fig = plt.figure(figsize=(15, 15), dpi=300)
 
     gs = fig.add_gridspec(
@@ -217,8 +223,9 @@ def spec_plus_zoom_page(target_dict: Dict[str, Any],
     return frames
 
 
-def plot_zoom(frame, x: np.ndarray, y: np.ndarray, limits: list,
-              **kwargs):
+def plot_zoom(frame: Any, x: np.ndarray, y: np.ndarray,
+              limits: List[float], **kwargs: Any) -> Any:
+    """Plot only samples whose x coordinates fall within the given limits."""
     # mask the data  - instead of just setting limits
     mask = (x >= limits[0]) & (x <= limits[1])
     # plot the masked data (passing any args from call)
@@ -231,7 +238,8 @@ def plot_spectrum(params: ParamDict, filename: str,
                   title: str,
                   zoom_params: Union[List[str], List[float]],
                   xlabel: str = 'Wavelength [nm]',
-                  ylabel: str = 'Flux'):
+                  ylabel: str = 'Flux') -> None:
+    """Plot the supplied spectra with target metadata and wavelength zooms."""
     # construct target dictionary
     target_dict = make_target_dict(params, filename, header)
     # get zoom limits
@@ -271,7 +279,8 @@ def plot_spectrum(params: ParamDict, filename: str,
 
 
 def plot_spectrum_thumbnail(params: ParamDict, filename: str,
-                            dataset: Dict[str, Any]):
+                            dataset: Dict[str, Any]) -> None:
+    """Save a compact thumbnail of the supplied spectra."""
     dpi = 100
     fig = plt.figure(figsize=(256 / dpi, 256 / dpi), dpi=dpi)
     frame = fig.add_subplot(1, 1, 1)
@@ -299,7 +308,8 @@ def plot_spectrum_thumbnail(params: ParamDict, filename: str,
 # Define ccf functions
 # =============================================================================
 def plot_ccf(params: ParamDict, filename: str, header: fits.Header,
-             ccf_props: Dict[str, Any], title: str):
+             ccf_props: Dict[str, Any], title: str) -> None:
+    """Plot the CCF, its fit residuals, and target metadata."""
     # construct target dictionary
     target_dict = make_target_dict(params, filename, header)
     # set up figure, tables and get plotting frames
@@ -414,7 +424,8 @@ def plot_ccf(params: ParamDict, filename: str, header: fits.Header,
 
 
 def plot_ccf_thumbnail(params: ParamDict, filename: str,
-                       ccf_props: Dict[str, Any]):
+                       ccf_props: Dict[str, Any]) -> None:
+    """Save a compact thumbnail of the median CCF."""
     dpi = 100
     fig = plt.figure(figsize=(256 / dpi, 256 / dpi), dpi=dpi)
     frame = fig.add_subplot(1, 1, 1)
@@ -438,7 +449,8 @@ def plot_ccf_thumbnail(params: ParamDict, filename: str,
 # =============================================================================
 # Define lbl functions
 # =============================================================================
-def get_lbl_rdb_props(params: ParamDict, rdb_table: Table):
+def get_lbl_rdb_props(params: ParamDict,
+                      rdb_table: Table) -> Dict[str, Any]:
     """
     Take from apero_core.AriObject.get_lbl_parameters
 
@@ -491,7 +503,8 @@ def get_lbl_rdb_props(params: ParamDict, rdb_table: Table):
 
 def plot_lbl_rdb(params: ParamDict, filename: str,
                  header: Union[fits.Header, None],
-                 lbl_props: Dict[str, Any], objname_template: str):
+                 lbl_props: Dict[str, Any], objname_template: str) -> None:
+    """Plot LBL radial-velocity results from an RDB table."""
     # construct target dictionary
     target_dict = make_target_dict(params, filename, header)
     # set up figure, tables and get plotting frames
@@ -521,7 +534,8 @@ def plot_lbl_rdb(params: ParamDict, filename: str,
 
 
 def plot_lbl_rdb_thumbnail(params: ParamDict, filename: str,
-                           lbl_props: Dict[str, Any]):
+                           lbl_props: Dict[str, Any]) -> None:
+    """Save a compact radial-velocity versus date thumbnail."""
     # get parameters from props
     plot_date = lbl_props['plot_date']
     vrad = lbl_props['vrad']
@@ -558,7 +572,8 @@ def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
                      mask_on_label: str, mask_off_label: str,
                      on_color: str = 'blue', off_color: str = 'cyan',
                      ylabel: str = None, low_percentile: float = 5.0,
-                     high_percentile: float = 95.0):
+                     high_percentile: float = 95.0) -> None:
+    """Plot masked wavelength-dependent values and their robust range."""
     # plot the mask off (bad) points (faint)
     frame.errorbar(wavemap[~mask], y[~mask], yerr=ey[~mask],
                    marker='o', alpha=0.05, color=off_color,
@@ -599,7 +614,9 @@ def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
 # =============================================================================
 # Define file type functions (one per file type)
 # =============================================================================
-def plot_drs_post_e(params: ParamDict, filename: str, identity: str = ''):
+def plot_drs_post_e(params: ParamDict, filename: str,
+                    identity: str = '') -> None:
+    """Create summary plots for an extracted two-dimensional spectrum."""
     # we don't use identity here
     _ = identity
     # get main fiber
@@ -627,7 +644,9 @@ def plot_drs_post_e(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def plot_drs_post_t(params: ParamDict, filename: str, identity: str = ''):
+def plot_drs_post_t(params: ParamDict, filename: str,
+                    identity: str = '') -> None:
+    """Create summary plots for a telluric-corrected spectrum."""
     # we don't use identity here
     _ = identity
     # get main fiber
@@ -654,7 +673,9 @@ def plot_drs_post_t(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def post_drs_post_s(params: ParamDict, filename: str, identity: str = ''):
+def post_drs_post_s(params: ParamDict, filename: str,
+                    identity: str = '') -> None:
+    """Create summary plots for a one-dimensional spectrum table."""
     # we don't use identity here
     _ = identity
     # get main fiber
@@ -692,7 +713,9 @@ def post_drs_post_s(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def plot_drs_post_p(params: ParamDict, filename: str, identity: str = ''):
+def plot_drs_post_p(params: ParamDict, filename: str,
+                    identity: str = '') -> None:
+    """Create summary plots for polarimetric products."""
     # we don't use identity here
     _ = identity
     # get main fiber
@@ -734,7 +757,9 @@ def plot_drs_post_p(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
+def post_drs_post_v(params: ParamDict, filename: str,
+                    identity: str = '') -> None:
+    """Create summary plots for the CCF products in a FITS file."""
     # we don't use identity here
     _ = identity
     # get main fiber
@@ -788,7 +813,9 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
     plot_ccf_thumbnail(params, filename, ccf_props)
 
 
-def red_tellu_temp(params: ParamDict, filename: str, identity: str = ''):
+def red_tellu_temp(params: ParamDict, filename: str,
+                   identity: str = '') -> None:
+    """Plot the red-arm telluric template product."""
     # we don't use identity here
     _ = identity
     # get the header
@@ -820,7 +847,9 @@ def red_tellu_temp(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def red_tellu_temp_s1dv(params: ParamDict, filename: str, identity: str = ''):
+def red_tellu_temp_s1dv(params: ParamDict, filename: str,
+                        identity: str = '') -> None:
+    """Plot the S1D-V red-arm telluric template product."""
     # we don't use identity here
     _ = identity
     # get the header
@@ -848,7 +877,9 @@ def red_tellu_temp_s1dv(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def red_tellu_temp_s1dw(params: ParamDict, filename: str, identity: str = ''):
+def red_tellu_temp_s1dw(params: ParamDict, filename: str,
+                        identity: str = '') -> None:
+    """Plot the S1D-W red-arm telluric template product."""
     # we don't use identity here
     _ = identity
     # get the header
@@ -876,7 +907,9 @@ def red_tellu_temp_s1dw(params: ParamDict, filename: str, identity: str = ''):
     plot_spectrum_thumbnail(params, filename, dataset)
 
 
-def lbl_rdb(params: ParamDict, filename: str, identity: str = ''):
+def lbl_rdb(params: ParamDict, filename: str,
+             identity: str = '') -> None:
+    """Plot LBL results from the selected RDB product."""
 
     # get the basename
     basename = os.path.basename(filename)
@@ -941,7 +974,9 @@ def lbl_rdb(params: ParamDict, filename: str, identity: str = ''):
 
 
 
-def lbl_fits(params: ParamDict, filename: str, identity: str = ''):
+def lbl_fits(params: ParamDict, filename: str,
+             identity: str = '') -> None:
+    """Plot LBL results stored in the selected FITS product."""
     # we don't use identity here
     _ = identity
     # get the header

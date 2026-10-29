@@ -1,13 +1,18 @@
 """User pins API helper functions for ARIApp."""
 
 from datetime import datetime, timezone
+from typing import Any
 
 from apero_ri.core import user_data as ud
 from flask import jsonify, request
 
 
-def api_user_pins_toggle(app):
-    """Toggle pin state for a page for the current user."""
+def api_user_pins_toggle(app: Any) -> Any:
+    """Toggle a page pin and return the JSON API response.
+
+    :param app: Application facade for authentication and user-pin storage.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -55,8 +60,12 @@ def api_user_pins_toggle(app):
     return jsonify(success=True, pinned=pinned, pins=pins)
 
 
-def api_user_pins_remove(app):
-    """Remove a pin from the current user's pinned pages list."""
+def api_user_pins_remove(app: Any) -> Any:
+    """Remove a page pin and return the JSON API response.
+
+    :param app: Application facade for authentication and user-pin storage.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -77,8 +86,12 @@ def api_user_pins_remove(app):
     return jsonify(success=True, pins=pins)
 
 
-def api_user_pins_reorder(app):
-    """Persist a user-specified order for pinned pages."""
+def api_user_pins_reorder(app: Any) -> Any:
+    """Persist a user-specified pin order and return the JSON response.
+
+    :param app: Application facade for authentication and user-pin storage.
+    :return: JSON response, optionally paired with an HTTP error status.
+    """
     user_info = app._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401

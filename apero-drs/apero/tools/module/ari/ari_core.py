@@ -265,7 +265,9 @@ HTML_COL_TYPES['FINDER_TABLE'] = ['str'] * len(HTML_OUTCOL_NAMES['FINDER_TABLE']
 class FileType:
     def __init__(self, name: str, block_kind: Optional[str] = None,
                  kw_output: Optional[str] = None, fiber: Optional[str] = None,
-                 count: bool = True, chain: Optional[str] = None):
+                 count: bool = True,
+                 chain: Optional[str] = None) -> None:
+        """Initialize a file category and its per-object statistics state."""
         self.name = str(name)
         self.block_kind = copy.deepcopy(block_kind)
         self.kw_output = copy.deepcopy(kw_output)
@@ -288,7 +290,8 @@ class FileType:
         self.num_passed = 0
         self.num_failed = 0
 
-    def yaml_dump(self):
+    def yaml_dump(self) -> Dict[str, Any]:
+        """Serialize this file category's configuration and statistics."""
         # set up yaml dict
         yaml_dict = dict()
         # ------------------------------------------------------------------
@@ -358,7 +361,8 @@ class FileType:
         # return yaml_dict
         return yaml_dict
 
-    def load_dump(self, yaml_dict):
+    def load_dump(self, yaml_dict: Dict[str, Any]) -> None:
+        """Restore category configuration and statistics from a YAML mapping."""
         # ------------------------------------------------------------------
         # set properties from yaml dict
         # ------------------------------------------------------------------
@@ -431,7 +435,8 @@ class FileType:
         return new
 
     def count_files(self, objname, indexdbm, logdbm,
-                    filetypes: Dict[str, 'FileType']):
+                    filetypes: Dict[str, 'FileType']) -> None:
+        """Refresh file counts, QC masks, and observation-time statistics."""
         # deal with not wanting to count in every case
         if not self.count:
             return
@@ -525,7 +530,9 @@ class FileType:
             self.num_passed = num_passed
             self.num_failed = num_failed
 
-    def get_files(self, qc: Optional[bool] = None, attr='files'):
+    def get_files(self, qc: Optional[bool] = None,
+                  attr: str = 'files') -> np.ndarray:
+        """Return a stored file vector, optionally filtered by QC status."""
         # get the value of the attribute
         vector = getattr(self, attr)
         # deal with weird vectors
@@ -555,7 +562,9 @@ class RecipeEntry:
 
 
 class AriObject:
-    def __init__(self, objname: str, filetypes: Dict[str, FileType]):
+    def __init__(self, objname: str,
+                 filetypes: Dict[str, FileType]) -> None:
+        """Initialize one object's metadata, file categories, and page state."""
         # get the object name
         self.objname = objname
         self.ra: Optional[str] = None
@@ -647,7 +656,8 @@ class AriObject:
         # store the required header info
         self.header_dict = dict()
 
-    def add_astrometrics(self, table):
+    def add_astrometrics(self, table: Any) -> None:
+        """Copy astrometric values, provenance, and aliases from one row."""
         self.ra = str(table["RA_DEG"])
         self.ra_source = str(table['RA_SOURCE'])
         self.dec = str(table["DEC_DEG"])
@@ -673,7 +683,8 @@ class AriObject:
 
         # TODO: Add Keywords, vsini etc when available
 
-    def add_files_stats(self, indexdbm, logdbm):
+    def add_files_stats(self, indexdbm: Any, logdbm: Any) -> None:
+        """Update indexed file statistics and derived object metadata."""
         # keep track of whether we need to update
         update = False
         # loop around raw files
@@ -726,7 +737,8 @@ class AriObject:
         else:
             self.last_processed = None
 
-    def add_reject_table(self, reject_table: pd.DataFrame):
+    def add_reject_table(self, reject_table: pd.DataFrame) -> None:
+        """Keep active rejection rows matching this object's raw files."""
 
         # Step 1: Get the list of raw files
         raw_files = self.filetypes['raw'].files
@@ -756,11 +768,8 @@ class AriObject:
         else:
             self.reject_table = None
 
-    def populate_header_dict(self, params: ParamDict):
-        """
-        Populate the header dictionary with the required header keys
-        :return:
-        """
+    def populate_header_dict(self, params: ParamDict) -> None:
+        """Read configured header properties for each populated file type."""
         # push the header properites into self
         self.headers = params['TOOLS.ARI.HEADER_PROPS']
         # loop around COUNT COLS and populate header dict
@@ -771,12 +780,12 @@ class AriObject:
             # get the header keys
             self.get_header_keys(self.headers[key], self.filetypes[key].files)
 
-    def get_header_keys(self, keys: Dict[str, Dict[str, str]], files: List[str]):
-        """
-        Get the header keys from the files
-        :param keys: dictionary of keys to get (with their properties)
-        :param files: list of files (for error reporting)
-        :return:
+    def get_header_keys(self, keys: Dict[str, Dict[str, str]],
+                        files: List[str]) -> None:
+        """Read configured FITS header values into this object's header map.
+
+        :param keys: Header names and their dtype, unit, or time options.
+        :param files: Files to read, also used in missing-key error messages.
         """
 
         # deal with no keys
@@ -2050,7 +2059,8 @@ class AriObject:
 
 
 class AriRecipe:
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize storage for one observation's recipe summary."""
         self.obsdir = None
         self.numtotal = None
         self.numfail = None
@@ -2059,7 +2069,8 @@ class AriRecipe:
         self.yamlfile = None
 
     @staticmethod
-    def from_yaml(yaml_abs_path):
+    def from_yaml(yaml_abs_path: str) -> None:
+        """Read recipe summary fields from the supplied observation YAML."""
         # load yaml file into dictionary
         yaml_dict = base.load_yaml(yaml_abs_path)
         # create instance of AriRecipe
@@ -2077,7 +2088,8 @@ class AriRecipe:
         # get the recipes
         ari_recipe.recipes = yaml_dict['recipes']
 
-    def save_yaml(self, params: ParamDict):
+    def save_yaml(self, params: ParamDict) -> None:
+        """Write this observation's recipe summary to its configured YAML."""
         # get the recipe yaml directory
         yaml_path = params['TOOLS.ARI.RECIPE_YAMLS']
         # construct the filename
@@ -2104,6 +2116,7 @@ class AriRecipe:
 # Define functions
 # =============================================================================
 def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
+    """Build the file categories and output identifiers used by the ARI."""
     # load pseudo-constants from apero
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get the science fiber from pconst
@@ -2150,6 +2163,7 @@ def ari_filetypes(params: ParamDict) -> Dict[str, FileType]:
 
 
 def get_has_polar(params: ParamDict) -> bool:
+    """Return whether the configured instrument supports polarimetry."""
     # get polar condition
     has_polar = HAS_POLAR[params['OBS.INSTRUMENT']]
     # return has polar
@@ -2160,7 +2174,8 @@ def get_has_polar(params: ParamDict) -> bool:
 # Target info page functions
 # =============================================================================
 def target_stats_table(target_props: Dict[str, Any], stat_path: str,
-                       title: str):
+                       title: str) -> None:
+    """Write the target metadata statistics table to ``stat_path``."""
 
     # get parameters from props
     coord_url = target_props['COORD_URL']
@@ -2240,7 +2255,14 @@ def target_stats_table(target_props: Dict[str, Any], stat_path: str,
 # =============================================================================
 # Spectrum page functions
 # =============================================================================
-def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
+def spec_stats_table(spec_props: Dict[str, Any], stat_path: str,
+                     title: str) -> None:
+    """Write spectrum statistics and links as a CSV table.
+
+    :param spec_props: Spectrum page values used to construct table columns.
+    :param stat_path: Destination CSV path.
+    :param title: Object title displayed in the table.
+    """
 
     # get parameters from props
     num_raw = spec_props['NUM_RAW_FILES']
@@ -2503,7 +2525,14 @@ def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
     return object_classes
 
 
-def lbl_stats_table(lbl_props: Dict[str, Any], stat_path: str, title: str):
+def lbl_stats_table(lbl_props: Dict[str, Any], stat_path: str,
+                    title: str) -> None:
+    """Write LBL statistics and template links as a CSV table.
+
+    :param lbl_props: LBL page values used to construct table columns.
+    :param stat_path: Destination CSV path.
+    :param title: Object title displayed in the table.
+    """
     # get parameters from props
     rjd = lbl_props['rjd']
     vrad = lbl_props['vrad']
@@ -2654,7 +2683,14 @@ def fit_ccf(ccf_props: Dict[str, Any]) -> Dict[str, Any]:
     return ccf_props
 
 
-def ccf_stats_table(ccf_props: Dict[str, Any], stat_path: str, title: str):
+def ccf_stats_table(ccf_props: Dict[str, Any], stat_path: str,
+                    title: str) -> None:
+    """Write CCF statistics and file links as a CSV table.
+
+    :param ccf_props: CCF page values used to construct table columns.
+    :param stat_path: Destination CSV path.
+    :param title: Object title displayed in the table.
+    """
     # get parameters from props
     vrad = ccf_props['dv']
     fwhm = ccf_props['fwhm']
@@ -2725,7 +2761,13 @@ def ccf_stats_table(ccf_props: Dict[str, Any], stat_path: str, title: str):
 # =============================================================================
 # Time series page functions
 # =============================================================================
-def time_series_stats_table(time_series_props: Dict[str, Any], stat_path: str):
+def time_series_stats_table(time_series_props: Dict[str, Any],
+                            stat_path: str) -> None:
+    """Write the time-series values as a CSV table.
+
+    :param time_series_props: Column names and their row values.
+    :param stat_path: Destination CSV path.
+    """
     # get parameters from props
     columns = time_series_props['columns']
     # --------------------------------------------------------------------------
@@ -2740,7 +2782,7 @@ def time_series_stats_table(time_series_props: Dict[str, Any], stat_path: str):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _match_file(reffile: str, files: List[str]):
+def _match_file(reffile: str, files: List[str]) -> Optional[int]:
     """
     Using a ref file split at the _pp level and try to locate the position
     of this file in the files list
@@ -2748,9 +2790,9 @@ def _match_file(reffile: str, files: List[str]):
     If ref file does not have _pp we assume it is a raw file and just remove
     the .fits and search based on this
 
-    :param reffile: str,
-    :param files:
-    :return:
+    :param reffile: Reference raw or pre-processed filename.
+    :param files: Candidate filenames to search.
+    :return: Matching candidate index, or None when no filename matches.
     """
     # force ref to be a basename
     refbasename = os.path.basename(reffile)
@@ -2773,6 +2815,13 @@ def _match_file(reffile: str, files: List[str]):
 
 def _header_value(keydict: Dict[str, str], header: fits.Header,
                   filename: str):
+    """Read and convert one configured header value.
+
+    :param keydict: Header key, optional fallback, dtype, unit, and time format.
+    :param header: FITS header supplying the value when present.
+    :param filename: Source filename used in conversion errors.
+    :return: Value converted according to configuration; its type is dynamic.
+    """
     # get properties of header key
     key = keydict['key']
     unit = keydict.get('unit', None)
@@ -2858,7 +2907,7 @@ def _url_addp(key: str, value: Union[str, List[str], None],
 
 
 def create_header_file(files: List[str], headers: Dict[str, Any], filetype: str,
-                       hdict: Dict[str, Any], filename: str):
+                       hdict: Dict[str, Any], filename: str) -> None:
     """
     Creates a header file (csv) from a dictionary of header keys
 
@@ -2888,7 +2937,9 @@ def create_header_file(files: List[str], headers: Dict[str, Any], filetype: str,
 
 
 def create_request_link_table(props: Dict[str, Any], save_path: str,
-                              rlinks: List[str], rlinkstxt: List[str]):
+                              rlinks: List[str],
+                              rlinkstxt: List[str]) -> None:
+    """Write a table of request links and their display descriptions."""
     # rlinks
     rlink_dict = dict()
     rlink_dict['Request'] = []
@@ -2911,9 +2962,11 @@ def create_request_link_table(props: Dict[str, Any], save_path: str,
     rdict_table.write(save_path, format='ascii.csv', overwrite=True)
 
 
-def create_file_list(files: List[str], path: str):
-    """
-    Writes a list of files to disk
+def create_file_list(files: List[str], path: str) -> None:
+    """Write filenames in sorted order, replacing any existing file.
+
+    :param files: Filenames to include.
+    :param path: Destination text-file path.
     """
     # if file exists remove it
     if os.path.exists(path):
@@ -2938,18 +2991,17 @@ def create_file_list(files: List[str], path: str):
 
 def download_table(files: List[str], descriptions: List[str],
                    item_path: str, dwn_rel_path: str, down_dir: str,
-                   title: str, versions: Optional[List[str]] = None):
-    """
-    Generic download table saving to the item relative path
+                   title: str,
+                   versions: Optional[List[str]] = None) -> None:
+    """Write a download table referencing files relative to the page.
 
-    :param files: the list of files to add to download table
-    :param descriptions: the list of descriptions for each file
-    :param dwn_rel_path: the path of the download relative to the page
-    :param item_path: the absolute path to the item csv table file (to save to)
-    :param down_dir: the path to the download directory
-    :param title: the title for the download table
-    :param versions: the versions of the files (optional)
-    :return:
+    :param files: Files to include in the table.
+    :param descriptions: Display description for each file.
+    :param item_path: Destination CSV path.
+    :param dwn_rel_path: Download directory path relative to the page.
+    :param down_dir: Filesystem directory containing downloads.
+    :param title: Table title.
+    :param versions: Optional version labels corresponding to the files.
     """
     # --------------------------------------------------------------------------
     # storage for ref file
@@ -3038,7 +3090,9 @@ def download_table(files: List[str], descriptions: List[str],
     down_table.write(item_path, format='ascii.csv', overwrite=True)
 
 
-def reject_table(reject_table: pd.DataFrame, save_path: str, title: str):
+def reject_table(reject_table: pd.DataFrame, save_path: str,
+                 title: str) -> None:
+    """Write the supplied rejection rows as a page table."""
     # --------------------------------------------------------------------------
     # convert to table
     rej_table = Table()
@@ -3052,7 +3106,8 @@ def reject_table(reject_table: pd.DataFrame, save_path: str, title: str):
 
 
 def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
-             required=True):
+             required: bool = True) -> None:
+    """Synchronize a path using the configured ARI remote-copy settings."""
     # --------------------------------------------------------------------------
     # get the correct rsync command
     if mode == 'get':
@@ -3095,7 +3150,7 @@ def find_finder_charts(path: str, objname: str) -> Tuple[List[str], List[str]]:
     Find finder charts for this object
     :param path: str, the path to the finder charts directory
     :param objname: str, the object name to locate
-    :return:
+    :return: Matching PDF paths and their display descriptions.
     """
     # expected directory name
     expected_dir = os.path.join(path, objname)
@@ -3125,7 +3180,17 @@ def find_finder_charts(path: str, objname: str) -> Tuple[List[str], List[str]]:
 
 
 def make_finder_download_table(entry, objname, item_save_path, item_rel_path,
-                               down_save_path, down_rel_path):
+                               down_save_path, down_rel_path) -> str:
+    """Create a finder-chart download table and return its relative path.
+
+    :param entry: Finder-chart file and description lists.
+    :param objname: Object name used in the download filename.
+    :param item_save_path: Directory for the generated table.
+    :param item_rel_path: Table directory path relative to the page.
+    :param down_save_path: Directory containing the downloadable charts.
+    :param down_rel_path: Download directory path relative to the page.
+    :return: Relative path to the generated table.
+    """
     # get the download base name
     dwn_base_name = f'finder_download_{objname}.txt'
     # get the download table path
@@ -3171,7 +3236,16 @@ def get_objnames_headers(objname: str, indexdbm: Any) -> str:
     return ', '.join(all_names)
 
 
-def calc_obs_windows(params: ParamDict, hprops, times: np.ndarray):
+def calc_obs_windows(
+    params: ParamDict, hprops: Dict[str, Any], times: np.ndarray
+    ) -> Tuple[np.ndarray, List[np.bool_]]:
+    """Evaluate target visibility on a two-hour grid across the date range.
+
+    :param params: Observation location and timezone parameters.
+    :param hprops: Target name and RA/Dec values in degrees.
+    :param times: Julian dates defining the start and end of the range.
+    :return: Calendar dates and a boolean observability flag for each date.
+    """
 
     # Define observer's location
     observer = Observer(latitude=params['OBS.LAT']*uu.deg,

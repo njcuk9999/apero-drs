@@ -45,7 +45,7 @@ _runtime_server: Optional[str] = None
 _runtime_token: Optional[str] = None
 
 
-def _ensure_requests():
+def _ensure_requests() -> None:
     """Raise a helpful error when ``requests`` is not installed."""
     if requests is None:
         raise ImportError(
@@ -149,10 +149,11 @@ def _get_token() -> str:
 # Low-level HTTP helpers
 # -------------------------------------------------------------------------
 def _headers() -> Dict[str, str]:
+    """Build the authorization headers for an API request."""
     return {"Authorization": f"Bearer {_get_token()}"}
 
 
-def _raise_api_error(resp) -> None:
+def _raise_api_error(resp: Any) -> None:
     """Extract a server error message from the response JSON, or fall back."""
     try:
         data = resp.json()
@@ -164,7 +165,9 @@ def _raise_api_error(resp) -> None:
     resp.raise_for_status()
 
 
-def _get(path: str, params: Optional[dict] = None) -> dict:
+def _get(
+    path: str, params: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """Perform an authenticated GET and return the JSON body."""
     _ensure_requests()
     assert requests is not None
@@ -178,7 +181,9 @@ def _get(path: str, params: Optional[dict] = None) -> dict:
     return data
 
 
-def _post(path: str, body: Optional[dict] = None) -> dict:
+def _post(
+    path: str, body: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """Perform an authenticated POST and return the JSON body."""
     _ensure_requests()
     assert requests is not None

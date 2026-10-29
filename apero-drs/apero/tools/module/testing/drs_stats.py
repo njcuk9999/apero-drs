@@ -67,7 +67,8 @@ UNHANDLED_ERROR_CODE = 'E[01-010-00001]'
 # Define classes
 # =============================================================================
 class LogEntry:
-    def __init__(self, pid: str, dataframe: pd.DataFrame):
+    def __init__(self, pid: str, dataframe: pd.DataFrame) -> None:
+        """Track one process ID and its derived timing and QC properties."""
         self.pid = str(pid)
         # fill out data
         self.dataframe = dataframe
@@ -112,13 +113,15 @@ class LogEntry:
         self.errormsgs = dict()
 
     def __str__(self) -> str:
+        """Return a compact label containing this recipe and process ID."""
         return 'LogEntry[{0}|{1}]'.format(self.recipe_name, self.pid)
 
     def __repr__(self) -> str:
+        """Return the string representation of this log entry."""
         return self.__str__()
 
     def get_attributes(self, params: ParamDict, mode: str,
-                       idataframe: pd.DataFrame):
+                       idataframe: pd.DataFrame) -> None:
         """
         Get attributes from dataframe for this object
         :return:
@@ -292,23 +295,29 @@ class LogEntry:
                 WLOG(params, 'warning', textentry('10-516-00002', args=eargs))
                 self.is_valid_for_qc = False
 
-    def query(self, command: str):
+    def query(self, command: str) -> pd.DataFrame:
+        """Run a pandasql query against this entry's registered dataframes."""
         return sqldf(command, self.namespace)
 
 
 class StatProperty:
-    def __init__(self, name, kind):
+    """Store one named statistic and register it in a parameter dictionary."""
+
+    def __init__(self, name: str, kind: str) -> None:
+        """Initialize a named statistic and its classification."""
         self.name = name
         self.kind = kind
         self.value = None
 
-    def add(self, pdict, value, func_name):
+    def add(self, pdict: ParamDict, value: Any, func_name: str) -> None:
+        """Store the value and register its source and property instance."""
         self.value = value
         pdict[self.name] = self.value
         pdict.set_source(self.name, func_name)
         pdict.instances[self.name] = self
 
     def make(self) -> str:
+        """Format the statistic as a name/value assignment."""
         return f'{self.name} = {self.value}'
 
 
@@ -317,6 +326,7 @@ class StatProperty:
 # =============================================================================
 def get_log_entries(params: ParamDict, recipe: DrsRecipe,
                     mode: str) -> List[LogEntry]:
+    """Load log records and return valid entries for the requested mode."""
     # load log database
     # log: Obtaining full log database. Please wait...
     WLOG(params, '', textentry('40-516-00001'))
@@ -517,6 +527,7 @@ def get_timing_stats(logs: List[LogEntry]) -> Dict[str, Dict[str, Any]]:
 
 def print_timing_stats(params: ParamDict, recipe: str,
                        stats: Dict[str, Any]) -> str:
+    """Log timing metrics for one recipe and return their formatted text."""
     WLOG(params, 'info', '=' * 50)
     WLOG(params, 'info', '\t{0}'.format(recipe))
     WLOG(params, 'info', '=' * 50)
@@ -765,7 +776,9 @@ def get_qc_stats(logs: List[LogEntry]) -> QcStatReturn:
 
 
 def print_qc_stats(params: ParamDict, recipe_name: str, stats: Dict[str, Any],
-                   stat_crit: List[str], stat_qc: Dict[str, List[str]]):
+                   stat_crit: List[str],
+                   stat_qc: Dict[str, List[str]]) -> None:
+    """Log pass, fail, QC, running, and completion counts for a recipe."""
     # print recipe
     WLOG(params, 'info', '=' * 50)
     WLOG(params, 'info', '\t{0}'.format(recipe_name))
@@ -879,6 +892,7 @@ def _statstr_print(statstr: str, key: str, values: List[Any],
 
 def _mapqc(x, attribute: str, crit: str, name: Optional[str] = None,
            default: Optional[Any] = None):
+    """Fetch one criterion value from a log entry, or return its default."""
     if hasattr(x, attribute):
         avalue = getattr(x, attribute)
         if crit in avalue:
@@ -890,6 +904,7 @@ def _mapqc(x, attribute: str, crit: str, name: Optional[str] = None,
 
 
 def _compile_plot_qc_params(stats, criteria, qcdict):
+    """Prepare date/value series, QC limits, and labels for QC plots."""
     # -------------------------------------------------------------------------
     # plot parameters
     xvalues = dict()
@@ -1065,7 +1080,8 @@ def _get_qcv(stats: dict, xkey: str, ykey: str
 # Define error stats functions
 # =============================================================================
 class ErrorReportEntry:
-    def __init__(self, loglines, start, end):
+    def __init__(self, loglines, start, end) -> None:
+        """Capture the lines belonging to one error-report section."""
 
         self.error_lines = loglines[start:end]
         self.run_id = -1
@@ -1075,13 +1091,16 @@ class ErrorReportEntry:
         self.error_str = ''
         self.error_codes = []
 
-    def print_str(self):
+    def print_str(self) -> None:
+        """Print the captured raw log lines."""
         print(''.join(self.error_lines))
 
-    def print_report(self):
+    def print_report(self) -> None:
+        """Print the cleaned report text for this error section."""
         print(self.error_str)
 
     def write_entry(self, iteration, length) -> str:
+        """Format this error report with its position and run string."""
         entrystr = ''
         entrystr += '\n#' + '=' * 80
         entrystr += '\n#' + ' {0} / {1}'.format(iteration + 1, length)
@@ -1093,7 +1112,8 @@ class ErrorReportEntry:
         entrystr += '\n\n'
         return entrystr
 
-    def process(self, params):
+    def process(self, params) -> None:
+        """Extract run metadata, report text, and error codes from the lines."""
         # ---------------------------------------------------------------------
         # get run id - should be in line 0
         # noinspection PyBroadException

@@ -34,7 +34,7 @@ class AperoCheck:
     """Class to represent an APERO check."""
 
     def __init__(self, name: str, string_name: str,
-                 check_type: str, instruments: List[str]):
+                 check_type: str, instruments: List[str]) -> None:
         # the name of this test which should be used in the check_dict
         self.name = name
         # the string name of this test (for internal use)
@@ -64,14 +64,20 @@ class AperoCheck:
         # must return a tuple of (passed: bool, message: str)
         self.func = no_function
 
-    def clone(self):
+    def clone(self) -> 'AperoCheck':
         """Return a per-run copy of this check instance."""
         # Copy the instance so runtime state is not shared between runs.
         return copy.deepcopy(self)
         
-    def __call__(self, instrument, obs_dir: str, aparams: dict,
-                 dbparams: dict, check_dict: Dict[str, bool]):
-        """Run the check."""
+    def __call__(
+        self,
+        instrument: str,
+        obs_dir: str,
+        aparams: Dict[str, Any],
+        dbparams: Dict[str, Any],
+        check_dict: Dict[str, bool],
+    ) -> None:
+        """Run this check if its instrument and dependencies are valid."""
         # Reset runtime state before every execution.
         self.message = ''
         self.wrong_instrument = False
@@ -104,7 +110,9 @@ class AperoCheck:
         else:
             self.message = "No function defined for this check"
     
-    def create_yaml_entry(self):
+    def create_yaml_entry(
+        self,
+    ) -> Optional[Tuple[str, str, Dict[str, Any]]]:
         """Create the YAML bucket name and entry for this check."""
         # Skip checks that are not valid for this instrument.
         if self.wrong_instrument:
@@ -121,7 +129,7 @@ class AperoCheck:
         # Return the bucket, key, and payload for the writer.
         return bucket, str(self.name), entry
         
-    def report(self):
+    def report(self) -> str:
         """Create a report for this check."""
         status = "PASSED" if self.passed else "FAILED"
         if self.wrong_instrument:
@@ -137,7 +145,7 @@ class SimpleCheck:
         check: AperoCheck,
         test_key: str,
         config_section: str = 'eng_test',
-    ):
+    ) -> None:
         self.check = check
         self.test_key = str(test_key or '').strip()
         self.config_section = str(config_section or 'eng_test').strip()
@@ -162,11 +170,14 @@ class SimpleCheck:
         return str(names or '').strip()
 
     @staticmethod
-    def _safe_format(text: Any, values: dict) -> str:
+    def _safe_format(
+        text: Any, values: Dict[str, Any]
+    ) -> str:
         """Format text with placeholder values while preserving misses."""
 
         class _Missing(dict):
-            def __missing__(self, key):
+            def __missing__(self, key: str) -> str:
+                """Preserve an unknown format field as a placeholder."""
                 return '{' + str(key) + '}'
 
         return str(text or '').format_map(_Missing(values))
@@ -233,7 +244,9 @@ class SimpleCheck:
             summary += f' normalize={normalize}'
         return summary
 
-    def _filter_summary(self, name: str, spec: dict) -> str:
+    def _filter_summary(
+        self, name: str, spec: Dict[str, Any]
+    ) -> str:
         """Return a concise summary for one row-filter specification."""
         logical_key = str(spec.get('logical_key', '') or '').strip()
         key_name = self._display_name(self._spec_key(name, spec))
@@ -242,7 +255,7 @@ class SimpleCheck:
             f'logical_key={logical_key} values={key_name} dtype={dtype}'
         )
 
-    def _display_cfg(self) -> dict:
+    def _display_cfg(self) -> Dict[str, Any]:
         """Build placeholder values for docs and admin views."""
         values = dict()
         values['test_key'] = self.test_key
@@ -272,7 +285,7 @@ class SimpleCheck:
 
         return values
 
-    def _render_desc(self, values: dict) -> str:
+    def _render_desc(self, values: Dict[str, Any]) -> str:
         """Render the logic description text for a values mapping."""
         if callable(self.desc):
             try:
@@ -282,7 +295,9 @@ class SimpleCheck:
         return self._safe_format(self.desc, values).strip()
 
     @staticmethod
-    def _group_signature(values: dict, logic_markdown: str) -> str:
+    def _group_signature(
+        values: Dict[str, Any], logic_markdown: str
+    ) -> str:
         """Return a stable signature for one resolved logic payload."""
         payload = dict()
         payload['values'] = dict(values or {})
@@ -302,7 +317,9 @@ class SimpleCheck:
             label = str(name or '').strip()
         return str(label or '').upper()
 
-    def _logic_rows(self, values: dict) -> List[dict]:
+    def _logic_rows(
+        self, values: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Return ordered key/value rows for one logic-values mapping."""
         rows = []
         rows.append(dict(label='TEST_KEY', value=self.test_key))
@@ -327,7 +344,7 @@ class SimpleCheck:
             ))
         return rows
 
-    def get_generic_logic_group(self) -> dict:
+    def get_generic_logic_group(self) -> Dict[str, Any]:
         """Return one generic logic section using placeholder names."""
         values = self._display_cfg()
         logic_markdown = self.get_logic_markdown(values)
@@ -344,8 +361,8 @@ class SimpleCheck:
 
     def get_profile_logic_groups(
         self,
-        profiles_data: Optional[dict] = None,
-    ) -> List[dict]:
+        profiles_data: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """Return grouped per-profile logic payloads for docs/admin tabs."""
         from apero_ri.apero_monitoring.core import raw_common
         from apero_ri.core.auth import load_apero_profiles
@@ -438,14 +455,16 @@ class SimpleCheck:
 
     def get_logic_tab_groups(
         self,
-        profiles_data: Optional[dict] = None,
-    ) -> List[dict]:
+        profiles_data: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """Return generic + grouped per-profile logic tabs."""
         out = [self.get_generic_logic_group()]
         out.extend(self.get_profile_logic_groups(profiles_data=profiles_data))
         return out
 
-    def get_logic_markdown(self, values: Optional[dict] = None) -> str:
+    def get_logic_markdown(
+        self, values: Optional[Dict[str, Any]] = None
+    ) -> str:
         """Return markdown describing this SimpleCheck logic."""
         logic = self._render_desc(values or self._display_cfg())
         if logic == '' and callable(self.func):
@@ -460,7 +479,7 @@ class SimpleCheck:
         out += '```'
         return out
 
-    def get_admin_sections(self) -> List[dict]:
+    def get_admin_sections(self) -> List[Dict[str, Any]]:
         """Return structured parameter sections for admin views."""
         sections = []
 
@@ -517,8 +536,8 @@ class SimpleCheck:
         self,
         instrument: str,
         obs_dir: str,
-        aparams: dict,
-        dbparams: dict,
+        aparams: Dict[str, Any],
+        dbparams: Dict[str, Any],
     ) -> Tuple[bool, str]:
         """Execute this simple check against one observation night."""
         from apero_ri.apero_monitoring.core import raw_common
@@ -576,7 +595,7 @@ class SimpleCheck:
 
     def _cfg_value(
         self,
-        cfg: dict,
+        cfg: Dict[str, Any],
         names: Any,
         default: Any = None,
     ) -> Any:
@@ -595,7 +614,9 @@ class SimpleCheck:
         value = cfg.get(key, default)
         return default if value is None else value
 
-    def _runtime_logic_values(self, cfg: dict, aparams: dict) -> dict:
+    def _runtime_logic_values(
+        self, cfg: Dict[str, Any], aparams: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Return display values resolved from config for logic text."""
         from apero_ri.apero_monitoring.core import raw_common
 
@@ -660,7 +681,9 @@ class SimpleCheck:
             return str(value)
         return value if value is not None else default
 
-    def _build_runtime(self, cfg: dict, aparams: dict) -> dict:
+    def _build_runtime(
+        self, cfg: Dict[str, Any], aparams: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Resolve config-backed runtime values for one check."""
         from apero_ri.apero_monitoring.core import raw_common
 
@@ -748,7 +771,12 @@ class SimpleCheck:
             return str(names[0] or '').strip()
         return str(names or '').strip()
 
-    def _build_use_mask(self, table: dict, masks: dict, runtime: dict):
+    def _build_use_mask(
+        self,
+        table: Dict[str, Any],
+        masks: Dict[str, Any],
+        runtime: Dict[str, Any],
+    ) -> np.ndarray:
         """Return the combined row mask for fields and configured filters."""
         use = np.ones(len(table.get('filename', [])), dtype=bool)
         for name in runtime['header_data']:
@@ -759,7 +787,9 @@ class SimpleCheck:
             use &= np.isin(values, item['values'])
         return use
 
-    def _normalize_series(self, raw_values: Any, spec: dict) -> np.ndarray:
+    def _normalize_series(
+        self, raw_values: Any, spec: Dict[str, Any]
+    ) -> np.ndarray:
         """Convert one loaded header column to the requested runtime form."""
         values = np.array(raw_values)
         normalize = str(spec.get('normalize', '') or '').strip()
@@ -776,10 +806,10 @@ class SimpleCheck:
 
     def _build_variables(
         self,
-        table: dict,
+        table: Dict[str, Any],
         use: np.ndarray,
-        runtime: dict,
-    ) -> dict:
+        runtime: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """Build the runtime variable mapping from loaded table data."""
         variables = dict(runtime['fixed_data'])
         variables['test_key'] = self.test_key
@@ -793,7 +823,9 @@ class SimpleCheck:
 
         return variables
 
-    def _render_message(self, template: Any, values: dict) -> str:
+    def _render_message(
+        self, template: Any, values: Dict[str, Any]
+    ) -> str:
         """Render one pass/fail message from a template or callable."""
         if callable(template):
             try:
@@ -804,9 +836,9 @@ class SimpleCheck:
 
     def _evaluate(
         self,
-        table: dict,
+        table: Dict[str, Any],
         use: np.ndarray,
-        variables: dict,
+        variables: Dict[str, Any],
     ) -> Tuple[bool, str, str, np.ndarray]:
         """Evaluate this declarative SimpleCheck instance."""
         if not callable(self.func):
@@ -831,8 +863,12 @@ class SimpleCheck:
         
         
 
-def no_function(instrument: str, obs_dir: str,
-                aparams: dict, dbparams: dict) -> (bool, str):
+def no_function(
+    instrument: str,
+    obs_dir: str,
+    aparams: Dict[str, Any],
+    dbparams: Dict[str, Any],
+) -> Tuple[bool, str]:
     """Default function for checks that have no function defined."""
     
     _ = instrument, obs_dir, aparams, dbparams
@@ -877,7 +913,7 @@ def format_time_string(value: Any) -> str:
     return text
 
 
-def load_yaml_file(filename: Path) -> dict:
+def load_yaml_file(filename: Path) -> Dict[str, Any]:
     """Load an existing APERO-check YAML file if it exists."""
     # Return an empty payload when the file does not exist.
     if not filename.exists() or not filename.is_file():
@@ -891,7 +927,9 @@ def load_yaml_file(filename: Path) -> dict:
     return dict()
 
 
-def resolve_output_root(local_data_dir: str, aparams: dict) -> Path:
+def resolve_output_root(
+    local_data_dir: str, aparams: Dict[str, Any]
+) -> Path:
     """Resolve the output root from LOCAL_DATA_DIR and profile paths."""
     # Import lazily to avoid a module cycle at import time.
     from apero_ri.core import apero_checks as checks_core
@@ -908,7 +946,8 @@ def make_obsdir_filename(root_dir: Path, obs_dir: str) -> Path:
 
 def build_history_entry(user: Optional[str] = None,
                         source: Optional[str] = None,
-                        date_str: Optional[str] = None) -> dict:
+                        date_str: Optional[str] = None
+                        ) -> Dict[str, str]:
     """Create one history entry for a check run."""
     # Build the ordered event mapping used in the YAML output.
     entry = dict()
@@ -918,7 +957,9 @@ def build_history_entry(user: Optional[str] = None,
     return entry
 
 
-def append_history_entry(data: dict, history_entry: dict) -> dict:
+def append_history_entry(
+    data: Dict[str, Any], history_entry: Dict[str, Any]
+) -> Dict[str, Any]:
     """Append a history entry and return the updated history mapping."""
     # Copy the existing history so callers do not mutate shared state.
     history = dict(data.get('history', {}) or {})
@@ -935,7 +976,8 @@ def build_obsdir_payload(obs_dir: str,
                          profile: str,
                          first_file: Any,
                          last_file: Any,
-                         existing_data: Optional[dict] = None) -> dict:
+                         existing_data: Optional[Dict[str, Any]] = None
+                         ) -> Dict[str, Any]:
     """Create the base YAML payload for one obsdir."""
     # Start from any existing data so history can be preserved.
     current = dict(existing_data or {})
@@ -952,9 +994,10 @@ def build_obsdir_payload(obs_dir: str,
     return payload
 
 
-def add_check_entry(payload: dict,
+def add_check_entry(payload: Dict[str, Any],
                     check_entry: Optional[Tuple[str, str, dict]],
-                    existing_data: Optional[dict] = None) -> None:
+                    existing_data: Optional[Dict[str, Any]] = None
+                    ) -> None:
     """Add one check entry to the in-memory YAML payload."""
     # Ignore empty or skipped check entries.
     if check_entry is None:
@@ -980,8 +1023,8 @@ def add_check_entry(payload: dict,
 
 def write_obsdir_yaml(root_dir: Path,
                       obs_dir: str,
-                      payload: dict,
-                      history_entry: Optional[dict] = None,
+                      payload: Dict[str, Any],
+                      history_entry: Optional[Dict[str, Any]] = None,
                       profile_id: Optional[str] = None) -> Path:
     """Write one APERO-check YAML file atomically.
 

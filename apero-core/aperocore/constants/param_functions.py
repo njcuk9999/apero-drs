@@ -16,7 +16,7 @@ import os
 import shutil
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 from astropy.io import fits
@@ -79,7 +79,7 @@ class ParamDict(CaseInDict):
     Custom dictionary to retain source of a parameter (added via setSource,
     retreived via getSource). String keys are case insensitive.
     """
-    def __init__(self, *arg, **kw):
+    def __init__(self, *arg: Any, **kw: Any) -> None:
         """
         Constructor for parameter dictionary, calls dict.__init__
         i.e. the same as running dict(*arg, *kw)
@@ -116,7 +116,7 @@ class ParamDict(CaseInDict):
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -154,7 +154,7 @@ class ParamDict(CaseInDict):
 
     def __setitem__(self, key: str, value: object,
                     source: Union[None, str] = None,
-                    instance: Union[None, Const, Keyword] = None):
+                    instance: Union[None, Const, Keyword] = None) -> None:
         """
         Sets an item wrapper for self[key] = value
         :param key: string, the key to set for the parameter
@@ -204,7 +204,7 @@ class ParamDict(CaseInDict):
         # run contains command from super
         return super(ParamDict, self).__contains__(key)
 
-    def __delitem__(self, key: str):
+    def __delitem__(self, key: str) -> None:
         """
         Deletes the "key" from ParamDict instance, case insensitive
 
@@ -236,7 +236,7 @@ class ParamDict(CaseInDict):
         # get string from string print
         return self.string_print()
 
-    def count_used(self, key: str, start_value: int = 0):
+    def count_used(self, key: str, start_value: int = 0) -> None:
         """
         Counts the usage of key and stores it in self.used
 
@@ -254,7 +254,7 @@ class ParamDict(CaseInDict):
     def set(self, key: str, value: Any,
             source: Union[None, str] = None,
             instance: Union[None, Const, Keyword] = None,
-            record_use: bool = True):
+            record_use: bool = True) -> None:
         """
         Set an item even if params is locked
 
@@ -284,7 +284,7 @@ class ParamDict(CaseInDict):
         # then do the normal dictionary setting
         super(ParamDict, self).__setitem__(key, value)
 
-    def lock(self):
+    def lock(self) -> None:
         """
         Locks the parameter dictionary
 
@@ -293,7 +293,7 @@ class ParamDict(CaseInDict):
         # set locked to True
         self.locked = True
 
-    def unlock(self):
+    def unlock(self) -> None:
         """
         Unlocks the parameter dictionary
 
@@ -391,7 +391,7 @@ class ParamDict(CaseInDict):
             return cast_value
         return value
 
-    def set_source(self, key: str, source: str):
+    def set_source(self, key: str, source: str) -> None:
         """
         Set a key to have sources[key] = source
 
@@ -439,7 +439,8 @@ class ParamDict(CaseInDict):
             #     '{0}' is not in parameter dictionary
             raise AperoCodedException(None, '00-003-00026', targs=[key])
 
-    def set_instance(self, key: str, instance: Union[None, Const, Keyword]):
+    def set_instance(self, key: str,
+                     instance: Union[None, Const, Keyword]) -> None:
         """
         Set a key to have instance[key] = instance
 
@@ -468,7 +469,7 @@ class ParamDict(CaseInDict):
             #     '{0} is not in parameter dictionary
             raise AperoCodedException(None, '00-003-00027', targs=[key])
 
-    def append_source(self, key: str, source: str):
+    def append_source(self, key: str, source: str) -> None:
         """
         Adds source to the source of key (appends if exists)
         i.e. sources[key] = oldsource + source
@@ -490,7 +491,7 @@ class ParamDict(CaseInDict):
             self.set_source(key, source)
 
     def set_sources(self, keys: List[str],
-                    sources: Union[str, List[str], dict]):
+                    sources: Union[str, List[str], dict]) -> None:
         """
         Set a list of keys sources
 
@@ -525,7 +526,7 @@ class ParamDict(CaseInDict):
             self.set_source(key, source)
 
     def set_instances(self, keys: List[str],
-                      instances: Union[object, list, dict]):
+                      instances: Union[object, list, dict]) -> None:
         """
         Set a list of keys sources
 
@@ -560,7 +561,7 @@ class ParamDict(CaseInDict):
             self.set_instance(key, instance)
 
     def append_sources(self, keys: List[str],
-                       sources: Union[str, List[str], dict]):
+                       sources: Union[str, List[str], dict]) -> None:
         """
         Adds list of keys sources (appends if exists)
 
@@ -594,7 +595,7 @@ class ParamDict(CaseInDict):
             # append key
             self.append_source(key, source)
 
-    def set_all_sources(self, source: str):
+    def set_all_sources(self, source: str) -> None:
         """
         Set all keys in dictionary to this source
 
@@ -611,7 +612,7 @@ class ParamDict(CaseInDict):
             # set key
             self.sources[key] = source
 
-    def append_all_sources(self, source: str):
+    def append_all_sources(self, source: str) -> None:
         """
         Sets all sources to this "source" value
 
@@ -821,7 +822,8 @@ class ParamDict(CaseInDict):
         # return new param dict filled
         return pp
 
-    def merge(self, paramdict: 'ParamDict', overwrite: bool = True):
+    def merge(self, paramdict: 'ParamDict',
+              overwrite: bool = True) -> None:
         """
         Merge another parameter dictionary with this one
 
@@ -854,8 +856,8 @@ class ParamDict(CaseInDict):
             self.set(key, paramdict[key], ksource, kinst,
                      record_use=False)
 
-    def string_print(self, full: bool = True, indent=0,
-                     name: str = None) -> str:
+    def string_print(self, full: bool = True, indent: int = 0,
+                     name: Optional[str] = None) -> str:
         """
         Constructs a string representation of the instance
 
@@ -936,7 +938,7 @@ class ParamDict(CaseInDict):
         # return keyworddict
         return keydict
 
-    def info(self, key: str):
+    def info(self, key: str) -> None:
         """
         Display the information related to a specific key
 
@@ -990,7 +992,7 @@ class ParamDict(CaseInDict):
             # log: Instance: {0}
             print(textentry('40-000-00008', args=[self.instances[key]]))
 
-    def history(self, key: str):
+    def history(self, key: str) -> None:
         """
         Display the history of where key was defined (using source)
 
@@ -1013,7 +1015,7 @@ class ParamDict(CaseInDict):
             # log: No history found for key='{0}'
             print(textentry('40-000-00010', args=[key]))
 
-    def keys(self) -> List:
+    def keys(self) -> List[Any]:
         """
         Return a list of keys for the ParamDict
 
@@ -1021,7 +1023,7 @@ class ParamDict(CaseInDict):
         """
         return list(self.data.keys())
 
-    def values(self) -> List:
+    def values(self) -> List[Any]:
         """
         Return a list of values for the ParamDict
 
@@ -1305,14 +1307,20 @@ class SubParamDict():
 
     path_dict['Y'] = 5    # updates params as well as path_dict
     """
-    def __init__(self, param_dict: ParamDict, key: str):
+    def __init__(self, param_dict: ParamDict, key: str) -> None:
+        """Create a prefixed view over a parent parameter dictionary.
+
+        :param param_dict: parent dictionary to read and update
+        :param key: prefix for keys exposed by this view
+        """
         # shallow copy the parameter dictionary
         self.param_dict = param_dict
         self.path = key if key.endswith('.') else key + '.'
         self.path_len = len(self.path)
         self.exists = self._exists()
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Any:
+        """Return a parent value using this view's key prefix."""
         return self.param_dict.data[f'{self.path}{item}']
 
     def rget(self, key: str, override: Any = None, required: bool = False,
@@ -1331,13 +1339,16 @@ class SubParamDict():
         rget_kwargs = dict(override=override, required=required, func=func)
         return self.param_dict.rget(full_key, **rget_kwargs)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set a parent value using this view's key prefix."""
         self.param_dict[f'{self.path}{key}'] = value
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
+        """Return whether the relative key is present in the parent data."""
         return f'{self.path}{key}' in self.param_dict.data.keys()
 
-    def keys(self):
+    def keys(self) -> List[str]:
+        """Return parent keys relative to this view's prefix."""
         _keys = self.param_dict.data.keys()
         keys = []
         for key in _keys:
@@ -1345,40 +1356,50 @@ class SubParamDict():
                 keys.append(key[self.path_len:])
         return keys
 
-    def values(self):
+    def values(self) -> Any:
+        """Return the parent mapping's values view."""
         return self.param_dict.data.values()
 
-    def set(self, key: str, value: Any, source: str, instance: Any):
+    def set(self, key: str, value: Any, source: str,
+            instance: Any) -> None:
+        """Set a value and its provenance in the parent dictionary."""
         self.param_dict.set(f'{self.path}{key}', value, source, instance)
 
-    def set_source(self, key: str, source: str):
+    def set_source(self, key: str, source: str) -> None:
+        """Update the source metadata for one relative key."""
         self.param_dict.set_source(f'{self.path}{key}', source)
 
-    def set_instance(self, key: str, instance: Any):
+    def set_instance(self, key: str, instance: Any) -> None:
+        """Update the instance metadata for one relative key."""
         self.param_dict.set_instance(f'{self.path}{key}', instance)
 
     def set_sources(self, keys: List[str],
-                    sources: Union[str, List[str], dict]):
+                    sources: Union[str, List[str], dict]) -> None:
+        """Update source metadata for several relative keys."""
         self.param_dict.set_sources([f'{self.path}{key}' for key in keys],
                                     sources)
 
     def set_instances(self, keys: List[str],
-                      instances: Union[object, list, dict]):
+                      instances: Union[object, list, dict]) -> None:
+        """Update instance metadata for several relative keys."""
         self.param_dict.set_instances([f'{self.path}{key}' for key in keys],
                                       instances)
 
-    def _exists(self):
+    def _exists(self) -> bool:
+        """Return whether the parent contains any key with this prefix."""
         for key in self.param_dict.data.keys():
             if key.startswith(self.path):
                 return True
         return False
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
+        """Return whether the relative key exists in the parent mapping."""
         if f'{self.path}{key}' in self.param_dict.data:
             return True
         return False
 
     def as_param_dict(self) -> ParamDict:
+        """Copy this view's values and provenance into a new ParamDict."""
         # create a new parameter dictionary
         param_dict = ParamDict()
 
@@ -1391,6 +1412,7 @@ class SubParamDict():
         return param_dict
 
     def __str__(self) -> str:
+        """Return the formatted representation of this parameter view."""
         # get the data as a parameter dictionary
         param_dict = self.as_param_dict()
         # get the string representation of that parameter dictionary
@@ -1400,12 +1422,13 @@ class SubParamDict():
         # return return string
         return return_string
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return the string representation of this parameter view."""
         return self.__str__()
 
 
 class PCheck:
-    def __init__(self, wlog: Any = None):
+    def __init__(self, wlog: Any = None) -> None:
         """
         Constructor for checking a parameter dictionary
 
@@ -1428,7 +1451,7 @@ class PCheck:
         # return dictionary state (for pickle)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict) -> None:
         """
         For when we have to unpickle the class
 
@@ -1438,7 +1461,7 @@ class PCheck:
         # update dict with state
         self.__dict__.update(state)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return the string representation of the class
         :return: str, the string representation
@@ -1572,8 +1595,9 @@ class PCheck:
 # =============================================================================
 # Define functions
 # =============================================================================
-def update_paramdicts(*args, key: str, value: Any = None, source: str = None,
-                      instance: Union[None, Const, Keyword] = None):
+def update_paramdicts(*args: Any, key: str, value: Any = None,
+                      source: str = None,
+                      instance: Union[None, Const, Keyword] = None) -> None:
     """
     Update a set of parameter dictionarys with a key/value/source/instance
 
@@ -1685,7 +1709,7 @@ def get_module_names(instrument: str, package: str,
         return mods
 
 
-def print_error(error: AperoCodedException):
+def print_error(error: AperoCodedException) -> None:
     """
     Print an exceptions message/level etc
 
@@ -1714,7 +1738,7 @@ def print_error(error: AperoCodedException):
 
 
 # noinspection PyUnusedLocal
-def catch_sigint(signal: Any, frame: Any):
+def catch_sigint(signal: Any, frame: Any) -> None:
     """
     The signal handler -
     :param signal: expected from call to signal.signal (not used)
@@ -1798,7 +1822,7 @@ def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
 
 
 def _map_listparameter(value: Union[str, list], separator: str = ',',
-                       dtype: Union[None, Type] = None) -> list:
+                       dtype: Union[None, Type] = None) -> List[Any]:
     """
     Map a string list into a python list
 
@@ -1842,7 +1866,8 @@ def _map_listparameter(value: Union[str, list], separator: str = ',',
         raise AperoCodedException(None, '00-003-00002', targs=eargs)
 
 
-def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
+def _map_dictparameter(value: str, dtype: Union[None, Type] = None
+                       ) -> Union[dict, None]:
     """
     Map a string dictionary into a python dictionary
 
@@ -1875,7 +1900,8 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
         raise AperoCodedException(None, '00-003-00003', targs=eargs)
 
 
-def _yaml_walk(yaml_dict) -> Tuple[list, list]:
+def _yaml_walk(yaml_dict: Dict[str, Any]
+               ) -> Tuple[List[str], List[Any]]:
     """
     Turn a yaml dictionary into a list of keys and a list of values
 
