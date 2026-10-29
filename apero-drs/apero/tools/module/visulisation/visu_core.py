@@ -141,8 +141,10 @@ class BokehPlot:
                 # append to str args
                 strargs.append(strarg)
             except Exception as _:
-                emsg = 'Cannot convert keyword {0}={1} to string'
-                WLOG(self.params, 'error', emsg.format(key, str(kwargs[key])))
+                eargs = [key, str(kwargs[key])]
+                # error: Cannot convert keyword {0}={1} to string
+                WLOG(self.params, 'error',
+                     textentry('09-511-00002', args=eargs))
         # join into string string
         fullstring = ', '.join(strargs)
         # return cleaned string
@@ -152,18 +154,18 @@ class BokehPlot:
 def check_arg(func_name, kwargs, key, dtype, required: bool = True):
     # check key exists
     if key not in kwargs and required:
-        emsg = 'Function: "{0}" requires keyword "{1}"'
         eargs = [func_name, key]
-        WLOG(PARAMS, 'error', emsg.format(*eargs))
+        # error: Function: "{0}" requires keyword "{1}"
+        WLOG(PARAMS, 'error', textentry('09-511-00005', args=eargs))
     elif key not in kwargs:
         return None
     # try to return value
     try:
         return dtype(kwargs[key])
     except Exception as e:
-        emsg = 'Error with key {0}={1}\n\t{2}: {3}'
         eargs = [key, kwargs[key], type(e), str(e)]
-        WLOG(PARAMS, 'error', emsg.format(*eargs))
+        # error: Error with key {0}={1} \n {2}: {3}
+        WLOG(PARAMS, 'error', textentry('09-511-00006', args=eargs))
 
 
 def get_file(block_kind: str,  obs_dir: str, identifier: str,

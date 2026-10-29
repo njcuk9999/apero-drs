@@ -107,9 +107,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # remove any current arguments from sys.argv
         sys.argv = [__NAME__]
     except ImportError:
-        # TODO: Add to language database
-        emsg = 'Cannot run LBL (not installed) please install LBL'
-        WLOG(params, 'error', emsg)
+        # error: Cannot run LBL (not installed) please install LBL
+        WLOG(params, 'error', textentry('09-022-00001'))
         return locals()
     # -------------------------------------------------------------------------
     # step 2: deal with reset
@@ -127,9 +126,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         skip_done = params['INPUTS'].get('SKIP_DONE', True)
         kwargs['program'] = program
         # print progress
-        # TODO: Add to language database
-        msg = 'Running LBL reset'
-        WLOG(params, 'info', msg)
+        # log: Running LBL reset
+        WLOG(params, 'info', textentry('40-022-00002'))
         # run compute
         lblrtn = lbl_reset.main(**kwargs)
         # log messages from lbl

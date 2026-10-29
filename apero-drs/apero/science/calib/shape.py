@@ -92,6 +92,7 @@ def construct_fp_table(params: ParamDict,
     basenames, obs_dirs = [], []
     valid_files = []
     # log that we are reading all dark files
+    # log: Constructing FP table and reading all fp file headers
     WLOG(params, '', textentry('40-014-00003'))
     # loop through file headers
     for it in range(len(filenames)):
@@ -211,6 +212,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     # match files by date
     # ----------------------------------------------------------------------
     # log progress
+    # log: Matching FP files by observation time (+/- {0} hrs)
     WLOG(params, '', textentry('40-014-00004', args=[time_thres]))
     # match files by time
     matched_id = drs_path.group_files_by_time(fp_times, time_thres)
@@ -218,6 +220,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     # Read individual files and sum groups
     # ----------------------------------------------------------------------
     # log process
+    # log: Reading FP files and combining groups
     WLOG(params, '', textentry('40-014-00005'))
     # Find all unique groups
     u_groups = np.unique(matched_id)
@@ -232,6 +235,7 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     for g_it, group_num in enumerate(u_groups):
         # log progress
         wargs = [g_it + 1, len(u_groups)]
+        # log: Combining FP Group {0} of {1}
         WLOG(params, 'info', textentry('40-014-00006', args=wargs))
         # find all files for this group
         fp_ids = np.array(filenames[matched_id == group_num])
@@ -275,6 +279,8 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
         if transforms is None:
             # log that image quality too poor
             wargs = [g_it + 1]
+            # warning: Quality control failed for group {0} \n Image quality too
+            #     poor (sigma clip failed)
             WLOG(params, 'warning', textentry('10-014-00001', args=wargs),
                  sublevel=6)
             # skip adding to group
@@ -282,6 +288,8 @@ def construct_ref_fp(params: ParamDict, recipe: DrsRecipe, dprtype: str,
         if (xres > qc_res) or (yres > qc_res):
             # log that xres and yres too larger
             wargs = [xres, yres, qc_res]
+            # warning: Quality control failed for group {0} \n XRES = {0} YRES =
+            #     {1} (limit = {2})
             WLOG(params, 'warning', textentry('10-014-00002', args=wargs),
                  sublevel=6)
             # skip adding to group
@@ -365,6 +373,8 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     if image2.shape != image1.shape:
         # log that the shapes are inconsistent
         eargs = [image1.shape, image2.shape, func_name]
+        # error: Image 1 (shape={0}) not the same shape as image 2 (shape={1}).
+        #     \n function = {2}
         raise AperoCodedException(params, '00-014-00001', targs=eargs)
     # linear transform vector
     # with dx0,dy0,A,B,C,D
@@ -376,6 +386,7 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     # copy image2
     image3 = np.array(image2)
     # print out initial conditions of linear transform vector
+    # log: Linear transform starting point:
     WLOG(params, 'info', textentry('40-014-00009'))
     # set up arguments
     ltv = np.array(lin_transform_vect)
@@ -394,6 +405,7 @@ def get_linear_transform_params(params: ParamDict, recipe: DrsRecipe,
     for n_it in range(niterations):
         # log progress
         wargs = [n_it + 1, niterations]
+        # log: Iteration {0}/{1}
         WLOG(params, '', textentry('40-014-00010', args=wargs))
         # transform image2 if we have some transforms (initial we don't)
         if n_it > 0:
@@ -574,16 +586,21 @@ def ea_transform(params, image, lin_transform_vect=None,
     dymapstr = int(dymap is not None)
     transstr = int(lin_transform_vect is not None)
     wargs = [dxmapstr, dymapstr, transstr]
+    # log: Transforming (dxmap={0}, dymap={1}, trans={2})
     WLOG(params, '', textentry('40-014-00041', args=wargs))
 
     # check size of dx and dy map
     if dxmap is not None:
         if dxmap.shape != image.shape:
             eargs = [dxmap.shape, image.shape, func_name]
+            # error: Incorrect shape for dx map (shape={0}) must be {1} \n
+            #     Function = {2}
             raise AperoCodedException(params, '00-014-00002', targs=eargs)
     if dymap is not None:
         if dymap.shape != image.shape:
             eargs = [dymap.shape, image.shape, func_name]
+            # error: Incorrect shape for dy map (shape={0}) must be {1} \n
+            #     Function = {2}
             raise AperoCodedException(params, '00-014-00003', targs=eargs)
     # delegate numerical work to the profile-independent core module
     sorder = _spline_order_value(order)
@@ -612,6 +629,7 @@ def ea_transform_reverse(params, image, lin_transform_vect=None,
     # log the numerical operation using the same message as ea_transform
     wargs = [int(dxmap is not None), int(dymap is not None),
              int(lin_transform_vect is not None)]
+    # log: Transforming (dxmap={0}, dymap={1}, trans={2})
     WLOG(params, '', textentry('40-014-00041', args=wargs))
     try:
         et_args = [image, lin_transform_vect, dxmap, dymap]
@@ -772,6 +790,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
             # --------------------------------------------------------------
             # Log progress banana iteration {0} of {1} order {2} of {3}
             wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
+            # log: Banana iteration: {0}/{1}: Order {2}/{3}
             WLOG(params, '', textentry('40-014-00016', args=wargs))
             # --------------------------------------------------------------
             # defining a ribbon that will contain the straightened order
@@ -821,6 +840,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
+            # log: Range slope exploration: {0:.3f} -> {1:.3f} deg
             WLOG(params, '', textentry('40-014-00017', args=wargs))
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
@@ -910,6 +930,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
             s_xpix = dim2 // 2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
             wargs = [s_xpix, s_ypix]
+            # log: Slope at pixel {0}: {1:.5f} deg
             WLOG(params, '', textentry('40-014-00018', args=wargs))
             # get slope for full range
             slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim2))
@@ -1029,6 +1050,8 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
             # -------------------------------------------------------------
             # log process (updating big dx map)
             wargs = [order_num + 1, nbo]
+            # log: Update of the big dx map after filtering of pre-order dx:
+            #     {0}/{1}
             WLOG(params, '', textentry('40-014-00021', args=wargs))
             # -------------------------------------------------------------
             # spline everything onto the reference DX map
@@ -1060,6 +1083,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
 
             # log start and end points along slice
             wargs = [start_good_ccor, end_good_ccor]
+            # log: Data along slice. Start={0} End={1}
             WLOG(params, '', textentry('40-014-00022', args=wargs))
 
             # -------------------------------------------------------------
@@ -1201,6 +1225,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     # loop around fiber
     for fiber in fibers:
         # log progress
+        # log: Loading localisation for fiber = {0}
         WLOG(params, '', textentry('40-014-00024', args=[fiber]))
         # get coefficients
         lprops = localisation.get_coefficients(params, recipe, fpheader,
@@ -1223,6 +1248,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     # column, and apply a spline to straighten the order.
     y0 = np.zeros((nbo * nfibers, dim2))
     # log progress
+    # log: Creating DY map from localisation
     WLOG(params, '', textentry('40-014-00023'))
     # set a reference dy map
     ref_dymap = np.zeros_like(fpimage)
@@ -1272,6 +1298,7 @@ def get_ref_fp(params, recipe, header, filename=None, database=None):
     fpref, fpref_file = cfile.data, cfile.filename
     # ----------------------------------------------------------------------
     # log which fpref file we are using
+    # log: Reading reference FP file: {0}
     WLOG(params, '', textentry('40-014-00030', args=[fpref_file]))
     # return the reference image
     return fpref_file, fpref
@@ -1347,6 +1374,7 @@ def get_shapex(params, recipe, header, filename=None, database=None):
     shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which shape x file we are using
+    # log: Reading shape dxmap file: {0}
     WLOG(params, '', textentry('40-014-00031', args=[shapex_file]))
     # return the reference image
     return shapex_file, shapetime, dxmap
@@ -1376,6 +1404,7 @@ def get_shapey(params, recipe, header, filename=None, database=None):
     shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which shape y file we are using
+    # log: Reading shape dymap file: {0}
     WLOG(params, '', textentry('40-014-00032', args=[shapey_file]))
     # return the reference image
     return shapey_file, shapetime, dymap
@@ -1406,6 +1435,7 @@ def get_shapelocal(params, recipe, header, filename=None, database=None):
     shapetime = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which fpref file we are using
+    # log: Reading night shape file: {0}
     WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))
     # return the reference image
     return shapel_file, shapetime, shapel.flatten()
@@ -1478,7 +1508,9 @@ def compute_shape_order_profiles(
                           fiber=usefiber0, return_filename=True)
     locofilepath = cfile.filename
     locotime = cfile.mjdmid
-    WLOG(params, '', 'Using LOC_LOCO: {0}'.format(locofilepath))
+    margs = [locofilepath]
+    # log: Using LOC_LOCO: {0}
+    WLOG(params, '', textentry('40-014-00044', args=margs))
     # straighten each unique LOC fiber type's order profile once
     straightened = dict()
     for fiber in all_fibers:
@@ -1487,8 +1519,9 @@ def compute_shape_order_profiles(
             # A and B share ORDERP_AB — no need to straighten twice
             continue
         extname = 'ORDERP_{0}'.format(usefiber)
-        WLOG(params, 'info',
-             'Straightening order profile: {0}'.format(extname))
+        margs = [extname]
+        # log: Straightening order profile: {0}
+        WLOG(params, 'info', textentry('40-014-00046', args=margs))
         orderp, _ = drs_fits.readfits(params, locofilepath, getdata=True,
                                       gethdr=True, extname=extname)
         straightened[usefiber] = ea_transform(
@@ -1497,13 +1530,15 @@ def compute_shape_order_profiles(
     # compute reverse-transform (detector-frame) profiles for every fiber
     noshape = dict()
     for usefiber, orderp_straight in straightened.items():
-        WLOG(params, 'info',
-             'Computing detector-frame profile: {0}'.format(usefiber))
+        margs = [usefiber]
+        # log: Computing detector-frame profile: {0}
+        WLOG(params, 'info', textentry('40-014-00047', args=margs))
         noshape[usefiber] = ea_transform_reverse(
             params, orderp_straight, transform,
             dxmap=dxmap, dymap=dymap, order=str(spline_order))
     # compute inverse coordinate maps for background subtraction geometry
-    WLOG(params, '', 'Computing inverse coordinate maps')
+    # log: Computing inverse coordinate maps
+    WLOG(params, '', textentry('40-014-00045'))
     inv_xmap, inv_ymap = shape_core.inverse_coordinates(
         image_shape, transform, dxmap=dxmap, dymap=dymap, niter=niter)
     # load localisation geometry from LOC_LOCO
@@ -1588,6 +1623,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     outfile1.data = dxmap
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
+    # log: Saving shape x information in file: {0}
     WLOG(params, '', textentry('40-014-00026', args=[outfile1.filename]))
     # define multi lists
     data_list = [fp_table]
@@ -1619,6 +1655,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # copy data
     outfile2.data = dymap
     # log that we are saving dymap to file
+    # log: Saving shape y information in file: {0}
     WLOG(params, '', textentry('40-014-00027', args=[outfile2.filename]))
     # define multi lists
     data_list = [fp_table]
@@ -1649,6 +1686,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # copy data
     outfile3.data = ref_fp
     # log that we are saving ref_fp to file
+    # log: Saving reference FP file: {0}
     WLOG(params, '', textentry('40-014-00028', args=[outfile3.filename]))
     # define multi lists
     data_list = [fp_table]
@@ -1668,6 +1706,7 @@ def write_shape_ref_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # ----------------------------------------------------------------------
     if params['DEBUG.OUTFILE.SHAPE_FILES']:
         # log progress (writing debug outputs)
+        # log: Saving shape debug files
         WLOG(params, '', textentry('40-014-00029'))
         # ------------------------------------------------------------------
         # deal with the unstraighted dxmap
@@ -1837,6 +1876,7 @@ def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
             qcargs = [order_num, dxrms[order_num], dxrmscut]
             # check that rms is below required level
             if dxrms[order_num] > dxrmscut:
+                # text: dx-ddx rms (Order {0}) too high: {1} > {2})
                 fail_msg.append(textentry('40-014-00042', args=qcargs))
                 qc_pass.append(0)
             else:
@@ -1849,10 +1889,12 @@ def shape_ref_qc(params, dxrms=None, qc_params=None, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -1879,6 +1921,7 @@ def shape_local_qc(params, transform, xres, yres):
     # ------------------------------------------------------------------
     # check that transform is not None
     if transform is None:
+        # text: FP Image quality too poor (sigma clip failed)
         fail_msg.append(textentry('40-014-00034'))
         qc_pass.append(0)
     else:
@@ -1891,6 +1934,7 @@ def shape_local_qc(params, transform, xres, yres):
     qc_res = params['CAL.SHAPE.QC_LTRANS_RTHRES']
     # assess quality of x residuals
     if xres > qc_res:
+        # text: x-residuals too high {0} > {1}
         fail_msg.append(textentry('40-014-00035', args=[xres, qc_res]))
         qc_pass.append(0)
     else:
@@ -1900,6 +1944,7 @@ def shape_local_qc(params, transform, xres, yres):
     qc_logic.append('XRES > {0}'.format(qc_res))
     # assess quality of x residuals
     if yres > qc_res:
+        # text: y-residuals too high {0} > {1}
         fail_msg.append(textentry('40-014-00036', args=[yres, qc_res]))
         qc_pass.append(0)
     else:
@@ -1911,10 +1956,12 @@ def shape_local_qc(params, transform, xres, yres):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -1976,6 +2023,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     outfile.data = [sprops['TRANSFORM']]
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
+    # log: Saving shape transforms in file: {0}
     WLOG(params, '', textentry('40-014-00037', args=[outfile.filename]))
     # define multi lists (datatype_list distinguishes images from tables)
     data_list, name_list, datatype_list = [], [], []
@@ -2027,6 +2075,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # ----------------------------------------------------------------------
     if params['DEBUG.OUTFILE.SHAPE_FILES']:
         # log progress (writing debug outputs)
+        # log: Saving shape debug files
         WLOG(params, '', textentry('40-014-00029'))
         # in file
         shapel_in_fp_file = recipe.outputs['SHAPEL_IN_FP_FILE']

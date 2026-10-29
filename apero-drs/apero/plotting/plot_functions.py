@@ -22,6 +22,7 @@ from astropy import units as uu
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import math as mp
+from aperocore import drs_lang
 from apero.utils import drs_recipe
 from apero.base import base as apero_base
 
@@ -35,6 +36,8 @@ __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
+# Get the text types
+textentry = drs_lang.textentry
 # Get parameter dictionary class
 ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
@@ -385,7 +388,9 @@ class ClickCursor(object):
         # get the new x and y locations
         x, y = event.xdata, event.ydata
         # print the position of the cursor
-        print('PLOT x={0:.2f}, y={1:.2f}'.format(x, y))
+        margs = [x, y]
+        # log: PLOT x={0:.2f}, y={1:.2f}
+        print(textentry('40-003-00007', args=margs))
 
 
 class YesNoButtonGraph:
@@ -424,12 +429,16 @@ class YesNoButtonGraph:
         self.no_button.on_clicked(self.on_no)
 
     def on_yes(self, event):
-        print(f'{self.question}: yes')
+        margs = [self.question]
+        # log: {0}: yes
+        print(textentry('40-003-00008', args=margs))
         self.response = 'y'
         self.plt.close(self.fig)
 
     def on_no(self, event):
-        print(f'{self.question}: no')
+        margs = [self.question]
+        # log: {0}: no
+        print(textentry('40-003-00009', args=margs))
         self.response = 'n'
         self.plt.close(self.fig)
 
@@ -5843,7 +5852,8 @@ def plot_stats_ram_plot(plotter: Plotter, graph: Graph, kwargs: Dict[str, Any]):
         _, _, _, s_start, s_end, r_start, r_end = shortname_values[shortname]
 
         pargs = [shortname, len(s_start)]
-        print('\tAdding recipe {0} [{1} entries]'.format(*pargs))
+        # log: Adding recipe {0} [{1} entries]
+        print(textentry('40-003-00010', args=pargs))
 
         smed = mp.median([s_start, s_end], axis=0)
         # smin = smed - s_start

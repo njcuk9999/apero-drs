@@ -115,34 +115,27 @@ ari.name = 'apero_ari.py'
 ari.path = 'apero.tools.recipes.bin'
 ari.shortname = 'ARI'
 ari.instrument = __INSTRUMENT__
-ari.description = 'Run the ARI (APERO reduction interface)'
+ari.description = textentry('ARI_DESCRIPTION')
 ari.recipe_type = 'nolog-tool'
 ari.recipe_kind = 'user'
 ari.set_arg(pos=0, name='profile', dtype=str,
-            helpstr='ARI yaml file to use')
+            helpstr=textentry('ARI_PROFILE_HELP'))
 ari.set_kwarg(name='--obsdir', dtype=str, default='None',
               helpstr=textentry('OBS_DIR_HELP'))
 ari.set_kwarg(name='--reset', dtype='switch',
-              helpstr='Reset ARI')
+              helpstr=textentry('ARI_RESET_HELP'))
 ari.set_kwarg(name='--redo_objs', dtype='List[str]', default='None',
-              helpstr='List of comma separated objects (named as in '
-                      'astrometric database) to redo. All others will be '
-                      'taken from storage unless not currently processed.')
+              helpstr=textentry('ARI_REDO_OBJS_HELP'))
 ari.set_kwarg(name='--finder_create', dtype='switch',
-              helpstr='Overwrites the profile setting to create finder charts')
+              helpstr=textentry('ARI_FINDER_CREATE_HELP'))
 ari.set_kwarg(name='--finder_reset', dtype='switch',
-              helpstr='Overwrites the profile setting to reset finder charts')
+              helpstr=textentry('ARI_FINDER_RESET_HELP'))
 ari.set_kwarg(name='--profiles', dtype='switch',
-              helpstr='List allowed profiles (and path to profiles), as profile '
-                      'is usually required any invalid profile yaml also '
-                      'displays this and exits.')
+              helpstr=textentry('ARI_PROFILES_HELP'))
 ari.set_kwarg(name='--cores', dtype=int, default=0,
-              helpstr='Number of cores to use (default is 0, which uses '
-                      'value from yaml file)')
+              helpstr=textentry('ARI_CORES_HELP'))
 ari.set_kwarg(name='--filterobjs', dtype=str, default='None',
-              helpstr='Only process these objects (should only be used for '
-                      'debugging). List of comma separated objects (named as '
-                      'in astrometric database) ')
+              helpstr=textentry('ARI_FILTEROBJS_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_astrometrics.py
@@ -165,16 +158,11 @@ astrometric.set_kwarg(name='--nopmrequired', dtype='switch',
 astrometric.set_kwarg(name='--test', dtype='switch',
                       helpstr=textentry('ASTROMETRIC_TEST_HELP'))
 astrometric.set_kwarg(name='--check', dtype='switch',
-                      helpstr='Check object database for basic errors')
+                      helpstr=textentry('ASTROMETRIC_CHECK_HELP'))
 astrometric.set_kwarg(name='--fileoption', dtype=str, default='None',
-                      helpstr='Use a absolute filepath to identy an object '
-                              '(i.e. from RA/Dec). Note this overrides '
-                              '"OBJECTS", however OBJECT must be set to '
-                              'something to run astrometrics.')
+                      helpstr=textentry('ASTROMETRIC_FILEOPTION_HELP'))
 astrometric.set_kwarg(name='--aliases', dtype=str, default='None',
-                      helpstr='Aliases to add to the database for this object. '
-                              'Note this should only be used with a single '
-                              'object name.')
+                      helpstr=textentry('ASTROMETRIC_ALIASES_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py
@@ -200,17 +188,15 @@ database_mgr.description = textentry('DBMGR_DESCRIPTION')
 database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--push', dtype='switch',
-                       helpstr='Push pending database entries to the database')
+                       helpstr=textentry('DATABASE_MGR_PUSH_HELP'))
 database_mgr.set_kwarg(name='--pushname', dtype=str, default='*',
-                       helpstr='Shortname of the pending database entries '
-                               'to push')
+                       helpstr=textentry('DATABASE_MGR_PUSHNAME_HELP'))
 database_mgr.set_kwarg(name='--kill', dtype='switch',
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
 database_mgr.set_kwarg(name='--dbkind', dtype='options', default='all',
                        options=['all', 'calib', 'tellu', 'findex', 'log',
                                 'astrom', 'reject', 'lang'],
-                       helpstr='Database kind to update or reset. Must use in'
-                               'conjuction with --update or --reset')
+                       helpstr=textentry('DATABASE_MGR_DBKIND_HELP'))
 database_mgr.set_kwarg(name='--update', dtype='switch',
                        helpstr=textentry('DBMGR_UPDATE_HELP'))
 database_mgr.set_kwarg(name='--reset', dtype='switch',
@@ -229,31 +215,20 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
 database_mgr.set_kwarg(name='--delete', dtype='switch',
                        helpstr=textentry('DBMGR_DELETE_HELP'))
 database_mgr.set_kwarg(name='--cores', dtype=int, default=0,
-                       helpstr='Number of cores to use for parallel database '
-                               'updates (default is 0, which uses value from '
-                               'yaml file). Use with --update to enable parallel '
-                               'processing for calib, tellu, log, and index '
-                               'databases.')
+                       helpstr=textentry('DATABASE_MGR_CORES_HELP'))
 database_mgr.set_kwarg(name='--block_kind', dtype=str, default='None',
-                       helpstr='Block kind filter (not always used)')
+                       helpstr=textentry('DATABASE_MGR_BLOCK_KIND_HELP'))
 # TODO: Add to language database
 database_mgr.set_kwarg(name='--keys', dtype='List[str]', default='None',
-                       helpstr='Keyname of entries to remove (used in '
-                               'combination with --telludb or --calibdb)')
+                       helpstr=textentry('DATABASE_MGR_KEYS_HELP'))
 database_mgr.set_kwarg(name='--since', dtype=str, default='None',
-                       helpstr='Date to remove entries since (used in '
-                                 'combination with --telludb or --calibdb)'
-                               ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
+                       helpstr=textentry('DATABASE_MGR_SINCE_HELP'))
 database_mgr.set_kwarg(name='--before', dtype=str, default='None',
-                       helpstr='Date to remove entries before (used in '
-                               'combination with --telludb or --calibdb)'
-                               ' format is YYYY-MM-DD or YYYY-MM-DD hh:mm:ss')
+                       helpstr=textentry('DATABASE_MGR_BEFORE_HELP'))
 database_mgr.set_kwarg(name='--deletefiles', dtype='switch',
-                       helpstr='Whether to delete files from disk when '
-                               'removing entries (using in combination with '
-                               '--telludb or --calibdb and --since / --keys)')
+                       helpstr=textentry('DATABASE_MGR_DELETEFILES_HELP'))
 database_mgr.set_kwarg(name='--test', dtype='switch',
-                       helpstr='Run the removal of entries in test mode')
+                       helpstr=textentry('DATABASE_MGR_TEST_HELP'))
 
 
 # -----------------------------------------------------------------------------
@@ -273,7 +248,7 @@ remake_doc.set_kwarg(name='--compile', dtype='switch',
 remake_doc.set_kwarg(name='--upload', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_UPLOADARG_HELP'))
 remake_doc.set_kwarg(name='--all', dtype='switch',
-                     helpstr='--filedef --recipedef and --recipeseq')
+                     helpstr=textentry('REMAKE_DOC_ALL_HELP'))
 remake_doc.set_kwarg(name='--filedef', dtype='switch',
                      helpstr=textentry('REMAKE_DOC_FILEDEF_HELP'))
 remake_doc.set_kwarg(name='--recipedef', dtype='switch',
@@ -284,13 +259,9 @@ remake_doc.set_kwarg(name='--mode', dtype='options', default='both',
                      options=['both', 'html', 'latex'],
                      helpstr=textentry('REMAKE_MODE_HELP'))
 remake_doc.set_kwarg(name='--ari', dtype='switch',
-                     helpstr='Generate the apero-ri markdown documentation '
-                             'tree (documentation/ari/{docversion}/home/docs/'
-                             'apero) from the recipe and file definitions')
+                     helpstr=textentry('REMAKE_DOC_ARI_HELP'))
 remake_doc.set_kwarg(name='--docversion', dtype=str, default='None',
-                     helpstr='[STRING] Documentation version directory to '
-                             'write to with --ari (e.g. 0.8.XXX). Defaults '
-                             'to the major version of the running APERO.')
+                     helpstr=textentry('REMAKE_DOC_DOCVERSION_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -321,7 +292,7 @@ get_files.description = textentry('GET_DESCRIPTION')
 get_files.recipe_type = 'nolog-tool'
 get_files.recipe_kind = 'user'
 get_files.set_kwarg(name='--assets', dtype='switch',
-                    helpstr='Download the assets to the github directory')
+                    helpstr=textentry('GET_FILES_ASSETS_HELP'))
 get_files.set_kwarg(name='--gui', dtype='switch',
                     helpstr=textentry('GET_GUI_HELP'))
 get_files.set_kwarg(name='--dbkind', dtype='options', default='findex',
@@ -331,14 +302,11 @@ get_files.set_kwarg(name='--outpath', dtype=str, default='None',
 get_files.set_kwarg(name='--symlinks', dtype='switch',
                     helpstr=textentry('GET_SYMLINKS_HELP'))
 get_files.set_kwarg(name='--tar', dtype='switch',
-                    helpstr='Whether to create a tar instead of copying files.'
-                            'Must also provide the --tarfile argument')
+                    helpstr=textentry('GET_FILES_TAR_HELP'))
 get_files.set_kwarg(name='--tarfile', default='None', dtype=str,
-                    helpstr='The name of the tar file to create. Must also '
-                            'provide the --tar argument')
+                    helpstr=textentry('GET_FILES_TARFILE_HELP'))
 get_files.set_kwarg(name='--cores', default=1, dtype=int,
-                    helpstr='How many cores to use for certain steps '
-                            '(will multiprocess when possible)',
+                    helpstr=textentry('GET_FILES_CORES_HELP'),
                     minimum=1)
 # file filters
 get_files.set_kwarg(name='--objnames', dtype='List[str]', default='None',
@@ -350,62 +318,49 @@ get_files.set_kwarg(name='--outtypes', dtype='List[str]', default='None',
 get_files.set_kwarg(name='--fibers', dtype='List[str]', default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
 get_files.set_kwarg(name='--block_kind', dtype=str, default='None',
-                    helpstr='The APERO file block this file belongs '
-                            'to e.g. raw, tmp, red, out, lbl')
+                    helpstr=textentry('GET_FILES_BLOCK_KIND_HELP'))
 get_files.set_kwarg(name='--keynames', dtype='List[str]', default='None',
-                    helpstr='For dbkind=calib or dbkind=tellu this is required,'
-                            ' and sets the type of calibration/telluric '
-                            'required (used instead of --outtypes)')
+                    helpstr=textentry('GET_FILES_KEYNAMES_HELP'))
 get_files.set_kwarg(name='--since', default='None', dtype=str,
-                    helpstr='Only get files processed since a certain date '
-                            'YYYY-MM-DD hh:mm:ss')
+                    helpstr=textentry('GET_FILES_SINCE_HELP'))
 get_files.set_kwarg(name='--latest', default='None', dtype=str,
-                    helpstr='Only get files processed since a certain date '
-                            'YYYY-MM-DD hh:mm:ss')
+                    helpstr=textentry('GET_FILES_LATEST_HELP'))
 get_files.set_kwarg(name='--timekey', default='observed', dtype='options',
                     options=['processed', 'observed'],
-                    helpstr='Whether to use the processed or observed time in'
-                            ' the since and latest arguments (applies to both)')
+                    helpstr=textentry('GET_FILES_TIMEKEY_HELP'))
 get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
-                    helpstr='Only get files from a certain observation '
-                            'directory')
+                    helpstr=textentry('GET_FILES_OBSDIR_HELP'))
 get_files.set_kwarg(name='--pi_name', default='None', dtype='List[str]',
-                    helpstr='Only get files from a certain PI')
+                    helpstr=textentry('GET_FILES_PI_NAME_HELP'))
 get_files.set_kwarg(name='--runid', default='None', dtype='List[str]',
-                    helpstr='Only get files from certain run ids')
+                    helpstr=textentry('GET_FILES_RUNID_HELP'))
 # with group permissions options
 get_files.set_kwarg(name='--out_prefix', default='None', dtype=str,
-                     helpstr='All output files have this prefix added')
+                     helpstr=textentry('GET_FILES_OUT_PREFIX_HELP'))
 get_files.set_kwarg(name='--out_suffix', default='None', dtype=str,
-                     helpstr='All output files have this suffix added')
+                     helpstr=textentry('GET_FILES_OUT_SUFFIX_HELP'))
 get_files.set_kwarg(name='--permission_yaml', default='None', dtype=str,
-                    helpstr='Sort files based on permissions in this yaml '
-                            'file. Must also define --group_yaml.')
+                    helpstr=textentry('GET_FILES_PERMISSION_YAML_HELP'))
 get_files.set_kwarg(name='--group_yaml', default='None', dtype=str,
-                    helpstr='Group yaml file. For use with --permission_yaml.')
+                    helpstr=textentry('GET_FILES_GROUP_YAML_HELP'))
 get_files.set_kwarg(name='--group_server', default='None', dtype=str,
-                    helpstr='Group server to use with --group_yaml and '
-                            '--permission_yaml.')
+                    helpstr=textentry('GET_FILES_GROUP_SERVER_HELP'))
 # advanced options
 get_files.set_kwarg(name='--failedqc', dtype='switch',
                     helpstr=textentry('GET_FAILEDQC_HELP'))
 get_files.set_kwarg(name='--nosubdir', dtype='switch',
-                    helpstr='Do not put files into a sub-directory. '
-                            'Only use thes outpath')
+                    helpstr=textentry('GET_FILES_NOSUBDIR_HELP'))
 get_files.set_kwarg(name='--test', dtype='switch',
                     helpstr=textentry('GET_TEST_HELP'))
 get_files.set_kwarg(name='--sizelimit', default=0, dtype=int,
-                    helpstr='Limit the size of output tarfile (in GB)')
+                    helpstr=textentry('GET_FILES_SIZELIMIT_HELP'))
 get_files.set_kwarg(name='--nodb', dtype='switch',
-                    helpstr='Use filesystem to search for files [very slow] '
-                            'usually just for debugging')
+                    helpstr=textentry('GET_FILES_NODB_HELP'))
 get_files.set_kwarg(name='--nodb_wildcard', default='*', dtype=str,
-                    helpstr='When --nodb is used use --nodb_wildcard to only '
-                            'target specific files')
+                    helpstr=textentry('GET_FILES_NODB_WILDCARD_HELP'))
 get_files.set_kwarg(name='--mp_mode', default='process', dtype=str,
                     options=['pathos', 'pool', 'process', 'linear'],
-                    helpstr='The multiprocessing mode to use when using '
-                            '--cores')
+                    helpstr=textentry('GET_FILES_MP_MODE_HELP'))
 
 
 # -----------------------------------------------------------------------------
@@ -422,11 +377,11 @@ go_recipe.recipe_kind = 'user'
 go_recipe.set_kwarg(name='--data', dtype='switch',
                     helpstr=textentry('GO_DATA_HELP'))
 go_recipe.set_kwarg(name='--all', dtype='switch',
-                    helpstr='Display all relevant paths')
+                    helpstr=textentry('GO_RECIPE_ALL_HELP'))
 go_recipe.set_kwarg(name='--setup', dtype='switch',
-                    helpstr='Display DRS_UCONFIG path')
+                    helpstr=textentry('GO_RECIPE_SETUP_HELP'))
 go_recipe.set_kwarg(name='--mysql', dtype='switch',
-                    helpstr='Display MySQL parameters')
+                    helpstr=textentry('GO_RECIPE_MYSQL_HELP'))
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
     go_recipe.set_kwarg(name=f'--{block.argname}', dtype='switch',
@@ -492,9 +447,7 @@ stats.set_kwarg(**plot)
 stats.set_kwarg(name='--sql', dtype=str, default='None',
                 helpstr=textentry('LOGSTAT_SQL_HELP'))
 stats.set_kwarg(name='--limit', dtype=int, default=0,
-                helpstr='Limit the number of entries in memory plot '
-                        '(any recipe with more than this limit is left '
-                        'out of stats)')
+                helpstr=textentry('STATS_LIMIT_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_trigger.py
@@ -586,8 +539,7 @@ processing.set_kwarg(name='--verify', dtype='switch',
                      helpstr=textentry('PROCESS_VERIFY_HELP'))
 processing.set_kwarg(name='--queue_mode', altnames=['--queue'],
                      dtype='switch',
-                     helpstr='Run in queue mode: add jobs to the queue '
-                             'instead of processing them directly')
+                     helpstr=textentry('PROCESSING_QUEUE_MODE_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_db_push.py
@@ -596,10 +548,7 @@ db_push.name = 'apero_db_push.py'
 db_push.path = 'apero.tools.recipes.bin'
 db_push.shortname = 'DBPUSH'
 db_push.instrument = __INSTRUMENT__
-db_push.description = ('Push all pending database entries into the '
-                       'databases. apero_processing (queue mode) adds one '
-                       'run after every queue group so the next group '
-                       'can use the outputs of the previous group')
+db_push.description = (textentry('DB_PUSH_DESCRIPTION'))
 db_push.recipe_type = 'nolog-tool'
 db_push.recipe_kind = 'processing'
 
@@ -610,45 +559,24 @@ queue_recipe.name = 'apero_queue.py'
 queue_recipe.path = 'apero.tools.recipes.bin'
 queue_recipe.shortname = 'QUEUE'
 queue_recipe.instrument = __INSTRUMENT__
-queue_recipe.description = ('The APERO queue management tool - run, batch, '
-                            'monitor and reset the processing queue '
-                            '(created by apero_processing in queue mode)')
+queue_recipe.description = (textentry('QUEUE_RECIPE_DESCRIPTION'))
 queue_recipe.recipe_type = 'nolog-tool'
 queue_recipe.recipe_kind = 'processing'
 queue_recipe.set_arg(pos=0, name='mode', dtype='options',
                      options=['run', 'batch', 'chain', 'status', 'gui',
                               'reset', 'init', 'action', 'system'],
-                     helpstr='The queue mode: "run" runs the next task(s) '
-                             'in the queue, "batch" creates (and submits) '
-                              'sbatch scripts for the next group, "chain" '
-                              'creates dependency-chained Slurm arrays, '
-                              '"status" shows an interactive terminal view '
-                              'of the queue, "gui" starts a browser '
-                              'dashboard (status view + action buttons), '
-                              '"reset" removes entries from the queue, '
-                              '"init" creates the batch template, "action" '
-                              'runs an explicit queue action and "system" '
-                              '(internal) moves a task from running to '
-                              'complete/failed')
+                     helpstr=textentry('QUEUE_RECIPE_MODE_HELP'))
 queue_recipe.set_kwarg(name='--cores', dtype=str, default='None',
-                       helpstr='Number of tasks to run at once in run '
-                               'mode (same rules as apero_processing '
-                               '--cores)')
+                       helpstr=textentry('QUEUE_RECIPE_CORES_HELP'))
 queue_recipe.set_kwarg(name='--mpmode', dtype='options', default='None',
                        options=['process', 'pool', 'linear', 'None'],
-                       helpstr='The multiprocessing mode for run mode '
-                               '(defaults to the TOOLS.REPROCESS.MP_TYPE '
-                               'constant, same as apero_processing)')
+                       helpstr=textentry('QUEUE_RECIPE_MPMODE_HELP'))
 queue_recipe.set_kwarg(name='--ntasks', dtype=str, default='None',
-                       helpstr='Total number of queue tasks to run in run '
-                               'mode. Default is one cycle (up to --cores). '
-                               'Use "all" to keep running until blocked or '
-                               'the queue is empty')
+                       helpstr=textentry('QUEUE_RECIPE_NTASKS_HELP'))
 queue_recipe.set_kwarg(name='--qstate', dtype='options', default='None',
                        options=['pending', 'running', 'complete', 'failed',
                                 'all', 'None'],
-                       helpstr='Only act on this queue state (for status '
-                               'and reset modes) - default is all states')
+                       helpstr=textentry('QUEUE_RECIPE_QSTATE_HELP'))
 queue_recipe.set_kwarg(name='--qaction', dtype='options', default='None',
                        options=['move_to_pending',
                                 'move_all_failed_to_pending',
@@ -657,55 +585,33 @@ queue_recipe.set_kwarg(name='--qaction', dtype='options', default='None',
                                 'stop_to_pending',
                                 'stop_to_complete',
                                 'stop_to_failed',
-                                'clear_all_pending', 'None'],
-                       helpstr='Explicit queue action for action mode. Use '
-                               '--qid for per-run actions')
+                                'clear_all_pending', 'fail_stale_running',
+                                'None'],
+                       helpstr=textentry('QUEUE_RECIPE_QACTION_HELP'))
 queue_recipe.set_kwarg(name='--rows', dtype=str, default='None',
-                       helpstr='Number of rows to show per page in status '
-                               'mode (cli pager page size) and gui mode '
-                               '(table page size)')
+                       helpstr=textentry('QUEUE_RECIPE_ROWS_HELP'))
 queue_recipe.set_kwarg(name='--host', dtype=str, default='None',
-                       helpstr='The host address for the gui dashboard '
-                               'server (gui mode only, default 127.0.0.1 '
-                               'i.e. localhost only)')
+                       helpstr=textentry('QUEUE_RECIPE_HOST_HELP'))
 queue_recipe.set_kwarg(name='--port', dtype=str, default='None',
-                       helpstr='The port for the gui dashboard server '
-                               '(gui mode only, default 8090 - tries the '
-                               'next ports if taken)')
+                       helpstr=textentry('QUEUE_RECIPE_PORT_HELP'))
 queue_recipe.set_kwarg(name='--qpath', dtype=str, default='None',
-                       helpstr='The absolute path to the queue directory '
-                               '(system mode only - allows the fast path '
-                               'to avoid loading the APERO runtime)')
+                       helpstr=textentry('QUEUE_RECIPE_QPATH_HELP'))
 queue_recipe.set_kwarg(name='--qid', dtype=str, default='None',
-                       helpstr='The queue id of a task, i.e. '
-                               '"{group}/{run_file}" (action mode '
-                               'per-run actions and system mode)')
+                       helpstr=textentry('QUEUE_RECIPE_QID_HELP'))
 queue_recipe.set_kwarg(name='--qresult', dtype='options', default='None',
                        options=['success', 'failed', 'None'],
-                       helpstr='The result of a task (system mode only)')
+                       helpstr=textentry('QUEUE_RECIPE_QRESULT_HELP'))
 queue_recipe.set_kwarg(name='--template', dtype=str, default='None',
-                       helpstr='The name of the batch template to use '
-                               '(init and batch modes) - default is '
-                               '"default". Use "apero_queue.py init" to '
-                               'create named templates')
+                       helpstr=textentry('QUEUE_RECIPE_TEMPLATE_HELP'))
 queue_recipe.set_kwarg(name='--per_batch', dtype=str, default='None',
-                       helpstr='Number of tasks per batch script (batch '
-                               'mode) - if given, skips the interactive '
-                               'question')
+                       helpstr=textentry('QUEUE_RECIPE_PER_BATCH_HELP'))
 queue_recipe.set_kwarg(name='--n_batches', dtype=str, default='None',
-                       helpstr='Number of batch scripts to create (batch '
-                               'mode) - if given, skips the interactive '
-                               'question')
+                       helpstr=textentry('QUEUE_RECIPE_N_BATCHES_HELP'))
 queue_recipe.set_kwarg(name='--submit', dtype='options', default='None',
                        options=['True', 'False', 'None'],
-                       helpstr='Whether to submit the batch script(s) via '
-                               'sbatch (batch mode) - if given, skips the '
-                               'interactive question')
+                       helpstr=textentry('QUEUE_RECIPE_SUBMIT_HELP'))
 queue_recipe.set_kwarg(name='--dry_run', dtype='switch',
-                       helpstr='Dry-run behavior by mode: batch/chain write '
-                               'scripts that print "Would have run ..." '
-                               'instead of executing recipes; reset reports '
-                               'what would be removed without deleting')
+                       helpstr=textentry('QUEUE_RECIPE_DRY_RUN_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py
@@ -725,33 +631,19 @@ reject.name = 'apero_reject.py'
 reject.path = 'apero.tools.recipes.bin'
 reject.shortname = 'REJECT'
 reject.instrument = __INSTRUMENT__
-reject.description = ('Add a object or file to the object or file reject list '
-                      'online.')
+reject.description = (textentry('REJECT_DESCRIPTION'))
 reject.recipe_type = 'nolog-tool'
 reject.recipe_kind = 'user'
 reject.set_kwarg(name='--identifier', dtype='List[str]', default='None',
-                 helpstr='Add a specific file identifier to the file reject '
-                         'list. E.g. for spirou this is the odocode, for '
-                         'nirps this is raw the filename '
-                         '(Can add multiple as comma separated list)')
+                 helpstr=textentry('REJECT_IDENTIFIER_HELP'))
 reject.set_kwarg(name='--objname', dtype='List[str]', default='None',
-                 helpstr='Add a specific object name to the object reject list '
-                         '(Can add multiple as comma separated list)')
+                 helpstr=textentry('REJECT_OBJNAME_HELP'))
 reject.set_kwarg(name='--obsdir', dtype=str, default='None',
-                 helpstr='Add all files from a certain observation directory '
-                         'to the file reject list (excludes science '
-                         'observations). You may only select one obsdir at '
-                         'once. Note this overrides --identifier')
+                 helpstr=textentry('REJECT_OBSDIR_HELP'))
 reject.set_kwarg(name='--autofill', dtype=str, default='None',
-                 helpstr='Autofill the questions asked. '
-                         'For identifier this is PP,TEL,RV,COMMENT '
-                         'e.g. "1,1,1,bad target" '
-                         'For objname this is ALIASES,BAD_ASTRO,NOTES '
-                         'e.g. "alias1|alias2|alias3,0,Not a real target"'
-                         '      or      '
-                         'e.g. "alias1|alias2|alias3,1,No proper motion"')
+                 helpstr=textentry('REJECT_AUTOFILL_HELP'))
 reject.set_kwarg(name='--test', dtype='switch',
-                 helpstr='Whether to run in test mode (recommended first time)')
+                 helpstr=textentry('REJECT_TEST_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_reset.py
@@ -760,31 +652,25 @@ remove.name = 'apero_remove.py'
 remove.path = 'apero.tools.recipes.bin'
 remove.shortname = 'REMOVE'
 remove.instrument = __INSTRUMENT__
-remove.description = 'The APERO file/directory remove tool'
+remove.description = textentry('REMOVE_DESCRIPTION')
 remove.recipe_type = 'nolog-tool'
 remove.recipe_kind = 'user'
 remove.set_kwarg(name='--obsdir', dtype=str, default='None',
-                 helpstr='Delete all instances of a certain observation '
-                         'directory from disk and databases')
+                 helpstr=textentry('REMOVE_OBSDIR_HELP'))
 remove.set_kwarg(name='--blocks', dtype='List[str]', default='None',
-                 helpstr='Delete all instances of tmp/red/out/calib/tellu '
-                         'from disk and database '
-                         '(multiple blocks should be separated by a comma)')
+                 helpstr=textentry('REMOVE_BLOCKS_HELP'))
 remove.set_kwarg(name='--file_prefix', dtype=str, default='None',
-                 helpstr='Delete all instances of a certain file prefix '
-                         'from disk and databases')
+                 helpstr=textentry('REMOVE_FILE_PREFIX_HELP'))
 remove.set_kwarg(name='--file_suffix', dtype=str, default='None',
-                 helpstr='Delete all instances of a certain file suffix '
-                         'from disk and databases')
+                 helpstr=textentry('REMOVE_FILE_SUFFIX_HELP'))
 remove.set_kwarg(name='--objnames', dtype='List[str]', default='None',
-                 helpstr='Delete all instances of a certain object name '
-                         '(DRSOBJN) from disk and databases')
+                 helpstr=textentry('REMOVE_OBJNAMES_HELP'))
 remove.set_kwarg(name='--test', dtype='switch',
-                 helpstr='Whether to run in test mode (recommended first time)')
+                 helpstr=textentry('REMOVE_TEST_HELP'))
 remove.set_kwarg(name='--nowarn', dtype='switch',
-                 helpstr='Whether to warn the user we are not in test mode.')
+                 helpstr=textentry('REMOVE_NOWARN_HELP'))
 remove.set_kwarg(name='--rawdb', dtype='switch',
-                 helpstr='Whether to remove raw database entries')
+                 helpstr=textentry('REMOVE_RAWDB_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_reset.py
@@ -803,31 +689,29 @@ reset.set_kwarg(name='--nowarn', dtype='switch',
 reset.set_kwarg(name='--database_timeout', dtype=int, default=0,
                 helpstr=textentry('RESET_DATABASE_TIMEOUT_HELP'))
 reset.set_kwarg(name='--only_assets', dtype='switch',
-                helpstr='Reset only the assets directory')
+                helpstr=textentry('RESET_ONLY_ASSETS_HELP'))
 reset.set_kwarg(name='--only_tmp', dtype='switch',
-                helpstr='Reset only the tmp directory')
+                helpstr=textentry('RESET_ONLY_TMP_HELP'))
 reset.set_kwarg(name='--only_red', dtype='switch',
-                helpstr='Reset only the reduced directory')
+                helpstr=textentry('RESET_ONLY_RED_HELP'))
 reset.set_kwarg(name='--only_calib', dtype='switch',
-                helpstr='Reset only the calibration directory')
+                helpstr=textentry('RESET_ONLY_CALIB_HELP'))
 reset.set_kwarg(name='--only_tellu', dtype='switch',
-                helpstr='Reset only the telluric directory')
+                helpstr=textentry('RESET_ONLY_TELLU_HELP'))
 reset.set_kwarg(name='--only_log', dtype='switch',
-                helpstr='Reset only the log directory')
+                helpstr=textentry('RESET_ONLY_LOG_HELP'))
 reset.set_kwarg(name='--only_plot', dtype='switch',
-                helpstr='Reset only the plot directory')
+                helpstr=textentry('RESET_ONLY_PLOT_HELP'))
 reset.set_kwarg(name='--only_run', dtype='switch',
-                helpstr='Reset only the run directory')
+                helpstr=textentry('RESET_ONLY_RUN_HELP'))
 reset.set_kwarg(name='--only_lbl', dtype='switch',
-                helpstr='Reset only the lbl directory')
+                helpstr=textentry('RESET_ONLY_LBL_HELP'))
 reset.set_kwarg(name='--only_out', dtype='switch',
-                helpstr='Reset only the out directory')
+                helpstr=textentry('RESET_ONLY_OUT_HELP'))
 reset.set_kwarg(name='--only_other', dtype='switch',
-                helpstr='Reset only the other directory')
+                helpstr=textentry('RESET_ONLY_OTHER_HELP'))
 reset.set_kwarg(name='--only_queue', dtype='switch',
-                helpstr='Reset only the processing queue (all queue '
-                        'entries, queue output and chain scripts - '
-                        'batch templates are kept)')
+                helpstr=textentry('RESET_ONLY_QUEUE_HELP'))
 
 
 # -----------------------------------------------------------------------------
@@ -844,7 +728,7 @@ run_ini.set_kwarg(name='--instrument', dtype='options', default='None',
                   options=apero_base.INSTRUMENTS,
                   helpstr=textentry('RUN_INI_INSTRUMENT_HELP'))
 run_ini.set_kwarg(name='--runfile', dtype=str, default='None',
-                  helpstr='Only create a single run file (for debugging)')
+                  helpstr=textentry('RUN_INI_RUNFILE_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_validate.py
@@ -871,17 +755,11 @@ visulise.set_kwarg(name='--mode', dtype='options', default='info',
                    options=['info', 'e2ds'],
                    helpstr=textentry('VISU_MODE_HELP'))
 visulise.set_kwarg(name='--path', dtype=str, default='None',
-                   helpstr='Some modes require a path. '
-                           'For mode=info this is the path to the files to '
-                           'create info graphics for (recursive)')
+                   helpstr=textentry('VISULISE_PATH_HELP'))
 visulise.set_kwarg(name='--infopath', dtype=str, default='None',
-                   helpstr='Path to save info plots to (only for mode=info). '
-                           'Note this will flatten any file structure under '
-                           '--path. If --infopath is not plots will save to '
-                           '--path/{path to file} '
-                           '(i.e. where the files are found).')
+                   helpstr=textentry('VISULISE_INFOPATH_HELP'))
 visulise.set_kwarg(name='--core', dtype=int, default=1,
-                   helpstr='Number of cores to use')
+                   helpstr=textentry('VISULISE_CORE_HELP'))
 
 # -----------------------------------------------------------------------------
 # compile recipe list

@@ -170,9 +170,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Load wave solution for each fiber (use ref wave as default)
         # ------------------------------------------------------------------
-        WLOG(params, '',
-             'Loading reference wave solutions for fibers: '
-             '{0}'.format(', '.join(fiber_types)))
+        margs = [', '.join(fiber_types)]
+        # log: Loading reference wave solutions for fibers: {0}
+        WLOG(params, '', textentry('40-015-00010', args=margs))
         wave_maps = dict()
         for fiber in fiber_types:
             # load the reference wave solution for this fiber
@@ -180,7 +180,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                            database=calibdbm)
             wprops = wave.get_wavesolution(params, recipe, **wkwargs)
             wave_maps[fiber] = wprops['WAVEMAP']
-        WLOG(params, '', 'Wave solutions loaded')
+        # log: Wave solutions loaded
+        WLOG(params, '', textentry('40-015-00011'))
 
         # ------------------------------------------------------------------
         # Fit physical blaze model and compute flat per fiber
@@ -199,9 +200,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             log2 = log1.add_level(params, 'fiber', fiber)
             # retrieve eprops built by make_blaze for this fiber
             eprops = eprops_all[fiber]
-            WLOG(params, '',
-                 'Fiber {0}: blaze model fit — '
-                 'rms={1:.2%}'.format(fiber, eprops['BLAZE_FIT_RMS']))
+            margs = [fiber, eprops['BLAZE_FIT_RMS']]
+            # log: Fiber {0}: blaze model fit — rms={1:.2%}
+            WLOG(params, '', textentry('40-015-00012', args=margs))
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------
@@ -226,9 +227,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # flat_files[fiber] carries full calibration provenance in
             # its header (shape, loco, wave) and is used as source_file
             # --------------------------------------------------------------
-            WLOG(params, '',
-                 'Fiber {0}: writing blaze and flat '
-                 'calibration files'.format(fiber))
+            margs = [fiber]
+            # log: Fiber {0}: writing blaze and flat calibration files
+            WLOG(params, '', textentry('40-015-00013', args=margs))
             wargs = [infile, eprops, fiber, rawfiles, combine,
                      flat_files[fiber], qc_params]
             outfiles = flat_blaze.flat_blaze_write(params, recipe, *wargs)
@@ -238,9 +239,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # Update the calibration database
             # --------------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
-                WLOG(params, '',
-                     'Fiber {0}: updating calibration '
-                     'database'.format(fiber))
+                margs = [fiber]
+                # log: Fiber {0}: updating calibration database
+                WLOG(params, '', textentry('40-015-00014', args=margs))
                 # copy the blaze file to the calibDB
                 calibdbm.add_calib_file(blazefile)
                 # copy the flat file to the calibDB
@@ -250,6 +251,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ------------------------------------------------------------------
             if not passed and params['INPUTS']['REF']:
                 eargs = [recipe.name]
+                # error: QC failure of reference recipe: {0}
                 raise AperoCodedException(params, '09-000-00011', targs=eargs)
             # ------------------------------------------------------------------
             # Summary plots

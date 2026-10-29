@@ -130,9 +130,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # remove any current arguments from sys.argv
         sys.argv = [__NAME__]
     except ImportError:
-        # TODO: Add to language database
-        emsg = 'Cannot run LBL (not installed) please install LBL'
-        raise AperoCodedException(params, message=emsg)
+        # error: Cannot run LBL (not installed) please install LBL
+        raise AperoCodedException(params, '09-022-00001')
     # -------------------------------------------------------------------------
     # store errors for reporting later
     errors = []
@@ -143,9 +142,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # run lbl compute for self
     try:
         # print progress
-        msg = 'Running LBL compute for {0}_{1}'
         margs = [object_science, object_comparison]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Running LBL compute for {0}_{1}
+        WLOG(params, 'info', textentry('40-022-00007', args=margs))
         # run compute
         lblself = lbl_compute.main(object_science=object_science,
                                    object_comparison=object_comparison,
@@ -191,9 +190,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # run lbl compute for friend
     try:
         # print progress
-        msg = 'Running LBL compute for {0}_{1}'
         margs = [object_science, object_comparison]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Running LBL compute for {0}_{1}
+        WLOG(params, 'info', textentry('40-022-00007', args=margs))
         # run compute
         lblfriend = lbl_compute.main(object_science=object_science,
                                      object_comparison=object_comparison,

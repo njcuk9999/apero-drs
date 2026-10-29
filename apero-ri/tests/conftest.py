@@ -6,7 +6,7 @@ These fixtures create an isolated application instance that:
 - Does not start background services or SSHFS mounts
 """
 
-import os
+import sys
 import pytest
 
 
@@ -15,22 +15,22 @@ def app(tmp_path_factory):
     """Create an ARIApp test instance with an isolated data directory."""
     data_dir = tmp_path_factory.mktemp("ari_data")
 
-    # Prevent the app from touching ~/.ari or starting background threads.
-    os.environ.setdefault("ARI_DATA_DIR", str(data_dir))
-
     from apero_ri.application.application import ARIApp
+    from apero_ri.application import ariapp_impls
 
-    _app = ARIApp()
+    with pytest.MonkeyPatch.context() as startup:
+        startup.setattr(sys, 'argv', ['ari-test', '--data-dir', str(data_dir)])
+        startup.setattr(ARIApp, '_start_admin_health_refresher',
+                        lambda self: None)
+        startup.setattr(ariapp_impls.task_runner, 'start_background_services',
+                        lambda data_dir: None)
+        _app = ARIApp()
     _app.config.update(
         TESTING=True,
         SECRET_KEY="test-secret-key-not-for-production",
         WTF_CSRF_ENABLED=False,
         RATELIMIT_ENABLED=False,   # disable rate limiting during tests
     )
-    # Point auth module at the isolated directory.
-    from apero_ri.core import auth as _auth
-    _auth.set_ari_dir(str(data_dir))
-
     yield _app
 
 

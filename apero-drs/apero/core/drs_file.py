@@ -411,6 +411,8 @@ class DrsPath:
         # else we have a problem
         else:
             # log error: DrsPath requires at least abspath/block_kind/block_name
+            # error: DrsPath requires at least either ‘abspath’ or ‘block_kind’
+            #     or ‘block_name’
             raise AperoCodedException(None, '00-004-00007')
         # now we have block kind we can set other properties
         for block in self.blocks:
@@ -568,6 +570,8 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
+            # error: DrsPath abspath=’{0}’ must be relatied to a valid block. \n
+            #     Valid blocks are: {1}
             raise AperoCodedException(None, '00-004-00009', targs=eargs)
 
     def _blocks_error(self) -> str:
@@ -629,6 +633,8 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
+            # error: DrsPath: ‘{0}’ is not a valid block path. \n Valid blocks
+            #     are: {1}
             raise AperoCodedException(None, '00-004-00010', targs=eargs)
 
     def _set_block_path_from_block_kind(self) -> bool:
@@ -692,6 +698,8 @@ class DrsPath:
             # add block error
             eargs += [self._blocks_error()]
             # log error
+            # error: DrsPath: ‘{0}’ is not a valid block kind. \n Valid blocks
+            #     are: {1}
             raise AperoCodedException(None, '00-004-00011', targs=eargs)
 
     def get_block(self):
@@ -1092,6 +1100,8 @@ class DrsInputFile:
         if self.filename is None:
             func = self.__repr__()
             eargs = [func, func + '.set_filename()']
+            # text: {0} : Filename is not set. Must set a filename with '{1}'
+            #     first.
             self.__error__(textentry('00-001-00002', args=eargs))
 
     def file_exists(self) -> bool:
@@ -1292,6 +1302,7 @@ class DrsInputFile:
         if self.params is None:
             func = self.__repr__()
             eargs = [func, self.filename, func_name]
+            # text: No params set for {0}: filename={1}. Run {2} first.
             self.__error__(textentry('00-001-00003', args=eargs))
 
     def __error__(self, messages: Union[Text, str]):
@@ -1866,6 +1877,8 @@ class DrsInputFile:
         # else raise an error
         else:
             eargs = [self.__repr__(), func_name]
+            # error: File definition error: 'outfunc' must be set in file
+            #     definition. \n File = {0} \n Function = {1}
             raise AperoCodedException(None, '00-008-00004', targs=eargs)
         # check that we are allowed to use infile (if set)
         if infile is not None and check:
@@ -1876,6 +1889,9 @@ class DrsInputFile:
                 # see if infile is in reqfiles
                 if infile.name not in reqfiles:
                     eargs = [infile.name, reqstr, self.filename, func_name]
+                    # error: 'infile' is not valid. Current infile='{0}'
+                    #     required infile='{1}' \n Constructed filename = {2} \n
+                    #     Function = {3}
                     raise AperoCodedException(None, '00-008-00017', targs=eargs)
 
     def generate_reqfiles(self) -> List[str]:
@@ -2841,6 +2857,7 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # deal with no argument name
         if argname is None:
+            # text: Unknown
             argname = textentry('40-001-00018')
         # -----------------------------------------------------------------
         # check params has been set
@@ -2850,12 +2867,15 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # check extension
         if filetype is None:
+            # text: File '{0}' extension not checked.
             msg = textentry('09-000-00003', args=[basename])
             cond = True
         elif filename.endswith(filetype):
+            # text: File '{0}' has correct extension ('{1}')
             msg = textentry('09-000-00004', args=[basename, filetype])
             cond = True
         else:
+            # text: File '{0}' must have extension '{1}'
             msg = textentry('09-000-00005', args=[basename, filetype])
             cond = False
         # if valid return True and no error
@@ -2864,6 +2884,8 @@ class DrsFitsFile(DrsInputFile):
             return True, msg
         # if False generate error and return it
         else:
+            # text: Argument '{0}': Extension of file not valid \n Required
+            #     extension='{1}'
             emsg = textentry('09-001-00006', args=[argname, filetype])
             return False, emsg
 
@@ -2910,6 +2932,7 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # deal with no argument name
         if argname is None:
+            # text: Unknown
             argname = textentry('40-001-00018')
         # -----------------------------------------------------------------
         # Check that required keys are in header
@@ -2918,7 +2941,13 @@ class DrsFitsFile(DrsInputFile):
             if drskey not in allowed_keys:
                 eargs = [self.name, drskey, 'FILEDEF_HEADER_KEYS()',
                          ','.join(allowed_keys), func_name]
+                # text: DrsFile: {0} key "{1}" is not allowed in hkeys. \n Valid
+                #     keys defined here: {2} \n Allowed keys: {3} \n Function =
+                #     {4}
                 emsg = textentry('00-006-00022', args=eargs)
+                # error: DrsFile: {0} key "{1}" is not allowed in hkeys. \n
+                #     Valid keys defined here: {2} \n Allowed keys: {3} \n
+                #     Function = {4}
                 raise AperoCodedException(None, '00-006-00022', targs=eargs)
 
             # check whether header key is in param dict (i.e. from a
@@ -2932,10 +2961,12 @@ class DrsFitsFile(DrsInputFile):
             # deal with empty key
             if (key is None) or key == '':
                 eargs = [key, drskey, source]
+                # error: Argument '{0}': not found in recipe. \n function = {1}
                 raise AperoCodedException(None, '00-006-00011', targs=eargs)
             # check if key is in header
             if key not in header:
                 eargs = [argname, key]
+                # text: Argument '{0}': Header key '{1}' not found.
                 emsg = textentry('09-001-00007', args=eargs)
                 return False, emsg
             else:
@@ -2986,6 +3017,7 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # deal with no argument name
         if argname is None:
+            # text: Unknown
             argname = textentry('40-001-00018')
         # -----------------------------------------------------------------
         # search for correct value for each header key
@@ -3181,6 +3213,8 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # log error: Filename must be set or given
                 eargs = [func_name]
+                # error: Filename must be set (self.filename) or given as
+                #     argument (filename) \n Function = {0}
                 raise AperoCodedException(None, '00-004-00012', targs=eargs)
         # deal with fiber being set
         if fiber is not None:
@@ -3265,6 +3299,8 @@ class DrsFitsFile(DrsInputFile):
 
             else:
                 eargs = [self.name, recipename, func_name]
+                # error: For file defintion {0} (recipe={1}) 'outfunc' is unset.
+                #     \n Function = {2}
                 raise AperoCodedException(None, '09-503-00009', targs=eargs)
         # ------------------------------------------------------------------
         # assume file is valid
@@ -3279,6 +3315,8 @@ class DrsFitsFile(DrsInputFile):
             valid = False
             # debug log that extension was incorrect
             dargs = [self.filetype, filename]
+            # debug: Check table Filename. Extension= {0} invalid \n Filename =
+            #     {1}
             WLOG(params, 'debug', textentry('90-008-00004', args=dargs))
 
         # ------------------------------------------------------------------
@@ -3290,6 +3328,8 @@ class DrsFitsFile(DrsInputFile):
                     valid = False
                     # debug log that extension was incorrect
                     dargs = [self.suffix, filename]
+                    # debug: Check table Filename. Suffix = {0} invalid \n
+                    #     Filename = {1}
                     WLOG(params, 'debug', textentry('90-008-00005', args=dargs))
             # ------------------------------------------------------------------
             # if we have fibers then file should end with one of them and
@@ -3305,6 +3345,8 @@ class DrsFitsFile(DrsInputFile):
                 # if valid1 is False debug log that fibers were not found
                 if not valid1:
                     dargs = [', '.join(fibers), filename]
+                    # debug: Check table Filename. No fiber found. Fibers = {0}
+                    #     \n Filename = {1}
                     WLOG(params, 'debug', textentry('90-008-00006', args=dargs))
                 # put valid1 back into valid
                 valid &= valid1
@@ -3386,6 +3428,8 @@ class DrsFitsFile(DrsInputFile):
                 # modify valid value
                 valid &= valid1
                 dargs = [key, valid, filedict['OUT'], rvalues]
+                # debug: Check table keys. Key={0} was found and file valid =
+                #     {1} \n file = {2} \n values = {3}
                 WLOG(params, 'debug', textentry('90-008-00003', args=dargs))
                 # if we haven't found a key the we can stop here
                 if not valid:
@@ -3393,6 +3437,8 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # Log that key was not found
                 dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
+                # warning: Check table keys. Key={0} not found in filedict. \n
+                #     file = {1} \n Available keys: {2}
                 WLOG(params, 'warning', textentry('90-008-00002', args=dargs),
                      sublevel=2)
         # return valid
@@ -3584,6 +3630,7 @@ class DrsFitsFile(DrsInputFile):
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
+                # text: {0}: Data is not set. Must read fits using {1} first.
                 self.__error__(textentry('00-001-00004', args=eargs))
                 return 0
             else:
@@ -3599,6 +3646,7 @@ class DrsFitsFile(DrsInputFile):
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
+                # text: {0}: Data is not set. Must read fits using {1} first.
                 self.__error__(textentry('00-001-00004', args=eargs))
                 return 0
             else:
@@ -3827,8 +3875,8 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # deal with no save
         if self.no_save():
-            wmsg = 'NOSAVE active - file not written to disk'
-            WLOG(self.params, 'warning', wmsg)
+            # warning: NOSAVE active - file not written to disk
+            WLOG(self.params, 'warning', textentry('10-006-00001'))
             return
         # ---------------------------------------------------------------------
         # check that filename is set
@@ -3900,8 +3948,8 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # deal with no save
         if self.no_save():
-            wmsg = 'NOSAVE active - file not written to disk'
-            WLOG(self.params, 'warning', wmsg)
+            # warning: NOSAVE active - file not written to disk
+            WLOG(self.params, 'warning', textentry('10-006-00001'))
             return
         # ---------------------------------------------------------------------
         # check that filename is set
@@ -4152,6 +4200,9 @@ class DrsFitsFile(DrsInputFile):
             # check that infile matches in name to self
             if (self.name != infile.name) and same_type:
                 eargs = [func_name]
+                # error: All 'infiles' must be the same type of DrsFile to
+                #     combine. \n Input file 1: {0} Input file {1}: {2} \n
+                #     function = {3}
                 raise drs_log.AperoCodedException(params, '00-001-00021',
                                                   targs=eargs)
             # in date mode, keep only dprtypes valid for this file MJD
@@ -4167,11 +4218,11 @@ class DrsFitsFile(DrsInputFile):
             headers0.append(Header.from_fits_header(infile.header))
         # no files left after date filtering
         if len(datacube0) == 0:
-            emsg = ('DrsFitsFile.combine: filelogic="{0}" with '
-                    'filelogictag="{1}" has no valid files to combine')
             eargs = [filelogic, filelogictag]
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(*eargs))
+            # error: DrsFitsFile.combine: filelogic="{0}" with
+            #     filelogictag="{1}" has no valid files to combine
+            raise drs_log.AperoCodedException(params, '00-006-00035',
+                                              targs=eargs)
         # --------------------------------------------------------------------
         # Quality control on data
         # --------------------------------------------------------------------
@@ -4252,6 +4303,7 @@ class DrsFitsFile(DrsInputFile):
                 smsg = '\n\t{0} ({1}) METRIC={2}'
                 stat_str += smsg.format(*sargs)
             # log error
+            # error: No good calibrations: \n {0}
             raise drs_log.AperoCodedException(params, '00-001-00054',
                                               targs=[stat_str])
 
@@ -4264,6 +4316,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with math
         # --------------------------------------------------------------------
         # log what we are doing
+        # log: Combining files. Math = '{0}'
         WLOG(params, '', textentry('40-999-00004', args=[math]))
         # if we want to sum the data
         if math in ['sum', 'add', '+']:
@@ -4294,6 +4347,8 @@ class DrsFitsFile(DrsInputFile):
         # else we have an error in math
         else:
             eargs = [math, ', '.join(available_math), func_name]
+            # error: Cannot combine. Mode='{0}' in invalid. \n Available modes =
+            #     {1} \n Funcion = {2}
             raise drs_log.AperoCodedException(params, '00-001-00042',
                                               targs=eargs)
 
@@ -4344,22 +4399,24 @@ class DrsFitsFile(DrsInputFile):
                               ) -> Tuple[str, dict]:
         """Resolve and validate date-based filelogic mapping."""
         if drs_text.null_text(filelogictag, ['None', '']):
-            emsg = ('DrsFitsFile.combine: filelogic="date" requires '
-                    'filelogictag to be set')
-            raise drs_log.AperoCodedException(params, None, message=emsg)
+            # error: DrsFitsFile.combine: filelogic="date" requires filelogictag
+            #     to be set
+            raise drs_log.AperoCodedException(params, '00-006-00036')
         map_key = 'FILES.DATES.{0}'.format(filelogictag)
         if map_key in params:
             date_map = params[map_key]
         else:
-            emsg = ('DrsFitsFile.combine: filelogic="date" could not find '
-                    '{0} in params')
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(map_key))
+            eargs = [map_key]
+            # error: DrsFitsFile.combine: filelogic="date" could not find {0} in
+            #     params
+            raise drs_log.AperoCodedException(params, '00-006-00037',
+                                              targs=eargs)
         if (date_map is None) or (len(date_map) == 0):
-            emsg = ('DrsFitsFile.combine: filelogic="date" found empty '
-                    'mapping for {0}')
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(map_key))
+            eargs = [map_key]
+            # error: DrsFitsFile.combine: filelogic="date" found empty mapping
+            #     for {0}
+            raise drs_log.AperoCodedException(params, '00-006-00038',
+                                              targs=eargs)
         return str(map_key), date_map
 
     def _date_filelogic_keep(self, params: ParamDict,
@@ -4369,28 +4426,28 @@ class DrsFitsFile(DrsInputFile):
         dprtype = infile.get_hkey('KW_DPRTYPE', required=False, dtype=str)
         mjdate = infile.get_hkey('KW_MJDATE', required=False, dtype=float)
         if drs_text.null_text(dprtype, ['None', '']):
-            emsg = ('DrsFitsFile.combine: filelogic="date" requires '
-                    'KW_DPRTYPE in all inputs ({0})')
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(
-                                                  infile.basename))
+            eargs = [infile.basename]
+            # error: DrsFitsFile.combine: filelogic="date" requires KW_DPRTYPE
+            #     in all inputs ({0})
+            raise drs_log.AperoCodedException(params, '00-006-00039',
+                                              targs=eargs)
         if (mjdate is None) or (not np.isfinite(mjdate)):
-            emsg = ('DrsFitsFile.combine: filelogic="date" requires '
-                    'KW_MJDATE in all inputs ({0})')
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(
-                                                  infile.basename))
+            eargs = [infile.basename]
+            # error: DrsFitsFile.combine: filelogic="date" requires KW_MJDATE in
+            #     all inputs ({0})
+            raise drs_log.AperoCodedException(params, '00-006-00040',
+                                              targs=eargs)
         if dprtype not in date_map:
             return False
         date_range = date_map[dprtype]
         cond1 = not hasattr(date_range, '__len__')
         cond2 = len(date_range) != 2
         if cond1 or cond2:
-            emsg = ('DrsFitsFile.combine: invalid range for {0} in {1} '
-                    '(expected [start_mjd, end_mjd])')
             margs = [dprtype, map_key]
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(*margs))
+            # error: DrsFitsFile.combine: invalid range for {0} in {1} (expected
+            #     [start_mjd, end_mjd])
+            raise drs_log.AperoCodedException(params, '00-006-00041',
+                                              targs=margs)
         mjd_min = float(date_range[0])
         mjd_max = float(date_range[1])
         return mjd_min <= mjdate <= mjd_max
@@ -4458,9 +4515,13 @@ class DrsFitsFile(DrsInputFile):
                 else:
                     if key == drskey:
                         eargs = [drskey, self.filename, func_name]
+                        # text: Key '{0}' not found in header of file '{1}' \n
+                        #     function = {2}
                         emsg = textentry('09-000-00006', args=eargs)
                     else:
                         eargs = [drskey, self.filename, key, func_name]
+                        # text: Key '{0}' ('{2}') not found in header of file
+                        #     '{1}' \n function = {3}
                         emsg = textentry('09-000-00007', args=eargs)
                     self.__error__(emsg)
                     value = None
@@ -4522,6 +4583,7 @@ class DrsFitsFile(DrsInputFile):
         try:
             keys = list(keys)
         except TypeError:
+            # text: 'keys' must be a valid python list \n function = {0}
             self.__error__(textentry('00-001-00005', args=[func_name]))
         # if defaults is None --> list of Nones else make sure defaults
         #    is a list
@@ -4531,8 +4593,11 @@ class DrsFitsFile(DrsInputFile):
             try:
                 defaults = list(defaults)
                 if len(defaults) != len(keys):
+                    # text: 'defaults' must be same length as 'keys' \n function
+                    #     = {0}
                     self.__error__(textentry('00-001-00006', args=[func_name]))
             except TypeError:
+                # text: 'defaults' must be a valid python list \n function = {0}
                 self.__error__(textentry('00-001-00007', args=[func_name]))
         # loop around keys and look up each key
         values = []
@@ -4632,6 +4697,8 @@ class DrsFitsFile(DrsInputFile):
             # deal with no wild card values found
             if wildvalues is None:
                 eargs = [wildkey, dim1, self.basename, func_name]
+                # text: Cannot find key '{0}' with dim={1} in header for
+                #     file={2} \n function = {3}
                 self.__error__(textentry('09-000-00008', args=eargs))
             # else get the length of dim1
             else:
@@ -4652,6 +4719,8 @@ class DrsFitsFile(DrsInputFile):
                     values = []
                 else:
                     eargs = [keyname, dim1, self.basename, func_name]
+                    # text: Cannot find key '{0}' with dim={1} in header for
+                    #     file={2} \n function = {3}
                     self.__error__(textentry('09-000-00008', args=eargs))
                     values = None
         # return values
@@ -4696,6 +4765,8 @@ class DrsFitsFile(DrsInputFile):
                 except KeyError:
                     eargs = [keyname, drskey, dim1, dim2, self.basename,
                              func_name]
+                    # text: Cannot find key '{0}' (input={1}) with dim1={2}
+                    #     dim2={3} in header for file={4} \n function = {5}
                     self.__error__(textentry('09-000-00009', args=eargs))
         # return values
         return values
@@ -4731,6 +4802,7 @@ class DrsFitsFile(DrsInputFile):
             source = 'input'
         # debug log message
         dargs = [key, drskey, source]
+        # debug: Get from header: In='{0}' Out='{1}' ({2})
         WLOG(drs_params, 'debug', textentry('90-008-00001', args=dargs))
         # return drskey
         return drskey
@@ -4965,6 +5037,10 @@ class DrsFitsFile(DrsInputFile):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
+                # text: Key was set (key = '{0}') but was not found in parameter
+                #     dictionary. \n Either make sure key is in parameter
+                #     dictionary or define 'keyword', 'value' and 'comment'. \n
+                #     function = {1}
                 self.__error__(textentry('00-001-00008', args=eargs))
                 kwstore = None
         else:
@@ -5019,11 +5095,14 @@ class DrsFitsFile(DrsInputFile):
                                  self.class_name)
         # deal with no keywordstore
         if (kwstores is None) and (keys is None or comments is None):
+            # text: Either 'kwstore' or ('key' and 'comment') must be defined \n
+            #     function = {0}
             self.__error__(textentry('00-001-00009', args=[func_name]))
         # deal with kwstores set
         if kwstores is not None:
             # make sure kwstores is a list of list
             if not isinstance(kwstores, list):
+                # text: 'kwstores' must be a list \n function = {0}
                 self.__error__(textentry('00-001-00010', args=[func_name]))
             # loop around entries
             for k_it, kwstore in enumerate(kwstores):
@@ -5031,10 +5110,16 @@ class DrsFitsFile(DrsInputFile):
         # else we assume keys and comments
         else:
             if not isinstance(keys, list):
+                # text: 'keys' must be a list (or 'kwstores' must be defined) \n
+                #     function = {0}
                 self.__error__(textentry('00-001-00011', args=[func_name]))
             if not isinstance(comments, list):
+                # text: 'comments' must be a list (or 'kwstores' must be
+                #     defined) \n function = {0}
                 self.__error__(textentry('00-001-00012', args=[func_name]))
             if len(keys) != len(comments):
+                # text: 'keys' must be the same length as 'comment' \n function
+                #     = {0}
                 self.__error__(textentry('00-001-00013', args=[func_name]))
             # loop around entries
             for k_it in range(len(keys)):
@@ -5078,6 +5163,8 @@ class DrsFitsFile(DrsInputFile):
                                  self.class_name)
         # deal with no keywordstore
         if (key is None) and (keyword is None or comment is None):
+            # text: Either 'kwstore' or ('key' and 'comment') must be defined \n
+            #     function = {0}
             self.__error__(textentry('00-001-00014', args=[func_name]))
         # deal with no dim1name
         if dim1name is None:
@@ -5093,6 +5180,10 @@ class DrsFitsFile(DrsInputFile):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
+                # text: Key was set (key = '{0}') but was not found in parameter
+                #     dictionary. \n Either make sure key is in parameter
+                #     dictionary or define 'keyword', 'value' and 'comment'. \n
+                #     function = {1}
                 self.__error__(textentry('00-001-00008', args=eargs))
                 kwstore = None
         else:
@@ -5186,6 +5277,10 @@ class DrsFitsFile(DrsInputFile):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
+                # text: Key was set (key = '{0}') but was not found in parameter
+                #     dictionary. \n Either make sure key is in parameter
+                #     dictionary or define 'keyword', 'value' and 'comment'. \n
+                #     function = {1}
                 self.__error__(textentry('00-001-00008', args=eargs))
                 kwstore = None
         else:
@@ -5243,6 +5338,8 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # deal with no prefix
         if (prefix is None):
+            # text: Either 'kwstore' or ('key' and 'comment') must be defined \n
+            #     function = {0}
             self.__error__(textentry('00-001-00014', args=[func_name]))
         if isinstance(prefix, str) and (prefix in params):
             kwstore = params[prefix]
@@ -5250,6 +5347,9 @@ class DrsFitsFile(DrsInputFile):
             kwstore = list(prefix)
         else:
             eargs = [prefix, func_name]
+            # text: Key was set (key = '{0}') but was not found in parameter
+            #     dictionary. \n Either make sure key is in parameter dictionary
+            #     or define 'keyword', 'value' and 'comment'. \n function = {1}
             self.__error__(textentry('00-001-00008', args=eargs))
             return
         # ---------------------------------------------------------------------
@@ -5365,6 +5465,8 @@ class DrsFitsFile(DrsInputFile):
         for length in lengths:
             if lengths[0] != length:
                 eargs = [', '.join(strlengths), func_name]
+                # error: All QC parameters must be the same length \n Lengths =
+                #     {0} \n function = {1}
                 raise drs_log.AperoCodedException(params, '00-001-00019',
                                                   targs=eargs)
         # loop around values and add to hdict
@@ -5446,6 +5548,11 @@ class DrsFitsFile(DrsInputFile):
             key, dvalue, comment = kwstore
         except Exception as _:
             eargs = [kwstore, func_name]
+            # text: There was a problem with the kwstore='{0}' \n It must be a
+            #     list/tuple with the following format \n [STRING, OBJECT,
+            #     STRING] \n where the first element is the HEADER name of the
+            #     keyword \n where the second is the default value of the
+            #     keyword \n function = {1}
             self.__error__(textentry('00-001-00016', args=eargs))
             key, dvalue, comment = None, None, None
         # return values
@@ -5811,6 +5918,8 @@ class DrsNpyFile(DrsInputFile):
                     #   raise error
                     if attempts == 9:
                         eargs = [type(e), e, self.filename, func_name]
+                        # error: Could not load NPY file. \n Error {0}: {1} \n
+                        #     File = {2} \n Function = {3}
                         raise AperoCodedException(None, '00-008-00018',
                                                   targs=eargs)
                     # some time file is locked by other process
@@ -5824,6 +5933,7 @@ class DrsNpyFile(DrsInputFile):
                         attempts += 1
         # cause error if file name is not set
         else:
+            # error: NpyFile must have filename set. \n Function = {0}
             raise drs_log.AperoCodedException(params, '00-008-00013',
                                               targs=[func_name])
 
@@ -5855,6 +5965,7 @@ class DrsNpyFile(DrsInputFile):
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
+                # text: {0}: Data is not set. Must read fits using {1} first.
                 self.__error__(textentry('00-001-00004', args=eargs))
                 return 0
             else:
@@ -5912,11 +6023,12 @@ class DrsNpyFile(DrsInputFile):
         params = self.params
         # deal with no save
         if self.no_save():
-            wmsg = 'NOSAVE active - file not written to disk'
-            WLOG(self.params, 'warning', wmsg)
+            # warning: NOSAVE active - file not written to disk
+            WLOG(self.params, 'warning', textentry('10-006-00001'))
             return
         # if filename is not set raise error
         if self.filename is None:
+            # error: NpyFile must have filename set. \n Function = {0}
             raise drs_log.AperoCodedException(params, '00-008-00013',
                                               targs=[func_name])
         if self.data is not None:
@@ -5925,10 +6037,14 @@ class DrsNpyFile(DrsInputFile):
                 np.save(self.filename, self.data)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
+                # error: NpyFile could not read file. \n Filename = {0} \n
+                #     Function = {1}
                 raise drs_log.AperoCodedException(params, '00-008-00015',
                                                   targs=eargs)
         else:
             eargs = [self.filename, func_name]
+            # error: NpyFile must have data set. \n Filename = {0} \n Function =
+            #     {1}
             raise drs_log.AperoCodedException(params, '00-008-00014',
                                               targs=eargs)
 
@@ -6626,11 +6742,15 @@ class DrsOutFileExtension:
             # deal with calibration mode
             if mode == 'calibration':
                 eargs = [mode, self.pos, self.name, col]
+                # text: Cannot use {0} entry for extension {1} ({2}) \n Column =
+                #     {3}
                 reason = textentry('00-090-00015', args=eargs)
                 return False, reason
             # -----------------------------------------------------------------
             elif mode == 'telluric':
                 eargs = [mode, self.pos, self.name, col]
+                # text: Cannot use {0} entry for extension {1} ({2}) \n Column =
+                #     {3}
                 reason = textentry('00-090-00015', args=eargs)
                 return False, reason
             # -----------------------------------------------------------------
@@ -6673,6 +6793,8 @@ class DrsOutFileExtension:
                 # log error and return: Column file for EXT={0} ({1}) not
                 #     found. Condition = {2}
                 eargs = [self.pos, self.name, condition, func_name]
+                # text: Column file for EXT={0} ({1}) not found. \n Condition =
+                #     {2} \n Function = {3}
                 reason = textentry('00-090-00007', args=eargs)
                 return False, reason
             else:
@@ -6704,6 +6826,8 @@ class DrsOutFileExtension:
                 #     Filename = {2} \n\t Column name = {3}
                 eargs = [self.pos, self.name, filename, incolumns[col],
                          func_name]
+                # text: Column for EXT={0} ({1}) not found \n Filename={2} \n
+                #     Column name = {3} \n Function = {4}
                 reason = textentry('00-090-00008', args=eargs)
                 return False, reason
             # -----------------------------------------------------------------
@@ -6718,6 +6842,10 @@ class DrsOutFileExtension:
                              incolumns[0], len(values[0]), filenames[0],
                              incolumns[col], len(row_values), filenames[col],
                              func_name]
+                    # text: Column for EXT={0} ({1}) not found \n Filename={2}
+                    #     \n Column name = {3} \n Column '{4}' length={5} (File:
+                    #     {6}) \n Column '{7}' length={8} (File: {9}) \n
+                    #     Function: {10}
                     reason = textentry('00-090-00009', args=eargs)
                     return False, reason
             # -----------------------------------------------------------------
@@ -6733,6 +6861,7 @@ class DrsOutFileExtension:
         # print tables added
         for filename in tables:
             margs = [os.path.basename(filename)]
+            # log: File: {0}
             WLOG(params, '', textentry('40-090-00007', args=margs),
                  colour='magenta')
         # ---------------------------------------------------------------------
@@ -6992,6 +7121,8 @@ class DrsOutFile(DrsInputFile):
                                  self.class_name)
         # position must be an integer
         if not isinstance(pos, int):
+            # error: DrsOutFile Error: pos must be an integer (value = {0) \n
+            #     Function = {1}
             raise AperoCodedException(None, '00-001-00053',
                                       targs=[pos, func_name])
         # add new extension instance
@@ -7233,6 +7364,8 @@ class DrsOutFile(DrsInputFile):
         # must have primary filename set
         if self.extensions[0].filename is None:
             # log error and return
+            # text: Cannot process links. Infile not set for primary extension.
+            #     \n Function = {0}
             reason = textentry('00-090-00001', args=func_name)
             return False, reason
         # ---------------------------------------------------------------------
@@ -7258,6 +7391,7 @@ class DrsOutFile(DrsInputFile):
         # end the clock  (reading large database is slow - give user feedback)
         end = time.time()
         # log full database loaded in X s
+        # log: Full database loaded in {0:.4f} s
         WLOG(params, '', textentry('40-090-00004', args=[end - start]))
         # get index columns
         # index_cols = ptable.colnames()
@@ -7277,12 +7411,15 @@ class DrsOutFile(DrsInputFile):
                 margs = [pos, ext.name, 'primary']
                 # log progress
                 if ext.header_only:
+                    # text: Adding EXT={0} ({1}) [Header only] mode={2}
                     msg = textentry('40-090-00005', args=margs)
                 else:
+                    # text: Adding EXT={0} ({1}) mode={2}
                     msg = textentry('40-090-00006', args=margs)
                 WLOG(params, '', msg)
                 # add filename
                 margs = [os.path.basename(ext.filename)]
+                # log: File: {0}
                 WLOG(params, '', textentry('40-090-00007', args=margs),
                      colour='magenta')
                 # skip to next extension
@@ -7318,6 +7455,8 @@ class DrsOutFile(DrsInputFile):
                 #      extension {1} ({2}) \n\t Valid link names: {3}
                 eargs = [ext.link, pos, name, ', '.join(valid_names),
                          func_name]
+                # text: Link name={0} not valid for extension {1} ({2}) \n Valid
+                #     link names: {3} \n Function: {4}
                 reason = textentry('00-090-00002', args=eargs)
                 return False, reason
             # -----------------------------------------------------------------
@@ -7356,6 +7495,9 @@ class DrsOutFile(DrsInputFile):
                 if cfilename is None:
                     eargs = [dbkey, ext.pos, ext.name, linkext.pos,
                              linkext.name, linkext.filename, func_name]
+                    # text: No valid calibration entry dbkey="{0}" for extension
+                    #     {1} ({2} \n Link {3} ({4}) \n Link file: {5} \n
+                    #     Function: {6}
                     reason = textentry('00-090-00013', args=eargs)
                     return False, reason
                 # get criteria from calibration filename
@@ -7377,6 +7519,9 @@ class DrsOutFile(DrsInputFile):
                 if tfilename is None:
                     eargs = [dbkey, ext.pos, ext.name, linkext.pos,
                              linkext.name, linkext.filename, func_name]
+                    # text: No valid telluric entry dbkey="{0}" for extension
+                    #     {1} ({2} \n Link {3} ({4}) \n Link file: {5} \n
+                    #     Function: {6}
                     reason = textentry('00-090-00014', args=eargs)
                     return False, reason
                 # get criteria from telluric filename
@@ -7425,6 +7570,8 @@ class DrsOutFile(DrsInputFile):
                     # log and return: No entries for extension {0} ({1})
                     #    \n\t condition = {2}
                     eargs = [pos, name, condition, func_name]
+                    # text: No entries found for extension {0} ({1}) \n
+                    #     Condition = {2} \n Function = {3}
                     reason = textentry('00-090-00005', args=eargs)
                     return False, reason
 
@@ -7439,6 +7586,8 @@ class DrsOutFile(DrsInputFile):
                     # log message and return: Header link key={0} not valid for
                     #     link name={1}\n\tlink file={2}\n\tFunction = {3}
                     eargs = [ext.hlink, ext.link, linkext.filename, func_name]
+                    # text: Header link key={0} not valid for link name={1} \n
+                    #     link file={2} \n Function = {3}
                     reason = textentry('00-090-00003', args=eargs)
                     return False, reason
                 # -------------------------------------------------------------
@@ -7451,6 +7600,9 @@ class DrsOutFile(DrsInputFile):
                     #     \n\tlink file={3}\n\tFunction={4}
                     eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename,
                              func_name]
+                    # text: Header link key={0} is not valid for link name={1}
+                    #     \n header key "{2}" not found \n link file={3} \n
+                    #     Function={4}
                     reason = textentry('00-090-00004', args=eargs)
                     return False, reason
                 # -------------------------------------------------------------
@@ -7498,6 +7650,8 @@ class DrsOutFile(DrsInputFile):
                     # log and return: No entries for extension {0} ({1})
                     #    \n\t condition = {2}
                     eargs = [pos, name, condition, func_name]
+                    # text: No entries found for extension {0} ({1}) \n
+                    #     Condition = {2} \n Function = {3}
                     reason = textentry('00-090-00005', args=eargs)
                     return False, reason
 
@@ -7512,6 +7666,7 @@ class DrsOutFile(DrsInputFile):
                     ext.set_infile(params, extrow, exttable)
                     # log progress: Adding EXT={0} ({1}) [TABLE]'
                     margs = [pos, name, mode]
+                    # log: Adding EXT-{0} ({1}) [TABLE] mode={2}
                     WLOG(params, '', textentry('40-090-00008', args=margs))
                     # make the table
                     success, reason = ext.make_table(params, ptable, linkkind,
@@ -7525,6 +7680,8 @@ class DrsOutFile(DrsInputFile):
                     eargs = ['table', pos, name, ext.filename, type(e), str(e),
                              func_name]
                     # log and return: Could not add extension
+                    # text: Could not add {0} extension {1} ({2}) \n Filename:
+                    #     {3} \n Error {4}: {5} \n Function: {6}
                     reason = textentry('00-090-00006', args=eargs)
                     return False, reason
             # -----------------------------------------------------------------
@@ -7543,18 +7700,23 @@ class DrsOutFile(DrsInputFile):
                     # log progress: Adding EXT={0} ({1}) [Header only]
                     margs = [pos, name, mode]
                     if ext.header_only:
+                        # text: Adding EXT={0} ({1}) [Header only] mode={2}
                         msg = textentry('40-090-00005', args=margs)
                     else:
+                        # text: Adding EXT={0} ({1}) mode={2}
                         msg = textentry('40-090-00006', args=margs)
                     WLOG(params, '', msg)
                     # add filename
-                    msg = '\t\tFile: {0}'
                     margs = [os.path.basename(ext.filename)]
-                    WLOG(params, '', msg.format(*margs), colour='magenta')
+                    # log: File: {0}
+                    WLOG(params, '', textentry('40-090-00007', args=margs),
+                         colour='magenta')
                 except Exception as e:
                     eargs = ['image', pos, name, ext.filename, type(e), str(e),
                              func_name]
                     # log and return: Could not add extension
+                    # text: Could not add {0} extension {1} ({2}) \n Filename:
+                    #     {3} \n Error {4}: {5} \n Function: {6}
                     reason = textentry('00-090-00006', args=eargs)
                     return False, reason
             # -----------------------------------------------------------------
@@ -7639,10 +7801,11 @@ class DrsOutFile(DrsInputFile):
                         # set skip to True
                         skip = True
                         # log that we are skipping file
-                        msg = '\tSkipping {0} for {1} ({2} = {3})'
                         margs = [self.extensions[ext].filename,
                                  self.name, drsekey, evalue]
-                        WLOG(self.params, '', msg.format(*margs))
+                        # log: Skipping {0} for {1} ({2} = {3})
+                        WLOG(self.params, '',
+                             textentry('40-006-00015', args=margs))
         # return whether we should skip file
         return skip
 
@@ -7767,6 +7930,8 @@ class DrsOutFile(DrsInputFile):
             if outpos is None:
                 # Cannot add hkey {0} (out extension {1} does not exist)
                 eargs = [drs_key, inext, 'outpos']
+                # error: Cannot add hkey {0} (in extension {1} does not exist)
+                #     [{2}]
                 raise drs_log.AperoCodedException(params, '00-090-00011',
                                                   targs=eargs)
 
@@ -7775,6 +7940,8 @@ class DrsOutFile(DrsInputFile):
             if self.extensions[inpos].header is None:
                 # Cannot add hkey {0} (in header {1} does not exist)
                 eargs = [drs_key, inext, 'inheader=None']
+                # error: Cannot add hkey {0} (in extension {1} does not exist)
+                #     [{2}]
                 raise drs_log.AperoCodedException(params, '00-090-00011',
                                                   targs=eargs)
             else:
@@ -7783,6 +7950,8 @@ class DrsOutFile(DrsInputFile):
             if self.extensions[outpos].header is None:
                 # Cannot add hkey {0} (out header {1} does not exist)
                 eargs = [drs_key, inext, 'outheader=None']
+                # error: Cannot add hkey {0} (in extension {1} does not exist)
+                #     [{2}]
                 raise drs_log.AperoCodedException(params, '00-090-00011',
                                                   targs=eargs)
             else:
@@ -7792,6 +7961,8 @@ class DrsOutFile(DrsInputFile):
             if drs_key not in inheader:
                 # Cannot add hkey {0} (in header {1} does not have header key
                 eargs = [drs_key, inext]
+                # error: Cannot add hkey {0} (in extension {1} does not exist)
+                #     [key not found]
                 raise drs_log.AperoCodedException(params, '00-090-00012',
                                                   targs=eargs)
             # get value
@@ -7932,6 +8103,8 @@ class DrsOutFile(DrsInputFile):
                     wargs = [key, pos, self.extensions[pos].name]
                     # header key changed - this is should not happen but
                     #   isn't a big problem
+                    # warning: Header key {0} expected in extension {1} ({2})
+                    #     but value changed.
                     WLOG(params, 'warning',
                          textentry('10-090-00004', args=wargs), sublevel=2)
 
@@ -8012,8 +8185,8 @@ class DrsOutFile(DrsInputFile):
                                  self.class_name)
         # deal with no save
         if self.no_save():
-            wmsg = 'NOSAVE active - file not written to disk'
-            WLOG(self.params, 'warning', wmsg)
+            # warning: NOSAVE active - file not written to disk
+            WLOG(self.params, 'warning', textentry('10-006-00001'))
             return
         # construct data list
         data_list = []
@@ -8515,6 +8688,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
                 return drsfiles
     # -------------------------------------------------------------------------
     # print progress
+    # log: Checking input qc for: {0}
     WLOG(params, '', textentry('40-005-10004', args=[filekind]))
     # -------------------------------------------------------------------------
     # storage for return
@@ -8563,6 +8737,7 @@ def check_input_qc(params: ParamDict, drsfiles: List[DrsFitsFile],
             eargs1 = [bad_drsfile, bad_drsfiles[bad_drsfile]]
             emsg += '\n\t - {0}: {1}'.format(*eargs1)
         # report error: No valid files after QC
+        # error: No valid input {0} files after QC test:
         raise drs_log.AperoCodedException(params, '09-001-00033',
                                           message=emsg)
 
@@ -8657,12 +8832,11 @@ def check_input_dprtypes(params: ParamDict, recipe: Any,
         # we have to raise exception if ref_dprtype is not in dprtypes but
         #   all files are valid individually
         if valid and ref_dprtype not in dprtypes:
-            # TODO: Add to language database
-            emsg = ('Reference DPRTYPE {0} not in input files '
-                    '\n\tCurrent DPRTYPES are: {1}')
             eargs = [ref_dprtype, ', '.join(dprtypes)]
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg.format(*eargs))
+            # error: Reference DPRTYPE {0} not in input files \n Current
+            #     DPRTYPES are: {1}
+            raise drs_log.AperoCodedException(params, '00-006-00042',
+                                              targs=eargs)
 
         elif valid:
             # storage of first (ref file type)
@@ -8737,6 +8911,7 @@ def get_file_definition(params: ParamDict, name: str,
     if name == 'None' or name is None:
         if required:
             eargs = [name, 'unknown', func_name]
+            # error: No file of filetype '{0}' in function {1} \n Function = {2}
             raise drs_log.AperoCodedException(params, '00-008-00011',
                                               targs=eargs)
         return None
@@ -8770,6 +8945,7 @@ def get_file_definition(params: ParamDict, name: str,
     # deal with no files found and required - raise error
     elif len(found_files) == 0:
         eargs = [name, filemod.__path__, func_name]
+        # error: No file of filetype '{0}' in function {1} \n Function = {2}
         raise drs_log.AperoCodedException(params, '00-008-00011',
                                           targs=eargs)
     # return the found files
@@ -8830,6 +9006,7 @@ def get_another_fiber_file(params: ParamDict, outfile: DrsFitsFile,
     if getdata:
         # log message: Reading data for file
         margs = [outfile2.filename]
+        # log: Reading data for file: {0}
         WLOG(params, '', textentry('40-004-00005', args=margs))
         outfile2.read_data()
     # load header if required
@@ -8890,6 +9067,7 @@ def combine(params: ParamDict, recipe: Any,
         return infiles, Table()
     # make sure infiles is a list
     if not isinstance(infiles, list):
+        # error: 'infiles' must be a list of DrsFiles \n function = {0}
         raise drs_log.AperoCodedException(params, '00-001-00020',
                                           targs=[func_name])
     # if we have only one file (or none) skip combine
@@ -8902,12 +9080,17 @@ def combine(params: ParamDict, recipe: Any,
         for it, infile in enumerate(infiles):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
+                # error: All 'infiles' must be the same type of DrsFile to
+                #     combine. \n Input file 1: {0} Input file {1}: {2} \n
+                #     function = {3}
                 raise drs_log.AperoCodedException(params, '00-001-00021',
                                                   targs=eargs)
     # get output path from params
     outpath = str(params['OUTPATH'])
     # check if outpath is set
     if outpath is None:
+        # error: Path is unset and 'OUTPATH' (in params) is unset. One of these
+        #     must be set. \n Function = {0}
         raise drs_log.AperoCodedException(params, '01-001-00023',
                                           targs=[func_name])
     # get the absolute path (for combined output)
@@ -8954,6 +9137,7 @@ def combine(params: ParamDict, recipe: Any,
             name_list += ['PARAM_TABLE']
             datatype_list += ['table']
         # write to disk
+        # log: Writing combined file: {0}
         WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
         outfile.write_multi(data_list=data_list, name_list=name_list,
                             datatype_list=datatype_list,
@@ -9179,10 +9363,9 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
     # get dtype of values - if mixed we have a problem
     dtypes = [type(value) for value in values]
     if len(set(dtypes)) != 1:
-        emsg = 'Mixed type in "values"\n\tValues={0}\n\tfunction = {0}'
         eargs = [', '.format([str(value) for value in values]), func_name]
-        raise AperoCodedException(None, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Mixed type in "values" \n Values={0} \n function = {0}
+        raise AperoCodedException(None, '00-006-00034', targs=eargs)
     # deal with strings - max and min work
     if dtypes[0] is str:
         if method in ['minimum', 'min']:
@@ -9375,6 +9558,7 @@ def id_drs_file(params: ParamDict,
             # --------------------------------------------------------------
             # debug
             dargs = [str(drsfile)]
+            # debug: ID: Checking {0}
             WLOG(params, 'debug', textentry('90-010-00001', args=dargs))
             # --------------------------------------------------------------
             # copy info from given_drsfile into drsfile
@@ -9385,6 +9569,8 @@ def id_drs_file(params: ParamDict,
             if file_in.filename is None:
                 if filename is None:
                     eargs = [func_name]
+                    # error: Filename is neither set in the class definition or
+                    #     given as an argument. Function = {0}
                     WLOG(params, 'error', textentry('00-001-00057', args=eargs))
                 else:
                     file_in.set_filename(filename)
@@ -9454,6 +9640,8 @@ def id_drs_file(params: ParamDict,
             argstr += '\t{0}: {1}\n'.format(key, value)
 
         eargs = [' '.join(names), file_set.filename, argstr, func_name]
+        # error: Generic Drs File '{0}' has no associated files \n filename =
+        #     {1} \n {2} \n function = {3}
         raise drs_log.AperoCodedException(params, '00-010-00001', targs=eargs)
     # ----------------------------------------------------------------------
     # return found and the drsfile instance
@@ -9501,6 +9689,8 @@ def get_mid_obs_time(params: ParamDict,
     # deal with header still being None
     if header is None:
         eargs = [func_name]
+        # error: Either 'header' or 'infile' (DrsFitsFile) must be set to get
+        #     mid observation time. \n Function = {0}
         raise drs_log.AperoCodedException(params, '00-001-00051', targs=eargs)
     # get raw value from header
     rawtime = header[outkey]
@@ -9525,6 +9715,8 @@ def get_mid_obs_time(params: ParamDict,
     else:
         kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
         eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
+        # error: {0}: Invalid kind. Kind = {1}. \n Should be: {2} \n function =
+        #     {3}
         raise drs_log.AperoCodedException(params, '00-001-00030', targs=eargs)
 
 

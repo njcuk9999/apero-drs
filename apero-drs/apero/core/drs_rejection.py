@@ -33,6 +33,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
+from aperocore import drs_lang
 
 # fcntl is POSIX-only; on Windows we silently fall back to lock-file polling
 try:
@@ -61,6 +62,8 @@ AperoCodedWarning = drs_log.AperoCodedWarning
 display_func = drs_misc.display_func
 # get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 
 # ---------------------------------------------------------------------------
 # CSV layout constants
@@ -125,9 +128,10 @@ class _FileLock:
                 except (BlockingIOError, OSError):
                     if (time.time() - start) > self.timeout:
                         self._fh.close()
-                        emsg = 'Timeout acquiring lock {0}'.format(
-                            self.lockpath)
-                        raise AperoCodedException(None, message=emsg)
+                        eargs = [self.lockpath]
+                        # error: Timeout acquiring lock {0}
+                        raise AperoCodedException(None, '00-512-00021',
+                                                  targs=eargs)
                     time.sleep(self.SLEEP_INTERVAL)
         # Fallback: O_EXCL spin-wait
         while True:
@@ -139,8 +143,9 @@ class _FileLock:
                 return self
             except FileExistsError:
                 if (time.time() - start) > self.timeout:
-                    emsg = 'Timeout acquiring lock {0}'.format(self.lockpath)
-                    raise AperoCodedException(None, message=emsg)
+                    eargs = [self.lockpath]
+                    # error: Timeout acquiring lock {0}
+                    raise AperoCodedException(None, '00-512-00021', targs=eargs)
                 time.sleep(self.SLEEP_INTERVAL)
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -302,8 +307,8 @@ class RejectDatabase:
         if identifier is not None:
             clean_identifier = str(identifier).strip()
         if clean_identifier == '':
-            emsg = 'identifier cannot be empty when adding reject entries'
-            raise AperoCodedException(self.params, message=emsg)
+            # error: identifier cannot be empty when adding reject entries
+            raise AperoCodedException(self.params, '00-515-00003')
         lockpath = os.path.join(self.lockdir, 'reject.lock')
         with _FileLock(lockpath):
             df = _read_csv(self.path)
@@ -386,7 +391,8 @@ def add_file_reject(params: ParamDict, recipe: Any,
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # -------------------------------------------------------------------------
     # scan raw directory for all FITS files
-    WLOG(params, 'info', 'Generating list of raw files')
+    # log: Generating list of raw files
+    WLOG(params, 'info', textentry('40-515-00001'))
     all_files: Dict[str, str] = dict()
     for root, dirs, files in os.walk(rawdir, followlinks=True):
         for filename in files:
@@ -422,14 +428,15 @@ def add_file_reject(params: ParamDict, recipe: Any,
     }
     row = 0
     for identifier in identifiers:
-        WLOG(params, '',
-             '\tAnalysing files for identifier: {0}'.format(identifier))
+        margs = [identifier]
+        # log: Analysing files for identifier: {0}
+        WLOG(params, '', textentry('40-515-00004', args=margs))
         if identifier in existing_ids:
             mask = existing_df['IDENTIFIER'].astype(str) == identifier
             comment_val = str(existing_df.loc[mask, 'COMMENT'].iloc[0])
-            msg = ('\tIdentifier {0} already in reject list '
-                   'with comment: {1}')
-            WLOG(params, '', msg.format(identifier, comment_val),
+            margs = [identifier, comment_val]
+            # log: Identifier {0} already in reject list with comment: {1}
+            WLOG(params, '', textentry('40-515-00007', args=margs),
                  colour='magenta')
             continue
         if identifier in all_files:
@@ -474,12 +481,15 @@ def add_file_reject(params: ParamDict, recipe: Any,
             try:
                 remove_row_ints.append(int(_row))
                 if int(_row) not in file_table['ROW']:
+                    wargs = [_row]
+                    # warning: Row number={0} not in table
                     WLOG(params, 'warning',
-                         'Row number={0} not in table'.format(_row))
+                         textentry('10-515-00001', args=wargs))
                     has_warnings = True
             except ValueError:
-                WLOG(params, 'warning',
-                     'Row number={0} must be an integer'.format(_row))
+                wargs = [_row]
+                # warning: Row number={0} must be an integer
+                WLOG(params, 'warning', textentry('10-515-00002', args=wargs))
                 has_warnings = True
         if has_warnings:
             continue
@@ -492,8 +502,8 @@ def add_file_reject(params: ParamDict, recipe: Any,
     if autofill not in [None, 'None']:
         autofill_list = autofill.split(',')
         if len(autofill_list) != 4:
-            emsg = 'Autofill must be in form PP,TEL,RV,COMMENT'
-            raise AperoCodedException(params, message=emsg)
+            # error: Autofill must be in form PP,TEL,RV,COMMENT
+            raise AperoCodedException(params, '00-515-00004')
         pp_str, tel_str, rv_str, comment = autofill_list
         logic_values = []
         for val in [pp_str, tel_str, rv_str]:
@@ -502,8 +512,9 @@ def add_file_reject(params: ParamDict, recipe: Any,
             elif str(val).upper() in ['0', 'FALSE', 'F']:
                 logic_values.append(0)
             else:
-                emsg = '{0} must be True/T/1 or False/F/0'.format(val)
-                raise AperoCodedException(params, message=emsg)
+                eargs = [val]
+                # error: {0} must be True/T/1 or False/F/0
+                raise AperoCodedException(params, '00-515-00005', targs=eargs)
         pp, tel, rv = logic_values
     else:
         pp, tel, rv, comment = _ask_user_for_reject_info(params,
@@ -515,13 +526,14 @@ def add_file_reject(params: ParamDict, recipe: Any,
             rejectdbm.add_entries(identifier=identifier,
                                   pp_flag=pp, tel_flag=tel, rv_flag=rv,
                                   used=1, comment=comment)
-            WLOG(params, '',
-                 'identifier={0} added to reject list'.format(identifier))
+            margs = [identifier]
+            # log: identifier={0} added to reject list
+            WLOG(params, '', textentry('40-515-00005', args=margs))
     else:
         for identifier in file_table['IDENTIFIER']:
-            WLOG(params, '',
-                 '[TEST] Would add identifier={0} to reject list'.format(
-                     identifier))
+            margs = [identifier]
+            # log: [TEST] Would add identifier={0} to reject list
+            WLOG(params, '', textentry('40-515-00006', args=margs))
 
 
 def update_from_obsdir(params: ParamDict, recipe: Any,
@@ -549,8 +561,9 @@ def update_from_obsdir(params: ParamDict, recipe: Any,
     # -------------------------------------------------------------------------
     rawdir = params['PATH.RAW']
     if obsdir not in os.listdir(rawdir):
-        emsg = 'Obsdir={0} not found in raw directory'
-        raise AperoCodedException(params, message=emsg.format(obsdir))
+        eargs = [obsdir]
+        # error: Obsdir={0} not found in raw directory
+        raise AperoCodedException(params, '00-515-00001', targs=eargs)
     rawpath = os.path.join(rawdir, obsdir)
     # load astrometric database
     objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
@@ -559,11 +572,13 @@ def update_from_obsdir(params: ParamDict, recipe: Any,
     # -------------------------------------------------------------------------
     files = glob.glob(os.path.join(rawpath, '*.fits'))
     if len(files) == 0:
-        emsg = 'No files found in raw directory: {0}'
-        raise AperoCodedException(params, message=emsg.format(rawpath))
+        eargs = [rawpath]
+        # error: No files found in raw directory: {0}
+        raise AperoCodedException(params, '00-515-00002', targs=eargs)
     sci_dprtype = params['PP.OBJ_DPRTYPES']
-    WLOG(params, '',
-         'Analysing files in raw directory: {0}'.format(rawpath))
+    margs = [rawpath]
+    # log: Analysing files in raw directory: {0}
+    WLOG(params, '', textentry('40-515-00002', args=margs))
     valid_files = []
     for filename in TQDM(files):
         header = drs_fits.read_header(params, filename)
@@ -577,9 +592,9 @@ def update_from_obsdir(params: ParamDict, recipe: Any,
     for filename in valid_files:
         identifier = os.path.basename(filename).split('.fits')[0]
         identifiers.append(identifier)
-    WLOG(params, '',
-         'Adding {0} identifiers from obsdir={1}'.format(
-             len(identifiers), obsdir))
+    margs = [len(identifiers), obsdir]
+    # log: Adding {0} identifiers from obsdir={1}
+    WLOG(params, '', textentry('40-515-00003', args=margs))
     return ','.join(identifiers)
 
 

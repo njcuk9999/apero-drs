@@ -171,12 +171,10 @@ def __main__(recipe, params):
         for fiber in fibers:
             if fiber not in allowed_fibers:
                 # log error message
-                # TODO: Add to language database
-                emsg = ('--fibers FIBER="{0}" is not a valid fiber'
-                        '\n\t Valid fibers are {1}')
                 eargs = [fiber, ' or '.join(allowed_fibers)]
-                raise AperoCodedException(params, message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: --fibers FIBER="{0}" is not a valid fiber \n Valid
+                #     fibers are {1}
+                raise AperoCodedException(params, '09-018-00004', targs=eargs)
     # else set fibers to all allowed fibers
     else:
         fibers = allowed_fibers
@@ -189,11 +187,14 @@ def __main__(recipe, params):
     wave_infiles = dict()
 
     # log progress
-    WLOG(params, '', 'Gettings wave files')
+    # log: Gettings wave files
+    WLOG(params, '', textentry('40-018-00009'))
     # loop around fibers
     for fiber in fibers:
         # print fibers
-        WLOG(params, '', '\tFiber {0}'.format(fiber))
+        margs = [fiber]
+        # log: Fiber {0}
+        WLOG(params, '', textentry('40-018-00017', args=margs))
         # find file instance in set (verify user input)
         drsfile = drs_file.get_file_definition(params, filetype,
                                                block_kind='red')
@@ -203,11 +204,9 @@ def __main__(recipe, params):
         files = drs_utils.find_files(params, block_kind='red', filters=filters)
         # deal with no files found
         if len(files) == 0:
-            # TODO: Add to language database
             eargs = [filetype, fiber, mainname]
-            emsg = 'No files found for {0} (fiber = {1}) \n\t Function = {2}'
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: No files found for {0} (fiber = {1}) \n Function = {2}
+            raise AperoCodedException(params, '09-018-00003', targs=eargs)
         # make a new copy of infile
         infile = drsfile.newcopy(filename=files[-1], params=params)
         # read file
@@ -258,14 +257,16 @@ def __main__(recipe, params):
     _, _, shapex = shape.get_shapex(params, recipe, ref_header)
     _, _, shapey = shape.get_shapey(params, recipe, ref_header)
     # transform the shapex map
-    WLOG(params, '', 'Transforming shapex map')
+    # log: Transforming shapex map
+    WLOG(params, '', textentry('40-018-00010'))
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
 
     # ----------------------------------------------------------------------
     # Get localisation for all fibers
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Loading localisation')
+    # log: Loading localisation
+    WLOG(params, '', textentry('40-018-00011'))
     # storage
     centers, widths = dict(), dict()
     # loop around fibers
@@ -273,7 +274,9 @@ def __main__(recipe, params):
         # wave infile
         header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
-        WLOG(params, '', '\t Getting localisation for Fiber={0}'.format(fiber))
+        margs = [fiber]
+        # log: Getting localisation for Fiber={0}
+        WLOG(params, '', textentry('40-018-00018', args=margs))
         cents, wids = inverse.calc_central_localisation(params, recipe, fiber,
                                                         header=header)
         # add to storage
@@ -286,7 +289,8 @@ def __main__(recipe, params):
     # set simage to None
     swave_map = None
     # log progress
-    WLOG(params, '', 'Calculating straight image for wave map')
+    # log: Calculating straight image for wave map
+    WLOG(params, '', textentry('40-018-00012'))
     # loop around fibers
     for fiber in fibers:
         # wave infile
@@ -294,7 +298,9 @@ def __main__(recipe, params):
         # get the localisation parameters for this fiber
         cents, wids = centers[fiber], widths[fiber]
         # get straighted wave image
-        WLOG(params, '', '\t Adding flux (Fiber={0})'.format(fiber))
+        margs = [fiber]
+        # log: Adding flux (Fiber={0})
+        WLOG(params, '', textentry('40-018-00019', args=margs))
         swave_map = inverse.e2ds_to_simage(wave_images[fiber], ximage, yimage,
                                            cents, wids, fill=np.nan,
                                            simage=swave_map)
@@ -305,7 +311,8 @@ def __main__(recipe, params):
     # set simage to None
     stellu_map = None
     # log progress
-    WLOG(params, '', 'Calculating straight image for wave map')
+    # log: Calculating straight image for wave map
+    WLOG(params, '', textentry('40-018-00012'))
     # loop around fibers
     for fiber in fibers:
         # wave infile
@@ -313,7 +320,9 @@ def __main__(recipe, params):
         # get the localisation parameters for this fiber
         cents, wids = centers[fiber], widths[fiber]
         # get straighted wave image
-        WLOG(params, '', '\t Adding flux (Fiber={0})'.format(fiber))
+        margs = [fiber]
+        # log: Adding flux (Fiber={0})
+        WLOG(params, '', textentry('40-018-00019', args=margs))
         stellu_map = inverse.e2ds_to_simage(tellu_images[fiber], ximage,
                                             yimage, cents, wids, fill=np.nan,
                                             simage=stellu_map)
@@ -322,10 +331,12 @@ def __main__(recipe, params):
     # Prepare drs images (de-straightened image)
     # ----------------------------------------------------------------------
     # for wave image
-    WLOG(params, '', 'De-straightening wave image')
+    # log: De-straightening wave image
+    WLOG(params, '', textentry('40-018-00013'))
     pwave_map = inverse.simage_to_drs(params, swave_map, shapex2, shapey)
     # for tellu image
-    WLOG(params, '', 'De-straightening tellu image')
+    # log: De-straightening tellu image
+    WLOG(params, '', textentry('40-018-00014'))
     ptellu_map = inverse.simage_to_drs(params, stellu_map, shapex2, shapey)
 
     # ----------------------------------------------------------------------
@@ -375,7 +386,9 @@ def __main__(recipe, params):
     # add data
     out_pp_file.data = maskpp
     # save to file
-    WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file.filename))
+    margs = [out_pp_file.filename]
+    # log: Saving pp file: {0}
+    WLOG(params, '', textentry('40-018-00015', args=margs))
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters
@@ -407,7 +420,9 @@ def __main__(recipe, params):
     # add data
     out_raw_file.data = np.array(maskraw).astype(int)
     # save to file
-    WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file.filename))
+    margs = [out_raw_file.filename]
+    # log: Saving raw file: {0}
+    WLOG(params, '', textentry('40-018-00016', args=margs))
     # define multi lists
     data_list, name_list = [], []
     # snapshot of parameters

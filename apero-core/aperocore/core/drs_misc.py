@@ -292,11 +292,13 @@ def send_email(params: Any, subject: str, message: Union[List[str], str],
         # close the email connection
         yag.close()
     except ImportError:
+        # error: Cannot send email (need pip install yagmail)
         raise drs_base.base_error('00-503-00001',
                                   str(textentry('00-503-00001')),
                                   'error')
     except Exception as e:
         eargs = [type(e), e, func_name]
+        # error: Error {0}: {1} \n file = '{2}' \n function = {3}
         raise drs_base.base_error('00-503-00002',
                                   str(textentry('00-503-00002')),
                                   'error', args=eargs)

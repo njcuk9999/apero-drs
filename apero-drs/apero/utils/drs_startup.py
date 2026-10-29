@@ -211,9 +211,9 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     if 'OBS.INSTRUMENT' in base.IPARAMS:
         if not drs_text.null_text(instrument, ['None']):
             if instrument != base.IPARAMS['OBS.INSTRUMENT']:
-                emsg = 'Cannot use {0} for instrument {1}'
                 eargs = [name, base.IPARAMS['OBS.INSTRUMENT']]
-                WLOG(None, 'error', emsg.format(*eargs))
+                # error: Cannot use {0} for instrument {1}
+                WLOG(None, 'error', textentry('00-100-00005', args=eargs))
         else:
             # update instrument
             instrument = str(base.IPARAMS['OBS.INSTRUMENT'])
@@ -250,6 +250,9 @@ def __setup__(name: str = 'None', instrument: str = 'None',
         # only keep the basename for drs group name
         drsgroupname = os.path.basename(drsgrouppath)
         del fkwargs['DRS.GROUP']
+    elif os.environ.get(apero_base.DRS_GROUP_ENV, '') != '':
+        drsgrouppath = os.environ[apero_base.DRS_GROUP_ENV]
+        drsgroupname = os.path.basename(drsgrouppath)
     else:
         drsgrouppath, drsgroupname = None, None
     # need to deal with recipe_type and kind from fkwargs
@@ -385,6 +388,7 @@ def __setup__(name: str = 'None', instrument: str = 'None',
     if 'DATA_DICT' in fkwargs:
         # log process: data being passed from call
         iargs = [', '.join(list(fkwargs['DATA_DICT'].keys()))]
+        # log: Passing data (via DATA_DICT) to function. \n Keys = {0}
         WLOG(params, 'info', textentry('40-001-00021', args=iargs))
         # push into params
         params['DATA_DICT'] = fkwargs['DATA_DICT']
@@ -493,7 +497,8 @@ def run(func: Any, recipe: DrsRecipe,
             # on Ctrl + C was not a success
             success = False
             # print the error
-            WLOG(params, 'error', 'SIGINT or CTRL-C detected. Exiting',
+            # error: SIGINT or CTRL-C detected. Exiting
+            WLOG(params, 'error', textentry('00-100-00004'),
                  raise_exception=False, wrap=False, printonly=True)
             # log the error
             WLOG(params, 'error', string_trackback,
@@ -599,6 +604,7 @@ def run(func: Any, recipe: DrsRecipe,
             # on LogExit was not a success
             success = False
             # construct the error with a trace back
+            # text: Unhandled error has occurred: Error {0}
             emsg = textentry('01-010-00001', args=[type(e)])
             emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
@@ -616,6 +622,7 @@ def run(func: Any, recipe: DrsRecipe,
             # on LogExit was not a success
             success = False
             # construct the error with a trace back
+            # text: Unhandled error has occurred: Error {0}
             emsg = textentry('01-010-00001', args=[type(e)])
             emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
@@ -667,6 +674,7 @@ def end_all(params: ParamDict = None, success: bool = True,
     if success and (not quiet):
         iargs = [str(params.get('RECIPE', recipename))]
         WLOG(params, 'info', params['LOG.HEADER'])
+        # text: Recipe {0} has been successfully completed
         msg = textentry('40-003-00001', args=iargs)
         if duration is not None:
             msg += f'\t({duration:.3f} seconds)'
@@ -677,6 +685,7 @@ def end_all(params: ParamDict = None, success: bool = True,
     elif not quiet:
         wargs = [str(params.get('RECIPE', recipename))]
         WLOG(params, 'info', params['LOG.HEADER'], colour='red')
+        # text: Recipe {0} has NOT been successfully completed
         msg = textentry('40-003-00005', args=wargs)
         if duration is not None:
             msg += f'\t({duration:.3f} seconds)'
@@ -908,6 +917,7 @@ def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
     func_name = display_func('copy_kwargs', __NAME__)
     # deal with no recipe
     if recipe is None and recipename is None:
+        # error: 'recipe' or 'recipename' must be provided. \n Function = {0}
         raise drs_log.AperoCodedException(params, '00-001-00040',
                                           targs=[func_name])
     elif recipe is None:
@@ -976,6 +986,7 @@ def file_processing_update(params: ParamDict, it: int, num_files: int):
     # log
     WLOG(params, '', params['LOG.HEADER'])
     eargs = [it + 1, num_files]
+    # log: Processing file {0} of {1}
     WLOG(params, '', textentry('40-001-00020', args=eargs))
     WLOG(params, '', params['LOG.HEADER'])
 
@@ -994,6 +1005,7 @@ def fiber_processing_update(params: ParamDict, fiber: str):
     # _ = display_func('fiber_processing_update', __NAME__)
     # log
     WLOG(params, '', params['LOG.HEADER'])
+    # log: Processing fiber {0}
     WLOG(params, '', textentry('40-001-00022', args=[fiber]))
     WLOG(params, '', params['LOG.HEADER'])
 
@@ -1014,6 +1026,7 @@ def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
     # _ = display_func('end_plotting', __NAME__)
     # only do this is we don't have a recipe
     if recipe is None or not hasattr(recipe, 'plot'):
+        # debug: Closing plots manually
         WLOG(params, 'debug', textentry('90-100-00004'))
         import matplotlib.pyplot as plt
         plt.close('all')
@@ -1021,6 +1034,7 @@ def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
     # get the plotter from recipe
     plotter = recipe.plot
     if plotter is not None:
+        # debug: Closing plots
         WLOG(params, 'debug', textentry('90-100-00005'))
         if len(plotter.debug_graphs) > 0:
             plotter.close_plots()
@@ -1122,6 +1136,8 @@ def _set_runfile_param(params: ParamDict,
         if not log_overwrite:
             if not drs_text.null_text(params[target_key], ['', 'None']):
                 wargs = [target_key, params[target_key], value]
+                # text: Overwriting constant {0} \n Old value: {1} New value:
+                #     {2}
                 wmsg = textentry('10-503-00002', args=wargs)
                 WLOG(params, 'warning', wmsg, sublevel=2)
         instance = params.instances[target_key]
@@ -1129,12 +1145,9 @@ def _set_runfile_param(params: ParamDict,
             params[target_key] = instance.dtype(value)
             params.set_source(target_key, func_name)
         except Exception as _:
-            emsg = ('Run File Error: keyword "{0}"={1} invalid '
-                    '(required "{2}")')
             eargs = [target_key, value, instance.dtype]
-            raise drs_log.AperoCodedException(params, None,
-                                              message=emsg,
-                                              targs=eargs)
+            # error: Run File Error: keyword "{0}"={1} invalid (required "{2}")
+            raise drs_log.AperoCodedException(params, '00-100-00006')
     else:
         params[target_key] = value
         params.set_source(target_key, func_name)
@@ -1166,6 +1179,7 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
         if not os.path.exists(runfile):
+            # error: Cannot find run file {0}
             raise drs_log.AperoCodedException(params, '09-503-00002',
                                               targs=[runfile])
     # ----------------------------------------------------------------------
@@ -1175,6 +1189,7 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
     except Exception as e:
         # log error
         eargs = [runfile, type(e), e, func_name]
+        # error: Cannot open run file {0} \n Error {1}: {2} \n {3}
         raise drs_log.AperoCodedException(params, '09-503-00003', targs=eargs)
     # ----------------------------------------------------------------------
     # table storage
@@ -1226,6 +1241,7 @@ def read_runfile_yaml(params: ParamDict, recipe: Union[DrsRecipe, None],
                     continue
                 # print that we are using default settings (not a warning)
                 wargs = [key, run_keys[key].value]
+                # log: Key = {0} not found in run file using default value ({1})
                 WLOG(params, '', textentry('10-503-00005', args=wargs))
                 # push keys to params
                 params[key] = run_keys[key].value
@@ -1276,6 +1292,7 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
         if not os.path.exists(runfile):
+            # error: Cannot find run file {0}
             raise drs_log.AperoCodedException(params, '09-503-00002',
                                               targs=[runfile])
     # ----------------------------------------------------------------------
@@ -1286,6 +1303,7 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
     except Exception as e:
         # log error
         eargs = [runfile, type(e), e, func_name]
+        # error: Cannot open run file {0} \n Error {1}: {2} \n {3}
         raise drs_log.AperoCodedException(params, '09-503-00003', targs=eargs)
     # ----------------------------------------------------------------------
     # table storage
@@ -1315,12 +1333,17 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
                 runid = int(key.replace(run_key, ''))
             except Exception as e:
                 eargs = [key, value, run_key, type(e), e, func_name]
+                # error: Problem reading run file key {0} = {1} \n Key must be
+                #     {2}#### = command where #### is an integer. \n Error {3}:
+                #     {4} \n Function = {5}
                 raise drs_log.AperoCodedException(params, '09-503-00004',
                                                   targs=eargs)
             # check if we already have this column
             if runid in runtable:
                 wargs = [runid, keytable[runid], runtable[runid],
                          keys[it], values[it][:40] + '...']
+                # warning: Overwriting row {0} \n Old value: {1} = {2} \n {3} =
+                #     {4}
                 WLOG(params, 'warning', textentry('10-503-00001', args=wargs),
                      sublevel=2)
             # add to table
@@ -1345,6 +1368,8 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
                 # only log if value was not null before
                 if not drs_text.null_text(params[key], ['', 'None']):
                     wargs = [key, params[key], value]
+                    # text: Overwriting constant {0} \n Old value: {1} New
+                    #     value: {2}
                     wmsg = textentry('10-503-00002', args=wargs)
                     WLOG(params, 'warning', wmsg, sublevel=2)
                 # get instance
@@ -1355,13 +1380,10 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
                     params[key] = instance.dtype(value)
                     params.set_source(key, func_name)
                 except Exception as _:
-                    # TODO: Add to language database
-                    emsg = ('Run File Error: keyword "{0}"={1} invalid '
-                            '(required "{2}")')
                     eargs = [key, value, instance.dtype]
-                    raise drs_log.AperoCodedException(params, None,
-                                                      message=emsg,
-                                                      targs=eargs)
+                    # error: Run File Error: keyword "{0}"={1} invalid (required
+                    #     "{2}")
+                    raise drs_log.AperoCodedException(params, '00-100-00006')
             else:
                 params[key] = value
                 params.set_source(key, func_name)
@@ -1377,6 +1399,7 @@ def read_runfile_ini(params: ParamDict, recipe: Union[DrsRecipe, None],
                     continue
                 # print that we are using default settings (not a warning)
                 wargs = [key, run_keys[key].value]
+                # log: Key = {0} not found in run file using default value ({1})
                 WLOG(params, '', textentry('10-503-00005', args=wargs))
                 # push keys to params
                 params[key] = run_keys[key].value
@@ -1484,6 +1507,7 @@ def _deal_with_run_file_cmd_args(params: ParamDict) -> ParamDict:
         # if trigger if defined night name must be as well
         if params['OBS_DIR'] is None and params['TRIGGER_RUN']:
             # cause an error if obs_dir not set
+            # error: Trigger mode activate. Must define a night name.
             raise drs_log.AperoCodedException(params, '09-503-00010')
     # ---------------------------------------------------------------------
     # switch for setting science targets (from user inputs)
@@ -1582,10 +1606,10 @@ def _update_inputs_from_runfile(params: ParamDict, recipe: DrsRecipe,
                     params['INPUTS'].set_source(kwargname, func_name)
                     # print that we are updating values
                     if not log_overwrite:
-                        # TODO: Add to language database
-                        msg = 'Updating INPUTS[{0}] from {1} to {2}'
                         margs = [kwargname.upper(), oldvalue, newvalue]
-                        WLOG(params, 'warning', msg.format(*margs), sublevel=1)
+                        # warning: Updating INPUTS[{0}] from {1} to {2}
+                        WLOG(params, 'warning',
+                             textentry('10-100-01004', args=margs), sublevel=1)
     # -------------------------------------------------------------------------
     return params
 
@@ -1722,7 +1746,9 @@ def _display_title(params: ParamDict, title: str,
          printonly=printonly, logonly=logonly)
     # add group if defined
     if group is not None:
-        WLOG(params, '', '* \tGroup: {0}'.format(group), wrap=False,
+        margs = [group]
+        # log: * Group: {0}
+        WLOG(params, '', textentry('40-100-01014', args=margs), wrap=False,
              printonly=printonly, logonly=logonly)
     # end header
     WLOG(params, '', params['LOG.HEADER'], wrap=False,
@@ -1863,8 +1889,10 @@ def _display_initial_parameterisation(params: ParamDict,
                        ''.format(params['GLOBAL.PLOT_MODE']))
     if params['GLOBAL.DEBUG'] > 0:
         wargs = ['GLOBAL.DEBUG', params['GLOBAL.DEBUG']]
+        # text: {0} is set, debug mode level: {1}
         wmsgs += '\n' + textentry('40-001-00009', args=wargs)
     # log to screen and file
+    # text: DRS Setup:
     WLOG(params, 'info', textentry('40-001-00006') + wmsgs,
          printonly=printonly, logonly=logonly, wrap=False)
     WLOG(params, '', params['LOG.HEADER'], printonly=printonly,
@@ -1923,17 +1951,21 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
     # set function name
     # _ = display_func('_display_system_info', __NAME__)
     # noinspection PyListCreation
+    # text: System information
     messages = ' ' + textentry('40-001-00010')
     messages += '\n' + textentry(params['LOG.HEADER'])
     # add version /python dist keys
     messages = _sort_version(messages)
     # add os keys
+    # text: Path = '{0}'
     messages += '\n' + textentry('40-001-00011', args=[sys.executable])
+    # text: Platform = '{0}'
     messages += '\n' + textentry('40-001-00012', args=[sys.platform])
 
     messages += textentry(_display_python_modules())
 
     # add arguments (from sys.argv)
+    # text: Raw arguments used:
     messages += textentry('40-000-00018')
     for it, arg in enumerate(sys.argv):
         arg_msg = '\t Arg {0} = \'{1}\''.format(it + 1, arg)
@@ -2007,6 +2039,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     # log to screen and log file
     if len(log_strings) > 0:
         # add a newline string to log_String
+        # text: Arguments used:
         WLOG(params, 'info', textentry('40-001-00017') + log_strings,
              printonly=printonly, logonly=logonly)
         WLOG(params, '', textentry(params['LOG.HEADER']), printonly=printonly,
@@ -2033,6 +2066,7 @@ def _display_python_modules() -> str:
                     versions.append(version)
                     sources.append(source)
     # storage
+    # text: Currently installed python modules:
     storage = textentry('40-000-00017')
     # loop around packages and get versions
     for p_it, package in enumerate(packages):
@@ -2249,6 +2283,7 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
         return empty, None
     if found_recipe is None:
         # may not have access to this
+        # error: No recipe named '{0}'
         raise AperoCodedException(None, '00-007-00001', targs=[name])
     # make a copy of found recipe to return
     copy_recipe = DrsRecipe()
@@ -2712,6 +2747,7 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     version = '{0}.{1}.{2}'.format(major, minor, micro)
 
     # add version info to messages
+    # text: Python version = '{0}'
     messages += '\n' + textentry('40-001-00013', args=[version])
 
     # get system version info
@@ -2721,6 +2757,7 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     if '|' in sysversion:
         try:
             build = sysversion.split('|')[1].strip()
+            # text: Python distribution = '{0}'
             messages += '\n' + textentry('40-001-00014', args=[build])
         except IndexError:
             pass
@@ -2730,6 +2767,7 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
         try:
 
             date = sysversion.split('(')[1].split(')')[0].strip()
+            # text: Distribution date = '{0}'
             messages += '\n' + textentry('40-001-00015', args=[date])
         except IndexError:
             pass
@@ -2738,6 +2776,7 @@ def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     if '[' in sysversion and ']' in sysversion:
         try:
             other = sysversion.split('[')[1].split(']')[0].strip()
+            # text: Other information = '{0}'
             messages += '\n' + textentry('40-001-00016', args=[other])
         except IndexError:
             pass
@@ -2775,6 +2814,7 @@ def _make_dirs(params: ParamDict, path: str):
     # -------------------------------------------------------------------------
     # must check that a pid is set
     if params['PID'] is None:
+        # error: Undefined PID not recommended (PID is missing)
         raise drs_log.AperoCodedException(params, '10-005-00006')
     else:
         pid = params['PID']
@@ -2787,6 +2827,7 @@ def _make_dirs(params: ParamDict, path: str):
         if os.path.exists(path):
             return
         # log making directory
+        # log: Making dir(s): {0}
         WLOG(params, '', textentry('40-001-00023', args=[path]))
         # make directory
         try:
@@ -2794,8 +2835,10 @@ def _make_dirs(params: ParamDict, path: str):
         except Exception as e_:
             # log error
             string_trackback = traceback.format_exc()
+            # text: Could not create directory '{0}'. Error was {1}:
             emsg = textentry('01-000-00001', args=[path, type(e_)])
             emsg += '\n\n' + textentry(string_trackback)
+            # error: Could not create directory '{0}'. Error was {1}:
             raise drs_log.AperoCodedException(params, '01-000-00001',
                                               message=emsg)
 

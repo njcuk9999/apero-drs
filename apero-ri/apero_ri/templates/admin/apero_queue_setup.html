@@ -1,0 +1,522 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - APERO Queue Setup{% endblock %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
+
+{% block doc_content %}
+<style>
+.aqs-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr;
+            margin-bottom: 10px; }
+.aqs-card { border: 1px solid var(--ari-border); border-radius: 8px;
+            padding: 10px; display: grid; gap: 8px;
+            background: var(--ari-card-bg); }
+.aqs-card-title { display: flex; align-items: center; gap: 8px;
+                  font-weight: 700; flex-wrap: wrap; }
+.aqs-detail { font-size: 0.9em; color: var(--ari-text-muted);
+              line-height: 1.45; }
+.aqs-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.aqs-ok { color: var(--ari-success); }
+.aqs-warn { color: var(--ari-warning); }
+.aqs-bad { color: var(--ari-danger); }
+.aqs-checks { display: grid; gap: 4px;
+              grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.aqs-checks label { display: flex; gap: 6px; align-items: center;
+                    font-size: 0.9em; }
+.aqs-help { margin-top: 4px; font-size: 0.82em;
+            color: var(--ari-text-muted); }
+.aqs-overlay { display: none; position: fixed; inset: 0; z-index: 9000;
+               background: rgba(0, 0, 0, 0.55); align-items: center;
+               justify-content: center; }
+.aqs-dialog { background: var(--ari-card-bg); color: var(--ari-text);
+              border: 1px solid var(--ari-border); border-radius: 10px;
+              width: min(760px, 94vw); max-height: 90vh; overflow-y: auto;
+              display: flex; flex-direction: column; }
+.aqs-dialog-head { display: flex; justify-content: space-between;
+                   align-items: center; padding: 10px 14px;
+                   border-bottom: 1px solid var(--ari-border);
+                   font-weight: 700; }
+.aqs-term { margin: 0; padding: 12px 14px; min-height: 180px;
+            max-height: 55vh; overflow-y: auto; white-space: pre-wrap;
+            word-break: break-all; font-family: monospace; font-size: 0.85em;
+            background: var(--ari-bg); color: var(--ari-text); }
+.aqs-dialog-foot { display: flex; gap: 8px; padding: 10px 14px;
+                   border-top: 1px solid var(--ari-border);
+                   align-items: center; flex-wrap: wrap; }
+.aqs-dialog-foot input, .aqs-dialog textarea { flex: 1; width: 100%;
+    font-family: monospace; }
+@media (max-width: 768px) {
+    .aqs-grid { grid-template-columns: 1fr; }
+    .aqs-actions .ari-btn { min-height: 44px; }
+}
+</style>
+
+<div class="ari-up-shell sm-shell">
+    <div class="ari-page-header">
+        <h1><i class="fa-solid fa-list-check"></i> APERO Queue Setup</h1>
+    </div>
+
+    <div id="aqsMsg" class="ari-ae-save-msg" style="display:none;"></div>
+
+    <div class="ari-ae-section" style="margin-bottom:12px;">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-server"></i> Saved APERO Queues
+        </h2>
+        <div id="aqsList" style="display:grid; gap:10px;"></div>
+    </div>
+
+    <div class="ari-ae-section" style="margin-bottom:12px;">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-pen-ruler"></i> APERO Queue Definition
+        </h2>
+
+        <div class="ari-ae-callout" style="padding:10px; margin-bottom:10px;">
+            <div style="font-size:0.88em; line-height:1.5; display:grid; gap:6px;">
+                <div>
+                    <strong>Quick setup checklist:</strong>
+                    1) On the cluster start the dashboard, e.g.
+                    <code>apero_queue.py gui --port 8090</code> (it listens
+                    on localhost only).
+                    2) Fill in the SSH config host of the <em>same login
+                    node</em> (use a node-specific alias, not a round-robin
+                    one), the remote port and a free local port.
+                    3) Link the queue to an APERO profile - monitors who can
+                    access that profile will see the queue.
+                    4) Save, then click <strong>Start / Verify Tunnel</strong>
+                    (or <strong>Interactive Auth</strong> for password / Duo
+                    prompts).
+                </div>
+                <div>
+                    <strong>Equivalent command:</strong>
+                    <code>ssh -L LOCAL_PORT:localhost:REMOTE_PORT SSH_HOST</code>
+                </div>
+                <div>
+                    <strong>Monitor restrictions:</strong> users with this
+                    page's permission can use every dashboard action;
+                    monitors cannot use the actions ticked below.
+                </div>
+            </div>
+        </div>
+
+        <div class="aqs-grid">
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsName">Queue name (id)</label>
+                <input id="aqsName" class="ari-ap-input" placeholder="e.g. spirou_narval">
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsLabel">Tab label</label>
+                <input id="aqsLabel" class="ari-ap-input" placeholder="e.g. SPIROU (narval)">
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsProfile">Linked APERO profile</label>
+                <select id="aqsProfile" class="ari-ap-input"></select>
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsSshHost">SSH config host</label>
+                <input id="aqsSshHost" class="ari-ap-input" list="aqsSshHostList"
+                       placeholder="Select or type SSH config host alias">
+                <datalist id="aqsSshHostList"></datalist>
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsRemoteHost">Remote host (from the SSH host)</label>
+                <input id="aqsRemoteHost" class="ari-ap-input" value="localhost">
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsRemotePort">Remote port (apero_queue.py gui --port)</label>
+                <input id="aqsRemotePort" class="ari-ap-input" value="8090">
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsLocalPort">Local forward port (unique)</label>
+                <input id="aqsLocalPort" class="ari-ap-input" placeholder="e.g. 18090">
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsSshMode">SSH tunnel mode</label>
+                <select id="aqsSshMode" class="ari-ap-input">
+                    <option value="apero">APERO-managed</option>
+                    <option value="simple">Simple / docs-style</option>
+                </select>
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label" for="aqsNotes">Notes</label>
+                <input id="aqsNotes" class="ari-ap-input" placeholder="Optional notes">
+            </div>
+            <div class="ari-ae-field" style="display:flex; align-items:end;">
+                <label class="ari-ae-label" style="display:flex; gap:8px; align-items:center; margin:0;">
+                    <input id="aqsEnabled" type="checkbox" checked>
+                    Enabled (visible to monitors)
+                </label>
+            </div>
+        </div>
+
+        <div class="ari-ae-field" style="margin-bottom:10px;">
+            <label class="ari-ae-label">Actions monitors cannot use</label>
+            <div id="aqsBlocked" class="aqs-checks"></div>
+        </div>
+
+        <div class="aqs-actions">
+            <button class="ari-btn ari-btn--primary ari-btn--sm" type="button" onclick="aqsSave()">
+                <i class="fa-solid fa-floppy-disk"></i> Save Queue
+            </button>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" type="button" onclick="aqsResetForm()">
+                <i class="fa-solid fa-eraser"></i> Clear Form
+            </button>
+        </div>
+    </div>
+
+    <a class="ari-btn ari-btn--secondary" href="{{ url_for('home_monitor_portal_apero_queue') }}">
+        <i class="fa-solid fa-list-check"></i> Open Monitor APERO Queue
+    </a>
+</div>
+
+<div id="aqsTermOverlay" class="aqs-overlay">
+    <div class="aqs-dialog">
+        <div class="aqs-dialog-head">
+            <span><i class="fa-solid fa-terminal"></i> Interactive Queue Tunnel Authentication</span>
+            <button id="aqsTermClose" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" title="Close session">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <pre id="aqsTermOutput" class="aqs-term"></pre>
+        <div class="aqs-dialog-foot">
+            <input id="aqsTermInput" class="ari-ap-input" type="password" autocomplete="off"
+                   spellcheck="false" placeholder="Type response here and press Enter...">
+            <button id="aqsTermSend" type="button" class="ari-btn ari-btn--sm ari-btn--primary" title="Send">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div id="aqsTermStatus" class="aqs-dialog-foot aqs-help"></div>
+    </div>
+</div>
+
+<div id="aqsCmdOverlay" class="aqs-overlay">
+    <div class="aqs-dialog">
+        <div class="aqs-dialog-head">
+            <span><i class="fa-solid fa-terminal"></i> Queue SSH Tunnel Command</span>
+            <button id="aqsCmdClose" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="aqs-dialog-foot">
+            <textarea id="aqsCmdText" class="ari-ap-input" readonly rows="10"></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+const AQS_API = {{ url_for('api_apero_queue_admin', action='ACTION')|tojson }};
+let aqsRows = [];
+let aqsActions = [];
+let aqsDefaultBlocked = [];
+let aqsToken = null;
+let aqsPoll = null;
+let aqsAuthName = '';
+
+function aqsUrl(action) { return AQS_API.replace('ACTION', action); }
+
+function aqsEsc(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(String(text == null ? '' : text)));
+    return div.innerHTML;
+}
+
+function aqsMsg(text, ok) {
+    const el = document.getElementById('aqsMsg');
+    el.classList.remove('ari-ae-save-msg--ok', 'ari-ae-save-msg--err');
+    if (!text) { el.style.display = 'none'; return; }
+    el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
+    el.textContent = text;
+    el.style.display = 'block';
+}
+
+async function aqsPost(action, payload) {
+    const res = await fetch(aqsUrl(action), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {}),
+    });
+    return res.json();
+}
+
+function aqsRenderBlocked(selected) {
+    const box = document.getElementById('aqsBlocked');
+    const chosen = new Set(selected || []);
+    box.innerHTML = '';
+    aqsActions.forEach((act) => {
+        const label = document.createElement('label');
+        label.innerHTML = '<input type="checkbox" value="' + aqsEsc(act.key) + '"'
+            + (chosen.has(act.key) ? ' checked' : '') + '> ' + aqsEsc(act.label);
+        box.appendChild(label);
+    });
+}
+
+function aqsRenderProfiles(profiles) {
+    const sel = document.getElementById('aqsProfile');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select an APERO profile...</option>';
+    (profiles || []).forEach((prof) => {
+        const opt = document.createElement('option');
+        opt.value = prof.instrument + '|' + prof.profile_id;
+        opt.textContent = prof.instrument + ' / ' + prof.profile_id;
+        sel.appendChild(opt);
+    });
+    sel.value = current;
+}
+
+function aqsRenderHosts(hosts) {
+    const list = document.getElementById('aqsSshHostList');
+    list.innerHTML = '';
+    (hosts || []).forEach((host) => {
+        const opt = document.createElement('option');
+        opt.value = host;
+        list.appendChild(opt);
+    });
+}
+
+function aqsStatusHtml(row) {
+    const def = row.definition || {};
+    const st = row.status || {};
+    if (!def.enabled) {
+        return '<span class="aqs-warn"><i class="fa-solid fa-circle-pause"></i> Disabled</span>';
+    }
+    if (st.gui_alive) {
+        return '<span class="aqs-ok"><i class="fa-solid fa-circle-check"></i> Tunnel active, dashboard answering</span>';
+    }
+    if (st.local_port_open) {
+        return '<span class="aqs-warn"><i class="fa-solid fa-triangle-exclamation"></i> Tunnel active, dashboard not answering</span>';
+    }
+    return '<span class="aqs-bad"><i class="fa-solid fa-circle-xmark"></i> Tunnel down</span>';
+}
+
+function aqsRenderRows() {
+    const list = document.getElementById('aqsList');
+    list.innerHTML = '';
+    if (!aqsRows.length) {
+        list.innerHTML = '<div class="aqs-card aqs-detail">No APERO queue definitions saved yet.</div>';
+        return;
+    }
+    const labels = {};
+    aqsActions.forEach((act) => { labels[act.key] = act.label; });
+    aqsRows.forEach((row, index) => {
+        const def = row.definition || {};
+        const blocked = (def.blocked_actions || []).map((key) => labels[key] || key);
+        const card = document.createElement('div');
+        card.className = 'aqs-card';
+        card.innerHTML = `
+            <div class="aqs-card-title">
+                <span>${aqsEsc(def.label || row.name)}</span>
+                <span class="aqs-detail">(${aqsEsc(row.name)})</span>
+                ${aqsStatusHtml(row)}
+            </div>
+            <div class="aqs-detail">
+                <div><strong>Profile:</strong> ${aqsEsc(def.instrument)} / ${aqsEsc(def.profile_id)}</div>
+                <div><strong>Tunnel:</strong> ${aqsEsc(def.local_port)} &rarr; ${aqsEsc(def.remote_host)}:${aqsEsc(def.remote_port)} via ${aqsEsc(def.ssh_config_host)} (${def.ssh_mode === 'simple' ? 'Simple / docs-style' : 'APERO-managed'})</div>
+                <div><strong>Blocked for monitors:</strong> ${blocked.length ? aqsEsc(blocked.join(', ')) : 'none'}</div>
+                ${def.notes ? `<div><strong>Notes:</strong> ${aqsEsc(def.notes)}</div>` : ''}
+                ${(row.status || {}).error ? `<div class="aqs-bad">${aqsEsc(row.status.error)}</div>` : ''}
+            </div>
+            <div class="aqs-actions">
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button class="ari-btn ari-btn--sm ari-btn--primary" type="button" onclick="aqsEnsure(${index})"><i class="fa-solid fa-plug-circle-check"></i> Start / Verify Tunnel</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsInteractive(${index})"><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsShowCommand(${index})"><i class="fa-solid fa-copy"></i> Copy Command</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsClose(${index})"><i class="fa-solid fa-power-off"></i> Close</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsDelete(${index})"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+async function aqsRefresh() {
+    try {
+        const res = await fetch(aqsUrl('list'));
+        const data = await res.json();
+        if (!data.success) { aqsMsg(data.error || 'Failed to load queues.', false); return; }
+        const firstLoad = !aqsActions.length;
+        aqsRows = data.queues || [];
+        aqsActions = data.actions || [];
+        aqsDefaultBlocked = data.default_blocked || [];
+        aqsRenderProfiles(data.profiles);
+        aqsRenderHosts(data.ssh_hosts);
+        if (firstLoad) { aqsRenderBlocked(aqsDefaultBlocked); }
+        aqsRenderRows();
+    } catch (err) {
+        aqsMsg('Failed to load queues: ' + err.message, false);
+    }
+}
+
+function aqsPayload() {
+    const prof = String(document.getElementById('aqsProfile').value || '').split('|');
+    const blocked = Array.from(
+        document.querySelectorAll('#aqsBlocked input:checked')).map((el) => el.value);
+    const val = (id) => String(document.getElementById(id).value || '').trim();
+    return {
+        name: val('aqsName'),
+        label: val('aqsLabel'),
+        instrument: prof[0] || '',
+        profile_id: prof[1] || '',
+        ssh_config_host: val('aqsSshHost'),
+        remote_host: val('aqsRemoteHost'),
+        remote_port: val('aqsRemotePort'),
+        local_port: val('aqsLocalPort'),
+        ssh_mode: val('aqsSshMode') || 'apero',
+        enabled: !!document.getElementById('aqsEnabled').checked,
+        blocked_actions: blocked,
+        notes: val('aqsNotes'),
+    };
+}
+
+function aqsResetForm() {
+    ['aqsName', 'aqsLabel', 'aqsSshHost', 'aqsLocalPort', 'aqsNotes']
+        .forEach((id) => { document.getElementById(id).value = ''; });
+    document.getElementById('aqsProfile').value = '';
+    document.getElementById('aqsRemoteHost').value = 'localhost';
+    document.getElementById('aqsRemotePort').value = '8090';
+    document.getElementById('aqsSshMode').value = 'apero';
+    document.getElementById('aqsEnabled').checked = true;
+    aqsRenderBlocked(aqsDefaultBlocked);
+}
+
+function aqsEdit(index) {
+    const row = aqsRows[index];
+    if (!row) return;
+    const def = row.definition || {};
+    document.getElementById('aqsName').value = row.name || '';
+    document.getElementById('aqsLabel').value = def.label || '';
+    document.getElementById('aqsProfile').value = (def.instrument || '') + '|' + (def.profile_id || '');
+    document.getElementById('aqsSshHost').value = def.ssh_config_host || '';
+    document.getElementById('aqsRemoteHost').value = def.remote_host || 'localhost';
+    document.getElementById('aqsRemotePort').value = def.remote_port || '8090';
+    document.getElementById('aqsLocalPort').value = def.local_port || '';
+    document.getElementById('aqsSshMode').value = def.ssh_mode || 'apero';
+    document.getElementById('aqsEnabled').checked = def.enabled !== false;
+    document.getElementById('aqsNotes').value = def.notes || '';
+    aqsRenderBlocked(def.blocked_actions || []);
+    document.getElementById('aqsName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function aqsSave() {
+    try {
+        const data = await aqsPost('save', aqsPayload());
+        if (!data.success) { aqsMsg(data.error || 'Failed to save queue.', false); return; }
+        aqsMsg('APERO queue saved.', true);
+        await aqsRefresh();
+    } catch (err) {
+        aqsMsg('Failed to save queue: ' + err.message, false);
+    }
+}
+
+async function aqsSimple(action, index, busyText, confirmText) {
+    const row = aqsRows[index];
+    if (!row) return;
+    if (confirmText && !confirm(confirmText.replace('NAME', row.name))) return;
+    aqsMsg(busyText, true);
+    try {
+        const data = await aqsPost(action, { name: row.name });
+        aqsMsg(data.success ? (data.message || 'Done.') : (data.error || 'Failed.'), !!data.success);
+    } catch (err) {
+        aqsMsg('Request failed: ' + err.message, false);
+    }
+    await aqsRefresh();
+}
+
+function aqsEnsure(index) { aqsSimple('ensure', index, 'Starting or verifying queue tunnel...'); }
+function aqsClose(index) { aqsSimple('close', index, 'Closing queue tunnel...'); }
+function aqsDelete(index) {
+    aqsSimple('delete', index, 'Deleting queue...', 'Delete APERO queue "NAME"?');
+}
+
+function aqsShowCommand(index) {
+    const def = (aqsRows[index] || {}).definition || {};
+    const fwd = def.local_port + ':' + def.remote_host + ':' + def.remote_port;
+    const lines = [
+        '# On the cluster (same login node as the SSH host):',
+        'apero_queue.py gui --port ' + def.remote_port,
+        '',
+        '# Tunnel (foreground):',
+        'ssh -N -L ' + fwd + ' ' + def.ssh_config_host,
+        '',
+        '# Tunnel (background):',
+        'ssh -f -N -o ExitOnForwardFailure=yes -L ' + fwd + ' ' + def.ssh_config_host,
+        '',
+        '# Verify the dashboard answers locally:',
+        'curl -s http://127.0.0.1:' + def.local_port + '/api/state',
+    ];
+    document.getElementById('aqsCmdText').value = lines.join('\n');
+    document.getElementById('aqsCmdOverlay').style.display = 'flex';
+}
+
+function aqsTermAppend(text) {
+    const out = document.getElementById('aqsTermOutput');
+    if (!text) return;
+    out.textContent += text;
+    out.scrollTop = out.scrollHeight;
+}
+
+function aqsTermClose() {
+    if (aqsPoll) { clearInterval(aqsPoll); aqsPoll = null; }
+    document.getElementById('aqsTermOverlay').style.display = 'none';
+    if (aqsToken) {
+        aqsPost('auth_close', { token: aqsToken }).catch(() => {});
+        aqsToken = null;
+    }
+}
+
+function aqsTermSend() {
+    const input = document.getElementById('aqsTermInput');
+    if (!aqsToken) return;
+    const text = input.value;
+    input.value = '';
+    aqsPost('auth_send', { token: aqsToken, data: text + '\n' })
+        .catch(() => aqsTermAppend('\n[Failed to send input]\n'));
+}
+
+async function aqsInteractive(index) {
+    const row = aqsRows[index];
+    if (!row) return;
+    aqsAuthName = row.name;
+    document.getElementById('aqsTermOutput').textContent = '';
+    document.getElementById('aqsTermStatus').textContent = 'Connecting...';
+    document.getElementById('aqsTermOverlay').style.display = 'flex';
+    try {
+        const data = await aqsPost('auth_start', { name: row.name });
+        if (!data.ok) {
+            aqsTermAppend('[Error] ' + (data.error || 'Failed to start session.') + '\n');
+            return;
+        }
+        aqsToken = data.token;
+        document.getElementById('aqsTermStatus').textContent =
+            'Session active. Respond to prompts below.';
+        aqsPoll = setInterval(async () => {
+            if (!aqsToken) return;
+            const poll = await aqsPost('auth_poll', { token: aqsToken });
+            if (!poll.ok) { aqsTermAppend('\n[Session ended]\n'); aqsTermClose(); return; }
+            aqsTermAppend(poll.output);
+            if (!poll.finished) return;
+            const ok = poll.exit_code === 0;
+            aqsTermClose();
+            aqsMsg(ok ? 'Interactive authentication succeeded for ' + aqsAuthName + '.'
+                      : 'Interactive authentication failed (exit code ' + poll.exit_code + ').', ok);
+            await aqsRefresh();
+        }, 500);
+    } catch (err) {
+        aqsTermAppend('[Error] ' + err.message + '\n');
+    }
+}
+
+(function initAperoQueueSetup() {
+    document.getElementById('aqsTermClose').addEventListener('click', aqsTermClose);
+    document.getElementById('aqsTermSend').addEventListener('click', aqsTermSend);
+    document.getElementById('aqsTermInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); aqsTermSend(); }
+    });
+    const cmdOverlay = document.getElementById('aqsCmdOverlay');
+    document.getElementById('aqsCmdClose').addEventListener('click', () => {
+        cmdOverlay.style.display = 'none';
+    });
+    cmdOverlay.addEventListener('click', (e) => {
+        if (e.target === cmdOverlay) cmdOverlay.style.display = 'none';
+    });
+    aqsRefresh();
+    setInterval(aqsRefresh, 15000);
+})();
+</script>
+{% endblock %}

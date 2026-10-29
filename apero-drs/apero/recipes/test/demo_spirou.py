@@ -128,11 +128,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     if mode == 1:
         WLOG(params, '', params['LOG.HEADER'])
-        WLOG(params, '', 'DEMO 1: ACCESSING INPUTS')
+        # log: DEMO 1: ACCESSING INPUTS
+        WLOG(params, '', textentry('40-522-00001'))
         WLOG(params, '', params['LOG.HEADER'])
         # This is how we get parameters directly from user inputs
         # See blank.set_arg and blank.set_kwarg above for user input definitions
-        print('Current inputs:')
+        # log: Current inputs:
+        print(textentry('40-522-00002'))
         for _input in params['INPUTS']:
             print('\t{0} = {1}'.format(_input, params['INPUTS'][_input]))
         # print gap
@@ -143,18 +145,23 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     if mode == 2:
         WLOG(params, '', params['LOG.HEADER'])
-        WLOG(params, '', 'DEMO 2: WLOG')
+        # log: DEMO 2: WLOG
+        WLOG(params, '', textentry('40-522-00003'))
         WLOG(params, '', params['LOG.HEADER'])
         # By default this writes to the screen and log files
-        WLOG(params, '', 'Message types:')
-        WLOG(params, '', '\'\':\tGeneral message')
-        WLOG(params, 'info', '\'info\':\tInfo message')
-        WLOG(params, 'warning', '\'warning\':\tWarning message', sublevel=1)
+        # log: Message types:
+        WLOG(params, '', textentry('40-522-00004'))
+        # log: '':General message
+        WLOG(params, '', textentry('40-522-00005'))
+        # log: 'info':Info message
+        WLOG(params, 'info', textentry('40-522-00006'))
+        # warning: 'warning':Warning message
+        WLOG(params, 'warning', textentry('10-522-00001'), sublevel=1)
         # Note that error messages will end the code
         #    (uncomment below to use)
         # Here we have used raise_exception=False not to end code
-        WLOG(params, 'error', '\'error\':\tError message',
-             raise_exception=False)
+        # error: 'error':Error message
+        WLOG(params, 'error', textentry('09-522-00001'), raise_exception=False)
         # print gap
         print('\n\n\n')
 
@@ -163,34 +170,42 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     if mode == 3:
         WLOG(params, '', params['LOG.HEADER'])
-        WLOG(params, '', 'DEMO 3: Text Entry')
+        # log: DEMO 3: Text Entry
+        WLOG(params, '', textentry('40-522-00007'))
         WLOG(params, '', params['LOG.HEADER'])
 
         # We also have an extensive language database - these messages
         #  use codes that will print in the language of the users choice
         #  (if defined in the language database)
-        wmsg = 'Location of language database: \n\t{0}'
-        WLOG(params, 'info', wmsg.format(demo.get_lang_db_loc()))
-        WLOG(params, '', '\t Database file: language.xls')
+        margs = [demo.get_lang_db_loc()]
+        # log: Location of language database: \n {0}
+        WLOG(params, 'info', textentry('40-522-00028', args=margs))
+        # log: Database file: language.xls
+        WLOG(params, '', textentry('40-522-00008'))
 
         # Any changes to the language database must be updated with a run of the
         # following:
-        wmsg = 'Change to the database must be updated with command: \n\t{0}'
         wargs = ['tools/dev/apero_langdb.py --update']
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
+        # warning: Change to the database must be updated with command: \n {0}
+        WLOG(params, 'warning', textentry('10-522-00005', args=wargs),
+             sublevel=2)
 
         # examples of these codes are as follows:
         wargs = ['SPIROU']
-        WLOG(params, 'info', 'Text Entry examples:')
+        # log: Text Entry examples:
+        WLOG(params, 'info', textentry('40-522-00009'))
+        # log: Listing for: {0}
         WLOG(params, '', textentry('40-005-00001', args=wargs))
         # same as running the following:
-        wmsg = 'Listing for: {0}'
-        WLOG(params, '', wmsg.format(*wargs))
+        # log: Listing for: {0}
+        WLOG(params, '', textentry('40-005-00001', args=wargs))
 
         # but if the user specified french:
         demo.change_lang(params, 'FR')  # only for demo purposes DO NOT USE
+        # log: This is a test message
         WLOG(params, '', textentry('00-000-99999'))
         demo.change_lang(params, 'ENG')  # only for demo purposes DO NOT USE
+        # log: This is a test message
         WLOG(params, '', textentry('00-000-99999'))
 
         # print gap
@@ -228,29 +243,38 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         newparams.set_sources(keys, 'demo_spirou.py.more()')
 
         # printing gives a summary of variables
-        WLOG(params, '', 'ParamDict: print newparams:')
+        # log: ParamDict: print newparams:
+        WLOG(params, '', textentry('40-522-00010'))
         print(newparams)
 
         # ------------------------------------------------------------------
         # there are also some very helpful functionality
         # ------------------------------------------------------------------
         # the info method
-        WLOG(params, '', 'ParamDict: info of newparams[\'CONST1\']')
+        # log: ParamDict: info of newparams['CONST1']
+        WLOG(params, '', textentry('40-522-00011'))
         newparams.info('CONST1')
 
         # the history method
-        WLOG(params, '', 'ParamDict: history of newparams[\'CONST1\']')
+        # log: ParamDict: history of newparams['CONST1']
+        WLOG(params, '', textentry('40-522-00012'))
         newparams.history('CONST1')
         # which is very useful in params where we read constants from multiple
         #   different places
-        WLOG(params, '', 'params PATH.RAW history:')
+        # log: params PATH.RAW history:
+        WLOG(params, '', textentry('40-522-00013'))
         params.history('PATH.RAW')
 
         # the contains function
-        WLOG(params, '', 'ParamDict: newparams contains "VAR"')
-        print('VAR keys = ', newparams.contains('VAR'))
+        # log: ParamDict: newparams contains "VAR"
+        WLOG(params, '', textentry('40-522-00014'))
+        margs = [newparams.contains('VAR')]
+        # log: VAR keys = {0}
+        print(textentry('40-522-00015', args=margs))
         # which is very useful for params
-        print('params DRS_DATA keys = ', params.contains('DRS_DATA'))
+        margs = [params.contains('DRS_DATA')]
+        # log: params DRS_DATA keys = {0}
+        print(textentry('40-522-00016', args=margs))
 
 
     # ----------------------------------------------------------------------
@@ -292,7 +316,9 @@ if __name__ == "__main__":
         # note to access recipe and params from __main__ do the following
         _recipe, _params = main(DEBUG0000=True)
         # simple print statement
-        WLOG(_params, '', 'Welcome to {0}'.format(_params['DRS.PACKAGE']))
+        margs = [_params['DRS.PACKAGE']]
+        # log: Welcome to {0}
+        WLOG(_params, '', textentry('40-522-00017', args=margs))
 
 # =============================================================================
 # End of code

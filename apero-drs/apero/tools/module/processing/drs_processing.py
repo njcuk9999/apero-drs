@@ -206,6 +206,7 @@ class Run:
         # deal with an empty recipe return
         if recipe.name == 'Empty':
             eargs = [self.recipename]
+            # error: No recipe named '{0}'
             raise AperoCodedException(None, '00-007-00001', targs=eargs)
         # else return
         return recipe, mod
@@ -331,6 +332,8 @@ class Run:
         # check whether input directory exists
         if not os.path.exists(input_dir):
             wargs = [input_dir]
+            # warning: Input directory for recipe not found. Pre-run check
+            #     failed. \n Directory = {0}
             WLOG(params, 'warning', textentry('10-503-00008', args=wargs),
                  sublevel=4)
             return False
@@ -341,6 +344,8 @@ class Run:
             # check whether directory exists (if present)
             if not os.path.exists(input_dir):
                 wargs = [self.kwargs['obs_dir'], input_dir]
+                # warning: Night name 'directory' inputted not found. Pre-run
+                #     check failed. \n Night name = {0} \n Directory = {1}
                 WLOG(params, 'warning', textentry('10-503-00009', args=wargs),
                      sublevel=4)
                 return False
@@ -366,6 +371,8 @@ class Run:
                     if not os.path.exists(abspath):
                         # log warning
                         wargs = [argname, abspath]
+                        # text: File not found on disk for argument: {0} \n Path
+                        #     = {1}
                         wmsg = textentry('10-503-00010', args=wargs)
                         WLOG(params, 'warning', wmsg, sublevel=4)
                         return False
@@ -391,6 +398,8 @@ class Run:
                     if not os.path.exists(abspath):
                         # log warning
                         wargs = [kwargname, abspath]
+                        # text: File not found on disk for argument: {0} \n Path
+                        #     = {1}
                         wmsg = textentry('10-503-00010', args=wargs)
                         WLOG(params, 'warning', wmsg, sublevel=4)
                         return False
@@ -485,9 +494,13 @@ def run_process(params: ParamDict, recipe: DrsRecipe,
         if terminate:
             display_errors(params, outlist)
             eargs = [module.name, recipe.name]
+            # error: Internal error in recipe {0}. Controller recipe ({1})
+            #     cannot continue
             raise AperoCodedException(params, '00-001-00043', targs=eargs)
         else:
             eargs = [module.name, recipe.name]
+            # warning: Internal error in recipe {0}. Controller recipe ({1})
+            #     cannot continue
             WLOG(params, 'warning', textentry('00-001-00043', args=eargs),
                  sublevel=6)
     # return outlist
@@ -514,6 +527,7 @@ def generate_skip_table(params: ParamDict, recipe: DrsRecipe):
     :return:
     """
     # log process
+    # log: Generating skip table
     WLOG(params, '', textentry('90-503-00017'))
     # load log database
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
@@ -562,6 +576,7 @@ def generate_skip_table(params: ParamDict, recipe: DrsRecipe):
     skip_table['RUNSTRING'] = arguments
     skip_table['PASSED_QC'] = qc_passed
     # log number of runs found
+    # log: Found {0} previous recipe runs
     WLOG(params, '', textentry('90-503-00018', args=[len(skip_table)]))
     # return skip table
     return skip_table
@@ -670,6 +685,7 @@ def processing_email(params: ParamDict, position: str, name: str,
     # ----------------------------------------------------------------------
     # log sending email
     margs = [position, params['EMAIL_ADDRESS']]
+    # log: Sending {0} mail to {1}
     WLOG(params, 'info', textentry('40-503-00041', args=margs))
     # ----------------------------------------------------------------------
     # deal with no PID
@@ -693,6 +709,7 @@ def processing_email(params: ParamDict, position: str, name: str,
     if position == 'start':
         iname = 'APERO-{0}'.format(instrument)
         sargs = [iname, name, pid]
+        # text: [{0}] {1} has started (PID = {2})
         subject = str(textentry('40-503-00001', args=sargs))
         messages = list(lines)
     # ----------------------------------------------------------------------
@@ -700,6 +717,7 @@ def processing_email(params: ParamDict, position: str, name: str,
     elif position == 'end':
         iname = 'APERO-{0}'.format(instrument)
         sargs = [iname, name, pid]
+        # text: [{0}] {1} has finished (PID = {2})
         subject = str(textentry('40-503-00002', args=sargs))
         messages = list(lines)
     # ----------------------------------------------------------------------
@@ -765,14 +783,14 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
             lines.append(f'id{strkey} = {runstring}')
         # -------------------------------------------------------------------------
         # print that we are writing file
-        msg = 'Writing run strings to file {0}'
         margs = [os.path.abspath(filename)]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Writing run strings to file {0}
+        WLOG(params, 'info', textentry('40-502-00044', args=margs))
     else:
         # print that we are writing file
-        msg = 'Writing no run strings to file {0}'
         margs = [os.path.abspath(filename)]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Writing no run strings to file {0}
+        WLOG(params, 'info', textentry('40-502-00045', args=margs))
         # push a comment saying no runs processed
         lines.append('# No runs processed')
 
@@ -805,6 +823,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             drs_reset.reset_tmp_folders(params, recipe, log=True)
         # print that we are not resetting directory
         else:
+            # log: Not resetting {0} directory.
             WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
     # progress
@@ -818,6 +837,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             drs_reset.reset_reduced_folders(params, log=True)
         # print that we are not resetting directory
         else:
+            # log: Not resetting {0} directory.
             WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
     # progress
@@ -831,6 +851,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             drs_reset.reset_calibdb(params, recipe, log=True)
         # print that we are not resetting directory
         else:
+            # log: Not resetting {0} directory.
             WLOG(params, '', textentry('40-502-00013', args=['Calibration']))
     # ----------------------------------------------------------------------
     # progress
@@ -844,6 +865,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             drs_reset.reset_telludb(params, recipe, log=True)
         # print that we are not resetting directory
         else:
+            # log: Not resetting {0} directory.
             WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
     # progress
@@ -859,6 +881,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             drs_reset.reset_log(params, exclude_files)
         # print that we are not resetting directory
         else:
+            # log: Not resetting {0} directory.
             WLOG(params, '', textentry('40-502-00013', args=['Log']))
     # ----------------------------------------------------------------------
     # progress
@@ -872,6 +895,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             drs_reset.reset_plot(params)
         # print that we are not resetting directory
         else:
+            # log: Not resetting {0} directory.
             WLOG(params, '', textentry('40-502-00013', args=['Plot']))
 
 
@@ -998,9 +1022,9 @@ def get_raw_obs_dirs(params, includelist: List[str] = None,
         base_dirs = list(np.unique(filtered_dirs))
     # -------------------------------------------------------------------------
     # log how many raw directories found
-    msg = 'Found {0} raw observation directories to process'
     margs = [len(base_dirs)]
-    WLOG(params, '', msg.format(*margs))
+    # log: Found {0} raw observation directories to process
+    WLOG(params, '', textentry('40-502-00036', args=margs))
     # return base directories
     return base_dirs
 
@@ -1096,6 +1120,9 @@ def generate_run_list(params: ParamDict, recipe: DrsRecipe,
             #   tempaltes and x many templates found
             if len(current_tstars) > 0:
                 wargs = [len(current_tstars)]
+                # warning: RECAL_TEMPLATES = False. Found {0} templates. Recipes
+                #     requiring templates where templates were found will be
+                #     skipped.
                 WLOG(params, 'warning', textentry('10-503-00023', args=wargs),
                      sublevel=2)
     # need to make sure recal templates is set correctly
@@ -1117,6 +1144,7 @@ def generate_run_list(params: ParamDict, recipe: DrsRecipe,
         # loop around sequences
         for sequence in sequencelist:
             # log progress
+            # log: Processing sequence '{0}'
             WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns, vdict = gen_run_from_seq(params, sequence,
@@ -1162,18 +1190,19 @@ def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
     run_dir = params['PATH.RUN']
     run_file = params['INPUTS']['RUNFILE']
     # print progress
-    msg = 'Verification of {0}'
     margs = [os.path.abspath(os.path.join(run_dir, run_file))]
     WLOG(params, '', params['LOG.HEADER'], colour='magenta')
-    WLOG(params, 'info', msg.format(*margs), colour='magenta')
+    # log: Verification of {0}
+    WLOG(params, 'info', textentry('40-502-00042', args=margs),
+         colour='magenta')
     WLOG(params, '', params['LOG.HEADER'], colour='magenta')
     # -------------------------------------------------------------------------
     # loop around sequences
     for sequence in vdicts.keys():
         # print sequence name
-        msg = '\t Sequence = {0}'
         margs = [sequence]
-        WLOG(params, '', msg.format(*margs))
+        # log: Sequence = {0}
+        WLOG(params, '', textentry('40-502-00046', args=margs))
         WLOG(params, '', params['LOG.HEADER'])
         # print out the used/unused sequences
         for shortname in vdicts[sequence]['used']:
@@ -1181,18 +1210,18 @@ def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
             count = vdicts[sequence]['counts'][shortname]
 
             if not vdicts[sequence]['used'][shortname]:
-                msg = '\t\t {0:30s} not used'
                 margs = [shortname]
-                WLOG(params, 'warning', msg.format(*margs))
+                # warning: {0:30s} not used
+                WLOG(params, 'warning', textentry('10-502-00014', args=margs))
 
             elif count == 0:
-                msg = '\t\t {0:30s} used but no recipes found to be run'
                 margs = [shortname]
-                WLOG(params, 'warning', msg.format(*margs))
+                # warning: {0:30s} used but no recipes found to be run
+                WLOG(params, 'warning', textentry('10-502-00015', args=margs))
             else:
-                msg = '\t\t {0:30s} used (count = {1})'
                 margs = [shortname, count]
-                WLOG(params, '', msg.format(*margs))
+                # log: {0:30s} used (count = {1})
+                WLOG(params, '', textentry('40-502-00058', args=margs))
 
 
 def process_run_list(params: ParamDict, shortname, runlist, group=None):
@@ -1215,6 +1244,7 @@ def process_run_list(params: ParamDict, shortname, runlist, group=None):
     # use pathos to multiprocess
     elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'pathos':
         # log process: Running with N cores
+        # log: Running with {0} cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_pathos(params, shortname, runlist,
@@ -1222,6 +1252,7 @@ def process_run_list(params: ParamDict, shortname, runlist, group=None):
     # use pool to continue parallelization
     elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'pool':
         # log process: Running with N cores
+        # log: Running with {0} cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_pool(params, shortname, runlist, cores=cores,
@@ -1229,6 +1260,7 @@ def process_run_list(params: ParamDict, shortname, runlist, group=None):
     # use Process to continue parallelization
     elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'process':
         # log process: Running with N cores
+        # log: Running with {0} cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process_process(params, shortname, runlist, cores=cores,
@@ -1270,7 +1302,8 @@ def display_timing(params, outlist, ptime):
     # display the timings
     WLOG(params, '', '')
     WLOG(params, '', params['LOG.HEADER'])
-    WLOG(params, '', 'Timings:')
+    # log: Timings:
+    WLOG(params, '', textentry('40-502-00015'))
     WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', '')
     # sort outlist ids
@@ -1283,6 +1316,7 @@ def display_timing(params, outlist, ptime):
         cond2 = outlist[key]['TIMING'] is not None
         if cond1 and cond2:
             wargs = [key, outlist[key]['TIMING']]
+            # log: ID = {0} Time = {1:.3f}
             WLOG(params, '', textentry('40-503-00020', args=wargs))
             WLOG(params, '', '\t\t{0}'.format(outlist[key]['RUNSTRING']),
                  wrap=False)
@@ -1294,8 +1328,11 @@ def display_timing(params, outlist, ptime):
     speed_up = tot_time / ptime
     # add total time
     WLOG(params, '', params['LOG.HEADER'])
+    # log: Cumulative time taken = {0:.3f}
     WLOG(params, 'info', textentry('40-503-00025', args=[tot_time]))
+    # log: Actual time taken = {0:.3f}
     WLOG(params, 'info', textentry('40-503-00033', args=[ptime]))
+    # log: Speed up: {0:.3f} (Number of cores = {1})
     WLOG(params, 'info', textentry('40-503-00034', args=[speed_up, cores]))
     WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', '')
@@ -1305,7 +1342,8 @@ def display_errors(params, outlist):
     # log error title
     WLOG(params, '', '')
     WLOG(params, '', params['LOG.HEADER'])
-    WLOG(params, '', 'Errors:')
+    # log: Errors:
+    WLOG(params, '', textentry('40-502-00016'))
     WLOG(params, '', params['LOG.HEADER'])
     WLOG(params, '', '')
     # sort outlist ids
@@ -1315,6 +1353,7 @@ def display_errors(params, outlist):
         if len(outlist[key]['ERROR']) > 0:
             WLOG(params, '', '', colour='red')
             WLOG(params, '', params['LOG.HEADER'], colour='red')
+            # error: Error found for ID='{0}'
             WLOG(params, 'error', textentry('40-503-00019', args=[key]),
                  raise_exception=False, wrap=False, no_timestamp=True)
             WLOG(params, 'error', '\t{0}'.format(outlist[key]['RUNSTRING']),
@@ -1362,6 +1401,8 @@ def save_stats(params, outlist):
             os.mkdir(save_dir)
         except Exception as e:
             eargs = [save_dir, type(e), e, func_name]
+            # warning: Processing stats: Could not create directory '{0}' \n
+            #     Error {1}: {2} \n Function = {3}
             WLOG(params, 'warning', textentry('10-503-00011', args=eargs),
                  sublevel=4)
             return
@@ -1412,6 +1453,8 @@ def save_stats(params, outlist):
         drs_table.write_table(params, out_fits_table, out_fits_path)
     except Exception as e:
         eargs = [out_fits_path, type(e), e, func_name]
+        # warning: Processing stats: Could not save fits file '{0}' \n Error
+        #     {1}: {2} \n Function = {3}
         WLOG(params, 'warning', textentry('10-503-00012', args=eargs),
              sublevel=4)
 
@@ -1422,6 +1465,8 @@ def save_stats(params, outlist):
                 f.write(value + '\n')
     except Exception as e:
         eargs = [out_txt_path, type(e), e, func_name]
+        # warning: Processing stats: Could not save fits file '{0}' \n Error
+        #     {1}: {2} \n Function = {3}
         WLOG(params, 'warning', textentry('10-503-00012', args=eargs),
              sublevel=4)
 
@@ -1439,6 +1484,9 @@ def generate_run_table(params, recipe, *args, **kwargs):
                 length = len(arg)
             elif len(arg) != length:
                 eargs = ['Arg {0}'.format(it), length, func_name]
+                # error: Run table generation error: argument '{0}' was a list
+                #     but not the correct length (needs to be {1}) \n Function =
+                #     {2}
                 raise AperoCodedException(params, '00-503-00010', targs=eargs)
     # loop around keyword arguments and identify list of arguments
     for kwarg in kwargs:
@@ -1451,6 +1499,9 @@ def generate_run_table(params, recipe, *args, **kwargs):
                 # log error we need all lists to have the same number of
                 #    elements
                 eargs = [kwarg, length, func_name]
+                # error: Run table generation error: argument '{0}' was a list
+                #     but not the correct length (needs to be {1}) \n Function =
+                #     {2}
                 raise AperoCodedException(params, '00-503-00010', targs=eargs)
     # length could still be None should be 1
     if length is None:
@@ -1524,6 +1575,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     skip_storage = dict()
     # -------------------------------------------------------------------------
     # log progress: Validating ids
+    # log: Validating all runs ({0} run ids found)
     WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
     # -------------------------------------------------------------------------
     # deal with a single core (no multiprocessing)
@@ -1577,15 +1629,14 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
                                                skiptable)
             else:
                 # TODO: Move to language database
-                emsg = 'Unknown multiprocessing type: {0}'
                 eargs = [params['TOOLS.REPROCESS.MP_TYPE_VAL']]
-                WLOG(params, 'error', emsg.format(*eargs))
+                # error: Unknown multiprocessing type: {0}
+                WLOG(params, 'error', textentry('09-502-00002', args=eargs))
                 continue
         # ---------------------------------------------------------------------
         # load pickle files of runs
-        # TODO: Add to language database
-        msg = 'Loading run objects from pickles'
-        WLOG(params, 'info', msg)
+        # log: Loading run objects from pickles
+        WLOG(params, 'info', textentry('40-502-00047'))
         # add to pickle files
         prefix = 'RunObject_{0}'.format(params['PID'])
         rdict = drs_pickle.get_pickle(params, prefix, remove=True)
@@ -1593,10 +1644,9 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     # recreate the run objects list from the return dict
     #    sorted by key
     # print progress
-    # TODO: Add to language database
-    msg = 'Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.'
     margs = [len(runlist), len(rdict), len(runlist) - len(rdict)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Analyzed {0} runs. Validated {1} runs. Skipped {2} runs.
+    WLOG(params, 'info', textentry('40-502-00043', args=margs))
     # sort the rdict into a run_object list
     sorted_run = np.argsort(list(rdict.keys()))
     run_values = list(rdict.values())
@@ -1661,6 +1711,7 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
     if runobj.shortname in params['RUN_RECIPES']:
         # if user has set the runname to False then we want to skip
         if not params['RUN_RECIPES'][runobj.shortname]:
+            # text: User set run to 'False'
             return True, textentry('40-503-00007')
     # ----------------------------------------------------------------------
     # deal with skip table being empty
@@ -1711,6 +1762,7 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
         else:
             # debug log
             dargs = [f'SKIP_RECIPES[{runobj.shortname}]']
+            # debug: Skip Check: not skipping as {0} = False
             WLOG(params, 'debug', textentry('90-503-00004', args=dargs))
             # return False and no reason
             return False, None
@@ -1719,6 +1771,7 @@ def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
         skip_name = f'SKIP_RECIPES[{runobj.shortname}]'
         # debug log
         dargs = [skip_name]
+        # log: Skip Check: not skipping as {0} not in params (unset)
         WLOG(params, '', textentry('90-503-00005', args=dargs))
         # return False and no reason
         return False, '{0} not present'.format(skip_name)
@@ -1812,23 +1865,26 @@ def gen_run_from_seq(params: ParamDict, sequence,
         # test whether we need to stop here
         if trigger_cond and idb_len == 0:
             # display message that we stopped here as no files were found
-            wmsg = 'No files found for trigger run'
-            WLOG(params, 'info', wmsg)
+            # log: No files found for trigger run
+            WLOG(params, 'info', textentry('40-502-00039'))
             # stop processing recipes
             return []
     # deal with empty database (after conditions)
     if idb_len == 0:
         eargs = [ref_condition, func_name]
+        # warning: No rows in database (after reference conditions applied) \n
+        #     Condition = {0} \n Function = {1}
         WLOG(params, 'warning', '00-503-00018', targs=eargs, sublevel=8)
         # get response for how to continue (skip or exit)
         response = prompt(params)
         if not response:
-            # TODO: Add to language database
-            WLOG(params, 'warning', 'User chose to exit', sublevel=8)
+            # warning: User chose to exit
+            WLOG(params, 'warning', textentry('10-502-00003'), sublevel=8)
             raise SystemExit()
 
     # log that we are processing recipes
     if logmsg:
+        # log: processing recipes for {0} raw data entries
         WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
     # ------------------------------------------------------------------
     # if in verification mode add all RUN
@@ -1853,9 +1909,9 @@ def gen_run_from_seq(params: ParamDict, sequence,
     rmask, creject_list = pconst.REJECTION(reject_list,
                                            dataframe['KW_IDENTIFIER'])
     # print how many files were rejected
-    msg = 'Rejected {0}/{1} files [using rejection database len={2}]'
     margs = [np.sum(rmask), len(dataframe), len(creject_list)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Rejected {0}/{1} files [using rejection database len={2}]
+    WLOG(params, 'info', textentry('40-502-00037', args=margs))
     # apply the rmask to dataframe - we don't want any of these files from this
     # point on
     dataframe = dataframe[~rmask]
@@ -1876,6 +1932,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
 
                 if not verify:
                     wargs = [srecipe.name, srecipe.shortname]
+                    # log: skipping recipe '{0}' (RUN_{1}=False)
                     WLOG(params, '', textentry('40-503-00021', args=wargs),
                          colour='yellow')
                 # store that we are not using this runname
@@ -1888,11 +1945,13 @@ def gen_run_from_seq(params: ParamDict, sequence,
         if srecipe.recipe_type == 'recipe':
             if srecipe.shortname not in params['RUN_RECIPES']:
                 wargs = [srecipe.name, srecipe.shortname]
+                # log: skipping recipe '{0}' (RUN_{1} missing from ini file)
                 WLOG(params, '', textentry('40-503-00045', args=wargs),
                      colour='yellow')
                 continue
         # print progress
         wargs = [srecipe.name, srecipe.shortname]
+        # log: processing recipe '{0}' ({1})
         WLOG(params, '', textentry('40-503-00012', args=wargs))
         # add params to srecipe
         srecipe.params = params
@@ -1909,6 +1968,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
                 sdataframe = sdataframe[~dmask]
                 # print that this recipe is skipping templates
                 wargs = [srecipe.shortname]
+                # warning: recipe = {0} skipping runs with known templates.
                 WLOG(params, 'warning', textentry('10-503-00024', args=wargs))
         # ------------------------------------------------------------------
         # deal with directory filters (reference observation directory and
@@ -1924,6 +1984,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
             # check if reference observation directory is valid (in table)
             if obs_dir not in obs_dirs:
                 wargs = [obs_dir]
+                # warning: Master nightname = ‘{0}’ invalid. Skipping.
                 WLOG(params, 'warning', textentry('10-503-00004', args=wargs),
                      sublevel=8)
                 # get response for how to continue (skip or exit)
@@ -1931,8 +1992,8 @@ def gen_run_from_seq(params: ParamDict, sequence,
                 if response:
                     continue
                 else:
-                    # TODO: Add to language database
-                    WLOG(params, 'error', 'User chose to exit',
+                    # error: User chose to exit
+                    WLOG(params, 'error', textentry('09-502-00001'),
                          raise_exception=False)
                     raise SystemExit()
             # get dataframe mask
@@ -1958,6 +2019,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
         # deal with empty database (after conditions)
         if idb_len == 0:
             wargs = [obs_dir]
+            # warning: No files with nightname = {0}. Skipping.
             WLOG(params, 'warning', textentry('10-503-00003', args=wargs),
                  sublevel=8)
             # get response for how to continue (skip or exit)
@@ -1965,8 +2027,8 @@ def gen_run_from_seq(params: ParamDict, sequence,
             if response:
                 continue
             else:
-                # TODO: Add to language database
-                WLOG(params, 'error', 'User chose to exit',
+                # error: User chose to exit
+                WLOG(params, 'error', textentry('09-502-00001'),
                      raise_exception=False)
                 raise SystemExit()
         # ------------------------------------------------------------------
@@ -1988,6 +2050,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
         # Log message: Added {0} runs
         WLOG(params, '', textentry('40-503-00042', args=[len(sruns)]))
         if not verify:
+            # log: Added {0} runs
             WLOG(params, '', textentry('40-503-00042', args=[n_runs]))
         # store for verification
         vdicts['counts'][runname] = n_runs
@@ -2002,6 +2065,8 @@ def gen_run_from_seq(params: ParamDict, sequence,
             if trigger_cond and len(sruns) == 0:
                 # display message that we stopped here as no files were found
                 wargs = [srecipe.name]
+                # log: Trigger mode: Not enough files to continue. Stopping at
+                #     recipe = {0}
                 WLOG(params, 'info', textentry('40-503-00028', args=wargs))
                 # stop processing recipes
                 break
@@ -2103,19 +2168,24 @@ def prompt(params, message: str = None):
 
     # deal with no message - use deafult message
     if message is None:
+        # text: Continue? [Y]es or [N]o:
         msg = textentry('40-503-00022')
     else:
         msg = textentry(message)
     # if in non-interactive mode then return True
     if not sys.stdin.isatty():
-        emsg = ('Non-interactive mode - cannot ask "{0}"'
-               '\n\nExiting (see warning above)')
-        WLOG(params, 'warning', emsg.format(msg), sublevel=8)
+        wargs = [msg]
+        # warning: Non-interactive mode - cannot ask "{0}" \n \n Exiting (see
+        #     warning above)
+        WLOG(params, 'warning', textentry('10-502-00005', args=wargs),
+             sublevel=8)
         return 0
     # prompt the user for response
     uinput = input(msg)
     # get the True/False responses
+    # text: Y
     true = textentry('40-503-00023')
+    # text: N
     false = textentry('40-503-00024')
 
     if true.upper() in uinput.upper():
@@ -2204,6 +2274,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
     if not params['USE_ENGINEERING']:
         # log that we are checking engineering nights
         if log:
+            # log: Calculating which nights have no object files
             WLOG(params, '', textentry('40-503-00035'))
         # get sub condition for engineering nights
         subcondition = _remove_engineering(params, findexdbm, condition)
@@ -2213,14 +2284,15 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
+            # warning: No files after removing engineering data. Skipping.
             WLOG(params, 'warning', textentry('10-503-00016'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt(params)
             if response:
                 pass
             else:
-                # TODO: Add to language database
-                WLOG(params, 'error', 'User chose to exit',
+                # error: User chose to exit
+                WLOG(params, 'error', textentry('09-502-00001'),
                      raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
@@ -2236,19 +2308,21 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         # log blacklist
         if log:
             wargs = [' ,'.join(exclude_obs_dirs)]
+            # log: Black listing directories: {0}
             WLOG(params, '', textentry('40-503-00026', args=wargs))
         # get length of database at this point
         idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
+            # warning: No files after blacklisting. Skipping.
             WLOG(params, 'warning', textentry('10-503-00006'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt(params)
             if response:
                 pass
             else:
-                # TODO: Add to language database
-                WLOG(params, 'error', 'User chose to exit',
+                # error: User chose to exit
+                WLOG(params, 'error', textentry('09-502-00001'),
                      raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
@@ -2265,19 +2339,21 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         # log whitelist
         if log:
             wargs = [', '.join(include_obs_dirs)]
+            # log: White listing directories: {0}
             WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
         idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
+            # warning: No files after whitelisting. Skipping.
             WLOG(params, 'warning', textentry('10-503-00007'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt(params)
             if response:
                 pass
             else:
-                # TODO: Add to language database
-                WLOG(params, 'error', 'User chose to exit',
+                # error: User chose to exit
+                WLOG(params, 'error', textentry('09-502-00001'),
                      raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
@@ -2292,19 +2368,21 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         # log pi name
         if log:
             wargs = [' ,'.join(pi_names)]
+            # log: PI Names kept: {0}
             WLOG(params, '', textentry('40-503-00029', args=wargs))
         # get length of database at this point
         idb_len = findexdbm.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
+            # warning: No files after pi name filter. Skipping.
             WLOG(params, 'warning', textentry('10-503-00015'), sublevel=8)
             # get response for how to continue (skip or exit)
             response = prompt(params)
             if response:
                 pass
             else:
-                # TODO: Add to language database
-                WLOG(params, 'error', 'User chose to exit',
+                # error: User chose to exit
+                WLOG(params, 'error', textentry('09-502-00001'),
                      raise_exception=False)
                 raise SystemExit()
     # ------------------------------------------------------------------
@@ -2433,8 +2511,9 @@ def _linear_process(params: ParamDict, runlist: List[Run],
         # deal with an event set -- skip
         # --------------------------------------------------------------
         elif event is not None and event.is_set():
-            emsg = 'LINEAR PROCESS: Event set - skipping ID{0:05d}'
-            WLOG(params, 'debug', emsg.format(priority))
+            dargs = [priority]
+            # debug: LINEAR PROCESS: Event set - skipping ID{0:05d}
+            WLOG(params, 'debug', textentry('90-502-00002', args=dargs))
             # deal with returns
             pp = dict()
             pp['PID'] = None
@@ -2544,6 +2623,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:
+                # text: Expected error occurred in run '{0}'
                 emsgs = [textentry('00-503-00005', args=[priority])]
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)
@@ -2568,6 +2648,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
                     string_traceback = traceback.format_exc()
                 except Exception as _:
                     string_traceback = ''
+                # text: Unexpected error occurred in run '{0}'
                 emsgs = [textentry('00-503-00004', args=[priority])]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
@@ -2591,6 +2672,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
                     string_traceback = traceback.format_exc()
                 except Exception as _:
                     string_traceback = ''
+                # text: System exit occurred in run '{0}'
                 emsgs = [textentry('00-503-00015', args=[priority])]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
@@ -2618,6 +2700,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
         if stop_at_exception and not finished:
             if event is not None:
                 wargs = [run_item.recipename]
+                # debug: Stop at Exception triggered for recipe: {0}
                 WLOG(params, 'debug', textentry('90-503-00008', args=wargs),
                      sublevel=6)
                 event.set()
@@ -2872,8 +2955,10 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # print out is too heavy for multiprocessing
     if cores == 1:
         WLOG(params, '', params['LOG.HEADER'])
+        # log: Validating run {0} ({1} of {2})
         WLOG(params, '', textentry('40-503-00004', args=wargs))
         WLOG(params, '', params['LOG.HEADER'])
+        # log: {0}
         WLOG(params, '', textentry('40-503-00013', args=[run_item]))
     # create run object
     run_object = Run(params, indexdb, run_item, mod=recipemod,
@@ -2887,9 +2972,9 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # some recipes should not be skipped even if they meet skip criteria
     if input_recipe.never_skip:
         skip = False
-        msg = 'Run {0} not skipped as recipe set to never skip [{1}] '
         margs = [runid, run_object.runstring]
-        WLOG(params, 'warning', msg.format(*margs))
+        # warning: Run {0} not skipped as recipe set to never skip [{1}]
+        WLOG(params, 'warning', textentry('10-502-00013', args=margs))
     # deal with RECAL_TEMPLATES = True (don't skip if template required)
     if skip:
         # run condition is based on 1. template flagged as required
@@ -2899,9 +2984,9 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
         # warn user that we wont skip target
         if run_cond:
             skip = False
-            msg = 'Run {0} not skipped as RECAL_TEMPLATE_IF_EXISTS=True [{1}] '
             margs = [runid, run_object.runstring]
-            WLOG(params, '', msg.format(*margs))
+            # log: Run {0} not skipped as RECAL_TEMPLATE_IF_EXISTS=True [{1}]
+            WLOG(params, '', textentry('40-502-00048', args=margs))
     # ---------------------------------------------------------------------
     # deal with passing debug
     if params['GLOBAL.DEBUG'] > 0:
@@ -2926,12 +3011,12 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
         # log that we have validated run
         if cores == 1:
             wargs = [runid]
+            # log: run {0} validated
             WLOG(params, '', textentry('40-503-00005', args=wargs))
         else:
-            # TODO: Add to language database
-            msg = 'Run {0} validated [{1}]'
             margs = [runid, run_object.runstring]
-            WLOG(params, '', msg.format(*margs))
+            # log: Run {0} validated [{1}]
+            WLOG(params, '', textentry('40-502-00049', args=margs))
         # add to pickle files
         if not return_run:
             prefix = 'RunObject_{0}'.format(params['PID'])
@@ -2944,13 +3029,14 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
         # log that we have skipped run
         wargs = [runid, reason]
         if cores == 1:
+            # log: Skipped run {0} \n {1}
             WLOG(params, '', textentry('40-503-00006', args=wargs),
                  colour='yellow')
         else:
-            # TODO: Add to language database
-            msg = 'Run {0} skipped [{1}] {2}'
             margs = [runid, run_object.runstring, reason]
-            WLOG(params, '', msg.format(*margs), colour='yellow')
+            # log: Run {0} skipped [{1}] {2}
+            WLOG(params, '', textentry('40-502-00050', args=margs),
+                 colour='yellow')
 
 
 def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
@@ -3162,6 +3248,7 @@ def _linear_findex(params: ParamDict, block_kind: str, shortname: str,
     findexdbm = FileIndexDatabase(params, shortname)
     findexdbm.load_db()
     # log block update
+    # text: Updating index database with new {0} files
     WLOG(params, '', textentry('40-503-00044', args=[block_kind]) + job_msg)
     # update index database for block kind
     drs_utils.update_index_db(params, block_kind=block_kind,
@@ -3310,6 +3397,7 @@ def _linear_headerfix(params, obs_dirs, shortname,
     findexdbm.load_db()
     # fix the header data (object name, dprtype, mjdmid and
     #     trg_type etc)
+    # text: Updating database with header fixes
     WLOG(params, '', textentry('40-503-00043') + job_msg)
     findexdbm.update_header_fix(objdbm=objdbm, obs_dirs=obs_dirs,
                                 job_msg=job_msg)
@@ -3483,6 +3571,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     # debug log the number of files found
     idb_len = len(sdataframe)
     dargs = [func_name, idb_len]
+    # debug: For {0} using {1} file(s)
     WLOG(params, 'debug', textentry('90-503-00011', args=dargs))
     # loop around arguments
     for argname in args:
@@ -3505,6 +3594,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # add sub-dictionary for each drs file
         filedict[argname] = OrderedDict()
         # debug log: the argument being scanned
+        # debug: Processing argument = {0}
         WLOG(params, 'debug', textentry('90-503-00012', args=[argname]))
         # get drs file instances
         drsfiles = arg.files
@@ -3570,6 +3660,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             drsfile.params = params
             # debug log: the file being tested
             dargs = [drsfile.name]
+            # debug: DrsFile = {0}
             WLOG(params, 'debug', textentry('90-503-00013', args=dargs))
             # define storage (if not already defined)
             cond1 = drsfile.name not in filedict[argname]
@@ -3601,6 +3692,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                     valid_infiles.append(None)
                     valid_outfiles.append(None)
             # debug log the number of valid files
+            # debug: Number of valid files = {0}
             WLOG(params, 'debug', textentry('90-503-00014', args=[valid_num]))
             # add outfiles to table
             ftable['OUT'] = valid_outfiles
@@ -4042,12 +4134,11 @@ def check_minimum_number(params: ParamDict, recipe: DrsRecipe,
                 if len(runarg[filearg]) < minimum_files[filearg]:
                     good = False
                     # log debug message
-                    # TODO: Add to language db
-                    dmsg = ('\tArg {0} Row [{1}]: Minimum number of files not '
-                            'met \n\t\t Found {2}, require {3}')
                     dargs = [filearg, r_it, runarg[filearg],
                              minimum_files[filearg]]
-                    WLOG(params, 'debug', dmsg.format(*dargs))
+                    # debug: Arg {0} Row [{1}]: Minimum number of files not met
+                    #     \n Found {2}, require {3}
+                    WLOG(params, 'debug', textentry('90-502-00001', args=dargs))
                     # add to skipped
                     if filearg in skipped:
                         skipped[filearg] += 1
@@ -4062,11 +4153,10 @@ def check_minimum_number(params: ParamDict, recipe: DrsRecipe,
         # clear printer
         Printer(None, None, '')
         # print warning message
-        # TODO: Add to language db
-        wmsg = ('\t\tSkipped {0} runs due to minimum file requirements '
-                '(TRIGGER_RUN=True)')
         wargs = [len(runargs) - len(new_runargs)]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        # warning: Skipped {0} runs due to minimum file requirements
+        #     (TRIGGER_RUN=True)
+        WLOG(params, 'warning', textentry('10-502-00006', args=wargs))
         # print number of file arguments skipped
         for filearg in skipped:
             wargs = [filearg, skipped[filearg]]
@@ -4075,9 +4165,8 @@ def check_minimum_number(params: ParamDict, recipe: DrsRecipe,
         # clear printer
         Printer(None, None, '')
         # print none skipped
-        # TODO: Add to language db
-        msg = '\t\tTRIGGER_RUN=True all files meet minimum file requirements'
-        WLOG(params, '', msg)
+        # log: TRIGGER_RUN=True all files meet minimum file requirements
+        WLOG(params, '', textentry('40-502-00038'))
     # -------------------------------------------------------------------------
     # return good runargs
     return new_runargs
@@ -4346,6 +4435,7 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     # set function name
     func_name = f'{__NAME__}.get_non_telluric_stars()'
     # add to debug log
+    # debug: Finding all non-telluric star objects
     WLOG(params, 'debug', textentry('90-503-00015'))
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
@@ -4364,14 +4454,16 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     for objname in all_objects:
         # this should happen and should flag a warning with the user
         if not isinstance(objname, str):
-            wmsg = '{0}: Object name not string: {1}'
             wargs = [func_name, objname]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=8)
+            # warning: {0}: Object name not string: {1}
+            WLOG(params, 'warning', textentry('10-502-00008', args=wargs),
+                 sublevel=8)
             continue
         # do not add telluric stars
         if objname not in tstars:
             other_objects.append(objname)
     # add to debug log
+    # debug: Found {0} objects
     WLOG(params, 'debug', textentry('90-503-00016', args=[len(other_objects)]))
     # return other objects
     return list(np.sort(other_objects))
@@ -4380,6 +4472,7 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
 def get_recipe_module(params: ParamDict, logmsg: bool = True, **kwargs):
     # log progress: loading recipe module files
     if logmsg:
+        # log: Loading recipe module files...
         WLOG(params, '', textentry('40-503-00014'))
     # need to update filemod and recipe mod
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -4407,6 +4500,10 @@ def _check_runtable(params, runtable, recipemod):
         if program not in recipelist:
             # log error
             eargs = [program, params['OBS.INSTRUMENT'], func_name]
+            # error: Run table generation error: recipe '{0}' is not valid for
+            #     instrument '{1}'. \n Please check instruments: \n - recipe
+            #     definitions \n - 'recipes' list \n - sequences definitions \n
+            #     - 'sequences' list. \n Function = {2}
             raise AperoCodedException(params, '00-503-00011', targs=eargs)
 
 
@@ -4445,9 +4542,10 @@ def _find_special_targets(params: ParamDict, pconst,
         # flag for stopping here
         stop_here = False
         # print warning
-        wmsg = 'Could not find all objects from {0} in astrometric database.'
         wargs = [special_name]
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+        # warning: Could not find all objects from {0} in astrometric database.
+        WLOG(params, 'warning', textentry('10-502-00007', args=wargs),
+             sublevel=1)
         # Ask the user for each missing target whether they wish to use it
         for missing_obj in missing_list:
             # ask user whether they wish to use this object
@@ -4577,6 +4675,8 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
         else:
             # log error
             eargs = [key, value, srecipe.name, func_name]
+            # error: Filter error: Filter {0} = '{1}' not valid for recipe {2}
+            #     \n Function = {3}
             raise AperoCodedException(params, '00-503-00017', targs=eargs)
     # -------------------------------------------------------------------------
     # add basic drprtpye filters (from args/kwargs with file arguments)
@@ -4744,6 +4844,7 @@ def _group_progress(params, g_it, grouplist, groupname):
     # log
     WLOG(params, 'info', '', colour='magenta')
     WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+    # log: {0} GROUP {1}/{2} ({3})
     WLOG(params, 'info', textentry('40-503-00018', args=wargs),
          colour='magenta')
     WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -4839,6 +4940,8 @@ def _remove_engineering(params, indexdb, condition):
     # log that we rejected directories
     if len(rejected_dirs) > 0:
         # log warning message about rejected directories
+        # text: Remove Engineering Nights: Directory {0} was removed - no OBJECT
+        #     type found. Set "ENGINEERING=True" to include this directory.
         wmsg = textentry('10-503-00014', args=[', '.join(rejected_dirs)])
         WLOG(params, 'warning', wmsg, sublevel=2)
     # return condition

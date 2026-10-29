@@ -88,14 +88,16 @@ def kill(params: ParamDict, timeout: int = 60):
         cargs = [dbm.dbuser, dbm.dbname, timeout]
         condition = 'USER="{0}" AND DB="{1}" AND TIME > {2}'.format(*cargs)
         # log condition
-        WLOG(params, '', 'Condition')
+        WLOG(params, '', textentry('40-506-00015'))
         WLOG(params, '', '\t' + condition)
         # get all processes that were started by user
         table = database.get('*', condition=condition, return_pandas=True)
         # get ids from table
         ids = table['ID'].to_list()
         # log how many ids found
-        WLOG(params, '', 'Found {0} processes'.format(len(ids)))
+        margs = [len(ids)]
+        # log: Found {0} processes
+        WLOG(params, '', textentry('40-506-00016', args=margs))
         # try to kill processes
         for _id in ids:
             # set up command
@@ -141,6 +143,7 @@ def export_database(params: ParamDict, recipe: DrsRecipe,
     else:
         # log error: Argument Error: EXPORTDB must be
         eargs = [' or '.join(apero_base.DATABASE_NAMES)]
+        # error: Argument Error: --exportdb must be {0}
         raise AperoCodedException(params, '09-506-00001', targs=eargs)
     # -------------------------------------------------------------------
     # load database
@@ -156,6 +159,7 @@ def export_database(params: ParamDict, recipe: DrsRecipe,
     df = db.database.get('*', return_pandas=True)
     # -------------------------------------------------------------------
     # print that we are saving csv file
+    # log: csv file saved to: {0}
     WLOG(params, '', textentry('40-507-00001', args=[outfilename]))
     # save to csv file
     df.to_csv(outfilename)
@@ -188,6 +192,8 @@ def import_database(params: ParamDict, recipe: DrsRecipe,
     if joinmode not in ['append', 'replace']:
         # log error: Join mode = "{0}" is invalid. Must be either "append"
         #            or "replace"
+        # error: Argument Error: Join mode = '{0}'. Must be either 'append' or
+        #     'replace'
         raise AperoCodedException(params, '09-506-00004', targs=[joinmode])
     # -------------------------------------------------------------------
     # deal with calibration database
@@ -197,6 +203,7 @@ def import_database(params: ParamDict, recipe: DrsRecipe,
     else:
         # log error Argument Error: EXPORTDB must be {0}
         eargs = [' or '.join(apero_base.DATABASE_NAMES)]
+        # error: Argument Error: --importdb must be {0}
         raise AperoCodedException(params, '09-506-00003', targs=eargs)
     # -------------------------------------------------------------------
     # load database
@@ -214,6 +221,7 @@ def import_database(params: ParamDict, recipe: DrsRecipe,
     # load csv file
     # -------------------------------------------------------------------
     # print that we are saving csv file
+    # log: Reading csv file: {0}
     WLOG(params, '', textentry('40-507-00002', args=[infilename]))
     # load csv file into pandas table
     df = pd.read_csv(infilename)
@@ -222,8 +230,10 @@ def import_database(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------
     # print log
     if joinmode == 'replace':
+        # text: Deleting database and replacing with csv data
         wmsg = textentry('40-507-00003')
     else:
+        # text: Appending csv data to end of database
         wmsg = textentry('40-507-00004')
     # log
     WLOG(params, '', wmsg)
@@ -334,14 +344,16 @@ def create_calibration_database(params: ParamDict, pconst: Instrument,
         calibdb.backup()
         calibdb.delete_table(calibdb.tablename)
         if verbose:
-            WLOG(params, '', 'Deleted calibration database')
+            # log: Deleted calibration database
+            WLOG(params, '', textentry('40-506-00022'))
     # add main table
     calibdb.add_table(calibdb.tablename,
                       columns=cdb_cols.columns,
                       indexes=cdb_cols.indexes,
                       uniques=cdb_cols.uniques)
     if verbose:
-        WLOG(params, '', 'Created calibration database')
+        # log: Created calibration database
+        WLOG(params, '', textentry('40-506-00017'))
     # -------------------------------------------------------------------------
     return calibdb
 
@@ -380,14 +392,16 @@ def create_telluric_database(params: ParamDict, pconst: Instrument,
         telludb.backup()
         telludb.delete_table(telludb.tablename)
         if verbose:
-            WLOG(params, '', 'Deleted telluric database')
+            # log: Deleted telluric database
+            WLOG(params, '', textentry('40-506-00023'))
     # add main table
     telludb.add_table(telludb.tablename,
                       columns=tdb_cols.columns,
                       indexes=tdb_cols.indexes,
                       uniques=tdb_cols.uniques)
     if verbose:
-        WLOG(params, '', 'Created telluric database')
+        # log: Created telluric database
+        WLOG(params, '', textentry('40-506-00018'))
     # ---------------------------------------------------------------------
     return telludb
 
@@ -423,14 +437,16 @@ def create_fileindex_database(params: ParamDict, pconst: Instrument,
         indexdb.backup()
         indexdb.delete_table(indexdb.tablename)
         if verbose:
-            WLOG(params, '', 'Deleted file index database')
+            # log: Deleted file index database
+            WLOG(params, '', textentry('40-506-00024'))
     # add main table
     indexdb.add_table(indexdb.tablename,
                       columns=idb_cols.columns,
                       indexes=idb_cols.indexes,
                       uniques=idb_cols.uniques)
     if verbose:
-        WLOG(params, '', 'Created file index database')
+        # log: Created file index database
+        WLOG(params, '', textentry('40-506-00019'))
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -466,14 +482,16 @@ def create_log_database(params: ParamDict, pconst: Instrument,
         logdb.backup()
         logdb.delete_table(logdb.tablename)
         if verbose:
-            WLOG(params, '', 'Deleted recipe log database')
+            # log: Deleted recipe log database
+            WLOG(params, '', textentry('40-506-00025'))
     # add main table
     logdb.add_table(logdb.tablename,
                     columns=ldb_cols.columns,
                     indexes=ldb_cols.indexes,
                     uniques=ldb_cols.uniques)
     if verbose:
-        WLOG(params, '', 'Created recipe log database')
+        # log: Created recipe log database
+        WLOG(params, '', textentry('40-506-00020'))
     # -------------------------------------------------------------------------
     return logdb
 
@@ -506,8 +524,8 @@ def create_object_database(params: ParamDict, pconst: Instrument,
     # ensure the on-disk directory exists
     objectdbm._ensure_loaded()
     if verbose:
-        WLOG(params, '', 'Astrometric database is yaml-backed (no SQL '
-             'table to create)')
+        # log: Astrometric database is yaml-backed (no SQL table to create)
+        WLOG(params, '', textentry('40-506-00021'))
     # ---------------------------------------------------------------------
     # validate yaml-backed archive readability
     validate_astrometric_yaml_archive(params, shortname='MAN_DB',
@@ -597,15 +615,15 @@ def validate_astrometric_yaml_archive(params: ParamDict,
     valid = total - invalid
     # log summary and fail on invalid entries
     if log:
-        msg = 'Astrometric yaml validation: total={0} valid={1} invalid={2}'
-        WLOG(params, 'info', msg.format(total, valid, invalid))
+        margs = [total, valid, invalid]
+        # log: Astrometric yaml validation: total={0} valid={1} invalid={2}
+        WLOG(params, 'info', textentry('40-506-00031', args=margs))
     if invalid > 0:
         yfile, etype, emsg = bad_files[0]
         eargs = [yfile, etype, emsg]
-        full = ('Invalid astrometric yaml entry in {0} (error {1}: {2}). '
-                'Fix yaml files under DRS_DATA_ASSETS/astrometrics.')
-        raise AperoCodedException(params, message=full.format(*eargs),
-                                  targs=eargs)
+        # error: Invalid astrometric yaml entry in {0} (error {1}: {2}). Fix
+        #     yaml files under DRS_DATA_ASSETS/astrometrics.
+        raise AperoCodedException(params, '09-506-00005', targs=eargs)
     return dict(total=total, valid=valid, invalid=invalid)
 
 
@@ -638,15 +656,21 @@ def create_reject_database(params: ParamDict, pconst: Instrument,
     if not os.path.isdir(csv_dir):
         os.makedirs(csv_dir, exist_ok=True)
         if verbose:
-            WLOG(params, '', 'Created reject directory: {0}'.format(csv_dir))
+            margs = [csv_dir]
+            # log: Created reject directory: {0}
+            WLOG(params, '', textentry('40-506-00026', args=margs))
     if not os.path.isfile(csv_path):
         pd.DataFrame(columns=drs_rejection.CSV_COLUMNS).to_csv(
             csv_path, index=False)
         if verbose:
-            WLOG(params, '', 'Created empty reject CSV: {0}'.format(csv_path))
+            margs = [csv_path]
+            # log: Created empty reject CSV: {0}
+            WLOG(params, '', textentry('40-506-00027', args=margs))
     else:
         if verbose:
-            WLOG(params, '', 'Reject CSV already exists: {0}'.format(csv_path))
+            margs = [csv_path]
+            # log: Reject CSV already exists: {0}
+            WLOG(params, '', textentry('40-506-00028', args=margs))
     # warm the cache
     rejectdbm.load_db()
     return rejectdbm
@@ -681,6 +705,7 @@ def update_reject_database(params: ParamDict, log: bool = True) -> None:
     :return: None
     """
     if log:
+        # log: Updating reject database (from google sheets)
         WLOG(params, 'info', textentry('40-503-00046'))
     rejectdbm = drs_rejection.RejectDatabase(params, 'MAN_DB')
     # force a fresh read from disk
@@ -698,6 +723,7 @@ def get_reject_database(params: ParamDict,
              RV, USED, COMMENT
     """
     if log:
+        # log: Updating reject database (from google sheets)
         WLOG(params, 'info', textentry('40-503-00046'))
     rejectdbm = drs_rejection.RejectDatabase(params, 'MAN_DB')
     rejectdbm.load_db()
@@ -725,7 +751,9 @@ def reset_db_pending(params):
         # walk around the directory and delete all files
         for root, dirs, files in os.walk(db_pend):
             for file in files:
-                print('Removing file: {0}'.format(os.path.join(root, file)))
+                margs = [os.path.join(root, file)]
+                # log: Removing file: {0}
+                print(textentry('40-506-00029', args=margs))
                 os.remove(os.path.join(root, file))
         # finally clean all sub-directories
         shutil.rmtree(db_pend)

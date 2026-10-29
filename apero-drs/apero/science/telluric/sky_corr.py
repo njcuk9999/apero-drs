@@ -119,12 +119,11 @@ def find_night_skyfiles(params: ParamDict, fiber: Union[str, None],
     # deal with no science files
     if len(sky_files) == 0:
         # TODO: Add to language database
-        emsg = ('No night SKY files found (KW_OUTPUT={0} KW_FIBER={1})'
-                '\n\tFunction = {2}')
         eargs = [filetype, fiber, func_name]
         # log error
-        raise AperoCodedException(params, message=emsg.format(*eargs), 
-                                  targs=eargs)
+        # error: No night SKY files found (KW_OUTPUT={0} KW_FIBER={1}) \n
+        #     Function = {2}
+        raise AperoCodedException(params, '09-019-00011', targs=eargs)
     else:
         sky_files = list(np.sort(sky_files))
     # Get filetype definition
@@ -343,10 +342,9 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         sky_props['TABLE'] = None
     else:
         # print progress
-        # TODO: Add to language database
-        msg = 'Building sky model cubes fiber={0}'
         margs = [fiber]
-        WLOG(params, '', msg.format(*margs))
+        # log: Building sky model cubes fiber={0}
+        WLOG(params, '', textentry('40-019-00062', args=margs))
         # get sky filenames
         sky_files = np.array(sky_table['FILENAME'])
         # get bins
@@ -356,9 +354,9 @@ def skymodel_cube(recipe: DrsRecipe, params: ParamDict,
         # loop around files
         for it in range(len(sky_files)):
             # print analysing file
-            msg = '\tAdding sky file {0}/{1}'
             margs = [it + 1, len(sky_files)]
-            WLOG(params, '', msg.format(*margs))
+            # log: Adding sky file {0}/{1}
+            WLOG(params, '', textentry('40-019-00063', args=margs))
             # read image and header
             image, hdr = drs_fits.readfits(params, sky_files[it], gethdr=True)
             # lowpass + shift image
@@ -589,10 +587,12 @@ def mk_skymodel_qc(params: ParamDict, sky_props: ParamDict
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -633,9 +633,9 @@ def write_skymodel(recipe: DrsRecipe, params: ParamDict,
     # set data = sky
     skymodel_file.data = sky_props['SKYMODEL_SCI']
     # log that we are saving s1d table
-    msg = 'Saving sky model file to: {0}'
     margs = [skymodel_file.filename]
-    WLOG(params, '', msg.format(*margs))
+    # log: Saving sky model file to: {0}
+    WLOG(params, '', textentry('40-019-00059', args=margs))
     # define multi lists
     data_list = [sky_props['SKYMODEL_CAL'], sky_props['WAVEMAP'],
                  sky_props['REGION_ID'], sky_props['WEIGHTS'],
@@ -1021,6 +1021,7 @@ def get_sky_model(params: ParamDict, recipe: DrsRecipe,
     # get key
     sky_key = out_sky_model.get_dbkey()
     # log status
+    # log: Loading {0} files
     WLOG(params, '', textentry('40-019-00046', args=[sky_key]))
     # load tellu file, header and abspaths
     sky_model = load_tellu_file(params, recipe.shortname, sky_key, header,
@@ -1093,6 +1094,7 @@ def skyclean_write(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
                      value=os.path.basename(props['SKY_MODEL_FILE']))
     # -------------------------------------------------------------------------
     # print progress
+    # log: Writing pre-cleaned file to: {0}
     WLOG(params, '', textentry('40-019-00044', args=[skyfile.filename]))
     # define multi lists
     data_list = [props[f'CORR_EXT_{calib_fiber}'],

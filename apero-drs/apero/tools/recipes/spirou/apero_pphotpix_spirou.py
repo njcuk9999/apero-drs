@@ -123,7 +123,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Prepare dark file
     # ----------------------------------------------------------------------
-    WLOG(params, '', 'Loading dark and preparing image')
+    # log: Loading dark and preparing image
+    WLOG(params, '', textentry('40-010-00044'))
     # load file
     image = darkfile.get_data(copy=True)
     # set NaNS and infs to zero. NaN pixels will not be flagged as hot pixels
@@ -136,14 +137,16 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Find hot pixels
     # ----------------------------------------------------------------------
-    WLOG(params, '', 'Finding hot pixels')
+    # log: Finding hot pixels
+    WLOG(params, '', textentry('40-010-00045'))
     # get box size from parameters
     boxsize = params['PP.HOTPIX_BOXSIZE']
     threshold = params['PP.CORRUPT_HOT_THRES']
     # a hot pixel is a point that is > 10 sigma (positive) and that has a
     # 5x5 median around it that is within +/- 1 sigma; it is well-behaved and
     #  not surrounded by bad pixels
-    WLOG(params, '', '\t- median filter')
+    # log: - median filter
+    WLOG(params, '', textentry('40-010-00046'))
     medimage = medfilt(image, [boxsize, boxsize])
 
     # find the hot pixels
@@ -151,26 +154,30 @@ def __main__(recipe, params):
     hotpix = np.array(mask).astype(float)
 
     # find if hot pixels are alone in a 5x5 box
-    WLOG(params, '', '\t- convolve')
+    # log: - convolve
+    WLOG(params, '', textentry('40-010-00047'))
     box = np.ones([boxsize, boxsize]).astype(float)
     neighbours = convolve2d(hotpix, box, mode='same')
 
     # after the convolution, isolated (within 5x5)
     #     hotpixels have neighbours = 1
-    WLOG(params, '', '\t- find neighbours')
+    # log: - find neighbours
+    WLOG(params, '', textentry('40-010-00048'))
     has_neighbours = neighbours == 1
     # set non-isolated hot pixels to zero
     hotpix[~has_neighbours] = 0.0
 
     # find positions in x and y of good hot pixels
-    WLOG(params, '', '\t- locate')
+    # log: - locate
+    WLOG(params, '', textentry('40-010-00049'))
     y, x = np.where(hotpix)
 
     # ----------------------------------------------------------------------
     # write table to file
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Writing to file')
+    # log: Writing to file
+    WLOG(params, '', textentry('40-010-00050'))
     # create table
     table = Table()
     table['nsig'] = image[y, x]
@@ -183,7 +190,9 @@ def __main__(recipe, params):
     relpath = params['DATA.DATA_ENGINEERING']
     absoutpath = os.path.join(assetdir, relpath, filename)
     # write output as a csv file
-    WLOG(params, '', '\t Saved to: {0}'.format(absoutpath))
+    margs = [absoutpath]
+    # log: Saved to: {0}
+    WLOG(params, '', textentry('40-010-00051', args=margs))
     table.write(absoutpath, format='csv', overwrite=True)
 
     # if debug is True save the mask (to compare to image)
@@ -191,7 +200,9 @@ def __main__(recipe, params):
         # get debug file
         debugabspath = os.path.join(assetdir, relpath, DEBUGFILE)
         # print progress
-        WLOG(params, '', '\t Saved debug to: {0}'.format(debugabspath))
+        margs = [debugabspath]
+        # log: Saved debug to: {0}
+        WLOG(params, '', textentry('40-010-00052', args=margs))
         # write to file
         fits.writeto(debugabspath, hotpix, overwrite=True)
 

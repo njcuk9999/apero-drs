@@ -109,8 +109,9 @@ def get_order_profiles(params: ParamDict, recipe: DrsRecipe,
     """
     func_name = __NAME__ + '.get_order_profiles()'
     shapelfile = sprops['SHAPELFILE']
-    WLOG(params, 'info',
-         'Loading order profiles from SHAPEL: {0}'.format(shapelfile))
+    margs = [shapelfile]
+    # log: Loading order profiles from SHAPEL: {0}
+    WLOG(params, 'info', textentry('40-016-00058', args=margs))
     # load the LOC_LOCO provenance recorded in the SHAPEL header so downstream
     # header keys reflect where the profiles originally came from
     shapel_hdr = drs_fits.read_header(params, shapelfile)
@@ -122,6 +123,7 @@ def get_order_profiles(params: ParamDict, recipe: DrsRecipe,
     orderpfiles = dict()
     orderptimes = dict()
     for fiber in fibertypes:
+        # log: Straightening Order Profile fiber = {0}
         WLOG(params, '', textentry('40-016-00003', args=[fiber]))
         orderprofiles[fiber] = np.array(
             drs_fits.readfits(params, shapelfile,
@@ -197,8 +199,8 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
     # ----------------------------------------------------------------------
     # deal with allowed dprtypes
     if dprtype not in allowtypes:
-        # Skipping FPLINES (DPRTYPE = {0})
-        WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
+        # debug: Skipping FPLINES (DPRTYPE='{0}')
+        WLOG(params, 'debug', textentry('90-016-00004', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
     # make sure fiber is FP
@@ -208,8 +210,9 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
         return None
     # ----------------------------------------------------------------------
     # announce FP-line processing (after all early-exit checks pass)
-    WLOG(params, '', 'Computing FP reference lines for '
-                     'fiber {0}'.format(fiber))
+    margs = [fiber]
+    # log: Computing FP reference lines for fiber {0}
+    WLOG(params, '', textentry('40-016-00059', args=margs))
     # get reference hc lines and fp lines from calibDB
     wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile,
                               database=database)
@@ -290,6 +293,7 @@ def e2ds_to_s1d(params: ParamDict, recipe: DrsRecipe,
 
     # -------------------------------------------------------------------------
     # log progress: calculating s1d (wavegrid)
+    # log: Calculating S1D ({0})
     WLOG(params, '', textentry('40-016-00009', args=[wgrid]))
     # -------------------------------------------------------------------------
     # Decide on output wavelength grid
@@ -489,6 +493,7 @@ def qc_extraction(params, eprops=None, spectra=None):
     # if array is completely NaNs it shouldn't pass
     if np.sum(np.isfinite(image)) == 0:
         # add failed message to fail message list
+        # text: E2DS image is all NaNs
         fail_msg.append(textentry('40-016-00008'))
         qc_pass.append(0)
     else:
@@ -501,10 +506,12 @@ def qc_extraction(params, eprops=None, spectra=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -732,6 +739,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsfffile.filename]
+    # log: Saving E2DSFF file: {0}
     WLOG(params, '', textentry('40-016-00006', args=wargs))
     # define multi lists
     data_list, name_list = [order_table], ['ORDER_TABLE']
@@ -768,6 +776,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         s1dwfile.datatype = 'table'
         # log that we are saving the wave-grid S1D
         wargs = ['wave', s1dwfile.filename]
+        # log: Saving S1D ({0}) file: {1}
         WLOG(params, '', textentry('40-016-00010', args=wargs))
         # define multi lists
         data_list, name_list = [], []
@@ -805,6 +814,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
         s1dvfile.datatype = 'table'
         # log that we are saving the velocity-grid S1D
         wargs = ['velocity', s1dvfile.filename]
+        # log: Saving S1D ({0}) file: {1}
         WLOG(params, '', textentry('40-016-00010', args=wargs))
         # define multi lists
         data_list, name_list = [], []
@@ -923,6 +933,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsfffile.filename]
+    # log: Saving E2DSFF file: {0}
     WLOG(params, '', textentry('40-016-00006', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -1064,6 +1075,7 @@ def main_extract(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # ------------------------------------------------------------------
     # Apply shape transformation to straighten the science image
     # ------------------------------------------------------------------
+    # log: Straightening Image
     WLOG(params, 'info', textentry('40-016-00004'))
     shape_order = params['CAL.EXT.SPLINE_ORDER']
     shargs = [params, image, sprops['SHAPEL']]

@@ -126,6 +126,7 @@ def load_linelist(params: ParamDict,
         table = load_table_file(params, absfilename, fmt=tablefmt,
                                 colnames=tablecols, datastart=int(tablestart),
                                 func_name=func_name)
+        # log: Read line list from file {0}
         WLOG(params, '', textentry('40-017-00001', args=absfilename))
         # push columns into numpy arrays and force to floats
         ll = np.array(table[wavecol], dtype=float)
@@ -134,6 +135,7 @@ def load_linelist(params: ParamDict,
         return ll, amp
     except AperoCodedException:
         eargs = [filename, os.path.join(assetdir, relfolder)]
+        # error: Line list not found. File = {0}; \n Function = {1}
         raise drs_log.AperoCodedException(params, '00-017-00002', targs=eargs)
 
 
@@ -254,6 +256,7 @@ def load_full_flat_badpix(params: ParamDict,
         return absfilename
     # return image
     image = load_fits_file(params, absfilename, func_name)
+    # log: Reading engineering full flat image: '{0}'
     WLOG(params, '', textentry('40-012-00003', args=absfilename))
     return image
 
@@ -354,6 +357,7 @@ def load_hotpix(params: ParamDict,
     table = load_table_file(params, absfilename, fmt=fmt,
                             datastart=datastart, func_name=func_name)
 
+    # log: Reading engineering full flat image: '{0}'
     WLOG(params, '', textentry('40-010-00011', args=absfilename))
     return table
 
@@ -403,8 +407,9 @@ def load_amp_bias_model(params: ParamDict,
     data = drs_fits.readfits(params, absfilename, getdata=True,
                              fmt='fits-multi')
     # TODO: Add to lanugage database
-    msg = 'Loading amplifer bias model: {0}'
-    WLOG(params, '', msg.format(absfilename))
+    margs = [absfilename]
+    # log: Loading amplifer bias model: {0}
+    WLOG(params, '', textentry('40-000-00022', args=margs))
     # return the slope (ext=1) and intercept (ext=2)
     return data[1], data[2]
 
@@ -453,6 +458,7 @@ def load_tapas(params: ParamDict,
     # return image
     table = load_table_file(params, absfilename, fmt=fmt,
                             func_name=func_name)
+    # log: Read tapas file from {0}
     WLOG(params, '', textentry('40-999-00002', args=absfilename))
     return table, absfilename
 
@@ -500,6 +506,7 @@ def load_object_list(params: ParamDict,
     # return image
     table = load_table_file(params, absfilename, fmt=fmt,
                             func_name=func_name)
+    # log: Read gaia lookup table from {0}
     WLOG(params, '', textentry('40-999-00003', args=absfilename))
     return table
 
@@ -550,6 +557,7 @@ def load_ccf_mask(params: ParamDict,
     table = load_table_file(params, absfilename, fmt=fmt,
                             colnames=['ll_mask_s', 'll_mask_e', 'w_mask'],
                             func_name=func_name)
+    # log: Template used for CCF computation: {0}
     WLOG(params, '', textentry('40-020-00002', args=absfilename))
     return table, absfilename
 
@@ -630,6 +638,8 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
             except Exception as e:
                 # log error
                 eargs = [filename, type(e), e]
+                # error: Cannot load LSD spectral mask from file {0} \n Error
+                #     {1}: {2} \n Function = {3}
                 raise drs_log.AperoCodedException(params, '09-021-00009',
                                                   targs=eargs)
         # ---------------------------------------------------------------------
@@ -712,6 +722,7 @@ def load_order_mask(params: ParamDict,
     table = load_table_file(params, absfilename, fmt='ascii',
                             datastart=1, func_name=func_name,
                             colnames=['order', 'lower', 'upper'])
+    # log: Template used for CCF computation: {0}
     WLOG(params, '', textentry('40-020-00002', args=absfilename))
     return table, absfilename
 
@@ -834,6 +845,7 @@ def read_db_file(params: ParamDict, abspath: Union[str, Path],
     else:
         # raise error is kind is incorrect
         eargs = [' or '.join(['image', 'table']), func_name]
+        # error: kind' was not valid. Must be {0}. \n Function = {1}
         raise drs_log.AperoCodedException(params, '00-001-00038', targs=eargs)
     # ------------------------------------------------------------------
     # get header if required (and a fits file)
@@ -867,6 +879,7 @@ def load_fits_file(params: ParamDict, filename: str,
     if not os.path.exists(filename):
         # generate error
         eargs = [filename, func_name]
+        # error: Could not load drs data file = {0} \n Function = {1}
         raise AperoCodedException(params, '01-001-00022', targs=eargs)
     # read image
     image = drs_fits.readfits(params, filename)
@@ -899,6 +912,7 @@ def load_table_file(params: ParamDict, filename: str,
     if not os.path.exists(filename):
         # raise exception
         eargs = [filename, func_name]
+        # error: Could not load drs data file = {0} \n Function = {1}
         raise AperoCodedException(params, '01-001-00022', targs=eargs)
     # read table
     table = drs_table.read_table(params, filename, fmt=fmt,
@@ -928,6 +942,7 @@ def load_text_file(params: ParamDict, filename: str,
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
         eargs = [filename, func_name]
+        # error: Could not load drs data file = {0} \n Function = {1}
         raise AperoCodedException(params, '01-001-00022', targs=eargs)
     # load text as list
     try:

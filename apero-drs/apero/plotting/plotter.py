@@ -223,11 +223,15 @@ class Plotter:
         if self.recipe is None:
             self.location = './'
         elif self.location is None:
+            # error: Plotter error: must set file location before any plotting
+            #     is called with plot(). \n Please set with plot.set_location()
+            #     \n Function = {0}
             raise AperoCodedException(self.params, '00-100-00003',
                                       targs=[str(func)])
         # ------------------------------------------------------------------
         # deal with no plot needed
         if self.plotoption == 0 and not _force:
+            # debug: Plotting: plotting skipped (DRS_PLOT = 0)
             WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
@@ -236,6 +240,7 @@ class Plotter:
                            and (name in self.debug_graphs)
                            and not _force)
         if cond_debug_done:
+            # debug: Plotting: plotting skipped (DRS_PLOT = 0)
             WLOG(self.params, 'debug', textentry('90-100-00002'))
             return 0
         # ------------------------------------------------------------------
@@ -258,6 +263,7 @@ class Plotter:
                 pass
             # if it is check whether it is set to False
             elif not self.plot_switches[name]:
+                # text: Plotting: plotting skipped (DEBUG.PLOT.{0} = False)
                 dmsg = textentry('40-100-01013', args=[name.upper()])
                 WLOG(self.params, '', dmsg)
                 # if it is check whether it is set to False
@@ -277,16 +283,22 @@ class Plotter:
             pass
         elif self.recipe is None:
             # log: plotting debug plot
+            # log: Plotting plot: {0}
             WLOG(self.params, '', textentry('40-100-00007', args=[name]))
         elif name in self.recipe.debug_plots:
             # log: plotting debug plot
+            # log: Plotting debug plot: {0}
             WLOG(self.params, '', textentry('40-100-00002', args=[name]))
         elif name in self.recipe.summary_plots:
             # log: plotting summary plot
+            # log: Plotting summary plot: {0}
             WLOG(self.params, '', textentry('40-100-00003', args=[name]))
         else:
             # else log an error
             eargs = [name, self.recipe.name]
+            # error: Plotter error: graph name = '{0}' was not defined for
+            #     recipe {1}. \n Please check recipe definitions
+            #     ('set_debug_plots' and 'set_summary_plots')
             raise AperoCodedException(self.params, '00-100-00002', targs=eargs)
         # ------------------------------------------------------------------
         # new instance of the plot object
@@ -443,9 +455,8 @@ class Plotter:
             try:
                 looplist = list(looplist)
             except Exception as _:
-                # TODO: Add to language database
-                emsg = 'Must be a list'
-                raise AperoCodedException(self.params, None, message=emsg)
+                # error: Must be a list
+                raise AperoCodedException(self.params, '00-003-00038')
 
         # test for string list
         if len(looplist) > 0:
@@ -455,8 +466,13 @@ class Plotter:
         # ---------------------------------------------------------------------
         # define message to give to user
         if strlist:
+            # text: Plot loop navigation: \n [L]ist options \n Go to \n
+            #     [P]revious plot \n [N]ext plot \n [E]nd plotting \n Number
+            #     from [0 to {0}]:
             message = textentry('40-100-00009', args=[len(looplist) - 1])
         else:
+            # text: Plot loop navigation: Go to \n [P]revious plot \n [N]ext
+            #     plot \n [E]nd plotting \n Number from [0 to {0}]:
             message = textentry('40-100-00001', args=[len(looplist) - 1])
         # ---------------------------------------------------------------------
         # start the iterator at zero
@@ -505,7 +521,8 @@ class Plotter:
                     userinput = str(userinput)
                 # if 'l' in user input we assume they want to list options
                 if strlist and 'L' in str(userinput).upper():
-                    print('Options are:')
+                    # log: Options are:
+                    print(textentry('40-003-00013'))
                     for jt in range(len(looplist)):
                         print('\t{0}: {1}'.format(jt, looplist[jt]))
                     continue
@@ -561,8 +578,10 @@ class Plotter:
             return
         # deal with closing loop plots
         if loop:
+            # log: Plotting: Must close other plots before a loop debug plot.
             WLOG(self.params, 'info', textentry('40-100-00006'), printonly=True)
         # log message asking to close plots
+        # log: Close plots? [Y]es or [N]o
         WLOG(self.params, 'info', textentry('40-003-00003'), printonly=True)
         # deal with input method
         uinput = str(input('[Y]es or [N]o:\t'))
@@ -653,6 +672,7 @@ class Plotter:
             if self.params['TOOLS.GEN.SUMMARY_LATEX_PDF']:
                 try:
                     # log progress
+                    # log: Creating summary latex document
                     WLOG(self.params, 'info', textentry('40-100-00004'))
                     # latex document
                     latexdoc = self.summary_latex(qc_params, stats, warnings)
@@ -662,6 +682,8 @@ class Plotter:
                         raise e
                     # log error as warning
                     wargs = [type(e), e, func_name]
+                    # warning: Latex document construction failed. \n Error {0}:
+                    #     {1} \n Function = {2}
                     WLOG(self.params, 'warning', textentry('10-100-01001',
                                                            args=wargs))
         # ------------------------------------------------------------------
@@ -669,6 +691,7 @@ class Plotter:
         # ------------------------------------------------------------------
         try:
             # log progress
+            # log: Creating summary html document
             WLOG(self.params, 'info', textentry('40-100-00005'))
             # latex document
             htmldoc = self.summary_html(qc_params, stats, warnings)
@@ -678,6 +701,8 @@ class Plotter:
                 raise e
             # log error as warning
             wargs = [type(e), e, func_name]
+            # warning: HTML document construction failed. \n Error {0}: {1} \n
+            #     Function = {2}
             WLOG(self.params, 'warning', textentry('10-100-01002', args=wargs))
             # set latex doc to None
             htmldoc = None
@@ -707,6 +732,7 @@ class Plotter:
         pid = self.params['PID'].lower()
         # summary info
         sargs = [shortname, pid]
+        # text: Summary for {0}: {1}
         summary_title = textentry('40-100-01006', args=sargs)
         summary_authors = ' '.join(__authors__)
         # add start
@@ -717,11 +743,13 @@ class Plotter:
         # display the arguments used
         doc.newline()
         argv = ' '.join(clean(self.used_command))
+        # text: Command used: {0}
         doc.add_text(textentry('40-100-01002', args=argv))
         doc.newline()
         # add graph section
         doc.section(textentry('40-100-01000'))
         # add graph section text
+        # text: This section contains the summary graphs for recipe {0}
         doc.add_text(textentry('40-100-01001', args=[shortname]))
         doc.newline()
         # display all graphs
@@ -731,6 +759,7 @@ class Plotter:
             # get cleaned name
             cgname = clean(sgraph.name)
             # reference graph
+            # text: Figure {0}: {1}
             doc.add_text(textentry('40-100-01007', args=[g_it + 1, cgname]))
             doc.newline()
         # display all graphs
@@ -763,6 +792,7 @@ class Plotter:
         # check that latex file was created
         if not os.path.exists(doc.latexfilename):
             wargs = [doc.latexfilename]
+            # warning: Latex could not compile pdf document (File = {0})
             WLOG(self.params, 'warning', textentry('10-100-01003', args=wargs))
         # return the doc
         return doc
@@ -782,18 +812,25 @@ class Plotter:
         # get recipe short name
         shortname = clean(self.recipename)
         # add qc_param section
+        # text: Quality Control
         doc.section(textentry('40-100-01003'))
         # add qc_param table
         qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
         # deal with no qc_table
         if qc_table is None:
+            # text: No quality control parameters defined.
             doc.add_text(textentry('40-100-01012'))
             return
         # else add qc section text
         else:
             # add qc_param text
+            # text: This section contains a summary of the quality control for
+            #     recipe {0}. In the table green elements passed the quality
+            #     control and red failed.
             doc.add_text(textentry('40-100-01004', args=[shortname]))
             # get qc_caption
+            # text: Quality control criteria for {0}. Green = PASS, Red =
+            #     Failed.
             qc_caption = textentry('40-100-01005', args=[shortname])
         # deal with have fiber
         if 'Fiber' in qc_table.colnames:
@@ -826,10 +863,14 @@ class Plotter:
         # get recipe short name
         shortname = clean(self.recipename)
         # add qc_param section
+        # text: Statistics and Numbers
         doc.section(textentry('40-100-01008'))
         # add qc_param text
+        # text: This section contains any important statistics and numbers for
+        #     recipe {0}.
         doc.add_text(textentry('40-100-01009', args=[shortname]))
         # get qc_caption
+        # text: Statistics and numbers for {0}
         caption = textentry('40-100-01010', args=[shortname])
         # copy table
         stats_latex = Table(stats)
@@ -862,6 +903,7 @@ class Plotter:
         if self.warnings is None:
             return doc
         # set up section
+        # text: Warnings
         doc.section(textentry('40-100-01011'))
         doc.newline()
         # deal with no warnings
@@ -900,6 +942,7 @@ class Plotter:
         pid = self.params['PID'].lower()
         # summary info
         sargs = [shortname, pid]
+        # text: Summary for {0}: {1}
         summary_title = textentry('40-100-01006', args=sargs)
         summary_authors = ' '.join(__authors__)
         # add start
@@ -909,11 +952,13 @@ class Plotter:
         # display the arguments used
         doc.newline()
         argv = ' '.join(self.used_command)
+        # text: Command used: {0}
         doc.add_text(textentry('40-100-01002', args=[argv]))
         doc.newline()
         # add graph section
         doc.section(textentry('40-100-01000'))
         # add graph section text
+        # text: This section contains the summary graphs for recipe {0}
         doc.add_text(textentry('40-100-01001', args=[shortname]))
         doc.newline()
         # display all graphs
@@ -922,6 +967,7 @@ class Plotter:
             sgraph = self.summary_graphs[key]
             # reference graph
             targs = [g_it + 1, sgraph.description]
+            # text: Figure {0}: {1}
             doc.add_text(textentry('40-100-01007', args=targs))
             doc.newline()
             # add graph with correct extension
@@ -961,16 +1007,23 @@ class Plotter:
         # get recipe short name
         shortname = self.recipename
         # add qc_param section
+        # text: Quality Control
         doc.section(textentry('40-100-01003'))
         # deal with no qc_table
         if qc_table is None:
+            # text: No quality control parameters defined.
             doc.add_text(textentry('40-100-01012'))
             return
         # else add qc section text
         else:
             # add qc_param text
+            # text: This section contains a summary of the quality control for
+            #     recipe {0}. In the table green elements passed the quality
+            #     control and red failed.
             doc.add_text(textentry('40-100-01004', args=[shortname]))
             # get qc_caption
+            # text: Quality control criteria for {0}. Green = PASS, Red =
+            #     Failed.
             qc_caption = textentry('40-100-01005', args=[shortname])
         # deal with have fiber
         if 'Fiber' in qc_table.colnames:
@@ -1003,10 +1056,14 @@ class Plotter:
         # get recipe short name
         shortname = self.recipename
         # add qc_param section
+        # text: Statistics and Numbers
         doc.section(textentry('40-100-01008'))
         # add qc_param text
+        # text: This section contains any important statistics and numbers for
+        #     recipe {0}.
         doc.add_text(textentry('40-100-01009', args=[shortname]))
         # get qc_caption
+        # text: Statistics and numbers for {0}
         caption = textentry('40-100-01010', args=[shortname])
         # copy table
         stats_html = Table(stats)
@@ -1038,6 +1095,7 @@ class Plotter:
         if self.warnings is None:
             return doc
         # set up section
+        # text: Warnings
         doc.section(textentry('40-100-01011'))
         doc.newline()
         # deal with no warnings
@@ -1220,27 +1278,25 @@ class Plotter:
                 # load module
                 module = importlib.import_module(mod_path)
             except Exception as e:
-                # TODO: Add to language database
-                emsg = 'Error importing module {0}: {1}'
                 eargs = [mod_path, str(e)]
-                raise AperoCodedException(self.params, None,
-                                          message=emsg.format(*eargs))
+                # error: Error importing module {0}: {1}
+                raise AperoCodedException(self.params, '00-003-00039',
+                                          targs=eargs)
             try:
                 func = getattr(module, mod_file)
             except Exception as e:
-                # TODO: Add to language database
-                emsg = 'No plotting function named {0}'
                 eargs = [yaml_func]
-                raise AperoCodedException(self.params, None,
-                                          message=emsg.format(*eargs))
+                # error: No plotting function named {0}
+                raise AperoCodedException(self.params, '00-003-00040',
+                                          targs=eargs)
             # if we get here we have a graph class - use it
             graph = Graph.from_yaml(name, func, self.yaml)
             if graph is None:
                 # TODO: Add to lan
-                emsg = 'Unable to create Graph for {0}'
                 eargs = [yaml_func]
-                raise AperoCodedException(self.params, None,
-                                          message=emsg.format(*eargs))
+                # error: Unable to create Graph for {0}
+                raise AperoCodedException(self.params, '00-003-00037',
+                                          targs=eargs)
             # return the graph instance
             return graph
         # else return an error
@@ -1248,6 +1304,8 @@ class Plotter:
             # log error: Plotter error: graph name was not found in plotting
             #            definitions
             eargs = [name, func_name]
+            # error: Plotter error: graph name = '{0}' was not found in plotting
+            #     definitions. \n Function = {1}
             raise AperoCodedException(self.params, '00-100-00001', targs=eargs)
 
     def _get_plot_switches(self):
@@ -1342,10 +1400,12 @@ class Plotter:
         self.backend = matplotlib.get_backend()
         # debug log which backend used
         dargs = [self.backend]
+        # debug: Plotting: maplotlib backend used = {0}
         WLOG(self.params, 'debug', textentry('90-100-00001', args=dargs))
         # ------------------------------------------------------------------
         # deal with still having MacOSX backend
         if self.backend == 'MacOSX':
+            # error: Plotting: maplotlib backend used = {0}
             raise AperoCodedException(self.params, '90-100-00001',
                                       targs=[self.backend])
 
@@ -1516,7 +1576,8 @@ def plot_selection(params: ParamDict,
     # get a list of plots for this recipe
     plots = recipe.debug_plots
     # print options
-    print('Select from the following plots to plot:')
+    # log: Select from the following plots to plot:
+    print(textentry('40-003-00011'))
     # loop around plots to give user the options
     for it in range(len(plots)):
         # TODO: We may need a description here
@@ -1533,7 +1594,9 @@ def plot_selection(params: ParamDict,
         try:
             plot_names.append(plots[int(plot_num) - 1])
         except Exception as _:
-            print(f'\t Entry "{plot_num} invalid. Skipping')
+            margs = [plot_num]
+            # log: Entry "{0} invalid. Skipping
+            print(textentry('40-003-00012', args=margs))
             continue
     # loop around plots
     for plot in plots:

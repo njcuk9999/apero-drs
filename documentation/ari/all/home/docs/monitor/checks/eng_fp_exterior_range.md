@@ -56,23 +56,3 @@ np.nanmin(metric_key) > lower_limit and np.nanmax(metric_key) < upper_limit
 | UPPER_LIMIT | upper_limit |
 | XMIN | xmin |
 | XMAX | xmax |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.nanmin(HIERARCH ESO INS TEMP13 VAL) > 23.496 and np.nanmax(HIERARCH ESO INS TEMP13 VAL) < 24.504
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | fp_exterior_range |
-| ENABLED | True |
-| METRIC_KEY | HIERARCH ESO INS TEMP13 VAL |
-| LOWER_LIMIT | 23.496 |
-| UPPER_LIMIT | 24.504 |
-| XMIN | xmin |
-| XMAX | xmax |

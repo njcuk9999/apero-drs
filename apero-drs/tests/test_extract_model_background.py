@@ -50,7 +50,7 @@ def test_model_background_correction_keeps_electron_model_units(
 
 def test_run_all_fiber_model_keeps_zero_point_out_of_background_fit(
         spirou_params) -> None:
-    """The smooth background should subtract the fiber model, not the zero point."""
+    """Keep the fitted zero point in the background-fitting residual."""
     image = np.zeros((8, 12))
     profile1 = np.zeros_like(image)
     profile2 = np.zeros_like(image)
@@ -69,11 +69,11 @@ def test_run_all_fiber_model_keeps_zero_point_out_of_background_fit(
     order_map[4:6, :] = 2
     order_nearest = np.array(order_map)
     order_profiles = dict(A=profile1, B=profile2)
-    props = model_background.run_all_fiber_model(
-        spirou_params, image, image, order_profiles, geometry, order_map,
-        order_nearest, {'A': (1, 1), 'B': (2, 2)}, np.array([1]),
-        np.array([7]), np.array([3]), [('A', [[1]]), ('B', [[2]])],
-        'A', 'B', gain=1.0, ron=1.0)
+    model_args = [spirou_params, image, image, order_profiles, order_profiles,
+                  geometry, order_map, order_nearest,
+                  dict(A=(1, 1), B=(2, 2)), np.array([1]), np.array([7]),
+                  np.array([3]), [('A', [[1]]), ('B', [[2]])], 'A', 'B']
+    props = model_background.run_all_fiber_model(*model_args, gain=1.0, ron=1.0)
     assert np.allclose(props['DIFF_STRAIGHT'], image - props['IMAGE_MODEL'],
                        rtol=1e-2, atol=1e-2)
 
@@ -88,14 +88,18 @@ def test_prepare_model_bckgrd_geo_uses_dxmap_no_shape(
     sprops['SHAPEX'] = np.zeros(image_shape)
     sprops['SHAPEY'] = np.zeros(image_shape)
     sprops['DXMAP_NO_SHAPE'] = xgrid
+    sprops['INV_XMAP'] = xgrid + 0.25
+    sprops['INV_YMAP'] = ygrid - 0.5
     sprops['SHAPELFILE'] = 'shape-local.fits'
     sprops['SHAPELTIME'] = 1.0
     sprops['DXMAP_NO_SHAPEFILE'] = 'shape-local.fits'
     sprops['DXMAP_NO_SHAPETIME'] = 1.0
-    gprops = model_background.prepare_model_bckgrd_geo(
-        spirou_params, image_shape, sprops)
-    assert np.allclose(gprops['INV_XMAP'], xgrid)
-    assert np.allclose(gprops['INV_YMAP'], ygrid)
+    geo_args = [spirou_params, sprops]
+    gprops = model_background.prepare_model_bckgrd_geo(*geo_args)
+    assert np.allclose(gprops['INV_XMAP'], sprops['INV_XMAP'])
+    assert np.allclose(gprops['INV_YMAP'], sprops['INV_YMAP'])
+    assert not np.shares_memory(gprops['INV_XMAP'], sprops['INV_XMAP'])
+    assert not np.shares_memory(gprops['INV_YMAP'], sprops['INV_YMAP'])
     assert np.allclose(gprops['DXMAP_NO_SHAPE'], xgrid)
 
 
@@ -144,18 +148,18 @@ def test_run_all_fiber_model_uses_profiles_and_geometry(spirou_params) -> None:
     order_map[4, :] = 2
     order_nearest = np.array(order_map)
     order_profiles = dict(A=profile1, B=profile2)
-    props = model_background.run_all_fiber_model(
-        spirou_params, image, image, order_profiles, geometry, order_map,
-        order_nearest, {'A': (1, 1), 'B': (2, 2)}, np.array([1]),
-        np.array([5]), np.array([3]), [('A', [[1]]), ('B', [[2]])],
-        'A', 'B', gain=1.0, ron=1.0)
+    model_args = [spirou_params, image, image, order_profiles, order_profiles,
+                  geometry, order_map, order_nearest,
+                  dict(A=(1, 1), B=(2, 2)), np.array([1]), np.array([5]),
+                  np.array([3]), [('A', [[1]]), ('B', [[2]])], 'A', 'B']
+    props = model_background.run_all_fiber_model(*model_args, gain=1.0, ron=1.0)
     assert props['FIBER1'] == 'A'
     assert props['FIBER2'] == 'B'
     assert props['IMAGE_MODEL'].shape == image.shape
     assert props['SCI_BKGSUB'].shape == image.shape
     assert set(props['MODEL_SPECTRA']) == {'A', 'B', 'COMBINED'}
-    assert set(props['BLAZE']) == {'A', 'B'}
-    assert 'A' in props['SPECTRA']
+    assert props['PROFILES_NOSHAPE'] is order_profiles
+    assert set(props['SPECTRA']) == {'A', 'B'}
     expected_grid = int(np.ceil(
         10 * spirou_params['CAL.EXT.EXTRACTION_OVERSAMPLING']))
     assert props['SPECTRUM_GRID'].shape == (expected_grid,)

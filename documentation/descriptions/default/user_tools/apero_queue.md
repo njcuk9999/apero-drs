@@ -7,6 +7,8 @@ references: []
 
 The APERO queue management tool - run, batch, monitor and reset the processing queue (created by apero_processing in queue mode)
 
+<!-- include: apero/tools/module/processing/gui/queue_info.md -->
+
 ## Flow
 
 <!-- Replace the diagram below with the real steps. -->

@@ -91,6 +91,10 @@ WARN_TO_ERROR = False
 # this is how we turn warnings to errors
 if WARN_TO_ERROR:
     warnings.filterwarnings('error')
+# environment variable that gives a recipe started from the command line
+#   its processing group (DRS.GROUP) - set by apero_queue for queued tasks
+#   so they log and use pending databases like apero_processing runs
+DRS_GROUP_ENV = 'APERO_DRS_GROUP'
 
 # -----------------------------------------------------------------------------
 # databases

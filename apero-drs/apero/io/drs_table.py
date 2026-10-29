@@ -108,12 +108,16 @@ def make_table(columns: List[str],
     # make sure we have as many columns as we do values
     if lcol != len(values):
         eargs = [lcol, len(values), func_name]
+        # error: Column names (length = {0}) must be equal to length of 'values'
+        #     (length = {1}) \n function = {2}
         raise AperoCodedException(None, '01-002-00001', targs=eargs)
 
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
             eargs = [lcol, len(formats), func_name]
+            # error: Column names (length = {0}) must be equal to length of
+            #     'formats' (length = {1}) \n function = {2}
             raise AperoCodedException(None, '01-002-00002', targs=eargs)
     else:
         formats = [None] * len(columns)
@@ -121,11 +125,15 @@ def make_table(columns: List[str],
     if units is not None:
         if lcol != len(units):
             eargs = [lcol, len(units), func_name]
+            # error: Column names (length = {0}) must be equal to length of
+            #     'units' (length = {1}) \n function = {2}
             raise AperoCodedException(None, '01-002-00003', targs=eargs)
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
+            # error: All column-values must have the same number of rows \n
+            #     function = {0}
             raise AperoCodedException(None, '01-002-00004', targs=[func_name])
     # now construct the table
     for c_it, col in enumerate(columns):
@@ -139,6 +147,8 @@ def make_table(columns: List[str],
                 table[col].format = formats[c_it]
             else:
                 eargs = [formats[c_it], col, func_name]
+                # error: Format '{0}' is invalid (Column = '{1}') \n function =
+                #     {2}
                 raise AperoCodedException(None, '01-002-00005', targs=eargs)
         # if we have units set the unit
         if units is not None:
@@ -192,12 +202,16 @@ def write_table(params: ParamDict, table: Table, filename: str,
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
+        # error: Table format = {0} not valid for astropy.table. \n function =
+        #     {1}
         raise AperoCodedException(params, '01-002-00006', targs=eargs)
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['write?'][pos]:
             eargs = [fmt, func_name]
+            # error: Table format = {0} cannot be written by astropy.table \n
+            #     function = {1}
             raise AperoCodedException(params, '01-002-00007', targs=eargs)
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
@@ -208,6 +222,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
     # -------------------------------------------------------------------------
     # must check that a pid is set
     if params['PID'] is None:
+        # error: Undefined PID not recommended (PID is missing)
         raise AperoCodedException(params, '10-005-00006')
     else:
         pid = params['PID']
@@ -223,6 +238,8 @@ def write_table(params: ParamDict, table: Table, filename: str,
         except Exception as exception:
             # log error
             _eargs = [type(exception), exception, func_name]
+            # error: Cannot write table to file. \n Error {0}: {1} \n function =
+            #     {2}
             raise AperoCodedException(params, '01-002-00008', targs=_eargs)
         if (fmt == 'fits') and (header is not None):
             # reload fits data
@@ -237,6 +254,8 @@ def write_table(params: ParamDict, table: Table, filename: str,
             except Exception as exception:
                 # log error
                 _eargs = [type(exception), exception, func_name]
+                # error: Cannot write header to file. \n Error {0}: {1} \n
+                #     function = {2}
                 raise AperoCodedException(params, '01-002-00009', targs=_eargs)
 
     # -------------------------------------------------------------------------
@@ -290,6 +309,7 @@ def merge_table(params: ParamDict, table: Table, filename: str,
             new_table = vstack([old_table, table])
         except TableMergeError as e:
             eargs = [filename, type(e), e, func_name]
+            # error: Cannot merge file={0} \n Error {1}: {2} \n function = {3}
             raise AperoCodedException(params, '01-002-00010', targs=eargs)
         # write new table
         write_table(params, new_table, filename, fmt)
@@ -337,17 +357,22 @@ def read_table(params: ParamDict, filename: str, fmt: str,
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
+        # error: Table format = {0} not valid for astropy.table. \n function =
+        #     {1}
         raise AperoCodedException(params, '01-002-00006', targs=eargs)
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             eargs = [fmt, func_name]
+            # error: Cannot write table to file. \n Error {0}: {1} \n function =
+            #     {2}
             raise AperoCodedException(params, '01-002-00008', targs=eargs)
 
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
+        # error: File does not exist. \n file = '{0}' \n function = {1}
         raise AperoCodedException(params, '01-002-00011', targs=eargs)
 
     # remove data_start for fits files
@@ -361,11 +386,14 @@ def read_table(params: ParamDict, filename: str, fmt: str,
                                                     format=fmt, **kwargs))
     except Exception as e:
         eargs = [type(e), e, filename, func_name]
+        # error: Error {0}: {1} \n file = '{2}' \n function = {3}
         raise AperoCodedException(params, '01-002-00012', targs=eargs)
     # if we have colnames rename the columns
     if colnames is not None:
         if len(colnames) > len(table.colnames):
             eargs = [len(colnames), len(table.colnames), filename, func_name]
+            # error: Number of columns ({0}) not equal to number of columns in
+            #     table ({1}) \n file = '{2}' \n function = {3}
             raise AperoCodedException(params, '01-002-00013', targs=eargs)
         # rename old names to new names
         oldcols = table.colnames
@@ -462,6 +490,7 @@ def read_fits_table(params: ParamDict, filename: str,
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
+        # error: Fits file {0} does not exist \n function = {1}
         raise AperoCodedException(params, '01-002-00014', targs=eargs)
     # read data
     try:
@@ -474,6 +503,8 @@ def read_fits_table(params: ParamDict, filename: str,
     except Exception as e:
         # display error
         eargs = [filename, type(e), e, func_name]
+        # error: Cannot open {0} as a fits table \n Error was {1}: {2} \n
+        #     function = {3}
         raise AperoCodedException(params, '01-002-00015', targs=eargs)
     # return dict if return_dict is True
     if return_dict:
@@ -512,6 +543,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
     # check directory exists
     if not os.path.exists(dir_name):
         eargs = [dir_name, func_name]
+        # error: Directory {0} does not exist \n function = {1}
         raise AperoCodedException(params, '01-002-00016', targs=eargs)
     # get backup file name
     backup_file = output_filename.replace('.fits', '.fits.back')
@@ -525,6 +557,8 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
         except Exception as e:
             # log error
             eargs = [output_filename, type(e), e, func_name]
+            # error: Cannot backup {0} as a fits table. \n Error {1}: {2} \n
+            #     function = {3}
             raise AperoCodedException(params, '01-002-00023', targs=eargs)
     # write data
     try:
@@ -544,6 +578,8 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
             shutil.copy(backup_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
+        # error: Cannot write {0} as a fits table. \n Error {1}: {2} \n function
+        #     = {3}
         raise AperoCodedException(params, '01-002-00017', targs=eargs)
 
 
@@ -592,13 +628,19 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
         ext = 1
     else:
         eargs = [filename, type(exception), exception, func_name]
+        # error: Cannot open {0} as a fits table \n Error was {1}: {2} \n
+        #     function = {3}
         raise AperoCodedException(params, '01-002-00018', targs=eargs)
     # test that we have columns and names
     if not hasattr(data, 'columns'):
         eargs = [filename, type(exception), exception, func_name]
+        # error: Cannot open {0} as a fits table \n Error was: data cannot read
+        #     'columns' \n Error {1}: {2} \n function = {3}
         raise AperoCodedException(params, '01-002-00019', targs=eargs)
     if not hasattr(data.columns, 'names'):
         eargs = [filename, type(exception), exception, func_name]
+        # error: Cannot open {0} as a fits table \n Error was: data cannot read
+        #     'columns.names' \n Error {1}: {2} \n function = {3}
         raise AperoCodedException(params, '01-002-00020', targs=eargs)
     # print warning
     wargs = [type(exception), exception, ext, filename, func_name]
@@ -765,6 +807,7 @@ def prep_merge(params: ParamDict, filename: str, table: Table,
         # check for column name
         if col not in table.colnames:
             eargs = [col, filename, func_name]
+            # error: Column '{0}' not in file '{1}' \n function = {2}
             raise AperoCodedException(params, '01-002-00021', targs=eargs)
         # check format
         if table[col].dtype != pformat:
@@ -772,6 +815,8 @@ def prep_merge(params: ParamDict, filename: str, table: Table,
                 newtable[col] = np.array(table[col]).astype(pformat)
             except Exception as e:
                 eargs = [col, filename, type(e), e, func_name]
+                # error: Incompatible data types for column = '{0}' for file
+                #     '{1}' \n Error {2}: {3} \n function = {4}
                 raise AperoCodedException(params, '01-002-00022', targs=eargs)
         else:
             newtable[col] = table[col]

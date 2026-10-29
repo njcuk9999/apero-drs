@@ -395,6 +395,9 @@ def _get_range(params, rangedict, fiber, keys):
         return extract_core.get_range(rangedict, fiber)
     except ValueError as e:
         eargs = [fiber, rangedict, keys[0], keys[1], func_name]
+        # error: Range dictionary does not have entry for fiber='{0}'. \n
+        #     RangeDict = {1} \n Check parameter {2} or {3} (if set). \n
+        #     Function = {4}
         raise AperoCodedException(params, '00-016-00008', targs=eargs)
 
 

@@ -223,11 +223,13 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
             # --------------------------------------------------------------
         # log how many FPs were found and how many rejected
         wargs = [order_num, ipeak, nreject]
+        # log: Order {0}: {1} peak(s) found, {2} peak(s) rejected
         WLOG(params, '', textentry('40-018-00001', args=wargs))
         # ------------------------------------------------------------------
         # print warnings
         for key in list(warn_dict.keys()):
             wargs = [warn_dict[key], key]
+            # warning: Curve Fit Warning (N={0}): {1}
             WLOG(params, 'warning', textentry('00-018-00001', args=wargs),
                  sublevel=2)
         # ------------------------------------------------------------------
@@ -259,6 +261,7 @@ def measure_fp_peaks(params: ParamDict, props: ParamDict, limit: float,
 
     # Log the total number of FP lines found
     wargs = [len(props['XPEAK'])]
+    # log: Total number of FP lines found = {0}
     WLOG(params, 'info', textentry('40-018-00002', args=wargs))
 
     # return the property parameter dictionary
@@ -391,10 +394,12 @@ def remove_wide_peaks(params: ParamDict, props: ParamDict,
     # log number of lines removed for suspicious width
     # noinspection PyTypeChecker
     wargs = [mp.nansum(~mask)]
+    # log: Number of lines removed due to suspicious width = {0}
     WLOG(params, 'info', textentry('40-018-00003', args=wargs))
 
     # log number of lines removed as double-fitted
     wargs = [len(props['XPEAK_OLD']) - len(props['XPEAK'])]
+    # log: Number of double-fitted lines remove = {0}
     WLOG(params, 'info', textentry('40-018-00004', args=wargs))
 
     # return props
@@ -433,10 +438,12 @@ def get_ccf_teff_mask(params: ParamDict,
     if teff_key in header:
         teff = float(header[teff_key])
         # log that we are using a Teff key for mask
+        # log: Using object temperature = {0} K for mask identification
         WLOG(params, '', textentry('40-020-00008', args=[teff]))
     else:
         # error msg: Object temperature key "{0}" not in header'
         eargs = [teff_key]
+        # error: Object temperature header key ‘{0}’ not in header.
         raise AperoCodedException(params, '09-020-00008', targs=eargs)
         # should never get here
         return '', ''
@@ -510,6 +517,8 @@ def get_ccf_mask(params, filename, mask_width, mask_units='nm',
     except Exception as e:
         # log error
         eargs = [mask_units, type(e), e, func_name]
+        # error: Fiber={0} is not valid for 'reference'. (Required '{1}') \n
+        #     File {2}: {3} \n Function = {4}
         raise AperoCodedException(params, '09-020-00002', targs=eargs)
     # add units
     ll_mask_d = ll_mask_d * unit
@@ -562,6 +571,8 @@ def remove_telluric_domain(params, infile, fiber, **kwargs):
     # check that e2ds file exists
     if not os.path.exists(e2dsabsfilename):
         eargs = [infile.filename, ext_type, e2dsabsfilename]
+        # error: Cannot remove telluric domain for file: {0} \n The {1} file was
+        #     not found: {2}
         raise AperoCodedException(params, '09-020-00003', targs=eargs)
     # get infile
     e2dsinst = drs_file.get_file_definition(params, ext_type, block_kind='red')
@@ -577,6 +588,8 @@ def remove_telluric_domain(params, infile, fiber, **kwargs):
     # check recon file exists
     if not os.path.exists(reconfile.filename):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
+        # error: Cannot remove telluric domain for file: {0} \n The {1} file was
+        #     not found: {2}
         raise AperoCodedException(params, '09-020-00003', targs=eargs)
     # read recon file
     reconfile.read_file()
@@ -604,6 +617,8 @@ def fill_e2ds_nans(params, image, **kwargs):
     kernel = np.exp(-0.5 * (xker ** 2))
     kernel /= np.sum(kernel)
     # log that NaNs were found
+    # warning: NaNs found in image. Replacing NaNs with values smoothed by
+    #     kernel.
     WLOG(params, 'warning', textentry('10-020-00002'), sublevel=2)
     # copy original image
     image2 = np.array(image)
@@ -668,11 +683,15 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         # set target rv to zero if we don't have a value
         if targetrv is None:
             wargs = [params['KW_DRS_RV'][0], infile.filename]
+            # warning: RV not found in header. Setting input RV to 0.0 \n
+            #     Key={0}) \n File = {1}
             WLOG(params, 'warning', textentry('09-020-00006', args=wargs),
                  sublevel=2)
             targetrv = 0.0
         elif np.abs(targetrv) > null_targetrv:
             wargs = [params['KW_DRS_RV'][0], null_targetrv, infile.filename]
+            # warning: RV null value found in header. Setting input RV to 0.0 \n
+            #     Key={0} Nullvalue={1} \n File = {2}
             WLOG(params, 'warning', textentry('09-020-00007', args=wargs),
                  sublevel=2)
             targetrv = 0.0
@@ -703,6 +722,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     if ccfstep > (ccfwidth / maxwsr):
         eargs = [ccfwidth, ccfstep, maxwsr, func_name]
+        # error: CCF step much not be greater than CCF width / {2}. \n Current
+        #     CCF step = {0} \n Current CCF width = {1} \n Function = {3}
         raise AperoCodedException(params, '09-020-00005', targs=eargs)
 
     # ----------------------------------------------------------------------
@@ -714,6 +735,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         # log that the science fiber was not correct
         eargs = [fiber, ' or '.join(sfiber), infile.name, infile.filename,
                  func_name]
+        # error: Fiber={0} is not valid for 'science'. (Required '{1}') \n File
+        #     {2}: {3} \n Function = {4}
         raise AperoCodedException(params, '09-020-00001', targs=eargs)
 
     # ----------------------------------------------------------------------
@@ -726,6 +749,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     dvrmsref, wmeanref, wmeanrefo = delta_v_rms_2d(**dkwargs)
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
+    # log: On fiber {0} estimated RV uncertainty on spectrum is {1:.3f}
     WLOG(params, 'info', textentry('40-020-00003', args=wargs))
 
     # ----------------------------------------------------------------------
@@ -754,6 +778,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     wargs = [props['CONTRAST_STACK'], props['RV_STACK'],
              props['CCF_PHOT_NOISE_STACK'], props['FWHM_STACK']]
+    # log: Correlation: C={0:1f}[%] SYSRV={1:.5f}[km/s] RV_NOISE={2:.5f}[km/s]
+    #     FWHM={3:.4f}[km/s]
     WLOG(params, 'info', textentry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
@@ -859,6 +885,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
 
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
+    # log: On fiber {0} estimated RV uncertainty on spectrum is {1:.3f}
     WLOG(params, 'info', textentry('40-017-00028', args=wargs))
     # ----------------------------------------------------------------------
     # Do the CCF calculations
@@ -886,6 +913,8 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # ----------------------------------------------------------------------
     wargs = [props['CONTRAST_STACK'], props['RV_STACK'],
              props['CCF_PHOT_NOISE_STACK'], props['FWHM_STACK']]
+    # log: Correlation: C={0:1f}[%] SYSRV={1:.5f}[km/s] RV_NOISE={2:.5f}[km/s]
+    #     FWHM={3:.4f}[km/s]
     WLOG(params, 'info', textentry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
@@ -1002,6 +1031,7 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
     # loop around the orders
     for order_num in range(nbo):
         # log the process
+        # log: Processing CCF fiber {0} for Order {1}
         WLOG(params, '', textentry('40-020-00005', args=[fiber, order_num]))
         # ------------------------------------------------------------------
         # get this orders values
@@ -1036,6 +1066,8 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         if np.sum(mask_wave_mask) == 0:
             # log all NaN
             wargs = [order_num, min_ord_wav, max_ord_wav]
+            # warning: Order {0} CCF mask for this order has no lines. CCF set
+            #     to NaNs. \n order wavelength: {1:.3f} to {2:.3f}
             WLOG(params, 'warning', textentry('10-020-00006', args=wargs),
                  sublevel=4)
             continue
@@ -1044,6 +1076,7 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         if np.sum(~valid) == nbpix:
             # log all NaN
             wargs = [order_num]
+            # warning: Order {0} has no finite values. CCF set to NaNs.
             WLOG(params, 'warning', textentry('10-020-00004', args=wargs),
                  sublevel=4)
             continue
@@ -1080,6 +1113,8 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         if np.sum(keep) == 0:
             # log all NaN
             wargs = [order_num]
+            # warning: Order {0} CCF mask for this order only has lines in
+            #     invalid blaze locations. CCF set to NaNs
             WLOG(params, 'warning', textentry('10-020-00007', args=wargs),
                  sublevel=4)
             continue
@@ -1114,6 +1149,8 @@ def ccf_calculation_per_order(params, image, blaze, wavemap, berv, targetrv,
         if np.sum(np.isnan(ccf_ord)) > 0:
             # log all NaN
             wargs = [order_num]
+            # warning: Order {0} CCF generated a non-finite value. CCF set to
+            #     NaNs.
             WLOG(params, 'warning', textentry('10-020-00005', args=wargs),
                  sublevel=4)
             continue
@@ -1311,11 +1348,15 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
     # deal with inconsistent lengths
     if len(rv) != len(ccf):
         eargs = [len(rv), len(ccf), func_name]
+        # error: Length of rv vector (len={0}) and ccf vector (len={1}) are not
+        #     the same. \n Function = {2}
         raise AperoCodedException(params, '00-020-00001', targs=eargs)
     # deal with all nans
     if np.sum(np.isnan(ccf)) == len(ccf):
         # log warning about all NaN ccf
         wargs = [order_num]
+        # warning: All NaN slice found when fitting CCF (Order = {0}). Returning
+        #     NaNs instead of fit.
         WLOG(params, 'warning', textentry('10-020-00001', args=wargs))
         # return NaNs
         result = np.zeros(fit_params) * np.nan
@@ -1363,11 +1404,12 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
                 result = np.repeat(np.nan, fit_params)
                 fit = np.repeat(np.nan, len(rv))
                 # print warning
-                wmsg = ('CCF initial guess out of bounds. Skipping order {0}.'
-                        '\n\t{1} = {2}  bounds=[{3}, {4}]')
                 wargs = [order_num, fitnames[v_it], variable,
                          bounds_lower[v_it], bounds_upper[v_it]]
-                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=5)
+                # warning: CCF initial guess out of bounds. Skipping order {0}.
+                #     \n {1} = {2} bounds=[{3}, {4}]
+                WLOG(params, 'warning', textentry('10-020-00009', args=wargs),
+                     sublevel=5)
                 # return the best guess and the gaussian fit
                 return result, fit, fitnames
         # get gaussian fit
@@ -1422,11 +1464,12 @@ def fit_ccf_ea(params, order_num, rv, ccf, sig, fit_type, fit_params,
                 result = np.repeat(np.nan, fit_params)
                 fit = np.repeat(np.nan, len(rv))
                 # print warning
-                wmsg = ('CCF initial guess out of bounds. Skipping order {0}.'
-                        '\n\t{1} = {2}  bounds=[{3}, {4}]')
                 wargs = [order_num, fitnames[v_it], variable,
                          bounds_lower[v_it], bounds_upper[v_it]]
-                WLOG(params, 'warning', wmsg.format(*wargs), sublevel=5)
+                # warning: CCF initial guess out of bounds. Skipping order {0}.
+                #     \n {1} = {2} bounds=[{3}, {4}]
+                WLOG(params, 'warning', textentry('10-020-00009', args=wargs),
+                     sublevel=5)
                 # return the best guess and the gaussian fit
                 return result, fit, fitnames
         # get gaussian fit
@@ -1659,6 +1702,7 @@ def write_ccf(params: ParamDict, recipe, infile: DrsFitsFile,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, ccf_file.filename]
+    # log: Saving CCF {0} file: {1}
     WLOG(params, '', textentry('40-020-00006', args=wargs))
     # define multi lists
     data_list = [table2]

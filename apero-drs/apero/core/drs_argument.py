@@ -145,6 +145,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         args, argv = self.parse_known_args(self.args, namespace)
         # deal with argv being set
         if argv:
+            # text: unrecognized arguments: {0}
             self.error(textentry('09-001-00002', args=[' '.join(argv)]))
         return args
 
@@ -163,8 +164,12 @@ class DrsArgumentParser(argparse.ArgumentParser):
         params = self.recipe.params
         # log message
         emsg_args = [message, program]
+        # text: Argument Error (Error from ArgParse): \n {0} \n Use: '{1}.py
+        #     --help' for help.
         emsg_obj = textentry('09-001-00001', args=emsg_args)
 
+        # error: Argument Error (Error from ArgParse): \n {0} \n Use: '{1}.py
+        #     --help' for help.
         raise drs_log.AperoCodedException(params, '09-001-00001',
                                           targs=emsg_args)
 
@@ -191,6 +196,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # Manually print error message (with help text)
         print()
         print(green + params['LOG.HEADER'] + end)
+        # text: Help for: '{0}.py'
         helptitletext = textentry('40-002-00001', args=[program])
         print(green + ' ' + helptitletext + end)
         print(green + params['LOG.HEADER'] + end)
@@ -238,6 +244,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
             # add header line
             hmsgs += [self.recipe.params['LOG.HEADER']]
         # deal with required (positional) arguments
+        # text: Required Arguments:
         hmsgs += ['', textentry('40-002-00002'), '']
         # loop around each required (positional) arguments
         for arg in self.recipe.required_args:
@@ -257,6 +264,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
                 # add to help mesasge list
                 hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # add help
+        # text: show this help message and exit
         helpstr = textentry('40-002-00005')
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
         # add extended help
@@ -301,11 +309,11 @@ class DrsArgumentParser(argparse.ArgumentParser):
             if f'--{arg}' in self.recipe.specialargs:
                 func_name = display_func('_has_special', __NAME__)
                 # define error
-                emsg = ('Error recipe {0} has argument {1} which is both an '
-                        'arg/kwarg and special arg - not allowed'
-                        '\n\tFunction = {2}')
                 eargs = [arg, self.recipe.name, func_name]
-                WLOG(self.recipe.params, 'error', emsg.format(*eargs))
+                # error: Error recipe {0} has argument {1} which is both an
+                #     arg/kwarg and special arg - not allowed \n Function = {2}
+                WLOG(self.recipe.params, 'error',
+                     textentry('00-006-00026', args=eargs))
         # Generate list of special arguments that require us to skip other
         #   arguments
         skippable = []
@@ -435,6 +443,7 @@ class _CheckObsDir(DrsAction):
         # debug checking output (with new line)
         if params['GLOBAL.DEBUG'] > 0:
             print('')
+        # debug: Checking Directory for argument: '{0}'
         WLOG(params, 'debug', textentry('90-001-00018', args=[argname]))
         # check whether we have a valid directory
         if NO_DB:
@@ -585,6 +594,7 @@ class _CheckFiles(DrsAction):
         obs_dir = _check_arg_path(params, arg, obs_dir)
         # ---------------------------------------------------------------------
         # debug checking output
+        # debug: Checking Files for argument: '{0}'
         WLOG(params, 'debug', textentry('90-001-00019', args=[argname]))
         # check whether we are updating the index
         update_index = True
@@ -599,6 +609,8 @@ class _CheckFiles(DrsAction):
         # deal with instrument == 'None'
         if self.indexdb.instrument == 'None':
             eargs = [argname, self.indexdb.name, func_name]
+            # error: Cannot use argument '{0}'. ({1} database required and
+            #     INSTRUMENT='None') \n Function = {2}
             raise drs_log.AperoCodedException(params, '09-001-00032',
                                               targs=eargs)
         elif self.indexdb.database is None:
@@ -750,12 +762,14 @@ class _CheckBool(DrsAction):
         # get the argument name
         argname = self.dest
         # debug progress
+        # debug: Checking Bools for argument: '{0}'
         WLOG(params, 'debug', textentry('90-001-00020', args=[argname]),
              wrap=False)
         # conditions
         if str(value).lower() in ['yes', 'true', 't', 'y', '1']:
             # debug print
             dargs = [argname, value, 'True']
+            # text: Argument '{0}': Value entered='{1}' value assigned='{2}'
             dmsg = textentry('90-001-00021', args=dargs)
             dmsg += ''
             WLOG(params, 'debug', dmsg, wrap=False)
@@ -763,11 +777,15 @@ class _CheckBool(DrsAction):
         elif str(value).lower() in ['no', 'false', 'f', 'n', '0']:
             # debug print
             dargs = [argname, value, 'False']
+            # text: Argument '{0}': Value entered='{1}' value assigned='{2}'
             dmsg = textentry('90-001-00021', args=dargs)
             dmsg += ''
             WLOG(params, 'debug', dmsg, wrap=False)
             return False
         else:
+            # error: Argument '{0}': Value must be a boolean (True/False) \n
+            #     Current value = '{1}' \n Acceptable values for True are: true,
+            #     yes, 1 \n Acceptable values for False are: false, no, 0
             raise drs_log.AperoCodedException(params, '09-001-00013',
                                               targs=[self.dest, value])
 
@@ -869,6 +887,7 @@ class _CheckType(DrsAction):
         # check if passed as a list
         if (self.nargs == 1) and (type(value) is list):
             if len(value) == 0:
+                # error: Argument '{0}': Value must not be an empty list
                 raise drs_log.AperoCodedException(params, '09-001-00016',
                                                   targs=[self.dest])
             else:
@@ -880,6 +899,8 @@ class _CheckType(DrsAction):
                 values.append(self._eval_type(values[it]))
             if len(values) < len(value):
                 eargs = [self.dest, self.nargs, len(value)]
+                # error: Argument '{0}': Too many values for argument. (Expected
+                #     {1} got {2})
                 raise drs_log.AperoCodedException(params, '09-001-00017',
                                                   targs=eargs)
 
@@ -887,6 +908,8 @@ class _CheckType(DrsAction):
         # else
         else:
             eargs = [self.dest, self.nargs, type(value), value]
+            # error: Argument '{0}': List was expected with {1} argument(s) but
+            #     type found was '{2}' \n Current value = '{3}'
             raise drs_log.AperoCodedException(params, '09-001-00018',
                                                 targs=eargs)
 
@@ -905,9 +928,13 @@ class _CheckType(DrsAction):
         try:
             return self.type(value)
         except ValueError as _:
+            # error: Argument '{0}': Value must be of type '{1}' (ValueError) \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00014',
                                               targs=eargs)
         except TypeError as _:
+            # error: Argument '{0}': Value must be of type '{1}' (TypeError) \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00015',
                                               targs=eargs)
 
@@ -942,6 +969,8 @@ class _CheckType(DrsAction):
             arg = self.recipe.special_args[argname]
         else:
             eargs = [argname, func_name]
+            # error: DrsArgument arg 'dtype' is not valid. Must be equal to one
+            #     of the following: \n {0} \n Current value is '{1}'
             raise drs_log.AperoCodedException(params, '00-006-00010',
                                               targs=eargs)
         # ---------------------------------------------------------------------
@@ -966,6 +995,8 @@ class _CheckType(DrsAction):
                 minimum = arg.dtype(minimum)
             except ValueError as e:
                 eargs = [argname, 'minimum', minimum, type(e), e]
+                # error: Argument '{0}': The value '{1}'='{2}' cannot be used.
+                #     \n Error {3}: {4}
                 raise drs_log.AperoCodedException(params, '00-006-00012',
                                                     targs=eargs)
 
@@ -974,6 +1005,8 @@ class _CheckType(DrsAction):
                 maximum = arg.dtype(maximum)
             except ValueError as e:
                 eargs = [argname, 'maximum', maximum, type(e), e]
+                # error: Argument '{0}': The value '{1}'='{2}' cannot be used.
+                #     \n Error {3}: {4}
                 raise drs_log.AperoCodedException(params, '00-006-00012',
                                                     targs=eargs)
         # ---------------------------------------------------------------------
@@ -983,18 +1016,24 @@ class _CheckType(DrsAction):
             if minimum is not None and maximum is not None:
                 if (value < minimum) or (value > maximum):
                     eargs = [argname, value, minimum, maximum]
+                    # error: Argument '{0}': value='{1}' must be between '{2}'
+                    #     and '{3}'
                     raise drs_log.AperoCodedException(params, '09-001-00029',
                                                       targs=eargs)
             # deal with case where just minimum is checked
             elif minimum is not None:
                 if value < minimum:
                     eargs = [argname, value, minimum]
+                    # error: Argument '{0}': value='{1}' must be larger than or
+                    #     equal to '{2}'
                     raise drs_log.AperoCodedException(params, '09-001-00027',
                                                       targs=eargs)
             # deal with case where just maximum is checked
             elif maximum is not None:
                 if value > maximum:
                     eargs = [argname, value, maximum]
+                    # error: Argument '{0}': value='{1}' must be smaller than or
+                    #     equal to '{2}'
                     raise drs_log.AperoCodedException(params, '09-001-00028',
                                                         targs=eargs)
         # ---------------------------------------------------------------------
@@ -1101,6 +1140,8 @@ class _CheckOptions(DrsAction):
             return value
         else:
             eargs = [self.dest, ' or '.join(self.choices), value]
+            # error: Argument '{0}': Value must be one of the following: {1} \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00019',
                                               targs=eargs)
 
@@ -1207,6 +1248,8 @@ class _CheckList(DrsAction):
         # else
         else:
             eargs = [self.dest, self.nargs, type(value), value]
+            # error: Argument '{0}': List was expected with {1} argument(s) but
+            #     type found was '{2}' \n Current value = '{3}'
             raise drs_log.AperoCodedException(params, '09-001-00018',
                                                 targs=eargs)
 
@@ -1225,9 +1268,13 @@ class _CheckList(DrsAction):
         try:
             return self.type(value)
         except ValueError as _:
+            # error: Argument '{0}': Value must be of type '{1}' (ValueError) \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00014',
                                               targs=eargs)
         except TypeError as _:
+            # error: Argument '{0}': Value must be of type '{1}' (TypeError) \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00015',
                                               targs=eargs)
 
@@ -1262,6 +1309,8 @@ class _CheckList(DrsAction):
             arg = self.recipe.special_args[argname]
         else:
             eargs = [argname, func_name]
+            # error: DrsArgument arg 'dtype' is not valid. Must be equal to one
+            #     of the following: \n {0} \n Current value is '{1}'
             raise drs_log.AperoCodedException(params, '00-006-00010',
                                               targs=eargs)
         # ---------------------------------------------------------------------
@@ -1286,6 +1335,8 @@ class _CheckList(DrsAction):
                 minimum = arg.dtype(minimum)
             except ValueError as e:
                 eargs = [argname, 'minimum', minimum, type(e), e]
+                # error: Argument '{0}': The value '{1}'='{2}' cannot be used.
+                #     \n Error {3}: {4}
                 raise drs_log.AperoCodedException(params, '00-006-00012',
                                                     targs=eargs)
 
@@ -1294,6 +1345,8 @@ class _CheckList(DrsAction):
                 maximum = arg.dtype(maximum)
             except ValueError as e:
                 eargs = [argname, 'maximum', maximum, type(e), e]
+                # error: Argument '{0}': The value '{1}'='{2}' cannot be used.
+                #     \n Error {3}: {4}
                 raise drs_log.AperoCodedException(params, '00-006-00012',
                                                     targs=eargs)
         # ---------------------------------------------------------------------
@@ -1303,18 +1356,24 @@ class _CheckList(DrsAction):
             if minimum is not None and maximum is not None:
                 if (value < minimum) or (value > maximum):
                     eargs = [argname, value, minimum, maximum]
+                    # error: Argument '{0}': value='{1}' must be between '{2}'
+                    #     and '{3}'
                     raise drs_log.AperoCodedException(params, '09-001-00029',
                                                       targs=eargs)
             # deal with case where just minimum is checked
             elif minimum is not None:
                 if value < minimum:
                     eargs = [argname, value, minimum]
+                    # error: Argument '{0}': value='{1}' must be larger than or
+                    #     equal to '{2}'
                     raise drs_log.AperoCodedException(params, '09-001-00027',
                                                       targs=eargs)
             # deal with case where just maximum is checked
             elif maximum is not None:
                 if value > maximum:
                     eargs = [argname, value, maximum]
+                    # error: Argument '{0}': value='{1}' must be smaller than or
+                    #     equal to '{2}'
                     raise drs_log.AperoCodedException(params, '09-001-00028',
                                                         targs=eargs)
         # ---------------------------------------------------------------------
@@ -1441,6 +1500,8 @@ class _CheckDict(DrsAction):
         # else
         else:
             eargs = [self.dest, self.nargs, type(value), value]
+            # error: Argument '{0}': List was expected with {1} argument(s) but
+            #     type found was '{2}' \n Current value = '{3}'
             raise drs_log.AperoCodedException(params, '09-001-00018',
                                                 targs=eargs)
 
@@ -1459,9 +1520,13 @@ class _CheckDict(DrsAction):
         try:
             return self.type(value)
         except ValueError as _:
+            # error: Argument '{0}': Value must be of type '{1}' (ValueError) \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00014',
                                               targs=eargs)
         except TypeError as _:
+            # error: Argument '{0}': Value must be of type '{1}' (TypeError) \n
+            #     Current value = '{2}'
             raise drs_log.AperoCodedException(params, '09-001-00015',
                                               targs=eargs)
 
@@ -1496,6 +1561,8 @@ class _CheckDict(DrsAction):
             arg = self.recipe.special_args[argname]
         else:
             eargs = [argname, func_name]
+            # error: DrsArgument arg 'dtype' is not valid. Must be equal to one
+            #     of the following: \n {0} \n Current value is '{1}'
             raise drs_log.AperoCodedException(params, '00-006-00010',
                                               targs=eargs)
         # ---------------------------------------------------------------------
@@ -1520,6 +1587,8 @@ class _CheckDict(DrsAction):
                 minimum = arg.dtype(minimum)
             except ValueError as e:
                 eargs = [argname, 'minimum', minimum, type(e), e]
+                # error: Argument '{0}': The value '{1}'='{2}' cannot be used.
+                #     \n Error {3}: {4}
                 raise drs_log.AperoCodedException(params, '00-006-00012',
                                                     targs=eargs)
 
@@ -1528,6 +1597,8 @@ class _CheckDict(DrsAction):
                 maximum = arg.dtype(maximum)
             except ValueError as e:
                 eargs = [argname, 'maximum', maximum, type(e), e]
+                # error: Argument '{0}': The value '{1}'='{2}' cannot be used.
+                #     \n Error {3}: {4}
                 raise drs_log.AperoCodedException(params, '00-006-00012',
                                                     targs=eargs)
         # ---------------------------------------------------------------------
@@ -1537,18 +1608,24 @@ class _CheckDict(DrsAction):
             if minimum is not None and maximum is not None:
                 if (value < minimum) or (value > maximum):
                     eargs = [argname, value, minimum, maximum]
+                    # error: Argument '{0}': value='{1}' must be between '{2}'
+                    #     and '{3}'
                     raise drs_log.AperoCodedException(params, '09-001-00029',
                                                       targs=eargs)
             # deal with case where just minimum is checked
             elif minimum is not None:
                 if value < minimum:
                     eargs = [argname, value, minimum]
+                    # error: Argument '{0}': value='{1}' must be larger than or
+                    #     equal to '{2}'
                     raise drs_log.AperoCodedException(params, '09-001-00027',
                                                       targs=eargs)
             # deal with case where just maximum is checked
             elif maximum is not None:
                 if value > maximum:
                     eargs = [argname, value, maximum]
+                    # error: Argument '{0}': value='{1}' must be smaller than or
+                    #     equal to '{2}'
                     raise drs_log.AperoCodedException(params, '09-001-00028',
                                                         targs=eargs)
         # ---------------------------------------------------------------------
@@ -1889,6 +1966,7 @@ class _ActivateDebug(DrsAction):
             raise AperoCodedException(None, e.codeid, targs=e.targs)
         except Exception as _:
             eargs = [self.dest, values]
+            # error: Argument '{0}': Debug mode = '{1}' not understood.
             raise AperoCodedException(None, '09-001-00020', targs=eargs)
 
 
@@ -2077,6 +2155,7 @@ class _ForceInputDir(DrsAction):
             return value
         except Exception as _:
             eargs = [self.dest, values]
+            # error: Argument '{0}': Debug mode = '{1}' not understood.
             raise drs_log.AperoCodedException(params, '09-001-00020',
                                               targs=eargs)
 
@@ -2176,6 +2255,7 @@ class _ForceOutputDir(DrsAction):
             return value
         except Exception as _:
             eargs = [self.dest, values]
+            # error: Argument '{0}': Debug mode = '{1}' not understood.
             raise drs_log.AperoCodedException(params, '09-001-00020',
                                               targs=eargs)
 
@@ -2472,6 +2552,7 @@ class _SetProgram(DrsAction):
         else:
             strvalue = str(values)
         # debug message: setting program to: "strvalue"
+        # text: Setting program name to: '{0}'
         dmsg = textentry('90-001-00031', args=[strvalue])
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
@@ -2577,6 +2658,9 @@ class _SetParallel(DrsAction):
             return False
         else:
             eargs = [self.dest, strvalue]
+            # error: Argument '{0}': Value must be a boolean (True/False) \n
+            #     Current value = '{1}' \n Acceptable values for True are: true,
+            #     yes, 1 \n Acceptable values for False are: false, no, 0
             raise drs_log.AperoCodedException(params, '09-001-00013',
                                               targs=eargs)
 
@@ -2762,6 +2846,7 @@ class _SetShortName(DrsAction):
         else:
             strvalue = str(values)
         # debug message: setting program to: "strvalue"
+        # text: Setting program name to: '{0}'
         dmsg = textentry('90-001-00031', args=[strvalue])
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
@@ -2848,6 +2933,7 @@ class _SetIPythonReturn(DrsAction):
         func_name = display_func('_set_return',
                                  __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
+        # text: Setting ipython_return to True
         dmsg = textentry('90-001-00032')
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
@@ -3079,6 +3165,7 @@ class _SetQuiet(DrsAction):
         # _ = display_func('_set_return', __NAME__,
         #                  self.class_name)
         # debug message: setting program to: "strvalue"
+        # text: Setting mode to quiet
         dmsg = textentry('90-001-00034')
         WLOG(self.recipe.params, 'debug', dmsg)
         # return strvalue
@@ -3251,6 +3338,7 @@ class DrsArgument(object):
             # check argname
             if self.argname.startswith('-'):
                 # get entry to log error
+                # text: Positional argument '{0}' cannot start with a '-'
                 ee = textentry('00-006-00015', args=[self.argname])
                 self.exception(None, errorstr=[ee])
         elif kind == 'kwarg':
@@ -3258,6 +3346,7 @@ class DrsArgument(object):
             # check argname
             if not self.argname.startswith('-'):
                 # get entry to log error
+                # text: Keyword argument '{0}' must start with a '-'
                 ee = textentry('00-006-00016', args=[self.argname])
                 self.exception(None, errorstr=[ee])
         elif kind == 'special':
@@ -3265,6 +3354,7 @@ class DrsArgument(object):
             # check argname
             if not self.argname.startswith('-'):
                 # get entry to log error
+                # text: Special argument '{0}' must start with a '-'
                 ee = textentry('00-006-00017', args=[self.argname])
                 self.exception(None, errorstr=[ee])
         else:
@@ -3303,6 +3393,8 @@ class DrsArgument(object):
                     # get exception argumnets
                     eargs = [self.name, 'DrsInputFile', func_name]
                     # raise exception
+                    # error: Argument '{0}': tried to set 'files' attribute,
+                    #     however files attributes must be {1} \n Function = {2}
                     raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # else assume file is a single file (but put it into a list any way)
         else:
@@ -3313,6 +3405,8 @@ class DrsArgument(object):
                 # get exception arguments
                 eargs = [self.name, 'DrsInputFile', func_name]
                 # raise exception
+                # error: Argument '{0}': tried to set 'files' attribute, however
+                #     files attributes must be {1} \n Function = {2}
                 raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # ---------------------------------------------------------------------
         # define the override input path for files (defaults to directory)
@@ -3327,6 +3421,8 @@ class DrsArgument(object):
         self.filelogic = filelogic
         if self.filelogic not in ['inclusive', 'exclusive', 'date']:
             # get entry to log error
+            # text: DrsArgument arg 'filelogic' must be equal to 'inclusive' or
+            #     'exclusive' only. \n Current value is '{0}'
             ee = textentry('00-006-00008', args=[self.filelogic])
             self.exception(None, errorstr=[ee])
         # get file logic tag
@@ -3336,6 +3432,9 @@ class DrsArgument(object):
             # get entry
             if (default is None) and (default_ref is None):
                 # get entry to log error
+                # text: DrsArgument kwargs error: call to DrsArgument must have
+                #     keyword 'default' or 'default_ref' when DrsArgumet kind is
+                #     'kwarg'
                 ee = textentry('00-006-00009', args=self.filelogic)
                 self.exception(None, errorstr=[ee])
         # get default
@@ -3431,6 +3530,8 @@ class DrsArgument(object):
             # make error
             a_dtypes_str = ['"{0}"'.format(i) for i in self.allowed_dtypes]
             eargs = [' or '.join(a_dtypes_str), self.dtype]
+            # text: DrsArgument arg 'dtype' is not valid. Must be equal to one
+            #     of the following: \n {0} \n Current value is '{1}'
             ee = textentry('00-006-00010', args=eargs)
             self.exception(None, errorstr=[ee])
         # deal with dtype
@@ -3559,6 +3660,8 @@ class DrsArgument(object):
                     # get exception argumnets
                     eargs = [self.name, 'DrsInputFile', func_name]
                     # raise exception
+                    # error: Argument '{0}': tried to set 'files' attribute,
+                    #     however files attributes must be {1} \n Function = {2}
                     raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # else assume file is a single file (but put it into a list any way)
         else:
@@ -3569,6 +3672,8 @@ class DrsArgument(object):
                 # get exception argumnets
                 eargs = [self.name, 'DrsInputFile', func_name]
                 # raise exception
+                # error: Argument '{0}': tried to set 'files' attribute, however
+                #     files attributes must be {1} \n Function = {2}
                 raise AperoCodedException(None, '00-006-00021', targs=eargs)
         # copy the override input path
         #    Note path can be a parameter in param dict
@@ -3637,10 +3742,12 @@ class DrsArgument(object):
                 if isinstance(estr, drs_lang.Text):
                     estr = estr.get_text(report=True)
                 errorout += estr
+            # error: {0}
             raise AperoCodedException(None, '00-006-00023', targs=[errorout])
 
         # else raise the argument error with just the message
         else:
+            # error: {0}
             raise AperoCodedException(None, '00-006-00023', targs=[message])
 
 
@@ -3786,6 +3893,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: FileIndexDatabase,
         input_value = str(input_value)
     except Exception as _:
         eargs = [argname, input_value, type(input_value)]
+        # error: Argument '{0}': Directory = '{1}' is not valid (type = '{2}')
         raise drs_log.AperoCodedException(params, '09-001-00003', targs=eargs)
     # clean up
     input_value = input_value.strip()
@@ -3820,6 +3928,7 @@ def valid_obs_dir_no_db(params: ParamDict, indexdb: FileIndexDatabase,
     # -------------------------------------------------------------------------
     abspath = os.path.join(block_inst.block_path, input_value)
     eargs = [argname, input_value, input_value, str(abspath)]
+    # error: Argument '{0}': Directory = '{1}' not found \n Tried \n {1} \n {2}
     raise drs_log.AperoCodedException(params, '09-001-00004', targs=eargs)
 
 
@@ -3861,6 +3970,7 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
         input_value = str(input_value)
     except Exception as _:
         eargs = [argname, input_value, type(input_value)]
+        # error: Argument '{0}': Directory = '{1}' is not valid (type = '{2}')
         raise drs_log.AperoCodedException(params, '09-001-00003', targs=eargs)
     # clean up
     input_value = input_value.strip()
@@ -3870,6 +3980,8 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
         eargs = [argname, indexdb.name, func_name]
+        # error: Cannot use argument '{0}'. ({1} database required and
+        #     INSTRUMENT='None') \n Function = {2}
         raise drs_log.AperoCodedException(params, '09-001-00032', targs=eargs)
     elif indexdb.database is None:
         # try to load database
@@ -3909,6 +4021,7 @@ def valid_obs_dir(params: ParamDict, indexdb: FileIndexDatabase,
     # -------------------------------------------------------------------------
     abspath = os.path.join(block_inst.block_path, input_value)
     eargs = [argname, input_value, input_value, str(abspath)]
+    # error: Argument '{0}': Directory = '{1}' not found \n Tried \n {1} \n {2}
     raise drs_log.AperoCodedException(params, '09-001-00004', targs=eargs)
 
 
@@ -3946,6 +4059,8 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
         filename = str(filename)
     except Exception as _:
         eargs = [argname, filename, type(filename)]
+        # error: Argument '{0}': File ='{1}' was not found \n Tried: \n '{1}' \n
+        #     '{2}'
         raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
     # clean up
     filename = filename.strip()
@@ -3987,6 +4102,8 @@ def valid_file_no_db(params: ParamDict, recipe: Any,
     # ---------------------------------------------------------------------
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
+    # error: Argument '{0}': File ='{1}' was not found \n Tried: \n '{1}' \n
+    #     '{2}'
     raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
 
 
@@ -4027,6 +4144,8 @@ def valid_file(params: ParamDict, filedb: PandasLikeDatabase,
         filename = str(filename)
     except Exception as _:
         eargs = [argname, filename, type(filename)]
+        # error: Argument '{0}': File ='{1}' was not found \n Tried: \n '{1}' \n
+        #     '{2}'
         raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
     # clean up
     filename = filename.strip()
@@ -4084,6 +4203,8 @@ def valid_file(params: ParamDict, filedb: PandasLikeDatabase,
     # ---------------------------------------------------------------------
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
+    # error: Argument '{0}': File ='{1}' was not found \n Tried: \n '{1}' \n
+    #     '{2}'
     raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
 
 
@@ -4142,6 +4263,7 @@ def _fits_database_query(params: ParamDict, drsfiles: List[DrsInputFile],
         for drsfile in drsfiles:
             # if in debug mode print progres
             dargs = [drsfile.name, os.path.basename(filename_it)]
+            # debug: Checking DrsFile='{0}' filename='{1}'
             WLOG(params, 'debug', textentry('90-001-00008', args=dargs),
                  wrap=False)
             # -------------------------------------------------------------
@@ -4233,6 +4355,7 @@ def _fits_query(params: ParamDict, recipe: Any,
         for drsfile in drsfiles:
             # if in debug mode print progres
             dargs = [drsfile.name, os.path.basename(filename_it)]
+            # debug: Checking DrsFile='{0}' filename='{1}'
             WLOG(params, 'debug', textentry('90-001-00008', args=dargs),
                  wrap=False)
             # -------------------------------------------------------------
@@ -4306,6 +4429,9 @@ def _check_file_logic(params: ParamDict, argname: str, logic: str,
             if filetype.name != types[-1].name:
                 # raise error if not
                 eargs = [argname, filetype.name, types[-1].name]
+                # error: Argument '{0}': File identified as '{1}' \n However,
+                #     previous file(s) identified as '{2}' \n Files must match
+                #     (logic set to 'exclusive')
                 raise drs_log.AperoCodedException(params, '09-001-00008',
                                                   targs=eargs)
 
@@ -4336,6 +4462,8 @@ def _inpath_file(params: ParamDict, argname: str, filename: str,
         return [abspath], [file_in]
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
+    # error: Argument '{0}': File ='{1}' was not found \n Tried: \n '{1}' \n
+    #     '{2}'
     raise drs_log.AperoCodedException(params, '09-001-00005', targs=eargs)
 
 
@@ -4365,11 +4493,16 @@ def _get_version_info(params: ParamDict, green: str = '',
     else:
         version = __version__
     # get text strings
+    # text: NAME
     namestr = textentry('40-001-00001')
+    # text: VERSION
     versionstr = textentry('40-001-00002')
+    # text: AUTHORS
     authorstr = textentry('40-001-00003')
     authors = ', '.join(__authors__)
+    # text: LAST UPDATED
     datestr = textentry('40-001-00004')
+    # text: RELEASE STATUS
     releasestr = textentry('40-001-00005')
     # construct version info string
     imsgs = [green + '\t{0}: {1}'.format(namestr, name),
@@ -4490,13 +4623,21 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     wmsgs = []
     if limitreached:
         if dircond:
+            # text: Possible inputs for 'directory' \n (displaying first {0}
+            #     directories in location='{1}')
             wmsgs.append(textentry('40-005-00002', args=wargs))
         else:
+            # text: Possible inputs for '{2}' \n (displaying first {0} files in
+            #     directory='{1}')
             wmsgs.append(textentry('40-005-00003', args=wargs))
     else:
         if dircond:
+            # text: Possible inputs for 'directory' \n (displaying all
+            #     directories in location='{1}')
             wmsgs.append(textentry('40-005-00004', args=wargs))
         else:
+            # text: Possible inputs for '{2}' \n (displaying all files in
+            #     directory='{1}')
             wmsgs.append(textentry('40-005-00005', args=wargs))
     # loop around files and add to list
     for filename in filelist:
@@ -4508,6 +4649,7 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     # print info
     if not return_string:
         pmsgs.append(green + params['LOG.HEADER'] + end)
+        # text: Listing for: {0}
         pmsgs.append(green + ' ' + textentry('40-005-00001', args=[program])
                      + end)
         pmsgs.append(green + params['LOG.HEADER'] + end)

@@ -158,9 +158,8 @@ class Trigger:
         self.outdir = params['PATH.RAW']
         # deal with no input directory to scan
         if drs_text.null_text(self.indir, ['None', '', 'Null']):
-            # TODO: Add to language database
-            emsg = '--indir must be defined'
-            raise AperoCodedException(params, message=emsg)
+            # error: --indir must be defined
+            raise AperoCodedException(params, '09-502-00008')
         # define the calib and science trigger scripts
         self.calib_script = 'None'
         self.science_script = 'None'
@@ -181,7 +180,8 @@ class Trigger:
         # step 1: sync raw directory
         # ----------------------------------------------------------------------
         # print progress
-        WLOG(self.params, 'info', 'Creating new symlinks')
+        # log: Creating new symlinks
+        WLOG(self.params, 'info', textentry('40-502-00017'))
         # update raw file symlinks
         raw_files(self.indir, self.outdir, do_copy=False, do_symlink=True,
                   exclude_obs_dir=self.excluded_dirs, replace=False, log=False)
@@ -189,7 +189,8 @@ class Trigger:
         # step 2: update obs_dir table
         # ---------------------------------------------------------------------
         # print progress
-        WLOG(self.params, 'info', 'Updating trigger status')
+        # log: Updating trigger status
+        WLOG(self.params, 'info', textentry('40-502-00018'))
         # get and update status table
         table = self.status()
         # ---------------------------------------------------------------------
@@ -203,8 +204,9 @@ class Trigger:
             # deal with whether we are in calibration mode
             if not table['DONE_CALIB'][row]:
                 # print progress
-                msg = f'Running apero calibration processing for {obs_dir}'
-                WLOG(self.params, 'info', msg)
+                margs = [obs_dir]
+                # log: Running apero calibration processing for {0}
+                WLOG(self.params, 'info', textentry('40-502-00056', args=margs))
                 # run calib script
                 apero_processing.main(runfile=self.calib_script,
                                       obs_dir=obs_dir, test=self.trigger_test)
@@ -212,7 +214,8 @@ class Trigger:
         # step 4: update obs_dir table
         # ---------------------------------------------------------------------
         # print progress
-        WLOG(self.params, 'info', 'Updating trigger status')
+        # log: Updating trigger status
+        WLOG(self.params, 'info', textentry('40-502-00018'))
         # get and update status table
         table = self.status()
         # ---------------------------------------------------------------------
@@ -226,8 +229,9 @@ class Trigger:
             # deal with whether we are in science mode
             if not table['DONE_SCI'][row] and table['DONE_CALIB'][row]:
                 # print progress
-                msg = f'Running apero science processing for {obs_dir}'
-                WLOG(self.params, 'info', msg)
+                margs = [obs_dir]
+                # log: Running apero science processing for {0}
+                WLOG(self.params, 'info', textentry('40-502-00057', args=margs))
                 # run science script
                 apero_processing.main(runfile=self.science_script,
                                       obs_dir=obs_dir, test=self.trigger_test)
@@ -256,6 +260,7 @@ class Trigger:
         drs_processing.update_index_db(self.params, self.recipe.shortname)
         # fix the header data (object name, dprtype, mjdmid and
         #     trg_type etc)
+        # log: Updating database with header fixes
         WLOG(self.params, '', textentry('40-503-00043'))
         self.findexdbm.update_header_fix(objdbm=self.objdbm)
         # ----------------------------------------------------------------------
@@ -368,11 +373,13 @@ class Trigger:
         # ---------------------------------------------------------------------
         # print the obs dirs left to do
         if len(todo_calib) > 0:
-            msg = 'Processing calib nights:\n\t{0}'
-            WLOG(self.params, '', msg.format(', '.join(todo_calib)))
+            margs = [', '.join(todo_calib)]
+            # log: Processing calib nights: \n {0}
+            WLOG(self.params, '', textentry('40-502-00051', args=margs))
         if len(todo_sci) > 0:
-            msg = 'Processing science nights:\n\t{0}'
-            WLOG(self.params, '', msg.format(', '.join(todo_sci)))
+            margs = [', '.join(todo_sci)]
+            # log: Processing science nights: \n {0}
+            WLOG(self.params, '', textentry('40-502-00052', args=margs))
         # ---------------------------------------------------------------------
         # 6. convert to table for use elsewhere
         # ---------------------------------------------------------------------
@@ -438,8 +445,9 @@ def get_recipes(params: ParamDict, runfile: str,
               is a recipe class
     """
     # print progress
-    msg = f'Getting recipes for {runfile}'
-    WLOG(params, '', msg)
+    margs = [runfile]
+    # log: Getting recipes for {0}
+    WLOG(params, '', textentry('40-502-00055', args=margs))
     # copy params
     iparams = params.copy()
     # deal with run file

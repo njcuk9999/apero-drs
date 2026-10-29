@@ -151,11 +151,9 @@ class AperoTableModel(AperoDataModel):
                 outtable[column] = kwargs[column]
             # otherwise throw an error
             else:
-                emsg = 'AperoTable[{0}] requires column "{1}"'
                 eargs = [self.name, column]
-                raise AperoCodedException(None, None,
-                                          message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: AperoTable[{0}] requires column "{1}"
+                raise AperoCodedException(None, '00-006-00027', targs=eargs)
             # set units if present
             if self.units[c_it] is not None:
                 outtable[column].unit = self.units[c_it]

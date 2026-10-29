@@ -23,6 +23,7 @@ from aperocore.core import drs_db
 from aperocore.constants import load_functions
 from aperocore.core import drs_text
 from aperocore.core import drs_misc
+from aperocore import drs_lang
 from apero.tools.module.database import manage_databases
 from apero.instruments import select
 from apero.base import base as apero_base
@@ -37,6 +38,8 @@ __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
+# Get the text types
+textentry = drs_lang.textentry
 
 # Define an empty table
 EMPTY_DATABASE = pd.DataFrame()
@@ -119,11 +122,15 @@ class DatabaseHolder:
         if drs_db.UHASH_COL not in df and self.hash_data is not None:
             df[drs_db.UHASH_COL] = self.hash_data
         # print we are saving database
-        print('Saving database {0}'.format(self.name))
+        margs = [self.name]
+        # log: Saving database {0}
+        print(textentry('40-506-00010', args=margs))
         # push dataframe to replace SQL table
         database.add_from_pandas(df, tablename=database.tablename)
         # print we are saving database
-        print('Saved {0} database'.format(self.name))
+        margs = [self.name]
+        # log: Saved {0} database
+        print(textentry('40-506-00011', args=margs))
 
     def is_openable(self, rows, cols, datamodel):
         """
@@ -581,7 +588,8 @@ def open_ds9(path):
         ds9_path = 'ds9'
     # test whether ds9 was found
     if ds9_path in [None, 'None', '']:
-        print('ds9 not found.')
+        # log: ds9 not found.
+        print(textentry('40-506-00012'))
         return
     # construct command
     command = '{0} {1} &'.format(ds9_path, os.path.abspath(path))
@@ -589,9 +597,12 @@ def open_ds9(path):
     try:
         os.system(command)
     except Exception as e:
-        print('Cannot run command:')
+        # log: Cannot run command:
+        print(textentry('40-506-00013'))
         print('\t{0}'.format(command))
-        print('\tError {0}: {1}'.format(type(e), e))
+        margs = [type(e), e]
+        # log: Error {0}: {1}
+        print(textentry('40-506-00014', args=margs))
 
 
 # =============================================================================

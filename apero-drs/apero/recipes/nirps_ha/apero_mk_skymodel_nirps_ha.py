@@ -119,10 +119,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     margs = [sky_files_sci, sky_files_cal, sci_fiber, cal_fiber]
     sky_files_sci, sky_files_cal = telluric.skymodel_matchfiles(*margs)
     # print progress
-    # TODO: Add to language database
-    msg = 'Found {0} sky files (after matched fiber {1} and {2})'
     margs = [len(sky_files_sci), sci_fiber, cal_fiber]
-    WLOG(params, '', msg.format(*margs))
+    # log: Found {0} sky files (after matched fiber {1} and {2})
+    WLOG(params, '', textentry('40-000-00023', args=margs))
 
     # ----------------------------------------------------------------------
     # make sky table
@@ -136,10 +135,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                                sky_files_cal,
                                                                infile_cal)
     # print progress
-    # TODO: Add to language database
-    msg = 'Kept {0} sky files (after filtering)'
     margs = [len(sky_table_sci)]
-    WLOG(params, '', msg.format(*margs))
+    # log: Kept {0} sky files (after filtering)
+    WLOG(params, '', textentry('40-000-00024', args=margs))
 
     # ----------------------------------------------------------------------
     # load reference wave map

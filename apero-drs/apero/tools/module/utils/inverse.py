@@ -16,6 +16,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import math as mp
 from aperocore.core import drs_log
+from aperocore import drs_lang
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.instruments import select
@@ -35,6 +36,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 
 
 # =============================================================================
@@ -182,48 +185,60 @@ def main():
     swave_map = None
     # loop around fibers
     for fiber in fibers:
-        print('E2DS-->MAP: Fiber {0}'.format(fiber))
+        margs = [fiber]
+        # log: E2DS-->MAP: Fiber {0}
+        print(textentry('40-517-00011', args=margs))
         # get locofile (remove when we have a header)
         locofile = locofiles[fiber]
         # calculate fiber centers
-        print('\t Getting centers')
+        # log: Getting centers
+        print(textentry('40-517-00012'))
         cents, wids = calc_central_localisation(params, recipe, fiber,
                                                 filename=locofile)
         # get straighted image for order map
-        print('\t Getting order map')
+        # log: Getting order map
+        print(textentry('40-517-00013'))
         sorder_map = e2ds_to_simage(order_map, ximage, yimage, cents, wids,
                                     fill=-1, simage=sorder_map)
         # get straighted image for ximage map
-        print('\t Getting x map')
+        # log: Getting x map
+        print(textentry('40-517-00014'))
         sx_map = e2ds_to_simage(x_map, ximage, yimage, cents, wids,
                                 fill=np.nan, simage=sx_map)
         # get straighted wave image
-        print('\t Getting wave map')
+        # log: Getting wave map
+        print(textentry('40-517-00015'))
         swave_map = e2ds_to_simage(wavefiles[fiber], ximage, yimage, cents,
                                    wids, fill=np.nan, simage=swave_map)
         # get straighted fp image
-        print('\t Getting fp map')
+        # log: Getting fp map
+        print(textentry('40-517-00016'))
         sfp_map = e2ds_to_simage(fpfiles[fiber], ximage, yimage, cents, wids,
                                  fill=0.0, simage=sfp_map)
 
     # --------------------------------------------------------------------------
     # shift by shape
     # --------------------------------------------------------------------------
-    print('MAP --> IMAGE')
+    # log: MAP --> IMAGE
+    print(textentry('40-517-00006'))
     # get shifted order map
-    print('\tshifting order map')
+    # log: shifting order map
+    print(textentry('40-517-00007'))
     # porder_map = simage_to_drs(params, sorder_map, shapex2, shapey)
 
     # get shifted position map
-    print('\tshifting x map')
+    # log: shifting x map
+    print(textentry('40-517-00008'))
     # px_map = simage_to_drs(params, sx_map, shapex2, shapey)
 
     # get shifted wave map
-    print('\tshifting wave map')
+    # log: shifting wave map
+    print(textentry('40-517-00009'))
     # pwave_map = simage_to_drs(params, swave_map, shapex2, shapey)
 
     # get shifted wave map
-    print('\tshifting fp map')
+    # log: shifting fp map
+    print(textentry('40-517-00010'))
     pfp_map = simage_to_drs(params, sfp_map, shapex2, shapey)
 
     # --------------------------------------------------------------------------

@@ -27,6 +27,7 @@ from aperocore import math as mp
 from aperocore.core import drs_base_classes as base_class, drs_text, drs_misc
 from apero.core import drs_database
 from aperocore.core import drs_log
+from aperocore import drs_lang
 from apero.utils import drs_recipe
 from apero.io import drs_fits
 from apero.base import base as apero_base
@@ -47,6 +48,8 @@ Time = base.Time
 tqdm = base.tqdm_module()
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # define index columns to get
@@ -209,11 +212,11 @@ class LogEntry:
                     self.is_valid = True
                     self.is_valid_for_timing = True
             except Exception as e:
-                emsg = ('TIMING ERROR PID {0}\n\tstart_time={1}'
-                        '\n\tend_time={2}\n\t{3}: {4}')
                 eargs = [self.pid, rawstart, rawend, type(e),
                          str(e)[:84]]
-                WLOG(params, 'warning', emsg.format(*eargs))
+                # warning: TIMING ERROR PID {0} \n start_time={1} \n
+                #     end_time={2} \n {3}: {4}
+                WLOG(params, 'warning', textentry('10-516-00001', args=eargs))
                 # make sure this target is not valid
                 self.is_valid = False
                 self.is_valid_for_timing = False
@@ -284,9 +287,9 @@ class LogEntry:
                 self.is_valid = True
                 self.is_valid_for_qc = True
             except Exception as e:
-                emsg = 'QC ERROR - PID {0}: {1}: {2}'
                 eargs = [self.pid, type(e), str(e)]
-                WLOG(params, 'warning', emsg.format(*eargs))
+                # warning: QC ERROR - PID {0}: {1}: {2}
+                WLOG(params, 'warning', textentry('10-516-00002', args=eargs))
                 self.is_valid_for_qc = False
 
     def query(self, command: str):
@@ -315,7 +318,8 @@ class StatProperty:
 def get_log_entries(params: ParamDict, recipe: DrsRecipe,
                     mode: str) -> List[LogEntry]:
     # load log database
-    WLOG(params, '', 'Obtaining full log database. Please wait...')
+    # log: Obtaining full log database. Please wait...
+    WLOG(params, '', textentry('40-516-00001'))
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
 
@@ -328,7 +332,8 @@ def get_log_entries(params: ParamDict, recipe: DrsRecipe,
     dataframe = logdbm.get_entries('*', condition=condition)
     # get the index database
     if mode == 'index':
-        WLOG(params, '', 'Obtaining full index database. Please wait...')
+        # log: Obtaining full index database. Please wait...
+        WLOG(params, '', textentry('40-516-00010'))
         findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
         idataframe = findexdbm.get_entries('*')
@@ -340,7 +345,9 @@ def get_log_entries(params: ParamDict, recipe: DrsRecipe,
     # storage for log entries
     log_entries = []
     # print progress
-    WLOG(params, '', 'Sorting {0} log entries'.format(len(upids)))
+    margs = [len(upids)]
+    # log: Sorting {0} log entries
+    WLOG(params, '', textentry('40-516-00002', args=margs))
     # loop around pids
     for upid in tqdm(upids):
         # get a log entry
@@ -389,7 +396,8 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     # set function name
     func_name = __NAME__ + '.timing_stats()'
     # print progress
-    WLOG(params, 'info', 'Running timing code')
+    # log: Running timing code
+    WLOG(params, 'info', textentry('40-516-00003'))
     # -------------------------------------------------------------------------
     # plot dt timing graph
     report_file = 'apero_stats_timing.fits'
@@ -422,7 +430,9 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     # construct log file absolute path
     log_file = os.path.join(report_dir, report_file)
     # print progress
-    WLOG(params, '', 'Writing log file: {0}'.format(log_file))
+    margs = [log_file]
+    # log: Writing log file: {0}
+    WLOG(params, '', textentry('40-516-00004', args=margs))
     # write to disk
     log_table.write(log_file, overwrite=True)
     # -------------------------------------------------------------------------
@@ -518,7 +528,11 @@ def print_timing_stats(params: ParamDict, recipe: str,
                '\n\tTotal Time: {TOTALTIME_HR:.3f} hr'
                '\n\tTotal CPU Time: {CPU_TIME_HR:.3f} hr (x{SPEED_UP:.2f})'
                '\n')
-    WLOG(params, '', statstr.format(**stats))
+    # log: Mean Time: {MEAN:.3f} s +/- {STD:.3f} \n Med Time: {MEDIAN:.3f} s +/-
+    #     {STD:.3f} \n Range: {SHORTEST:.3f} s to {LONGEST:.3f} \n Nruns:
+    #     {NUMBER} \n Total Time: {TOTALTIME_HR:.3f} hr \n Total CPU Time:
+    #     {CPU_TIME_HR:.3f} hr (x{SPEED_UP:.2f})
+    WLOG(params, '', textentry('40-516-00034', kwargs=stats))
 
     return statstr.replace('\t', '\n').format(**stats)
 
@@ -537,7 +551,8 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     # set function name
     func_name = __NAME__ + '.qc_stats()'
     # print progress
-    WLOG(params, 'info', 'Running timing code')
+    # log: Running timing code
+    WLOG(params, 'info', textentry('40-516-00003'))
     # get log entries
     log_entries = get_log_entries(params, recipe, mode='qc')
     # get stats
@@ -770,8 +785,10 @@ def print_qc_stats(params: ParamDict, recipe_name: str, stats: Dict[str, Any],
         failed = stats[f'NUM_FAILED{critstr}']
         total = passed + failed
         # add to string
-        statstr += '\t\tNumber passed: {0}/{1}\n'.format(passed, total)
-        statstr += '\t\tNumber failed: {0}/{1}\n'.format(failed, total)
+        # text: Number passed: {0}/{1}
+        statstr += str(textentry('40-516-00035', args=[passed, total]))
+        # text: Number failed: {0}/{1}
+        statstr += str(textentry('40-516-00036', args=[failed, total]))
         # add QC
         for qc_name in stat_qc[crit]:
             values = stats[f'QCV::{qc_name}{critstr}']
@@ -783,8 +800,10 @@ def print_qc_stats(params: ParamDict, recipe_name: str, stats: Dict[str, Any],
         ended = stats[f'NUM_ENDED{critstr}']
         # add to string
         statstr += '\t\t' + '-' * 50 + '\n'
-        statstr += '\t\tNumber running = {0}/{1}\n'.format(running, total)
-        statstr += '\t\tNumber ended = {0}/{1}\n'.format(ended, total)
+        # text: Number running = {0}/{1}
+        statstr += str(textentry('40-516-00037', args=[running, total]))
+        # text: Number ended = {0}/{1}
+        statstr += str(textentry('40-516-00038', args=[ended, total]))
         # print stats
         WLOG(params, '', statstr)
 
@@ -1163,10 +1182,12 @@ def error_stats(params: ParamDict):
     # loop around log files
     for p_it, plog_file in enumerate(plog_files):
         # print progress
-        msg = 'Analysing log file {0} of {1}'
-        WLOG(params, 'info', msg.format(p_it + 1, len(plog_files)))
-        msg = '\tLogfile: {0}'
-        WLOG(params, 'info', msg.format(plog_file), wrap=False)
+        margs = [p_it + 1, len(plog_files)]
+        # log: Analysing log file {0} of {1}
+        WLOG(params, 'info', textentry('40-516-00026', args=margs))
+        margs = [plog_file]
+        # log: Logfile: {0}
+        WLOG(params, 'info', textentry('40-516-00027', args=margs), wrap=False)
         # read the log file
         with open(plog_file, 'r') as plogfile:
             lines = plogfile.readlines()
@@ -1182,11 +1203,14 @@ def error_stats(params: ParamDict):
         if not os.path.exists(report_dir):
             os.makedirs(report_dir)
         # log that we are removing all files from report directory
-        WLOG(params, '', 'Removing all files from : {0}'.format(report_dir))
+        margs = [report_dir]
+        # log: Removing all files from : {0}
+        WLOG(params, '', textentry('40-516-00011', args=margs))
         # make sure directory is empty
         for filename in glob.glob(report_dir + '/*'):
-            msg = '\t - Removing {0}'
-            WLOG(params, '', msg.format(os.path.basename(filename)))
+            margs = [os.path.basename(filename)]
+            # log: - Removing {0}
+            WLOG(params, '', textentry('40-516-00029', args=margs))
             os.remove(filename)
         # ---------------------------------------------------------------------
         # counter for number of runs
@@ -1196,7 +1220,9 @@ def error_stats(params: ParamDict):
             if '|PROC|Validating run ' in line:
                 num_runs += 1
         # print how many runs there were
-        WLOG(params, 'info', 'In total there were {0} runs'.format(num_runs))
+        margs = [num_runs]
+        # log: In total there were {0} runs
+        WLOG(params, 'info', textentry('40-516-00012', args=margs))
         # ---------------------------------------------------------------------
         # scan through and find all error reporting lines - note down the line
         # numbers
@@ -1209,8 +1235,9 @@ def error_stats(params: ParamDict):
         # storage of error entries
         error_rentries = []
         # print progress
-        msg = 'Creating error entries for {0} errors'
-        WLOG(params, 'info', msg.format(len(reported_error_lines)))
+        margs = [len(reported_error_lines)]
+        # log: Creating error entries for {0} errors
+        WLOG(params, 'info', textentry('40-516-00028', args=margs))
         # for each reported error line we can generate an error report entry
         for row in tqdm(range(len(reported_error_lines))):
             # get start and end line numbers
@@ -1228,7 +1255,8 @@ def error_stats(params: ParamDict):
             error_rentries.append(error_rentry)
         # ---------------------------------------------------------------------
         # print progress
-        WLOG(params, 'info', 'Counting number of errors per recipe')
+        # log: Counting number of errors per recipe
+        WLOG(params, 'info', textentry('40-516-00013'))
         # count number of errors for each recipe
         recipe_count = dict()
         # loop around error entries
@@ -1239,15 +1267,17 @@ def error_stats(params: ParamDict):
                 recipe_count[entry.recipename] = 1
         # print stats
         for recipename in recipe_count:
-            msg = '\t- There were {0} errors for recipe {1}'
-            WLOG(params, '', msg.format(recipe_count[recipename], recipename))
+            margs = [recipe_count[recipename], recipename]
+            # log: - There were {0} errors for recipe {1}
+            WLOG(params, '', textentry('40-516-00030', args=margs))
 
         # save all plog recipe counts
         recipe_count_all[plog_file]['TCOUNT'] = len(error_rentries)
         recipe_count_all[plog_file]['RCOUNT'] = recipe_count
         # ---------------------------------------------------------------------
         # print progress
-        WLOG(params, 'info', 'Counting number of unique errors')
+        # log: Counting number of unique errors
+        WLOG(params, 'info', textentry('40-516-00014'))
         # count all error code occurrences
         all_error_codes = dict()
         all_error_codes_runstrings = dict()
@@ -1279,7 +1309,9 @@ def error_stats(params: ParamDict):
             if code == UNHANDLED_ERROR_CODE:
                 continue
             # print progress
-            WLOG(params, '', 'Writing error file for code {0}'.format(code),
+            margs = [code]
+            # log: Writing error file for code {0}
+            WLOG(params, '', textentry('40-516-00024', args=margs),
                  colour='magenta')
             # get a new set of lines
             lines = ''
@@ -1293,8 +1325,9 @@ def error_stats(params: ParamDict):
             # get unique recipe names
             urecipe_names = np.unique(all_error_codes_recipe_names[code])
             # log how many instances found
-            msg = '\t Found {0} recipes with this error'
-            WLOG(params, '', msg.format(len(instances)))
+            margs = [len(instances)]
+            # log: Found {0} recipes with this error
+            WLOG(params, '', textentry('40-516-00031', args=margs))
             # print unique recipe names
             WLOG(params, '', '\t({0})'.format(','.join(urecipe_names)))
             # loop around instances
@@ -1307,10 +1340,12 @@ def error_stats(params: ParamDict):
         # deal with out unhandled errors
         # ---------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Dealing with unhandled errors')
+        # log: Dealing with unhandled errors
+        WLOG(params, '', textentry('40-516-00015'))
         # deal with no unhandled errors found
         if UNHANDLED_ERROR_CODE not in all_error_codes_instance:
-            WLOG(params, 'info', '\tNo unhandled errors found')
+            # log: No unhandled errors found
+            WLOG(params, 'info', textentry('40-516-00025'))
             # update full plog
             recipe_count_all[plog_file]['UNEXPECTED_COUNT'] = dict()
             continue
@@ -1337,7 +1372,8 @@ def error_stats(params: ParamDict):
         # ---------------------------------------------------------------------
         # write unhandled groups to log files
         # print progress
-        WLOG(params, 'info', 'Writing unhandled errors to group log files')
+        # log: Writing unhandled errors to group log files
+        WLOG(params, 'info', textentry('40-516-00016'))
         # store unhandled
         unhandled_store = dict()
         # loop around groups and save
@@ -1345,8 +1381,10 @@ def error_stats(params: ParamDict):
             # define the code string
             codestr = 'E_UNHANDLE_{0:05d}'.format(key)
             # print progress
-            msg = '\t - Writing error file for group {0}'
-            WLOG(params, '', msg.format(codestr), colour='magenta')
+            margs = [codestr]
+            # log: - Writing error file for group {0}
+            WLOG(params, '', textentry('40-516-00032', args=margs),
+                 colour='magenta')
             WLOG(params, '', '\t\t{0}'.format(groups[key]))
             # get the instances for this group
             instance_group = group_instances[key]
@@ -1355,8 +1393,9 @@ def error_stats(params: ParamDict):
             # get unique recipe names
             urecipe_names = np.unique(allrecipes)
             # log how many instances found
-            msg = '\t\t Found {0} recipes with this error'
-            WLOG(params, '', msg.format(len(instance_group)))
+            margs = [len(instance_group)]
+            # log: Found {0} recipes with this error
+            WLOG(params, '', textentry('40-516-00033', args=margs))
             # store number
             unhandled_store[key] = len(instance_group)
             # print unique recipe names
@@ -1406,7 +1445,8 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         os.makedirs(report_dir)
     # ---------------------------------------------------------------------
     # get log database
-    WLOG(params, '', 'Loading log database')
+    # log: Loading log database
+    WLOG(params, '', textentry('40-516-00005'))
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     # set up condition - filter to entries with both START_TIME and
     # END_TIME values (not NULL)
@@ -1451,7 +1491,8 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
         shortnames = np.array(new_shortnames)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Sorting time axis')
+    # log: Sorting time axis
+    WLOG(params, '', textentry('40-516-00006'))
     # change time into time since start
     time000 = np.min(ltable['UNIXTIME'])
     time0 = ltable['UNIXTIME'] - time000
@@ -1464,7 +1505,8 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     endtime = (endtime - time000) / 3600
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Getting recipe start and finish limits')
+    # log: Getting recipe start and finish limits
+    WLOG(params, '', textentry('40-516-00007'))
     # get first occurrence of each short name
     unix_short = []
     for shortname in shortnames:
@@ -1499,7 +1541,9 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # window = len(ltable) // 1000
     window = 1
     # print progress
-    WLOG(params, '', f'Calculating rolling mean of timings (window={window}')
+    margs = [window]
+    # log: Calculating rolling mean of timings (window={0}
+    WLOG(params, '', textentry('40-516-00008', args=margs))
     # mean results
     unixtime = time0.rolling(window=window).mean()
     ram_start = ltable['RAM_USAGE_START'].rolling(window=window).mean()
@@ -1523,11 +1567,21 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # print stats to screen
     for shortname in shortname_values:
         _, _, _, _, _, r_start, r_end = shortname_values[shortname]
-        WLOG(params, 'info', 'Recipe = {0}'.format(shortname))
-        WLOG(params, '', '\tMin RAM start: {0:.3f} GB'.format(np.min(r_start)))
-        WLOG(params, '', '\tMax RAM start: {0:.3f} GB'.format(np.max(r_start)))
-        WLOG(params, '', '\tMin RAM end: {0:.3f} GB'.format(np.min(r_end)))
-        WLOG(params, '', '\tMax RAM end: {0:.3f} GB'.format(np.max(r_end)))
+        margs = [shortname]
+        # log: Recipe = {0}
+        WLOG(params, 'info', textentry('40-516-00017', args=margs))
+        margs = [np.min(r_start)]
+        # log: Min RAM start: {0:.3f} GB
+        WLOG(params, '', textentry('40-516-00018', args=margs))
+        margs = [np.max(r_start)]
+        # log: Max RAM start: {0:.3f} GB
+        WLOG(params, '', textentry('40-516-00019', args=margs))
+        margs = [np.min(r_end)]
+        # log: Min RAM end: {0:.3f} GB
+        WLOG(params, '', textentry('40-516-00020', args=margs))
+        margs = [np.max(r_end)]
+        # log: Max RAM end: {0:.3f} GB
+        WLOG(params, '', textentry('40-516-00021', args=margs))
 
     # -------------------------------------------------------------------------
     # plot (more to recipe plots)
@@ -1756,7 +1810,9 @@ def file_index_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
         file_stat = file_stats[it]
         # ---------------------------------------------------------------------
         # log progress
-        WLOG(params, 'info', f'Counting disk files for {file_stat.name}')
+        margs = [file_stat.name]
+        # log: Counting disk files for {0}
+        WLOG(params, 'info', textentry('40-516-00022', args=margs))
         # count files on disk
         file_stat.count_on_disk()
         # print counts
@@ -1769,7 +1825,9 @@ def file_index_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
             file_outputs[name] = disk_count
         # ---------------------------------------------------------------------
         # log progress
-        WLOG(params, 'info', f'Counting db files for {file_stat.name}')
+        margs = [file_stat.name]
+        # log: Counting db files for {0}
+        WLOG(params, 'info', textentry('40-516-00023', args=margs))
         # count files in database
         file_stat.count_in_db(findexdb.database)
         # print counts
@@ -1833,14 +1891,18 @@ def combine_stats(params: ParamDict, outputs: List[Union[ParamDict, None]]):
                 varying_list.append(instance.make())
     # -------------------------------------------------------------------------
     # log progress
-    WLOG(params, 'info', f'Saving file {static_file}')
+    margs = [static_file]
+    # log: Saving file {0}
+    WLOG(params, 'info', textentry('40-516-00009', args=margs))
     # create static file list
     with open(static_file, 'w') as sfile:
         for line in static_list:
             sfile.write(line + '\n')
     # -------------------------------------------------------------------------
     # log progress
-    WLOG(params, 'info', f'Saving file {varying_file}')
+    margs = [varying_file]
+    # log: Saving file {0}
+    WLOG(params, 'info', textentry('40-516-00009', args=margs))
     # create varying file list
     with open(varying_file, 'w') as vfile:
         for line in varying_list:

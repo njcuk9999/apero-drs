@@ -162,6 +162,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if fpfiles is not None:
         if len(hcfiles) != len(fpfiles):
             wargs = [len(hcfiles), len(fpfiles)]
+            # error: Inconsistent number of input hc / fp files (No. hc={0}, No.
+            #     fp={1}) and combine set to False.
             raise AperoCodedException(params, '10-017-00002', targs=wargs)
     # get the number of files
     num_files = len(hcfiles)
@@ -326,6 +328,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Calculate resolution map
         # =================================================================
         # log progress: Generating resolution map'
+        # log: Generating resolution map and calculating line spread function
         WLOG(params, 'info', textentry('40-017-00010'))
         # generate resolution map and update wprops
         wprops = wave.generate_resolution_map(params, recipe, wprops,
@@ -485,6 +488,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # -----------------------------------------------------------------
         if not global_passed:
             eargs = [recipe.name]
+            # error: QC failure of reference recipe: {0}
             raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # -----------------------------------------------------------------
         # Construct summary document

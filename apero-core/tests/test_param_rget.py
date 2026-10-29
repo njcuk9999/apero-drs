@@ -176,6 +176,17 @@ def test_sub_rget_observes_parent_changes(sub_params):
     assert sub_params.rget('COUNT') == 8
 
 
+def test_sub_assignment_respects_parent_lock(sub_params):
+    """View assignment updates the parent and cannot bypass its lock."""
+    sub_params['COUNT'] = 8
+    assert sub_params.param_dict['SECTION.COUNT'] == 8
+    sub_params.param_dict.lock()
+    with pytest.raises(param_functions.AperoCodedException) as caught:
+        sub_params['COUNT'] = 9
+    assert caught.value.code == '00-003-00025'
+    assert sub_params.rget('COUNT') == 8
+
+
 @pytest.mark.parametrize('key', ['UNTYPED', 'NO_INSTANCE'])
 def test_sub_rget_without_dtype(sub_params, key):
     """Missing data-type metadata does not constrain the selected value."""

@@ -117,9 +117,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # check file type
     for filetype in filetypes:
         if filetype not in allowedtypes:
+            # text: Invalid file type = '{0}'. \n function = {1}. \n Must be one
+            #     of the following:
             emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
+            # error: Invalid file type = '{0}'. \n function = {1}. \n Must be
+            #     one of the following:
             raise AperoCodedException(params, '01-001-00020', message=emsg)
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
@@ -135,6 +139,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with no files found
     if len(filenames) == 0:
         eargs = [params['INPATH']]
+        # error: No DARK_DARK files found in {0}
         raise AperoCodedException(params, '09-011-00005', targs=eargs)
 
     # ----------------------------------------------------------------------
@@ -175,6 +180,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]
+        # error: QC failure of reference recipe: {0}
         raise AperoCodedException(params, '09-000-00011', targs=eargs)
     # ------------------------------------------------------------------
     # Construct summary document

@@ -136,7 +136,8 @@ def _ask_start_from_minidata(params):
     '''
     # Display banner
     WLOG(params, '', '='*80)
-    WLOG(params, '', 'Demo setup')
+    # log: Demo setup
+    WLOG(params, '', textentry('40-522-00018'))
     WLOG(params, '', '='*80)
     # Ask user for confirmation
     question = ('\nWould you like to start from a demo set? '
@@ -144,7 +145,8 @@ def _ask_start_from_minidata(params):
     response = drs_text.user_input(question, dtype='YN')
     # Return False if user declines
     if not response:
-        WLOG(params, '', 'Exiting demo setup.')
+        # log: Exiting demo setup.
+        WLOG(params, '', textentry('40-522-00023'))
         return False
     # Return True to continue
     return True
@@ -186,18 +188,21 @@ def _select_demo(params, yaml_dict):
             selected_info = yaml_dict[selected_key]
         except KeyboardInterrupt:
             # User pressed Ctrl+C to exit
-            WLOG(params, '', '\n\nExiting mini data setup.')
+            # log: Exiting mini data setup.
+            WLOG(params, '', textentry('40-522-00027'))
             return None
 
     # Display user selection confirmation
     if 'name' not in selected_info:
-        wmsg = ('Error: demo yaml for {0} incomplete (missing "name")'
-                '\n\tdemo path: {1}')
         wargs = [selected_key, DEMO_FILE]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        # warning: Error: demo yaml for {0} incomplete (missing "name") \n demo
+        #     path: {1}
+        WLOG(params, 'warning', textentry('10-522-00004', args=wargs))
         return None
     # otherwise print selection
-    WLOG(params, '', f"\nSelected: {selected_info.get('name', selected_key)}")
+    margs = [selected_info.get('name', selected_key)]
+    # log: Selected: {0}
+    WLOG(params, '', textentry('40-522-00019', args=margs))
     # Return selected key
     return selected_key
 
@@ -224,18 +229,16 @@ def _load_file_list(params, selected_info, selected_key):
     file_list_name = selected_info.get('file')
     # Check if file list is defined
     if file_list_name is None:
-        emsg = 'Error: No file list defined for {0}'
         eargs = [selected_key]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Error: No file list defined for {0}
+        raise AperoCodedException(params, '00-522-00001', targs=eargs)
     # Construct full path to file list
     file_list_path = os.path.join(RES_PATH, file_list_name)
     # Check if file list file exists
     if not os.path.exists(file_list_path):
-        emsg = 'Error: File list not found at {0}'
         eargs = [file_list_path]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Error: File list not found at {0}
+        raise AperoCodedException(params, '00-522-00002', targs=eargs)
     # Read file list from file
     with open(file_list_path, 'r') as f:
         file_paths = [line.strip() for line in f if line.strip()]
@@ -262,8 +265,9 @@ def _check_missing_files(params, file_paths, output_dir):
         List of missing file paths
     '''
     # Print status message
-    msg = f'\nChecking for {len(file_paths)} files in {output_dir}...'
-    WLOG(params, '', msg)
+    margs = [len(file_paths), output_dir]
+    # log: Checking for {0} files in {1}...
+    WLOG(params, '', textentry('40-522-00029', args=margs))
     # Initialize empty list for missing files
     missing_files = []
     # Loop through all expected files
@@ -304,9 +308,9 @@ def _get_source_location(params, selected_info, missing_files, total_files):
     source_type = None
     source_location = None
     # Print status message
-    msg = (f'Found {len(missing_files)} missing files out of '
-           f'{total_files} total files.')
-    WLOG(params, '', msg)
+    margs = [len(missing_files), total_files]
+    # log: Found {0} missing files out of {1} total files.
+    WLOG(params, '', textentry('40-522-00030', args=margs))
     # Check if URL is available
     if url is not None:
         # URL is available, offer both download and directory options
@@ -332,21 +336,26 @@ def _get_source_location(params, selected_info, missing_files, total_files):
                     raw_dir = user_input(question, dtype='PATH')
                     # Check if directory exists
                     if not os.path.exists(raw_dir):
-                        emsg = f'Directory does not exist: {raw_dir}'
-                        WLOG(params, 'warning', emsg)
+                        wargs = [raw_dir]
+                        # warning: Directory does not exist: {0}
+                        WLOG(params, 'warning',
+                             textentry('10-522-00007', args=wargs))
                         continue
                     # Store directory path as string
                     source_location = str(raw_dir)
                 else:
                     # Inform user of valid choices (shouldn't happen with user_input)
-                    WLOG(params, 'warning', 'Invalid choice. Enter 1 or 2.')
+                    # warning: Invalid choice. Enter 1 or 2.
+                    WLOG(params, 'warning', textentry('10-522-00003'))
             except KeyboardInterrupt:
                 # User pressed Ctrl+C to exit
-                WLOG(params, '', '\n\nExiting mini data setup.')
+                # log: Exiting mini data setup.
+                WLOG(params, '', textentry('40-522-00027'))
                 return None, None
     else:
         # No URL available, only ask for directory
-        WLOG(params, '', '\nNo URL available for download.')
+        # log: No URL available for download.
+        WLOG(params, '', textentry('40-522-00024'))
         # Loop until user provides valid directory
         while source_location is None:
             try:
@@ -355,15 +364,18 @@ def _get_source_location(params, selected_info, missing_files, total_files):
                 raw_dir = user_input(question, dtype='PATH')
                 # Check if directory exists
                 if not os.path.exists(raw_dir):
-                    emsg = f'Directory does not exist: {raw_dir}'
-                    WLOG(params, 'warning', emsg)
+                    wargs = [raw_dir]
+                    # warning: Directory does not exist: {0}
+                    WLOG(params, 'warning',
+                         textentry('10-522-00007', args=wargs))
                     continue
                 # Store directory information
                 source_type = 'directory'
                 source_location = str(raw_dir)
             except KeyboardInterrupt:
                 # User pressed Ctrl+C to exit
-                WLOG(params, '', '\n\nExiting mini data setup.')
+                # log: Exiting mini data setup.
+                WLOG(params, '', textentry('40-522-00027'))
                 return None, None
     # Return source type and location
     return source_type, source_location
@@ -411,10 +423,12 @@ def _get_copy_method(params, source_type):
                     break
                 else:
                     # Inform user of valid choices (shouldn't happen with user_input)
-                    WLOG(params, 'warning', 'Invalid choice. Enter 1 or 2.')
+                    # warning: Invalid choice. Enter 1 or 2.
+                    WLOG(params, 'warning', textentry('10-522-00003'))
             except KeyboardInterrupt:
                 # User pressed Ctrl+C to exit
-                WLOG(params, '', '\n\nExiting mini data setup.')
+                # log: Exiting mini data setup.
+                WLOG(params, '', textentry('40-522-00027'))
                 return None
     # Return copy method
     return copy_method
@@ -446,8 +460,9 @@ def _transfer_files(params, missing_files, output_dir, source_type,
         True if successful, False if errors occurred
     '''
     # Display transfer method and file count
-    msg = f'\n{copy_method.capitalize()}ing {len(missing_files)} files...'
-    WLOG(params, '', msg)
+    margs = [copy_method.capitalize(), len(missing_files)]
+    # log: {0}ing {1} files...
+    WLOG(params, '', textentry('40-522-00031', args=margs))
     WLOG(params, '', '-'*80)
     # Initialize error tracking
     errors = []
@@ -498,24 +513,28 @@ def _transfer_files(params, missing_files, output_dir, source_type,
     # Print completion separator
     WLOG(params, '', '-'*80)
     # Format and display completion message
-    msg = (f'\nCompleted: {success_count}/{len(missing_files)} files '
-           f'processed successfully.')
-    WLOG(params, '', msg)
+    margs = [success_count, len(missing_files)]
+    # log: Completed: {0}/{1} files processed successfully.
+    WLOG(params, '', textentry('40-522-00032', args=margs))
     # Check if any errors occurred
     if errors:
         # Display error count
-        WLOG(params, 'warning', f'\nEncountered {len(errors)} errors:')
+        wargs = [len(errors)]
+        # warning: Encountered {0} errors:
+        WLOG(params, 'warning', textentry('10-522-00002', args=wargs))
         # Display first 10 errors
         for error in errors[:10]:
             WLOG(params, 'warning', f'  - {error}')
         # Indicate if there are more errors
         if len(errors) > 10:
-            msg = f'  ... and {len(errors) - 10} more errors.'
-            WLOG(params, 'warning', msg)
+            wargs = [len(errors) - 10]
+            # warning: ... and {0} more errors.
+            WLOG(params, 'warning', textentry('10-522-00006', args=wargs))
         # Return False to indicate failure
         return False
     # Display success message
-    WLOG(params, 'info', '\nMini data setup completed successfully!')
+    # log: Mini data setup completed successfully!
+    WLOG(params, 'info', textentry('40-522-00020'))
     # Return True to indicate success
     return True
 
@@ -534,10 +553,10 @@ def _print_all_files_present(params, file_paths, output_dir):
         Path to DRS_DATA_RAW directory
     '''
     # Format message with file count and directory
-    msg = (f'All {len(file_paths)} files are already '
-           f'present in {output_dir}')
     # Display the message
-    WLOG(params, 'info', msg)
+    margs = [len(file_paths), output_dir]
+    # log: All {0} files are already present in {1}
+    WLOG(params, 'info', textentry('40-522-00033', args=margs))
 
 
 def _cleanup_extraneous_files(params, yaml_dict, output_dir):
@@ -583,17 +602,21 @@ def _cleanup_extraneous_files(params, yaml_dict, output_dir):
         return 0
     # Display cleanup banner
     WLOG(params, '', '\n' + '='*80)
-    WLOG(params, '', 'Demo Data Set Cleanup')
+    # log: Demo Data Set Cleanup
+    WLOG(params, '', textentry('40-522-00021'))
     WLOG(params, '', '='*80)
     # Display found extraneous files
-    msg = f'\nFound {len(extraneous_files)} extraneous files:'
-    WLOG(params, '', msg)
+    margs = [len(extraneous_files)]
+    # log: Found {0} extraneous files:
+    WLOG(params, '', textentry('40-522-00034', args=margs))
     WLOG(params, '', '-'*80)
     for i, fpath in enumerate(extraneous_files[:20], 1):
         rel_path = os.path.relpath(fpath, output_dir)
         WLOG(params, '', f'  {i}. {rel_path}')
     if len(extraneous_files) > 20:
-        WLOG(params, '', f'  ... and {len(extraneous_files) - 20} more')
+        margs = [len(extraneous_files) - 20]
+        # log: ... and {0} more
+        WLOG(params, '', textentry('40-522-00025', args=margs))
     WLOG(params, '', '-'*80)
     # Now ask user if they want to remove them
     question = ('\nWould you like to remove these extraneous files '
@@ -601,11 +624,13 @@ def _cleanup_extraneous_files(params, yaml_dict, output_dir):
                 'from the raw data directory? (yes/no): ')
     response = user_input(question, dtype='YN')
     if not response:
-        WLOG(params, '', 'Skipping removal.')
+        # log: Skipping removal.
+        WLOG(params, '', textentry('40-522-00026'))
         return 0
     # Remove extraneous files
-    msg = f'\nRemoving {len(extraneous_files)} extraneous files...'
-    WLOG(params, '', msg)
+    margs = [len(extraneous_files)]
+    # log: Removing {0} extraneous files...
+    WLOG(params, '', textentry('40-522-00035', args=margs))
     errors = []
     success_count = 0
     # Loop through each extraneous file
@@ -630,20 +655,24 @@ def _cleanup_extraneous_files(params, yaml_dict, output_dir):
     # Display completion separator
     WLOG(params, '', '-'*80)
     # Format and display completion message
-    msg = (f'\nCompleted: {success_count}/{len(extraneous_files)} '
-           f'files removed successfully.')
-    WLOG(params, '', msg)
+    margs = [success_count, len(extraneous_files)]
+    # log: Completed: {0}/{1} files removed successfully.
+    WLOG(params, '', textentry('40-522-00036', args=margs))
     # Check if any errors occurred
     if errors:
-        WLOG(params, 'warning', f'\nEncountered {len(errors)} errors:')
+        wargs = [len(errors)]
+        # warning: Encountered {0} errors:
+        WLOG(params, 'warning', textentry('10-522-00002', args=wargs))
         for error in errors[:10]:
             WLOG(params, 'warning', f'  - {error}')
         if len(errors) > 10:
-            msg = f'  ... and {len(errors) - 10} more errors.'
-            WLOG(params, 'warning', msg)
+            wargs = [len(errors) - 10]
+            # warning: ... and {0} more errors.
+            WLOG(params, 'warning', textentry('10-522-00006', args=wargs))
         return 1
     # Display success message
-    WLOG(params, 'info', '\nCleanup completed successfully!')
+    # log: Cleanup completed successfully!
+    WLOG(params, 'info', textentry('40-522-00022'))
     return 0
 
 # =============================================================================

@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 from aperocore.base import base
 from aperocore.constants import param_functions
+from aperocore import drs_lang
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -32,6 +33,8 @@ __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
+# Get the text types
+textentry = drs_lang.textentry
 # get the parameter dictionary
 ParamDict = param_functions.ParamDict
 
@@ -278,7 +281,8 @@ def process_load_messages(params: ParamDict):
     for l_it, log_file in enumerate(log_files):
         # print progress
         margs = [l_it + 1, len(log_files), log_file]
-        print('[{0}/{1}] Analysing log file: {2}'.format(*margs))
+        # log: [{0}/{1}] Analysing log file: {2}
+        print(textentry('40-519-00001', args=margs))
         # make yamls
         from_processing_log_file(yaml_path, log_file)
 
@@ -312,7 +316,8 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
     # -------------------------------------------------------------------------
     if clean:
         if log:
-            print('Cleaning table data')
+            # log: Cleaning table data
+            print(textentry('40-519-00003'))
         # clean up outlist
         for idnumber in tqdm(outlist):
             for c_it, column_name in enumerate(col_names):
@@ -325,7 +330,8 @@ def filtered_html_table(outlist: Dict[int, Dict[str, Union[str, List[str]]]],
                     outlist[idnumber][column_name] = value
     # -------------------------------------------------------------------------
     if log:
-        print('Generating html page')
+        # log: Generating html page
+        print(textentry('40-519-00002'))
     # get the column headers text in html format
     column_headers = "\n".join([f'<th>{col}</th>' for col in col_names])
 

@@ -421,6 +421,14 @@ def _is_local_port_open(port: int) -> bool:
         return sock.connect_ex(("127.0.0.1", port)) == 0
 
 
+def _tunnel_state_root(params: Dict[str, Any]) -> Path:
+    """Return (and create) the state directory for a family of tunnels."""
+    subdir = str(params.get("TUNNEL_STATE_SUBDIR") or "db_tunnels").strip()
+    state_root = _get_local_data_dir(params) / "secret" / subdir
+    state_root.mkdir(parents=True, exist_ok=True)
+    return state_root
+
+
 def _tunnel_control_paths(
     params: Dict[str, Any],
     ssh_host: str,
@@ -429,8 +437,7 @@ def _tunnel_control_paths(
     remote_port: int,
 ) -> Tuple[Path, Path]:
     """Return stable state paths for one DB SSH tunnel definition."""
-    state_root = _get_local_data_dir(params) / "secret" / "db_tunnels"
-    state_root.mkdir(parents=True, exist_ok=True)
+    state_root = _tunnel_state_root(params)
     signature = sha1(
         f"{ssh_host}|{remote_host}|{local_port}|{remote_port}".encode("utf-8")
     ).hexdigest()[:16]
@@ -492,8 +499,7 @@ def _load_tunnel_meta(meta_path: Path) -> Dict[str, Any]:
 
 def _close_other_tunnels(params: Dict[str, Any], keep_control: Path) -> None:
     """Ensure at most one persistent DB tunnel is active at a time."""
-    state_root = _get_local_data_dir(params) / "secret" / "db_tunnels"
-    state_root.mkdir(parents=True, exist_ok=True)
+    state_root = _tunnel_state_root(params)
 
     for control_path in sorted(state_root.glob("*.sock")):
         if control_path == keep_control:

@@ -21,6 +21,7 @@ from astropy.table import Table
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
+from aperocore import drs_lang
 from apero.instruments import select
 from apero.base import base as apero_base
 
@@ -34,6 +35,8 @@ __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
+# Get the text types
+textentry = drs_lang.textentry
 # Get parameter dictionary class
 ParamDict = param_functions.ParamDict
 # define known extensions
@@ -128,7 +131,9 @@ class LatexDocument:
         if shutil.which('okular') is not None:
             os.system(command)
         else:
-            print('Cannot run command: {0}'.format(command))
+            margs = [command]
+            # log: Cannot run command: {0}
+            print(textentry('40-003-00006', args=margs))
 
     def cleanup(self):
         """

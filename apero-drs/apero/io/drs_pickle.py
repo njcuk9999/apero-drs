@@ -20,6 +20,7 @@ import numpy as np
 from apero.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -30,6 +31,8 @@ ParamDict = param_functions.ParamDict
 tqdm = base.TQDM
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -55,9 +58,9 @@ def make_pickle(params: ParamDict, instance: Any, prefix: str, suffix: int,
     filename = os.path.join(outdir, f'{str(suffix)}.apero_pickle')
 
     if log:
-        msg = 'Pickling file: {0}'
         margs = [filename]
-        WLOG(params, '', msg.format(*margs))
+        # log: Pickling file: {0}
+        WLOG(params, '', textentry('40-001-00087', args=margs))
     # write the pickle file
     with open(filename, 'wb') as pickle_file:
         pickle.dump(instance, pickle_file)
@@ -96,9 +99,9 @@ def get_pickle(params: ParamDict, prefix: str, suffix: Optional[int] = None,
             instances[_suffix] = pickle.load(pickle_file)
     # if we are removing files remove them now
     if remove:
-        msg = 'Removing pickle directory: {0} ({1} files)'
         margs = [outdir, len(files)]
-        WLOG(params, '', msg.format(*margs))
+        # log: Removing pickle directory: {0} ({1} files)
+        WLOG(params, '', textentry('40-001-00088', args=margs))
         # loop around files and remove
         for filename in files:
             os.remove(filename)

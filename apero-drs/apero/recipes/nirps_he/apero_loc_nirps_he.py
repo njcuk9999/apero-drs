@@ -133,6 +133,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if fiber is None:
             eargs = [dprtype, recipe.name, 'FLAT_DARK or DARK_FLAT',
                      infile.basename]
+            # error: File DPRTYPE={0} was not valid for recipe {1}, thus fiber
+            #     not assigned. \n Allowed DPRTYPES are: {2} \n filename = {3}
             raise AperoCodedException(params, '00-013-00001', targs=eargs)
         fiber_groups.setdefault(fiber, []).append(infile)
     # fiber kinds used to flag science/reference fiber in the recipe log
@@ -178,9 +180,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             combine = False
         else:
             wargs = [fiber, len(group_infiles)]
-            WLOG(params, 'error', 'LOC recipe requires combine=True when '
-                                  'more than one {0} file is provided (got '
-                                  '{1} files)'.format(*wargs))
+            # error: LOC recipe requires combine=True when more than one {0}
+            #     file is provided (got {1} files)
+            WLOG(params, 'error', textentry('09-013-00001', args=wargs))
             infile, combine = group_infiles[0], False
         # get header from file instance
         header = infile.get_header()
@@ -303,6 +305,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ---------------------------------------------------------------------
     if not passed and params['INPUTS']['REF']:
         eargs = [recipe.name]
+        # error: QC failure of reference recipe: {0}
         raise AperoCodedException(params, '09-000-00011', targs=eargs)
     # ----------------------------------------------------------------------
     # Construct summary document

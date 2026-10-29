@@ -122,9 +122,13 @@ def _system_move(qpath: str, qid: str, qresult: str) -> bool:
     # a pid only identifies the process while the task is running
     lines = [line for line in lines
              if not line.startswith(('pid:', 'pid_host:'))]
-    # write the updated yaml to the destination
-    with open(dst_path, 'w') as wfile:
+    # write the updated yaml to the destination (atomically, mirrors
+    #   drs_queue._write_lines_atomic)
+    tmp_name = '.{0}.tmp{1}'.format(run_file, os.getpid())
+    tmp_path = os.path.join(dst_dir, tmp_name)
+    with open(tmp_path, 'w') as wfile:
         wfile.writelines(lines)
+    os.replace(tmp_path, dst_path)
     # remove the source file
     os.remove(src_path)
     # remove the source group directory if it is now empty

@@ -125,6 +125,7 @@ def __main__(recipe, params):
         drs_processing.update_index_db(params, recipe.shortname)
 
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)
+    # log: Updating database with header fixes
     WLOG(params, '', textentry('40-503-00043'))
     findexdbm.update_header_fix(objdbm)
     # -------------------------------------------------------------------------

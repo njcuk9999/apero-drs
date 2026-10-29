@@ -642,9 +642,9 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
             center_full[order_num] -= diff[pos]
     # -------------------------------------------------------------------------
     # log final number of orders
-    msg = 'Final number of Orders: {0}'
     margs = [final_cent_fit.shape[0]]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Final number of Orders: {0}
+    WLOG(params, 'info', textentry('40-013-00032', args=margs))
     # -------------------------------------------------------------------------
     # Calculate width polynomial fits
     # -------------------------------------------------------------------------
@@ -1052,7 +1052,9 @@ def loc_stats(params: ParamDict, fiber: str, cent_coeffs: np.ndarray,
     # measure the mean good background as a percentage
     mean_backgrd = np.mean(normed_miny[goodmask]) * 100
     # Log the maximum signal and the mean background
+    # log: Maximum flux/pixel in the spectrum: {0:.1f} [e-]
     WLOG(params, 'info', textentry('40-013-00003', args=[max_signal]))
+    # log: Average background level: {0:.2f} [%]
     WLOG(params, 'info', textentry('40-013-00004', args=[mean_backgrd]))
     # -------------------------------------------------------------------------
     # load stats into parameter dictionary
@@ -1171,6 +1173,8 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     if rorder_num != required_norders:
         # add failed message to fail message list
         fargs = [rorder_num, required_norders]
+        # text: abnormal number of identified orders (found {0:.2f} expected
+        #     {1:.2f}
         fail_msg.append(textentry('40-013-00018', args=fargs))
         qc_pass.append(0)
     else:
@@ -1188,6 +1192,9 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     if negative_diff:
         # add failed message to fail message list
         fargs = [' ']
+        # text: The difference in y central positions is not positive.
+        #     Localisation has failed due to calculated orders crossing in the
+        #     y-direction.
         fail_msg.append(textentry('40-013-00027', args=fargs))
         qc_pass.append(0)
     else:
@@ -1200,10 +1207,12 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     # finally log the failed messages and set QC = 1 if we pass the
     #    quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -1312,6 +1321,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     # copy data
     orderpfile.data = order_profile
     # log that we are saving rotated image
+    # log: Saving order profile to {0}
     WLOG(params, '', textentry('40-013-00002', args=[orderpfile.filename]))
     # define multi lists
     data_list, name_list = [], []
@@ -1371,6 +1381,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     loco1file.data = center_fits
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving loco1 file to {0}
     WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
     # define multi lists
     data_list = [cent_table, wid_table]
@@ -1407,6 +1418,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
     loco2file.data = width_fits
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving loco2 file to {0}
     WLOG(params, '', textentry('40-013-00020', args=[loco2file.filename]))
     # define multi lists
     data_list, name_list = [], []
@@ -1445,6 +1457,7 @@ def write_localisation_files(params: ParamDict, recipe: DrsRecipe,
         # --------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [loco3file.filename]
+        # log: Saving loco3 file to {0}
         WLOG(params, '', textentry('40-013-00021', args=wargs))
         # define multi lists
         data_list, name_list = [], []
@@ -1680,6 +1693,7 @@ def write_localisation_files_multi(
         datatype_list += ['table']
     # ------------------------------------------------------------------
     # log that we are saving the combined localisation file
+    # log: Saving loco1 file to {0}
     WLOG(params, '', textentry('40-013-00019', args=[locofile.filename]))
     # write all extensions to file
     locofile.write_multi(data_list=data_list, header_list=header_list,

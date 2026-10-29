@@ -24,6 +24,7 @@ from aperocore.core import drs_log
 from apero.base import base as apero_base
 from apero.io import drs_fits
 from apero.tools.module.static import drs_static
+from aperocore import drs_lang
 
 
 # =============================================================================
@@ -41,6 +42,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # -----------------------------------------------------------------------------
@@ -61,10 +64,9 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # -------------------------------------------------------------------------
     # check that in path exists
     if not os.path.exists(in_path):
-        emsg = 'Invalid in_path: {0}, please fix in yaml file: {1}'
         eargs = [in_path, params['INPUTS']['yamlfile']]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Invalid in_path: {0}, please fix in yaml file: {1}
+        raise AperoCodedException(params, '09-518-00005', targs=eargs)
     # -------------------------------------------------------------------------
     # sort out detector path (this is where we are saving things to)
     det_path = str(os.path.join(params['PATH.ASSETS'], 
@@ -127,8 +129,8 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
     :return np.ndarray - median dark image
     """
     # print progres
-    msg = 'Creating median dark image'
-    WLOG(params, 'info', msg)
+    # log: Creating median dark image
+    WLOG(params, 'info', textentry('40-518-00014'))
     # -------------------------------------------------------------------------
     # add path to dark_files and check they exist
     dark_files = []
@@ -136,10 +138,9 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
         # get absolute path to dark file
         dark_file = str(os.path.join(in_path, in_dark_file))
         if not os.path.exists(dark_file):
-            emsg = 'Invalid input dark file: {0}, please fix in yaml file: {1}'
             eargs = [dark_file, params['INPUTS']['yamlfile']]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Invalid input dark file: {0}, please fix in yaml file: {1}
+            raise AperoCodedException(params, '09-518-00006', targs=eargs)
         # append to dark_files
         dark_files.append(dark_file)
     # -------------------------------------------------------------------------
@@ -152,17 +153,16 @@ def create_median_dark(params: ParamDict, recipe, in_path: str,  det_path: str,
     #    FITS headers
     for it, dark_file in enumerate(dark_files):
         # print reading of files
-        msg = 'Reading dark frame: {0}'
         margs = [dark_file]
-        WLOG(params, '', msg.format(*margs))
+        # log: Reading dark frame: {0}
+        WLOG(params, '', textentry('40-518-00018', args=margs))
         hdr = drs_fits.read_header(params, str(dark_file))
         exptimes[it] = float(hdr[params['KW_EXPTIME'][0]])
         mjdtimes[it] = float(hdr[params['KW_MJDEND'][0]])
     # If the median dark frame does not exist, create it from the longest
     # exposure darks
-    # TODO: Add to language database
-    msg = 'Computing median dark frame from the longest exposure times'
-    WLOG(params, '', msg)
+    # log: Computing median dark frame from the longest exposure times
+    WLOG(params, '', textentry('40-518-00015'))
     # Select only the longest exposure darks
     long_mask = exptimes == np.max(exptimes)
     long_darks = dark_files[long_mask]
@@ -229,8 +229,8 @@ def create_median_led(params: ParamDict, recipe,
     :return np.ndarray - median dark image
     """
     # print progres
-    msg = 'Creating median LED image'
-    WLOG(params, 'info', msg)
+    # log: Creating median LED image
+    WLOG(params, 'info', textentry('40-518-00009'))
     # -------------------------------------------------------------------------
     # first lets decide whether we are creating leds or using an engineering
     # flat
@@ -242,23 +242,24 @@ def create_median_led(params: ParamDict, recipe,
     # deal with no led files
     if in_led_files in [None, '', 'None', 'Null']:
         no_leds = True
-        wmsg = 'No LED files provided - Attempting to use Engineering flat'
-        WLOG(params, 'warning', wmsg, sublevel=6)
+        # warning: No LED files provided - Attempting to use Engineering flat
+        WLOG(params, 'warning', textentry('10-518-00003'), sublevel=6)
     elif isinstance(in_led_files, list):
         if len(in_led_files) < 3:
             no_leds = True
-            wmsg = 'We require at least 3 LED files to process'
-            WLOG(params, 'warning', wmsg, sublevel=6)
+            # warning: We require at least 3 LED files to process
+            WLOG(params, 'warning', textentry('10-518-00004'), sublevel=6)
         # add path to dark_files and check they exist
         for in_led_file in in_led_files:
             # get absolute path to dark file
             led_file = str(os.path.join(in_path, in_led_file))
             if not os.path.exists(led_file):
                 no_leds = True
-                wmsg = ('Invalid input LED file: {0}, '
-                        'please fix in yaml file: {1}')
                 margs = [led_file, params['INPUTS']['yamlfile']]
-                WLOG(params, 'warning', wmsg.format(*margs), sublevel=6)
+                # warning: Invalid input LED file: {0}, please fix in yaml file:
+                #     {1}
+                WLOG(params, 'warning', textentry('10-518-00011', args=margs),
+                     sublevel=6)
                 break
             # append to dark_files
             led_files.append(led_file)
@@ -270,12 +271,11 @@ def create_median_led(params: ParamDict, recipe,
         # make full path to engineering flat
         eng_flat_file = os.path.join(in_path, engineering_flat)
         if not os.path.exists(eng_flat_file):
-            emsg = ('LED error and engineering flat not found: {0}.'
-                    'Please correct LED error or provide an engineering flat in '
-                    ' the yaml file {1}. \n\tLED Error: {2}')
             eargs = [eng_flat_file, params['INPUTS']['yamlfile'], wmsg]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: LED error and engineering flat not found: {0}.Please
+            #     correct LED error or provide an engineering flat in the yaml
+            #     file {1}. \n LED Error: {2}
+            raise AperoCodedException(params, '09-518-00007', targs=eargs)
         # read the engineering flat file
         eng_flat = drs_fits.readfits(params, eng_flat_file)
         # add a header key for satif flat mode
@@ -299,12 +299,11 @@ def create_median_led(params: ParamDict, recipe,
     # Case 2: No LEDs (error) and we don't have an engineering flat
     # -------------------------------------------------------------------------
     elif no_leds:
-        emsg = ('LED error and no engineering flat defined in yaml. '
-                'Please correct LED error or provide an engineering flat in '
-                ' the yaml file {0}. \n\tLED Error: {1}')
         eargs = [params['INPUTS']['yamlfile'], wmsg]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: LED error and no engineering flat defined in yaml. Please
+        #     correct LED error or provide an engineering flat in the yaml file
+        #     {0}. \n LED Error: {1}
+        raise AperoCodedException(params, '09-518-00008', targs=eargs)
     # -------------------------------------------------------------------------
     # Case 3: Use LEDS
     # -------------------------------------------------------------------------
@@ -370,8 +369,8 @@ def create_high_pass_flat(params: ParamDict, recipe,
     :return np.ndarray, the high passed flat
     """
     # print progres
-    msg = 'Creating high-passed flat field image'
-    WLOG(params, 'info', msg)
+    # log: Creating high-passed flat field image
+    WLOG(params, 'info', textentry('40-518-00016'))
     # -------------------------------------------------------------------------
     # copy led into flat
     flat = np.array(led)
@@ -399,9 +398,9 @@ def create_high_pass_flat(params: ParamDict, recipe,
     # large-scale structure
     while (sig_step > 1e-4):
         # print progress
-        msg = '\tIteration {0}, previous step: {1:.4e}'
         margs = [iteration, sig_step]
-        WLOG(params, '', msg.format(*margs))
+        # log: Iteration {0}, previous step: {1:.4e}
+        WLOG(params, '', textentry('40-518-00019', args=margs))
         # median bin the image
         binned_image = mp.medbin(flat, flat.shape[0] // binsize,
                                  flat.shape[1] // binsize)
@@ -447,8 +446,8 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
     :return np.ndarray - median dark image
     """
     # print progres
-    msg = 'Creating amplifier dark current image'
-    WLOG(params, 'info', msg)
+    # log: Creating amplifier dark current image
+    WLOG(params, 'info', textentry('40-518-00017'))
     # -------------------------------------------------------------------------
     # add path to dark_files and check they exist
     dark_files = []
@@ -456,10 +455,9 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
         # get absolute path to dark file
         dark_file = str(os.path.join(in_path, in_dark_file))
         if not os.path.exists(dark_file):
-            emsg = 'Invalid input dark file: {0}, please fix in yaml file: {1}'
             eargs = [dark_file, params['INPUTS']['yamlfile']]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Invalid input dark file: {0}, please fix in yaml file: {1}
+            raise AperoCodedException(params, '09-518-00006', targs=eargs)
         # append to dark_files
         dark_files.append(dark_file)
     # -------------------------------------------------------------------------
@@ -528,9 +526,9 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
     # deal with only one unique exposure time
     if uexptimes.size < 2:
         # print warning
-        wmsg = ('Single DARK exposure time found. Using fall back method to '
-                'calculate intercept and setting slope=0')
-        WLOG(params, 'warning', wmsg, sublevel=2)
+        # warning: Single DARK exposure time found. Using fall back method to
+        #     calculate intercept and setting slope=0
+        WLOG(params, 'warning', textentry('10-518-00001'), sublevel=2)
         # intercept is the median of the cube
         intercept = mp.nanmedian(cube_amps, axis=0)
         # slope is zero
@@ -550,9 +548,9 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
         #    (dark current vs. exposure time)
         for x_it in range(size[1] // n_amp):
             # print progress
-            msg = '\tFitting dark frames Amplifier pixel {0}/{1}'
             margs = [x_it + 1, size[1] // n_amp]
-            WLOG(params, '', msg.format(*margs))
+            # log: Fitting dark frames Amplifier pixel {0}/{1}
+            WLOG(params, '', textentry('40-518-00020', args=margs))
             # loop around all y-pixels
             for y_it in range(size[0]):
                 # linear fit exposure times vs the amplitudes

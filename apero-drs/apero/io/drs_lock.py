@@ -105,6 +105,8 @@ class Lock:
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
             eargs = [type(error), error, self.lockpath, func_name]
+            # error: Creating lock directory failed. \n Error {0}: {1} \n
+            #     Directory = {2} \n Function = {3}
             raise AperoCodedException(params, '00-503-00016', targs=eargs)
         # ------------------------------------------------------------------
         self.maxwait = MAX_WAIT

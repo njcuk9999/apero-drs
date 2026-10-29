@@ -148,6 +148,8 @@ class ParamDict(CaseInDict):
             return super(ParamDict, self).__getitem__(key)
         except KeyError:
             # log that parameter was not found in parameter dictionary
+            # error: ParamDict Error: Parameter '{0}' not found in parameter
+            #     dictionary
             raise AperoCodedException(None, '00-003-00024', targs=[key])
 
     def __setitem__(self, key: str, value: object,
@@ -173,6 +175,7 @@ class ParamDict(CaseInDict):
         # deal with parameter dictionary being locked
         if self.locked:
             # log that parameter dictionary is locked so we cannot set key
+            # error: ParamDict locked. \n Cannot add '{0}'='{1}'
             raise AperoCodedException(None, '00-003-00025', targs=[key, value])
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
@@ -381,6 +384,8 @@ class ParamDict(CaseInDict):
             except (TypeError, ValueError, OverflowError) as error:
                 function_text = '' if func is None else f'\nFunction: {func}'
                 eargs = [key, value, dtype, function_text]
+                # error: Parameter {0}={1} does not have data-type {2}{3} \n
+                #     Please check the input yaml files.
                 raise AperoCodedException(None, '00-000-00015',
                                           targs=eargs) from error
             return cast_value
@@ -430,6 +435,8 @@ class ParamDict(CaseInDict):
                 self.source_history[key] = [_source]
         else:
             # log error: source cannot be added for key
+            # error: ParamDict Error: Source cannot be added for key '{0}' \n
+            #     '{0}' is not in parameter dictionary
             raise AperoCodedException(None, '00-003-00026', targs=[key])
 
     def set_instance(self, key: str, instance: Union[None, Const, Keyword]):
@@ -457,6 +464,8 @@ class ParamDict(CaseInDict):
             self.instances[key] = instance
         else:
             # log error: instance cannot be added for key
+            # error: ParamDict Error: Instance cannot be added for key '{0}' \n
+            #     '{0} is not in parameter dictionary
             raise AperoCodedException(None, '00-003-00027', targs=[key])
 
     def append_source(self, key: str, source: str):
@@ -639,6 +648,7 @@ class ParamDict(CaseInDict):
         # else raise a Config Error
         else:
             # log error: no source set for key
+            # error: ParamDict Error: No source set for key={0}
             raise AperoCodedException(None, '00-003-00028', targs=[key])
 
     def get_instance(self, key: str) -> Union[None, Const, Keyword]:
@@ -661,6 +671,7 @@ class ParamDict(CaseInDict):
             return self.instances[key]
         # else raise a Config Error
         else:
+            # error: ParamDict Error: No instance set for key={0}
             raise AperoCodedException(None, '00-003-00029', targs=[key])
 
     def source_keys(self) -> List[str]:
@@ -937,37 +948,46 @@ class ParamDict(CaseInDict):
         """
         # deal with key not existing
         if key not in self.data.keys():
+            # log: ParamDict Info: Key = '{0}' not found
             print(textentry('40-000-00001', args=[key]))
             return
         # print key title
+        # log: Information for key = '{0}'
         print(textentry('40-000-00002', args=[key]))
         # print value stats
         value = self.__getitem__(key)
         # print the data type
+        # log: Data Type: {0}
         print(textentry('40-000-00003', args=[type(value).__name__]))
         # deal with lists and numpy array
         if isinstance(value, (list, np.ndarray)):
             sargs = [key, list(value), None, self.pfmt_ns]
             wargs = [mp.nanmin(value), mp.nanmax(value),
                      np.sum(np.isnan(value)) > 0, _string_repr_list(*sargs)]
+            # log: Min Value: {0} \n Max Value: {1} \n Has NaNs: {2} \n Values:
+            #     {3}
             print(textentry('40-000-00004', args=wargs))
         # deal with dictionaries
         elif isinstance(value, (dict, OrderedDict, ParamDict)):
             strvalue = list(value.keys()).__repr__()[:40]
             sargs = [key + '[DICT]', strvalue, None]
             wargs = [len(list(value.keys())), self.pfmt_ns.format(*sargs)]
+            # log: Num Keys: {0} \n Values: {1}
             print(textentry('40-000-00005', args=wargs))
         # deal with everything else
         else:
             strvalue = str(value)[:40]
             sargs = [key + ':', strvalue, None]
             wargs = [self.pfmt_ns.format(*sargs)]
+            # log: Value: {0}
             print(textentry('40-000-00006', args=wargs))
         # add source info
         if key in self.sources:
+            # log: Source: {0}
             print(textentry('40-000-00007', args=[self.sources[key]]))
         # add instances info
         if key in self.instances:
+            # log: Instance: {0}
             print(textentry('40-000-00008', args=[self.instances[key]]))
 
     def history(self, key: str):
@@ -983,12 +1003,14 @@ class ParamDict(CaseInDict):
         # if history found then print it
         if key in self.source_history:
             # print title: History for key
+            # log: History for key = '{0}'
             print(textentry('40-000-00009', args=[key]))
             # loop around history and print row by row
             for it, entry in enumerate(self.source_history[key]):
                 print('{0}: {1}'.format(it + 1, entry))
         # else display that there was not history found
         else:
+            # log: No history found for key='{0}'
             print(textentry('40-000-00010', args=[key]))
 
     def keys(self) -> List:
@@ -1062,10 +1084,13 @@ class ParamDict(CaseInDict):
                 # deal with input not being a list
                 if not isinstance(kinds, list):
                     eargs = [inames[it], func_name]
+                    # error: Input ‘{0}’ must be a list \n Function = {1}
                     raise AperoCodedException(None, '00-001-00056', targs=eargs)
                 # deal with length of input
                 if len(inputs[it]) != length:
                     eargs = [inames[it], len(inputs[it]), length, func_name]
+                    # error: Input list ‘{0}’ was wrong length (length = {1}
+                    #     required = {2}) \n Function = {3}
                     raise AperoCodedException(None, '00-001-00055', targs=eargs)
         # ---------------------------------------------------------------------
         # extract out hdict values
@@ -1307,7 +1332,7 @@ class SubParamDict():
         return self.param_dict.rget(full_key, **rget_kwargs)
 
     def __setitem__(self, key, value):
-        self.param_dict.data[f'{self.path}{key}'] = value
+        self.param_dict[f'{self.path}{key}'] = value
 
     def __contains__(self, key):
         return f'{self.path}{key}' in self.param_dict.data.keys()
@@ -1497,6 +1522,8 @@ class PCheck:
             paramdict = ParamDict(paramdict)
         # deal with key being None
         if key is None and name is None:
+            # error: Pcheck: 'key' and 'name' were both unset, at least one
+            #     value must be set. \n Function = {0}
             raise AperoCodedException(None, '00-003-00004')
         elif key is None:
             key = 'Not set'
@@ -1533,6 +1560,8 @@ class PCheck:
             return copy.deepcopy(default)
         elif not_in_paramdict and not_in_rkwargs:
             eargs = [key, func]
+            # error: Parameter '{0}' was not found in constants parameter
+            #     dictionary. \n function = {1}
             raise AperoCodedException(None, '00-003-00001', targs=eargs)
         elif name in rkwargs:
             return copy.deepcopy(rkwargs[name])
@@ -1634,6 +1663,8 @@ def get_module_names(instrument: str, package: str,
         if not found:
             # log error: dev error module {0} is required to have class {1}
             eargs = [mod, fpath, func_name]
+            # error: Dev Error: Const mod path '{0}' does not exist. \n Path =
+            #     {1} \n Function = {2}
             raise AperoCodedException(None, '00-001-00047', targs=eargs)
         # append mods
         mods.append(mod)
@@ -1646,7 +1677,7 @@ def get_module_names(instrument: str, package: str,
     if len(mods) != len(mod_list):
         # log error: DevError: Const mod scripts missing
         eargs = [','.join(mods), ','.join(mod_list), func_name]
-        raise AperoCodedException(None, '00-001-000479', targs=eargs)
+        raise AperoCodedException(None, '00-001-00049', targs=eargs)
     # return modules
     if return_paths:
         return paths
@@ -1806,6 +1837,8 @@ def _map_listparameter(value: Union[str, list], separator: str = ',',
             return list(map(lambda x: x.strip(), listparameter))
     except Exception as e:
         eargs = [value, type(e), e, func_name]
+        # error: Parameter '{0}' can not be converted to a list. \n Error {1}:
+        #     {2}. \n function = {3}
         raise AperoCodedException(None, '00-003-00002', targs=eargs)
 
 
@@ -1837,6 +1870,8 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
             return returndict
     except Exception as e:
         eargs = [value, type(e), e, func_name]
+        # error: Parameter '{0}' can not be converted to a dictionary. \n Error
+        #     {1}: {2}. \n function = {3}
         raise AperoCodedException(None, '00-003-00003', targs=eargs)
 
 

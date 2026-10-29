@@ -115,8 +115,10 @@ class OutFile:
             func_name = '{0} [{1}]'.format(func, func_name)
         # deal with kwargs that are required
         if infile is None:
+            # error: Function {0} requires 'infile' to be set.
             raise AperoCodedException(params, '00-001-00017', targs=[func_name])
         if outfile is None:
+            # error: Function {0} requires 'outfile' to be set.
             raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # try to get fiber from outfile
         if fiber is None:
@@ -124,6 +126,8 @@ class OutFile:
         # deal with fiber being required but still unset
         if outfile.fibers is not None and fiber is None:
             eargs = [outfile, func_name]
+            # error: Must define keyword “fiber” for drs file = {0}. \n Function
+            #     = {1} (or in definition of drs file instance)
             raise AperoCodedException(params, '00-001-00032', targs=eargs)
         # set infile basename
         inbasename = infile.basename
@@ -131,6 +135,7 @@ class OutFile:
         if inbasename is None:
             # raise error: infile.basename must be set when defining infile
             eargs = [infile.name, func_name]
+            # error: Function {0} requires 'infile' to be set.
             raise AperoCodedException(params, '00-001-00017', targs=eargs)
         # get condition to remove input file prefix
         if remove_insuffix is None:
@@ -170,6 +175,8 @@ class OutFile:
                 outpath = None
             # check if outpath is set
             if outpath is None:
+                # error: Path is unset and 'OUTPATH' (in params) is unset. One
+                #     of these must be set. \n Function = {0}
                 raise AperoCodedException(params, '01-001-00023', 
                                           targs=[func_name])
             # get output night name from params
@@ -239,8 +246,10 @@ class GeneralOutFile(OutFile):
             func_name = '{0} [{1}]'.format(func, func_name)
         # deal with kwargs that are required
         if infile is None:
+            # error: Function {0} requires 'infile' to be set.
             raise AperoCodedException(params, '00-001-00017', targs=[func_name])
         if outfile is None:
+            # error: Function {0} requires 'outfile' to be set.
             raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # try to get fiber from outfile
         if fiber is None:
@@ -248,6 +257,8 @@ class GeneralOutFile(OutFile):
         # deal with fiber being required but still unset
         if outfile.fibers is not None and fiber is None:
             eargs = [outfile, func_name]
+            # error: Must define keyword “fiber” for drs file = {0}. \n Function
+            #     = {1} (or in definition of drs file instance)
             raise AperoCodedException(params, '00-001-00032', targs=eargs)
         # set infile basename
         inbasename = infile.basename
@@ -289,6 +300,8 @@ class GeneralOutFile(OutFile):
                 outpath = None
             # check if outpath is set
             if outpath is None:
+                # error: Path is unset and 'OUTPATH' (in params) is unset. One
+                #     of these must be set. \n Function = {0}
                 raise AperoCodedException(params, '01-001-00023',
                                           targs=[func_name])
             # get output night name from params
@@ -358,10 +371,13 @@ class NpyOutFile(GeneralOutFile):
 
         # get out file and report error if not set
         if outfile is None:
+            # error: Function {0} requires 'outfile' to be set.
             raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # make sure filetype is .npy
         filetype = outfile.filetype
         if '.npy' not in filetype:
+            # error: npy file must have extension '.npy'. Current value = {0} \n
+            #     function = {1}
             raise AperoCodedException(params, '00-001-00033', targs=[filetype])
         # update keywords func name
         return super().construct(params, infile, outfile, func=func_name)
@@ -484,6 +500,7 @@ class BlankOutFile(OutFile):
         # deal with kwargs that are required
         if infile is None:
             _ = outfile
+            # error: Function {0} requires 'infile' to be set.
             raise AperoCodedException(params, '00-001-00017', targs=[func_name])
         # return absolute path
         return infile.filename
@@ -543,12 +560,15 @@ class SetOutFile(OutFile):
         # deal with no outfile set
         if outfile is None:
             _ = infile
+            # error: Function {0} requires 'outfile' to be set.
             raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # get filename from outfile if None
         if filename is None:
             filename = outfile.basename
         # deal with no file name set and filename must be a basename (no path)
         if filename is None:
+            # error: Function {0} requires ‘filename’ to be set in file
+            #     definitions.
             raise AperoCodedException(params, '00-001-00041', targs=[func_name])
         else:
             filename = os.path.basename(filename)
@@ -568,6 +588,8 @@ class SetOutFile(OutFile):
             outpath = params['OUTPATH']
             # check if outpath is set
             if outpath is None:
+                # error: Path is unset and 'OUTPATH' (in params) is unset. One
+                #     of these must be set. \n Function = {0}
                 raise AperoCodedException(params, '01-001-00023',
                                           targs=[func_name])
             # get output night name from params
@@ -636,6 +658,7 @@ class StaticFile(OutFile):
         # deal with no outfile set
         if outfile is None:
             _ = infile
+            # error: Function {0} requires 'outfile' to be set.
             raise AperoCodedException(params, '00-001-00018', targs=[func_name])
         # get filename from outfile if None
         if filename is None:
@@ -643,29 +666,27 @@ class StaticFile(OutFile):
                 # deal with no prefix set
                 if outfile.prefix is None:
 
-                    emsg = ('Fiber was given as argument (fiber={0}), '
-                            'prefix must be set in file definitions. '
-                            'Function={1}')
                     eargs = [fiber, func_name]
-                    raise AperoCodedException(params, None, 
-                                              message=emsg.format(*eargs),
+                    # error: Fiber was given as argument (fiber={0}), prefix
+                    #     must be set in file definitions. Function={1}
+                    raise AperoCodedException(params, '00-006-00046',
                                               targs=eargs)
                 # set filename from prefix and fiber
                 filename = outfile.prefix + '_' + fiber 
             else:
                 # deal with no basename set
                 if outfile.basename is None:
-                    emsg = ('No filename was given as argument, '
-                            'and no basename set in file definitions. '
-                            'Function={0}')
                     eargs = [func_name]
-                    raise AperoCodedException(params, None, 
-                                              message=emsg.format(*eargs),
+                    # error: No filename was given as argument, and no basename
+                    #     set in file definitions. Function={0}
+                    raise AperoCodedException(params, '00-006-00047',
                                               targs=eargs)
                 # otherwise set from the basename
                 filename = outfile.basename
         # deal with no file name set and filename must be a basename (no path)
         if filename is None:
+            # error: Function {0} requires ‘filename’ to be set in file
+            #     definitions.
             raise AperoCodedException(params, '00-001-00041', targs=[func_name])
         else:
             filename = os.path.basename(filename)
@@ -681,6 +702,8 @@ class StaticFile(OutFile):
             outfilename = filename + outext
         # deal with no given path (default)
         if path is None:
+            # error: Path is unset and 'OUTPATH' (in params) is unset. One of
+            #     these must be set. \n Function = {0}
             raise AperoCodedException(params, '01-001-00023',
                                           targs=[func_name])
         else:
@@ -733,15 +756,13 @@ class LBLOutFile(OutFile):
         path = path.format(obj=objname, temp=tempname)
         # give error if filetype is not defined
         if drsfile.filetype is None:
-            # TODO: Add to language database
-            emsg = 'LBL file definition must have a filetype'
-            raise AperoCodedException(params, message=emsg)
+            # error: LBL file definition must have a filetype
+            raise AperoCodedException(params, '00-006-00043')
 
         if drsfile.basename is not None:
             if objname is None or tempname is None:
-                # TODO: Add to language database
-                emsg = 'LBL file definition must have objname and tempname'
-                raise AperoCodedException(params, message=emsg)
+                # error: LBL file definition must have objname and tempname
+                raise AperoCodedException(params, '00-006-00044')
             
             basename = drsfile.basename.format(obj=objname, temp=tempname)
 
@@ -750,9 +771,8 @@ class LBLOutFile(OutFile):
             basename = '{0}{1}'.format(inprefix, suffix)
 
         else:
-            # TODO: Add to language database
-            emsg = 'LBL file definition must have a basename or suffix'
-            raise AperoCodedException(params, message=emsg)
+            # error: LBL file definition must have a basename or suffix
+            raise AperoCodedException(params, '00-006-00045')
         # ---------------------------------------------------------------------
         # add the in suffix if given
         if insuffix is not None:
@@ -1059,6 +1079,8 @@ def get_outfilename(infilename: str, prefix: Union[str, None] = None,
         outfilename = str(infilename[:-len(inext)])
     else:
         eargs = [infilename, inext, func_name]
+        # error: Could not construct output filename. Filename = {0} does not
+        #     have required extension ({1}). \n Function = {2}
         raise AperoCodedException(None, '00-001-00031', targs=eargs)
     # add prefix and suffix
     if prefix is not None:
@@ -1111,12 +1133,16 @@ def make_obs_dir(obs_dir: Union[str, None], path: str) -> str:
             os.chdir(cwd)
         except Exception as e:
             eargs = [rel_path, path, type(e), e, func_name]
+            # error: Could not make night name directory {0} (in directory {1})
+            #     \n Error {2}: {3} \n Function = {4}
             raise AperoCodedException(None, '09-003-00002', targs=eargs)
     # verify path exists after creation
     if os.path.exists(full_path):
         return full_path
     else:
         eargs = [rel_path, path, func_name]
+        # error: Could not make night name directory {0} (in directory {1}) \n
+        #     Function = {2}
         raise AperoCodedException(None, '09-003-00003', targs=eargs)
 
 

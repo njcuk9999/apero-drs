@@ -35,6 +35,7 @@ from apero_ri.application import (
     apero_profiles_api_helpers,
 )
 from apero_ri.application import ariapp_impls as _impls
+from apero_ri.application import apero_queue_api_helpers
 from apero_ri.application import astrometrics_api_helpers
 from apero_ri.application import astrometrics_history
 from apero_ri.application import rejection_list_api_helpers
@@ -401,6 +402,15 @@ class ARIApp(Flask):
 
     def _api_server_sync_peer(self, action):
         return server_sync_api_helpers.peer_api_view(self, action)
+
+    # -----------------------------------------------------------------
+    # APERO queue setup API (admin) and dashboard proxy (monitor)
+    # -----------------------------------------------------------------
+    def _api_apero_queue_admin(self, action):
+        return apero_queue_api_helpers.admin_api(self, action)
+
+    def _monitor_apero_queue_proxy(self, name, subpath=''):
+        return apero_queue_api_helpers.proxy_view(self, name, subpath)
 
     @staticmethod
     def _normalize_db_source(value: str) -> str:

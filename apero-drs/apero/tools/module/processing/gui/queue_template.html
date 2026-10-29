@@ -1,8 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="dark">
 <head>
 <meta charset="utf-8">
 <title>APERO Queue</title>
+<script>
+// apply the saved theme before first paint (dark is the default)
+(function () {
+    var theme = 'dark';
+    try { theme = localStorage.getItem('apero-queue-theme') || 'dark'; }
+    catch (err) { theme = 'dark'; }
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <style>
 body { font-family: sans-serif; margin: 0; background: #f1f4f8;
        color: #253045; }
@@ -55,6 +64,7 @@ body { font-family: sans-serif; margin: 0; background: #f1f4f8;
                    margin-bottom: 14px; }
 #activity { margin-top: 14px; }
 #busy { display: none; color: #ffcc75; font-weight: bold; }
+#status-error { color: #ff8a80; font-weight: bold; font-size: 12px; }
 .cli-title { font-size: 12px; color: #666; margin-top: 8px; }
 .cli-wrap { display: flex; align-items: stretch; gap: 8px; }
 .cli-box { flex: 1; min-height: 58px; font-family: monospace;
@@ -135,9 +145,11 @@ tr.failed { background: #fadddd; }
 #gbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .summary-card { display: flex; align-items: center; gap: 10px;
                 flex-wrap: wrap; }
-.summary-row { display: flex; align-items: center; gap: 6px;
-               margin: 3px 0; }
-.summary-label { width: 70px; font-size: 12px; font-weight: bold;
+.summary { display: grid; align-items: center;
+           grid-template-columns: auto repeat(4, max-content);
+           column-gap: 8px; row-gap: 6px; }
+.summary .summary-btn { margin-right: 0; text-align: left; }
+.summary-label { font-size: 12px; font-weight: bold;
                  color: #44536b; text-transform: uppercase; }
 .summary .summary-btn.task-btn { background: #fff; border: 2px solid;
                                  padding: 2px 10px; }
@@ -155,6 +167,10 @@ tr.failed { background: #fadddd; }
 .gprog span { display: block; height: 100%; }
 .gp-pending { background: #e6a817; } .gp-running { background: #2a7de1; }
 .gp-complete { background: #2e9e4f; } .gp-failed { background: #d33c3c; }
+.gp-text { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.gp-text-complete { color: #23793c; } .gp-text-failed { color: #b02f2f; }
+html[data-theme="dark"] .gp-text-complete { color: #56d364; }
+html[data-theme="dark"] .gp-text-failed { color: #ff7b72; }
 .badge.s-pending { background: #e6a817; }
 .badge.s-running { background: #2a7de1; }
 .badge.s-complete { background: #2e9e4f; }
@@ -262,6 +278,354 @@ tr.failed { background: #fadddd; }
 .a-fg10 { color: #56d364; } .a-fg11 { color: #e3b341; }
 .a-fg12 { color: #79c0ff; } .a-fg13 { color: #d2a8ff; }
 .a-fg14 { color: #56d4dd; } .a-fg15 { color: #f0f6fc; }
+/* ---- modern controls ---- */
+button { font: inherit; font-size: 13px; padding: 6px 14px;
+         border-radius: 7px; border: 1px solid #c9d4e3;
+         background: #fff; color: #253045; cursor: pointer;
+         box-shadow: 0 1px 2px rgba(20, 35, 60, 0.06);
+         transition: background 0.12s, border-color 0.12s,
+                     box-shadow 0.12s; }
+button:hover { background: #eef4fc; border-color: #9fb7d8; }
+button:active { transform: translateY(1px); }
+button:focus-visible { outline: 2px solid #3c88ea; outline-offset: 1px; }
+button.primary { background: #2f7de1; border-color: #2f7de1; color: #fff;
+                 font-weight: 600; }
+button.primary:hover { background: #2368c4; border-color: #2368c4; }
+button.danger { background: #fff; border-color: #e3a3a3; color: #b42d2d;
+                font-weight: 600; }
+button.danger:hover { background: #d33c3c; border-color: #d33c3c;
+                      color: #fff; }
+#global-actions button { background: #2a3f5c; border-color: #415674;
+                         color: #dbe6f5; box-shadow: none; }
+#global-actions button:hover { background: #324b6d; }
+#global-actions button.danger { color: #ffb4b4; }
+#global-actions button.danger:hover { background: #d33c3c; color: #fff; }
+.controltabbar { display: flex; gap: 4px; flex-wrap: wrap; }
+.controltabbar button { border: none; background: transparent;
+                        box-shadow: none; color: #44536b;
+                        font-weight: 600; padding: 7px 14px; }
+.controltabbar button:hover { background: #e7eef8; }
+.controltabbar button.active { background: #2f7de1; color: #fff; }
+.panel h2 { margin: 0 0 6px 0; font-size: 18px; color: #1f2f46; }
+.panel label { display: block; margin: 12px 0 4px 0; font-size: 12px;
+               font-weight: 600; color: #44536b; }
+.panel label.inline, label.inline { display: inline-flex;
+    align-items: center; gap: 6px; margin: 6px 12px 0 0;
+    font-weight: 500; color: #253045; }
+.panel input[type=text], .panel input[type=number], .panel select,
+#action-table select, .panel textarea:not(.cli-box) {
+    font: inherit; font-size: 13px; padding: 6px 9px;
+    border: 1px solid #c9d4e3; border-radius: 7px; background: #fff;
+    color: #253045; min-width: 220px; box-sizing: border-box; }
+.panel input:focus, .panel select:focus, #action-table select:focus {
+    outline: none; border-color: #2f7de1;
+    box-shadow: 0 0 0 3px rgba(47, 125, 225, 0.15); }
+.panel > button, .panel br + button { margin-top: 14px; }
+.cli-title { font-size: 11px; color: #6b7a90; text-transform: uppercase;
+             letter-spacing: 0.04em; margin: 10px 0 4px 0;
+             font-weight: 600; }
+.cli-wrap { position: relative; }
+.cli-box { width: 100%; box-sizing: border-box; min-height: 44px;
+           resize: vertical; background: #0d1117; color: #a5d6ff;
+           border: 1px solid #30363d; border-radius: 8px;
+           padding: 10px 80px 10px 12px; font-size: 12px;
+           font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+textarea#tpl-activation.cli-box { padding-right: 12px; color: #e6edf3; }
+.cli-wrap .copy-btn { position: absolute; top: 7px; right: 7px;
+                      padding: 3px 10px; font-size: 12px;
+                      background: #21262d; color: #c9d1d9;
+                      border-color: #30363d; box-shadow: none; }
+.cli-wrap .copy-btn:hover { background: #30363d; }
+.muted { color: #6b7a90; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+/* action table */
+#action-table { border-collapse: separate; border-spacing: 0;
+                border: 1px solid #dbe3ef; border-radius: 10px;
+                overflow: hidden; }
+#action-table th { background: #f4f7fb; color: #44536b; cursor: default;
+                   font-size: 12px; text-transform: uppercase;
+                   letter-spacing: 0.04em; border: none;
+                   border-bottom: 1px solid #dbe3ef; padding: 9px 12px; }
+#action-table th:hover { background: #f4f7fb; }
+#action-table td { border: none; border-bottom: 1px solid #edf1f7;
+                   padding: 10px 12px; vertical-align: middle;
+                   font-size: 13px; }
+#action-table tr:last-child td { border-bottom: none; }
+#action-table tbody tr:hover td { background: #f8fbff; }
+#action-table tr.act-critical td { background: #fff7f7; }
+.act-name { font-weight: 600; color: #1f2f46; }
+.act-desc { color: #6b7a90; font-size: 12px; margin-top: 2px;
+            max-width: 420px; }
+.action-cell-run { text-align: right; white-space: nowrap; }
+.cli-chip { display: flex; align-items: center; gap: 6px;
+            background: #0d1117; border: 1px solid #30363d;
+            border-radius: 7px; padding: 4px 4px 4px 10px;
+            max-width: 520px; }
+.cli-chip code { flex: 1; color: #a5d6ff; font-size: 12px;
+                 white-space: nowrap; overflow-x: auto; }
+.cli-chip .chip-copy { padding: 2px 9px; font-size: 11px;
+                       background: #21262d; color: #c9d1d9;
+                       border-color: #30363d; box-shadow: none; }
+.cli-chip .chip-copy:hover { background: #30363d; }
+/* generate panel */
+.gen-head { display: flex; align-items: center; gap: 14px;
+            justify-content: space-between; }
+.segmented { display: inline-flex; background: #e9eef6; border-radius: 9px;
+             padding: 3px; gap: 2px; }
+.segmented button { border: none; background: transparent; box-shadow: none;
+                    padding: 5px 14px; border-radius: 7px; color: #44536b;
+                    font-weight: 600; }
+.segmented button.active { background: #fff; color: #1f2f46;
+                           box-shadow: 0 1px 3px rgba(20, 35, 60, 0.15); }
+.segmented.small button { padding: 3px 10px; font-size: 12px; }
+.coming-soon { margin-top: 14px; padding: 22px; text-align: center;
+               border: 1px dashed #b9c7db; border-radius: 10px;
+               color: #6b7a90; background: #f8fbff; }
+.coming-soon-title { font-size: 18px; font-weight: 700; color: #2f7de1;
+                     margin-bottom: 6px; }
+.field-row { display: flex; flex-wrap: wrap; gap: 14px;
+             align-items: flex-end; }
+.field-actions { display: flex; gap: 8px; }
+.fold { margin-top: 14px; border: 1px solid #dbe3ef; border-radius: 10px;
+        padding: 8px 12px; background: #fbfcfe; }
+.fold summary { cursor: pointer; font-weight: 600; color: #1f2f46; }
+.forced-opt { margin-top: 8px; font-family: monospace; font-size: 12px; }
+.opt-grid { display: grid; gap: 4px 18px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.opt-grid .field label { margin-top: 8px; font-family: monospace; }
+.opt-grid .field label.inline { white-space: nowrap; margin-top: 12px; }
+.val-str { white-space: nowrap; }
+.opt-grid .field input, .opt-grid .field select { width: 100%; }
+.opt-help { font-size: 11px; color: #8592a6; margin-top: 3px;
+            max-height: 3.2em; overflow: hidden; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 10px;
+        font-size: 11px; font-weight: 700; background: #e9eef6;
+        color: #44536b; }
+.pill-running { background: #2a7de1; color: #fff; }
+.pill-ok { background: #2e9e4f; color: #fff; }
+.pill-bad { background: #d33c3c; color: #fff; }
+.runfile-head { display: flex; justify-content: space-between;
+                align-items: center; gap: 10px; margin: 16px 0 8px 0; }
+.runfile-view { display: grid; gap: 12px; }
+.rf-section { border: 1px solid #dbe3ef; border-radius: 10px;
+              overflow: hidden; background: #fff; }
+.rf-title { background: #f4f7fb; padding: 7px 12px; font-weight: 700;
+            color: #1f2f46; border-bottom: 1px solid #dbe3ef; }
+.rf-desc { font-weight: 400; font-size: 12px; color: #6b7a90;
+           margin-top: 2px; }
+.rf-table { width: 100%; border-collapse: collapse; }
+.rf-table td { border-bottom: 1px solid #f0f3f8; padding: 6px 12px;
+               vertical-align: top; }
+.rf-table tr:last-child td { border-bottom: none; }
+.rf-key { font-family: monospace; font-weight: 600; color: #1f2f46;
+          white-space: nowrap; width: 1%; }
+.rf-comment { color: #6b7a90; font-size: 12px; }
+.val { font-family: monospace; font-size: 12px; padding: 1px 7px;
+       border-radius: 5px; background: #f0f3f8; }
+.val-true { background: #def7e5; color: #1f7a3c; }
+.val-false { background: #f1f1f4; color: #7a8292; }
+.val-null { color: #9aa5b5; font-style: italic; }
+.val-num { background: #e8f0fd; color: #1f5fb5; }
+.chip-group { font-size: 11px; color: #6b7a90; margin: 8px 0 4px 0;
+              font-weight: 600; }
+.chip { display: inline-block; font-family: monospace; font-size: 11px;
+        padding: 2px 8px; border-radius: 10px; margin: 0 4px 4px 0; }
+.chip-on { background: #def7e5; color: #1f7a3c;
+           border: 1px solid #b6e6c4; }
+.chip-off { background: #f3f4f7; color: #8a93a3;
+            border: 1px solid #e1e5ec; text-decoration: line-through; }
+.chip-other { background: #e8f0fd; color: #1f5fb5;
+              border: 1px solid #c7d9f7; }
+.runfile-raw { background: #0d1117; color: #c9d1d9; padding: 12px;
+               border-radius: 10px; max-height: 520px; overflow: auto;
+               font-size: 12px; }
+/* generate / reset command output */
+.job-card { margin-top: 16px; border: 1px solid #30363d;
+            border-radius: 10px; overflow: hidden; background: #0d1117; }
+.job-head { display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; background: #161b22; color: #c9d1d9; }
+.job-title { font-weight: 700; }
+.job-cmd { flex: 1; overflow: hidden; text-overflow: ellipsis;
+           white-space: nowrap; color: #8b949e; font-size: 12px; }
+.job-head button { background: #21262d; color: #c9d1d9;
+                   border-color: #30363d; box-shadow: none;
+                   padding: 3px 10px; font-size: 12px; }
+.job-output { margin: 0; max-height: 360px; overflow: auto;
+              padding: 10px 12px; color: #c9d1d9; font-size: 12px;
+              line-height: 1.45; }
+/* stats tab */
+.stats-filters { display: flex; align-items: center; gap: 10px;
+                 flex-wrap: wrap; margin: 10px 0; }
+.stats-filters select { padding: 4px 6px; }
+.stats-cards { display: grid; gap: 10px; margin-bottom: 14px;
+               grid-template-columns: repeat(auto-fill,
+                                             minmax(170px, 1fr)); }
+.stat-card { border: 1px solid #dbe3ef; border-radius: 8px;
+             padding: 8px 10px; background: #fff; }
+.stat-val { font-size: 20px; font-weight: 700; }
+.stat-lbl { font-size: 11px; color: #6b7a90; text-transform: uppercase;
+            letter-spacing: 0.04em; }
+.stats-table-wrap { overflow-x: auto; margin-bottom: 14px; }
+.stats-table-wrap th { cursor: default; }
+.stats-table-wrap td.num { text-align: right;
+                           font-variant-numeric: tabular-nums; }
+.tbar { height: 8px; border-radius: 3px; min-width: 2px; }
+.stats-task { cursor: pointer; }
+.stats-task:hover { outline: 2px solid #3c88ea; outline-offset: -2px; }
+.chart { width: 100%; min-height: 120px; margin-bottom: 18px; }
+.chart svg { display: block; overflow: visible; }
+.chart svg text { fill: currentColor; font-size: 11px; }
+.chart .grid { stroke: #dbe3ef; stroke-width: 1; }
+.chart .axis { stroke: #8592a6; stroke-width: 1; }
+.chart-empty { padding: 20px; text-align: center; color: #6b7a90;
+               border: 1px dashed #b9c7db; border-radius: 8px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 4px 14px;
+                font-size: 12px; margin-top: 4px; }
+.swatch { display: inline-block; width: 10px; height: 10px;
+          border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+html[data-theme="dark"] .stat-card { background: #0d1117;
+                                     border-color: #30363d; }
+html[data-theme="dark"] .chart .grid { stroke: #30363d; }
+html[data-theme="dark"] .chart-empty { border-color: #30363d; }
+/* processes tab */
+.proc-bar { display: flex; align-items: center; gap: 8px;
+            flex-wrap: wrap; margin-bottom: 12px; }
+.proc-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+#proc-table td { vertical-align: middle; }
+#proc-table th { cursor: default; }
+#pbody tr { cursor: pointer; }
+#pbody tr:hover { outline: 2px solid #3c88ea; outline-offset: -2px; }
+#pbody tr.done td { opacity: 0.75; }
+.proc-label { font-family: monospace; font-size: 12px; }
+.proc-logs button, .proc-stop { padding: 2px 8px; font-size: 12px;
+                                margin: 0 4px 2px 0; }
+.badge.s-stopped { background: #8a5cd1; }
+.badge.s-finished { background: #2e9e4f; }
+.badge.s-lost { background: #b35c00; }
+.badge.s-unknown { background: #6e7681; }
+/* info tab */
+.info-md { max-width: 900px; line-height: 1.55; }
+.info-md h2, .info-md h3 { margin: 4px 0 8px 0; }
+.info-md ul { padding-left: 22px; margin: 8px 0; }
+.info-md li { margin-bottom: 6px; }
+.info-md code { font-size: 12px; padding: 1px 5px; border-radius: 4px;
+                background: #f0f3f8; }
+/* ---- dark theme (default) ---- */
+html[data-theme="dark"] body { background: #0d1117; color: #c9d1d9; }
+html[data-theme="dark"] .navbar { background: #161b22;
+                                  border-bottom-color: #30363d; }
+html[data-theme="dark"] .tabpage.active,
+html[data-theme="dark"] .section-card,
+html[data-theme="dark"] .rf-section,
+html[data-theme="dark"] table { background: #161b22;
+                                border-color: #30363d;
+                                box-shadow: none; }
+html[data-theme="dark"] .controlpage.active,
+html[data-theme="dark"] .fold,
+html[data-theme="dark"] .coming-soon,
+html[data-theme="dark"] .info-box,
+html[data-theme="dark"] .template-preview { background: #0d1117;
+                                            border-color: #30363d; }
+html[data-theme="dark"] .controltabbar,
+html[data-theme="dark"] #status-controls { border-bottom-color: #30363d; }
+html[data-theme="dark"] .panel h2,
+html[data-theme="dark"] .fold summary,
+html[data-theme="dark"] .act-name,
+html[data-theme="dark"] .rf-key,
+html[data-theme="dark"] .rf-title,
+html[data-theme="dark"] .template-preview pre,
+html[data-theme="dark"] #pos,
+html[data-theme="dark"] .panel label.inline,
+html[data-theme="dark"] label.inline { color: #e6edf3; }
+html[data-theme="dark"] .panel label,
+html[data-theme="dark"] .summary-label,
+html[data-theme="dark"] .controltabbar button,
+html[data-theme="dark"] .segmented button { color: #8b949e; }
+html[data-theme="dark"] .muted,
+html[data-theme="dark"] .cli-title,
+html[data-theme="dark"] .act-desc,
+html[data-theme="dark"] .rf-desc,
+html[data-theme="dark"] .rf-comment,
+html[data-theme="dark"] .opt-help,
+html[data-theme="dark"] .chip-group { color: #8b949e; }
+html[data-theme="dark"] button { background: #21262d; color: #c9d1d9;
+                                 border-color: #30363d;
+                                 box-shadow: none; }
+html[data-theme="dark"] button:hover { background: #30363d;
+                                       border-color: #8b949e; }
+html[data-theme="dark"] button.primary { background: #1f6feb;
+                                         border-color: #1f6feb;
+                                         color: #fff; }
+html[data-theme="dark"] button.primary:hover { background: #388bfd; }
+html[data-theme="dark"] button.danger { background: #21262d;
+                                        border-color: #8e3b3b;
+                                        color: #ff7b72; }
+html[data-theme="dark"] button.danger:hover { background: #da3633;
+                                              color: #fff; }
+html[data-theme="dark"] .controltabbar button,
+html[data-theme="dark"] .segmented button { background: transparent; }
+html[data-theme="dark"] .controltabbar button:hover { background: #21262d; }
+html[data-theme="dark"] .controltabbar button.active { background: #1f6feb;
+                                                       color: #fff; }
+html[data-theme="dark"] .segmented { background: #21262d; }
+html[data-theme="dark"] .segmented button.active { background: #0d1117;
+                                                   color: #e6edf3; }
+html[data-theme="dark"] .panel input[type=text],
+html[data-theme="dark"] .panel input[type=number],
+html[data-theme="dark"] .panel select,
+html[data-theme="dark"] .panel textarea:not(.cli-box),
+html[data-theme="dark"] #action-table select,
+html[data-theme="dark"] #status-controls input,
+html[data-theme="dark"] #status-controls select,
+html[data-theme="dark"] .row-actions select { background: #0d1117;
+                                              color: #e6edf3;
+                                              border: 1px solid #30363d; }
+html[data-theme="dark"] th { background: #21262d; color: #e6edf3; }
+html[data-theme="dark"] th:hover { background: #30363d; }
+html[data-theme="dark"] td { border-bottom-color: #30363d; }
+html[data-theme="dark"] tr.pending { background: #2d2410; }
+html[data-theme="dark"] tr.running { background: #102136; }
+html[data-theme="dark"] tr.complete { background: #10261a; }
+html[data-theme="dark"] tr.failed { background: #2f1416; }
+html[data-theme="dark"] #action-table { border-color: #30363d; }
+html[data-theme="dark"] #action-table th,
+html[data-theme="dark"] #action-table th:hover { background: #21262d;
+                                                 color: #8b949e;
+                                                 border-color: #30363d; }
+html[data-theme="dark"] #action-table td { border-bottom-color: #21262d; }
+html[data-theme="dark"] #action-table tbody tr:hover td { background:
+                                                          #1c2128; }
+html[data-theme="dark"] #action-table tr.act-critical td { background:
+                                                           #2a1517; }
+html[data-theme="dark"] .summary .summary-btn.task-btn { background:
+                                                         #0d1117; }
+html[data-theme="dark"] .statefilter-btn { background: #21262d;
+                                           color: #c9d1d9;
+                                           border-color: #30363d; }
+html[data-theme="dark"] .gprog { background: #30363d; }
+html[data-theme="dark"] .rf-title { background: #21262d;
+                                    border-bottom-color: #30363d; }
+html[data-theme="dark"] .rf-table td { border-bottom-color: #21262d; }
+html[data-theme="dark"] .val,
+html[data-theme="dark"] .pill,
+html[data-theme="dark"] .info-md code { background: #21262d;
+                                        color: #c9d1d9; }
+html[data-theme="dark"] .val-true,
+html[data-theme="dark"] .chip-on { background: #10261a; color: #56d364;
+                                   border-color: #1f6f3a; }
+html[data-theme="dark"] .val-false,
+html[data-theme="dark"] .chip-off { background: #21262d; color: #8b949e;
+                                    border-color: #30363d; }
+html[data-theme="dark"] .val-num,
+html[data-theme="dark"] .chip-other { background: #102136;
+                                      color: #79c0ff;
+                                      border-color: #1f4f8f; }
+html[data-theme="dark"] .pill-running { background: #2a7de1; color: #fff; }
+html[data-theme="dark"] .pill-ok { background: #2e9e4f; color: #fff; }
+html[data-theme="dark"] .pill-bad { background: #d33c3c; color: #fff; }
+html[data-theme="dark"] #gbody tr.dbpush td { color: #8b949e; }
+html[data-theme="dark"] button.info-btn { background: #1f6feb; color: #fff;
+                                          border: none; }
 </style>
 </head>
 <body>
@@ -273,16 +637,25 @@ tr.failed { background: #fadddd; }
     <div id="tabbar">
         <button id="tab-btn-control" class="active"
                 onclick="setTab('control')">Control</button>
+        <button id="tab-btn-processes" onclick="setTab('processes')">
+            Processes
+        </button>
         <button id="tab-btn-status" onclick="setTab('status')">
             Status
+        </button>
+        <button id="tab-btn-stats" onclick="setTab('stats')">
+            Stats
         </button>
     </div>
 </div>
 <div id="global-actions">
+    <button id="theme-toggle" onclick="toggleTheme()">Theme</button>
     <button onclick="refreshAll()">&#8635; Refresh</button>
     <button id="lv-reopen" onclick="lvShow()">Logs (0)</button>
-    <button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
+    <button id="btn-shutdown" class="danger"
+            onclick="shutdownServer()">Shutdown GUI</button>
     <span id="busy">&#9203; action running...</span>
+    <span id="status-error"></span>
 </div>
 </div>
 </div>
@@ -299,7 +672,11 @@ Control queue execution, script generation, and operational actions.
 <div id="control-content" class="content-block">
 
 <div class="controltabbar">
-<button id="ctab-btn-run" class="active"
+<button id="ctab-btn-info" class="active"
+        onclick="setControlTab('info')">Info</button>
+<button id="ctab-btn-generate"
+        onclick="setControlTab('generate')">Generate</button>
+<button id="ctab-btn-run"
         onclick="setControlTab('run')">Run</button>
 <button id="ctab-btn-batch" onclick="setControlTab('batch')">Batch</button>
 <button id="ctab-btn-chain" onclick="setControlTab('chain')">Chain</button>
@@ -312,7 +689,67 @@ Control queue execution, script generation, and operational actions.
 </div>
 <div class="section-divider"></div>
 
-<div id="ctab-run" class="controlpage active">
+<div id="ctab-info" class="controlpage active">
+<div class="panelrow"><div class="panel info-md">
+XX_INFO_XX
+</div></div></div>
+
+<div id="ctab-generate" class="controlpage">
+<div class="tabdesc">
+Fill the queue with <code>apero_processing</code> (always in queue mode).
+</div>
+<div class="panelrow"><div class="panel">
+<div class="gen-head">
+<h2>Generate queue</h2>
+<div class="segmented" role="tablist">
+<button id="gen-mode-static" class="active"
+        onclick="setGenerateMode('static')">Static</button>
+<button id="gen-mode-dynamic"
+        onclick="setGenerateMode('dynamic')">Dynamic</button>
+</div>
+</div>
+<div id="gen-dynamic" class="coming-soon" style="display:none">
+<div class="coming-soon-title">Coming soon</div>
+Dynamic queue generation is not available yet - use Static (a run file
+with apero_processing in queue mode).
+</div>
+<div id="gen-static">
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-generate" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="copyCli('cli-generate')">Copy</button>
+</div>
+<div class="field-row">
+<div class="field">
+<label for="gen-runfile">Run file</label>
+<select id="gen-runfile" onchange="loadRunfile()"></select>
+</div>
+<div class="field field-actions">
+<button onclick="refreshRunfiles()">&#8635; Reload list</button>
+<button id="btn-generate" class="primary" onclick="doGenerate()">
+    &#9654; Generate queue</button>
+</div>
+</div>
+<details id="gen-options-box" class="fold" open>
+<summary>apero_processing options
+<span class="muted">(blank = use the run file / default)</span></summary>
+<div class="forced-opt">--queue_mode <span class="pill">always on</span></div>
+<div id="gen-options" class="opt-grid"></div>
+</details>
+<div class="runfile-head">
+<span id="gen-runfile-path" class="muted mono"></span>
+<span class="segmented small">
+<button id="gen-view-table" class="active"
+        onclick="setRunfileView('table')">Parameters</button>
+<button id="gen-view-raw" onclick="setRunfileView('raw')">Raw YAML</button>
+</span>
+</div>
+<div id="gen-runfile-view" class="runfile-view"></div>
+<pre id="gen-runfile-raw" class="runfile-raw" style="display:none"></pre>
+</div>
+</div></div></div>
+
+<div id="ctab-run" class="controlpage">
 <div class="tabdesc">
 Run queued recipes directly from this machine using APERO multiprocessing.
 </div>
@@ -333,7 +770,8 @@ Run queued recipes directly from this machine using APERO multiprocessing.
 <option value="pool">pool</option>
 <option value="process">process</option>
 </select>
-<br><button onclick="doRun()">&#9654; Run</button>
+<br><button id="btn-run" class="primary"
+            onclick="doRun()">&#9654; Run</button>
 </div></div></div>
 
 <div id="ctab-batch" class="controlpage">
@@ -360,7 +798,8 @@ Build classic sbatch scripts from the next queue group.
  style="width:auto"> Submit via sbatch</label>
 <label><input id="batch-dry" type="checkbox"
  style="width:auto"> Dry run (print commands only)</label>
-<br><button onclick="doBatch()">&#9654; Create batches</button>
+<br><button id="btn-batch" class="primary"
+            onclick="doBatch()">&#9654; Create batches</button>
 </div></div></div>
 
 <div id="ctab-chain" class="controlpage">
@@ -385,7 +824,8 @@ Build dependency-chained Slurm arrays so queue groups run strictly in order.
  style="width:auto"> Submit via sbatch</label>
 <label><input id="chain-dry" type="checkbox"
  style="width:auto"> Dry run (print commands only)</label>
-<br><button onclick="doChain()">&#9654; Create chain</button>
+<br><button id="btn-chain" class="primary"
+            onclick="doChain()">&#9654; Create chain</button>
 </div></div></div>
 
 <div id="ctab-action" class="controlpage">
@@ -399,74 +839,79 @@ Run queue management actions, including resets, from a single action table.
 <tr>
 <th>Action</th>
 <th>Options</th>
-<th>Description</th>
-<th>Run</th>
 <th>CLI equivalent</th>
+<th></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Retry all failed</td>
-<td>-</td>
-<td>Move all failed tasks back to pending.</td>
+<td><div class="act-name">Retry all failed</div>
+<div class="act-desc">Move all failed tasks back to pending.</div></td>
+<td class="muted">&ndash;</td>
+<td><div class="cli-chip"><code id="cli-act-failed"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-act-failed', this)">Copy</button></div></td>
 <td class="action-cell-run">
-<button onclick="runPresetAction('move_all_failed_to_pending')">Run</button>
-</td>
-<td>
-<textarea id="cli-act-failed" class="action-cli" readonly></textarea>
-<button class="copy-btn action-copy"
-        onclick="copyCli('cli-act-failed')">Copy</button>
+<button class="primary"
+        onclick="runPresetAction('move_all_failed_to_pending')">Run</button>
 </td>
 </tr>
 <tr>
-<td>Move all complete to pending</td>
-<td>-</td>
-<td>Re-open all complete tasks for rerun.</td>
+<td><div class="act-name">Move all complete to pending</div>
+<div class="act-desc">Re-open all complete tasks for rerun.</div></td>
+<td class="muted">&ndash;</td>
+<td><div class="cli-chip"><code id="cli-act-complete"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-act-complete', this)">Copy</button></div></td>
 <td class="action-cell-run">
-<button onclick="runPresetAction('move_all_complete_to_pending')">
-    Run
-</button>
-</td>
-<td>
-<textarea id="cli-act-complete" class="action-cli" readonly></textarea>
-<button class="copy-btn action-copy"
-        onclick="copyCli('cli-act-complete')">Copy</button>
+<button class="primary"
+        onclick="runPresetAction('move_all_complete_to_pending')">Run</button>
 </td>
 </tr>
 <tr>
-<td>Stop all running</td>
-<td>-</td>
-<td>Attempt to stop running jobs and move them to pending.</td>
+<td><div class="act-name">Stop all running</div>
+<div class="act-desc">Stop running tasks (and the active run) and move
+them back to pending.</div></td>
+<td class="muted">&ndash;</td>
+<td><div class="cli-chip"><code id="cli-act-stop"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-act-stop', this)">Copy</button></div></td>
 <td class="action-cell-run">
 <button class="danger" onclick="runPresetAction('stop_all_running')">
-    Run
-</button>
-</td>
-<td>
-<textarea id="cli-act-stop" class="action-cli" readonly></textarea>
-<button class="copy-btn action-copy"
-        onclick="copyCli('cli-act-stop')">Copy</button>
+    Run</button>
 </td>
 </tr>
 <tr>
-<td>Clear all pending</td>
-<td>-</td>
-<td>Delete all pending queue entries.</td>
+<td><div class="act-name">Clear all pending</div>
+<div class="act-desc">Delete all pending queue entries.</div></td>
+<td class="muted">&ndash;</td>
+<td><div class="cli-chip"><code id="cli-act-clear"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-act-clear', this)">Copy</button></div></td>
 <td class="action-cell-run">
 <button class="danger" onclick="runPresetAction('clear_all_pending')">
-    Run
-</button>
-</td>
-<td>
-<textarea id="cli-act-clear" class="action-cli" readonly></textarea>
-<button class="copy-btn action-copy"
-        onclick="copyCli('cli-act-clear')">Copy</button>
+    Run</button>
 </td>
 </tr>
 <tr>
-<td>Reset queue state(s)</td>
+<td><div class="act-name">Fail stale running</div>
+<div class="act-desc">Mark running tasks that nothing is running any more
+(dead process, or no process for 5 minutes) as failed. Also done
+automatically every 30 s and before every run/batch/chain.</div></td>
+<td class="muted">&ndash;</td>
+<td><div class="cli-chip"><code id="cli-act-stale"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-act-stale', this)">Copy</button></div></td>
+<td class="action-cell-run">
+<button class="primary" onclick="runPresetAction('fail_stale_running')">
+    Run</button>
+</td>
+</tr>
+<tr id="act-row-reset">
+<td><div class="act-name">Reset queue state(s)</div>
+<div class="act-desc">Remove queue entries from the selected
+state(s).</div></td>
 <td>
-<label>State</label>
 <select id="reset-state">
 <option value="all">all states</option>
 <option value="pending">pending</option>
@@ -474,17 +919,30 @@ Run queue management actions, including resets, from a single action table.
 <option value="complete">complete</option>
 <option value="failed">failed</option>
 </select>
-<label><input id="reset-dry" type="checkbox" style="width:auto">
-Dry run</label>
+<label class="inline"><input id="reset-dry" type="checkbox"> Dry run</label>
 </td>
-<td>Remove queue entries from selected state(s).</td>
+<td><div class="cli-chip"><code id="cli-reset"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-reset', this)">Copy</button></div></td>
 <td class="action-cell-run">
 <button class="danger" onclick="doReset()">Run</button>
 </td>
+</tr>
+<tr id="act-row-reset-data" class="act-critical">
+<td><div class="act-name">Reset all data</div>
+<div class="act-desc">Run <code>apero_reset.py</code>: removes reduced
+data, calibrations, databases, logs and the queue (batch templates are
+kept). The GUI reloads itself when it finishes.</div></td>
 <td>
-<textarea id="cli-reset" class="action-cli" readonly></textarea>
-<button class="copy-btn action-copy"
-        onclick="copyCli('cli-reset')">Copy</button>
+<select id="resetdata-part">
+<option value="all">everything</option>
+</select>
+</td>
+<td><div class="cli-chip"><code id="cli-act-resetdata"></code>
+<button class="chip-copy" title="Copy"
+        onclick="copyCli('cli-act-resetdata', this)">Copy</button></div></td>
+<td class="action-cell-run">
+<button class="danger" onclick="doResetData()">Reset</button>
 </td>
 </tr>
 </tbody>
@@ -524,16 +982,62 @@ conda activate apero-env-08
 source apero_profile.sh my_profile</pre>
 </div>
 <textarea id="tpl-activation" class="cli-box"></textarea>
-<br><button onclick="saveTemplate()">&#128190; Save template</button>
+<br><button id="btn-save-template"
+            onclick="saveTemplate()">&#128190; Save template</button>
 <div id="tpl-saved-path" class="cli-title"></div>
 </div></div></div>
 
+</div>
+
+<div id="job-card" class="job-card" style="display:none">
+<div class="job-head">
+<span id="job-badge" class="pill"></span>
+<span id="job-title" class="job-title"></span>
+<span id="job-cmd" class="muted mono job-cmd"></span>
+<button onclick="toggleJobOutput()" id="job-toggle">Hide output</button>
+</div>
+<pre id="job-output" class="job-output"></pre>
 </div>
 
 <div class="section-divider"></div>
 <div id="activity">
 <h2>Activity log</h2>
 <div id="log"></div>
+</div>
+</div>
+
+<div id="tab-processes" class="tabpage">
+<div class="tabdesc">
+Processes started around this queue: generate (<code>apero_processing</code>),
+reset (<code>apero_reset</code>), queue runs (<code>apero_queue.py run</code>,
+from this GUI or a terminal) and submitted Slurm batch/chain jobs. Click a
+row to open its log(s); a queue run opens the logs of the tasks it is
+running.
+</div>
+<div class="section-card proc-bar">
+<span class="proc-actions">
+<button class="danger" onclick="procStopSelected()">
+    &#9632; Stop selected</button>
+<button onclick="procAction('remove', procSelected())">
+    Remove selected from list</button>
+<button onclick="procAction('clear_finished', [])">Clear finished</button>
+<button class="danger" onclick="procResetList()">Reset process list</button>
+</span>
+<label class="inline"><input id="proc-show-finished" type="checkbox"
+       checked onchange="renderProcesses()"> Show finished</label>
+<span id="proc-note" class="muted"></span>
+</div>
+<div class="content-block section-card">
+<table id="proc-table">
+<thead>
+<tr>
+<th><input id="proc-all" type="checkbox" onclick="procSelectAll(this)"></th>
+<th>Status</th><th>Kind</th><th>Description</th><th>Started</th>
+<th>Finished</th><th>Where</th><th>Tasks</th><th>Logs</th><th></th>
+</tr>
+</thead>
+<tbody id="pbody"></tbody>
+</table>
 </div>
 </div>
 
@@ -615,6 +1119,61 @@ task to view its log.
 </div>
 </div>
 
+<div id="tab-stats" class="tabpage">
+<div class="tabdesc">
+Timing and resource usage measured for every queue task (run, batch and
+chain modes) - RAM, CPU and disk I/O are sampled every few seconds while a
+task runs (the whole task process tree is measured).
+</div>
+<div class="controltabbar">
+<button id="stab-btn-timing" class="active"
+        onclick="setStatsTab('timing')">Timing</button>
+<button id="stab-btn-perf" onclick="setStatsTab('perf')">Performance</button>
+</div>
+<div class="stats-filters">
+<label class="inline">Recipe type
+<select id="stats-type" onchange="renderStats()">
+<option value="">All</option></select></label>
+<label class="inline"><input id="stats-split" type="checkbox"
+       onchange="renderStats()"> Split by type</label>
+<label class="inline"><input id="stats-failed" type="checkbox" checked
+       onchange="renderStats()"> Include failed</label>
+<button onclick="refreshStats()">&#8635; Refresh</button>
+<span id="stats-note" class="muted"></span>
+</div>
+<div id="stab-timing" class="controlpage active">
+<div id="stats-cards" class="stats-cards"></div>
+<h3>Duration per recipe type</h3>
+<div id="stats-table" class="stats-table-wrap"></div>
+<h3>Task duration over time</h3>
+<div id="chart-duration" class="chart"></div>
+<h3>Finished tasks over time</h3>
+<div id="chart-progress" class="chart"></div>
+</div>
+<div id="stab-perf" class="controlpage">
+<h3>Resource use per recipe type</h3>
+<div class="muted">Cores busy = CPU time / wall time (well below the cores a
+recipe can use means it mostly waits on disk, the database or locks).</div>
+<div id="stats-resources" class="stats-table-wrap"></div>
+<h3>Most I/O-heavy tasks</h3>
+<div id="stats-top-io" class="stats-table-wrap"></div>
+<h3>Highest RAM tasks</h3>
+<div id="stats-top-ram" class="stats-table-wrap"></div>
+<h3>RAM in use by queue tasks (GB)</h3>
+<div id="chart-ram" class="chart"></div>
+<h3>CPU in use by queue tasks (cores)</h3>
+<div id="chart-cpu" class="chart"></div>
+<h3>Running tasks</h3>
+<div id="chart-running" class="chart"></div>
+<h3>Disk I/O by queue tasks (MB/s, read + write)</h3>
+<div id="chart-io" class="chart"></div>
+<h3>Host load average (1 min)</h3>
+<div id="chart-load" class="chart"></div>
+<h3>Host available memory (GB)</h3>
+<div id="chart-mem" class="chart"></div>
+</div>
+</div>
+
 <script>
 var allData = [];
 // one aggregated row per queue group (built from allData)
@@ -639,14 +1198,36 @@ var tplFields = XX_TPLFIELDS_XX;
 // TOOLS.REPROCESS.MP_TYPE (or --mpmode) from the server
 var defaultMpmode = XX_MPMODE_XX;
 
+// relative urls keep the api working behind a path prefix (e.g. apero_ri)
+function apiUrl(url) {
+    return url.charAt(0) === '/' ? url.substring(1) : url;
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+        btn.innerHTML = theme === 'dark' ? '&#9728; Light mode'
+                                         : '&#9790; Dark mode';
+    }
+}
+
+function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var theme = current === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('apero-queue-theme', theme); }
+    catch (err) { console.log(err); }
+    applyTheme(theme);
+}
+
 function apiGet(url, callback) {
-    fetch(url).then(function (resp) { return resp.json(); })
+    fetch(apiUrl(url)).then(function (resp) { return resp.json(); })
               .then(callback)
               .catch(function (err) { console.log(err); });
 }
 
 function apiPost(url, data, callback) {
-    fetch(url, {
+    fetch(apiUrl(url), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
@@ -662,26 +1243,21 @@ function escapeHtml(value) {
 }
 
 function setTab(tabName) {
-    var controlPage = document.getElementById('tab-control');
-    var statusPage = document.getElementById('tab-status');
-    var controlBtn = document.getElementById('tab-btn-control');
-    var statusBtn = document.getElementById('tab-btn-status');
-    if (tabName === 'status') {
-        statusPage.classList.add('active');
-        controlPage.classList.remove('active');
-        statusBtn.classList.add('active');
-        controlBtn.classList.remove('active');
-        render();
-    } else {
-        controlPage.classList.add('active');
-        statusPage.classList.remove('active');
-        controlBtn.classList.add('active');
-        statusBtn.classList.remove('active');
-    }
+    ['control', 'processes', 'status', 'stats'].forEach(function (name) {
+        var active = (name === tabName);
+        document.getElementById('tab-' + name).classList.toggle(
+            'active', active);
+        document.getElementById('tab-btn-' + name).classList.toggle(
+            'active', active);
+    });
+    if (tabName === 'status') { render(); }
+    if (tabName === 'processes') { refreshProcesses(); }
+    if (tabName === 'stats') { refreshStats(); }
 }
 
 function setControlTab(tabName) {
-    var tabs = ['run', 'batch', 'chain', 'action', 'template'];
+    var tabs = ['info', 'generate', 'run', 'batch', 'chain', 'action',
+                'template'];
     tabs.forEach(function (name) {
         var page = document.getElementById('ctab-' + name);
         var btn = document.getElementById('ctab-btn-' + name);
@@ -791,7 +1367,12 @@ function applyFilter(keepPage) {
     var text = document.getElementById('filter').value.toLowerCase();
     if (statusView === 'groups') {
         view = groupData.filter(function (grp) {
-            if (!activeStates[grp.state]) { return false; }
+            // a group shows under every state it has tasks in
+            var match = ['pending', 'running', 'complete', 'failed']
+                .some(function (state) {
+                    return activeStates[state] && grp[state] > 0;
+                });
+            if (!match) { return false; }
             if (text === '') { return true; }
             var blob = (grp.group + ' ' + grp.recipe).toLowerCase();
             return blob.indexOf(text) !== -1;
@@ -913,7 +1494,14 @@ function groupProgressHtml(grp) {
         html += '<span class="gp-' + state + '" style="width:' +
                 pct.toFixed(2) + '%"></span>';
     });
-    return html + '</span>' + grp.done + '/' + grp.total;
+    html += '</span>';
+    html += '<span class="gp-text gp-text-complete">' + grp.complete +
+            ' complete</span>';
+    if (grp.failed > 0) {
+        html += ' <span class="gp-text gp-text-failed">' + grp.failed +
+                ' failed</span>';
+    }
+    return html + ' <span class="muted">/ ' + grp.total + '</span>';
 }
 
 function renderGroups(start, end) {
@@ -1005,8 +1593,8 @@ function nextPage() {
 }
 
 function summaryRow(label, kind, counts, unit, btnClass) {
-    var html = '<div class="summary-row"><span class="summary-label">' +
-               label + '</span>';
+    // label + 4 buttons are cells of one grid shared by both rows
+    var html = '<span class="summary-label">' + label + '</span>';
     ['pending', 'running', 'complete', 'failed'].forEach(function (state) {
         var count = counts[state] || 0;
         html += '<button type="button" class="summary-btn ' + btnClass +
@@ -1014,12 +1602,17 @@ function summaryRow(label, kind, counts, unit, btnClass) {
                 '\', \'' + kind + '\')">' + state.toUpperCase() + ': ' +
                 count + ' ' + unit + (count === 1 ? '' : 's') + '</button>';
     });
-    return html + '</div>';
+    return html;
 }
 
 function renderSummary() {
+    // groups count once for every state they hold tasks in
     var groupCounts = {pending: 0, running: 0, complete: 0, failed: 0};
-    groupData.forEach(function (grp) { groupCounts[grp.state] += 1; });
+    groupData.forEach(function (grp) {
+        Object.keys(groupCounts).forEach(function (state) {
+            if (grp[state] > 0) { groupCounts[state] += 1; }
+        });
+    });
     var html = summaryRow('Groups', 'group', groupCounts, 'group',
                           'group-btn') +
                summaryRow('Tasks', 'individual', statusCounts, 'task',
@@ -1136,15 +1729,30 @@ function buildActionCli() {
     return 'apero_queue.py action --qaction move_all_failed_to_pending';
 }
 
+function setCliText(idValue, text) {
+    var box = document.getElementById(idValue);
+    if (!box) { return; }
+    if (box.tagName === 'TEXTAREA' || box.tagName === 'INPUT') {
+        box.value = text;
+    } else {
+        box.textContent = text;
+    }
+}
+
 function updateActionTableCli() {
-    document.getElementById('cli-act-failed').value =
-        'apero_queue.py action --qaction move_all_failed_to_pending';
-    document.getElementById('cli-act-complete').value =
-        'apero_queue.py action --qaction move_all_complete_to_pending';
-    document.getElementById('cli-act-stop').value =
-        'apero_queue.py action --qaction stop_all_running';
-    document.getElementById('cli-act-clear').value =
-        'apero_queue.py action --qaction clear_all_pending';
+    setCliText('cli-act-failed',
+        'apero_queue.py action --qaction move_all_failed_to_pending');
+    setCliText('cli-act-complete',
+        'apero_queue.py action --qaction move_all_complete_to_pending');
+    setCliText('cli-act-stop',
+        'apero_queue.py action --qaction stop_all_running');
+    setCliText('cli-act-clear',
+        'apero_queue.py action --qaction clear_all_pending');
+    setCliText('cli-act-stale',
+        'apero_queue.py action --qaction fail_stale_running');
+    var part = document.getElementById('resetdata-part').value;
+    setCliText('cli-act-resetdata', 'apero_reset.py --nowarn' +
+               (part === 'all' ? '' : ' --only_' + part));
 }
 
 function buildTemplateCli() {
@@ -1167,8 +1775,9 @@ function updateCliCommands() {
     document.getElementById('cli-run').value = buildRunCli();
     document.getElementById('cli-batch').value = buildBatchCli();
     document.getElementById('cli-chain').value = buildChainCli();
-    document.getElementById('cli-reset').value = buildResetCli();
+    setCliText('cli-reset', buildResetCli());
     document.getElementById('cli-template').value = buildTemplateCli();
+    setCliText('cli-generate', buildGenerateCli());
     updateActionTableCli();
 }
 
@@ -1177,20 +1786,17 @@ function setActionCli(qaction, qid) {
     if (qid) {
         cmd += ' --qid ' + qid;
     }
-    var box = document.getElementById('cli-act-failed');
-    if (box) {
-        box.value = cmd;
-    }
+    setCliText('cli-act-failed', cmd);
 }
 
-function copyCli(idValue) {
+function copyCli(idValue, button) {
     var box = document.getElementById(idValue);
-    box.focus();
-    box.select();
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(box.value);
-    } else {
-        document.execCommand('copy');
+    var text = (box.value !== undefined) ? box.value : box.textContent;
+    lvCopyText(text);
+    if (button) {
+        var label = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = label; }, 1200);
     }
 }
 
@@ -1208,9 +1814,19 @@ var statusLoading = false;
 function refreshStatus(keepPage) {
     if (statusLoading) { return; }
     statusLoading = true;
-    fetch('/api/status').then(function (resp) { return resp.json(); })
+    fetch(apiUrl('/api/status')).then(function (resp) {
+        return resp.json();
+    })
     .then(function (data) {
         statusLoading = false;
+        var errorEl = document.getElementById('status-error');
+        // keep showing the last good status if this refresh failed
+        if (!data || data.error || !data.entries) {
+            errorEl.textContent = 'Status refresh failed: ' +
+                ((data && data.error) || 'bad response');
+            return;
+        }
+        errorEl.textContent = '';
         allData = data.entries;
         statusCounts = data.counts;
         buildGroups();
@@ -1219,6 +1835,8 @@ function refreshStatus(keepPage) {
     })
     .catch(function (err) {
         statusLoading = false;
+        document.getElementById('status-error').textContent =
+            'Status refresh failed: ' + err;
         console.log(err);
     });
 }
@@ -1298,6 +1916,13 @@ function refreshState() {
     apiGet('/api/state', function (data) {
         var busy = document.getElementById('busy');
         busy.style.display = data.busy ? 'inline' : 'none';
+        // a generate/reset changed files on disk: reload everything
+        if (lastDataVersion !== null &&
+                data.data_version !== lastDataVersion) {
+            reloadAfterChange();
+        }
+        lastDataVersion = data.data_version;
+        if (data.job_running || jobShown) { refreshJob(); }
         var log = document.getElementById('log');
         var selection = window.getSelection();
         var hasSelection = selection && selection.toString().length > 0;
@@ -1320,6 +1945,1084 @@ function refreshState() {
 function refreshAll() {
     refreshStatus();
     refreshState();
+}
+
+// ---------------------------------------------------------------------
+// Generate (apero_processing in queue mode), reset all data, job output
+// ---------------------------------------------------------------------
+var lastDataVersion = null;
+var jobShown = false;
+var jobOutputHidden = false;
+var generateMode = 'static';
+var processingOptions = [];
+var lastJobText = null;
+
+// colour ANSI lines (same palette as the task log viewer)
+function ansiLinesHtml(lines) {
+    var st = {fg: null, b: false, u: false};
+    return lines.map(function (raw) {
+        return lvParseAnsi(raw, st).map(function (seg) {
+            var cls = [];
+            if (seg.fg !== null) { cls.push('a-fg' + seg.fg); }
+            if (seg.b) { cls.push('a-b'); }
+            if (seg.u) { cls.push('a-u'); }
+            var text = lvEsc(seg.t);
+            if (cls.length === 0) { return text; }
+            return '<span class="' + cls.join(' ') + '">' + text + '</span>';
+        }).join('');
+    }).join('\n');
+}
+
+function reloadAfterChange() {
+    refreshStatus();
+    refreshRunfiles();
+    refreshTemplateNames();
+}
+
+function refreshJob() {
+    apiGet('/api/job', function (job) {
+        if (!job || !job.kind) { return; }
+        jobShown = true;
+        document.getElementById('job-card').style.display = 'block';
+        var badge = document.getElementById('job-badge');
+        if (job.running) {
+            badge.textContent = 'running';
+            badge.className = 'pill pill-running';
+        } else if (job.returncode === 0) {
+            badge.textContent = 'done';
+            badge.className = 'pill pill-ok';
+        } else {
+            badge.textContent = 'failed (' + job.returncode + ')';
+            badge.className = 'pill pill-bad';
+        }
+        document.getElementById('job-title').textContent =
+            job.kind + ' (started ' + job.started + ')';
+        var cmd = document.getElementById('job-cmd');
+        cmd.textContent = job.cmd;
+        cmd.title = job.path;
+        var out = document.getElementById('job-output');
+        var atEnd = out.scrollTop + out.clientHeight >=
+                    out.scrollHeight - 20;
+        var text = (job.lines || []).join('\n');
+        if (lastJobText !== text) {
+            lastJobText = text;
+            out.innerHTML = ansiLinesHtml(job.lines || []);
+            if (atEnd) { out.scrollTop = out.scrollHeight; }
+        }
+        // stop polling once a finished job has been shown
+        if (!job.running) { jobShown = false; }
+    });
+}
+
+function toggleJobOutput() {
+    jobOutputHidden = !jobOutputHidden;
+    document.getElementById('job-output').style.display =
+        jobOutputHidden ? 'none' : 'block';
+    document.getElementById('job-toggle').textContent =
+        jobOutputHidden ? 'Show output' : 'Hide output';
+}
+
+// ---------------------------------------------------------------------
+// Processes tab (generate/reset/run/batch/chain process registry)
+// ---------------------------------------------------------------------
+var procData = [];
+var procLoading = false;
+var procChecked = {};
+var PROC_ACTIVE = {running: true, pending: true, unknown: true};
+
+function refreshProcesses() {
+    if (procLoading) { return; }
+    procLoading = true;
+    fetch(apiUrl('/api/processes')).then(function (resp) {
+        return resp.json();
+    }).then(function (data) {
+        procLoading = false;
+        if (!data || !data.processes) { return; }
+        procData = data.processes;
+        document.getElementById('proc-note').textContent = data.slurm ? '' :
+            'squeue is not available on ' + data.host +
+            ' - Slurm job status is unknown';
+        renderProcesses();
+    }).catch(function (err) {
+        procLoading = false;
+        console.log(err);
+    });
+}
+
+function autoRefreshProcesses() {
+    if (document.hidden) { return; }
+    // keep the table still while the user is selecting text in it
+    var selection = window.getSelection();
+    if (selection && selection.toString() !== '' && selection.anchorNode &&
+            document.getElementById('pbody').contains(selection.anchorNode)) {
+        return;
+    }
+    refreshProcesses();
+}
+
+function procLogLabel(name) {
+    var ext = name.split('.').pop();
+    var job = /^(\d+)_/.exec(name);
+    var kind = (ext === 'out' || ext === 'err') ? ext : 'log';
+    return job ? job[1] + ' ' + kind : kind;
+}
+
+function procOpenLog(proc, index) {
+    var info = {recipe: proc.kind + ' ' + procLogLabel(proc.logs[index]),
+                runstring: proc.cmd || proc.label, state: 'running'};
+    openLog('proc:' + proc.id + ':' + index, info, true);
+}
+
+function procOpenTasks(proc) {
+    proc.running_qids.forEach(function (qid, it) {
+        var row = allData.filter(function (item) {
+            return item.qid === qid;
+        })[0] || {state: 'running'};
+        openLog(qid, row, it === 0);
+    });
+}
+
+function procOpenDefault(proc) {
+    if (proc.running_qids.length > 0) { procOpenTasks(proc); return; }
+    if (proc.logs.length > 0) { procOpenLog(proc, 0); return; }
+    alert('No log for this process yet' +
+          (proc.kind === 'run' ? ' (it is not running any task)' : ''));
+}
+
+function renderProcesses() {
+    var showDone = document.getElementById('proc-show-finished').checked;
+    var tbody = document.getElementById('pbody');
+    var nActive = 0;
+    var rows = procData.filter(function (proc) {
+        var active = !!PROC_ACTIVE[proc.status];
+        if (active) { nActive++; }
+        return active || showDone;
+    });
+    document.getElementById('tab-btn-processes').textContent =
+        'Processes' + (nActive > 0 ? ' (' + nActive + ')' : '');
+    tbody.innerHTML = '';
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="muted">' +
+                          'No processes recorded</td></tr>';
+        return;
+    }
+    rows.forEach(function (proc) {
+        var active = !!PROC_ACTIVE[proc.status];
+        var jobs = proc.slurm_jobs || [];
+        var where = jobs.length > 0 ? 'Slurm ' + jobs.join(', ') :
+            (proc.pid !== null ? 'PID ' + proc.pid + ' ' : '') + '@' +
+            proc.host + (proc.owner === 'gui' ? ' (GUI)' : '');
+        var tasks = proc.n_qids > 0 ?
+            proc.running_qids.length + ' running / ' + proc.n_qids : '';
+        var logs = proc.logs.map(function (name, it) {
+            return '<button data-log="' + it + '" title="' +
+                   escapeHtml(name) + '">' +
+                   escapeHtml(procLogLabel(name)) + '</button>';
+        }).join('');
+        if (proc.running_qids.length > 0) {
+            logs += '<button data-tasks="1">Task logs (' +
+                    proc.running_qids.length + ')</button>';
+        }
+        var tr = document.createElement('tr');
+        if (!active) { tr.className = 'done'; }
+        tr.innerHTML =
+            '<td><input type="checkbox"' +
+            (procChecked[proc.id] ? ' checked' : '') + '></td>' +
+            '<td><span class="badge s-' + proc.status + '">' +
+            proc.status + '</span></td>' +
+            '<td>' + escapeHtml(proc.kind) + '</td>' +
+            '<td class="proc-label"></td>' +
+            '<td>' + escapeHtml(proc.started || '') + '</td>' +
+            '<td>' + escapeHtml(proc.finished || '') + '</td>' +
+            '<td>' + escapeHtml(where) + '</td>' +
+            '<td>' + tasks + '</td>' +
+            '<td class="proc-logs">' + logs + '</td>' +
+            '<td>' + (active ? '<button class="danger proc-stop">Stop' +
+                               '</button>' : '') + '</td>';
+        var label = tr.querySelector('.proc-label');
+        label.textContent = proc.label;
+        label.title = (proc.cmd || proc.label) + '\n' + proc.id;
+        tr.addEventListener('click', function (ev) {
+            var target = ev.target;
+            if (target.type === 'checkbox') {
+                procChecked[proc.id] = target.checked;
+                return;
+            }
+            if (target.dataset.log !== undefined) {
+                procOpenLog(proc, parseInt(target.dataset.log, 10));
+            } else if (target.dataset.tasks) {
+                procOpenTasks(proc);
+            } else if (target.classList.contains('proc-stop')) {
+                procStop([proc.id]);
+            } else if (window.getSelection().toString() === '') {
+                procOpenDefault(proc);
+            }
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+function procSelected() {
+    return procData.filter(function (proc) {
+        return procChecked[proc.id];
+    }).map(function (proc) { return proc.id; });
+}
+
+function procSelectAll(box) {
+    var showDone = document.getElementById('proc-show-finished').checked;
+    procData.forEach(function (proc) {
+        if (showDone || PROC_ACTIVE[proc.status]) {
+            procChecked[proc.id] = box.checked;
+        }
+    });
+    renderProcesses();
+}
+
+function procAction(op, ids, done) {
+    if (op === 'remove' && ids.length === 0) {
+        alert('Select one or more processes first');
+        return;
+    }
+    apiPost('/api/process', {op: op, ids: ids}, function (data) {
+        document.getElementById('proc-note').textContent =
+            (data && (data.message || data.error)) || '';
+        ids.forEach(function (procId) { delete procChecked[procId]; });
+        refreshProcesses();
+        refreshStatus(true);
+        if (done) { done(data); }
+    });
+}
+
+function procStop(ids) {
+    var msg = 'Stop ' + ids.length + ' process(es)?\n\nLocal processes ' +
+              'get TERM then KILL, Slurm jobs are scancelled and queue ' +
+              'tasks they were still running go back to pending.';
+    if (!confirm(msg)) { return; }
+    procAction('stop', ids);
+}
+
+function procStopSelected() {
+    var ids = procData.filter(function (proc) {
+        return procChecked[proc.id] && PROC_ACTIVE[proc.status];
+    }).map(function (proc) { return proc.id; });
+    if (ids.length === 0) {
+        alert('Select one or more running processes first');
+        return;
+    }
+    procStop(ids);
+}
+
+function procResetList() {
+    var msg = 'Remove ALL process records?\n\nNothing is stopped - running ' +
+              'processes just disappear from this list.';
+    if (confirm(msg)) { procAction('clear_all', []); }
+}
+
+// ---------------------------------------------------------------------
+// Stats tab (task timing + RAM/CPU/IO performance graphs)
+// ---------------------------------------------------------------------
+var statsData = null;
+var statsTab = 'timing';
+var statsLoading = false;
+var statsResizeTimer = null;
+var STATS_COLORS = ['#3c88ea', '#e6a817', '#2e9e4f', '#8a5cd1', '#39c5cf',
+                    '#f778ba', '#79c0ff', '#b35c00', '#56d364', '#bc8cff',
+                    '#e3b341', '#8b949e'];
+
+function setStatsTab(name) {
+    statsTab = name;
+    ['timing', 'perf'].forEach(function (key) {
+        document.getElementById('stab-' + key).classList.toggle(
+            'active', key === name);
+        document.getElementById('stab-btn-' + key).classList.toggle(
+            'active', key === name);
+    });
+    renderStats();
+}
+
+function refreshStats() {
+    if (statsLoading) { return; }
+    statsLoading = true;
+    fetch(apiUrl('/api/stats')).then(function (resp) {
+        return resp.json();
+    }).then(function (data) {
+        statsLoading = false;
+        if (!data || data.error) { return; }
+        statsData = data;
+        var select = document.getElementById('stats-type');
+        var current = select.value;
+        select.innerHTML = '<option value="">All</option>';
+        statsTypes().forEach(function (type) {
+            select.innerHTML += '<option value="' + escapeHtml(type) + '">' +
+                                escapeHtml(type) + '</option>';
+        });
+        select.value = current;
+        renderStats();
+    }).catch(function (err) {
+        statsLoading = false;
+        console.log(err);
+    });
+}
+
+function autoRefreshStats() {
+    if (document.hidden) { return; }
+    if (!document.getElementById('tab-stats').classList.contains('active')) {
+        return;
+    }
+    refreshStats();
+}
+
+function statsTypes() {
+    var seen = {};
+    var types = [];
+    var add = function (type) {
+        if (type !== null && type !== undefined && !seen[type]) {
+            seen[type] = true;
+            types.push(type);
+        }
+    };
+    if (!statsData) { return types; }
+    statsData.tasks.shortname.forEach(add);
+    if (statsData.perf) { Object.keys(statsData.perf.types).forEach(add); }
+    return types;
+}
+
+function statsColor(type) {
+    var idx = statsTypes().indexOf(type);
+    return STATS_COLORS[(idx < 0 ? 0 : idx) % STATS_COLORS.length];
+}
+
+function statsTaskRows() {
+    var cols = statsData.tasks;
+    var type = document.getElementById('stats-type').value;
+    var failed = document.getElementById('stats-failed').checked;
+    var rows = [];
+    for (var i = 0; i < cols.qid.length; i++) {
+        if (type && cols.shortname[i] !== type) { continue; }
+        if (!failed && !cols.success[i]) { continue; }
+        var row = {};
+        Object.keys(cols).forEach(function (key) { row[key] = cols[key][i]; });
+        rows.push(row);
+    }
+    return rows;
+}
+
+function quantile(sorted, q) {
+    if (sorted.length === 0) { return NaN; }
+    var pos = (sorted.length - 1) * q;
+    var lo = Math.floor(pos);
+    var hi = Math.ceil(pos);
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+
+function fmtDuration(seconds) {
+    if (!isFinite(seconds)) { return '-'; }
+    if (seconds < 60) { return seconds.toFixed(seconds < 10 ? 1 : 0) + ' s'; }
+    if (seconds < 3600) { return (seconds / 60).toFixed(1) + ' min'; }
+    if (seconds < 172800) { return (seconds / 3600).toFixed(1) + ' h'; }
+    return (seconds / 86400).toFixed(1) + ' d';
+}
+
+function fmtTime(ms, span) {
+    var date = new Date(ms);
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var hm = pad(date.getHours()) + ':' + pad(date.getMinutes());
+    if (span > 86400000) {
+        return pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + hm;
+    }
+    return hm;
+}
+
+function niceStep(raw) {
+    var power = Math.pow(10, Math.floor(Math.log10(raw)));
+    var frac = raw / power;
+    var nice = frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 5 ? 5 : 10;
+    return nice * power;
+}
+
+// series: [{name, color, x: [ms], y: [], mode: 'line'|'points',
+//           titles: [] (points only)}]
+// opts: {height, yLog, yFormat(value), legend}
+function drawChart(id, series, opts) {
+    var el = document.getElementById(id);
+    opts = opts || {};
+    var width = Math.max(el.clientWidth || 0, 320);
+    var height = opts.height || 240;
+    var pad = {l: 64, r: 14, t: 8, b: 28};
+    var ylog = !!opts.yLog;
+    var tf = function (y) { return ylog ? Math.log10(Math.max(y, 0.1)) : y; };
+    var xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+    series.forEach(function (ser) {
+        for (var i = 0; i < ser.x.length; i++) {
+            var yv = ser.y[i];
+            if (yv === null || yv === undefined || !isFinite(yv)) { continue; }
+            xmin = Math.min(xmin, ser.x[i]);
+            xmax = Math.max(xmax, ser.x[i]);
+            ymin = Math.min(ymin, tf(yv));
+            ymax = Math.max(ymax, tf(yv));
+        }
+    });
+    if (!isFinite(xmin)) {
+        el.innerHTML = '<div class="chart-empty">No data yet</div>';
+        return;
+    }
+    if (!ylog) { ymin = Math.min(0, ymin); }
+    if (xmax === xmin) { xmin -= 30000; xmax += 30000; }
+    if (ymax === ymin) { ymax = ymin + 1; }
+    var pw = width - pad.l - pad.r;
+    var ph = height - pad.t - pad.b;
+    var sx = function (x) { return pad.l + pw * (x - xmin) / (xmax - xmin); };
+    var sy = function (y) {
+        return pad.t + ph * (1 - (tf(y) - ymin) / (ymax - ymin));
+    };
+    var fmt = opts.yFormat || function (v) {
+        return Math.abs(v) >= 100 ? v.toFixed(0) : +v.toPrecision(3) + '';
+    };
+    var parts = [];
+    // y grid + labels
+    var yticks = [];
+    if (ylog) {
+        // 1-2-5 ticks per decade (only 1s when the range is wide)
+        var mults = (ymax - ymin) > 3 ? [1] : [1, 2, 5];
+        for (var p = Math.floor(ymin); p <= Math.ceil(ymax); p++) {
+            mults.forEach(function (mult) {
+                yticks.push(mult * Math.pow(10, p));
+            });
+        }
+    } else {
+        var step = niceStep((ymax - ymin) / 5);
+        for (var v = Math.ceil(ymin / step) * step; v <= ymax + 1e-9;
+             v += step) {
+            yticks.push(v);
+        }
+    }
+    yticks.forEach(function (val) {
+        var yy = sy(val);
+        if (yy < pad.t - 1 || yy > pad.t + ph + 1) { return; }
+        parts.push('<line class="grid" x1="' + pad.l + '" x2="' +
+                   (pad.l + pw) + '" y1="' + yy + '" y2="' + yy + '"/>');
+        parts.push('<text x="' + (pad.l - 6) + '" y="' + (yy + 4) +
+                   '" text-anchor="end">' + escapeHtml(fmt(val)) +
+                   '</text>');
+    });
+    // x labels
+    var nx = Math.max(2, Math.floor(pw / 110));
+    for (var k = 0; k <= nx; k++) {
+        var xv = xmin + (xmax - xmin) * k / nx;
+        parts.push('<text x="' + sx(xv) + '" y="' + (height - 8) +
+                   '" text-anchor="middle">' +
+                   fmtTime(xv, xmax - xmin) + '</text>');
+    }
+    parts.push('<line class="axis" x1="' + pad.l + '" x2="' + pad.l +
+               '" y1="' + pad.t + '" y2="' + (pad.t + ph) + '"/>');
+    parts.push('<line class="axis" x1="' + pad.l + '" x2="' + (pad.l + pw) +
+               '" y1="' + (pad.t + ph) + '" y2="' + (pad.t + ph) + '"/>');
+    // data
+    series.forEach(function (ser) {
+        if (ser.mode === 'points') {
+            for (var i = 0; i < ser.x.length; i++) {
+                if (ser.y[i] === null || !isFinite(ser.y[i])) { continue; }
+                parts.push('<circle cx="' + sx(ser.x[i]).toFixed(1) +
+                           '" cy="' + sy(ser.y[i]).toFixed(1) +
+                           '" r="2.6" fill="' + ser.color +
+                           '" fill-opacity="0.75"><title>' +
+                           escapeHtml(ser.titles ? ser.titles[i] : '') +
+                           '</title></circle>');
+            }
+            return;
+        }
+        var path = '';
+        var pen = false;
+        for (var j = 0; j < ser.x.length; j++) {
+            var yv = ser.y[j];
+            if (yv === null || yv === undefined || !isFinite(yv)) {
+                pen = false;
+                continue;
+            }
+            path += (pen ? 'L' : 'M') + sx(ser.x[j]).toFixed(1) + ' ' +
+                    sy(yv).toFixed(1);
+            pen = true;
+        }
+        parts.push('<path d="' + path + '" fill="none" stroke="' +
+                   ser.color + '" stroke-width="1.6"><title>' +
+                   escapeHtml(ser.name) + '</title></path>');
+    });
+    var legend = '';
+    if (opts.legend !== false && series.length > 0) {
+        legend = '<div class="chart-legend">' + series.map(function (ser) {
+            return '<span><span class="swatch" style="background:' +
+                   ser.color + '"></span>' + escapeHtml(ser.name) +
+                   '</span>';
+        }).join('') + '</div>';
+    }
+    el.innerHTML = '<svg width="' + width + '" height="' + height +
+                   '" viewBox="0 0 ' + width + ' ' + height + '">' +
+                   parts.join('') + '</svg>' + legend;
+}
+
+function renderStats() {
+    if (!statsData) { return; }
+    var note = statsData.n_tasks + ' task(s) measured, ' +
+               statsData.n_samples + ' resource sample(s)';
+    document.getElementById('stats-note').textContent = note;
+    if (statsTab === 'timing') { renderTiming(); } else { renderPerf(); }
+}
+
+function statsCard(label, value) {
+    return '<div class="stat-card"><div class="stat-val">' +
+           escapeHtml(value) + '</div><div class="stat-lbl">' +
+           escapeHtml(label) + '</div></div>';
+}
+
+function renderTiming() {
+    var rows = statsTaskRows();
+    var durations = rows.map(function (r) { return r.duration; })
+        .sort(function (a, b) { return a - b; });
+    var nOk = rows.filter(function (r) { return r.success; }).length;
+    var cpuHours = rows.reduce(function (acc, r) {
+        return acc + (r.cpu_s || 0);
+    }, 0) / 3600;
+    var first = Infinity, last = -Infinity;
+    rows.forEach(function (r) {
+        first = Math.min(first, r.start);
+        last = Math.max(last, r.end);
+    });
+    // throughput over the last hour of measured tasks -> ETA
+    var recent = rows.filter(function (r) { return r.end > last - 3600; });
+    var rate = recent.length / 3600;
+    var remaining = (statusCounts.pending || 0) + (statusCounts.running || 0);
+    var eta = (rate > 0 && remaining > 0) ? fmtDuration(remaining / rate) :
+              (remaining === 0 ? 'done' : '-');
+    var waits = rows.map(queueWait).filter(function (w) {
+        return w !== null;
+    }).sort(function (a, b) { return a - b; });
+    var cards = [
+        statsCard('Tasks measured', String(rows.length)),
+        statsCard('Success rate', rows.length ?
+                  (100 * nOk / rows.length).toFixed(1) + ' %' : '-'),
+        statsCard('Median duration', fmtDuration(quantile(durations, 0.5))),
+        statsCard('90th percentile', fmtDuration(quantile(durations, 0.9))),
+        statsCard('Median queue wait', fmtDuration(quantile(waits, 0.5))),
+        statsCard('Wall time span', isFinite(first) ?
+                  fmtDuration(last - first) : '-'),
+        statsCard('CPU time', cpuHours.toFixed(1) + ' h'),
+        statsCard('Tasks / hour (last h)', String(recent.length)),
+        statsCard('ETA (queue, all types)', eta)];
+    document.getElementById('stats-cards').innerHTML = cards.join('');
+    // per type table
+    var byType = {};
+    rows.forEach(function (r) {
+        (byType[r.shortname] = byType[r.shortname] || []).push(r);
+    });
+    var types = statsTypes().filter(function (t) { return byType[t]; });
+    var maxMed = 0;
+    var tableRows = types.map(function (type) {
+        var trs = byType[type];
+        var durs = trs.map(function (r) { return r.duration; })
+            .sort(function (a, b) { return a - b; });
+        var med = quantile(durs, 0.5);
+        maxMed = Math.max(maxMed, med);
+        return {type: type, n: trs.length, durs: durs, med: med,
+                fail: trs.filter(function (r) { return !r.success; }).length,
+                mean: durs.reduce(function (a, b) { return a + b; }, 0) /
+                      durs.length,
+                cpu: trs.reduce(function (a, r) {
+                    return a + (r.cpu_s || 0);
+                }, 0) / 3600,
+                ram: Math.max.apply(null, trs.map(function (r) {
+                    return r.peak_rss_mb || 0;
+                })) / 1024,
+                total: durs.reduce(function (a, b) { return a + b; }, 0),
+                wait: quantile(trs.map(queueWait).filter(function (w) {
+                    return w !== null;
+                }).sort(function (a, b) { return a - b; }), 0.5)};
+    });
+    var html = '<table><thead><tr><th>Type</th><th>N</th><th>Failed</th>' +
+               '<th>Median</th><th>Mean</th><th>p90</th><th>Max</th>' +
+               '<th>Total wall</th><th>Median wait</th><th>CPU (h)</th>' +
+               '<th>Peak RAM (GB)</th>' +
+               '<th style="width:25%">Median</th></tr></thead><tbody>';
+    tableRows.forEach(function (tr) {
+        var pct = maxMed > 0 ? 100 * tr.med / maxMed : 0;
+        html += '<tr><td><span class="swatch" style="background:' +
+            statsColor(tr.type) + '"></span>' + escapeHtml(tr.type) +
+            '</td><td class="num">' + tr.n + '</td><td class="num">' +
+            tr.fail + '</td><td class="num">' + fmtDuration(tr.med) +
+            '</td><td class="num">' + fmtDuration(tr.mean) +
+            '</td><td class="num">' + fmtDuration(quantile(tr.durs, 0.9)) +
+            '</td><td class="num">' +
+            fmtDuration(tr.durs[tr.durs.length - 1]) +
+            '</td><td class="num">' + fmtDuration(tr.total) +
+            '</td><td class="num">' + fmtDuration(tr.wait) +
+            '</td><td class="num">' + tr.cpu.toFixed(2) +
+            '</td><td class="num">' + tr.ram.toFixed(2) +
+            '</td><td><div class="tbar" style="width:' + pct.toFixed(1) +
+            '%;background:' + statsColor(tr.type) + '"></div></td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('stats-table').innerHTML = tableRows.length ?
+        html : '<div class="chart-empty">No finished tasks measured yet' +
+               '</div>';
+    // duration scatter (failed tasks in red)
+    var split = document.getElementById('stats-split').checked ||
+                !document.getElementById('stats-type').value;
+    var scatter = [];
+    var groups = split ? types : [types[0]];
+    groups.forEach(function (type) {
+        var trs = rows.filter(function (r) {
+            return r.success && (!split || r.shortname === type);
+        });
+        scatter.push({name: type || 'tasks', color: statsColor(type),
+                      mode: 'points',
+                      x: trs.map(function (r) { return r.end * 1000; }),
+                      y: trs.map(function (r) { return r.duration; }),
+                      titles: trs.map(function (r) {
+                          return r.qid + '\n' + fmtDuration(r.duration);
+                      })});
+    });
+    var bad = rows.filter(function (r) { return !r.success; });
+    if (bad.length > 0) {
+        scatter.push({name: 'failed', color: '#d33c3c', mode: 'points',
+                      x: bad.map(function (r) { return r.end * 1000; }),
+                      y: bad.map(function (r) { return r.duration; }),
+                      titles: bad.map(function (r) {
+                          return 'FAILED ' + r.qid + '\n' +
+                                 fmtDuration(r.duration);
+                      })});
+    }
+    drawChart('chart-duration', scatter, {yLog: true, yFormat: fmtDuration});
+    // cumulative finished tasks
+    var progress = [];
+    var addCumulative = function (name, color, trs) {
+        var ends = trs.map(function (r) { return r.end * 1000; })
+            .sort(function (a, b) { return a - b; });
+        progress.push({name: name, color: color, mode: 'line', x: ends,
+                       y: ends.map(function (_, i) { return i + 1; })});
+    };
+    if (document.getElementById('stats-split').checked) {
+        types.forEach(function (type) {
+            addCumulative(type, statsColor(type), byType[type]);
+        });
+    } else {
+        addCumulative('finished', '#3c88ea', rows);
+    }
+    if (bad.length > 0) { addCumulative('failed', '#d33c3c', bad); }
+    drawChart('chart-progress', progress, {});
+}
+
+// seconds between a group being queued (unix time in its name) and the
+//   task starting (null if unknown)
+function queueWait(row) {
+    var match = /^APERO-QUEUE-GROUP-(\d+)-/.exec(String(row.qid || ''));
+    if (!match || !row.start) { return null; }
+    var wait = row.start - parseInt(match[1], 10);
+    return wait >= 0 ? wait : null;
+}
+
+function statsTopTable(rows, valueFn, columns) {
+    var top = rows.slice().sort(function (a, b) {
+        return valueFn(b) - valueFn(a);
+    }).slice(0, 10).filter(function (r) { return valueFn(r) > 0; });
+    if (top.length === 0) {
+        return '<div class="chart-empty">No samples yet</div>';
+    }
+    var html = '<table><thead><tr><th>Task</th><th>Type</th>' +
+               '<th>Duration</th>' + columns.map(function (col) {
+                   return '<th>' + col.label + '</th>';
+               }).join('') + '</tr></thead><tbody>';
+    top.forEach(function (r) {
+        html += '<tr class="stats-task" data-qid="' + escapeHtml(r.qid) +
+            '" title="Click to view log"><td class="mono">' +
+            escapeHtml(lvRunLabel(r.qid, r.recipe)) + '</td><td>' +
+            '<span class="swatch" style="background:' +
+            statsColor(r.shortname) + '"></span>' +
+            escapeHtml(r.shortname) + '</td><td class="num">' +
+            fmtDuration(r.duration) + '</td>' + columns.map(function (col) {
+                return '<td class="num">' + col.fmt(r) + '</td>';
+            }).join('') + '</tr>';
+    });
+    return html + '</tbody></table>';
+}
+
+function renderResourceTables() {
+    var rows = statsTaskRows();
+    var byType = {};
+    rows.forEach(function (r) {
+        (byType[r.shortname] = byType[r.shortname] || []).push(r);
+    });
+    var types = statsTypes().filter(function (t) { return byType[t]; });
+    var totalIo = rows.reduce(function (acc, r) {
+        return acc + (r.read_mb || 0) + (r.write_mb || 0);
+    }, 0);
+    var sum = function (trs, key) {
+        return trs.reduce(function (acc, r) { return acc + (r[key] || 0); },
+                          0);
+    };
+    var html = '<table><thead><tr><th>Type</th><th>N</th>' +
+               '<th>Cores busy</th><th>Mean peak RAM (GB)</th>' +
+               '<th>Max peak RAM (GB)</th><th>Read (GB)</th>' +
+               '<th>Written (GB)</th><th>I/O per task (MB)</th>' +
+               '<th>Share of I/O</th></tr></thead><tbody>';
+    types.forEach(function (type) {
+        var trs = byType[type];
+        var wall = sum(trs, 'duration');
+        var cores = wall > 0 ? sum(trs, 'cpu_s') / wall : 0;
+        var io = sum(trs, 'read_mb') + sum(trs, 'write_mb');
+        var peaks = trs.map(function (r) { return r.peak_rss_mb || 0; });
+        // a recipe busy on well under one core is mostly waiting
+        var coreCls = cores < 0.5 ? ' style="color:#d33c3c"' : '';
+        html += '<tr><td><span class="swatch" style="background:' +
+            statsColor(type) + '"></span>' + escapeHtml(type) +
+            '</td><td class="num">' + trs.length +
+            '</td><td class="num"' + coreCls + '>' + cores.toFixed(2) +
+            '</td><td class="num">' +
+            (sum(trs, 'peak_rss_mb') / trs.length / 1024).toFixed(2) +
+            '</td><td class="num">' +
+            (Math.max.apply(null, peaks) / 1024).toFixed(2) +
+            '</td><td class="num">' +
+            (sum(trs, 'read_mb') / 1024).toFixed(2) +
+            '</td><td class="num">' +
+            (sum(trs, 'write_mb') / 1024).toFixed(2) +
+            '</td><td class="num">' + (io / trs.length).toFixed(1) +
+            '</td><td class="num">' +
+            (totalIo > 0 ? (100 * io / totalIo).toFixed(1) + ' %' : '-') +
+            '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('stats-resources').innerHTML = types.length ?
+        html : '<div class="chart-empty">No finished tasks measured yet' +
+               '</div>';
+    var ioOf = function (r) { return (r.read_mb || 0) + (r.write_mb || 0); };
+    document.getElementById('stats-top-io').innerHTML = statsTopTable(
+        rows, ioOf, [
+            {label: 'Read (MB)', fmt: function (r) {
+                return (r.read_mb || 0).toFixed(1);
+            }},
+            {label: 'Written (MB)', fmt: function (r) {
+                return (r.write_mb || 0).toFixed(1);
+            }},
+            {label: 'MB/s', fmt: function (r) {
+                return r.duration > 0 ? (ioOf(r) / r.duration).toFixed(2) :
+                       '-';
+            }}]);
+    document.getElementById('stats-top-ram').innerHTML = statsTopTable(
+        rows, function (r) { return r.peak_rss_mb || 0; }, [
+            {label: 'Peak RAM (GB)', fmt: function (r) {
+                return ((r.peak_rss_mb || 0) / 1024).toFixed(2);
+            }},
+            {label: 'Cores busy', fmt: function (r) {
+                return r.duration > 0 ?
+                       ((r.cpu_s || 0) / r.duration).toFixed(2) : '-';
+            }}]);
+    document.querySelectorAll('#stab-perf .stats-task').forEach(function (tr) {
+        tr.addEventListener('click', function () {
+            var qid = tr.dataset.qid;
+            var row = allData.filter(function (item) {
+                return item.qid === qid;
+            })[0] || {};
+            openLog(qid, row, true);
+        });
+    });
+}
+
+function renderPerf() {
+    renderResourceTables();
+    var perf = statsData.perf;
+    var ids = ['chart-ram', 'chart-cpu', 'chart-running', 'chart-io',
+               'chart-load', 'chart-mem'];
+    if (!perf) {
+        ids.forEach(function (id) {
+            document.getElementById(id).innerHTML =
+                '<div class="chart-empty">No resource samples yet</div>';
+        });
+        return;
+    }
+    var xs = [];
+    for (var i = 0; i < perf.nbins; i++) {
+        xs.push((perf.t0 + (i + 0.5) * perf.width) * 1000);
+    }
+    var type = document.getElementById('stats-type').value;
+    var split = document.getElementById('stats-split').checked;
+    var types = type ? [type] : Object.keys(perf.types);
+    var build = function (metric, scale) {
+        var get = function (t, b) {
+            var ser = perf.types[t];
+            if (!ser) { return 0; }
+            if (metric === 'io') {
+                return ser.read_mb_s[b] + ser.write_mb_s[b];
+            }
+            return ser[metric][b];
+        };
+        if (split) {
+            return types.map(function (t) {
+                return {name: t, color: statsColor(t), mode: 'line', x: xs,
+                        y: xs.map(function (_, b) {
+                            return get(t, b) * scale;
+                        })};
+            });
+        }
+        return [{name: type || 'all queue tasks', mode: 'line', x: xs,
+                 color: type ? statsColor(type) : '#3c88ea',
+                 y: xs.map(function (_, b) {
+                     return types.reduce(function (acc, t) {
+                         return acc + get(t, b);
+                     }, 0) * scale;
+                 })}];
+    };
+    drawChart('chart-ram', build('rss_mb', 1 / 1024), {});
+    drawChart('chart-cpu', build('cpu', 1 / 100), {});
+    drawChart('chart-running', build('ntasks', 1), {});
+    drawChart('chart-io', build('io', 1), {});
+    var hosts = Object.keys(perf.hosts);
+    var hostSeries = function (metric, scale) {
+        return hosts.map(function (host, h) {
+            return {name: host, mode: 'line', x: xs,
+                    color: STATS_COLORS[h % STATS_COLORS.length],
+                    y: perf.hosts[host][metric].map(function (val) {
+                        return val === null ? null : val * scale;
+                    })};
+        });
+    };
+    drawChart('chart-load', hostSeries('load1', 1), {});
+    drawChart('chart-mem', hostSeries('mem_avail_mb', 1 / 1024), {});
+}
+
+function setGenerateMode(mode) {
+    generateMode = mode;
+    document.getElementById('gen-mode-static').classList.toggle(
+        'active', mode === 'static');
+    document.getElementById('gen-mode-dynamic').classList.toggle(
+        'active', mode === 'dynamic');
+    document.getElementById('gen-static').style.display =
+        mode === 'static' ? 'block' : 'none';
+    document.getElementById('gen-dynamic').style.display =
+        mode === 'dynamic' ? 'block' : 'none';
+}
+
+function refreshRunfiles() {
+    apiGet('/api/runfiles', function (data) {
+        var select = document.getElementById('gen-runfile');
+        var current = select.value;
+        select.innerHTML = '';
+        if (data.names.length === 0) {
+            select.innerHTML = '<option value="">(no run files found)</option>';
+        }
+        data.names.forEach(function (name) {
+            var option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
+        if (data.names.indexOf(current) !== -1) { select.value = current; }
+        loadRunfile();
+    });
+}
+
+function yamlValueHtml(value) {
+    if (value === null || value === undefined || value === '') {
+        return '<span class="val val-null">null</span>';
+    }
+    if (value === true) { return '<span class="val val-true">true</span>'; }
+    if (value === false) {
+        return '<span class="val val-false">false</span>';
+    }
+    if (typeof value === 'number') {
+        return '<span class="val val-num">' + value + '</span>';
+    }
+    if (typeof value === 'object') {
+        return '<span class="val mono">' +
+               escapeHtml(JSON.stringify(value)) + '</span>';
+    }
+    return '<span class="val val-str">' + escapeHtml(value) + '</span>';
+}
+
+function renderRunfile(data) {
+    var view = document.getElementById('gen-runfile-view');
+    document.getElementById('gen-runfile-path').textContent =
+        data.path || '';
+    document.getElementById('gen-runfile-raw').textContent = data.raw || '';
+    if (data.error) {
+        view.innerHTML = '<div class="coming-soon">' +
+                         escapeHtml(data.error) + '</div>';
+        return;
+    }
+    var html = '';
+    (data.sections || []).forEach(function (section) {
+        html += '<div class="rf-section"><div class="rf-title">' +
+                escapeHtml(section.name) +
+                (section.description ? '<div class="rf-desc">' +
+                 escapeHtml(section.description) + '</div>' : '') +
+                '</div><table class="rf-table">';
+        section.items.forEach(function (item) {
+            if (item.children && item.children.length > 0) {
+                html += '<tr><td class="rf-key">' + escapeHtml(item.key) +
+                        '</td><td colspan="2">' + childChipsHtml(item) +
+                        '</td></tr>';
+                return;
+            }
+            html += '<tr><td class="rf-key">' + escapeHtml(item.key) +
+                    '</td><td>' + yamlValueHtml(item.value) +
+                    '</td><td class="rf-comment">' +
+                    escapeHtml(item.comment || '') + '</td></tr>';
+        });
+        html += '</table></div>';
+    });
+    view.innerHTML = html || '<div class="muted">Empty run file</div>';
+}
+
+function childChipsHtml(item) {
+    var html = '';
+    var group = null;
+    item.children.forEach(function (child) {
+        if (child.group !== group) {
+            group = child.group;
+            if (group) {
+                html += '<div class="chip-group">' + escapeHtml(group) +
+                        '</div>';
+            }
+        }
+        var cls = child.value === true ? 'chip-on' :
+                  (child.value === false ? 'chip-off' : 'chip-other');
+        var label = escapeHtml(child.key);
+        if (child.value !== true && child.value !== false) {
+            label += ' = ' + escapeHtml(JSON.stringify(child.value));
+        }
+        html += '<span class="chip ' + cls + '" title="' +
+                escapeHtml(child.comment || '') + '">' + label + '</span>';
+    });
+    return html;
+}
+
+function loadRunfile() {
+    var name = document.getElementById('gen-runfile').value;
+    updateCliCommands();
+    if (!name) {
+        document.getElementById('gen-runfile-view').innerHTML = '';
+        return;
+    }
+    apiGet('/api/runfile?name=' + encodeURIComponent(name), renderRunfile);
+}
+
+function setRunfileView(kind) {
+    document.getElementById('gen-view-table').classList.toggle(
+        'active', kind === 'table');
+    document.getElementById('gen-view-raw').classList.toggle(
+        'active', kind === 'raw');
+    document.getElementById('gen-runfile-view').style.display =
+        kind === 'table' ? 'block' : 'none';
+    document.getElementById('gen-runfile-raw').style.display =
+        kind === 'raw' ? 'block' : 'none';
+}
+
+function loadProcessingOptions() {
+    apiGet('/api/processing_options', function (data) {
+        processingOptions = data.options || [];
+        var box = document.getElementById('gen-options');
+        box.innerHTML = '';
+        processingOptions.forEach(function (opt) {
+            var field = document.createElement('div');
+            field.className = 'field';
+            field.title = opt.help;
+            var id = 'gen-opt-' + opt.name;
+            var html = '';
+            if (opt.dtype === 'switch') {
+                html = '<label class="inline"><input type="checkbox" id="' +
+                       id + '"> --' + escapeHtml(opt.name) + '</label>';
+            } else if (opt.options) {
+                html = '<label for="' + id + '">--' + escapeHtml(opt.name) +
+                       '</label><select id="' + id + '">' +
+                       '<option value="">(default)</option>';
+                opt.options.forEach(function (choice) {
+                    html += '<option>' + escapeHtml(choice) + '</option>';
+                });
+                html += '</select>';
+            } else {
+                html = '<label for="' + id + '">--' + escapeHtml(opt.name) +
+                       ' <span class="muted">' + escapeHtml(opt.dtype) +
+                       '</span></label><input type="text" id="' + id +
+                       '" placeholder="' + escapeHtml(opt.default) + '">';
+            }
+            html += '<div class="opt-help">' + escapeHtml(opt.help) +
+                    '</div>';
+            field.innerHTML = html;
+            box.appendChild(field);
+            var input = document.getElementById(id);
+            input.addEventListener('input', updateCliCommands);
+            input.addEventListener('change', updateCliCommands);
+        });
+        // fill the reset part selector from the same request
+        var reset = document.getElementById('resetdata-part');
+        (data.reset_parts || []).forEach(function (part) {
+            var option = document.createElement('option');
+            option.value = part;
+            option.textContent = 'only ' + part;
+            reset.appendChild(option);
+        });
+        updateCliCommands();
+    });
+}
+
+function generateOptions() {
+    var options = {};
+    processingOptions.forEach(function (opt) {
+        var input = document.getElementById('gen-opt-' + opt.name);
+        if (!input) { return; }
+        if (opt.dtype === 'switch') {
+            if (input.checked) { options[opt.name] = true; }
+        } else if (input.value.trim() !== '') {
+            options[opt.name] = input.value.trim();
+        }
+    });
+    return options;
+}
+
+function buildGenerateCli() {
+    var select = document.getElementById('gen-runfile');
+    var runfile = (select && select.value) || '<runfile.yaml>';
+    var cmd = 'apero_processing.py ' + runfile + ' --queue_mode';
+    var options = generateOptions();
+    Object.keys(options).forEach(function (key) {
+        if (options[key] === true) {
+            cmd += ' --' + key;
+        } else {
+            var value = String(options[key]);
+            cmd += ' --' + key + '=' +
+                   (/\s/.test(value) ? '"' + value + '"' : value);
+        }
+    });
+    return cmd;
+}
+
+function doGenerate() {
+    var runfile = document.getElementById('gen-runfile').value;
+    if (!runfile) {
+        alert('Select a run file first');
+        return;
+    }
+    if (!confirm('Run apero_processing on ' + runfile +
+                 ' in queue mode?')) { return; }
+    apiPost('/api/generate',
+            {runfile: runfile, options: generateOptions(),
+             mode: generateMode},
+            function (data) {
+                if (!data.started) { alert(data.message); }
+                jobShown = true;
+                refreshState();
+            });
+}
+
+function doResetData() {
+    var part = document.getElementById('resetdata-part').value;
+    var what = part === 'all' ? 'ALL apero data' : 'the "' + part + '" data';
+    var answer = prompt('This runs apero_reset.py and permanently deletes ' +
+                        what + ' for this profile (stop any running ' +
+                        'tasks first).\n\nType RESET to continue:');
+    if (answer !== 'RESET') { return; }
+    apiPost('/api/reset_data', {part: part}, function (data) {
+        if (!data.started) { alert(data.message); }
+        jobShown = true;
+        refreshState();
+    });
 }
 
 function doRun() {
@@ -1494,12 +3197,25 @@ bindSort('qtable', entrySort);
 })();
 
 document.getElementById('run-mpmode').value = defaultMpmode;
+applyTheme(document.documentElement.getAttribute('data-theme'));
 updateCliCommands();
 refreshAll();
 refreshTemplateNames();
 refreshTemplate();
+loadProcessingOptions();
+refreshRunfiles();
+refreshJob();
+document.getElementById('resetdata-part')
+    .addEventListener('change', updateCliCommands);
 setInterval(refreshState, 2000);
-setInterval(autoRefreshStatus, 5000);
+setInterval(autoRefreshStatus, 2000);
+setInterval(autoRefreshProcesses, 3000);
+setInterval(autoRefreshStats, 15000);
+window.addEventListener('resize', function () {
+    clearTimeout(statsResizeTimer);
+    statsResizeTimer = setTimeout(renderStats, 200);
+});
+refreshProcesses();
 </script>
 
 <div id="logviewer">
@@ -1510,6 +3226,8 @@ setInterval(autoRefreshStatus, 5000);
     <span id="lv-meta" class="lv-meta"></span>
     <button onclick="lvCopyPath()">Copy path</button>
     <button onclick="lvOpenRunning()">Open running logs</button>
+    <button onclick="lvCloseAll()"
+            title="Close every open log tab">Close all logs</button>
     <button onclick="lvHide()" title="Close (Esc)">&#10005; Close</button>
 </div>
 <div id="lv-runstring" class="lv-runstring"></div>
@@ -1577,6 +3295,7 @@ function lvFmtBytes(n) {
 }
 
 function lvRunLabel(qid, recipe) {
+    if (qid.indexOf('proc:') === 0) { return recipe || qid; }
     var run = qid.split('/')[1] || qid;
     var match = run.match(/APERO-QUEUE-RUN-(\d+)/);
     var num = match ? String(parseInt(match[1], 10)) : run;
@@ -1830,9 +3549,17 @@ function lvResetTab(tab) {
 function lvPoll(tab) {
     if (tab.loading || tab.done) { return; }
     tab.loading = true;
-    var url = '/api/log?qid=' + encodeURIComponent(tab.qid) +
+    var url;
+    if (tab.qid.indexOf('proc:') === 0) {
+        // process logs: "proc:{id}:{file index}"
+        var procParts = tab.qid.split(':');
+        url = '/api/process_log?id=' + encodeURIComponent(procParts[1]) +
+              '&file=' + procParts[2] + '&offset=' + tab.offset;
+    } else {
+        url = '/api/log?qid=' + encodeURIComponent(tab.qid) +
               '&offset=' + tab.offset;
-    fetch(url).then(function (resp) { return resp.json(); })
+    }
+    fetch(apiUrl(url)).then(function (resp) { return resp.json(); })
     .then(function (data) {
         tab.loading = false;
         if (!lvTabs[tab.qid]) { return; }
@@ -2111,6 +3838,10 @@ function lvCloseTab(qid) {
     }
     lvUpdateTabs();
     if (lvOrder.length === 0) { lvHide(); }
+}
+
+function lvCloseAll() {
+    lvOrder.slice().forEach(lvCloseTab);
 }
 
 function lvRowClick(row, ev) {

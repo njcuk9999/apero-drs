@@ -87,10 +87,14 @@ def make_trans_cube(params: ParamDict, transfiles: List[str]
         # make sure we have required header key for expo_water
         if water_key not in transhdr:
             wargs = [water_key, transfiles[it]]
+            # log: Skipping trans file (Header does not contain '{0}') \n
+            #     Filename = {1}
             WLOG(params, '', textentry('40-019-00050', args=wargs))
         # make sure we have required header key for expo_others
         elif others_key not in transhdr:
             wargs = [others_key, transfiles[it]]
+            # log: Skipping trans file (Header does not contain '{0}') \n
+            #     Filename = {1}
             WLOG(params, '', textentry('40-019-00050', args=wargs))
         else:
             # push data into abso array
@@ -170,6 +174,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     # deal with bad berv (nan or None)
     if not isinstance(berv, (int, float)) or not np.isfinite(berv):
         eargs = [berv, func_name]
+        # error: BERV value unusable. BERV = '{0}' \n Function = {1}
         raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # get airmass from header
     airmass = header[params['KW_DRS_AIRMASS'][0]]
@@ -253,9 +258,9 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
     for order_num in range(image2.shape[0]):
         # print progress
         # TODO: Move to language database
-        msg = 'Low pass filtering of hot star to create SED order {0} of {1}'
         margs = [order_num, image2.shape[0] - 1]
-        WLOG(params, '', msg.format(*margs))
+        # log: Low pass filtering of hot star to create SED order {0} of {1}
+        WLOG(params, '', textentry('40-019-00058', args=margs))
         # get the smoothing size from wconv
         smooth = int(wconv[order_num])
         # mask of outlier regions (floats for lowpass filter)
@@ -329,10 +334,10 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
         # final guess of the SED
         if bad_order:
             # log that we are skipping this order
-            # TODO: Add to language database
-            wmsg = 'Skipping order {0} [No good values]. SED set to NaN'
             wargs = [order_num]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+            # warning: Skipping order {0} [No good values]. SED set to NaN
+            WLOG(params, 'warning', textentry('10-019-00015', args=wargs),
+                 sublevel=3)
             # set the SED to NaN
             sed[order_num] = np.full(image2.shape[1], np.nan)
         else:
@@ -427,6 +432,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # ----------------------------------------------------------------------
     # if array is completely NaNs it shouldn't pass
     if np.sum(np.isfinite(transmission_map)) == 0:
+        # text: transmission map is all NaNs
         fail_msg.append(textentry('40-019-00006'))
         qc_pass.append(0)
     else:
@@ -442,6 +448,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # check that SNR is high enough
     if snr[snr_order] < qc_snr_min:
         fargs = [snr_order, snr[snr_order], qc_snr_min]
+        # text: low SNR in order {0}: ({1:.2f} < {2:.2f})
         fail_msg.append(textentry('40-019-00007', args=fargs))
         qc_pass.append(0)
     else:
@@ -455,6 +462,8 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # check that the file passed the CalcTelluAbsorption sigma clip loop
     if not calc_passed:
         fargs = [infile.basename]
+        # text: File {0} did not converge on a solution in telluric absorption
+        #     calculation
         fail_msg.append(textentry('40-019-00008', args=fargs))
         qc_pass.append(0)
     else:
@@ -468,6 +477,8 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     airmass_diff = np.abs(recovered_airmass - airmass)
     if airmass_diff > qc_airmass_diff:
         fargs = [recovered_airmass, airmass, qc_airmass_diff]
+        # text: Recovered airmass too dissimilar to input airmass. \n Recovered
+        #     airmass = {0:.3f} input: {1:.3f} qc limit = {2}
         fail_msg.append(textentry('40-019-00009', args=fargs))
         qc_pass.append(0)
     else:
@@ -483,6 +494,8 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # check both conditions
     if water_cond1 or water_cond2:
         fargs = [qc_min_watercol, qc_max_watercol, recovered_water]
+        # text: Recovered water vapor optical depth not between {0:.3f} and
+        #     {1:.3f} \n Value = {2:.3f}
         fail_msg.append(textentry('40-019-00010', args=fargs))
         qc_pass.append(0)
     else:
@@ -498,10 +511,12 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -541,10 +556,12 @@ def mk_model_qc(params: ParamDict) -> Tuple[list, int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -674,6 +691,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.data = tprops['TRANMISSION_MAP']
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving transmission file: {0}
     WLOG(params, '', textentry('40-019-00011', args=[transfile.filename]))
     # define multi lists
     data_list, name_list = [], []
@@ -719,6 +737,7 @@ def mk_write_model(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
     # set data
     model_file.data = tprops['ZERO_RES']
     # log that we are saving s1d table
+    # log: Saving mk tellu model file: {0}
     WLOG(params, '', textentry('40-019-00053', args=[model_file.filename]))
     # define multi lists
     data_list = [tprops['WATER_RES'], tprops['OTHERS_RES'], transtable]

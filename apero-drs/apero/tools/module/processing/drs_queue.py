@@ -36,6 +36,7 @@ Created on 2026-08-31
 """
 import collections
 import os
+import shlex
 import signal
 import shutil
 import socket
@@ -50,7 +51,10 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
+from aperocore import drs_lang
 from apero.base import base as apero_base
+from apero.tools.module.processing import drs_queue_procs
+from apero.tools.module.processing import drs_queue_stats
 from apero.utils import drs_utils
 
 # =============================================================================
@@ -65,6 +69,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # Get function string
 display_func = drs_misc.display_func
 # get the parameter dictionary
@@ -83,6 +89,8 @@ QUEUE_ERRORS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'errors')
 QUEUE_SCRIPTS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'scripts')
 # define the per-task log directory (one log per queue run file)
 QUEUE_TASK_LOGS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'task_logs')
+# define the task statistics directory (timing, RAM and CPU samples)
+QUEUE_STATS_DIR = os.path.join(QUEUE_OUTPUT_DIR, 'stats')
 # define the chain output base directory (relative to PATH.OTHER)
 QUEUE_CHAIN_BASE_DIR = os.path.join('batch', 'chain')
 # define the chain name prefix
@@ -131,7 +139,11 @@ QUEUE_MP_MODES = ['process', 'pool', 'linear']
 QUEUE_ACTIONS = ['move_to_pending', 'move_all_failed_to_pending',
                  'move_all_complete_to_pending', 'stop_all_running',
                  'stop_to_pending', 'stop_to_complete',
-                 'stop_to_failed', 'clear_all_pending']
+                 'stop_to_failed', 'clear_all_pending',
+                 'fail_stale_running']
+# seconds a claimed (running) task may have no recorded pid before it is
+#   considered stale (covers the gap between claiming and starting)
+QUEUE_STALE_GRACE = 300
 # define default batch template values (used as defaults in init mode)
 QUEUE_BATCH_DEFAULTS = dict()
 QUEUE_BATCH_DEFAULTS['time'] = '48:00:00'
@@ -369,7 +381,8 @@ def setup_queue_directories(params: ParamDict) -> Dict[str, str]:
     return sub_dirs
 
 
-def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
+def add_run_list_to_queue(params: ParamDict, runlist: List[Any],
+                          drs_group: Optional[str] = None):
     """
     Add a run list to the queue
 
@@ -380,6 +393,9 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
 
     :param params: ParamDict, the parameter dictionary of constants
     :param runlist: list of Run instances, the run list to add to the queue
+    :param drs_group: str or None, the apero_processing group name (the
+                      DRS.GROUP queued recipes run with - same as running
+                      apero_processing without the queue)
 
     :return: None, writes the queue group directories and run yaml files
     """
@@ -390,8 +406,8 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
     from apero.tools.module.processing import drs_processing
     # deal with an empty run list (nothing to queue)
     if len(runlist) == 0:
-        WLOG(params, 'warning', 'Queue: No runs to add to queue',
-             sublevel=2)
+        # warning: Queue: No runs to add to queue
+        WLOG(params, 'warning', textentry('10-513-00001'), sublevel=2)
         return
     # -------------------------------------------------------------------------
     # make sure queue directories exist (and get their paths)
@@ -406,9 +422,9 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
     unixtime = QUEUE_TIME_FORMAT.format(time.time())
     # -------------------------------------------------------------------------
     # log progress: adding N groups to the queue
-    msg = 'Queue: Adding {0} runs in {1} groups to queue: {2}'
     margs = [len(runlist), len(grouplist), pending_dir]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Queue: Adding {0} runs in {1} groups to queue: {2}
+    WLOG(params, 'info', textentry('40-513-00029', args=margs))
     # -------------------------------------------------------------------------
     # loop around groups (in group number order)
     for groupkey in sorted(grouplist.keys()):
@@ -426,7 +442,8 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
         # loop around run items in this group
         for run_item in grouplist[groupkey]:
             # convert the run item into a queue dictionary
-            queue_dict = _run_item_to_dict(run_item, group_dirname)
+            queue_dict = _run_item_to_dict(run_item, group_dirname,
+                                           drs_group)
             # construct the run yaml file name (sorts by priority)
             run_filename = QUEUE_RUN_FORMAT.format(run_item.priority)
             # construct the run yaml file path
@@ -435,16 +452,18 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any]):
             base.write_yaml(queue_dict, run_path, width=float('inf'))
         # ---------------------------------------------------------------------
         # log progress: added group with N runs
-        msg = 'Queue: \t Added group "{0}" ({1} runs)'
         margs = [group_dirname, len(grouplist[groupkey])]
-        WLOG(params, '', msg.format(*margs))
+        # log: Queue: Added group "{0}" ({1} runs)
+        WLOG(params, '', textentry('40-513-00032', args=margs))
         # ---------------------------------------------------------------------
         # queued recipes run with --parallel so their database entries stay
         #   pending until pushed - the next group needs them in the database
         priority = max(int(run.priority) for run in grouplist[groupkey])
         push_dirname = _add_db_push_group(pending_dir, group_dirname,
                                           priority)
-        WLOG(params, '', 'Queue: \t Added group "{0}"'.format(push_dirname))
+        wargs = [push_dirname]
+        # log: Queue: Added group "{0}"
+        WLOG(params, '', textentry('40-513-00010', args=wargs))
 
 
 def _add_db_push_group(pending_dir: str, group_dirname: str,
@@ -527,6 +546,56 @@ def get_task_log_path(queue_path: str, group: str, run_file: str) -> str:
     return os.path.join(queue_path, QUEUE_TASK_LOGS_DIR, group, log_name)
 
 
+def get_stats_dir(queue_path: str) -> str:
+    """
+    Get the task statistics directory ({QUEUE.PATH}/output/stats)
+
+    :param queue_path: str, the absolute path to the queue directory
+
+    :return: str, the absolute path to the stats directory
+    """
+    return os.path.join(queue_path, QUEUE_STATS_DIR)
+
+
+def _monitored_command(command: str, queue_path: str, qid: str,
+                       shortname: str, recipe: str, mode: str) -> str:
+    """
+    Wrap a batch/chain task command with the task monitor (timing, RAM
+    and CPU statistics - see drs_queue_stats)
+
+    :param command: str, the shell command
+    :param queue_path: str, the absolute path to the queue directory
+    :param qid: str, the queue id "{group}/{run_file}"
+    :param shortname: str, the recipe short name
+    :param recipe: str, the recipe name
+    :param mode: str, 'batch' or 'chain'
+
+    :return: str, the wrapped shell command
+    """
+    # run by path: the monitor only needs the standard library
+    margs = [sys.executable, os.path.abspath(drs_queue_stats.__file__),
+             '--stats', get_stats_dir(queue_path), '--qid', qid,
+             '--shortname', shortname, '--recipe', recipe, '--mode', mode,
+             '--', 'bash', '-c', command]
+    return shlex.join(margs)
+
+
+def _with_drs_group(command: str, drs_group: Optional[str]) -> str:
+    """
+    Prefix a shell command so the recipe runs with the given processing
+    group (DRS.GROUP), see apero.base.base.DRS_GROUP_ENV
+
+    :param command: str, the shell command
+    :param drs_group: str or None, the processing group
+
+    :return: str, the (possibly prefixed) command
+    """
+    if drs_text.null_text(drs_group, ['', 'None']):
+        return command
+    return '{0}={1} {2}'.format(apero_base.DRS_GROUP_ENV,
+                                shlex.quote(str(drs_group)), command)
+
+
 def _shell_logged_command(command: str, log_path: str) -> List[str]:
     """
     Build bash lines that run a command, tee its output to a task log
@@ -556,6 +625,222 @@ def get_chain_root(params: ParamDict) -> str:
     :return: str, absolute path to the chain output root
     """
     return os.path.join(str(params['PATH.OTHER']), QUEUE_CHAIN_BASE_DIR)
+
+
+def get_proc_dir(params: ParamDict) -> str:
+    """
+    Get the process registry directory (PATH.OTHER/queue_processes)
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: str, absolute path to the process registry
+    """
+    return drs_queue_procs.get_proc_dir(str(params['PATH.OTHER']))
+
+
+def release_running(params: ParamDict, qids: List[str]) -> int:
+    """
+    Move queue ids that are still running back to pending without
+    signalling anything (their process is already gone, e.g. scancel)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param qids: list of str, queue ids "{group}/{run_file}"
+
+    :return: int, the number of entries moved
+    """
+    queue_path = get_queue_path(params)
+    moved = 0
+    with QueueLock(params):
+        for qid in qids:
+            if '/' not in str(qid):
+                continue
+            group, run_file = str(qid).split('/', 1)
+            moved += int(move_run_file(queue_path, group, run_file,
+                                       QUEUE_RUNNING_DIR,
+                                       QUEUE_PENDING_DIR))
+    return moved
+
+
+def find_stale_running(params: ParamDict) -> List[Dict[str, str]]:
+    """
+    Find running queue entries that nothing is running any more
+
+    An entry is kept (not stale) when a live registered process holds it
+    (queue run, Slurm batch/chain job) or its recorded pid is alive. It is
+    stale when its pid (on this host) is dead, or it has no pid, is older
+    than QUEUE_STALE_GRACE and no Slurm job could be running it. Entries
+    that cannot be checked from here (pid on another host) are kept.
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: list of dict(qid, reason)
+    """
+    queue_path = get_queue_path(params)
+    entries = list_queue_entries(params, states=[QUEUE_RUNNING_DIR])
+    if len(entries) == 0:
+        return []
+    # queue ids held by live registered processes
+    records = drs_queue_procs.load_all(get_proc_dir(params))
+    jobs = [job for rec in records if not rec.get('finished')
+            for job in rec.get('slurm_jobs') or []]
+    slurm = drs_queue_procs.slurm_states(jobs)
+    covered = set()
+    for record in records:
+        status = drs_queue_procs.proc_status(record, slurm)
+        if status in ['running', 'pending', 'unknown']:
+            covered.update(record.get('qids') or [])
+    # slurm jobs we did not record (e.g. scripts submitted by hand) could
+    #   be running any pid-less entry
+    user_jobs = drs_queue_procs.user_slurm_jobs()
+    registered = set(job for rec in records
+                     for job in rec.get('slurm_jobs') or [])
+    unregistered = bool(user_jobs) and len(user_jobs - registered) > 0
+    host = socket.gethostname()
+    stale = []
+    for entry in entries:
+        qid = '{0}/{1}'.format(entry['group'], entry['run'])
+        if qid in covered:
+            continue
+        run_dict = _load_run_yaml(entry['path'])
+        if run_dict is None:
+            continue
+        pid = run_dict.get('pid')
+        if not drs_text.null_text(pid, ['', 'None']):
+            # a pid on another machine cannot be checked from here
+            if run_dict.get('pid_host') not in [None, host]:
+                continue
+            if drs_queue_procs.pid_alive(pid):
+                continue
+            reason = 'its process (pid {0}) is no longer running'
+            stale.append(dict(qid=qid, reason=reason.format(pid)))
+            continue
+        try:
+            age = time.time() - os.path.getmtime(entry['path'])
+        except OSError:
+            continue
+        if age < QUEUE_STALE_GRACE or unregistered:
+            continue
+        reason = 'no process is running it (claimed {0:.0f} min ago)'
+        stale.append(dict(qid=qid, reason=reason.format(age / 60)))
+    return stale
+
+
+def fail_stale_running(params: ParamDict,
+                       dry_run: bool = False) -> Dict[str, Any]:
+    """
+    Move stale running entries (see find_stale_running) to failed and
+    note the reason at the end of their task log
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param dry_run: bool, if True only report the stale entries
+
+    :return: dict(success, moved, stale, message)
+    """
+    stale = find_stale_running(params)
+    result = dict(success=True, moved=0, stale=stale, message='')
+    if dry_run or len(stale) == 0:
+        msg = 'Queue: {0} stale running task(s) found'
+        result['message'] = msg.format(len(stale))
+        return result
+    queue_path = get_queue_path(params)
+    stamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    with QueueLock(params):
+        for item in stale:
+            group, run_file = item['qid'].split('/', 1)
+            moved = move_run_file(queue_path, group, run_file,
+                                  QUEUE_RUNNING_DIR, QUEUE_FAILED_DIR)
+            if not moved:
+                continue
+            result['moved'] += 1
+            log_path = get_task_log_path(queue_path, group, run_file)
+            try:
+                os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                with open(log_path, 'a') as logfile:
+                    logfile.write('\nQUEUE: {0} marked failed - {1}\n'
+                                  ''.format(stamp, item['reason']))
+            except OSError:
+                pass
+    msg = 'Queue: Marked {0} stale running task(s) as failed'
+    result['message'] = msg.format(result['moved'])
+    return result
+
+
+def stop_process(params: ParamDict, record: Dict[str, Any],
+                 cancel: Optional[threading.Event] = None
+                 ) -> Dict[str, Any]:
+    """
+    Stop one registered process (TERM then KILL for local processes,
+    scancel for Slurm jobs). Queue tasks it was still running go back to
+    pending.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param record: dict, the process record (drs_queue_procs)
+    :param cancel: threading.Event or None, the cancel event of a queue
+                   run inside this process (the gui run action)
+
+    :return: dict(success, message)
+    """
+    proc_dir = get_proc_dir(params)
+    jobs = record.get('slurm_jobs') or []
+    slurm = drs_queue_procs.slurm_states(jobs)
+    status = drs_queue_procs.proc_status(record, slurm)
+    label = '{0} ({1})'.format(record.get('label', ''), record['id'])
+    if status not in ['running', 'pending', 'unknown']:
+        return dict(success=False,
+                    message='{0} is not running ({1})'.format(label, status))
+    qids = list(record.get('qids') or [])
+    # ------------------------------------------------------------------
+    # slurm jobs: cancel them then release the tasks they still held
+    if len(jobs) > 0:
+        if shutil.which('scancel') is None:
+            return dict(success=False,
+                        message='"scancel" not found on this machine')
+        output = subprocess.run(['scancel'] + jobs, capture_output=True,
+                                text=True)
+        if output.returncode != 0:
+            msg = 'scancel failed for {0}: {1}'
+            return dict(success=False,
+                        message=msg.format(label, output.stderr.strip()))
+        moved = release_running(params, qids)
+        drs_queue_procs.finish(proc_dir, record['id'], -15, stopped=True)
+        msg = 'Cancelled Slurm job(s) {0}; {1} task(s) back to pending'
+        return dict(success=True, message=msg.format(', '.join(jobs),
+                                                     moved))
+    # ------------------------------------------------------------------
+    # local processes
+    pid = record.get('pid')
+    if pid is None or record.get('host') != socket.gethostname():
+        msg = '{0} runs on {1} - it cannot be stopped from here'
+        return dict(success=False,
+                    message=msg.format(label, record.get('host')))
+    own = int(pid) == os.getpid()
+    if own and record.get('kind') != 'run':
+        return dict(success=False, message='refusing to stop this GUI')
+    # a queue run: stop starting new tasks, then stop its running tasks
+    n_tasks = 0
+    if record.get('kind') == 'run':
+        if own and cancel is not None:
+            cancel.set()
+        queue_path = get_queue_path(params)
+        for qid in qids:
+            if '/' not in str(qid):
+                continue
+            group, run_file = str(qid).split('/', 1)
+            run_path = os.path.join(queue_path, QUEUE_RUNNING_DIR, group,
+                                    run_file)
+            if os.path.exists(run_path):
+                sargs = [params, queue_path, group, run_file,
+                         QUEUE_PENDING_DIR]
+                n_tasks += _stop_running_entry(*sargs)[1]
+    killed = True if own else _kill_pid(int(pid))
+    if not killed:
+        return dict(success=False,
+                    message='could not stop {0} (pid {1})'.format(label, pid))
+    drs_queue_procs.finish(proc_dir, record['id'], -15, stopped=True)
+    msg = 'Stopped {0}'.format(label)
+    if record.get('kind') == 'run':
+        msg += '; {0} task(s) back to pending'.format(n_tasks)
+    return dict(success=True, message=msg)
 
 
 def _get_input_bool(params: ParamDict, key: str,
@@ -707,6 +992,23 @@ def save_template(params: ParamDict, template: Dict[str, Any],
     return template_path
 
 
+def _listdir(path: str) -> List[str]:
+    """
+    List a directory, returning nothing if it has just been removed
+
+    Group directories are deleted as soon as their last task is moved, so
+    a running queue can remove a directory between isdir and listdir
+
+    :param path: str, the directory to list
+
+    :return: list of strings, the directory contents
+    """
+    try:
+        return os.listdir(path)
+    except (FileNotFoundError, NotADirectoryError):
+        return []
+
+
 def list_queue_entries(params: ParamDict,
                        states: Optional[List[str]] = None
                        ) -> List[Dict[str, str]]:
@@ -739,7 +1041,7 @@ def list_queue_entries(params: ParamDict,
         if not os.path.isdir(state_path):
             continue
         # loop around group directories in this state
-        for group in sorted(os.listdir(state_path)):
+        for group in sorted(_listdir(state_path)):
             # construct the group directory path
             group_path = os.path.join(state_path, group)
             # skip non-directories and non-queue-group directories
@@ -748,7 +1050,7 @@ def list_queue_entries(params: ParamDict,
             if not group.startswith('APERO-QUEUE-GROUP-'):
                 continue
             # loop around run yaml files in this group
-            for run_file in sorted(os.listdir(group_path)):
+            for run_file in sorted(_listdir(group_path)):
                 # skip non-run files
                 if not run_file.startswith('APERO-QUEUE-RUN-'):
                     continue
@@ -851,9 +1153,9 @@ def move_run_file(queue_path: str, group: str, run_file: str,
     if to_state != QUEUE_RUNNING_DIR:
         lines = [line for line in lines
                  if not line.startswith(('pid:', 'pid_host:'))]
-    # write the updated yaml to the destination
-    with open(dst_path, 'w') as wfile:
-        wfile.writelines(lines)
+    # write the updated yaml to the destination (atomically - other
+    #   apero_queue processes may read it at any moment)
+    _write_lines_atomic(dst_path, lines)
     # remove the source file
     os.remove(src_path)
     # remove the source group directory if it is now empty
@@ -864,6 +1166,44 @@ def move_run_file(queue_path: str, group: str, run_file: str,
         pass
     # move was successful
     return True
+
+
+def _write_lines_atomic(path: str, lines: List[str]):
+    """
+    Write a text file so readers only ever see the old or the new content
+
+    :param path: str, the file to write
+    :param lines: list of strings, the lines to write
+
+    :return: None
+    """
+    # leading dot keeps the temporary file out of list_queue_entries
+    tmp_name = '.{0}.tmp{1}'.format(os.path.basename(path), os.getpid())
+    tmp_path = os.path.join(os.path.dirname(path), tmp_name)
+    with open(tmp_path, 'w') as wfile:
+        wfile.writelines(lines)
+    os.replace(tmp_path, path)
+
+
+def _load_run_yaml(run_path: str) -> Optional[Dict[str, Any]]:
+    """
+    Load a queue run yaml file, retrying briefly if it is empty or being
+    written by another process
+
+    :param run_path: str, the run yaml file path
+
+    :return: dict or None, the run dictionary (None if it stays unreadable
+             or has no runstring)
+    """
+    for _ in range(5):
+        try:
+            run_dict = base.load_yaml(run_path)
+        except Exception:
+            run_dict = None
+        if isinstance(run_dict, dict) and 'runstring' in run_dict:
+            return run_dict
+        time.sleep(0.2)
+    return None
 
 
 def get_queue_cores(params: ParamDict) -> int:
@@ -958,7 +1298,8 @@ def get_queue_task_limit(params: ParamDict, cores: int) -> Optional[int]:
 def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
                     mpmode: str,
                     progress: Optional[Callable[[str], None]] = None,
-                    cancel: Optional[threading.Event] = None
+                    cancel: Optional[threading.Event] = None,
+                    on_claim: Optional[Callable[[List[str]], None]] = None
                     ) -> Dict[str, Any]:
     """
     Run one queue claim/execute cycle
@@ -971,6 +1312,8 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
                      (e.g. the gui activity log)
     :param cancel: threading.Event or None, when set no further tasks are
                    started
+    :param on_claim: callable or None, receives the queue ids claimed in
+                     this cycle (e.g. the process registry)
 
     :return: dictionary, summary for this cycle
     """
@@ -988,6 +1331,12 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
     if mpmode is None:
         mpmode = get_queue_mpmode(params)
     # -------------------------------------------------------------------------
+    # stale running tasks would block their group forever
+    stale = fail_stale_running(params)
+    if stale['moved'] > 0:
+        WLOG(params, 'warning', stale['message'], sublevel=2)
+        _progress(progress, stale['message'])
+    # -------------------------------------------------------------------------
     # claim tasks inside the queue lock (so parallel apero_queues do not
     #   claim the same tasks)
     with QueueLock(params):
@@ -996,7 +1345,9 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         # deal with an empty queue
         if group is None:
             summary['message'] = 'Nothing to run (queue is empty)'
-            WLOG(params, '', 'Queue: {0}'.format(summary['message']))
+            wargs = [summary['message']]
+            # log: Queue: {0}
+            WLOG(params, '', textentry('40-513-00001', args=wargs))
             _progress(progress, summary['message'])
             return summary
         # store the group in the summary
@@ -1008,8 +1359,10 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
                     'waiting for group to finish (not starting next '
                     'group)')
             summary['message'] = wmsg.format(group, len(running_runs))
-            WLOG(params, 'warning',
-                 'Queue: {0}'.format(summary['message']), sublevel=2)
+            wargs = [summary['message']]
+            # warning: Queue: {0}
+            WLOG(params, 'warning', textentry('10-513-00002', args=wargs),
+                 sublevel=2)
             _progress(progress, summary['message'])
             return summary
         # take the next N pending tasks (up to the end of the group)
@@ -1018,11 +1371,15 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         for run_file in claimed_runs:
             move_run_file(queue_path, group, run_file,
                           QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
+    if on_claim is not None:
+        on_claim(['{0}/{1}'.format(group, run_file)
+                  for run_file in claimed_runs])
     # -------------------------------------------------------------------------
     # log progress: running N tasks from group
     msg = 'Running {0} task(s) from group "{1}" [mpmode={2}]'
-    WLOG(params, 'info', 'Queue: ' + msg.format(len(claimed_runs), group,
-                                                mpmode))
+    wargs = [msg.format(len(claimed_runs), group, mpmode)]
+    # log: Queue: {0}
+    WLOG(params, 'info', textentry('40-513-00001', args=wargs))
     _progress(progress, msg.format(len(claimed_runs), group, mpmode))
     # build the task list (read the claimed yaml files)
     tasks = []
@@ -1031,7 +1388,20 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         run_path = os.path.join(queue_path, QUEUE_RUNNING_DIR, group,
                                 run_file)
         # read the yaml file
-        run_dict = base.load_yaml(run_path)
+        run_dict = _load_run_yaml(run_path)
+        # an unreadable entry cannot be run - fail it rather than the run
+        if run_dict is None:
+            move_run_file(queue_path, group, run_file,
+                          QUEUE_RUNNING_DIR, QUEUE_FAILED_DIR)
+            wargs = [group, run_file]
+            # warning: Queue: {0}/{1} has an empty or invalid yaml file - moved
+            #     to failed (it must be re-queued with apero_processing)
+            WLOG(params, 'warning', textentry('10-513-00009', args=wargs),
+                 sublevel=2)
+            _progress(progress, 'FAILED {0} (unreadable queue file)'.format(
+                _task_label(run_file)))
+            summary['n_failed'] += 1
+            continue
         # construct the task tuple (group, run file, runstring, shortname)
         task = dict()
         task['group'] = group
@@ -1039,7 +1409,10 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         task['run_path'] = run_path
         task['log_path'] = get_task_log_path(queue_path, group, run_file)
         task['runstring'] = str(run_dict['runstring'])
-        task['shortname'] = str(run_dict['shortname'])
+        task['drs_group'] = run_dict.get('drs_group')
+        task['shortname'] = str(run_dict.get('shortname', ''))
+        task['recipe'] = str(run_dict.get('recipe', ''))
+        task['stats_dir'] = get_stats_dir(queue_path)
         tasks.append(task)
     # -------------------------------------------------------------------------
     # execute the tasks (linear or multiprocess based on mpmode)
@@ -1061,26 +1434,31 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         if not moved:
             n_stopped += 1
             stopped.add(run_file)
-            msg = 'Queue: \t {0}/{1} was stopped (left as is)'
-            WLOG(params, '', msg.format(group, run_file))
+            wargs = [group, run_file]
+            # log: Queue: {0}/{1} was stopped (left as is)
+            WLOG(params, '', textentry('40-513-00036', args=wargs))
             continue
         # log the result
-        msg = 'Queue: \t {0}/{1} --> {2}'
-        WLOG(params, '', msg.format(group, run_file, to_state))
+        wargs = [group, run_file, to_state]
+        # log: Queue: {0}/{1} --> {2}
+        WLOG(params, '', textentry('40-513-00039', args=wargs))
     # -------------------------------------------------------------------------
     # summarize
     summary['n_stopped'] = n_stopped
     n_ok = sum(1 for run_file in results
                if results[run_file] and run_file not in stopped)
-    n_bad = len(results) - n_ok - n_stopped
+    n_bad = len(results) - n_ok - n_stopped + summary['n_failed']
+    n_total = len(results) + summary['n_failed']
     msg = 'Finished {0} task(s): {1} complete, {2} failed'
-    summary['n_run'] = len(results)
+    summary['n_run'] = n_total
     summary['n_complete'] = n_ok
     summary['n_failed'] = n_bad
-    summary['message'] = msg.format(len(results), n_ok, n_bad)
+    summary['message'] = msg.format(n_total, n_ok, n_bad)
     if n_stopped > 0:
         summary['message'] += ', {0} stopped'.format(n_stopped)
-    WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
+    wargs = [summary['message']]
+    # log: Queue: {0}
+    WLOG(params, 'info', textentry('40-513-00001', args=wargs))
     _progress(progress, 'Cycle done: {0}'.format(summary['message']))
     # return the summary (used by the gui/flask)
     return summary
@@ -1090,15 +1468,11 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
               mpmode: Optional[str] = None,
               ntasks: Optional[Any] = None,
               progress: Optional[Callable[[str], None]] = None,
-              cancel: Optional[threading.Event] = None
-              ) -> Dict[str, Any]:
+              cancel: Optional[threading.Event] = None,
+              owner: str = 'cli') -> Dict[str, Any]:
     """
-    Run queue task(s), optionally across multiple claim/execute cycles
-
-    If ntasks is unset the command runs one cycle by default (up to the
-    selected core count). If ntasks is set to a larger integer, or to
-    "all", repeated cycles are run until that limit is reached or the
-    queue cannot continue.
+    Run queue task(s), optionally across multiple claim/execute cycles,
+    recording the run in the process registry (see _queue_run_cycles)
 
     :param params: ParamDict, the parameter dictionary of constants
     :param cores: int or None, override the number of cores for this call
@@ -1109,14 +1483,66 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
                      (e.g. the gui activity log)
     :param cancel: threading.Event or None, when set no further tasks or
                    cycles are started (e.g. the gui "stop all running")
+    :param owner: str, 'gui' when started by the dashboard, else 'cli'
 
     :return: dictionary, combined summary of the queue run
     """
-    # normalize runtime options once for the whole command
     if cores is None:
         cores = get_queue_cores(params)
     if mpmode is None:
         mpmode = get_queue_mpmode(params)
+    label = 'apero_queue.py run --cores {0} --mpmode {1}'.format(cores,
+                                                                mpmode)
+    if ntasks is not None:
+        label += ' --ntasks {0}'.format(ntasks)
+    proc_dir = get_proc_dir(params)
+    rkwargs = dict(pid=os.getpid(), owner=owner, cmd=label)
+    proc_id = drs_queue_procs.register(proc_dir, 'run', label, **rkwargs)
+
+    def _on_claim(qids: List[str]):
+        drs_queue_procs.update(proc_dir, proc_id, qids=qids)
+
+    summary = dict(n_stopped=0)
+    returncode = 1
+    try:
+        qargs = [params, cores, mpmode, ntasks, progress, cancel, _on_claim]
+        summary = _queue_run_cycles(*qargs)
+        returncode = 0
+    finally:
+        stopped = summary.get('n_stopped', 0) > 0
+        drs_queue_procs.finish(proc_dir, proc_id, returncode,
+                               stopped=stopped)
+    return summary
+
+
+def _queue_run_cycles(params: ParamDict, cores: int, mpmode: str,
+                      ntasks: Optional[Any] = None,
+                      progress: Optional[Callable[[str], None]] = None,
+                      cancel: Optional[threading.Event] = None,
+                      on_claim: Optional[Callable[[List[str]], None]] = None
+                      ) -> Dict[str, Any]:
+    """
+    Run queue task(s), optionally across multiple claim/execute cycles
+
+    If ntasks is unset the command runs one cycle by default (up to the
+    selected core count). If ntasks is set to a larger integer, or to
+    "all", repeated cycles are run until that limit is reached or the
+    queue cannot continue.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param cores: int, the number of cores for this call
+    :param mpmode: str, the multiprocessing mode for this call
+    :param ntasks: int/str or None, total number of tasks to run, or
+                   "all" for no limit
+    :param progress: callable or None, receives short progress messages
+                     (e.g. the gui activity log)
+    :param cancel: threading.Event or None, when set no further tasks or
+                   cycles are started (e.g. the gui "stop all running")
+    :param on_claim: callable or None, receives the queue ids claimed in
+                     each cycle
+
+    :return: dictionary, combined summary of the queue run
+    """
     # parse the requested total task limit
     if ntasks is None:
         limit = get_queue_task_limit(params, cores)
@@ -1146,7 +1572,8 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
                                        summary['n_run'], limit_str))
         # run one claim/execute cycle
         cycle = _queue_run_once(params, get_queue_path(params), cycle_cores,
-                                mpmode, progress=progress, cancel=cancel)
+                                mpmode, progress=progress, cancel=cancel,
+                                on_claim=on_claim)
         # keep the first touched group for reporting
         if summary['group'] is None and cycle['group'] is not None:
             summary['group'] = cycle['group']
@@ -1216,8 +1643,12 @@ def queue_status(params: ParamDict):
     state_colors[QUEUE_FAILED_DIR] = colors.fail
     # -------------------------------------------------------------------------
     # print the summary (counts per state)
-    print(colors.header + 'APERO QUEUE STATUS' + colors.endc)
-    print('Queue path: {0}'.format(get_queue_path(params)))
+    wargs = [colors.header, colors.endc]
+    # log: {0}APERO QUEUE STATUS{1}
+    print(textentry('40-513-00002', args=wargs))
+    wargs = [get_queue_path(params)]
+    # log: Queue path: {0}
+    print(textentry('40-513-00003', args=wargs))
     for state in QUEUE_SUB_DIRS:
         # skip states filtered out
         if state not in states:
@@ -1229,7 +1660,8 @@ def queue_status(params: ParamDict):
         print('{0}\t{1}: {2}{3}'.format(*cargs))
     # deal with no entries at all
     if len(entries) == 0:
-        print('Queue is empty (no entries to show)')
+        # log: Queue is empty (no entries to show)
+        print(textentry('40-513-00011'))
         return
     # -------------------------------------------------------------------------
     # non-interactive mode (not a tty): just print the first page
@@ -1262,7 +1694,8 @@ def queue_status(params: ParamDict):
                 target = int(user_input[1:].strip())
                 position = max(0, min(target, len(entries) - 1))
             except ValueError:
-                print('Invalid jump target (use e.g. "j 1000")')
+                # log: Invalid jump target (use e.g. "j 1000")
+                print(textentry('40-513-00020'))
         # default (and 'n'): go forwards
         else:
             # do not go past the end of the list
@@ -1341,33 +1774,39 @@ def queue_reset(params: ParamDict):
     running_entries = list_queue_entries(params,
                                          states=[QUEUE_RUNNING_DIR])
     if len(running_entries) > 0 and QUEUE_RUNNING_DIR in states:
-        wmsg = ('Queue: There are {0} entries in the running directory - '
-                'tasks may currently be running!')
-        WLOG(params, 'warning', wmsg.format(len(running_entries)),
+        wargs = [len(running_entries)]
+        # warning: Queue: There are {0} entries in the running directory - tasks
+        #     may currently be running!
+        WLOG(params, 'warning', textentry('10-513-00004', args=wargs),
              sublevel=2)
     # -------------------------------------------------------------------------
     # count what we are about to remove
     entries = list_queue_entries(params, states=states)
     # deal with nothing to reset
     if len(entries) == 0:
-        WLOG(params, '', 'Queue: Nothing to reset')
+        # log: Queue: Nothing to reset
+        WLOG(params, '', textentry('40-513-00012'))
         return
     # ask the user to confirm the reset
     if not dry_run:
         question = ('Queue: Remove {0} entries from state(s) {1}? [y/N]: ')
         user_input = _ask(question.format(len(entries), ', '.join(states)))
         if not user_input.lower().startswith('y'):
-            WLOG(params, '', 'Queue: Reset cancelled')
+            # log: Queue: Reset cancelled
+            WLOG(params, '', textentry('40-513-00016'))
             return
     # -------------------------------------------------------------------------
     # do the reset (non-interactive core)
     n_removed = reset_queue(params, states, dry_run=dry_run)
     # log that the reset is done
+    margs = [n_removed, ', '.join(states)]
     if dry_run:
-        msg = 'Queue: Dry-run reset ({0} entries would be removed from {1})'
+        # text: Queue: Dry-run reset ({0} entries would be removed from {1})
+        msg = textentry('40-513-00040', args=margs)
     else:
-        msg = 'Queue: Reset complete ({0} entries removed from {1})'
-    WLOG(params, 'info', msg.format(n_removed, ', '.join(states)))
+        # text: Queue: Reset complete ({0} entries removed from {1})
+        msg = textentry('40-513-00041', args=margs)
+    WLOG(params, 'info', msg)
 
 
 def queue_init(params: ParamDict):
@@ -1399,7 +1838,9 @@ def queue_init(params: ParamDict):
     if name is None:
         existing = list_templates(params)
         if len(existing) > 0:
-            print('Existing templates: {0}'.format(', '.join(existing)))
+            wargs = [', '.join(existing)]
+            # log: Existing templates: {0}
+            print(textentry('40-513-00017', args=wargs))
         prompt = 'Template name [{0}]: '.format(QUEUE_DEFAULT_TEMPLATE)
         name = _ask(prompt)
     name = sanitize_template_name(name)
@@ -1407,12 +1848,16 @@ def queue_init(params: ParamDict):
     #   defaults otherwise)
     template = load_template(params, name)
     if template != dict(QUEUE_BATCH_DEFAULTS):
-        msg = 'Queue: Updating existing batch template "{0}"'
-        WLOG(params, '', msg.format(name))
+        wargs = [name]
+        # log: Queue: Updating existing batch template "{0}"
+        WLOG(params, '', textentry('40-513-00033', args=wargs))
     # -------------------------------------------------------------------------
     # ask the user for the sbatch settings (enter keeps current value)
-    print('APERO QUEUE BATCH TEMPLATE SETUP ("{0}")'.format(name))
-    print('Press ENTER to keep the [current] value\n')
+    wargs = [name]
+    # log: APERO QUEUE BATCH TEMPLATE SETUP ("{0}")
+    print(textentry('40-513-00004', args=wargs))
+    # log: Press ENTER to keep the [current] value
+    print(textentry('40-513-00005'))
     # define the questions to ask (key, question)
     questions = [
         ('time', 'sbatch --time (e.g. 48:00:00)'),
@@ -1434,14 +1879,18 @@ def queue_init(params: ParamDict):
             template[key] = user_input.strip()
     # -------------------------------------------------------------------------
     # ask the user for the activation script lines (multiple allowed)
-    print('\nActivation script lines (run at the start of every batch '
-          'job)')
-    print('e.g.: module load StdEnv/2023 python/3.12')
-    print('e.g.: source /path/to/env/bin/activate')
-    print('e.g.: source apero_profile.sh my_profile')
+    # log: Activation script lines (run at the start of every batch job)
+    print(textentry('40-513-00006'))
+    # log: e.g.: module load StdEnv/2023 python/3.12
+    print(textentry('40-513-00007'))
+    # log: e.g.: source /path/to/env/bin/activate
+    print(textentry('40-513-00008'))
+    # log: e.g.: source apero_profile.sh my_profile
+    print(textentry('40-513-00009'))
     # show any current activation lines
     if len(template['activation']) > 0:
-        print('Current activation lines:')
+        # log: Current activation lines:
+        print(textentry('40-513-00013'))
         for line in template['activation']:
             print('\t{0}'.format(line))
         # ask whether to keep or redefine them
@@ -1461,8 +1910,9 @@ def queue_init(params: ParamDict):
     # save the template under its name
     template_path = save_template(params, template, name)
     # log that the template has been written
-    msg = 'Queue: Batch template "{0}" written to {1}'
-    WLOG(params, 'info', msg.format(name, template_path))
+    wargs = [name, template_path]
+    # log: Queue: Batch template "{0}" written to {1}
+    WLOG(params, 'info', textentry('40-513-00030', args=wargs))
 
 
 def batch_queue(params: ParamDict, per_batch: int,
@@ -1514,6 +1964,8 @@ def batch_queue(params: ParamDict, per_batch: int,
         return summary
     template = load_template(params, safe_name)
     # -------------------------------------------------------------------------
+    # stale running tasks would block their group forever
+    fail_stale_running(params)
     # claim tasks inside the queue lock
     with QueueLock(params):
         # get the next unfinished group
@@ -1562,22 +2014,26 @@ def batch_queue(params: ParamDict, per_batch: int,
                                           dry_run=dry_run)
         summary['scripts'].append(script_path)
         # log the script creation
-        msg = 'Queue: \t Created batch script {0} ({1} tasks)'
-        WLOG(params, '', msg.format(script_path, len(batch_runs)))
+        wargs = [script_path, len(batch_runs)]
+        # log: Queue: Created batch script {0} ({1} tasks)
+        WLOG(params, '', textentry('40-513-00034', args=wargs))
     # -------------------------------------------------------------------------
     # submit the batch scripts via sbatch (if requested)
     if submit:
         if dry_run:
-            wmsg = 'Queue: dry-run scripts can still be submitted'
-            WLOG(params, 'warning', wmsg, sublevel=1)
+            # warning: Queue: dry-run scripts can still be submitted
+            WLOG(params, 'warning', textentry('10-513-00010'), sublevel=1)
         # check that sbatch is available
         if shutil.which('sbatch') is None:
             summary['message'] = ('"sbatch" not found on this machine - '
                                   'scripts written but not submitted')
-            WLOG(params, 'warning',
-                 'Queue: {0}'.format(summary['message']), sublevel=2)
+            wargs = [summary['message']]
+            # warning: Queue: {0}
+            WLOG(params, 'warning', textentry('10-513-00002', args=wargs),
+                 sublevel=2)
             return summary
         # submit each script via sbatch
+        job_ids = []
         for script_path in summary['scripts']:
             # submit the script
             cmd = ['sbatch', script_path]
@@ -1585,15 +2041,30 @@ def batch_queue(params: ParamDict, per_batch: int,
             # log the submission result
             if output.returncode == 0:
                 summary['n_submitted'] += 1
-                msg = 'Queue: \t Submitted {0}: {1}'
-                WLOG(params, '',
-                     msg.format(os.path.basename(script_path),
-                                output.stdout.strip()))
+                job_ids += drs_queue_procs.parse_sbatch_ids(output.stdout)
+                wargs = [os.path.basename(script_path), output.stdout.strip()]
+                # log: Queue: Submitted {0}: {1}
+                WLOG(params, '', textentry('40-513-00038', args=wargs))
             else:
-                wmsg = 'Queue: \t Failed to submit {0}: {1}'
-                WLOG(params, 'warning',
-                     wmsg.format(os.path.basename(script_path),
-                                 output.stderr.strip()), sublevel=2)
+                wargs = [os.path.basename(script_path), output.stderr.strip()]
+                # warning: Queue: Failed to submit {0}: {1}
+                WLOG(params, 'warning', textentry('10-513-00011', args=wargs),
+                     sublevel=2)
+        # record the submitted jobs (so the gui can follow/cancel them)
+        if len(job_ids) > 0:
+            log_globs = []
+            for job_id in job_ids:
+                log_globs.append(os.path.join(out_dirs['logs'],
+                                              job_id + '_*.out'))
+                log_globs.append(os.path.join(out_dirs['errors'],
+                                              job_id + '_*.err'))
+            qids = ['{0}/{1}'.format(group, run_file)
+                    for run_file in claimed_runs]
+            label = 'batch {0} ({1} job(s))'.format(group, len(job_ids))
+            rkwargs = dict(log_globs=log_globs, slurm_jobs=job_ids,
+                           qids=qids)
+            drs_queue_procs.register(get_proc_dir(params), 'batch', label,
+                                     **rkwargs)
     # -------------------------------------------------------------------------
     # construct the summary message
     if dry_run:
@@ -1639,9 +2110,9 @@ def queue_batch(params: ParamDict):
     name = _input_text('TEMPLATE')
     existing = list_templates(params)
     if len(existing) == 0:
-        emsg = ('Queue: No batch template found - please run '
-                '"apero_queue.py init" first')
-        WLOG(params, 'error', emsg)
+        # error: Queue: No batch template found - please run "apero_queue.py
+        #     init" first
+        WLOG(params, 'error', textentry('09-513-00004'))
         return
     if name is None:
         default_name = (QUEUE_DEFAULT_TEMPLATE if
@@ -1651,8 +2122,9 @@ def queue_batch(params: ParamDict):
         name = user_input if len(user_input) > 0 else default_name
     name = sanitize_template_name(name)
     if name not in existing:
-        emsg = 'Queue: No batch template "{0}" found (available: {1})'
-        WLOG(params, 'error', emsg.format(name, ', '.join(existing)))
+        eargs = [name, ', '.join(existing)]
+        # error: Queue: No batch template "{0}" found (available: {1})
+        WLOG(params, 'error', textentry('09-513-00005', args=eargs))
         return
     template = load_template(params, name)
     # -------------------------------------------------------------------------
@@ -1660,21 +2132,24 @@ def queue_batch(params: ParamDict):
     group, pending_runs, running_runs = get_next_group(params)
     # deal with an empty queue
     if group is None:
-        WLOG(params, '', 'Queue: Nothing to batch (queue is empty)')
+        # log: Queue: Nothing to batch (queue is empty)
+        WLOG(params, '', textentry('40-513-00014'))
         return
     # deal with the group having no pending tasks (but still running)
     if len(pending_runs) == 0:
-        wmsg = ('Queue: Group "{0}" has {1} task(s) still running - '
-                'waiting for group to finish (not starting next group)')
         wargs = [group, len(running_runs)]
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=2)
+        # warning: Queue: Group "{0}" has {1} task(s) still running - waiting
+        #     for group to finish (not starting next group)
+        WLOG(params, 'warning', textentry('10-513-00005', args=wargs),
+             sublevel=2)
         return
     # ---------------------------------------------------------------------
     # work out how to split the tasks into batches (cli args skip the
     #   corresponding question)
     n_tasks = len(pending_runs)
-    msg = 'Queue: Group "{0}" has {1} pending task(s)'
-    WLOG(params, 'info', msg.format(group, n_tasks))
+    wargs = [group, n_tasks]
+    # log: Queue: Group "{0}" has {1} pending task(s)
+    WLOG(params, 'info', textentry('40-513-00031', args=wargs))
     # tasks per batch script
     default_per_batch = int(template['cpus_per_task'])
     per_batch_input = _input_text('PER_BATCH')
@@ -1709,13 +2184,14 @@ def queue_batch(params: ParamDict):
     summary = batch_queue(params, per_batch, n_batches, submit, name,
                           dry_run=dry_run)
     # log the summary message
-    WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
+    wargs = [summary['message']]
+    # log: Queue: {0}
+    WLOG(params, 'info', textentry('40-513-00001', args=wargs))
     # tell the user where the scripts are (if not submitted)
     if len(summary['scripts']) > 0 and summary['n_submitted'] == 0:
-        msg = ('Queue: Scripts are in {0} (submit manually with '
-               'sbatch)')
-        WLOG(params, '',
-             msg.format(os.path.dirname(summary['scripts'][0])))
+        wargs = [os.path.dirname(summary['scripts'][0])]
+        # log: Queue: Scripts are in {0} (submit manually with sbatch)
+        WLOG(params, '', textentry('40-513-00035', args=wargs))
 
 
 def _group_queue_entries(params: ParamDict) -> Dict[str, Dict[str, List[str]]]:
@@ -1834,8 +2310,11 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
             group, run_file = str(task['qid']).split('/', 1)
             log_path = get_task_log_path(str(task['qpath']), group,
                                          run_file)
-            lines.extend(_shell_logged_command(str(task['command']),
-                                               log_path))
+            command = _monitored_command(str(task['command']),
+                                         str(task['qpath']), task['qid'],
+                                         task['shortname'],
+                                         task.get('recipe', ''), 'chain')
+            lines.extend(_shell_logged_command(command, log_path))
             lines.append('if [ $task_status -eq 0 ]; then')
             lines.append('    apero_queue.py system --qpath="{0}" '
                          '--qid="{1}" --qresult=success'.format(
@@ -1986,6 +2465,8 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         return summary
     template = load_template(params, safe_name)
     queue_path = get_queue_path(params)
+    # stale running tasks would block the chain forever
+    fail_stale_running(params)
     # claim queue work inside the lock
     with QueueLock(params):
         grouped = _group_queue_entries(params)
@@ -2055,9 +2536,11 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
                                         run_file)
                 run_dict = base.load_yaml(run_path)
                 task_cmd = dict(runstring=str(run_dict['runstring']))
-                command = _build_task_command(task_cmd)
+                command = _with_drs_group(_build_task_command(task_cmd),
+                                          run_dict.get('drs_group'))
                 qid = '{0}/{1}'.format(group, run_file)
                 item = dict(shortname=str(run_dict['shortname']),
+                            recipe=str(run_dict.get('recipe', '')),
                             command=command, qid=qid, qpath=queue_path)
                 chunk_tasks.append(item)
             task_name = 'chunk_{0:06d}.sh'.format(c_it + 1)
@@ -2092,6 +2575,20 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         output = subprocess.run(cmd, capture_output=True, text=True)
         if output.returncode == 0:
             summary['submitted'] = True
+            job_ids = drs_queue_procs.parse_sbatch_ids(output.stdout)
+            log_globs = []
+            for job_id in job_ids:
+                log_globs.append(os.path.join(logs_dir, job_id + '_*.out'))
+                log_globs.append(os.path.join(errors_dir,
+                                              job_id + '_*.err'))
+            qids = ['{0}/{1}'.format(group, run_file)
+                    for group in grouped_runs
+                    for run_file in grouped_runs[group]]
+            label = '{0} ({1} group(s))'.format(chain_name, len(worker_meta))
+            rkwargs = dict(cmd='bash ' + submit_path, log_globs=log_globs,
+                           slurm_jobs=job_ids, qids=qids)
+            drs_queue_procs.register(get_proc_dir(params), 'chain', label,
+                                     **rkwargs)
             summary['message'] = ('Chain created and submitted: {0} '
                                   'group(s), {1} task(s)')
             summary['message'] = summary['message'].format(
@@ -2131,9 +2628,9 @@ def queue_chain(params: ParamDict):
     name = _input_text('TEMPLATE')
     existing = list_templates(params)
     if len(existing) == 0:
-        emsg = ('Queue: No batch template found - please run '
-                '"apero_queue.py init" first')
-        WLOG(params, 'error', emsg)
+        # error: Queue: No batch template found - please run "apero_queue.py
+        #     init" first
+        WLOG(params, 'error', textentry('09-513-00004'))
         return
     if name is None:
         default_name = (QUEUE_DEFAULT_TEMPLATE if
@@ -2143,8 +2640,9 @@ def queue_chain(params: ParamDict):
         name = user_input if len(user_input) > 0 else default_name
     name = sanitize_template_name(name)
     if name not in existing:
-        emsg = 'Queue: No batch template "{0}" found (available: {1})'
-        WLOG(params, 'error', emsg.format(name, ', '.join(existing)))
+        eargs = [name, ', '.join(existing)]
+        # error: Queue: No batch template "{0}" found (available: {1})
+        WLOG(params, 'error', textentry('09-513-00005', args=eargs))
         return
     # dry-run can be set by --dry_run, otherwise defaults to False
     dry_run_value = _get_input_bool(params, 'DRY_RUN', default=False)
@@ -2169,10 +2667,13 @@ def queue_chain(params: ParamDict):
     summary = chain_queue(params, name, submit=submit,
                           per_batch=per_batch,
                           dry_run=dry_run)
-    WLOG(params, 'info', 'Queue: {0}'.format(summary['message']))
+    wargs = [summary['message']]
+    # log: Queue: {0}
+    WLOG(params, 'info', textentry('40-513-00001', args=wargs))
     if summary['submit_script'] is not None:
-        WLOG(params, '', 'Queue: Submit script: {0}'
-             ''.format(summary['submit_script']))
+        wargs = [summary['submit_script']]
+        # log: Queue: Submit script: {0}
+        WLOG(params, '', textentry('40-513-00015', args=wargs))
 
 
 def queue_system(params: ParamDict):
@@ -2196,7 +2697,8 @@ def queue_system(params: ParamDict):
     qresult = str(params['INPUTS']['QRESULT']).lower()
     # deal with a null qid
     if drs_text.null_text(qid, ['', 'None']):
-        WLOG(params, 'error', 'Queue: system mode requires --qid')
+        # error: Queue: system mode requires --qid
+        WLOG(params, 'error', textentry('09-513-00001'))
         return
     # split the qid into group and run file
     group, run_file = qid.split('/', 1)
@@ -2210,11 +2712,14 @@ def queue_system(params: ParamDict):
                           QUEUE_RUNNING_DIR, to_state)
     # log the result
     if moved:
-        msg = 'Queue: {0} --> {1}'
-        WLOG(params, '', msg.format(qid, to_state))
+        wargs = [qid, to_state]
+        # log: Queue: {0} --> {1}
+        WLOG(params, '', textentry('40-513-00027', args=wargs))
     else:
-        wmsg = 'Queue: could not move {0} (not in running)'
-        WLOG(params, 'warning', wmsg.format(qid), sublevel=2)
+        wargs = [qid]
+        # warning: Queue: could not move {0} (not in running)
+        WLOG(params, 'warning', textentry('10-513-00006', args=wargs),
+             sublevel=2)
 
 
 def queue_action_core(params: ParamDict, qaction: str,
@@ -2282,6 +2787,9 @@ def queue_action_core(params: ParamDict, qaction: str,
         msg = 'Queue: Stopped {0}, moved {1}, failed {2}'
         result['message'] = msg.format(stopped, moved, failed)
         return result
+    # route stale running check
+    if qaction == 'fail_stale_running':
+        return fail_stale_running(params)
     # remaining action: clear pending
     removed = reset_queue(params, [QUEUE_PENDING_DIR])
     result['success'] = True
@@ -2304,7 +2812,8 @@ def queue_action(params: ParamDict):
     # get action input
     qaction = str(params['INPUTS'].get('QACTION', 'None')).strip().lower()
     if drs_text.null_text(qaction, ['', 'None']):
-        WLOG(params, 'error', 'Queue: action mode requires --qaction')
+        # error: Queue: action mode requires --qaction
+        WLOG(params, 'error', textentry('09-513-00002'))
         return
     # get optional queue id
     qid = str(params['INPUTS'].get('QID', 'None')).strip()
@@ -2484,7 +2993,8 @@ def _set_task_pid(task: Dict[str, str], pid: Optional[int]):
         else:
             run_dict['pid'] = int(pid)
             run_dict['pid_host'] = socket.gethostname()
-        base.write_yaml(run_dict, run_path, width=float('inf'))
+        base.write_yaml(run_dict, run_path + '.tmp', width=float('inf'))
+        os.replace(run_path + '.tmp', run_path)
     except Exception:
         return
 
@@ -2572,13 +3082,15 @@ def _stop_all_running(params: ParamDict) -> Tuple[int, int, int]:
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _run_item_to_dict(run_item: Any, group_dirname: str) -> Dict[str, Any]:
+def _run_item_to_dict(run_item: Any, group_dirname: str,
+                      drs_group: Optional[str] = None) -> Dict[str, Any]:
     """
     Convert a Run instance into a plain dictionary for the queue yaml file
 
     :param run_item: Run instance, the run item to convert
     :param group_dirname: str, the name of the group directory this run
                           item belongs to
+    :param drs_group: str or None, the apero_processing group (DRS.GROUP)
 
     :return: dictionary, the queue yaml dictionary
     """
@@ -2591,6 +3103,7 @@ def _run_item_to_dict(run_item: Any, group_dirname: str) -> Dict[str, Any]:
     queue_dict['runstring'] = str(run_item.runstring)
     queue_dict['is_reference'] = bool(run_item.reference)
     queue_dict['group'] = str(group_dirname)
+    queue_dict['drs_group'] = drs_group
     queue_dict['state'] = QUEUE_STATE_PENDING
     queue_dict['priority'] = int(run_item.priority)
     # return the queue dictionary
@@ -2668,10 +3181,11 @@ def _get_status_rows(params: ParamDict, default: int) -> int:
                 try:
                     rows = int(value)
                 except (TypeError, ValueError):
-                    wmsg = ('Queue: Invalid --rows value "{0}" - using '
-                            'default ({1})')
-                    WLOG(params, 'warning', wmsg.format(value, default),
-                         sublevel=1)
+                    wargs = [value, default]
+                    # warning: Queue: Invalid --rows value "{0}" - using default
+                    #     ({1})
+                    WLOG(params, 'warning',
+                         textentry('10-513-00008', args=wargs), sublevel=1)
     # rows must be at least 1
     return max(rows, 1)
 
@@ -2712,11 +3226,14 @@ def _ask_int(question: str, default: int, minimum: int = 1) -> int:
         try:
             value = int(user_input)
         except ValueError:
-            print('Invalid integer - please try again')
+            # log: Invalid integer - please try again
+            print(textentry('40-513-00019'))
             continue
         # enforce the minimum value
         if value < minimum:
-            print('Value must be >= {0} - please try again'.format(minimum))
+            wargs = [minimum]
+            # log: Value must be >= {0} - please try again
+            print(textentry('40-513-00018', args=wargs))
             continue
         # return the valid value
         return value
@@ -2815,17 +3332,27 @@ def _run_task(task: Dict[str, str]) -> Tuple[str, bool, str]:
     # unbuffered python output so the log is written line by line
     env = dict(os.environ)
     env['PYTHONUNBUFFERED'] = '1'
+    # same processing group as an apero_processing run (logs, pending db)
+    env.pop(apero_base.DRS_GROUP_ENV, None)
+    if not drs_text.null_text(task.get('drs_group'), ['', 'None']):
+        env[apero_base.DRS_GROUP_ENV] = str(task['drs_group'])
     with open(log_path, 'w') as logfile:
         # own session so a stop can kill the whole task process group
         process = subprocess.Popen(command, shell=True, stdout=logfile,
                                    stderr=subprocess.STDOUT, env=env,
                                    start_new_session=True)
         _set_task_pid(task, process.pid)
+        qid = '{0}/{1}'.format(task['group'], task['run_file'])
+        monitor = drs_queue_stats.TaskMonitor(
+            task.get('stats_dir'), qid, task.get('shortname', ''),
+            recipe=task.get('recipe', ''), mode='run')
+        monitor.begin(process.pid)
         try:
             process.wait()
         except KeyboardInterrupt:
             # tasks are in their own session so Ctrl+C does not reach them
             _kill_pid(process.pid)
+            monitor.finish(-2, success=False)
             raise
     # the pid is left in the yaml: rewriting it here could race a stop
     #   action that has just moved the file out of running
@@ -2839,6 +3366,7 @@ def _run_task(task: Dict[str, str]) -> Tuple[str, bool, str]:
             if QUEUE_FAIL_SIGNATURE in line:
                 success = False
     tail = '\n'.join(tail_lines)
+    monitor.finish(process.returncode, success=success)
     # return the run file name, success flag and output tail
     return task['run_file'], success, tail
 
@@ -2888,8 +3416,9 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
                                        len(results), len(tasks)))
         # report failures (with the output tail)
         if status == 'FAILED':
-            wmsg = 'Queue: Task {0} FAILED:\n{1}'
-            WLOG(params, 'warning', wmsg.format(run_file, tail),
+            wargs = [run_file, tail]
+            # warning: Queue: Task {0} FAILED: \n {1}
+            WLOG(params, 'warning', textentry('10-513-00007', args=wargs),
                  sublevel=2)
     # -------------------------------------------------------------------------
     # linear mode: run tasks one after the other
@@ -2905,9 +3434,9 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
                 continue
             command = _build_task_command(task)
             # log which task we are running
-            msg = 'Queue: Running {0} [{1}/{2}]'
             margs = [task['shortname'], t_it + 1, len(tasks)]
-            WLOG(params, '', msg.format(*margs))
+            # log: Queue: Running {0} [{1}/{2}]
+            WLOG(params, '', textentry('40-513-00037', args=margs))
             WLOG(params, '', '\t{0}'.format(command), wrap=False)
             # run the task
             _started(task)
@@ -3071,8 +3600,13 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
         else:
             # add the runstring itself (output also teed to the task log)
             log_path = get_task_log_path(queue_path, group, run_file)
-            lines.extend(_shell_logged_command(str(run_dict['runstring']),
-                                               log_path))
+            command = _with_drs_group(str(run_dict['runstring']),
+                                      run_dict.get('drs_group'))
+            command = _monitored_command(command, queue_path, qid,
+                                         str(run_dict['shortname']),
+                                         str(run_dict.get('recipe', '')),
+                                         'batch')
+            lines.extend(_shell_logged_command(command, log_path))
             # add the apero_queue system call (moves the task to
             #   complete/failed based on the exit code of the runstring)
             lines.append('if [ $task_status -eq 0 ]; then')

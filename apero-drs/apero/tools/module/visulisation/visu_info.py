@@ -24,6 +24,7 @@ from apero.utils import drs_recipe
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore.core import drs_log
+from aperocore import drs_lang
 from apero.instruments import select
 from apero.utils import drs_utils
 
@@ -39,6 +40,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # get parameter dictionary
@@ -80,13 +83,15 @@ def process_path(params: ParamDict, path: str):
     # -------------------------------------------------------------------------
     # deal with path not existing
     if not os.path.exists(path):
-        WLOG(params, 'error', f'Path does not exist: {path}')
+        eargs = [path]
+        # error: Path does not exist: {0}
+        WLOG(params, 'error', textentry('09-511-00001', args=eargs))
         return
     # deal with all other cases where path is not a directory
     if not os.path.isdir(path):
-        emsg = 'Path is not a file or directory: {0}'
         eargs = [path]
-        WLOG(params, 'error',  emsg.format(*eargs))
+        # error: Path is not a file or directory: {0}
+        WLOG(params, 'error', textentry('09-511-00003', args=eargs))
         return
     # if we get to here process as a directory
     return process_directory(params, path)
@@ -96,9 +101,9 @@ def process_one_file(params: ParamDict, filename: str):
     # identify file type
     identity = identify_file(params, filename)
     # give the identity of the file
-    msg = 'File: {0} identified as: {1}'
     margs = [filename, identity]
-    WLOG(params, '',  msg.format(*margs))
+    # log: File: {0} identified as: {1}
+    WLOG(params, '', textentry('40-511-00010', args=margs))
     # generate info plot
     generate_info_plot(params, identity, filename)
     # return here
@@ -111,9 +116,9 @@ def process_wildcards(params: ParamDict, path: str):
     # find all files matching wildcard
     all_files = glob.glob(path, recursive=True)
     # display the number of files found
-    msg = 'Found {0} files matching wildcard'
     margs = [len(all_files)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Found {0} files matching wildcard
+    WLOG(params, 'info', textentry('40-511-00012', args=margs))
     valid_files, valid_identity = [], []
     if _use_multiprocessing_identify(params, all_files):
         valid_files, valid_identity = _collect_valid_files_mp(params,
@@ -130,9 +135,9 @@ def process_wildcards(params: ParamDict, path: str):
                 valid_identity.append(identity)
     # ---------------------------------------------------------------------
     # display the number of valid files found
-    msg = 'Found {0} valid files'
     margs = [len(valid_files)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Found {0} valid files
+    WLOG(params, 'info', textentry('40-511-00013', args=margs))
     # ---------------------------------------------------------------------
     # loop around valid files and generate info plots
     if _use_multiprocessing_plot(params, valid_files):
@@ -150,9 +155,9 @@ def process_wildcards(params: ParamDict, path: str):
 def process_directory(params: ParamDict, path: str):
     # -------------------------------------------------------------------------
     # print that we are searching directory
-    msg = 'Searching directory for files: {0}'
     margs = [path]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Searching directory for files: {0}
+    WLOG(params, 'info', textentry('40-511-00014', args=margs))
     # -------------------------------------------------------------------------
     # otherwise find files in directory
     all_files = []
@@ -161,9 +166,9 @@ def process_directory(params: ParamDict, path: str):
             all_files.append(os.path.join(root, file))
     # -------------------------------------------------------------------------
     # display the number of files found
-    msg = 'Found {0} files'
     margs = [len(all_files)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Found {0} files
+    WLOG(params, 'info', textentry('40-511-00015', args=margs))
     # -------------------------------------------------------------------------
     valid_files, valid_identity = [], []
     if _use_multiprocessing_identify(params, all_files):
@@ -181,9 +186,9 @@ def process_directory(params: ParamDict, path: str):
                 valid_identity.append(identity)
     # -------------------------------------------------------------------------
     # display the number of valid files found
-    msg = 'Found {0} valid files'
     margs = [len(valid_files)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Found {0} valid files
+    WLOG(params, 'info', textentry('40-511-00013', args=margs))
     # -------------------------------------------------------------------------
     # loop around valid files and generate info plots
     if _use_multiprocessing_plot(params, valid_files):
@@ -258,7 +263,8 @@ def _multi_process_identify_pathos(params: ParamDict, all_files: List[str],
     try:
         from pathos.pools import ParallelPool as Pool
     except ImportError:
-        WLOG(params, 'warning', 'pathos not available; using serial identify')
+        # warning: pathos not available; using serial identify
+        WLOG(params, 'warning', textentry('10-511-00001'))
         return _multi_identify(params, all_files, source=source)
 
     grouped_files = _split_all_files(all_files, cores)
@@ -327,14 +333,17 @@ def _multi_process_identify_process(params: ParamDict, all_files: List[str],
             group_id, group_result = queue.get(timeout=300)  # 5 minute timeout
             ordered_results[group_id] = group_result
         except Exception as e:
-            WLOG(params, 'warning', f'Failed to get result from queue: {e}')
+            wargs = [e]
+            # warning: Failed to get result from queue: {0}
+            WLOG(params, 'warning', textentry('10-511-00003', args=wargs))
 
     # Now join processes with timeout to avoid hanging
     for proc in jobs:
         proc.join(timeout=30)  # 30 second timeout per process
         if proc.is_alive():
-            emsg = f'Process {proc.pid} did not terminate, terminating forcefully'
-            WLOG(params, 'warning', emsg)
+            wargs = [proc.pid]
+            # warning: Process {0} did not terminate, terminating forcefully
+            WLOG(params, 'warning', textentry('10-511-00006', args=wargs))
             proc.terminate()
             proc.join(timeout=5)
             if proc.is_alive():
@@ -402,7 +411,8 @@ def _multi_process_plot_pathos(params: ParamDict, valid_identity: List[str],
     try:
         from pathos.pools import ParallelPool as Pool
     except ImportError:
-        WLOG(params, 'warning', 'pathos not available; using serial plotting')
+        # warning: pathos not available; using serial plotting
+        WLOG(params, 'warning', textentry('10-511-00002'))
         _multi_generate_plots(params, valid_identity, valid_files,
                               source=source)
         return
@@ -460,8 +470,9 @@ def _multi_process_plot_process(params: ParamDict, valid_identity: List[str],
     for proc in jobs:
         proc.join(timeout=300)  # 5 minute timeout per process
         if proc.is_alive():
-            emsg = f'Process {proc.pid} did not terminate, terminating forcefully'
-            WLOG(params, 'warning', emsg)
+            wargs = [proc.pid]
+            # warning: Process {0} did not terminate, terminating forcefully
+            WLOG(params, 'warning', textentry('10-511-00006', args=wargs))
             proc.terminate()
             proc.join(timeout=5)
             if proc.is_alive():
@@ -590,40 +601,45 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str,
     if identity in KNOWN_IDENTITIES:
         # log that we are generating info plot
         if verbose:
-            WLOG(params, '', f'Generating info plot for file: {filename}')
+            margs = [filename]
+            # log: Generating info plot for file: {0}
+            WLOG(params, '', textentry('40-511-00003', args=margs))
         # get plot function
         plot_func = KNOWN_IDENTITIES[identity]
         # if plot function is not defined then we return
         if plot_func is None:
             if identity not in NO_FUNC_IDENTITIES:
                 if verbose:
-                    WLOG(params, 'warning', f'No plot function for {identity}')
+                    wargs = [identity]
+                    # warning: No plot function for {0}
+                    WLOG(params, 'warning',
+                         textentry('10-511-00005', args=wargs))
                 NO_FUNC_IDENTITIES.append(identity)
             return
         # otherwise call the plot function
         if params['INPUTS'].get('TEST', False):
             if verbose:
-                WLOG(params, 'info',
-                     f'Test mode: would have generated plot for {filename} '
-                     f'using {str(plot_func)}')
+                margs = [filename, str(plot_func)]
+                # log: Test mode: would have generated plot for {0} using {1}
+                WLOG(params, 'info', textentry('40-511-00004', args=margs))
             return
         else:
             # catch errors
             try:
                 plot_func(params, filename, identity)
             except Exception as e:
-                emsg = ('Error rendering {0} [{1}]'
-                        '\n\t Filename = {2} \n\t {3}: {4}')
                 eargs = [str(plot_func), identity, filename,
                          type(e), str(e)]
-                raise AperoCodedException(params, None, targs=eargs,
-                                          message=emsg.format(*eargs))
+                # error: Error rendering {0} [{1}] \n Filename = {2} \n {3}: {4}
+                raise AperoCodedException(params, '09-511-00007', targs=eargs)
     # else
     else:
 
         if identity not in UNKNOWN_IDENTITIES:
             if verbose:
-                WLOG(params, 'warning', f'Unknown identity: {identity}')
+                wargs = [identity]
+                # warning: Unknown identity: {0}
+                WLOG(params, 'warning', textentry('10-511-00004', args=wargs))
             UNKNOWN_IDENTITIES.append(identity)
         return
 

@@ -162,6 +162,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Get transform parameters (transform image onto fpref)
         # ----------------------------------------------------------------------
         # log progress
+        # log: Calculating transformation of image onto reference FP
         WLOG(params, '', textentry('40-014-00033'))
         # transform
         targs = [params, recipe, reffp_image, image]
@@ -215,6 +216,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
+            # error: QC failure of reference recipe: {0}
             raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # plot a zoom in of non-shifted vs shifted

@@ -89,6 +89,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     # print progress
     if log:
         WLOG(params, 'info', params['LOG.HEADER'])
+        # log: Analysing calibration raw files on disk
         WLOG(params, 'info', textentry('40-503-00047'))
         WLOG(params, 'info', params['LOG.HEADER'])
     # get calibration files grouped by recipe
@@ -158,6 +159,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
                                 # print warning: MISSING {0} OBS_DIR={1}
                                 #                RECIPE={2})
                                 wargs = [drsfile, uobsdir, recipe_name]
+                                # text: Missing {0}(OBS_DIR={1} RECIPE={2})
                                 wmsg = textentry('10-503-00025', args=wargs)
                                 WLOG(params, 'warning', wmsg, sublevel=2)
                             missing = True
@@ -198,6 +200,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
                     if count == 0 and srecipe.calib_required:
                         if log:
                             wargs = [drsfilenames, uobsdir, recipe_name]
+                            # text: Missing {0}(OBS_DIR={1} RECIPE={2})
                             wmsg = textentry('10-503-00025', args=wargs)
                             WLOG(params, 'warning', wmsg, sublevel=2)
                         missing = True
@@ -232,6 +235,7 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
         if not missing:
             # print msg: Minimum number of calibrations found
             if log:
+                # log: Minimum number of calibrations found
                 WLOG(params, '', textentry('40-503-00049'))
         else:
             bad_calib_nights.append(uobsdir)
@@ -243,23 +247,22 @@ def _get_date_filelogic_map(params: ParamDict,
                             arg: DrsArgument) -> Tuple[str, dict]:
     """Get and validate the date-filelogic mapping for an argument."""
     if drs_text.null_text(arg.filelogictag, ['None', '']):
-        emsg = ('drs_precheck.calib_check: filelogic="date" requires '
-                'filelogictag to be set for argument {0}')
         eargs = [arg.name]
-        raise drs_log.AperoCodedException(params, None,
-                                          message=emsg.format(*eargs))
+        # error: drs_precheck.calib_check: filelogic="date" requires
+        #     filelogictag to be set for argument {0}
+        raise drs_log.AperoCodedException(params, '09-502-00004', targs=eargs)
     map_key = 'FILES.DATES.{0}'.format(arg.filelogictag)
     if map_key not in params:
-        emsg = ('drs_precheck.calib_check: filelogic="date" could not '
-                'find {0} in params')
-        raise drs_log.AperoCodedException(params, None,
-                                          message=emsg.format(map_key))
+        eargs = [map_key]
+        # error: drs_precheck.calib_check: filelogic="date" could not find {0}
+        #     in params
+        raise drs_log.AperoCodedException(params, '09-502-00005', targs=eargs)
     date_map = params[map_key]
     if (date_map is None) or (len(date_map) == 0):
-        emsg = ('drs_precheck.calib_check: filelogic="date" found empty '
-                'mapping for {0}')
-        raise drs_log.AperoCodedException(params, None,
-                                          message=emsg.format(map_key))
+        eargs = [map_key]
+        # error: drs_precheck.calib_check: filelogic="date" found empty mapping
+        #     for {0}
+        raise drs_log.AperoCodedException(params, '09-502-00006', targs=eargs)
     return map_key, date_map
 
 
@@ -270,11 +273,10 @@ def _get_date_range_mask(mjdmids: np.ndarray, params: ParamDict,
     cond1 = not hasattr(drange, '__len__')
     cond2 = len(drange) != 2
     if cond1 or cond2:
-        emsg = ('drs_precheck.calib_check: invalid range for {0} in {1} '
-                '(expected [start_mjd, end_mjd])')
         eargs = [dprtype, map_key]
-        raise drs_log.AperoCodedException(params, None,
-                                          message=emsg.format(*eargs))
+        # error: drs_precheck.calib_check: invalid range for {0} in {1}
+        #     (expected [start_mjd, end_mjd])
+        raise drs_log.AperoCodedException(params, '09-502-00007', targs=eargs)
     mjd_min = float(drange[0])
     mjd_max = float(drange[1])
     mjd_arr = np.array(mjdmids, dtype=float)
@@ -336,6 +338,7 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     # print msg: Analysing telluric and science raw files on disk
     if log:
         WLOG(params, 'info', params['LOG.HEADER'])
+        # log: Analysing telluric and science raw files on disk
         WLOG(params, 'info', textentry('40-503-00050'))
         WLOG(params, 'info', params['LOG.HEADER'])
     # get telluric raw files
@@ -406,6 +409,7 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
         # else print observation directory
         elif log:
             margs = [uobsdir]
+            # log: Processing observation directory: {0}
             WLOG(params, 'info', textentry('40-503-00048', args=margs),
                  colour='magenta')
         # ---------------------------------------------------------------------
@@ -428,6 +432,7 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
                 # print msg: Found {0} {1} telluic files'
                 if log:
                     margs = [tcount, drsfile]
+                    # log: Found {0} {1} telluric files
                     WLOG(params, '', textentry('40-503-00051', args=margs))
                 # we are not missing all telluric files
                 t_missing = False
@@ -561,6 +566,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # print msg: file check summary
     WLOG(params, 'info', params['LOG.HEADER'])
+    # log: File check summary
     WLOG(params, 'info', textentry('40-503-00053'))
     WLOG(params, 'info', params['LOG.HEADER'])
     # -------------------------------------------------------------------------
@@ -581,8 +587,10 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
              sublevel=3)
 
     if len(bad_nights) == 0 and len(engineering_nights) == 0:
+        # log: All observation directories passed prechecks.
         WLOG(params, '', textentry('40-503-00054'))
     else:
+        # log: All observation directories passed prechecks.
         WLOG(params, '', textentry('40-503-00054'))
 
 
@@ -614,6 +622,7 @@ def get_raw_seq_files(params: ParamDict, recipe: DrsRecipe,
     func_name = __NAME__ + '.get_raw_seq_files'
     # print progress: Getting file types for sequence={0}
     if log:
+        # log: Getting file types for sequence={0}
         WLOG(params, '', textentry('40-503-00056', args=[sequence]))
     # -------------------------------------------------------------------------
     # get template list (if required)
@@ -780,6 +789,7 @@ def update_raw_findex_db(params: ParamDict, recipe: DrsRecipe,
         findexdbm.load_db()
     # -------------------------------------------------------------------------
     # log block update
+    # log: Updating index database with new {0} files
     WLOG(params, '', textentry('40-503-00044', args=['raw']))
     # update index database for raw for the obsdir
     _ = drs_utils.update_index_db(params, block_kind='raw',
@@ -805,7 +815,8 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     # print progress
     if log:
         WLOG(params, 'info', params['LOG.HEADER'])
-        WLOG(params, 'info', 'Checking current set of object names')
+        # log: Checking current set of object names
+        WLOG(params, 'info', textentry('40-502-00014'))
         WLOG(params, 'info', params['LOG.HEADER'])
     # ---------------------------------------------------------------------
     # get psuedo constants
@@ -827,6 +838,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     if params['UPDATE_OBJ_DATABASE']:
         # log progress
         if log:
+            # log: Updating object database (from google sheets)
             WLOG(params, '', textentry('40-503-00039'))
         # update database
         manage_databases.validate_astrometric_yaml_archive(params, log=False)
@@ -855,6 +867,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     # print progress: Preparing list of unique objects from file index database
     if log:
         margs = [len(uobjnames)]
+        # log: Preparing list of unique objects from file index database (N={0})
         WLOG(params, '', textentry('40-503-00057', args=margs))
     # get the object rejection list
     reject_list = prep.get_obj_reject_list(params)
@@ -879,6 +892,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     last_obs_date = []
     # Print progress: Finding all original names for each unfound object
     if log:
+        # log: Finding all original names for each unfound object
         WLOG(params, 'info', textentry('40-503-00058'))
     # loop around
     for unfound_object in tqdm(unfound_objects):
@@ -908,6 +922,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     # print any remaining objects
     if log:
         # print msg: Objects that will use the header for astrometrics are:
+        # log: Objects that will use header for astrometrics are:
         WLOG(params, '', textentry('40-503-00059'), colour='magenta',
              wrap=False)
         # deal with having no unfound objects
@@ -920,13 +935,13 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
             # loop around objects and put on a new line
             for it in range(len(unfound_objects)):
                 # print the object
-                msg = ('\t{0}\t{1:30s}\t(APERO: {2})'
-                       '\tLAST[{3}, {4}, {5}]')
                 margs = [it + 1, ' or '.join(orig_names[it]),
                          unfound_objects[it],
                          last_runid[it], last_pi_name[it],
                          last_obs_date[it]]
-                WLOG(params, 'warning', msg.format(*margs), sublevel=8)
+                # warning: {0}{1:30s}(APERO: {2})LAST[{3}, {4}, {5}]
+                WLOG(params, 'warning', textentry('10-502-00004', args=margs),
+                     sublevel=8)
             # print a note that some objects are in ignore list
             if len(reject_list) > 0:
                 # print msg: Note {0} objects are in the ignore list/ignore

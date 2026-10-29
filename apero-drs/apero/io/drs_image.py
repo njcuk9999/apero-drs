@@ -136,6 +136,8 @@ def resize(image: np.ndarray,
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
             eargs = ['xlow', 'xhigh', xlow, func_name]
+            # error: {0}' and '{1}' cannot have the same values (={2}). \n
+            #     function = {3}
             raise AperoCodedException(None, '00-001-00023', targs=eargs)
         else:
             x = np.arange(xlow, xhigh)
@@ -144,6 +146,8 @@ def resize(image: np.ndarray,
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
             eargs = ['ylow', 'yhigh', xlow, func_name]
+            # error: {0}' and '{1}' cannot have the same values (={2}). \n
+            #     function = {3}
             raise AperoCodedException(None, '00-001-00023', targs=eargs)
         else:
             y = np.arange(ylow, yhigh)
@@ -152,10 +156,14 @@ def resize(image: np.ndarray,
         newimage = np.take(np.take(image, x, axis=1), y, axis=0)
     except Exception as e:
         eargs = [xlow, xhigh, ylow, yhigh, type(e), e, func_name]
+        # error: Cannot resize image to ({0}-{1} by {2}-{3}) \n Error {4}: {5}
+        #     \n function = {6}
         raise AperoCodedException(None, '00-001-00024', targs=eargs)
     # return error if we removed all pixels
     if newimage.shape[0] == 0 or newimage.shape[1] == 0:
         eargs = [xlow, xhigh, ylow, yhigh, func_name]
+        # error: All pixels were removed in resizing ({0}-{1} by {2}-{3}) \n
+        #     Function = {4}
         raise AperoCodedException(None, '00-001-00025', targs=eargs)
 
     # return new image
@@ -190,15 +198,15 @@ def flip_image(params: ParamDict, image: np.ndarray,
     elif flip_kind == 'y':
         fliprows, flipcols = True, False
     else:
-        # TODO: Add to language database
-        emsg = 'flip_kind="{0}" is invalid must be: {1}'
         eargs = [flip_kind, '"None", "both", "x", "y"']
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: flip_kind="{0}" is invalid must be: {1}
+        raise AperoCodedException(params, '00-001-00062', targs=eargs)
 
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
+        # error: {0} database: could not copy file {1} to {2}. \n Error {3}: {4}
+        #     \n function = {5}
         raise AperoCodedException(params, '09-002-00001', targs=eargs)
 
     # flip both dimensions
@@ -458,6 +466,8 @@ def get_fiber_types(params: ParamDict,
         return [fiber]
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
+        # error: User requested fiber={0} however fiber must be: {1} \n Function
+        #     = {2}
         raise AperoCodedException(params, '09-001-00030', targs=eargs)
 
 
@@ -616,11 +626,9 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     elif math == 'sum':
         cfunc = mp.nansum
     else:
-        # TODO: Add to language database
-        emsg = 'Math error: {0} is invalid must be: {1}'
         eargs = [math, '"median" or "mean" or "sum"']
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Math error: {0} is invalid must be: {1}
+        raise AperoCodedException(params, '00-001-00061', targs=eargs)
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -658,6 +666,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
     else:
         # fmt="{0}" is incorrect
         eargs = [fmt, 'fits, npy', func_name]
+        # error: Fmt='{0}' is incorrect \n Must be: {1} \n Function = {2}
         raise AperoCodedException(params, '00-001-00044', targs=eargs)
     # ----------------------------------------------------------------------
     # deal with only having 1 file
@@ -691,6 +700,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # log message so we know how far through we are
         # Processing file {0} / {1}
         wargs = [f_it + 1, numfiles]
+        # text: Copying file {0} to {1}
         wmsg = textentry('40-000-00011', args=wargs)
         drs_base.base_printer('40-000-00012', level='', args=wargs,
                               message=wmsg)
@@ -704,6 +714,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         else:
             # fmt="{0}" is incorrect
             eargs = [fmt, 'fits, npy', func_name]
+            # error: Fmt='{0}' is incorrect \n Must be: {1} \n Function = {2}
             raise AperoCodedException(params, '00-001-00044', targs=eargs)
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
@@ -716,6 +727,9 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             # Files are not the same shape
             eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
                      func_name]
+            # error: Files are not the same shape \n File[0] = ({0}x{1}) \n
+            #     File[{2}] = ({3}x{4}) \n File[0]: {5} \n File[{2}]: {6} \n
+            #     Function={7}
             raise AperoCodedException(params, '00-001-00045', targs=eargs)
         # ------------------------------------------------------------------
         # deal with no fkwargs
@@ -737,6 +751,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
+            # text: Saving ribbon file: {0}
             msg = textentry('40-000-00013', args=[ribbon_path])
             drs_base.base_printer('40-000-00013', msg, level='',
                                   args=[ribbon_path])
@@ -754,6 +769,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
         # log message so we know how far through we are
         # Combining ribbon {0} / {1}
         wargs = [b_it + 1, len(bins)]
+        # text: Combining ribbon {0} of {1}
         msg = textentry('40-000-00014', args=wargs)
         drs_base.base_printer('40-000-00014', msg, level='', args=wargs)
         # store box
@@ -768,6 +784,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon_path = os.path.join(subfilepath, base_ribbon_name)
             # load ribbon
             # log: Loading file: {0}
+            # text: Loading ribbon file: {0}
             msg = textentry('40-000-00015', args=[ribbon_path])
             drs_base.base_printer('40-000-00015', msg, level='',
                                   args=[ribbon_path])
@@ -775,6 +792,7 @@ def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
             # log: Removing file: {0}
+            # text: Removing ribbon file: {0}
             msg = textentry('40-000-00016', args=[ribbon_path])
             drs_base.base_printer('40-000-00016', msg, level='',
                                   args=[ribbon_path])

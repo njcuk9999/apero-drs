@@ -34,36 +34,28 @@ def test_calculate_blaze_flat_sinc_recovers_flat_profile() -> None:
     assert rms < 0.05
 
 
-def test_flux_edge_trace_low_edge_flux_for_smooth_order() -> None:
-    """A well-behaved order with a smooth peak in the middle should have
-    low edge flux and no failed orders."""
-    norders = 3
-    profile = _synthetic_order(npix=100, center=50.0) + 1.0
-    e2dsll = np.tile(profile, (norders * 4, 1))
-    e2ds = np.zeros((norders, 10))
-    med, flux_edge, max_edge_flux, failed_orders = \
-        flat_blaze_core.flux_edge_trace(e2ds, e2dsll, mid_size=5,
-                                        ignore_orders=[], flux_edge_limit=0.5)
-    assert med.shape == (norders, 4)
-    assert flux_edge.shape == (norders,)
-    assert max_edge_flux == np.nanmax(flux_edge)
-    assert failed_orders == []
+def test_compute_flat_response_keeps_missing_traces_nan() -> None:
+    """An absent trace retains NaN response and uncertainty samples."""
+    order_map = np.zeros((4, 10), dtype=int)
+    xmap = np.tile(np.arange(10.0), (4, 1))
+    response_args = [order_map, xmap, dict(A=np.ones((4, 10))),
+                     dict(A=(1, 1)), 1.0, 2, 4.0, 2.0]
+    response, errors = flat_blaze_core.compute_flat_response(*response_args)
+    assert response['A'].shape == (1, 20)
+    assert errors['A'].shape == (1, 20)
+    assert np.isnan(response['A']).all()
+    assert np.isnan(errors['A']).all()
 
 
-def test_flux_edge_trace_ignores_requested_orders() -> None:
-    """Orders in ignore_orders should be set to NaN and excluded from the
-    failed orders list even if their raw edge flux would be high."""
-    norders = 2
-    e2dsll = np.zeros((norders * 4, 1))
-    # give the profile a big edge (index 0 and last) contribution
-    e2dsll[:, 0] = 1.0
-    e2ds = np.zeros((norders, 10))
-    med, flux_edge, max_edge_flux, failed_orders = \
-        flat_blaze_core.flux_edge_trace(e2ds, e2dsll, mid_size=1,
-                                        ignore_orders=[0],
-                                        flux_edge_limit=0.1)
-    assert np.isnan(flux_edge[0])
-    assert 0 not in failed_orders
+def test_compute_flat_response_skips_empty_groups() -> None:
+    """An explicitly empty spectral grouping produces no response arrays."""
+    order_map = np.zeros((4, 10), dtype=int)
+    xmap = np.tile(np.arange(10.0), (4, 1))
+    response_args = [order_map, xmap, dict(A=np.ones((4, 10))),
+                     dict(A=(1, 1)), 1.0, 2, 4.0, 2.0, [('A', [])]]
+    response, errors = flat_blaze_core.compute_flat_response(*response_args)
+    assert response == dict()
+    assert errors == dict()
 
 
 def test_compute_flat_response_uses_grouped_fibers() -> None:
@@ -99,11 +91,9 @@ def test_compute_flat_response_uses_grouped_fibers() -> None:
     flat_response, flat_response_err = frout
 
     assert list(flat_response.keys()) == ['A', 'B', 'AB', 'C']
-    assert flat_response['A'].shape == (2, ncols)
-    assert flat_response['B'].shape == (2, ncols)
-    assert flat_response['AB'].shape == (2, ncols)
-    assert flat_response['C'].shape == (2, ncols)
-    assert flat_response_err['AB'].shape == (2, ncols)
+    for fiber in ('A', 'B', 'AB', 'C'):
+        assert flat_response[fiber].shape == (2, 2 * ncols)
+        assert flat_response_err[fiber].shape == (2, 2 * ncols)
 
     med_a = np.nanmedian(flat_response['A'], axis=1)
     med_b = np.nanmedian(flat_response['B'], axis=1)

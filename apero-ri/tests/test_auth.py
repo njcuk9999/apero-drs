@@ -1,5 +1,7 @@
 """Tests for authentication utilities in apero_ri.core.auth."""
 
+from pathlib import Path
+
 import pytest
 from apero_ri.core import auth
 # Keep tests isolated when auth caches directory-initialization state.
@@ -92,6 +94,24 @@ def test_default_user_password_not_hardcoded(tmp_path, capsys):
 # =============================================================================
 # User management
 # =============================================================================
+
+def test_set_ari_dir_initializes_new_root(tmp_path: Path) -> None:
+    """Verify user storage is initialized after changing roots.
+
+    :param tmp_path: Temporary directory containing both storage roots.
+    :return: None.
+    """
+    original_dir = auth.ARI_DIR
+    try:
+        auth.set_ari_dir(str(tmp_path / 'first'))
+        auth.save_users(dict())
+        auth.set_ari_dir(str(tmp_path / 'second'))
+        auth.save_users(dict())
+        assert auth.USERS_FILE.is_file()
+        assert auth.load_users() == dict()
+    finally:
+        auth.set_ari_dir(str(original_dir))
+
 
 def test_create_and_authenticate(tmp_path):
     _set_ari_dir_for_test(tmp_path)

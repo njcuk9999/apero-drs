@@ -184,6 +184,8 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
     # complain if the flat image and dark image do not have the same dimensions
     if dimage.shape != fimage.shape:
         eargs = [fimage.shape, dimage.shape, func_name]
+        # error: Shapes do not match for flat image '{0}' and dark image '{1}'
+        #     \n function = {2}
         raise AperoCodedException(params, '09-012-00002', targs=eargs)
     # -------------------------------------------------------------------------
     # delegate numerical work to the profile-independent core module
@@ -192,6 +194,10 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
     badpix_map, badpix_stats = outs
     # -------------------------------------------------------------------------
     # log results
+    # log: Fraction of hot pixels from dark: {0:.4f} % \n Fraction of bad pixels
+    #     from flat: {1:.4f} % \n Fraction of non-finite pixels in dark: {2:.4f}
+    #     % \n Fraction of non-finite pixels in flat: {3:.4f} % \n Fraction of
+    #     bad pixels with all criteria: {4:.4f} %
     WLOG(params, '', textentry('40-012-00006', args=badpix_stats))
     # -------------------------------------------------------------------------
     # return bad pixel map
@@ -233,6 +239,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     """
     func_name = __NAME__ + '.locate_bad_pixels_full()'
     # log that we are looking for bad pixels
+    # log: Looking for bad pixels in the full flat image
     WLOG(params, '', textentry('40-012-00002'))
     # get parameters from params/kwargs
     threshold = pcheck(params, 'CAL.BPIX.FULL_THRES', func=func_name,
@@ -252,6 +259,8 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     # check if the shape of the image and the full flat match
     if image.shape != mdata.shape:
         eargs = [mdata.shape, image.shape, func_name]
+        # error: Shapes do not match for engineering full flat: '{0}' and image:
+        #     '{1}' \n function: {2}
         raise AperoCodedException(params, '09-012-00001', targs=eargs)
     # apply threshold (delegate numerical work to the profile-independent
     # core module)
@@ -259,6 +268,7 @@ def locate_bad_pixels_full(params: ParamDict, image: np.ndarray,
     # -------------------------------------------------------------------------
     # log results
     badpix_stats = [100.0 * (np.sum(mask) / np.array(mask).size)]
+    # log: Fraction of un-illuminated pixels in engineering flat {0:.4f} %
     WLOG(params, '', textentry('40-012-00004', args=[badpix_stats[0]]))
     # return mask
     # noinspection PyTypeChecker
@@ -287,16 +297,17 @@ def correction(params: ParamDict, image: Union[np.ndarray, None],
     mask = np.array(badpiximage, dtype=bool)
     # -------------------------------------------------------------------------
     if image is None and not return_map:
-        # TODO: Add to language database
-        emsg = ('Image cannot be None if we are not just returning the map'
-                ' please set "image" or set "return_map=True"')
-        raise AperoCodedException(params, message=emsg)
+        # error: Image cannot be None if we are not just returning the map
+        #     please set "image" or set "return_map=True"
+        raise AperoCodedException(params, '09-012-00003')
     # if return map just return the bad pixel map
     if return_map:
         return mask
     # else put NaNs into the image
     else:
         # log that we are setting background pixels to NaN
+        # log: Correcting for bad pixels (setting bad pixels to NaN) \n file =
+        #     {0}
         WLOG(params, '', textentry('40-012-00008', args=[badpixfile]))
         # correct image (set bad pixels to zero)
         corrected_image = np.array(image)
@@ -328,10 +339,12 @@ def quality_control(params: ParamDict) -> Tuple[List[list], int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -403,6 +416,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
     badpixfile.data = bad_pixel_map1
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving badpix map to {0}
     WLOG(params, '', textentry('40-012-00013', args=[badpixfile.filename]))
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
@@ -436,6 +450,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, flatfile: DrsFitsFile,
     backmapfile.data = backmap
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving background map to {0}
     WLOG(params, '', textentry('40-012-00014', args=[backmapfile.filename]))
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:

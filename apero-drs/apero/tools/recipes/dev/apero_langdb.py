@@ -16,6 +16,7 @@ from typing import Any, Dict
 
 from aperocore.base import base
 from apero.tools.module.error import find_error
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -27,6 +28,8 @@ __version__ = apero_pkg.__version__
 __authors__ = apero_pkg.__authors__
 __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
+# Get the text types
+textentry = drs_lang.textentry
 # define the drs name (and module name)
 DRS_PATH = __PACKAGE__
 # Define text (cannot use lanugage database to make language database)
@@ -86,7 +89,8 @@ def main():
         return find_error.main()
 
     else:
-        print('No option selected. See --help for options')
+        # log: No option selected. See --help for options
+        print(textentry('40-517-00022'))
 
 
 # =============================================================================

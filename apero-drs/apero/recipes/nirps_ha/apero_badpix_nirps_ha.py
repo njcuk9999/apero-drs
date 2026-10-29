@@ -139,6 +139,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # warn user if lengths differ
     if len(flatfiles) != len(darkfiles):
         wargs = [len(flatfiles), len(darkfiles)]
+        # error: Inconsistent number of input flat / dark files (No. flat={0},
+        #     No. dark={1}) and combine set to False.
         raise AperoCodedException(params, '10-012-00001', targs=wargs)
     else:
         # get the number of files
@@ -183,6 +185,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # total number of bad pixels
         btotal = (mp.nansum(bad_pixel_map) / bad_pixel_map.size) * 100
         # log result
+        # log: Fraction of total bad pixels: {0:.4f} %
         WLOG(params, '', textentry('40-012-00007', args=[btotal]))
 
         # ------------------------------------------------------------------
@@ -261,6 +264,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
+            # error: QC failure of reference recipe: {0}
             raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # Summary plots

@@ -55,6 +55,8 @@ admin:
     - manage.admin.backup_setup
     - manage.admin.sshfs_setup
     - manage.admin.database_setup
+    # define APERO queue dashboards (unrestricted dashboard actions)
+    - manage.admin.apero_queue_setup
     - manage.admin.user_db_access
     # host APERO asset tars (Assets Management page + upload API)
     - manage.admin.asset_management

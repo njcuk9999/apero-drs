@@ -117,9 +117,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # check whether filetype is in allowed types
         if filetype not in allowedtypes:
+            # text: Invalid file type = '{0}'. \n function = {1}. \n Must be one
+            #     of the following:
             emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
+            # error: Invalid file type = '{0}'. \n function = {1}. \n Must be
+            #     one of the following:
             raise AperoCodedException(params, '01-001-00020',
                                       targs=[filetype, mainname],
                                       message=emsg)
@@ -132,6 +136,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # deal with defintion not found
         if rawfile is None:
             eargs = [filetype, recipe.name, mainname]
+            # error: Filetype '{0}' is not valid for recipe={0} instrument={1}.
+            #     \n Function = {2}
             raise AperoCodedException(params, '09-010-00001', targs=eargs)
         # ------------------------------------------------------------------
         # get the reference start and end date
@@ -184,6 +190,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         infile = drs_file.fix_header(params, infile)
         # ------------------------------------------------------------------
         # print progress
+        # log: Constructing preprocessing reference mask (Filetype = {0})
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
         mask, props = preprocessing.nirps_order_mask(params, recipe,
@@ -212,6 +219,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [outfile.filename]
+        # log: Saving preprocessing reference mask: {0}
         WLOG(params, '', textentry('40-010-00015', args=wargs))
         # define multi lists
         data_list, name_list = [], []

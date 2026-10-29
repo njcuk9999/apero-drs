@@ -17,6 +17,7 @@ from ttkthemes import ThemedTk
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore import drs_lang
 from apero.utils import drs_startup
 from apero.tools.module.gui import widgets
 from apero.base import base as apero_base
@@ -35,6 +36,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get instrument names
 INSTRUMENTS = apero_base.INSTRUMENTS
 
@@ -83,7 +86,8 @@ class TestApp(ThemedTk):
 
     def execute(self):
         self.update()
-        print('Settings Entered:')
+        # log: Settings Entered:
+        print(textentry('40-511-00002'))
         for key in self.page_settings:
             print('\n{0} = {1}'.format(key, self.page_settings[key]))
         self.close()
@@ -220,7 +224,8 @@ def test(instrument=None):
     # get parameters from apero
     recipe, params = drs_startup.setup('None', instrument, quiet=True)
     # Log that we are running indexing
-    WLOG(params, '', 'Running generic app')
+    # log: Running generic app
+    WLOG(params, '', textentry('40-511-00001'))
     # Main code here
     app = TestApp()
     app.geometry("1024x768")

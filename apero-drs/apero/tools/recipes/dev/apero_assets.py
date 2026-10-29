@@ -131,26 +131,23 @@ def __main__(recipe, params):
     # get mode from arguments
     mode = params['INPUTS']['mode']
     if mode not in ['update-remote', 'check-local', 'update-local']:
-        # TODO: Add to language database
-        msg = ('Mode must be either: "update-remote", "check-local" or '
-               '"update-local"')
-        raise AperoCodedException(params, message=msg)
+        # error: Mode must be either: "update-remote", "check-local" or
+        #     "update-local"
+        raise AperoCodedException(params, '09-517-00002')
     # -------------------------------------------------------------------------
     if mode == 'update-remote':
         # get input directory
         indir = params['INPUTS']['INDIR']
         # deal with no input directory
         if drs_text.null_text(indir, ['None', 'Null', '']):
-            # TODO: Add to language database
-            emsg = ('Must provide an input directory with --indir '
-                    'for mode=update-remote')
-            raise AperoCodedException(params, message=emsg)
+            # error: Must provide an input directory with --indir for
+            #     mode=update-remote
+            raise AperoCodedException(params, '09-517-00003')
         # deal with input directory not existing
         if not os.path.exists(indir):
-            # TODO: Add to language database
-            emsg = 'Input directory {0} does not exist'
             margs = [indir]
-            raise AperoCodedException(params, message=emsg)
+            # error: Input directory {0} does not exist
+            raise AperoCodedException(params, '09-517-00004')
         # upload assets
         drs_assets.update_remote_assets(params, indir)
     # deal with checking local assets
@@ -162,10 +159,9 @@ def __main__(recipe, params):
         # update the local assets
         drs_assets.update_local_assets(params)
     else:
-        # TODO: Add to language database
-        emsg = ('Mode must be either: "update-remote", "check-local" or '
-               '"update-local"')
-        raise AperoCodedException(params, message=emsg)
+        # error: Mode must be either: "update-remote", "check-local" or
+        #     "update-local"
+        raise AperoCodedException(params, '09-517-00002')
 
     # -------------------------------------------------------------------------
     # End of main code

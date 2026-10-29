@@ -158,7 +158,8 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     mask1 = np.array(nsig2 > variance_cut1)
     mask2 = np.array(nsig2 > variance_cut2)
     # mask of where variance is bad
-    WLOG(params, '', '\tExpanding slope variance mask')
+    # log: Expanding slope variance mask
+    WLOG(params, '', textentry('40-010-00033'))
     mask_slope_variance = mp.xpand_mask(mask1, mask2)
     # mask_slope_variance = mask1
     # set bad pixels to NaN
@@ -194,7 +195,8 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     mask1 = np.array(nsig2 > intercept_cut1)
     mask2 = np.array(nsig2 > intercept_cut2)
     # mask of where variance is bad
-    WLOG(params, '', '\tExpanding intercept deviation mask')
+    # log: Expanding intercept deviation mask
+    WLOG(params, '', textentry('40-010-00034'))
     mask_intercept_deviation = mp.xpand_mask(mask1, mask2)
     # do not mask the reference pixels (intercept is different from rest of
     #  the detector)
@@ -620,9 +622,9 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
         # make sure led_file is a string
         led_file = str(led_file)
         # print progres
-        # TODO: Add to language database
         pargs = [it + 1, len(led_files)]
-        WLOG(params, '', '\tLED file {0} of {1}'.format(*pargs))
+        # log: LED file {0} of {1}
+        WLOG(params, '', textentry('40-010-00042', args=pargs))
         # get the basename from filenames
         basename = os.path.basename(led_file)
         # get the path inst
@@ -656,9 +658,9 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
         #  the bright fringe of the illumination
         for iteration in range(n_iterations):
             # print progres
-            # TODO: Add to language database
             pargs = [iteration + 1, n_iterations]
-            WLOG(params, '', '\t\tIteration {0} of {1}'.format(*pargs))
+            # log: Iteration {0} of {1}
+            WLOG(params, '', textentry('40-010-00043', args=pargs))
             # median filter square image
             led_med = led_med / mp.square_medbin(led_med)
         # ---------------------------------------------------------------------
@@ -728,17 +730,13 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
                                           time_column=time_col)
     # check that we have files
     if len(raw_led_files) == 0:
-        # TODO: Add to language database
-        emsg = 'No LED files found for {0}'
         eargs = [led_file.name]
-        raise AperoCodedException(params, message=emsg.format(*eargs), 
-                                  targs=eargs)
+        # error: No LED files found for {0}
+        raise AperoCodedException(params, '09-010-00002', targs=eargs)
     if len(raw_dark_files) == 0:
-        # TODO: Add to language database
-        emsg = 'No DARK files found for {0}'
         eargs = [dark_file.name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: No DARK files found for {0}
+        raise AperoCodedException(params, '09-010-00003', targs=eargs)
     # check whether filetype is allowed for instrument
     rawfiletype = led_file.name
     # get definition
@@ -746,7 +744,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
     rawfile = drs_file.get_file_definition(params, rawfiletype, **fdkwargs)
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Creating dark for LED flat')
+    # log: Creating dark for LED flat
+    WLOG(params, '', textentry('40-010-00035'))
     # ----------------------------------------------------------------------
     # Get all dark file properties
     # ----------------------------------------------------------------------
@@ -761,7 +760,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
     # Select our LED files
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Selecting LED files')
+    # log: Selecting LED files
+    WLOG(params, '', textentry('40-010-00036'))
     # loop around led files
     led_times, infiles, rawfiles = [], [], []
     for filename in raw_led_files:
@@ -781,13 +781,16 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
         infiles.append(infile)
         rawfiles.append(infile.basename)
 
-    WLOG(params, '', '\tFound {0} LED files'.format(len(led_times)))
+    margs = [len(led_times)]
+    # log: Found {0} LED files
+    WLOG(params, '', textentry('40-010-00037', args=margs))
 
     # ----------------------------------------------------------------------
     # Create medianed version of LED
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Medianing LED files to produced binned LED')
+    # log: Medianing LED files to produced binned LED
+    WLOG(params, '', textentry('40-010-00038'))
     # only keep 10 LED files (uniformly distributed in time)
     time_mask = drs_utils.uniform_time_list(led_times, 10)
     led_files = raw_led_files[time_mask]
@@ -816,7 +819,8 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
     # print stats
     pargs = [p50, p50 - p16, p84 - p50]
     # TODO: move to language database
-    WLOG(params, '', 'LED FLAT RMS: {0:.3e} +{1:.3e} -{2:.3e}'.format(*pargs))
+    # log: LED FLAT RMS: {0:.3e} +{1:.3e} -{2:.3e}
+    WLOG(params, '', textentry('40-010-00039', args=pargs))
     # ----------------------------------------------------------------------
     # Set the reference pixels to a value of 1
     # ----------------------------------------------------------------------
@@ -857,6 +861,7 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [outfile.filename]
+    # log: Saving preprocessing reference mask: {0}
     WLOG(params, '', textentry('40-010-00015', args=wargs))
     # define multi lists
     data_list = [rms, snr, dark_table, led_table, combtable]
@@ -899,7 +904,8 @@ def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
     # storage for correction
     corr = np.zeros_like(image)
     # print progress
-    WLOG(params, '', 'Creating correction for capacitive coupling')
+    # log: Creating correction for capacitive coupling
+    WLOG(params, '', textentry('40-010-00040'))
     # loop around amplifiers
     for amp_it in range(total_amps):
         # unfold the butterfly pattern
@@ -942,7 +948,8 @@ def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
     # set function name
     func_name = display_func('correct_sci_capacitive_coupling', __NAME__)
     # print progress
-    WLOG(params, '', 'Correcting capacitive coupling due to sci/calib flux')
+    # log: Correcting capacitive coupling due to sci/calib flux
+    WLOG(params, '', textentry('40-010-00041'))
     # get the amplitudes from constants
     # TODO: Add values and add to constants
     amp_flux = pcheck(params, 'PP.CX_AMP_FLUX', func=func_name,
@@ -1217,6 +1224,7 @@ def nirps_correction(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # 3- correction of column-wise median structure
     # 4- masking of deviant columns that cannot be properly corrected
     # -------------------------------------------------------------------------
+    # log: Finding low frequencies
     WLOG(params, '', textentry('40-010-00020'))
     # number of pixels in detector
     nbypix, nbxpix = image2.shape
@@ -1559,9 +1567,10 @@ def postermeter_stats(params: ParamDict, filename: str, ext: int) -> ParamDict:
         med_flux_diff = mp.nanmedian(flux_diff)
         rms_flux_diff = mp.nanstd(flux_diff)
     except Exception as e:
-        emsg = 'Cannot measure postmeter stats\n{0}: {1}'
         eargs = [type(e), str(e)]
-        WLOG(params, 'warning', emsg.format(*eargs), sublevel=2)
+        # warning: Cannot measure postmeter stats \n {0}: {1}
+        WLOG(params, 'warning', textentry('10-010-00009', args=eargs),
+             sublevel=2)
         mjd_flux = np.nan
         med_flux_diff = np.nan
         rms_flux_diff = np.nan

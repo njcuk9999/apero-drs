@@ -839,6 +839,7 @@ def sigfig(x: Union[list, np.ndarray, float, int], n: int
         xin = np.array([x])
         dtype = type(x)
     else:
+        # error: x (data type: '{0}') must be an array/list/float/int
         raise AperoCodedException(None, '00-009-10002', targs=[type(x)])
     # filter out zeros
     mask = (xin != 0) & (np.isfinite(xin))
@@ -927,9 +928,11 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     # must have valid bx and by
     if dim1 % by != 0:
         eargs = ['by', dim1, func_name]
+        # error: {0} must be a factor of {1} \n Function = {2}
         raise AperoCodedException(None, '00-009-10003', targs=eargs)
     if dim2 % bx != 0:
         eargs = ['bx', dim2, func_name]
+        # error: {0} must be a factor of {1} \n Function = {2}
         raise AperoCodedException(None, '00-009-10003', targs=eargs)
     # reshape the image
     array = image.reshape([by, dim1 // by, bx, dim2 // bx])

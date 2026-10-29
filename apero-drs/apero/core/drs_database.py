@@ -503,12 +503,10 @@ class CalibrationDatabase(DatabaseManager):
             outfilename = Path(filedir).joinpath(filenames).absolute()
             # check that outfile name exists
             if not outfilename.exists():
-                # TODO: Add to language database
-                emsg = ('Calib file {0} [{1}]: does not exist'
-                        '\n\tFilename={2}')
                 eargs = [key, str(timedirs), outfilename]
-                raise AperoCodedException(self.params, None,
-                                          message=emsg.format(*eargs))
+                # error: Calib file {0} [{1}]: does not exist \n Filename={2}
+                raise AperoCodedException(self.params, '00-006-00030',
+                                          targs=eargs)
             # return outfilenames
             return outfilename, float(filetimes), bool(reference)
         # else loop around them (assume they are iterable)
@@ -527,12 +525,11 @@ class CalibrationDatabase(DatabaseManager):
                 outfilename = Path(filedir).joinpath(filename).absolute()
                 # check that outfile name exists
                 if not outfilename.exists():
-                    # TODO: Add to language database
-                    emsg = ('Calib file {0} [{1}]: does not exist'
-                            '\n\tFilename={2}')
                     eargs = [key, str(timedirs[it]), outfilename]
-                    raise AperoCodedException(self.params, None,
-                                              message=emsg.format(*eargs))
+                    # error: Calib file {0} [{1}]: does not exist \n
+                    #     Filename={2}
+                    raise AperoCodedException(self.params, '00-006-00030',
+                                              targs=eargs)
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
@@ -667,6 +664,8 @@ class TelluricDatabase(DatabaseManager):
             if not self.params['INPUTS']['DATABASE']:
                 # Log that we are not adding file due to user input
                 wargs = [dbkey, drsfile.filename]
+                # text: Not adding key {0} to database (User input --database =
+                #     False) \n File = {1}
                 wmsg = textentry('40-001-00024', args=wargs)
                 drs_base.base_printer('40-001-00024', level='info', args=wargs,
                                       message=wmsg)
@@ -995,11 +994,10 @@ class TelluricDatabase(DatabaseManager):
             outfilename = Path(filedir).joinpath(filenames).absolute()
             # check that outfile name exists
             if not outfilename.exists():
-                # TODO: Add to language database
-                emsg = 'Telluric file {0} [{1}]: does not exist\n\tFilename={2}'
                 eargs = [key, objname, outfilename]
-                raise AperoCodedException(self.params, None,
-                                          message=emsg.format(*eargs))
+                # error: Telluric file {0} [{1}]: does not exist \n Filename={2}
+                raise AperoCodedException(self.params, '00-006-00031',
+                                          targs=eargs)
             # return the single path
             return outfilename
         # else loop around them (assume they are iterable)
@@ -1023,10 +1021,11 @@ class TelluricDatabase(DatabaseManager):
                     except Exception as e:
                         # deal with counter out of bounds
                         if counter > 60:
-                            emsg = ('Cannot create directory {0} times: {1}\n\t{2}:{3}')
                             eargs = [counter, str(filedir), type(e), str(e)]
-                            raise AperoCodedException(None, None,
-                                                      message=emsg.format(*eargs))
+                            # error: Cannot create directory {0} times: {1} \n
+                            #     {2}:{3}
+                            raise AperoCodedException(None, '00-006-00032',
+                                                      targs=eargs)
                         # weait for 1 second and try again
                         time.sleep(1)
                         counter += 1
@@ -1036,12 +1035,11 @@ class TelluricDatabase(DatabaseManager):
                 outfilename = Path(filedir).joinpath(str(filename)).absolute()
                 # check that outfile name exists
                 if not outfilename.exists():
-                    # TODO: Add to language database
-                    emsg = ('Telluric file {0} [{1}]: does not exist'
-                            '\n\tFilename={2}')
                     eargs = [key, objname, outfilename]
-                    raise AperoCodedException(self.params, None,
-                                              message=emsg.format(*eargs))
+                    # error: Telluric file {0} [{1}]: does not exist \n
+                    #     Filename={2}
+                    raise AperoCodedException(self.params, '00-006-00031',
+                                              targs=eargs)
                 # append to storage
                 outfilenames.append(outfilename)
             # return outfilenames
@@ -1089,6 +1087,7 @@ def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
         return drsfile.get_dbkey()
     else:
         eargs = [drsfile.name, dbmname, func_name]
+        # error: No cavity file found. File = {0}. \n Function = {1}
         raise AperoCodedException(params, '00-008-00012', targs=eargs)
 
 
@@ -1111,14 +1110,14 @@ def _get_dbtable(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool
         if dbname != dbmname.upper():
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
                      func_name]
+            # error: Cannot add {0} to {1} database. Must be added to {2}
+            #     database. \n Filename = {3} \n Function = {4}
             raise AperoCodedException(params, '00-002-00019', targs=eargs)
     else:
-        # TODO: Add to language database
         eargs = [drsfile.name, dbmname, func_name]
-        emsg = ('Drsfile {0} cannot use database "{1}". Check file_definitions'
-                '\n\tFunction = {2}')
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Drsfile {0} cannot use database "{1}". Check file_definitions
+        #     \n Function = {2}
+        raise AperoCodedException(params, '00-006-00028', targs=eargs)
     # if we are here return True --> success
     return True
 
@@ -1159,6 +1158,7 @@ def _get_hkey(params: ParamDict, pkey: str,
             value = dtype(value)
         except Exception as e:
             eargs = [type(e), str(e), func_name]
+            # error: Error {0}: {1} \n Function = {2}
             raise AperoCodedException(params, '00-000-00002', targs=eargs)
     # return fiber
     return value
@@ -1219,10 +1219,9 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
         except Exception as e:
             # deal with counter out of bounds
             if counter > 60:
-                emsg = ('Cannot create directory {0} times: {1}\n\t{2}:{3}')
                 eargs = [counter, str(outdir), type(e), str(e)]
-                raise AperoCodedException(params, None,
-                                          message=emsg.format(*eargs))
+                # error: Cannot create directory {0} times: {1} \n {2}:{3}
+                raise AperoCodedException(params, '00-006-00032', targs=eargs)
             # weait for 1 second and try again
             time.sleep(1)
             counter += 1
@@ -1238,6 +1237,7 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
         # log if verbose
         if verbose:
             margs = [dbmname, outpath]
+            # text: {0}: Copy to database successful. File = {1}
             msg = textentry('40-006-00004', args=margs)
             drs_base.base_printer('40-006-00004', level='info', args=margs,
                                   message=msg)
@@ -1246,6 +1246,8 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
     except Exception as e:
         # log exception:
         eargs = [dbmname, inpath, outpath, type(e), e, func_name]
+        # error: Database {0}. Error copying from {1} to {2} \n Error {3}: {4}
+        #     \n Function = {5}
         raise AperoCodedException(params, '00-002-00014', targs=eargs)
 
 
@@ -1317,6 +1319,10 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         header = _force_apero_header(drsfile.get_header())
     else:
         eargs = [dbname, drsfile.name, func_name]
+        # error: Cannot update {0} database. \n Given 'outfile' ({1}) does not
+        #     have 'hdict' or 'header' defined. \n Outfile DrsFitsFile must have
+        #     'hdict' or 'header' to get required parameters from updating the
+        #     database). \n function = {2}
         raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     return hdict, header
@@ -1363,6 +1369,8 @@ def _get_time(params: ParamDict, dbname: str,
         return t
     else:
         eargs = [dbname, func_name]
+        # error: Database {0}. 'hdict' or 'header' must be set. \n Function =
+        #     {1}
         raise AperoCodedException(params, '00-001-00039', targs=eargs)
 
 
@@ -1377,17 +1385,17 @@ def _none_float(params: ParamDict, value: Any, name: str) -> float:
     :return: float, the value to use as a float
     """
     if value is None:
-        wmsg = 'Variable {0} is None'
         wargs = [name]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        # warning: Variable {0} is None
+        WLOG(params, 'warning', textentry('10-006-00002', args=wargs))
         return np.nan
     else:
         try:
             return float(value)
         except Exception as e:
-            wmsg = 'Invalid float for {0}: value={1}.\n\tError {2}: {3}'
             wargs = [name, value, type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            # warning: Invalid float for {0}: value={1}. \n Error {2}: {3}
+            WLOG(params, 'warning', textentry('10-006-00003', args=wargs))
             return np.nan
 
 
@@ -1893,6 +1901,7 @@ class FileIndexDatabase(DatabaseManager):
             # log warning: Index database has wrong number of columns
             AperoCodedWarning(self.params, '10-002-00005', targs=wargs)
             # reset database
+            # text: Reset database? [Y]es or [N]o?
             userinput = input(str(textentry('10-002-00006')))
             # if yes delete table and recreate
             if 'Y' in userinput.upper():
@@ -1907,18 +1916,21 @@ class FileIndexDatabase(DatabaseManager):
                 self.load_db()
                 # update all entries for raw index entries
                 iargs = ['raw']
+                # text: Rebuilding {0} index entries
                 msg = textentry('40-006-00006', args=iargs)
                 drs_base.base_printer('40-006-00006', level='info', args=iargs,
                                       message=msg)
                 self.update_entries('raw', force_update=True)
                 # update all entries for tmp index entries
                 iargs = ['tmp']
+                # text: Rebuilding {0} index entries
                 msg = textentry('40-006-00006', args=iargs)
                 drs_base.base_printer('40-006-00006', level='info', args=iargs,
                                       message=msg)
                 self.update_entries('tmp', force_update=True)
                 # update all entries for reduced index entries
                 iargs = ['red']
+                # text: Rebuilding {0} index entries
                 msg = textentry('40-006-00006', args=iargs)
                 drs_base.base_printer('40-006-00006', level='info', args=iargs,
                                       message=msg)
@@ -1938,7 +1950,9 @@ class FileIndexDatabase(DatabaseManager):
         # disable tqdm
         if len(job_msg) > 0:
             _tqdm = base.tqdm_module(use=False)
-            WLOG(self.params, '', '\t\tPlease wait... ' + job_msg)
+            margs = [job_msg]
+            # log: Please wait... {0}
+            WLOG(self.params, '', textentry('40-006-00014', args=margs))
         else:
             _tqdm = base.tqdm_module()
         # log how long this took
@@ -2021,9 +2035,10 @@ class FileIndexDatabase(DatabaseManager):
         # disable tqdm
         if len(job_msg) > 0:
             _tqdm = base.tqdm_module(use=False)
-            msg = '\t\tFixing {0} headers. Please wait... ' + job_msg
             margs = [len(table)]
-            WLOG(self.params, '', msg.format(*margs))
+            # text: Fixing {0} headers. Please wait...
+            msg = textentry('40-006-00021', args=margs) + job_msg
+            WLOG(self.params, '', msg)
         else:
             _tqdm = base.tqdm_module()
         # log how long this took
@@ -3102,14 +3117,17 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
         except FileExistsError:
             # every 30 seconds print a message
             if lcounter % 30 == 0:
-                msg = 'Waiting for database push lock to clear... [{0}]'
-                WLOG(params, '', msg.format(lockfilename))
+                margs = [lockfilename]
+                # log: Waiting for database push lock to clear... [{0}]
+                WLOG(params, '', textentry('40-006-00019', args=margs))
             # remove stale locks that outlive expected run duration
             try:
                 lock_age = time.time() - os.path.getmtime(lockfilename)
                 if lock_age > lock_stale_time:
-                    msg = 'Removing stale database push lock: {0}'
-                    WLOG(params, 'warning', msg.format(lockfilename))
+                    wargs = [lockfilename]
+                    # warning: Removing stale database push lock: {0}
+                    WLOG(params, 'warning',
+                         textentry('10-006-00004', args=wargs))
                     db_remove(params, lockfilename, max_tries=3, wait=1,
                               file_kind='lock')
                     continue
@@ -3117,11 +3135,9 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
                 continue
             # avoid waiting forever on broken locks
             if (time.time() - lock_start) > lock_timeout:
-                emsg = 'Timeout waiting for database push lock: {0}'
                 eargs = [lockfilename]
-                raise AperoCodedException(params, None,
-                                          message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: Timeout waiting for database push lock: {0}
+                raise AperoCodedException(params, '00-006-00033', targs=eargs)
             # increment counter
             lcounter += 1
             # wait for lock to disappear
@@ -3156,17 +3172,23 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
             return
         # -------------------------------------------------------------------------
         # print progress
-        msg = 'Reading {0} pending database entrie(s) [{1}]'
         margs = [len(pend_files), db_pend]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Reading {0} pending database entrie(s) [{1}]
+        WLOG(params, 'info', textentry('40-006-00016', args=margs))
         # loop around pending files and compile a dictionary of entriers to add
         #  to each table
         pend_add_dict = dict()
         pend_set_dict = dict()
         # loop around pending files
+        consumed = []
         for pend_file in tqdm(pend_files):
-            # read yaml file
-            pdict = base.load_yaml(pend_file)
+            # another push (other lock directory) may have taken this file
+            try:
+                pdict = base.load_yaml(pend_file)
+                mtime = os.path.getmtime(pend_file)
+            except FileNotFoundError:
+                consumed.append(pend_file)
+                continue
             # get table name and entry
             tablename = pdict['TABLE_NAME']
             entry = pdict['ENTRY']
@@ -3175,7 +3197,6 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
             if all(key in entry for key in ['PID', 'LEVEL', 'SUBLEVEL']):
                 dkey = (tablename, mode, str(entry['PID']),
                         str(entry['LEVEL']), str(entry['SUBLEVEL']))
-                mtime = os.path.getmtime(pend_file)
                 current = newest_log_rows.get(dkey)
                 if current is None or mtime >= current[0]:
                     newest_log_rows[dkey] = (mtime, pdict)
@@ -3194,6 +3215,7 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
                     pend_set_dict[tablename] = []
                 # add entry to pend dict
                 pend_set_dict[tablename].append(entry)
+        pend_files = [pfile for pfile in pend_files if pfile not in consumed]
         # ---------------------------------------------------------------------
         # append deduplicated log rows collected above
         for _mtime, pdict in newest_log_rows.values():
@@ -3212,16 +3234,16 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
         # loop around add /set
         for mode, pend_dict in zip(['ADD', 'SET'], [pend_add_dict, pend_set_dict]):
             # print progress
-            msg = 'Pushing {0} pending {1} database entrie(s) to database [{2}]'
             margs = [len(pend_files), mode, db_pend]
-            WLOG(params, 'info', msg.format(*margs))
+            # log: Pushing {0} pending {1} database entrie(s) to database [{2}]
+            WLOG(params, 'info', textentry('40-006-00018', args=margs))
             # -----------------------------------------------------------------
             # loop around tables and add entries to database
             for tablename in pend_dict:
                 # print progress
-                msg = '\t- Pushing {0} entries to table: {1}'
                 margs = [len(pend_dict[tablename]), tablename]
-                WLOG(params, '', msg.format(*margs))
+                # log: - Pushing {0} entries to table: {1}
+                WLOG(params, '', textentry('40-006-00020', args=margs))
                 # construct database manager
                 dbm = DatabaseManager(params)
                 dbm.name = tablename
@@ -3237,9 +3259,9 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
                     dbm.database.set_rows(update_dicts=pend_dict[tablename])
         # ---------------------------------------------------------------------
         # print progress
-        msg = 'Removing {0} pending database entries [{1}]'
         margs = [len(pend_files), db_pend]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Removing {0} pending database entries [{1}]
+        WLOG(params, 'info', textentry('40-006-00017', args=margs))
         # remove pending files
         for pend_file in pend_files:
             db_remove(params, pend_file, file_kind='pending')
@@ -3277,10 +3299,9 @@ def db_remove(params: ParamDict, filename: str, max_tries: int = 10,
     # log an error if we have one
     if counter >= max_tries and os.path.exists(filename):
         # log error: Could not remove file
-        emsg = 'Error: Could not remove {0} file: {1}\n\t{2}: {3}'
         eargs = [file_kind, filename, type(error), str(error)]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Error: Could not remove {0} file: {1} \n {2}: {3}
+        raise AperoCodedException(params, '00-006-00029', targs=eargs)
 
 
 def db_send(params: ParamDict, tablename: str,
@@ -3374,6 +3395,8 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     except Exception as e:
         # log error: Could not load table from url
         eargs = [url, type(e), str(e), func_name]
+        # error: Could not load table from url: {0} \n Error {1}: {2} \n
+        #     Function = {3}
         raise AperoCodedException(params, '00-010-00009', targs=eargs)
     # deal with no rows in table
     if '\n' not in rawdata.text:
@@ -3401,6 +3424,8 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     if tries >= 10:
         # log error: Could not load table from url: (Tried 10 times)
         eargs = [url, func_name]
+        # error: Could not load table from url: {0} \n Tried 10 times \n
+        #     Function = {1}
         raise AperoCodedException(params, '00-010-00010', targs=eargs)
     # add to cached storage
     GOOGLE_TABLES[url] = table

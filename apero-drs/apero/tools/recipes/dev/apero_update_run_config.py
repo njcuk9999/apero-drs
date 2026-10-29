@@ -78,7 +78,8 @@ def __main__(recipe, params):
             instruments = params['INPUTS']['INSTRUMENT'].split(',')
     # -------------------------------------------------------------------------
     # log progress
-    WLOG(params, 'info', 'Generating list of default run.ini files')
+    # log: Generating list of default run.ini files
+    WLOG(params, 'info', textentry('40-517-00025'))
     # get default run file instances
     run_files = []
     for instrument in instruments:
@@ -93,14 +94,16 @@ def __main__(recipe, params):
             rundef = constant_functions.import_module(modname, modpath,
                                                       quiet=True)
         except Exception as e:
-            wmsg = 'Cannot load: {0} skipping \n\t{1}:{2}'
             wargs = [modpath, type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            # warning: Cannot load: {0} skipping \n {1}:{2}
+            WLOG(params, 'warning', textentry('10-517-00002', args=wargs))
             continue
         run_files += rundef.get().get_runfiles(params, recipe)
     # -------------------------------------------------------------------------
     # print how many found
-    WLOG(params, '', '\tFound {0} run file templates'.format(len(run_files)))
+    margs = [len(run_files)]
+    # log: Found {0} run file templates
+    WLOG(params, '', textentry('40-517-00026', args=margs))
     # loop around run files
     for it, run_file in enumerate(run_files):
         # skip invalid instruments
@@ -111,9 +114,9 @@ def __main__(recipe, params):
             if run_file.name != params['INPUTS']['RUNFILE']:
                 continue
         # progress report
-        msg = 'Processing file {0} of {1}: {2} [{3}]'
         margs = [it + 1, len(run_files), run_file.name, run_file.instrument]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Processing file {0} of {1}: {2} [{3}]
+        WLOG(params, 'info', textentry('40-517-00045', args=margs))
         # # populate the text file
         # run_file.populate_text_file(params)
         # # print message

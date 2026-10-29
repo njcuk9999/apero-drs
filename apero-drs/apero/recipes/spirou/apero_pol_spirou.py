@@ -112,6 +112,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log message: Part 1: loading input data
     WLOG(params, 'info', drs_header)
+    # log: Part 1: loading input data
     WLOG(params, 'info', textentry('40-021-00012'))
     WLOG(params, 'info', drs_header)
     # TODO: decide here (or inside) which products to load from
@@ -122,6 +123,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # log we are not continuing
         # print msg: Input data did not pass QC. Skipping
         #            (Use --noqccheck to force)'
+        # warning: Input data did not pass QC. Skipping (use –noqccheck to
+        #     force).
         WLOG(params, 'warning', textentry('10-021-00009'), sublevel=6)
         # flag that inputs failed QC
         recipe.log.update_flags(INPUTQC=False)
@@ -145,6 +148,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 2: Run polar analysis
     WLOG(params, 'info', drs_header)
+    # log: Part 2: Run polar analysis
     WLOG(params, 'info', textentry('40-021-00013'))
     WLOG(params, 'info', drs_header)
     pprops = gen_pol.calculate_polarimetry(params, pprops)
@@ -155,6 +159,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 3: Run continuum analysis
     WLOG(params, 'info', drs_header)
+    # log: Part 3: Run continuum analysis
     WLOG(params, 'info', textentry('40-021-00014'))
     WLOG(params, 'info', drs_header)
     # calculate the continuum
@@ -187,6 +192,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 4: Run LSD Analysis
     WLOG(params, 'info', drs_header)
+    # log: Part 4: Run LSD Analysis
     WLOG(params, 'info', textentry('40-021-00015'))
     WLOG(params, 'info', drs_header)
     # run analysis
@@ -199,6 +205,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 5: Quality Control
     WLOG(params, 'info', drs_header)
+    # log: Part 5: Quality Control
     WLOG(params, 'info', textentry('40-021-00016'))
     WLOG(params, 'info', drs_header)
     # add quality control (currently empty)
@@ -209,6 +216,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 6: Making S1D tables
     WLOG(params, 'info', drs_header)
+    # log: Part 6: Making S1D tables
     WLOG(params, 'info', textentry('40-021-00017'))
     WLOG(params, 'info', drs_header)
     s1dprops = gen_pol.make_s1d(params, recipe, pprops)
@@ -218,6 +226,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 7: Writing files
     WLOG(params, 'info', drs_header)
+    # log: Part 7: Writing files
     WLOG(params, 'info', textentry('40-021-00018'))
     WLOG(params, 'info', drs_header)
 
@@ -235,6 +244,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # log progress: Part 8: plots
     WLOG(params, 'info', drs_header)
+    # log: Part 8: plots
     WLOG(params, 'info', textentry('40-021-00019'))
     WLOG(params, 'info', drs_header)
     # -------------------------------------------------------------------------

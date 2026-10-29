@@ -1,5 +1,5 @@
 {% extends "general/sidebar_base.html" %}
-{% block title %}APERO RI – {{ page_label }}{% endblock %}
+{% block title %}APERO RI – {{ page_label | tl }}{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
@@ -88,7 +88,7 @@
 <div class="ari-page-header">
     <h1>
         <i class="{{ page_icon }}"></i>
-        {{ page_label }}
+        {{ page_label | tl }}
     </h1>
     <p class="ari-page-subtitle">
         Object details for <strong>{{ objname }}</strong> in profile

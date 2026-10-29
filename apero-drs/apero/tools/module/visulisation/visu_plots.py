@@ -21,6 +21,7 @@ from bokeh.models import DataTable, TableColumn, Div
 from bokeh.plotting import figure
 
 from aperocore.constants import load_functions
+from aperocore import drs_lang
 from aperocore import math as mp
 from apero.tools.module.visulisation import visu_core
 from apero.instruments import select
@@ -29,6 +30,8 @@ from apero.instruments import select
 # Define variables
 # =============================================================================
 DEBUG = True
+# Get the text types
+textentry = drs_lang.textentry
 # get params
 PARAMS = load_functions.load_config(select.INSTRUMENTS)
 # define log text
@@ -282,7 +285,8 @@ class SpectrumPlot:
                        order_num=self.order_num, fiber=self.fiber)
 
         if DEBUG:
-            print('Update')
+            # log: Update
+            print(textentry('40-511-00005'))
             print(lparams)
         # check condition to update file
         cond_update = False
@@ -412,7 +416,8 @@ class SpectrumPlot:
                     self.source.data[key] = blaze[order_num]
             else:
                 if DEBUG:
-                    print('Cannot find data')
+                    # log: Cannot find data
+                    print(textentry('40-511-00007'))
                     print(file_dict)
                 return
         # ----------------------------------------------------------------------
@@ -441,7 +446,8 @@ class SpectrumPlot:
             # deal with no valid data
             if data is None:
                 if DEBUG:
-                    print('Cannot find data')
+                    # log: Cannot find data
+                    print(textentry('40-511-00007'))
                     print(file_dict)
 
                 self.valid = False
@@ -457,7 +463,9 @@ class SpectrumPlot:
                 self.loaded_params = dict(identifier=self.identifier,
                                           fiber=self.fiber)
                 if DEBUG:
-                    print('Found file {0}'.format(filename))
+                    margs = [filename]
+                    # log: Found file {0}
+                    print(textentry('40-511-00008', args=margs))
             # -----------------------------------------------------------------
             # update max order
             self.order_max = data.shape[0]
@@ -547,7 +555,8 @@ class SpectrumPlot:
             # deal with debugging
             if DEBUG:
                 dargs = [name, order_num]
-                print('Plotting {0} [Order={1}]'.format(*dargs))
+                # log: Plotting {0} [Order={1}]
+                print(textentry('40-511-00006', args=dargs))
             # plot line
             line = self.figure.line(cxname, cyname, source=self.source,
                                     color=color, alpha=alpha,

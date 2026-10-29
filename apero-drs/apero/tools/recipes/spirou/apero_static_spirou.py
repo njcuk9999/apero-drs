@@ -84,8 +84,8 @@ def __main__(recipe, params):
     update_assets = drs_assets.check_local_assets(params)
     # if they need updating, update them now
     if update_assets:
-        msg = 'Updating APERO assets'
-        WLOG(None, 'info', msg)
+        # log: Updating APERO assets
+        WLOG(None, 'info', textentry('40-521-00007'))
         drs_assets.update_local_assets(params,
                                        tarfile=params.get('TARFILE', None))
 

@@ -300,6 +300,7 @@ def load_pconfig(instruments: Dict[str, Any],
     # otherwise raise an exception
     emsg = 'Instrument "{0}" not found.'
     eargs = [instrument]
+    # error: This is the Default error message
     raise AperoCodedException(None, '00-000-00000', targs=eargs,
                               message=emsg.format(*eargs))
 

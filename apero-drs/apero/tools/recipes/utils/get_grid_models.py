@@ -21,6 +21,7 @@ from astropy.table import Table
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -34,6 +35,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # alias to parameter check class
 pcheck = param_functions.PCheck(wlog=WLOG)
 
@@ -89,7 +92,8 @@ def main():
     saved_wave_file = os.path.join(WORKSPACE, WAVE_FILE)
     # get wave file
     if not os.path.exists(saved_wave_file):
-        print('Getting wavelength file')
+        # log: Getting wavelength file
+        print(textentry('40-517-00042'))
         get_url(URL, WAVE_FILE, saved_wave_file)
     # open wave file
     wave = fits.getdata(saved_wave_file)
@@ -115,10 +119,14 @@ def main():
         saved_model_file = os.path.join(WORKSPACE, model_file)
         # get model
         if not os.path.exists(saved_model_file):
-            print('Getting model for Teff = {0} K'.format(temperature))
+            margs = [temperature]
+            # log: Getting model for Teff = {0} K
+            print(textentry('40-517-00044', args=margs))
             get_url(URL, model_file, saved_model_file)
         # load the model
-        print('Loading model for Teff = {0} K'.format(temperature))
+        margs = [temperature]
+        # log: Loading model for Teff = {0} K
+        print(textentry('40-517-00043', args=margs))
         model = fits.getdata(saved_model_file)
         # add column to table
         table[TEMPCOL.format(temperature)] = model[keep]

@@ -17,6 +17,7 @@ from typing import Dict, List
 from aperocore.base import base
 from aperocore.core import drs_log
 from apero.utils import drs_startup
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -31,6 +32,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 
 
 # =============================================================================
@@ -113,7 +116,9 @@ def check_for_missing_docstrings(path: str) -> Dict[str, List[str]]:
                         storage[pyfile].append(node.name)
                     else:
                         storage[pyfile] = [node.name]
-        print(f'\t{count} missing docstrings found')
+        margs = [count]
+        # log: {0} missing docstrings found
+        print(textentry('40-517-00023', args=margs))
 
 
     return storage
@@ -162,7 +167,9 @@ def check_for_usused_functions(path: str) -> Dict[str, List[str]]:
     # `POP_TOP` opcode, which indicates that the function was not called
     for instr in bytecode:
         if instr.opname == 'CALL_FUNCTION' and 'POP_TOP' not in [x.opname for x in instr.next_instr]:
-            print(f'Function {instr.argval} was not called')
+            margs = [instr.argval]
+            # log: Function {0} was not called
+            print(textentry('40-517-00024', args=margs))
 
 
 # =============================================================================

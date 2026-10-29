@@ -19,6 +19,7 @@ from aperocore.base import base
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from apero.utils import drs_startup
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -32,6 +33,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # --------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = []
@@ -86,10 +89,12 @@ def __main__(recipe, params):
     drs_path = drs_misc.get_relative_folder(params['DRS.PACKAGE'], '')
     # ----------------------------------------------------------------------
     # get all python files
-    WLOG(params, '', 'Getting python files')
+    # log: Getting python files
+    WLOG(params, '', textentry('40-517-00017'))
     python_files = get_python_files(drs_path)
     # get all import statements
-    WLOG(params, '', 'Getting import statements')
+    # log: Getting import statements
+    WLOG(params, '', textentry('40-517-00018'))
     rimports, stats, info = get_import_statements(params, python_files)
     # clean imports
     imports = clean_imports(rimports)
@@ -97,13 +102,15 @@ def __main__(recipe, params):
     versions = get_current_versions(imports)
     # print total number of lines
     WLOG(params, '', '=' * 50)
-    WLOG(params, '', 'Stats:')
+    # log: Stats:
+    WLOG(params, '', textentry('40-517-00019'))
     WLOG(params, '', '=' * 50)
     for stat in stats:
         WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]))
     # print import statements
     WLOG(params, '', '=' * 50)
-    WLOG(params, '', 'Import statements found are:')
+    # log: Import statements found are:
+    WLOG(params, '', textentry('40-517-00020'))
     WLOG(params, '', '=' * 50)
     for it in range(len(imports)):
         args = [imports[it], versions[it]]
@@ -213,7 +220,9 @@ def get_import_statements(params, files):
             relfilename = os.path.join(package, relfilename)
             # print total number of lines
             WLOG(params, '', '=' * 60)
-            WLOG(params, '', 'Stats file={0}'.format(relfilename))
+            margs = [relfilename]
+            # log: Stats file={0}
+            WLOG(params, '', textentry('40-517-00021', args=margs))
             WLOG(params, '', '=' * 60)
             stats = statsdict2[filename]
             for stat in stats:

@@ -21,6 +21,7 @@ from apero.utils import drs_startup
 from apero.tools.module.documentation import ari_docs
 from apero.tools.module.documentation import drs_documentation
 from apero.instruments import select
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -35,6 +36,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 
 
 # =============================================================================
@@ -116,7 +119,9 @@ def __main__(recipe, params):
         # print progress if we are doing any of the three tasks
         if run_filedef or run_recipedef or run_recipeseq:
             WLOG(params, '', params['LOG.HEADER'], colour='magenta')
-            WLOG(params, 'info', 'Processing {0}'.format(instrument),
+            margs = [instrument]
+            # log: Processing {0}
+            WLOG(params, 'info', textentry('40-090-00001', args=margs),
                  colour='magenta')
             WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # re-load params for this instrument
@@ -151,7 +156,9 @@ def __main__(recipe, params):
     if params['INPUTS']['COMPILE']:
         # print progress
         WLOG(params, '', params['LOG.HEADER'], colour='magenta')
-        WLOG(params, 'info', 'Compiling mode={0}'.format(mode),
+        margs = [mode]
+        # log: Compiling mode={0}
+        WLOG(params, 'info', textentry('40-501-00044', args=margs),
              colour='magenta')
         WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # compile
@@ -160,7 +167,9 @@ def __main__(recipe, params):
     if params['INPUTS']['UPLOAD']:
         # print progress
         WLOG(params, '', params['LOG.HEADER'], colour='magenta')
-        WLOG(params, 'info', 'Compiling mode={0}'.format(mode),
+        margs = [mode]
+        # log: Compiling mode={0}
+        WLOG(params, 'info', textentry('40-501-00044', args=margs),
              colour='magenta')
         WLOG(params, '', params['LOG.HEADER'], colour='magenta')
         # upload

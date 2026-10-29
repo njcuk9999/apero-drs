@@ -55,22 +55,3 @@ np.nanstd(sensor_key - setpoint_key) < limit
 | SETPOINT_KEY | setpoint_key |
 | LIMIT | limit |
 | METRIC | metric |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.nanstd(HIERARCH ESO INS TEMP14 VAL - HIERARCH ESO INS TEMP188 VAL) < 0.005
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | fp_setpoint_rms |
-| ENABLED | True |
-| SENSOR_KEY | HIERARCH ESO INS TEMP14 VAL |
-| SETPOINT_KEY | HIERARCH ESO INS TEMP188 VAL |
-| LIMIT | 0.005 |
-| METRIC | metric |

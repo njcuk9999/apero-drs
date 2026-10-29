@@ -158,6 +158,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             allowed_dprtypes = ', '.join(params['OBJ.CCF.ALLOWED_DPRTYPES'])
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
+            # warning: DPRTYPE = ‘{0}’ is not valid for {1}. \n Allowed DPRTYPES
+            #     are: {2} \n Skipping filename = {3}
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
                  sublevel=4)
             # continue
@@ -179,6 +181,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # log that the science fiber was not correct
             eargs = [fiber, ' or '.join(sfiber), infile.name,
                      infile.filename, mainname]
+            # error: Fiber={0} is not valid for 'science'. (Required '{1}') \n
+            #     File {2}: {3} \n Function = {4}
             raise AperoCodedException(params, '09-020-00001', targs=eargs)
 
         # ------------------------------------------------------------------
@@ -216,6 +220,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Compute CCF on science channel
         # ------------------------------------------------------------------
         # log progress: Computing CCF on fiber
+        # log: Computing CCF on fiber {0}
         WLOG(params, 'info', textentry('40-020-00007', args=[fiber]))
         # compute ccf
         cargs = [infile, image, blaze, wprops['WAVEMAP'], bprops, fiber]
@@ -241,11 +246,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 # log warning
                 wargs = [wprops_r['WAVETIME'], wprops['WAVETIME'],
                          wprops_r['WAVEFILE'], wprops['WAVEFILE']]
+                # warning: Reference wave solution time did not match science
+                #     wave solution time. Using science wave solution for
+                #     reference fiber. \n Reference wave time = {0} science wave
+                #     time = {1} \n Reference wave file: {2} \n Science wave
+                #     file: {3}
                 WLOG(params, 'warning', textentry('10-020-00003', args=wargs),
                      sublevel=2)
                 # set the reference wave solution to the science wave solution
                 wprops_r = wprops
             # log progress: Computing CCF on fiber
+            # log: Computing CCF on fiber {0}
             WLOG(params, 'info', textentry('40-020-00007', args=[fiber]))
             # --------------------------------------------------------------
             # Compute CCF on reference channel
@@ -339,10 +350,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
+            # log: QUALITY CONTROL SUCCESSFUL - Well Done -
             WLOG(params, 'info', textentry('40-005-10001'))
             passed = 1
         else:
             for farg in fail_msg:
+                # text: QUALITY CONTROL FAILED:
                 WLOG(params, 'warning', textentry('40-005-10002') + farg,
                      sublevel=6)
             passed = 0

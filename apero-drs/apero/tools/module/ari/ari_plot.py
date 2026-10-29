@@ -889,10 +889,9 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
         ref_table = drs_io.no_mask_table(Table.read(sc1d_files[0],
                                                     'SC1D_V_FILE'))
     except Exception as e:
-        emsg = 'Cannot open ref_table: {0}\n\tFunc = {1}\n\t{2}:{3}'
         eargs = [sc1d_files[0], func_name, type(e), str(e)]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Cannot open ref_table: {0} \n Func = {1} \n {2}:{3}
+        raise AperoCodedException(params, '09-514-00009', targs=eargs)
     # get wave grid
     ref_wave = np.array(ref_table['wavelength'])
     # Find the order with the most data points within the wavelength range
@@ -923,10 +922,9 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
             # get the header
             it_hdr = fits.getheader(sc1d_file)
         except Exception as e:
-            emsg = 'Cannot open sc1d_file: {0}\n\tFunc = {1}\n\t{2}:{3}'
             eargs = [it, sc1d_file, func_name, type(e), str(e)]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Cannot open sc1d_file: {0} \n Func = {1} \n {2}:{3}
+            raise AperoCodedException(params, '09-514-00010', targs=eargs)
         # ---------------------------------------------------------------------
         # get the berv
         bervs[it] = float(it_hdr['BERV'])
@@ -971,10 +969,9 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
             tmp_table = drs_io.no_mask_table(Table.read(tmp_s1d[-1],
                                                         'TELLU_TEMP_S1DV'))
         except Exception as e:
-            emsg = 'Cannot open tmp_s1d[-1]: {0}\n\tFunc = {1}\n\t{2}:{3}'
             eargs = [tmp_s1d[-1], func_name, type(e), str(e)]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Cannot open tmp_s1d[-1]: {0} \n Func = {1} \n {2}:{3}
+            raise AperoCodedException(params, '09-514-00011', targs=eargs)
         # calculate median
         med = np.array(tmp_table['flux'][wave_mask]).astype(float)
         med = med / mp.lowpassfilter(med, 501)

@@ -97,6 +97,9 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
         strguess, strlower, strupper, errtype, errmsg = e.args
         eargs = [order_num, fiber, -1, strguess, strlower, strupper,
                 errtype, errmsg, func_name]
+        # error: Error fitting sinc to blaze. Order = {0} Fiber = {1} Iteration
+        #     = {2} \n Guess: {3} \n Lower: {4} \n Upper: {5} \n Error {6}: {7}
+        #     \n Function = {8}
         raise AperoCodedException(params, '40-015-00009', targs=eargs)
 
 
@@ -146,6 +149,7 @@ def get_flat(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------------
     # log which fpref file we are using
     if not quiet:
+        # log: Reading flat dymap file: {0}
         WLOG(params, '', textentry('40-015-00006', args=[flat_file]))
     # return the reference image
     return flat_file, flat_time, flat
@@ -193,8 +197,8 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
     if extract_type == 'flat':
         # e2ds must be supplied for flat runs so we know the output shape
         if e2ds is None:
-            WLOG(params, 'error',
-                 'get_blaze: e2ds must be provided for flat extractions')
+            # error: get_blaze: e2ds must be provided for flat extractions
+            WLOG(params, 'error', textentry('09-015-00001'))
         fbprops['BLAZE'] = np.ones_like(e2ds)
         fbprops['BLAZEFILE'] = 'None'
         fbprops['BLAZETIME'] = np.nan
@@ -202,7 +206,9 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
         return fbprops
     # ------------------------------------------------------------------------
     # Standard path: load blaze from the calibration database
-    WLOG(params, '', 'Loading blaze calibration for fiber {0}'.format(fiber))
+    margs = [fiber]
+    # log: Loading blaze calibration for fiber {0}
+    WLOG(params, '', textentry('40-015-00015', args=margs))
     # get file definition
     out_blaze = drs_file.get_file_definition(params, 'FF_BLAZE',
                                              block_kind='red')
@@ -221,6 +227,7 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
                           userinputkey='BLAZEFILE', database=calibdbm,
                           fiber=fiber)
     # log which blaze file we are using
+    # log: Reading blaze dymap file: {0}
     WLOG(params, '', textentry('40-015-00007', args=[cfile.filename]))
     # populate and return the properties dict
     fbprops['BLAZE'] = cfile.data
@@ -349,8 +356,9 @@ def fit_blaze_model(params: ParamDict, recipe: DrsRecipe,
                         func=func_name)
     peak_hw = pcheck(params, 'CAL.FLAT.BLAZE_PEAK_HW', func=func_name)
     spline_k = pcheck(params, 'CAL.FLAT.BLAZE_SPLINE_K', func=func_name)
-    WLOG(params, 'info',
-         'Fitting physical blaze model for fiber {0}'.format(fiber))
+    margs = [fiber]
+    # log: Fitting physical blaze model for fiber {0}
+    WLOG(params, 'info', textentry('40-015-00016', args=margs))
     # delegate numerical work to core module
     core_args = [flat_response, wave]
     core_kwargs = dict(teff=teff, wave_fit_max=wave_fit_max,
@@ -402,15 +410,17 @@ def make_blaze(params: ParamDict, recipe: DrsRecipe,
     nframes = 1
     eprops_all: Dict[str, ParamDict] = dict()
     # announce the overall blaze-fitting step before the per-fiber loop
-    WLOG(params, '', 'Fitting physical blaze model for fibers: '
-                     '{0}'.format(', '.join(fiber_types)))
+    margs = [', '.join(fiber_types)]
+    # log: Fitting physical blaze model for fibers: {0}
+    WLOG(params, '', textentry('40-015-00017', args=margs))
     for fiber in fiber_types:
         resp_data = flat_response_files.get(fiber)
         e2ds_file = e2ds_files.get(fiber)
         if resp_data is None or e2ds_file is None:
-            WLOG(params, 'warning',
-                 'make_blaze: skipping fiber {0} '
-                 '(missing flat-response or e2ds file)'.format(fiber))
+            wargs = [fiber]
+            # warning: make_blaze: skipping fiber {0} (missing flat-response or
+            #     e2ds file)
+            WLOG(params, 'warning', textentry('10-015-00002', args=wargs))
             continue
         wave_map = wave_maps[fiber]
         flat_response = np.array(resp_data, dtype=float)
@@ -471,7 +481,8 @@ def make_blaze(params: ParamDict, recipe: DrsRecipe,
         eprops['BLAZE_FIT_RMS'] = fit_params['rms']
         eprops.set_all_sources(func_name)
         eprops_all[fiber] = eprops
-    WLOG(params, '', 'Blaze model fitting complete')
+    # log: Blaze model fitting complete
+    WLOG(params, '', textentry('40-015-00018'))
     return eprops_all
 
 
@@ -523,8 +534,9 @@ def get_flat_response(params: ParamDict, recipe: DrsRecipe,
                           key, header, filename=filename,
                           userinputkey='FLAT_RESP_FILE',
                           database=calibdbm, fiber=fiber)
-    WLOG(params, '', 'Loading flat-response calibration for fiber '
-                     '{0}: {1}'.format(fiber, cfile.filename))
+    margs = [fiber, cfile.filename]
+    # log: Loading flat-response calibration for fiber {0}: {1}
+    WLOG(params, '', textentry('40-015-00019', args=margs))
     frprops = ParamDict()
     frprops['FLAT_RESPONSE'] = cfile.data
     frprops['FLAT_RESP_FILE'] = cfile.filename
@@ -610,6 +622,7 @@ def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
     if max_rms > params['CAL.FLAT.QC_MAX_RMS']:
         # add failed message to fail message list
         fargs = [fiber, max_rms, params['CAL.FLAT.QC_MAX_RMS']]
+        # text: Fiber {0}: Max RMS was greater than expected. {1} > limit ({2})
         fail_msg.append(textentry('40-015-00008', args=fargs))
         qc_pass.append(0)
     else:
@@ -622,10 +635,12 @@ def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -723,6 +738,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe,
     # attach blaze model data
     blazefile.data = eprops['BLAZE']
     # log that we are saving the blaze file
+    # log: Saving blaze file: {0}
     WLOG(params, '', textentry('40-015-00003', args=[blazefile.filename]))
     # define multi lists
     data_list, name_list = [], []
@@ -753,6 +769,7 @@ def flat_blaze_write(params: ParamDict, recipe: DrsRecipe,
     # attach flat field data
     flatfile.data = eprops['FLAT']
     # log that we are saving the flat file
+    # log: Saving flat file: {0}
     WLOG(params, '', textentry('40-015-00004', args=[flatfile.filename]))
     # define multi lists
     data_list, name_list = [], []

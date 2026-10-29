@@ -157,15 +157,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Dark exposure time check
         # ------------------------------------------------------------------
         # log the Dark exposure time
-        WLOG(params, 'info', 'Dark Time = {0:.3f} s'.format(exptime))
+        margs = [exptime]
+        # log: Dark Time = {0:.3f} s
+        WLOG(params, 'info', textentry('40-011-10009', args=margs))
         # Quality control: make sure the exposure time is longer than
         #                  qc_dark_time
         if exptime < params['CAL.DARK.QC_DARK_TIME']:
             # TODO: Add to language database
-            emsg = 'Dark exposure time too short (< {0:.1f} s)'
             eargs = [params['CAL.DARK.QC_DARK_TIME']]
-            raise AperoCodedException(params, message=emsg.format(eargs),
-                                      targs=eargs)
+            lang_args = [eargs]
+            # error: Dark exposure time too short (< {0:.1f} s)
+            raise AperoCodedException(params, '09-011-00006', targs=lang_args)
         # ------------------------------------------------------------------
         # Resize and rotate image
         # ------------------------------------------------------------------
@@ -234,6 +236,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ---------------------------------------------------------------------
         if not passed and params['INPUTS']['REF']:
             eargs = [recipe.name]
+            # error: QC failure of reference recipe: {0}
             raise AperoCodedException(params, '09-000-00011', targs=eargs)
         # ------------------------------------------------------------------
         # Summary plots

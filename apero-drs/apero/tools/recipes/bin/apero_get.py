@@ -19,6 +19,7 @@ from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.tools.module.listing import drs_get
 from apero.tools.module.setup import drs_assets
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -32,6 +33,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # Get Recipe class
@@ -117,8 +120,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     inputs = params['INPUTS']
     use_gui = params['INPUTS']['GUI']
     if use_gui:
-        WLOG(params, 'warning', 'Not Implemented yet',
-             sublevel=2)
+        # warning: Not Implemented yet
+        WLOG(params, 'warning', textentry('10-509-00001'), sublevel=2)
         return locals()
     # -------------------------------------------------------------------------
     # get input from user
@@ -149,9 +152,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if not drs_text.null_text(since, ['None', '', 'Null']):
         try:
             since = Time(since)
-            msg = 'Using --since={0}'
             margs = [since]
-            WLOG(params, '', msg.format(*margs))
+            # log: Using --since={0}
+            WLOG(params, '', textentry('40-509-00011', args=margs))
         except Exception as _:
             # TODO: move to language database
             emsg = '--since={0} is not a valid time YYYY-MM-DD hh:mm:ss'
@@ -165,9 +168,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if not drs_text.null_text(latest, ['None', '', 'Null']):
         try:
             latest = Time(latest)
-            msg = 'Using --latest={0}'
             margs = [latest]
-            WLOG(params, '', msg.format(*margs))
+            # log: Using --latest={0}
+            WLOG(params, '', textentry('40-509-00012', args=margs))
         except Exception as _:
             # TODO: move to language database
             emsg = '--latest={0} is not a valid time YYYY-MM-DD hh:mm:ss'

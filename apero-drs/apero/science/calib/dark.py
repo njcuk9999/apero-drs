@@ -118,6 +118,8 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
         image = np.array(image)
     except Exception as e:
         eargs = [type(e), e, func_name]
+        # error: 'Image' is not a valid numpy array. \n Error {0}: {1} \n
+        #     function = {2}
         raise AperoCodedException(params, '00-001-00026', targs=eargs)
     # delegate numerical work to the profile-independent core module
     mdark_args = [image, dark_qmin, dark_qmax, hbins, hrangelow, hrangehigh]
@@ -125,6 +127,8 @@ def measure_dark(params: ParamDict, image: np.ndarray, entry_key: str,
     histo, med, dadead, qmin, qmax = outs
     # log the dark statistics
     wargs = [image_name, dadead, med, dark_qmin, dark_qmax, qmin, qmax]
+    # log: In {0:12s}: Frac dead pixels= {1:.4f} % - Median= {2:.3f} ADU/s -
+    #     Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s
     WLOG(params, 'info', textentry('40-011-00002', args=wargs))
     # return the parameter dictionary with new values
     return histo, med, dadead
@@ -158,9 +162,11 @@ def measure_dark_badpix(params: ParamDict, image: np.ndarray,
     baddark, dadeadall = outs
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]
+    # log: Fraction of pixels with DARK > {0:.2f} ADU/s = {1:.3f} %
     WLOG(params, 'info', textentry('40-011-00006', args=wargs))
     # log fraction of dead pixels + dark > cut
     wargs = [darkcutlimit, dadeadall]
+    # log: Total fraction of dead pixels (NaN + DARK > {0:.2f} ADU/s = {1:.3f} %
     WLOG(params, 'info', textentry('40-011-00007', args=wargs))
     # return dadeadall
     return baddark, dadeadall
@@ -190,6 +196,7 @@ def correction(params: ParamDict, image: np.ndarray, nfiles: int,
     darkimage, dhdr = drs_fits.readfits(params, darkfile, gethdr=True)
     # Read dark file
     wargs = ['DARK_FILE', darkfile]
+    # log: Doing dark correction using {0}: {1}
     WLOG(params, '', textentry('40-011-00011', args=wargs))
     # delegate numerical work to the profile-independent core module
     corrected_image = dark_core.correct_dark(image, darkimage, nfiles)
@@ -241,6 +248,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     basenames, obs_dirs, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
     # log that we are reading all dark files
+    # log: Reading all dark file headers
     WLOG(params, '', textentry('40-011-10001'))
     # loop through file headers
     for it in range(len(filenames)):
@@ -294,8 +302,8 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     # ----------------------------------------------------------------------
     if len(dark_files) == 0:
         # TODO: add this to language database
-        emsg = 'No valid dark files found'
-        raise AperoCodedException(params, message=emsg)
+        # error: No valid dark files found
+        raise AperoCodedException(params, '09-011-00007')
     # ----------------------------------------------------------------------
     # Only use a certain number of files to limit time taken
     # ----------------------------------------------------------------------
@@ -317,6 +325,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
     # match files by date
     # ----------------------------------------------------------------------
     # log progress
+    # log: Matching dark files by observation time (+/- {0} hrs)
     WLOG(params, '', textentry('40-011-10002', args=[time_thres]))
     # match files by time
     matched_id = drs_path.group_files_by_time(np.array(dark_time),
@@ -370,6 +379,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
     # log process
+    # log: Reading Dark files and combining groups
     WLOG(params, 'info', textentry('40-011-10003'))
     # Find all unique groups
     u_groups = np.unique(matched_id)
@@ -380,6 +390,7 @@ def construct_ref_dark(params: ParamDict, dark_table: Table,
     for g_it, group_num in enumerate(u_groups):
         # log progress group g_it + 1 of len(u_groups)
         wargs = [g_it + 1, len(u_groups)]
+        # log: Group {0} of {1}
         WLOG(params, '', textentry('40-011-10004', args=wargs))
         # find all files for this group
         dark_ids = filenames[matched_id == group_num]
@@ -447,10 +458,12 @@ def reference_qc(params: ParamDict) -> Tuple[List[list], int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -492,6 +505,7 @@ def write_reference_files(params: ParamDict, recipe: DrsRecipe,
     # copy data
     outfile.data = ref_dark
     # log that we are saving reference dark to file
+    # log: Saving dark reference file to {0}
     WLOG(params, '', textentry('40-011-10006', args=[outfile.filename]))
     # define multi lists
     data_list, name_list = [dark_table], ['DARK_TABLE']
@@ -550,6 +564,7 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     if med_full > params['CAL.DARK.QC_MAX_DARKLEVEL']:
         # add failed message to fail message list
         fargs = [med_full, params['CAL.DARK.QC_MAX_DARKLEVEL']]
+        # text: Unexpected Median Dark level ({0:5.2f} > {1:5.2f} ADU/s)
         fail_msg.append(textentry('40-011-00008', args=fargs))
         qc_pass.append(0)
     else:
@@ -563,6 +578,7 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     if dadeadall > params['CAL.DARK.QC_MAX_DEAD']:
         # add failed message to fail message list
         fargs = [dadeadall, params['CAL.DARK.QC_MAX_DEAD']]
+        # text: Unexpected Fraction of dead pixels ({0:5.2f} > {1:5.2f} %)
         fail_msg.append(textentry('40-011-00009', args=fargs))
         qc_pass.append(0)
     else:
@@ -575,6 +591,8 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     # checl that the precentage of dark pixels < qc_max_dark
     if baddark > params['CAL.DARK.QC_MAX_DARK']:
         fargs = [params['CAL.DARK.CUTLIMIT'], baddark, params['CAL.DARK.QC_MAX_DARK']]
+        # text: Unexpected Fraction of dark pixels > {0:.2f} ADU/s ({1:.2f} >
+        #     {2:.2f}
         fail_msg.append(textentry('40-011-00010', args=fargs))
         qc_pass.append(0)
     else:
@@ -587,10 +605,12 @@ def dark_qc(params: ParamDict, med_full: float, dadeadall: float,
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -679,6 +699,7 @@ def dark_write_files(params: ParamDict, recipe: DrsRecipe, dprtype: str,
     outfile.data = image0c
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving dark file to {0}
     WLOG(params, '', textentry('40-011-00012', args=[outfile.filename]))
     # write image to file
     outfile.write_file()

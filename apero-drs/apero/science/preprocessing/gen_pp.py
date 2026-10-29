@@ -213,6 +213,8 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
         except Exception as e:
             # warn msg: Cannot use object database entry for {0}.\n\t{1}: {2}'
             eargs = [correct_objname, type(e), str(e)]
+            # warning: Cannot use astrometric database entry for object=’{0}’.
+            #     \n {1}: {2}
             WLOG(params, 'warning', textentry('10-010-00008', args=eargs))
             # mark resolved as not complete
             resolved = False
@@ -250,6 +252,8 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
     if not resolved:
         # print warning that we are using the header not the database
         wargs = [correct_objname]
+        # warning: Object {0} is not in the astrometric database. Using header
+        #     values for astrometric parameters
         WLOG(params, 'warning', textentry('10-010-00005', args=wargs),
              sublevel=7)
         # get properties from parameters
@@ -377,13 +381,11 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
             header.set_key(params, hkey, value=mags[mag])
             header.set_key(params, f'{hkey}_SOURCE', value=mag_sources[mag])
         else:
-            emsg = ('Cannot add magnitude {0} to header '
-                    '[defined from drs_astrometrics.MAGS] because header '
-                    'keyword {1} is not defined in the instrument/default '
-                    'keywords  parameters')
             eargs = [mag, hkey]
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Cannot add magnitude {0} to header [defined from
+            #     drs_astrometrics.MAGS] because header keyword {1} is not
+            #     defined in the instrument/default keywords parameters
+            raise AperoCodedException(params, '09-010-00004', targs=eargs)
     # -------------------------------------------------------------------------
     # must update DRSOBJN
     header.set_key(params, 'KW_OBJNAME', value=objname)
@@ -495,9 +497,10 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
         reject_data = drs_astrometrics.AstrometricDatabase._read_yaml(
             reject_path)
     except Exception as e:
-        wmsg = 'Cannot read object reject list: {0}. {1}: {2}'
         wargs = [reject_path, type(e).__name__, str(e)]
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+        # warning: Cannot read object reject list: {0}. {1}: {2}
+        WLOG(params, 'warning', textentry('10-010-00010', args=wargs),
+             sublevel=3)
         return np.array([])
     objects = reject_data.get('OBJECTS', dict())
     if not isinstance(objects, dict) or len(objects) == 0:
@@ -561,6 +564,7 @@ def reject_infile(params: ParamDict, recipe: DrsRecipe,
         kw_header = params[header_col][0]
     else:
         wargs = [header_col]
+        # warning: Bad list drs key ‘{0}’ invalid (not in params)
         WLOG(params, 'warning', textentry('10-503-00019', args=wargs),
              sublevel=4)
         return False
@@ -570,6 +574,7 @@ def reject_infile(params: ParamDict, recipe: DrsRecipe,
         value = header[kw_header]
     else:
         wargs = [kw_header, header_col]
+        # warning: Bad list header key ‘{0}’ not in header (drs key = {1})
         WLOG(params, 'warning', textentry('10-503-00020', args=wargs),
              sublevel=4)
         return False
@@ -631,6 +636,8 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
     if column not in list(rtable.columns):
         # log error
         eargs = [column, func_name]
+        # error: Reject list cannot be loaded. Column '{0}' does not exist. \n
+        #     Function = {1}
         raise AperoCodedException(params, '00-010-00008', targs=eargs)
     else:
         # get the reject mask for the column
@@ -674,10 +681,9 @@ def get_areldate(params: ParamDict, header: drs_fits.Header,
         gsheet_acol = params['DATA.AREL_GSHEET_LCOL']
         delta_key = 'DATA.AREL_LDELTA'
     else:
-        emsg = 'Invalid release type = {0} (function = {1})'
         eargs = [release_type, func_name]
-        raise AperoCodedException(params, None, targs=eargs,
-                                  message=emsg.format(*eargs))
+        # error: Invalid release type = {0} (function = {1})
+        raise AperoCodedException(params, '09-010-00005', targs=eargs)
     # -------------------------------------------------------------------------
     # option 1: Check the google sheet for an entry
     # -------------------------------------------------------------------------
@@ -706,10 +712,11 @@ def get_areldate(params: ParamDict, header: drs_fits.Header,
 
         # any exception here should return a warning and a empty array
         except Exception as e:
-            wmsg = 'Cannot read areldate list {0}.'
             wargs = [GOOGLE_BASE_URL.format(gsheet_url, gsheet_id),
                      type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+            # warning: Cannot read areldate list {0}.
+            WLOG(params, 'warning', textentry('10-010-00011', args=wargs),
+                 sublevel=3)
 
     # -------------------------------------------------------------------------
     # option 2: If we have apero areldate + time delta
@@ -772,6 +779,7 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ----------------------------------------------------------------------
     # print out SNR hotpix value
+    # log: Corruption check: SNR Hotpix value = {0:.5e}
     WLOG(params, '', textentry('40-010-00006', args=[snr_hotpix]))
     # get snr_threshold
     snr_threshold = params['PP.CORRUPT_SNR_HOTPIX']
@@ -779,6 +787,8 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     if snr_hotpix < snr_threshold:
         # add failed message to fail message list
         fargs = [snr_hotpix, snr_threshold, infile.filename]
+        # text: File was found to be corrupted. \n SNR_HOTPIX < threshold \n
+        #     {0:.4e} < {1:4e}. \n File will not be saved. \n File = {2}
         fail_msg.append(textentry('40-010-00007', args=fargs))
         qc_pass.append(0)
     else:
@@ -794,6 +804,8 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     if mp.nanmax(rms_list) > rms_threshold:
         # add failed message to fail message list
         fargs = [mp.nanmax(rms_list), rms_threshold, infile.filename]
+        # text: File was found to be corrupted. \n RMS < threshold \n {0:.4e} >
+        #     {1:.4e}. \n File will not be saved. \n File = {2}
         fail_msg.append(textentry('40-010-00008', args=fargs))
         qc_pass.append(0)
     else:
@@ -815,6 +827,8 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     if actual_exptime < min_req_exptime:
         # add failed message
         fargs = [actual_exptime, min_req_exptime]
+        # text: Minimum exposure time not met \n Actual Exposure time: {0} \n
+        #     Minimum required exposure time: {1}
         fail_msg.append(textentry('40-010-00017', args=fargs))
         qc_pass.append(0)
     else:
@@ -828,11 +842,13 @@ def quality_control1(params, snr_hotpix, infile, rms_list, log=True):
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         if log:
+            # log: QUALITY CONTROL SUCCESSFUL - Well Done -
             WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         if log:
             for farg in fail_msg:
+                # text: QUALITY CONTROL FAILED:
                 WLOG(params, 'warning', textentry('40-005-10002') + farg,
                      sublevel=6)
         passed = 0
@@ -869,6 +885,8 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
         if value > dark_thres:
             qc_pass.append(0)
             margs = [dprtype, value, dark_thres]
+            # text: DPRTYPE={0} (dark) was not found to be a valid dark. Value =
+            #     {1:.4f} > {2}
             fail_msg.append(textentry('40-010-00023', args=margs))
         else:
             qc_pass.append(1)
@@ -880,10 +898,12 @@ def quality_control2(params: ParamDict, qc_params: list, image: np.ndarray,
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -936,6 +956,8 @@ def _convert_units(params: ParamDict, key: str, value: float,
     except Exception as _:
         # log error: Units for {0} do not match Current: {1} Desired: {2}
         eargs = [key, current_unit, desired_unit]
+        # error: Units for key ‘{0}’ do not match. \n Current: {1} \n Desired:
+        #     {2}
         raise AperoCodedException(params, '00-001-00059', targs=eargs)
     # return the updated value
     return float(value.value)

@@ -555,6 +555,7 @@ def start_interactive_ssh_tunnel(
     remote_port: int = 3306,
     local_data_dir: str = "",
     simple_ssh: bool = False,
+    state_subdir: str = "db_tunnels",
 ) -> Dict[str, Any]:
     """
     Start an interactive SSH tunnel session (PTY-backed).
@@ -593,7 +594,7 @@ def start_interactive_ssh_tunnel(
     data_dir = str(local_data_dir or "").strip()
     if not data_dir:
         data_dir = os.environ.get("ARI_DIR", str(Path.home() / ".ari"))
-    state_root = Path(data_dir).expanduser().resolve() / "secret" / "db_tunnels"
+    state_root = Path(data_dir).expanduser().resolve() / "secret" / state_subdir
     state_root.mkdir(parents=True, exist_ok=True)
     signature = sha1(
         f"{ssh_config_host}|{remote_host}|{local_port}|{remote_port}".encode(

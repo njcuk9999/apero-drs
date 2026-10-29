@@ -127,16 +127,15 @@ def __main__(recipe, params):
         for block in blocks:
             # generate an error for invalid block
             if block not in valid_blocks:
-                emsg = ('Block "{0}" is not a valid block name.'
-                        ' Please check --blocks argument.')
                 eargs = [block]
-                raise AperoCodedException(params, message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: Block "{0}" is not a valid block name. Please check
+                #     --blocks argument.
+                raise AperoCodedException(params, '09-521-00002', targs=eargs)
             # do not allow block to be raw
             if block == 'raw':
-                emsg = ('block contains "raw". We cannot remove raw files. '
-                        'Please check --blocks argument.')
-                raise AperoCodedException(params, message=emsg)
+                # error: block contains "raw". We cannot remove raw files.
+                #     Please check --blocks argument.
+                raise AperoCodedException(params, '09-521-00003')
     # ----------------------------------------------------------------------
     # object names
     objnames = drs_reset.normalise_cli_csv_input(objnamestr)
@@ -172,17 +171,16 @@ def __main__(recipe, params):
 
     # ----------------------------------------------------------------------
     if params['INPUTS']['test']:
-        msg1 = 'Would have removed {0} files from disk'
-        msg2 = 'Would have removed {0} entries from database {1}'
+        code1, code2 = '40-502-00059', '40-502-00060'
     else:
-        msg1 = 'Removed {0} files from disk'
-        msg2 = 'Removed {0} entries from database {1}'
+        code1, code2 = '40-502-00061', '40-502-00062'
 
     # print stats on removed files
-    WLOG(params, 'info', msg1.format(disk_entries))
+    WLOG(params, 'info', textentry(code1, args=[disk_entries]))
     # print stats on removed database entries
     for db_key in db_entries:
-        WLOG(params, 'info', msg2.format(db_entries[db_key], db_key))
+        margs = [db_entries[db_key], db_key]
+        WLOG(params, 'info', textentry(code2, args=margs))
 
     # ----------------------------------------------------------------------
     # End of main code

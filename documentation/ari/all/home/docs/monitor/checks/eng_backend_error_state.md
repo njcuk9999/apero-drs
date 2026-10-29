@@ -55,20 +55,3 @@ np.all(np.char.upper(np.char.strip(status_key)) != np.char.upper('blocked_value'
 | ENABLED | True |
 | STATUS_KEY | status_key |
 | BLOCKED_VALUE | blocked_value |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.all(np.char.upper(np.char.strip(HIERARCH ESO INS SENS129 STAT)) != np.char.upper('NOK'))
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | backend_device_error_state |
-| ENABLED | True |
-| STATUS_KEY | HIERARCH ESO INS SENS129 STAT |
-| BLOCKED_VALUE | NOK |

@@ -20,6 +20,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.math import interpolate
 from aperocore.science.extract import extract_model_core
+from aperocore import drs_lang
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -34,6 +35,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # Get parameter class
 ParamDict = param_functions.ParamDict
 # alias pcheck
@@ -62,7 +65,8 @@ def prepare_model_bckgrd_geo(
     :return: ParamDict, geometry products for model-background extraction
     """
     func_name = __NAME__ + '.prepare_model_bckgrd_geo()'
-    WLOG(params, '', 'Preparing model-background extraction geometry')
+    # log: Preparing model-background extraction geometry
+    WLOG(params, '', textentry('40-016-00060'))
     # Copy the pre-computed inverse maps and shape arrays from sprops;
     # no re-computation needed here since apero_shape already did it.
     gprops = ParamDict()
@@ -207,7 +211,8 @@ def model_background_correction(params: ParamDict, image_noshape: np.ndarray,
             image_noshape_e, bkg_noshape, order_map,
             lag=ron_lag_value)
     # ----------------------------------------------------------------------
-    WLOG(params, '', 'Model background correction complete')
+    # log: Model background correction complete
+    WLOG(params, '', textentry('40-016-00061'))
     props = ParamDict()
     props['SCI_BKGSUB'] = corrected
     props['SCI_BKGSUB_ERR'] = err_noshape

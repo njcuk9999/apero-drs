@@ -143,6 +143,7 @@ def correct_local_background(params: ParamDict, image: np.ndarray,
     sig_ker = pcheck(params, 'CAL.BCORR.KER_SIG', func=func_name,
                      override=bkgr_ker_sig)
     # log process
+    # log: Measuring local background using 2D Gaussian Kernel
     WLOG(params, '', textentry('40-012-00010'))
     # delegate numerical work to the profile-independent core module
     lbkg_args = [image, wx_ker, wy_ker, sig_ker]
@@ -204,6 +205,7 @@ def correction(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
             local_background_correction = np.zeros_like(image)
         # ------------------------------------------------------------------
         # log process
+        # log: Correcting for global background using file = {0}
         WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
         # ------------------------------------------------------------------
         # get bad pixel file
@@ -433,8 +435,8 @@ def correction_lower_envelope(recipe: DrsRecipe, params: ParamDict,
         image1 = np.array(image)
         # ------------------------------------------------------------------
         # log process
-        msg = 'Background correction [fit lower envelope 2d]'
-        WLOG(params, '', msg)
+        # log: Background correction [fit lower envelope 2d]
+        WLOG(params, '', textentry('40-012-00015'))
         # # ------------------------------------------------------------------
         # # get background mask file (defines the background-only pixels)
         # # copy image
@@ -514,6 +516,7 @@ def debug_file_envelope(recipe: DrsRecipe, params: ParamDict,
     # add primage data to debug_back file
     debug_back.data = dlist[0]
     # print progress: saving file
+    # log: Saving debug background file {0}
     WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
     # define name of extensions
     name_list = ['CORRECTED', 'ORIGINAL', 'GLOB_BKGRD', 'GLOB_NSIG']
@@ -573,6 +576,7 @@ def debug_file(recipe: DrsRecipe, params: ParamDict, infile: DrsFitsFile,
     # add primage data to debug_back file
     debug_back.data = dlist[0]
     # print progress: saving file
+    # log: Saving debug background file {0}
     WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
     # define name of extensions
     name_list = ['CORRECTED', 'ORIGINAL', 'LOCAL_CORR',

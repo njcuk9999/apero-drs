@@ -95,6 +95,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile,
         thoutinst = recipe.outputs['THERMALT_FILE']
     else:
         eargs = [dprtype, func_name]
+        # error: Saving Thermal file {0}
         raise AperoCodedException(params, '40-016-00022', targs=eargs)
         thoutinst = None
 
@@ -154,8 +155,9 @@ def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
     """
     func_name = __NAME__ + '.extract_flat_files()'
     # announce sub-recipe launch so the user can track progress
-    WLOG(params, '', 'Running flat extraction sub-recipe '
-                     '({0})'.format(extname))
+    margs = [extname]
+    # log: Running flat extraction sub-recipe ({0})
+    WLOG(params, '', textentry('40-016-00062', args=margs))
     # read always_extract flag from params (can be overridden via kwargs)
     flat_always_extract = pcheck(params, 'CAL.FLAT.ALWAYS_EXTRACT',
                                  'always_extract', kwargs, func_name)
@@ -182,7 +184,8 @@ def extract_flat_files(params: ParamDict, recipe: DrsRecipe,
         hdr = e2ds_file.get_header()
         frprops = flat_blaze.get_flat_response(params, recipe, hdr, fiber)
         flat_response_outputs[fiber] = frprops['FLAT_RESPONSE']
-    WLOG(params, '', 'Flat extraction complete')
+    # log: Flat extraction complete
+    WLOG(params, '', textentry('40-016-00063'))
     # Return both e2ds and flat-response products in a combined dict.
     return {'e2dsff': flat_outputs, 'flat_response': flat_response_outputs}
 
@@ -277,8 +280,9 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
     #  point as we need to use these files later on - examples are
     #  the file that were combined
     drs_startup.index_files(params, recipe)
-    # push to database
-    drs_database.db_push(params)
+    # push this recipe's own entries only - without a DRS.GROUP (e.g. queue
+    #   mode) a full push would take other running recipes' entries too
+    drs_database.db_push(params, pid=params['PID'])
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
@@ -303,11 +307,9 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         obs_dir = os.path.dirname(infile.filename).split(inpath)[1]
     # otherwise deal with error
     else:
-        # TODO: Add to language database
-        emsg = 'Input file {0} not in input or output path'
         eargs = [infile.filename, inpath, outpath, func_name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Input file {0} not in input or output path
+        raise AperoCodedException(params, '09-016-00007', targs=eargs)
     # remove leading/trailing slashes
     obs_dir = obs_dir.strip(os.sep)
     # ------------------------------------------------------------------
@@ -435,6 +437,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         # check success
         if not llout['success']:
             eargs = [recipe.name, func_name]
+            # error: Extraction failed for {0} \n Function = {1}
             raise AperoCodedException(params, '09-016-00002', targs=eargs)
         # # get qc
         # passed = bool(llout['passed'])
@@ -474,6 +477,7 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         outfile = e2ds_files[fiber]
         # log that we are reading file
         wargs = [outfile.filename]
+        # log: Found and reading extracted file {0}
         WLOG(params, '', textentry('40-016-00021', args=wargs))
         # read file header and push into outputs
         outfile.read_file()
@@ -483,6 +487,8 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
         if not passed:
             # log error: extraction of file failed
             eargs = [kind, infile.basename, func_name]
+            # error: QC Failed for extraction of {0} file. File = {1} \n
+            #     Function = {1}
             raise AperoCodedException(params, '09-016-00003', targs=eargs)
         # copy file to dictionary
         outputs[fiber] = outfile.completecopy(outfile)

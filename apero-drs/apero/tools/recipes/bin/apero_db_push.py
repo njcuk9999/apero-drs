@@ -24,6 +24,7 @@ from aperocore.core import drs_log
 from apero.core import drs_database
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -37,6 +38,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -93,7 +96,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Push pending database entries
     # ----------------------------------------------------------------------
-    WLOG(params, 'info', 'Pushing pending database entries')
+    # log: Pushing pending database entries
+    WLOG(params, 'info', textentry('40-521-00001'))
     drs_database.db_push(params)
     # ----------------------------------------------------------------------
     # End of main code

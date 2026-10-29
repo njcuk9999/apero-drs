@@ -19,6 +19,7 @@ Import rules:
 - only from apero.base.base.py
 
 """
+import ast
 import importlib.resources as resources
 import os
 from hashlib import blake2b
@@ -96,32 +97,45 @@ def lang_db_proxy(language=None):
     for lang_basename in base.DEF_LANG_FILES:
         # construct language file
         lang_file = os.path.join(lang_path, lang_basename)
-        # read file
+        # parse the table without importing it (values may span lines)
         with open(lang_file, 'r') as lfile:
-            lines = lfile.readlines()
-        # make text pairs
-        in_file = True
-        while in_file:
-            # if no lines left break
-            if len(lines) == 0:
-                break
-            # get the first line
-            line = lines.pop(0)
-            # if we have a start of a text block
-            if 'langlist.create' in line:
-                # get the text key
-                key = line.split('langlist.create(\'')[-1].split('\'')[0]
-                # get the language values
-                next_lines = lines[:len(base.LANGUAGES)]
-                for nline in next_lines:
-                    if f'item.value[\'{language}\']' in nline:
-                        value = nline.split('] = ')[-1]
-                        value = value.strip('\n')
-                        value = value.strip('\'').strip('"')
-                        value = value.replace('\\n', '\n')
-                        value = value.replace('\\t', '\t')
-                        BETEXT[key] = value
-                        break
+            tree = ast.parse(lfile.read())
+        # storage for the key / values of the current item
+        key, values = None, dict()
+        for node in tree.body:
+            if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+                continue
+            target = node.targets[0]
+            # item = langlist.create('KEY', kind=...)
+            if isinstance(target, ast.Name) and target.id == 'item':
+                if key is not None:
+                    _store_betext(key, values, language)
+                key = ast.literal_eval(node.value.args[0])
+                values = dict()
+            # item.value['LANG'] = 'text'
+            elif (isinstance(target, ast.Subscript)
+                  and isinstance(target.value, ast.Attribute)
+                  and target.value.attr == 'value'):
+                lang = ast.literal_eval(target.slice)
+                values[lang] = ast.literal_eval(node.value)
+        if key is not None:
+            _store_betext(key, values, language)
+
+
+def _store_betext(key: str, values: dict, language: str):
+    """
+    Store a language value in BETEXT (falling back to the default language)
+
+    :param key: str, the language code
+    :param values: dict, language -> value for this code
+    :param language: str, the requested language
+
+    :return: None, updates BETEXT
+    """
+    if language in values:
+        BETEXT[key] = values[language]
+    elif base.DEFAULT_LANG in values:
+        BETEXT[key] = values[base.DEFAULT_LANG]
 
 
 def _rel_folder(package: str, folder: str) -> str:

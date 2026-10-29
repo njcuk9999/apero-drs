@@ -158,6 +158,8 @@ def __main__(recipe, params):
                 if fiber not in dfibers:
                     # log error User input error: fiber={0} is invalid.
                     eargs = [fiber, ' or '.join(dfibers)]
+                    # error: User input error: fiber={0} is invalid. \n Fiber
+                    #     must be {1}
                     raise AperoCodedException(params, '09-018-00002', targs=eargs)
     # -------------------------------------------------------------------------
     # deal with other user inputs
@@ -182,9 +184,13 @@ def __main__(recipe, params):
         if not drs_text.null_text(params['INPUTS']['dprtype'], ['None', '']):
             dprtype = params['INPUTS']['dprtype']
     if dprtype not in params['TOOLS.GEN.DRIFT_DPRTYPES']:
+        # text: Invalid file type = '{0}'. \n function = {1}. \n Must be one of
+        #     the following:
         emsg = textentry('01-001-00020', args=[dprtype, mainname])
         for allowedtype in params['TOOLS.GEN.DRIFT_DPRTYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)
+        # error: Invalid file type = '{0}'. \n function = {1}. \n Must be one of
+        #     the following:
         raise AperoCodedException(params, '01-001-00020',
                                   targs=[dprtype, mainname], message=emsg)
     # ------------------------------------------------------------------------
@@ -201,6 +207,7 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         WLOG(params, 'info', params['LOG.HEADER'])
         pargs = [fiber, fb_it + 1, len(fibers)]
+        # log: Processing fiber {0} ({1} of {2})
         WLOG(params, 'info', textentry('40-018-00006', args=pargs))
         WLOG(params, 'info', params['LOG.HEADER'])
         # get this fibers dprtype
@@ -208,6 +215,7 @@ def __main__(recipe, params):
         # skip if dprtype in this fiber does not match FP
         if fiberdpr != params['TOOLS.GEN.DRIFT_DPR_FIBER_TYPE']:
             eargs = [fiber, fiberdpr, params['TOOLS.GEN.DRIFT_DPR_FIBER_TYPE']]
+            # warning: Skipping fiber {0} = {1} (Not of type ‘{2}’)
             WLOG(params, 'warning', textentry('10-018-00001', args=eargs))
 
         # ---------------------------------------------------------------------
@@ -220,6 +228,7 @@ def __main__(recipe, params):
             if obs_dir is not None:
                 # print progress: seraching observation directory
                 iargs = [obs_dir]
+                # log: Searching observation directory: ‘{0}’
                 WLOG(params, 'info', textentry('40-018-00005', args=iargs))
                 # deal with invalid night
                 if obs_dir not in all_obs_dirs:
@@ -251,6 +260,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             WLOG(params, 'info', params['LOG.HEADER'])
             pargs = [f_it + 1, len(filenames)]
+            # log: Processing file {0} of {1}
             WLOG(params, 'info', textentry('40-018-00007', args=pargs))
             WLOG(params, 'info', params['LOG.HEADER'])
             # -----------------------------------------------------------------
@@ -313,6 +323,7 @@ def __main__(recipe, params):
                  OUTPUT_FILENAME.format(dprtype, fiber)]
         out_filename = str(os.path.join(*cargs))
         # log that we are saving file
+        # log: Writing drift file: {0}
         WLOG(params, '', textentry('40-018-00008', args=[out_filename]))
         # save the table to file
         drs_table.write_table(params, table, out_filename, fmt='fits')

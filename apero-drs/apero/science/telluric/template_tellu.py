@@ -111,6 +111,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     # get the objname
     objname = reffile.get_hkey('KW_OBJNAME', dtype=str)
     # log that we are constructing the cubes
+    # log: Constructing data cubes
     WLOG(params, 'info', textentry('40-019-00027'))
     # ----------------------------------------------------------------------
     # Compile a median SNR for rejection of bad files
@@ -235,6 +236,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             wargs = [reffile.name, jt + 1, len(pmask), p_it + 1,
                      len(upbins)]
             WLOG(params, '', params['LOG.HEADER'])
+            # log: Processing {0} file {1} of {2} (bin={3} of {4})
             WLOG(params, '', textentry('40-019-00028', args=wargs))
             WLOG(params, '', params['LOG.HEADER'])
             # ------------------------------------------------------------------
@@ -259,6 +261,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
             if (not isinstance(berv, (int, float))
                     or not np.isfinite(berv)):
                 eargs = [berv, func_name]
+                # error: BERV value unusable. BERV = '{0}' \n Function = {1}
                 raise AperoCodedException(params, '09-016-00004', targs=eargs)
             # ------------------------------------------------------------------
             # load wavelength solution for this fiber
@@ -282,6 +285,8 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                 # log skipping
                 wargs = [jt + 1, len(vfilenames), snr_order, snr_all[jt],
                          snr_thres]
+                # warning: Skipping file {0} of {1}. SNR (order {2}) = {3}
+                #     (Limit = {4})
                 WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
                      sublevel=4)
                 # skip
@@ -356,6 +361,8 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         qc_logic.append('BERV_COV < {0}'.format(min_berv_cov))
         qc_pass.append(0)
         fargs = [berv_cov, min_berv_cov]
+        # text: Insufficient BERV coverage to build template. \n BERV coverage
+        #     was: {0} km/s required > {1} km/s
         fail_msgs.append(textentry('10-019-00011', args=fargs))
     else:
         qc_names.append('BERV_COV')
@@ -375,6 +382,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         qc_values.append('False')
         qc_logic.append('HAS_ROWS==False')
         qc_pass.append(0)
+        # text: No good files found for object = {0}. Skipping.
         fail_msgs.append(textentry('10-019-00007', args=[objname]))
 
     else:
@@ -384,6 +392,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         for iteration in range(e2ds_iterations):
             wargs = [iteration + 1, e2ds_iterations]
             # print which iteration we are on
+            # log: E2DS low f filter iteration {0} of {1}
             WLOG(params, '', textentry('40-019-00034', args=wargs))
             # loop each order
             for order_num in range(reffile.shape[0]):
@@ -598,6 +607,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     hotstar_kernel_velocity = pcheck(params, 'OBJ.TELLU.TEMPLATE.HOTSTAR_KER_VEL',
                                      'hotstar_ker_vel', kwargs, func_name)
     # log that we are constructing the cubes
+    # log: Constructing data cubes
     WLOG(params, 'info', textentry('40-019-00027'))
 
     # read first file as reference
@@ -724,6 +734,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             wargs = [reffile.name, jt + 1, len(pmask), p_it + 1,
                      len(upbins)]
             WLOG(params, '', params['LOG.HEADER'])
+            # log: Processing {0} file {1} of {2} (bin={3} of {4})
             WLOG(params, '', textentry('40-019-00028', args=wargs))
             WLOG(params, '', params['LOG.HEADER'])
             # ------------------------------------------------------------------
@@ -758,6 +769,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
             if (not isinstance(berv, (int, float))
                     or not np.isfinite(berv)):
                 eargs = [berv, func_name]
+                # error: BERV value unusable. BERV = '{0}' \n Function = {1}
                 raise AperoCodedException(params, '09-016-00004', targs=eargs)
 
             # ------------------------------------------------------------------
@@ -775,6 +787,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
                 # log skipping
                 wargs = [jt + 1, len(vfilenames), snr_order, snr_all[jt],
                          snr_thres]
+                # warning: Skipping file {0} of {1}. SNR (order {2}) = {3}
+                #     (Limit = {4})
                 WLOG(params, 'warning', textentry('10-019-00006', args=wargs),
                      sublevel=4)
                 # skip
@@ -823,10 +837,9 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         else:
             # print progress
             WLOG(params, 'info', params['LOG.HEADER'])
-            # TODO: Add to language database
-            msg = 'Combining bin {0} of {1}'
             margs = [p_it + 1, len(upbins)]
-            WLOG(params, '', msg.format(*margs))
+            # log: Combining bin {0} of {1}
+            WLOG(params, '', textentry('40-019-00067', args=margs))
             WLOG(params, '', params['LOG.HEADER'])
             # work out the median of this bin
             median = mp.nanmedian(big_cube_tmp, axis=1)
@@ -863,6 +876,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     for iteration in range(s1d_iterations):
         wargs = [iteration + 1, s1d_iterations]
         # print which iteration we are on
+        # log: S1D low f filter iteration {0} of {1}
         WLOG(params, '', textentry('40-019-00035', args=wargs))
         # loop through files and normalise by cube median
         for it in range(big_cube.shape[-1]):
@@ -885,9 +899,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     else:
         # print progress
         WLOG(params, '', params['LOG.HEADER'])
-        # TODO: Add to language database
-        msg = 'Combining big_cube error and number of valid pixels'
-        WLOG(params, '', msg)
+        # log: Combining big_cube error and number of valid pixels
+        WLOG(params, '', textentry('40-019-00065'))
         WLOG(params, '', params['LOG.HEADER'])
 
         with warnings.catch_warnings(record=True) as _:
@@ -1035,6 +1048,7 @@ def calculate_berv_coverage(params: ParamDict, recipe: Union[DrsRecipe, None],
     berv_cov = float(np.trapezoid(coverage, velo_range))
     # log coverage
     if log:
+        # log: Calculated BERV coverage: {0} km/s
         WLOG(params, 'info', textentry('40-019-00051', args=[berv_cov]))
     # plot coverage for this object
     if recipe is not None:
@@ -1133,9 +1147,8 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     res_expo = np.array(res_table['flux_res_expo'])
     # -------------------------------------------------------------------------
     # print progress
-    # TODO: Add to language database
-    msg = 'Calculating deconvolution of template'
-    WLOG(params, '', msg)
+    # log: Calculating deconvolution of template
+    WLOG(params, '', textentry('40-019-00064'))
     # -------------------------------------------------------------------------
     # spline with slopes in domains that are not defined. We cannot have a NaN
     # in these maps.
@@ -1191,9 +1204,9 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
         # update the iteration
         iteration += 1
         # log the progress
-        # TODO: Add to language database
-        msg = '\tIteration {0}. residual (99th percentile) = {1:.3e}'
-        WLOG(params, '', msg.format(iteration, p99))
+        margs = [iteration, p99]
+        # log: Iteration {0}. residual (99th percentile) = {1:.3e}
+        WLOG(params, '', textentry('40-019-00066', args=margs))
     # -------------------------------------------------------------------------
     # plot the deconv plot
     recipe.plot('MKTEMP_S1D_DECONV', wavemap=wavemap, flux=flux, mask=mask,
@@ -1215,10 +1228,12 @@ def mk_template_qc(params, qc_params, fail_msg=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -1316,6 +1331,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # set data
     template_file.data = cprops['MEDIAN']
     # log that we are saving s1d table
+    # log: Saving median template file: {0}
     WLOG(params, '', textentry('40-019-00029', args=[template_file.filename]))
     # define multi lists
     data_list = [bigtable, berv_cov_table, cprops['HEADER_TABLE']]
@@ -1349,6 +1365,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # set data
     bigcubefile.data = cprops['BIG_CUBE']
     # log that we are saving s1d table
+    # log: Saving Big Cube: {0}
     WLOG(params, '', textentry('40-019-00030', args=[bigcubefile.filename]))
     # define multi lists
     data_list = [bigtable, berv_cov_table]
@@ -1382,6 +1399,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # set data
     bigcubefile0.data = cprops['BIG_CUBE0']
     # log that we are saving s1d table
+    # log: Saving Big Cube 0: {0}
     WLOG(params, '', textentry('40-019-00031', args=[bigcubefile0.filename]))
     # define multi lists
     data_list = [bigtable, berv_cov_table]
@@ -1455,6 +1473,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # set data
     template_file.data = s1dtable
     # log that we are saving s1d table
+    # log: Saving median s1d template file: {0}
     WLOG(params, '', textentry('40-019-00036', args=[template_file.filename]))
     # define multi lists
     data_list = [bigtable]
@@ -1488,6 +1507,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # set data
     bigcubefile.data = props['S1D_BIG_CUBE']
     # log that we are saving s1d table
+    # log: Saving s1d big cube file: {0}
     WLOG(params, '', textentry('40-019-00037', args=[bigcubefile.filename]))
     # define multi lists
     data_list = [bigtable]

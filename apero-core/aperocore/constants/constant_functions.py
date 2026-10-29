@@ -179,6 +179,7 @@ class Const:
         # set the source file of the constant
         if source is None:
             eargs = [self.class_name, self.name]
+            # error: {0} Error: must set source for {0}:{1}
             raise AperoCodedException(None, '00-003-00034', targs=eargs)
         else:
             self.source = source
@@ -315,6 +316,9 @@ class Const:
         func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
+            # error: Must define new source when copying a Constant \n Syntax:
+            #     Constant.copy(source) \n where 'source' is a string \n
+            #     Function = {0}
             raise AperoCodedException(None, '00-003-00007', targs=[func_name])
         # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
@@ -1160,6 +1164,7 @@ class Keyword(Const):
         # set the source file of the Keyword
         if source is None:
             eargs = [self.class_name, self.name]
+            # error: {0} Error: must set source for {0}:{1}
             raise AperoCodedException(None, '00-003-00034', targs=eargs)
         else:
             self.source = source
@@ -1374,6 +1379,7 @@ class Keyword(Const):
             self.comment = ''
         # need a key
         if self.key is None:
+            # error: Keyword instance '{0}' must have parameter 'key' set
             raise AperoCodedException(None, '00-003-00035', targs=[self.name])
         # construct true value as keyword store
         true_value = [self.key, key_value, self.comment]
@@ -1400,6 +1406,8 @@ class Keyword(Const):
         func_name = display_func('copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
+            # error: User config defined but directory = '{0}' has not config
+            #     files \n Valid config files: {1}
             raise AperoCodedException(None, '00-003-00036', targs=[func_name])
         # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
@@ -2024,8 +2032,12 @@ def import_module(func: str, modulepath: str, full: bool = False,
         eargs = [modfile, moddir, func_name, type(e), e, str(string_trackback)]
         # deal with quiet return vs normal return
         if quiet:
+            # error: Cannot import module '{0}' from '{1}' \n Function = {2} \n
+            #     Error {3}: {4} \n \n Traceback: \n \n {5}
             raise ValueError(textentry('00-000-00003', args=eargs))
         else:
+            # error: Cannot import module '{0}' from '{1}' \n Function = {2} \n
+            #     Error {3}: {4} \n \n Traceback: \n \n {5}
             raise AperoCodedException(None, '00-000-00003', targs=eargs)
 
 
@@ -2105,6 +2117,7 @@ def update_file(filename: str, dictionary: dict):
             lines = f.readlines()
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
+        # error: File '{0}' cannot be read by {1} \n Error {2}: {3}
         raise AperoCodedException(None, '00-004-00003', targs=eargs)
     # convert lines to char array
     clines = np.char.array(lines).strip()
@@ -2130,6 +2143,7 @@ def update_file(filename: str, dictionary: dict):
             f.writelines(lines)
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
+        # error: File '{0}' cannot be written by {1} \n Error {2}: {3}
         raise AperoCodedException(None, '00-004-00004', targs=eargs)
 
 
@@ -2205,16 +2219,22 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
         if not isinstance(invalue, str):
             if not quiet:
                 eargs = [name, type(invalue), invalue, source, func_name]
+                # error: Parameter '{0}' must be a string. \n Type: '{1}' \n
+                #     Value: '{2}' \n Config File = '{3}' \n Function = {4}
                 raise AperoCodedException(None, '00-003-00009', targs=eargs)
         if not os.path.exists(invalue):
             if not quiet:
                 eargs = [name, invalue, func_name]
+                # error: Const validate error - Key {0}: Path does not exist
+                #     '{1}' \n Function = {2}
                 raise AperoCodedException(None, '00-003-00010', targs=eargs)
         return str(invalue)
     # deal with casting a string into a list
     if (dtype is list) and isinstance(invalue, str):
         if not quiet:
             eargs = [name, invalue, source, func_name]
+            # error: Parameter '{0}' should be a list not a string. \n Value =
+            #     {1} \n Config File = '{2}' \n Function = {3}
             raise AperoCodedException(None, '00-003-00011', targs=eargs)
     # now try to cast value
     try:
@@ -2223,6 +2243,9 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
         if not quiet:
             eargs = [name, dtype, invalue, type(invalue), type(e), e,
                      source, func_name]
+            # error: Parameter '{0}' dtype is incorrect. Expected '{1}'
+            #     value='{2}' (dtype={3}) \n Error {4}: {5} \n Config File = {6}
+            #     \n Function = {7}
             raise AperoCodedException(None, '00-003-00012', targs=eargs)
         outvalue = invalue
     # return out value
@@ -2299,16 +2322,22 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     if dtype is None:
         if not quiet:
             eargs = [name, source, func_name]
+            # error: Parameter '{0}' dtype not set \n Config File = {1} \n
+            #     Function = {2}
             raise AperoCodedException(None, '00-003-00013', targs=eargs)
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
         if not quiet:
             eargs = [name, ', '.join(SIMPLE_STYPES), source, func_name]
+            # error: Parameter '{0}' dtype is incorrect. Must be one of the
+            #     following: \n {1} \n Config file: {2} \n function = {3}
             raise AperoCodedException(None, '00-003-00014', targs=eargs)
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
         if not quiet:
             eargs = [name, source, func_name]
+            # error: Parameter '{0}' value is not set. \n Config file = '{1}' \n
+            #     Function = {2}
             raise AperoCodedException(None, '00-003-00015', targs=eargs)
     # ---------------------------------------------------------------------
     # check bools
@@ -2321,6 +2350,8 @@ def _validate_value(name: str, dtype: Union[str, type, None],
         if value not in [True, 1, False, 0]:
             if not quiet:
                 eargs = [name, value, source, func_name]
+                # error: Parameter '{0}' must be True or False or 1 or 0 \n
+                #     Current value: '{1}' \n Config file: {2} \n Function = {3}
                 raise AperoCodedException(None, '00-003-00016', targs=eargs)
     # ---------------------------------------------------------------------
     # Check if dtype is correct
@@ -2354,6 +2385,9 @@ def _validate_value(name: str, dtype: Union[str, type, None],
                 stroptions = ['"{0}"'.format(opt) for opt in options]
                 eargs = [name, ', '.join(stroptions), true_value, source,
                          func_name]
+                # error: Parameter '{0}' value is incorrect. \n Options are: {1}
+                #     \n Current value: '{2}' \n Config File = {3} \n Function =
+                #     {4}
                 raise AperoCodedException(None, '00-003-00017', targs=eargs)
     # if we have a str we are done
     if dtype == str:
@@ -2365,11 +2399,17 @@ def _validate_value(name: str, dtype: Union[str, type, None],
             if true_value > maximum:
                 if not quiet:
                     eargs = [name, maximum, true_value, source, func_name]
+                    # error: Parameter '{0}' too large. \n Value must be less
+                    #     than {1} \n Current value: {2} \n Config File = {3} \n
+                    #     Function = {4}
                     raise AperoCodedException(None, '00-003-00018', targs=eargs)
         if minimum is not None:
             if true_value < minimum:
                 if not quiet:
                     eargs = [name, minimum, true_value, source, func_name]
+                    # error: Parameter '{0}' too small. \n Value must be greater
+                    #     than {1} \n Current value: {2} \n Config File = {3} \n
+                    #     Function = {4}
                     raise AperoCodedException(None, '00-003-00019', targs=eargs)
     # return true value
     return true_value, source
@@ -2410,14 +2450,17 @@ def _validate_text_file(filename: Union[str, Path],
         # loop through each character in line and check if it is a valid
         # character
         eargs = [filename, func_name]
+        # text: Invalid character(s) found in file = {0} \n Function = {1}
         emsg = textentry('00-003-00020', args=eargs)
         invalid = False
         for char in line:
             if char not in VALID_CHARS:
                 invalid = True
+                # text: Line {0}: character = '{1}'
                 emsg += textentry('00-003-00021', args=[char, l_it + 1])
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
+            # error: Invalid character(s) found in file = {0} \n Function = {1}
             raise AperoCodedException(None, '00-003-00020', message=emsg)
 
 

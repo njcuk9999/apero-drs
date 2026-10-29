@@ -1,0 +1,596 @@
+# ARI interface translations.
+#
+# Key: the English text exactly as written in the templates
+# ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
+# Values: FR / ES translations. Missing entries fall back to English.
+# Keep {name} placeholders unchanged in every translation.
+APERO Check Information:
+  ES: Información de las comprobaciones de APERO
+  FR: Informations sur les vérifications APERO
+APERO Checks:
+  ES: Comprobaciones de APERO
+  FR: Vérifications APERO
+APERO Checks Policy:
+  ES: Política de comprobaciones de APERO
+  FR: Politique des vérifications APERO
+APERO Data Portal:
+  ES: Portal de datos de APERO
+  FR: Portail de données APERO
+? APERO Monitors help keep the instrument data reduction pipelines running smoothly
+  — a great, flexible way to gain hands-on experience with real telescope data.
+: ES: Los monitores de APERO ayudan a que los pipelines de reducción de datos de
+    los instrumentos funcionen sin problemas — una forma excelente y flexible de
+    adquirir experiencia práctica con datos reales de telescopio.
+  FR: Les moniteurs APERO aident à assurer le bon fonctionnement des pipelines de
+    réduction des données des instruments — une excellente façon, flexible, d'acquérir
+    une expérience pratique avec de vraies données de télescope.
+APERO Queue:
+  ES: Cola de APERO
+  FR: File d'attente APERO
+APERO Queue Setup:
+  ES: Configuración de la cola de APERO
+  FR: Configuration de la file d'attente APERO
+? APERO is a pipeline designed to reduce astrophysical observations (specifically
+  from echelle spectrographs). This is the APERO data portal where you can view
+  documentation, install and with permission access some of our reductions.
+: ES: APERO es un pipeline diseñado para reducir observaciones astrofísicas (en
+    particular de espectrógrafos echelle). Este es el portal de datos de APERO donde
+    puede consultar la documentación, instalar APERO y, con permiso, acceder a algunas
+    de nuestras reducciones.
+  FR: APERO est un pipeline conçu pour réduire des observations astrophysiques (en
+    particulier de spectrographes échelle). Ceci est le portail de données APERO
+    où vous pouvez consulter la documentation, installer APERO et, avec autorisation,
+    accéder à certaines de nos réductions.
+API Access:
+  ES: Acceso a la API
+  FR: Accès API
+Account:
+  ES: Cuenta
+  FR: Compte
+Add Email:
+  ES: Añadir correo electrónico
+  FR: Ajouter un courriel
+Add Institution:
+  ES: Añadir institución
+  FR: Ajouter un établissement
+Admin Portal:
+  ES: Portal de administración
+  FR: Portail d'administration
+Admin Portal overview. Use the health cards to identify setup gaps, then open each section to configure and test.:
+  ES: Resumen del portal de administración. Use las tarjetas de estado para identificar
+    lo que falta en la configuración y luego abra cada sección para configurar y
+    probar.
+  FR: Vue d'ensemble du portail d'administration. Utilisez les cartes d'état pour
+    repérer ce qui manque dans la configuration, puis ouvrez chaque section pour
+    configurer et tester.
+Allowed Python Expressions:
+  ES: Expresiones de Python permitidas
+  FR: Expressions Python autorisées
+An unexpected error occurred. Please try again later.:
+  ES: Se produjo un error inesperado. Inténtelo de nuevo más tarde.
+  FR: Une erreur inattendue s'est produite. Veuillez réessayer plus tard.
+Assets Management:
+  ES: Gestión de recursos
+  FR: Gestion des ressources
+Astrometrics:
+  ES: Astrometría
+  FR: Astrométrie
+Async Tasks:
+  ES: Tareas asíncronas
+  FR: Tâches asynchrones
+Awards:
+  ES: Reconocimientos
+  FR: Distinctions
+Back to Home:
+  ES: Volver al inicio
+  FR: Retour à l'accueil
+Back to Login:
+  ES: Volver al inicio de sesión
+  FR: Retour à la connexion
+Backup Settings:
+  ES: Configuración de copias de seguridad
+  FR: Paramètres de sauvegarde
+Bad Request:
+  ES: Solicitud incorrecta
+  FR: Requête invalide
+Become a Monitor:
+  ES: Hacerse monitor
+  FR: Devenir moniteur
+Become an APERO Monitor:
+  ES: Hacerse monitor de APERO
+  FR: Devenir moniteur APERO
+Clock Settings:
+  ES: Configuración de relojes
+  FR: Paramètres des horloges
+Clocks:
+  ES: Relojes
+  FR: Horloges
+Close:
+  ES: Cerrar
+  FR: Fermer
+Coming Soon:
+  ES: Próximamente
+  FR: Bientôt disponible
+? Configure and monitor SSHFS mounts used by data paths on this server. Use SSH
+  config mode to reference host aliases from {c0}.
+: ES: Configure y supervise los montajes SSHFS usados por las rutas de datos en
+    este servidor. Use el modo de configuración SSH para referirse a los alias de
+    host de {c0}.
+  FR: Configurez et surveillez les montages SSHFS utilisés par les chemins de données
+    sur ce serveur. Utilisez le mode configuration SSH pour faire référence aux
+    alias d'hôtes de {c0}.
+Configure backup destinations and schedules. Validate credentials and paths first, then enable recurring backups.:
+  ES: Configure los destinos y los calendarios de las copias de seguridad. Valide
+    primero las credenciales y las rutas y luego active las copias periódicas.
+  FR: Configurez les destinations et les calendriers de sauvegarde. Validez d'abord
+    les identifiants et les chemins, puis activez les sauvegardes récurrentes.
+Configure outbound email service for alerts and notifications. Test your settings before enabling automated sends.:
+  ES: Configure el servicio de correo saliente para alertas y notificaciones. Pruebe
+    la configuración antes de activar los envíos automáticos.
+  FR: Configurez le service de courriel sortant pour les alertes et les notifications.
+    Testez vos paramètres avant d'activer les envois automatiques.
+Confirm New Password:
+  ES: Confirmar la nueva contraseña
+  FR: Confirmer le nouveau mot de passe
+? Connect ARI to running {c0} dashboards through SSH tunnels. Each queue is linked
+  to an APERO profile; monitors who can access that profile see it on the Monitor
+  Portal APERO Queue page, apart from the actions you block for monitors.
+: ES: Conecte ARI a los paneles {c0} en ejecución mediante túneles SSH. Cada cola
+    está vinculada a un perfil de APERO; los monitores con acceso a ese perfil la
+    ven en la página Cola de APERO del portal de monitores, salvo las acciones que
+    bloquee para los monitores.
+  FR: Connectez ARI aux tableaux de bord {c0} en cours d'exécution via des tunnels
+    SSH. Chaque file d'attente est liée à un profil APERO ; les moniteurs ayant
+    accès à ce profil la voient sur la page File d'attente APERO du portail des
+    moniteurs, à l'exception des actions que vous bloquez pour les moniteurs.
+? Control group-level database table permissions across science groups and profiles.
+  Grant minimum required access to balance security and usability.
+: ES: Controle los permisos de las tablas de la base de datos por grupo, para los
+    grupos científicos y los perfiles. Conceda el acceso mínimo necesario para equilibrar
+    seguridad y facilidad de uso.
+  FR: Contrôlez les permissions des tables de base de données par groupe, pour les
+    groupes scientifiques et les profils. Accordez l'accès minimum nécessaire pour
+    concilier sécurité et facilité d'utilisation.
+Create Account:
+  ES: Crear una cuenta
+  FR: Créer un compte
+? Create and maintain APERO profiles that drive paths, table names, and science
+  settings. Database definitions are managed separately in Database Setup to keep
+  forms simple.
+: ES: Cree y mantenga los perfiles de APERO que definen las rutas, los nombres de
+    tablas y los parámetros científicos. Las definiciones de bases de datos se gestionan
+    por separado en Configuración de la base de datos para mantener los formularios
+    simples.
+  FR: Créez et maintenez les profils APERO qui définissent les chemins, les noms
+    de tables et les paramètres scientifiques. Les définitions de bases de données
+    sont gérées séparément dans Configuration de la base de données pour garder
+    les formulaires simples.
+Custom Columns:
+  ES: Columnas personalizadas
+  FR: Colonnes personnalisées
+Data Access:
+  ES: Acceso a los datos
+  FR: Accès aux données
+Data Portal:
+  ES: Portal de datos
+  FR: Portail de données
+Database Query:
+  ES: Consulta de base de datos
+  FR: Requête de base de données
+Database Setup:
+  ES: Configuración de la base de datos
+  FR: Configuration de la base de données
+? Define reusable local and DB SSH tunnel database connections that APERO profiles
+  reference. Use Local for direct connections and DB SSH Tunnel for connections
+  routed through an SSH gateway.
+: ES: Defina conexiones de base de datos reutilizables (locales o por túnel SSH)
+    a las que hacen referencia los perfiles de APERO. Use Local para conexiones
+    directas y DB SSH Tunnel para conexiones a través de una pasarela SSH.
+  FR: Définissez des connexions de base de données réutilisables (locales ou par
+    tunnel SSH) auxquelles les profils APERO font référence. Utilisez Local pour
+    les connexions directes et DB SSH Tunnel pour les connexions passant par une
+    passerelle SSH.
+? Define science groups and manage run-ID membership for access control and profile
+  visibility. Use refresh to rescan available run IDs from object tables.
+: ES: Defina los grupos científicos y gestione la pertenencia de los run ID para
+    el control de acceso y la visibilidad de los perfiles. Use Actualizar para volver
+    a leer los run ID disponibles en las tablas de objetos.
+  FR: Définissez les groupes scientifiques et gérez l'appartenance des run ID pour
+    le contrôle d'accès et la visibilité des profils. Utilisez Actualiser pour relire
+    les run ID disponibles dans les tables d'objets.
+Dismiss:
+  ES: Descartar
+  FR: Ignorer
+Documentation:
+  ES: Documentación
+  FR: Documentation
+Download Basket:
+  ES: Cesta de descarga
+  FR: Panier de téléchargement
+Download Management:
+  ES: Gestión de descargas
+  FR: Gestion des téléchargements
+Edit this page:
+  ES: Editar esta página
+  FR: Modifier cette page
+Email Settings:
+  ES: Configuración de correo electrónico
+  FR: Paramètres de courriel
+Emails (first is primary):
+  ES: Correos electrónicos (el primero es el principal)
+  FR: Courriels (le premier est le principal)
+Enter the 6-digit code sent to your primary email address.:
+  ES: Introduzca el código de 6 dígitos enviado a su dirección de correo principal.
+  FR: Saisissez le code à 6 chiffres envoyé à votre adresse courriel principale.
+Enter your username or account email. If a matching account exists, we will email a reset link.:
+  ES: Introduzca su nombre de usuario o el correo de su cuenta. Si existe una cuenta
+    coincidente, le enviaremos un enlace de restablecimiento por correo.
+  FR: Saisissez votre nom d'utilisateur ou le courriel de votre compte. Si un compte
+    correspondant existe, nous vous enverrons un lien de réinitialisation par courriel.
+Favourite Objects:
+  ES: Objetos favoritos
+  FR: Objets favoris
+First Time Guide:
+  ES: Guía de primer uso
+  FR: Guide de première utilisation
+First name(s):
+  ES: Nombre(s)
+  FR: Prénom(s)
+? Follow a guided checklist for first-time admin setup. Open each step in a new
+  tab and use the tick marks to track what is complete.
+: ES: Siga una lista de comprobación guiada para la primera configuración de la
+    administración. Abra cada paso en una nueva pestaña y use las marcas para seguir
+    lo que está completado.
+  FR: Suivez une liste de contrôle guidée pour la première configuration de l'administration.
+    Ouvrez chaque étape dans un nouvel onglet et utilisez les coches pour suivre
+    ce qui est terminé.
+Forbidden:
+  ES: Acceso prohibido
+  FR: Accès interdit
+Forgot password?:
+  ES: ¿Olvidó su contraseña?
+  FR: Mot de passe oublié ?
+Get Involved:
+  ES: Participar
+  FR: Participer
+GitHub:
+  ES: GitHub
+  FR: GitHub
+Health Status:
+  ES: Estado de salud
+  FR: État de santé
+Home:
+  ES: Inicio
+  FR: Accueil
+Information:
+  ES: Información
+  FR: Informations
+Institutions (first is primary):
+  ES: Instituciones (la primera es la principal)
+  FR: Établissements (le premier est le principal)
+Instrument Calendar:
+  ES: Calendario del instrumento
+  FR: Calendrier de l'instrument
+Instrument Links:
+  ES: Enlaces del instrumento
+  FR: Liens de l'instrument
+Internal Server Error:
+  ES: Error interno del servidor
+  FR: Erreur interne du serveur
+Invalid Link:
+  ES: Enlace no válido
+  FR: Lien invalide
+Issues:
+  ES: Incidencias
+  FR: Problèmes
+Known errors:
+  ES: Errores conocidos
+  FR: Erreurs connues
+Language:
+  ES: Idioma
+  FR: Langue
+Last name:
+  ES: Apellido
+  FR: Nom de famille
+Last updated March 2026:
+  ES: 'Última actualización: marzo de 2026'
+  FR: 'Dernière mise à jour : mars 2026'
+Loading...:
+  ES: Cargando...
+  FR: Chargement...
+Login:
+  ES: Iniciar sesión
+  FR: Connexion
+Login As:
+  ES: Iniciar sesión como
+  FR: Se connecter en tant que
+Logout:
+  ES: Cerrar sesión
+  FR: Déconnexion
+Logout ({username}):
+  ES: Cerrar sesión ({username})
+  FR: Déconnexion ({username})
+Maintain shared links for team resources and operations. Use descriptive labels and remove stale links regularly.:
+  ES: Mantenga los enlaces compartidos a los recursos y operaciones del equipo.
+    Use etiquetas descriptivas y elimine periódicamente los enlaces obsoletos.
+  FR: Maintenez les liens partagés vers les ressources et les opérations de l'équipe.
+    Utilisez des libellés descriptifs et supprimez régulièrement les liens obsolètes.
+Manage:
+  ES: Gestionar
+  FR: Gérer
+Manage APERO Profiles:
+  ES: Gestionar los perfiles de APERO
+  FR: Gérer les profils APERO
+Manage Instruments:
+  ES: Gestionar los instrumentos
+  FR: Gérer les instruments
+Manage RUN IDs:
+  ES: Gestionar los RUN ID
+  FR: Gérer les RUN ID
+Manage Science Groups:
+  ES: Gestionar los grupos científicos
+  FR: Gérer les groupes scientifiques
+Manage Uploads:
+  ES: Gestionar las cargas
+  FR: Gérer les téléversements
+Manage admin calendar entries for team coordination. Keep event metadata clear for easy filtering and search.:
+  ES: Gestione las entradas del calendario de administración para la coordinación
+    del equipo. Mantenga claros los metadatos de los eventos para facilitar el filtrado
+    y la búsqueda.
+  FR: Gérez les entrées du calendrier d'administration pour la coordination de l'équipe.
+    Gardez les métadonnées des événements claires pour faciliter le filtrage et
+    la recherche.
+Manage shared download jobs and storage cleanup. Review old downloads regularly to prevent unnecessary disk usage.:
+  ES: Gestione las tareas de descarga compartidas y la limpieza del almacenamiento.
+    Revise periódicamente las descargas antiguas para evitar un uso innecesario
+    del disco.
+  FR: Gérez les tâches de téléchargement partagées et le nettoyage du stockage.
+    Passez régulièrement en revue les anciens téléchargements pour éviter une utilisation
+    inutile du disque.
+Messages:
+  ES: Mensajes
+  FR: Messages
+Miscellaneous:
+  ES: Varios
+  FR: Divers
+Monitor Portal:
+  ES: Portal de monitores
+  FR: Portail des moniteurs
+My Calendar:
+  ES: Mi calendario
+  FR: Mon calendrier
+My Links:
+  ES: Mis enlaces
+  FR: Mes liens
+My Notes:
+  ES: Mis notas
+  FR: Mes notes
+My Uploads:
+  ES: Mis cargas
+  FR: Mes téléversements
+New Password:
+  ES: Nueva contraseña
+  FR: Nouveau mot de passe
+No sections available with your current permissions.:
+  ES: No hay secciones disponibles con sus permisos actuales.
+  FR: Aucune section disponible avec vos permissions actuelles.
+Notifications:
+  ES: Notificaciones
+  FR: Notifications
+Object Groups:
+  ES: Grupos de objetos
+  FR: Groupes d'objets
+'Object Page: {objname}':
+  ES: 'Página del objeto: {objname}'
+  FR: 'Page de l''objet : {objname}'
+Object Table:
+  ES: Tabla de objetos
+  FR: Table des objets
+Observation Table:
+  ES: Tabla de observaciones
+  FR: Table des observations
+Open:
+  ES: Abrir
+  FR: Ouvrir
+Page Not Found:
+  ES: Página no encontrada
+  FR: Page introuvable
+Password:
+  ES: Contraseña
+  FR: Mot de passe
+Pinned Pages:
+  ES: Páginas fijadas
+  FR: Pages épinglées
+Pinned pages:
+  ES: Páginas fijadas
+  FR: Pages épinglées
+Plot Cache:
+  ES: Caché de gráficos
+  FR: Cache des graphiques
+Processing Logs:
+  ES: Registros de procesamiento
+  FR: Journaux de traitement
+Publications:
+  ES: Publicaciones
+  FR: Publications
+Quality Control Graphs:
+  ES: Gráficos de control de calidad
+  FR: Graphiques de contrôle qualité
+Quick TODO:
+  ES: Tareas rápidas
+  FR: Tâches rapides
+Quick navigation:
+  ES: Navegación rápida
+  FR: Navigation rapide
+Re-enter Password:
+  ES: Vuelva a introducir la contraseña
+  FR: Saisir à nouveau le mot de passe
+Recently visited pages:
+  ES: Páginas visitadas recientemente
+  FR: Pages récemment consultées
+Reduction Interface:
+  ES: Interfaz de reducción
+  FR: Interface de réduction
+Register New Account:
+  ES: Registrar una cuenta nueva
+  FR: Créer un nouveau compte
+Rejection list:
+  ES: Lista de rechazo
+  FR: Liste de rejet
+Remember me:
+  ES: Recordarme
+  FR: Se souvenir de moi
+Request New Reset Link:
+  ES: Solicitar un nuevo enlace de restablecimiento
+  FR: Demander un nouveau lien de réinitialisation
+Reset Your Password:
+  ES: Restablecer su contraseña
+  FR: Réinitialiser votre mot de passe
+? Review system health checks across admin subsystems. Warnings indicate incomplete
+  setup; errors require immediate attention.
+: ES: Revise las comprobaciones de salud del sistema en los subsistemas de administración.
+    Las advertencias indican una configuración incompleta; los errores requieren
+    atención inmediata.
+  FR: Consultez les vérifications de santé du système pour les sous-systèmes d'administration.
+    Les avertissements indiquent une configuration incomplète ; les erreurs nécessitent
+    une attention immédiate.
+SSHFS Management:
+  ES: Gestión de SSHFS
+  FR: Gestion SSHFS
+Schedule:
+  ES: Planificación
+  FR: Planification
+Schedule and monitor automated background tasks. Set cadence, inspect logs, and pause/resume execution as needed.:
+  ES: Programe y supervise las tareas automáticas en segundo plano. Defina la frecuencia,
+    consulte los registros y pause/reanude la ejecución según sea necesario.
+  FR: Planifiez et surveillez les tâches automatiques en arrière-plan. Définissez
+    la cadence, consultez les journaux et suspendez/reprenez l'exécution au besoin.
+Search:
+  ES: Búsqueda
+  FR: Recherche
+Search docs:
+  ES: Buscar en la documentación
+  FR: Rechercher dans la documentation
+Search pages…:
+  ES: Buscar páginas…
+  FR: Rechercher des pages…
+Section navigation:
+  ES: Navegación de la sección
+  FR: Navigation de la section
+Send Reset Link:
+  ES: Enviar el enlace de restablecimiento
+  FR: Envoyer le lien de réinitialisation
+Server API Config:
+  ES: Configuración de la API del servidor
+  FR: Configuration de l'API du serveur
+Server Information:
+  ES: Información del servidor
+  FR: Informations du serveur
+Server Sync:
+  ES: Sincronización de servidores
+  FR: Synchronisation des serveurs
+Set a New Password:
+  ES: Establecer una nueva contraseña
+  FR: Définir un nouveau mot de passe
+Sign In:
+  ES: Iniciar sesión
+  FR: Se connecter
+Site Content:
+  ES: Contenido del sitio
+  FR: Contenu du site
+Status:
+  ES: Estado
+  FR: État
+Support:
+  ES: Soporte
+  FR: Assistance
+Supported Instruments:
+  ES: Instrumentos compatibles
+  FR: Instruments pris en charge
+The page you are looking for does not exist.:
+  ES: La página que busca no existe.
+  FR: La page que vous cherchez n'existe pas.
+The server could not understand the request.:
+  ES: El servidor no pudo entender la solicitud.
+  FR: Le serveur n'a pas pu comprendre la requête.
+Themes:
+  ES: Temas
+  FR: Thèmes
+This page controls operational settings. Make one change at a time and test before saving.:
+  ES: Esta página controla parámetros operativos. Haga un cambio cada vez y pruebe
+    antes de guardar.
+  FR: Cette page contrôle des paramètres opérationnels. Faites une modification
+    à la fois et testez avant d'enregistrer.
+This reset link is invalid or has expired. Request a new password reset email.:
+  ES: Este enlace de restablecimiento no es válido o ha caducado. Solicite un nuevo
+    correo de restablecimiento de contraseña.
+  FR: Ce lien de réinitialisation est invalide ou a expiré. Demandez un nouveau
+    courriel de réinitialisation du mot de passe.
+This section is under construction.:
+  ES: Esta sección está en construcción.
+  FR: Cette section est en construction.
+Toggle navigation:
+  ES: Mostrar/ocultar la navegación
+  FR: Afficher/masquer la navigation
+Toggle section:
+  ES: Mostrar/ocultar la sección
+  FR: Afficher/masquer la section
+Tune plot and data cache behavior to balance performance and storage usage. Use conservative limits on constrained disks.:
+  ES: Ajuste el comportamiento de la caché de gráficos y datos para equilibrar rendimiento
+    y uso del almacenamiento. Use límites conservadores en discos con poco espacio.
+  FR: Ajustez le comportement du cache des graphiques et des données pour concilier
+    performances et utilisation du stockage. Utilisez des limites prudentes sur
+    les disques à espace restreint.
+Update Password:
+  ES: Actualizar la contraseña
+  FR: Mettre à jour le mot de passe
+Use lowercase letters, numbers, and underscore only (no spaces or punctuation).:
+  ES: Use solo letras minúsculas, números y guion bajo (sin espacios ni signos de
+    puntuación).
+  FR: Utilisez uniquement des lettres minuscules, des chiffres et le tiret bas (pas
+    d'espaces ni de ponctuation).
+User Database Access:
+  ES: Acceso de usuarios a la base de datos
+  FR: Accès des utilisateurs à la base de données
+User Management:
+  ES: Gestión de usuarios
+  FR: Gestion des utilisateurs
+User Portal:
+  ES: Portal de usuario
+  FR: Portail utilisateur
+Username:
+  ES: Nombre de usuario
+  FR: Nom d'utilisateur
+Username (lowercase):
+  ES: Nombre de usuario (minúsculas)
+  FR: Nom d'utilisateur (minuscules)
+Username or Email:
+  ES: Nombre de usuario o correo electrónico
+  FR: Nom d'utilisateur ou courriel
+Users:
+  ES: Usuarios
+  FR: Utilisateurs
+Vault:
+  ES: Bóveda
+  FR: Coffre-fort
+Verification Code:
+  ES: Código de verificación
+  FR: Code de vérification
+Verify Email:
+  ES: Verificar el correo electrónico
+  FR: Vérifier le courriel
+Version:
+  ES: Versión
+  FR: Version
+Welcome,:
+  ES: Bienvenido/a,
+  FR: Bienvenue,
+What does a Monitor do?:
+  ES: ¿Qué hace un monitor?
+  FR: Que fait un moniteur ?
+You do not have permission to access this page.:
+  ES: No tiene permiso para acceder a esta página.
+  FR: Vous n'avez pas la permission d'accéder à cette page.
+username:
+  ES: nombre_usuario
+  FR: nom_utilisateur

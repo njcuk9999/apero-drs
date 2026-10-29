@@ -67,6 +67,7 @@ from apero.science.calib import wave as wave_mod
 from apero.instruments import select
 from apero.utils import drs_data
 from aperocore.io import drs_io
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -83,6 +84,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # speed of light
 speed_of_light_kms = physics.speed_of_light_kms
 speed_of_light_ms = physics.speed_of_light_ms
@@ -151,7 +154,8 @@ def generate_hc_catagloue(params: ParamDict, recipe,
                           sparams: Dict[str, Any], cal_path: str, 
                           ofiles: Dict[str, Any]) -> Dict[str, Any]:
     # print progress
-    WLOG(params, 'info', 'Generating HC catalogue')
+    # log: Generating HC catalogue
+    WLOG(params, 'info', textentry('40-518-00004'))
     # get the wavelength sparams for input hc cat
     wparams = sparams['wavelength']
     # download the hc model
@@ -195,8 +199,8 @@ def generate_hc_catagloue(params: ParamDict, recipe,
 def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
                         cal_path: str, ofiles: Dict[str, Any]):
     # print progress
-    msg = 'Generating wavelength guess from HC and FP extracted files'
-    WLOG(params, 'info', msg)
+    # log: Generating wavelength guess from HC and FP extracted files
+    WLOG(params, 'info', textentry('40-518-00021'))
     # get static hc q2ds file
     hc_file = ofiles['STATIC_HC_Q2DS']
     # load the hc file
@@ -235,9 +239,9 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
 
     for iteration in range(tot_iterations):
         # print progress
-        msg = 'Static wavelength generation (iteration {0}/{1})'
         margs = [iteration + 1, tot_iterations]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Static wavelength generation (iteration {0}/{1})
+        WLOG(params, 'info', textentry('40-518-00025', args=margs))
         # initialize storage arrays
         fit_cavity = [sparams['wavelength']['cavity0']]
         # ---------------------------------------------------------------------
@@ -248,10 +252,10 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
         # if we have more than 5 pickles, we can refine the cavity fit
         if n_pickles > 5:
             # print progress
-            msg = ('We have {0} previous wave pickles '
-                   '- refining cavity fit (Iteration {1}/{2})')
             margs = [n_pickles, iteration, tot_iterations]
-            WLOG(params, 'info', msg.format(*margs))
+            # log: We have {0} previous wave pickles - refining cavity fit
+            #     (Iteration {1}/{2})
+            WLOG(params, 'info', textentry('40-518-00031', args=margs))
             # refine the cavity fit
             fit_cavity = refine_cavity_fit(params, recipe, sparams, orders)
         # ---------------------------------------------------------------------
@@ -259,11 +263,11 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
         # ---------------------------------------------------------------------
         for bw_itr in range(2):
             # print progress
-            msg = 'Building wave solution (iteration {0}/{1}: step {2}/{3})'
             margs = [iteration + 1, tot_iterations, bw_itr + 1, 2]
 
             WLOG(params, 'info', params['LOG.HEADER'])
-            WLOG(params, 'info', msg.format(*margs))
+            # log: Building wave solution (iteration {0}/{1}: step {2}/{3})
+            WLOG(params, 'info', textentry('40-518-00037', args=margs))
             WLOG(params, 'info', params['LOG.HEADER'])
             # build the wave solution
             build_wavesol(params, recipe, sparams, cal_path, hc_image,
@@ -272,9 +276,9 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
         # Step 3: Build the final 2D wavelength solution for all orders
         # ---------------------------------------------------------------------
         # print progress
-        msg = 'Building final wave solution for iteration {0}/{1}'
         margs = [iteration + 1, tot_iterations]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Building final wave solution for iteration {0}/{1}
+        WLOG(params, 'info', textentry('40-518-00033', args=margs))
         # build the final wave solution
         fout = build_final_wavesol(params, recipe, sparams, fp_image,
                                    fit_cavity)
@@ -291,9 +295,9 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
         # Step 4: compile into packaged wavelength solution and cavity fit file
         # ---------------------------------------------------------------------
         # print progress
-        msg = 'Packaging the wave solution for iteration {0}/{1}'
         margs = [iteration + 1, tot_iterations]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Packaging the wave solution for iteration {0}/{1}
+        WLOG(params, 'info', textentry('40-518-00034', args=margs))
         # package the wave solution
         package_wavesol(params, recipe, sparams, cal_path, 
                         hc_file, fp_file,
@@ -356,9 +360,9 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
         # ---------------------------------------------------------------------
         # if the file does not exist, skip this order
         if not os.path.exists(wave_order_csvfile):
-            msg = 'Skipping order {0} - no pickle file found'
             margs = [order_num]
-            WLOG(params, '', msg.format(*margs))
+            # log: Skipping order {0} - no pickle file found
+            WLOG(params, '', textentry('40-518-00029', args=margs))
             continue
         # ---------------------------------------------------------------------
         # Register that we known this order
@@ -396,9 +400,9 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
             #   a warning
             if not np.array_equal(prev_fp_int, new_fp_int):
                 # log a warning message
-                wmsg = 'Intensity values have changed for order {0}'
                 wargs = [order_num]
-                WLOG(params, 'warning', wmsg.format(*wargs))
+                # warning: Intensity values have changed for order {0}
+                WLOG(params, 'warning', textentry('10-518-00002', args=wargs))
                 # set fp_int to the new values
                 fp_int = new_fp_int
                 # update the fp_int for this order
@@ -470,12 +474,12 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
     # print acceptance
     if accept:
         fit_cavity = fit_cavity_tmp
-        msg = 'Cavity fit accepted with coefficients: {0}'
         margs = [fit_cavity]
-        WLOG(params, '', msg.format(*margs))
+        # log: Cavity fit accepted with coefficients: {0}
+        WLOG(params, '', textentry('40-518-00026', args=margs))
     else:
-        msg = 'Cavity fit rejected - keeping previous fit'
-        WLOG(params, '', msg)
+        # log: Cavity fit rejected - keeping previous fit
+        WLOG(params, '', textentry('40-518-00027'))
     # return fit 
     return fit_cavity
 
@@ -548,14 +552,14 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         # ---------------------------------------------------------------------
         # if the csv file already exists we can skip this step
         if os.path.exists(wave_order_csvfile):
-            msg = 'Skipping order {0} - csv file already exists'
             margs = [order_num]
-            WLOG(params, '', msg.format(*margs))
+            # log: Skipping order {0} - csv file already exists
+            WLOG(params, '', textentry('40-518-00030', args=margs))
             WLOG(params, '', params['LOG.HEADER'])
         else:
-            msg = '\nBuilding wavelength solution for order {0}'
             margs = [order_num]
-            WLOG(params, '', msg.format(*margs))
+            # log: Building wavelength solution for order {0}
+            WLOG(params, '', textentry('40-518-00032', args=margs))
             WLOG(params, '', params['LOG.HEADER'])
         # ---------------------------------------------------------------------
         # load the HC spectrum for this order
@@ -624,9 +628,9 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         # ---------------------------------------------------------------------
         n_guesses = len(peak0_guesses)
         # try all possible FP cavity order guesses and find the best alignment
-        msg = ('Trying {0} FP cavity order guesses (to find best alignment)')
         margs = [n_guesses]
-        WLOG(params, '', msg.format(*margs))
+        # log: Trying {0} FP cavity order guesses (to find best alignment)
+        WLOG(params, '', textentry('40-518-00035', args=margs))
         # loop around n_guesses
         for it in tqdm(range(n_guesses)):
             peak0_guess = peak0_guesses[it]
@@ -729,9 +733,9 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         nvalid2 /= mp.cal_med_abs_dev(nvalid2)
         # report the max nvalid
         with warnings.catch_warnings(record=True) as _:
-            msg = 'Order {0}: Nvalid[{1}]={2}'
             margs = [order_num, mp.nanargmax(nvalid2), mp.nanmax(nvalid2)]
-            WLOG(params, '', msg.format(*margs))
+            # log: Order {0}: Nvalid[{1}]={2}
+            WLOG(params, '', textentry('40-518-00036', args=margs))
         # ---------------------------------------------------------------------
         # deal with no solution
         with warnings.catch_warnings(record=True) as _:
@@ -741,16 +745,16 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
             #  the acceptance threshold or we have no best wave solution
             #  then skip this order
             if (iteration == 0) and (mp.nanmax(nvalid2) < nsig_accept_fp):
-                msg = ('Order {0}: No valid FP solution found '
-                       '(iter=0 and Max(Nvalid)<{1}) - skipping order')
                 margs = [order_num, nsig_accept_fp]
-                WLOG(params, 'warning', msg.format(*margs))
+                # warning: Order {0}: No valid FP solution found (iter=0 and
+                #     Max(Nvalid)<{1}) - skipping order
+                WLOG(params, 'warning', textentry('10-518-00009', args=margs))
                 continue
             if len(best_wave) == 0:
-                msg = ('Order {0}: No valid FP solution found '
-                       '(no best wave found) - skipping order')
                 margs = [order_num]
-                WLOG(params, 'warning', msg.format(*margs))
+                # warning: Order {0}: No valid FP solution found (no best wave
+                #     found) - skipping order
+                WLOG(params, 'warning', textentry('10-518-00010', args=margs))
                 continue
         # set up the plotting kwargs
         pkwargs = dict()
@@ -813,15 +817,11 @@ def build_final_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     # -------------------------------------------------------------------------
     # if we have less than 5 pickles we cannot robustly fit the middle fp
     if n_wave_picks < 5:
-        msg = ('Less than 5 wave solutions built '
-               '(found {0} successfully built) '
-               '- cannot build final wave solution. '
-               '\n\t Please update the yaml file parameters to better match '
-               'this instrument.'
-               '\n\t Yamlfile = {1}')
         margs = [n_wave_picks, params['INPUTS']['YAMLFILE']]
-        raise AperoCodedException(params, None, message=msg.format(*margs),
-                                  targs=margs)
+        # error: Less than 5 wave solutions built (found {0} successfully built)
+        #     - cannot build final wave solution. \n Please update the yaml file
+        #     parameters to better match this instrument. \n Yamlfile = {1}
+        raise AperoCodedException(params, '09-518-00009', targs=margs)
     # -------------------------------------------------------------------------
     # loop around all orders
     for order_num in range(norders):
@@ -917,9 +917,9 @@ def build_final_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         # round this to nearest peak
         fp_offset = np.round(err_fp_pos)
         # print that we found an offset
-        msg = 'Order {0}: Middle FP peak offset by {1} peaks'
         margs = [order_num, fp_offset]
-        WLOG(params, '', msg.format(*margs))
+        # log: Order {0}: Middle FP peak offset by {1} peaks
+        WLOG(params, '', textentry('40-518-00028', args=margs))
         # correct the fp_int for this offset
         fp_int = fp_int = fp_offset
         # loop around and iteratively fit the cavity
@@ -975,29 +975,27 @@ def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
             table = tables[0]
         except Exception as e:
             # TODO: Move to language database
-            emsg = 'Failed to load model: {0} from Vizier\n\t{1}: {2}'
             eargs = [vizier_ref, type(e), str(e)]
             # raise an APERO exception
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Failed to load model: {0} from Vizier \n {1}: {2}
+            raise AperoCodedException(params, '09-518-00015', targs=eargs)
     # -------------------------------------------------------------------------
     # try to save the HC model to file
     try:
         # print that we are writing hc model file
-        msg = 'Saving HC model file to: {0}'
         margs = [hc_model_file]
-        WLOG(params, '', msg.format(*margs))
+        # log: Saving HC model file to: {0}
+        WLOG(params, '', textentry('40-518-00013', args=margs))
         # write to file
         table.write(hc_model_file, overwrite=True)
         # return tables[0]
         return table
     except Exception as e:
         # TODO: Move to language database
-        emsg = 'Failed to save model: {0} to: {1}\n\t{2}: {3}'
         eargs = [vizier_ref, hc_model_file, (e), str(e)]
         # raise an APERO exception
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Failed to save model: {0} to: {1} \n {2}: {3}
+        raise AperoCodedException(params, '09-518-00012', targs=eargs)
 
 
 def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
@@ -1035,10 +1033,9 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
     try:
         wave_unit = uu.Unit(hc_wave_unit)
     except Exception as e:
-        emsg = 'wavelength.input_hc_Cat.wave_units={0} invalid.\n\t{1}: {2}'
         eargs = [hc_wave_unit, type(e), str(e)]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: wavelength.input_hc_Cat.wave_units={0} invalid. \n {1}: {2}
+        raise AperoCodedException(params, '09-518-00013', targs=eargs)
     # make sure wavelength is in nm
     try:
         if table[hc_wave_col].unit is None:
@@ -1046,12 +1043,10 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
         else:
             wavemap = (table[hc_wave_col].to(uu.nm)).value # type: ignore
     except Exception as e:
-        # TODO: Add to language database
-        emsg = ('wavelength.input_hc_Cat.wave_units={0} [astropy={1}] invalid.'
-                '\n\t{2}: {3}')
         eargs = [hc_wave_unit, str(wave_unit), type(e), str(e)]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: wavelength.input_hc_Cat.wave_units={0} [astropy={1}] invalid.
+        #     \n {2}: {3}
+        raise AperoCodedException(params, '09-518-00014', targs=eargs)
     # -------------------------------------------------------------------------
     # assume we don't want any lines at first
     smask = np.zeros(len(table), dtype=bool)
@@ -1070,12 +1065,10 @@ def get_hc_lines(params: ParamDict, recipe, sparams: Dict[str, Any],
         smask |= sp_mask
     # deal with no lines
     if np.sum(smask) == 0:
-        # TODO: Add to language database
-        emsg = ('No lines left in HC model after cut\n\tSpecies: {0}'
-                '\n\tWavemin: {1} nm\n\tWavemax: {2} nm')
         eargs = [','.join(species_keep), wavemin, wavemax]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: No lines left in HC model after cut \n Species: {0} \n Wavemin:
+        #     {1} nm \n Wavemax: {2} nm
+        raise AperoCodedException(params, '09-518-00010', targs=eargs)
     else:
         # get static file
         hccat = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
@@ -1142,9 +1135,9 @@ def count_wave_pickles(params: ParamDict, sparams: Dict[str, Any]) -> int:
     # list all files in the wave pickle path
     files = glob.glob(os.path.join(wave_pickle_path, 'wave_order_*.pkl'))
     # print the number of previous solutions found
-    msg = 'Found {0} previous wavelength solution pickles (path={1})'
     margs = [len(files), wave_pickle_path]
-    WLOG(params, '', msg.format(*margs))
+    # log: Found {0} previous wavelength solution pickles (path={1})
+    WLOG(params, '', textentry('40-518-00010', args=margs))
     # return the number of files    
     return len(files)
 
@@ -1174,9 +1167,9 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
     # set function name
     func_name = __NAME__ + '.detect_spectral_lines()'
     # print progress
-    msg = '\tDetecting {0} spectral lines in spectrum'
     margs = [peak_kind]
-    WLOG(params, '', msg.format(*margs))
+    # log: Detecting {0} spectral lines in spectrum
+    WLOG(params, '', textentry('40-518-00022', args=margs))
     # copy the spectrum
     spec = np.array(spectrum, dtype=float)
     # get parameters from sparams
@@ -1267,10 +1260,9 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
                 # if the fit fails we skip this peak
                 continue
         else:
-            emsg = 'peak_kind={0} not recognised. Function = {1}'
             eargs = [peak_kind, func_name]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: peak_kind={0} not recognised. Function = {1}
+            raise AperoCodedException(params, '09-518-00016', targs=eargs)
     # -------------------------------------------------------------------------
     # convert to numpy arrays
     mus = np.array(peak_pixels)
@@ -1338,9 +1330,9 @@ def detect_spectral_lines(params: ParamDict, sparams: Dict[str, Any],
         peak_count = np.arange(len(mus))
     # -------------------------------------------------------------------------
     # report the number of peaks found
-    msg = '\t\tFound {0} {1} peaks'
     margs = [len(mus), peak_kind]
-    WLOG(params, '', msg.format(*margs))
+    # log: Found {0} {1} peaks
+    WLOG(params, '', textentry('40-518-00023', args=margs))
     # -------------------------------------------------------------------------
     # return the peak positions, widths, fluxes, and counts
     return mus, sigmas, flux, peak_count
@@ -1360,9 +1352,9 @@ def get_peak0_guess(params: ParamDict, sparams: Dict[str, Any],
     # get the input path
     inpath = sparams['inpath']
     # print progress
-    msg = '\tGetting peak0 guess for order {0}'
     margs = [order_num]
-    WLOG(params, '', msg.format(*margs))
+    # log: Getting peak0 guess for order {0}
+    WLOG(params, '', textentry('40-518-00011', args=margs))
     # -------------------------------------------------------------------------
     # get the wave pickle path
     wave_pickle_path = os.path.join(inpath, 'wave_pickles')
@@ -1429,45 +1421,41 @@ def get_wavesol_from_file(params: ParamDict, recipe, sparams: Dict[str, Any],
     # -------------------------------------------------------------------------
     # deal with no final wave sol file
     if fparams['final_wave_sol'] is None:
-        msg = ('No final_wave_sol file provided '
-               '- to force please update wavelength.from_file.final_wave_sol')
-        WLOG(params, 'warning', msg)
+        # warning: No final_wave_sol file provided - to force please update
+        #     wavelength.from_file.final_wave_sol
+        WLOG(params, 'warning', textentry('10-518-00005'))
         return False
     else:
         wavefile = str(os.path.join(inpath, fparams['final_wave_sol']))
     # deal with no final fit cavity file
     if fparams['final_fit_cavity'] is None:
-        msg = ('No final_fit_cavity file provided '
-               '- to force please update '
-               'wavelength.from_file.final_fit_cavity')
-        WLOG(params, 'warning', msg)
+        # warning: No final_fit_cavity file provided - to force please update
+        #     wavelength.from_file.final_fit_cavity
+        WLOG(params, 'warning', textentry('10-518-00006'))
         return False
     else:
         cavfile = str(os.path.join(inpath, fparams['final_fit_cavity']))
     # -------------------------------------------------------------------------
     # deal with final wave sol file not existing
     if not os.path.exists(wavefile):
-        msg = ('final_wave_sol file provided does not exist: {0} '
-               '- to force please update '
-               'wavelength.from_file.final_wave_sol')
         margs = [wavefile]
-        WLOG(params, 'warning', msg.format(*margs))
+        # warning: final_wave_sol file provided does not exist: {0} - to force
+        #     please update wavelength.from_file.final_wave_sol
+        WLOG(params, 'warning', textentry('10-518-00007', args=margs))
         return False
     # deal with final fit cavity file not existing
     if not os.path.exists(cavfile):
-        msg = ('final_fit_cavity file provided does not exist: {0} '
-               '- to force please update '
-               'wavelength.from_file.final_fit_cavity')
         margs = [cavfile]
-        WLOG(params, 'warning', msg.format(*margs))
+        # warning: final_fit_cavity file provided does not exist: {0} - to force
+        #     please update wavelength.from_file.final_fit_cavity
+        WLOG(params, 'warning', textentry('10-518-00008', args=margs))
         return False
     # -------------------------------------------------------------------------
     # if we get to here print progress
-    msg = ('Force-loading final wave solution from file: {0} '
-           'and final fit to cavity from file: {1}. '
-           '\n\nWe will not generate a new wave solution.')
     margs = [wavefile, cavfile]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Force-loading final wave solution from file: {0} and final fit to
+    #     cavity from file: {1}. \n \n We will not generate a new wave solution.
+    WLOG(params, 'info', textentry('40-518-00024', args=margs))
     # -------------------------------------------------------------------------
     # get wave time from mean of hc and fp files
     fp_hdr = fp_file.get_header()
@@ -1606,10 +1594,9 @@ def load_wave_pickle(params: ParamDict, pickle_file: str) -> Dict[str, Any]:
 
     # check if the file exists
     if not os.path.exists(pickle_file):
-        emsg = 'Pickle file not found: {0}'
         eargs = [pickle_file]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Pickle file not found: {0}
+        raise AperoCodedException(params, '09-518-00011', targs=eargs)
     # load the pickle file
     with open(pickle_file, 'rb') as f:
         return pickle.load(f)
@@ -1626,9 +1613,9 @@ def save_wave_pickle(params, data: Dict[str, Any], pickle_file: str):
     with open(pickle_file, 'wb') as f:
         pickle.dump(data, f)
     # log that we saved the file
-    msg = 'Saved wavelength solution pickle to: {0}'
     margs = [pickle_file]
-    WLOG(params, '', msg.format(*margs))
+    # log: Saved wavelength solution pickle to: {0}
+    WLOG(params, '', textentry('40-518-00012', args=margs))
 
 
 

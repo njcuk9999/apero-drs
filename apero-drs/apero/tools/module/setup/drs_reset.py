@@ -89,12 +89,10 @@ def check_cwd(params: ParamDict):
         # if it is in current working path we have a problem
         if str(os.path.realpath(block_path)) in str(os.path.realpath(cwd)):
             # raise error
-            # TODO: Add to language database
-            emsg = ('Current working directory within paths to be reset. '
-                    'Please change directory\n\tCurrent dir: {0}\n\tBlock: {1}')
             eargs = [cwd, block_path]
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Current working directory within paths to be reset. Please
+            #     change directory \n Current dir: {0} \n Block: {1}
+            raise AperoCodedException(params, '09-502-00009', targs=eargs)
 
 
 def is_empty(params: ParamDict, directory: str,
@@ -153,6 +151,7 @@ def reset_title(params: ParamDict, name: str):
     print()
     print()
     WLOG(params, 'info', '=' * 50)
+    # log: {0} directory:
     WLOG(params, 'info', textentry('40-502-00012', args=[name]))
     WLOG(params, 'info', '=' * 50)
 
@@ -175,10 +174,13 @@ def reset_confirmation(params: ParamDict, name: str,
         # test if empty
         empty = is_empty(params, directory, exclude_files)
         if empty:
+            # log: Empty directory found.
             WLOG(params, '', textentry('40-502-00011'))
             return True
     # ----------------------------------------------------------------------
     # Ask if user wants to reset
+    # log: Are you sure you wish to reset the {0} directory? If you are sure you
+    #     want to reset type 'yes'
     WLOG(params, '', textentry('40-502-00001', args=[name]),
          colour='yellow')
     if directory is not None:
@@ -188,12 +190,14 @@ def reset_confirmation(params: ParamDict, name: str,
     # deal with user input
     while uinput.upper() not in ["YES", "NO"]:
         # user input
+        # text: Reset the {0} directory?
         uinput = input(textentry('40-502-00002', args=name))
         # line break
         print('\n')
         # only allow "YES" or "NO"
         if uinput.upper() not in ["YES", "NO"]:
-            print('Only "YES" or "NO" are valid responses')
+            # log: Only "YES" or "NO" are valid responses
+            print(textentry('40-502-00029'))
     # ----------------------------------------------------------------------
     # deal with response
     if uinput.upper() == "YES":
@@ -214,6 +218,7 @@ def reset_tmp_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     :return: None - resets tmp (preprocessed) directory
     """
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['tmp']))
     # remove files from reduced folder
     tmp_dir = params['PATH.PP']
@@ -281,6 +286,7 @@ def reset_reduced_folders(params: ParamDict, recipe: DrsRecipe,
     :return: None - resets reduced directory
     """
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['reduced']))
     # remove files from reduced folder
     red_dir = params['PATH.RED']
@@ -430,6 +436,7 @@ def reset_dbdir(params: ParamDict, name: str, db_dir: str,
     :return: None copys files to database file directory
     """
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=[name]))
     # construct relative path if None given
     if relative_path is None:
@@ -469,6 +476,8 @@ def copy_default_db(params: ParamDict, name: str, db_dir: str,
     # check that absfolder exists
     if not os.path.exists(reset_path):
         eargs = [name, reset_path]
+        # error: Reset {0} directory: Default directory not found at location
+        #     {1}
         raise AperoCodedException(params, '00-502-00001', targs=eargs)
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
@@ -488,6 +497,7 @@ def reset_log(params: ParamDict, exclude_files: Union[List[str], None] = None,
     :return: None, resets log directory
     """
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['log']))
     # remove files from reduced folder
     log_dir = params['PATH.LOG']
@@ -516,6 +526,7 @@ def reset_plot(params: ParamDict, log: bool = True):
     :return: None, resets plot directory
     """
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['plot']))
     # remove files from reduced folder
     plot_dir = params['PATH.PLOT']
@@ -544,6 +555,7 @@ def reset_run(params: ParamDict, log: bool = True):
 
 def reset_lbl_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['lbl']))
     # remove files from reduced folder
     lbl_dir = params['PATH.LBL']
@@ -610,6 +622,7 @@ def reset_out_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     :return: None - resets reduced directory
     """
     # log progress
+    # log: Resetting {0} directory
     WLOG(params, '', textentry('40-502-00003', args=['out']))
     # remove files from reduced folder
     red_dir = params['PATH.OUT']
@@ -754,9 +767,9 @@ def reset_other_folder(params: ParamDict, log: bool = True):
         try:
             drs_path.copy_element(old_path, new_path)
         except Exception as e:
-            emsg = 'Error copying {0} to other directory {1}. \n\t {2}: {3}'
             eargs = [path_name, other_path, type(e), str(e)]
-            WLOG(params, '', emsg.format(*eargs))
+            # log: Error copying {0} to other directory {1}. \n {2}: {3}
+            WLOG(params, '', textentry('40-502-00041', args=eargs))
     # remove these directories from the other directory
     directories = [params['DB.PENDING_PATH']]
     # loop around and remove
@@ -789,9 +802,11 @@ def reset_queue(params: ParamDict, log: bool = True):
     running = drs_queue.list_queue_entries(
         params, states=[drs_queue.QUEUE_RUNNING_DIR])
     if len(running) > 0:
-        wmsg = ('Queue has {0} running entries - any task still running '
-                'will no longer be tracked by the queue')
-        WLOG(params, 'warning', wmsg.format(len(running)), sublevel=2)
+        wargs = [len(running)]
+        # warning: Queue has {0} running entries - any task still running will
+        #     no longer be tracked by the queue
+        WLOG(params, 'warning', textentry('10-502-00011', args=wargs),
+             sublevel=2)
     # remove everything in the queue directory except the templates
     if os.path.exists(queue_path):
         for name in sorted(os.listdir(queue_path)):
@@ -799,7 +814,9 @@ def reset_queue(params: ParamDict, log: bool = True):
                 continue
             path = os.path.join(queue_path, name)
             if log:
-                WLOG(params, '', '\tRemoving: {0}'.format(path))
+                margs = [path]
+                # log: Removing: {0}
+                WLOG(params, '', textentry('40-502-00030', args=margs))
             if os.path.isdir(path) and not os.path.islink(path):
                 shutil.rmtree(path, ignore_errors=True)
             else:
@@ -808,7 +825,9 @@ def reset_queue(params: ParamDict, log: bool = True):
     chain_root = drs_queue.get_chain_root(params)
     if os.path.exists(chain_root):
         if log:
-            WLOG(params, '', '\tRemoving: {0}'.format(chain_root))
+            margs = [chain_root]
+            # log: Removing: {0}
+            WLOG(params, '', textentry('40-502-00030', args=margs))
         shutil.rmtree(chain_root, ignore_errors=True)
     # recreate the empty queue state directories
     drs_queue.setup_queue_directories(params)
@@ -821,19 +840,23 @@ def remove_all(params, path, log=True, skipfiles=None):
     # Check that directory exists
     if not os.path.exists(path):
         # display error and ask to create directory
+        # warning: Directory {0} does not exist. Should we create it?
         WLOG(params, 'warning', textentry('40-502-00005', args=[path]),
              sublevel=2)
         # user input
         if sys.version_info.major < 3:
             # noinspection PyUnresolvedReferences
+            # text: Create directory {0}?
             uinput = raw_input(textentry('40-502-00006', args=path))
         else:
+            # text: Create directory {0}?
             uinput = input(textentry('40-502-00006', args=path))
         # check user input
         if 'Y' in uinput.upper():
             # make directories
             os.makedirs(path)
         else:
+            # error: Directory does not exist: {0}
             raise AperoCodedException(params, '00-502-00002', targs=[path])
     # if we have access to rm and skip files is empty we can do this quickly
     if len(skipfiles) > 0:
@@ -886,7 +909,9 @@ def backup_all_diff(params, old_path, new_path):
         # construct new path
         new_filename = os.path.join(backup_dir, os.path.basename(filename))
         # move files
-        print(f'Backing up {filename}')
+        margs = [filename]
+        # log: Backing up {0}
+        print(textentry('40-502-00019', args=margs))
         shutil.move(filename, new_filename)
     # now remove everything in new_path other than backup
     files = glob.glob(new_path + '/*')
@@ -898,7 +923,9 @@ def backup_all_diff(params, old_path, new_path):
             if filename != backup_dir:
                 remove_all(params, filename)
         else:
-            print(f'Removing {filename}')
+            margs = [filename]
+            # log: Removing {0}
+            print(textentry('40-502-00031', args=margs))
             os.remove(filename)
 
 
@@ -1007,6 +1034,7 @@ def remove_files(params, path, log=True, skipfiles=None):
         return
     # log removal
     if log:
+        # text: Removing file: {0}
         TLOG(params, '', textentry('40-502-00004', args=[path]))
     # if in debug mode just log
     if DEBUG:
@@ -1018,6 +1046,7 @@ def remove_files(params, path, log=True, skipfiles=None):
         except Exception as e:
             # Log warning: Cannot remove path: {0} \n\t {1}: {2}'
             wargs = [path, type(e), str(e)]
+            # warning: Cannot remove path: {0} \n {1}: {2}
             WLOG(params, 'warning', textentry('10-502-00002', args=wargs),
                  sublevel=2)
     # clear loading message
@@ -1138,24 +1167,26 @@ def get_filelist(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # if we have no subconditions return empty list
     if len(subconditions) == 0:
-        wmsg = ('obsdir, blocks, fileprefix, filesuffix or objnames must '
-                'be defined. No files added')
-        WLOG(params, 'warning', wmsg)
+        # warning: obsdir, blocks, fileprefix, filesuffix or objnames must be
+        #     defined. No files added
+        WLOG(params, 'warning', textentry('10-502-00012'))
         return Table(), condition
     # -------------------------------------------------------------------------
     # join subconditions
     condition += ' AND '.join(subconditions)
     # -------------------------------------------------------------------------
     # print progress
-    msg = 'Querying index database for files with condition: \n\t{0}'
-    WLOG(params, '', msg.format(condition))
+    margs = [condition]
+    # log: Querying index database for files with condition: \n {0}
+    WLOG(params, '', textentry('40-502-00053', args=margs))
     # columns required
     columns = 'BLOCK_KIND, OBS_DIR, FILENAME, KW_PID'
     # run query
     findex_table = indexdbm.get_entries(columns, condition=condition)
     # print how many files found that match condition
-    msg = 'Found {0} files that match condition'
-    WLOG(params, '', msg.format(len(findex_table)))
+    margs = [len(findex_table)]
+    # log: Found {0} files that match condition
+    WLOG(params, '', textentry('40-502-00054', args=margs))
     # convert to astropy table
     findex_table = Table.from_pandas(findex_table)
     # return list of files
@@ -1178,7 +1209,9 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
     for absfile in tqdm(absfilelist):
         # if in debug mode just log
         if test:
-            WLOG(params, '', '\t\tWould have removed {0}'.format(absfile))
+            margs = [absfile]
+            # log: Would have removed {0}
+            WLOG(params, '', textentry('40-502-00032', args=margs))
             # count as file removed
             filecount += 1
         # else remove file
@@ -1190,6 +1223,7 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
             except Exception as e:
                 # Log warning: Cannot remove path: {0} \n\t {1}: {2}'
                 wargs = [absfile, type(e), str(e)]
+                # warning: Cannot remove path: {0} \n {1}: {2}
                 WLOG(params, 'warning', textentry('10-502-00002', args=wargs),
                      sublevel=2)
     # return count
@@ -1229,9 +1263,11 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
     calibdbm.load_db()
     # log removal
     if test:
-        WLOG(params, '', 'Would have removed entries from calibration database')
+        # log: Would have removed entries from calibration database
+        WLOG(params, '', textentry('40-502-00020'))
     else:
-        WLOG(params, '', 'Removing entries from calibration database')
+        # log: Removing entries from calibration database
+        WLOG(params, '', textentry('40-502-00021'))
     # start counter
     db_counts['calibdb'] = 0
     # we need to loop over all files and remove them one by one from the
@@ -1251,10 +1287,13 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
             calibdbm.remove_entries(condition=cal_cond)
         else:
             # log removal
-            WLOG(params, '', '\tWould have removed file: {0}'.format(ufilename))
+            margs = [ufilename]
+            # log: Would have removed file: {0}
+            WLOG(params, '', textentry('40-502-00033', args=margs))
     # if there are no files print this info
     if db_counts['calibdb'] == 0:
-        WLOG(params, '', '\tNo files removed.')
+        # log: No files removed.
+        WLOG(params, '', textentry('40-502-00022'))
     # -------------------------------------------------------------------------
     # then deal with the telluric database --> remove entries with the
     # same filename)
@@ -1263,9 +1302,11 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
     telludbm.load_db()
     # log removal
     if test:
-        WLOG(params, '', 'Would have removed entries from telluric database')
+        # log: Would have removed entries from telluric database
+        WLOG(params, '', textentry('40-502-00023'))
     else:
-        WLOG(params, '', 'Removing entries from telluric database')
+        # log: Removing entries from telluric database
+        WLOG(params, '', textentry('40-502-00024'))
     # start counter
     db_counts['telludb'] = 0
     # we need to loop over all files and remove them one by one from the
@@ -1285,10 +1326,13 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
             telludbm.remove_entries(condition=tel_cond)
         else:
             # log removal
-            WLOG(params, '', '\tWould have removed file: {0}'.format(ufilename))
+            margs = [ufilename]
+            # log: Would have removed file: {0}
+            WLOG(params, '', textentry('40-502-00033', args=margs))
     # if there are no files print this info
     if db_counts['telludb'] == 0:
-        WLOG(params, '', '\tNo files removed.')
+        # log: No files removed.
+        WLOG(params, '', textentry('40-502-00022'))
     # -------------------------------------------------------------------------
     # for the log database we remove entries with the same PIDs
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
@@ -1296,9 +1340,11 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
     logdbm.load_db()
     # log removal
     if test:
-        WLOG(params, '', 'Would have removed entries from log database')
+        # log: Would have removed entries from log database
+        WLOG(params, '', textentry('40-502-00025'))
     else:
-        WLOG(params, '', 'Removing entries from log database')
+        # log: Removing entries from log database
+        WLOG(params, '', textentry('40-502-00026'))
     # start counter
     db_counts['logdb'] = 0
     # we need to loop over all pids and remove them one by one from the
@@ -1318,10 +1364,13 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
             logdbm.remove_entries(condition=log_cond)
         else:
             # log removal
-            WLOG(params, '', '\tWould have removed PID: {0}'.format(upid))
+            margs = [upid]
+            # log: Would have removed PID: {0}
+            WLOG(params, '', textentry('40-502-00034', args=margs))
     # if there are no files print this info
     if db_counts['logdb'] == 0:
-        WLOG(params, '', '\tNo files removed.')
+        # log: No files removed.
+        WLOG(params, '', textentry('40-502-00022'))
     # -------------------------------------------------------------------------
     # last deal with index database (easy --> remove entries with the same
     # condition we used to find files)
@@ -1330,11 +1379,14 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
     findexdb.load_db()
     # log removal
     if test:
-        WLOG(params, '', 'Would have removed entries from index database '
-                         'with condition: \n\t{0}'.format(file_cond))
+        margs = [file_cond]
+        # log: Would have removed entries from index database with condition: \n
+        #     {0}
+        WLOG(params, '', textentry('40-502-00027', args=margs))
     else:
-        WLOG(params, '', 'Removing entries from index database with condition: '
-                         '\n\t{0}'.format(file_cond))
+        margs = [file_cond]
+        # log: Removing entries from index database with condition: \n {0}
+        WLOG(params, '', textentry('40-502-00028', args=margs))
     # add to db counts
     db_counts['findexdb'] = findexdb.database.count(condition=file_cond)
     # remove entries

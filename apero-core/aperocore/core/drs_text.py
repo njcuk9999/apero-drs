@@ -158,6 +158,8 @@ def save_text_file(filename: Union[str, None], array: np.ndarray,
             np.savetxt(filename, array)
         except Exception as e:
             eargs = [filename, type(e), e, func_name]
+            # error: Could not save text file: {0} \n Error {1}: {2} \n Function
+            #     = {3}
             raise AperoCodedException(None, '00-008-00020', targs=eargs)
 
 
@@ -667,6 +669,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                     check = False
                 else:
                     cargs = [dtype.lower()]
+                    # text: Response must be valid {0}
                     cprint(textentry('40-001-00034', args=cargs), 'y')
                     check = True
                     continue
@@ -679,6 +682,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                 check = False
             except Exception as _:
                 cargs = [dtype.__name__]
+                # text: Response must be valid {0}
                 cprint(textentry('40-001-00034', args=cargs), 'y')
                 check = True
                 continue
@@ -697,6 +701,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                 return None
             # otherwise 'None and '' are not valid
             elif uinput in ['None', '']:
+                # text: Response invalid
                 cprint(textentry('40-001-00035'), 'y')
                 check = True
                 continue
@@ -707,10 +712,12 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                 upath = Path(uinput)
             except Exception as _:
                 if not required:
+                    # text: Response must be a valid path or 'None'
                     cprint(textentry('40-001-00036'), 'y')
                     check = True
                     continue
                 else:
+                    # text: Response must be a valid path
                     cprint(textentry('40-001-00037'), 'y')
                     check = True
                     continue
@@ -723,6 +730,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
             # if path does not exist ask to make it (if create)
             else:
                 # check whether to create path
+                # text: Path '{0}' does not exist. Create?
                 pathquestion = textentry('40-001-00038', args=[uinput])
                 create = user_input(pathquestion, dtype='YN')
                 if create:
@@ -731,11 +739,13 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
                         try:
                             os.makedirs(upath)
                         except Exception as _:
+                            # text: Response must be a valid path
                             cprint(textentry('40-001-00037'), 'y')
                             check = True
                             continue
                     return upath
                 else:
+                    # text: Response must be a valid path
                     cprint(textentry('40-001-00037'), 'y')
                     check = True
                     continue
@@ -746,6 +756,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
             elif drs_lang.NO in uinput.upper():
                 return False
             else:
+                # text: Response must be {0}
                 cprint(textentry('40-001-00039', args=[drs_lang.YES_OR_NO]), 'y')
                 check = True
                 continue
@@ -765,6 +776,7 @@ def user_input(question: str, dtype: Union[str, type, None] = None,
             else:
                 ortxt = ' {0} '.format(drs_lang.OR)
                 optionstr = ortxt.join(np.array(options, dtype=str))
+                # text: Response must be {0}
                 cprint(textentry('40-001-00039', args=[optionstr]), 'y')
                 check = True
         # deal with string and string limit

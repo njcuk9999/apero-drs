@@ -143,12 +143,16 @@ class TableFile:
             # if we have no table then add a message
             table_page.add_text('No table created.')
         # write table page
-        print('Writing table page: {0}'.format(self.rst_path))
+        margs = [self.rst_path]
+        # log: Writing table page: {0}
+        print(textentry('40-514-00001', args=margs))
         table_page.write_page(self.rst_path)
         # ---------------------------------------------------------------------
         # write csv table to file
         if table is not None and len(table) > 0:
-            print('Writing csv table: {0}'.format(self.csv_path))
+            margs = [self.csv_path]
+            # log: Writing csv table: {0}
+            print(textentry('40-514-00024', args=margs))
             table.write(self.csv_path, format='ascii.csv', overwrite=True)
 
 
@@ -370,9 +374,9 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         debug_section_ref = f'debug_{ari_user}_objpage_{objname}'
         # ------------------------------------------------------------------
         # print progress
-        msg = '\tCreating page for {0} [{1} of {2}]'
         margs = [objname, it + 1, len(object_classes)]
-        WLOG(params, '', msg.format(*margs))
+        # log: Creating page for {0} [{1} of {2}]
+        WLOG(params, '', textentry('40-514-00039', args=margs))
         # ---------------------------------------------------------------------
         # construct path for object
         obj_save_path = os.path.join(params['TOOLS.ARI.OBJ_PAGES'], objname)
@@ -462,9 +466,10 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         object_page.write_page(os.path.join(object_page_path, rst_filename))
         # ------------------------------------------------------------------
         # print progress
-        msg = '\tFinished creating page for {0} [{1} of {2}]'
         margs = [objname, it + 1, len(object_classes)]
-        WLOG(params, '', msg.format(*margs), colour='magenta')
+        # log: Finished creating page for {0} [{1} of {2}]
+        WLOG(params, '', textentry('40-514-00040', args=margs),
+             colour='magenta')
         # update rdict
         rdict[objname] = (True, 'Finished')
         # return rdict
@@ -487,12 +492,14 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
     # deal with no entries in object table
     if len(object_classes) == 0:
         # print progress
-        WLOG(params, '', 'No new objects found in object table')
+        # log: No new objects found in object table
+        WLOG(params, '', textentry('40-514-00023'))
         # return empty table
         return object_classes
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', 'Creating object pages')
+    # log: Creating object pages
+    WLOG(params, 'info', textentry('40-514-00022'))
     # set up the arguments for the multiprocessing
     args = [0, '', params, object_classes]
     # get the number of cores
@@ -593,14 +600,13 @@ def add_obj_pages(params: ParamDict, object_classes: Dict[str, AriObject]):
         # print all warnings
         if not passed:
             all_passed = False
-            emsg = 'Error for {0}: {1}'
             eargs = [key, reason]
-            WLOG(params, 'warning', emsg.format(*eargs))
+            # warning: Error for {0}: {1}
+            WLOG(params, 'warning', textentry('10-514-00003', args=eargs))
     # stop the code here
     if not all_passed:
-        # TODO: Add to language database
-        emsg = 'ARI crashed (see warnings above)'
-        raise AperoCodedException(params, message=emsg)
+        # error: ARI crashed (see warnings above)
+        raise AperoCodedException(params, '09-514-00008')
     # -------------------------------------------------------------------------
     # return the object table
     return object_classes
@@ -1446,8 +1452,8 @@ def sphinx_compile(params: ParamDict):
             conf_py = new_element
     # ------------------------------------------------------------------
     # Update version in conf.py file
-    msg = 'Updating version in conf.py file'
-    WLOG(params, '', msg)
+    # log: Updating version in conf.py file
+    WLOG(params, '', textentry('40-514-00036'))
     # add version to the conf.py file
     if conf_py is not None:
         # read the conf.py file

@@ -211,15 +211,15 @@ def apero_wave_static(params: ParamDict, fibers: List[str],
         # get static wavelength filename
         filename = wave.get_static_wavesol(params, fiber)
         # print progress
-        msg = 'Copying static wave solution for fiber {0}: {1}'
         margs = [fiber, filename]
-        WLOG(params, '', msg.format(*margs))
+        # log: Copying static wave solution for fiber {0}: {1}
+        WLOG(params, '', textentry('40-022-00004', args=margs))
         # deal with no file found
         if not os.path.exists(filename):
-            emsg = 'Expected static wave solution does not exist: {0}'
             eargs = [filename]
-            raise AperoCodedException(params, None, message=emsg.format(eargs),
-                                      targs=eargs)
+            lang_args = [eargs]
+            # error: Expected static wave solution does not exist: {0}
+            raise AperoCodedException(params, '09-022-00007', targs=lang_args)
         # manually copy or symlink to outpath directory
         destfile = os.path.join(outpath, os.path.basename(filename))
         if not os.path.exists(destfile):
@@ -277,9 +277,9 @@ def find_teff(params: ParamDict, shortname: str, objname: str) -> float:
     try:
         teff = float(teff)
     except Exception as _:
-        # TODO: Add to language database
-        emsg = 'No Teff found for {0}'.format(objname)
-        raise AperoCodedException(params, message=emsg)
+        eargs = [objname]
+        # error: No Teff found for {0}
+        raise AperoCodedException(params, '09-022-00008', targs=eargs)
     # return the teff
     return teff
 
@@ -309,11 +309,9 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
     # deal with wrong drsfile (drsfile.outclass must have lbl_file attribute)
     if not hasattr(drsfile.outclass, 'lbl_file'):
-        # TODO: Add to language database
-        emsg = 'File definition {0} must have an lbl outclass (lbl_ofile)'
         eargs = [drsfile.name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: File definition {0} must have an lbl outclass (lbl_ofile)
+        raise AperoCodedException(params, '09-022-00004', targs=eargs)
     # get kwargs for lbl_file
     kwargs = dict()
     kwargs['objname'] = objname
@@ -324,24 +322,21 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     filename = drsfile.outclass.lbl_file(params, drsfile, **kwargs)
     # if file does not exist do not add to the file index database
     if not os.path.exists(filename) and drsfile.required:
-        # TODO: Add to language database
-        emsg = 'Expected {0} does not exist: {1}'
         eargs = [drsfile.name, filename]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Expected {0} does not exist: {1}
+        raise AperoCodedException(params, '09-022-00005', targs=eargs)
     elif not os.path.exists(filename):
-        # TODO: Add to language database
-        wmsg = 'Skipping {0}, does not exist and not required: {1}'
         wargs = [drsfile.name, filename]
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+        # warning: Skipping {0}, does not exist and not required: {1}
+        WLOG(params, 'warning', textentry('10-022-00002', args=wargs),
+             sublevel=1)
         return
     # convert absolute path to a drs path
     basefile = drs_file.DrsPath(params, abspath=filename)
     # print progres
-    # TODO: Add to language database
-    msg = 'Adding {0} to file index database: {1}'
     margs = [drsfile.name, filename]
-    WLOG(params, '', msg.format(*margs))
+    # log: Adding {0} to file index database: {1}
+    WLOG(params, '', textentry('40-022-00003', args=margs))
     # construct hkeys
     hkeys = fake_hkeys(params, filename, header_fits_file,
                        drsfile, objname, tempname)
@@ -374,10 +369,12 @@ def lbl_ref_qc(params: ParamDict) -> Tuple[List[list], int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -406,10 +403,12 @@ def lbl_mask_qc(params: ParamDict) -> Tuple[List[list], int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -438,10 +437,12 @@ def lbl_compute_qc(params: ParamDict) -> Tuple[List[list], int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -470,10 +471,12 @@ def lbl_compile_qc(params: ParamDict) -> Tuple[List[list], int]:
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -501,12 +504,10 @@ def fake_hkeys(params: ParamDict, filename: str,
         header_fits_file = filename
     # deal with header_fits_file being None
     if header_fits_file is None:
-        # TODO: Add to language database
-        emsg = ('Must provide a header_fits_file argument for non-fits file.'
-                '\n\tfilename = {0}\n\tfunction = {1}')
         eargs = [filename, func_name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Must provide a header_fits_file argument for non-fits file. \n
+        #     filename = {0} \n function = {1}
+        raise AperoCodedException(params, '09-022-00006', targs=eargs)
     # get header from selected
     hdr = drs_fits.read_header(params, header_fits_file)
     for key in rkeys:
@@ -561,7 +562,8 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
 
     # deal with models directory not existing
     if not os.path.exists(models_dir):
-        WLOG(params, 'warning', 'No DTEMP files found. Skipping.', sublevel=1)
+        # warning: No DTEMP files found. Skipping.
+        WLOG(params, 'warning', textentry('10-022-00001'), sublevel=1)
         return None
     # storage for output files
     valid_dtemp_files = dict()
@@ -573,12 +575,13 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
             valid_dtemp_files[dtemp_key] = dtemp_keys[dtemp_key]
     # deal with no files found
     if len(valid_dtemp_files) == 0:
-        WLOG(params, 'warning', 'No DTEMP files found. Skipping.', sublevel=1)
+        # warning: No DTEMP files found. Skipping.
+        WLOG(params, 'warning', textentry('10-022-00001'), sublevel=1)
         return None
     else:
-        msg = '{0} DTEMP files found.'
         margs = [len(valid_dtemp_files)]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: {0} DTEMP files found.
+        WLOG(params, 'info', textentry('40-022-00005', args=margs))
         return valid_dtemp_files
 
 
@@ -593,7 +596,8 @@ def add_log(params: ParamDict, lblinstance: Any):
     :return: None, just logs to parent log file
     """
     # TODO: This may be too slow if LBL log is large
-    WLOG(params, 'info', 'Adding LBL log to apero log')
+    # log: Adding LBL log to apero log
+    WLOG(params, 'info', textentry('40-022-00001'))
     for msg in TQDM(lblinstance.get('logmsg', [])):
         WLOG(params, '', msg, logonly=True)
 

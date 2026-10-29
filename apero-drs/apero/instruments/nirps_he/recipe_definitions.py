@@ -92,7 +92,7 @@ dprtype = dict(name='--dprtype', dtype=str, default='None',
                helpstr=textentry('DPRTYPE_HELP'))
 # -----------------------------------------------------------------------------
 no_in_qc = dict(name='--no_in_qc', dtype='switch',
-                helpstr='Disable checking the quality control of input files')
+                helpstr=textentry('NO_IN_QC_HELP'))
 
 # =============================================================================
 # File option definitions
@@ -574,9 +574,7 @@ apero_flat.set_kwarg(**shapelfile)
 apero_flat.set_kwarg(**no_in_qc)
 apero_flat.set_kwarg(name='--forceext', dtype='bool',
                      default_ref='CAL.FLAT.ALWAYS_EXTRACT',
-                     helpstr='If True, always re-extract the flat even if the'
-                             ' output already exists (overrides '
-                             'CAL.FLAT.ALWAYS_EXTRACT)')
+                     helpstr=textentry('APERO_FLAT_FORCEEXT_HELP'))
 apero_flat.set_min_nfiles('files', 1)
 # define the number of files we should use at maximum
 apero_flat.limit = 100
@@ -626,9 +624,7 @@ apero_leak_ref.set_kwarg(**plot)
 apero_leak_ref.set_kwarg(**no_in_qc)
 apero_leak_ref.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='CAL.LEAK.ALWAYS_EXTRACT',
-                         helpstr='If True, always re-extract the leak '
-                                 'reference even if the output already '
-                                 'exists (overrides CAL.LEAK.ALWAYS_EXTRACT)')
+                         helpstr=textentry('APERO_LEAK_REF_FORCEEXT_HELP'))
 apero_leak_ref.group_func = grouping.no_group
 apero_leak_ref.group_column = None
 # add to recipe
@@ -705,7 +701,7 @@ apero_extract.set_kwarg(default=False, **combine)
 apero_extract.set_kwarg(name='--combine_method', dtype=str,
                         options=['sum', 'median', 'mean', 'subtract', 'divide',
                                  'multiply'], default='sum',
-                        helpstr='Method to combine files (if --combine=True)')
+                        helpstr=textentry('APERO_EXTRACT_COMBINE_METHOD_HELP'))
 apero_extract.set_kwarg(**objname)
 apero_extract.set_kwarg(**dprtype)
 apero_extract.set_kwarg(**darkfile)
@@ -726,7 +722,7 @@ apero_extract.set_kwarg(name='--leakcorr', dtype='bool', default=True,
                         default_ref='CAL.LEAK.CORRECT_LEAK')
 apero_extract.set_kwarg(**wavefile)
 apero_extract.set_kwarg(name='--force_ref_wave', dtype='switch',
-                        helpstr='Force using the reference wave solution')
+                        helpstr=textentry('APERO_EXTRACT_FORCE_REF_WAVE_HELP'))
 apero_extract.set_kwarg(**no_in_qc)
 apero_extract.set_kwarg(**add_db)
 apero_extract.group_func = grouping.group_individually
@@ -817,7 +813,7 @@ apero_wave_ref.set_min_nfiles('fpfiles', 1)
 apero_wave_ref.set_min_nfiles('hcfiles', 1)
 apero_wave_ref.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='CAL.WAVE.GEN.ALWAYS_EXTRACT',
-                         helpstr='WAVE_EXTRACT_HELP')
+                         helpstr=textentry('APERO_WAVE_REF_FORCEEXT_HELP'))
 apero_wave_ref.set_kwarg(name='--cavityfile', dtype='file', default='None',
                          files=[files.out_waveref_cavity],
                          helpstr=textentry('WAVEREF_CAVFILE_HELP'))
@@ -903,7 +899,7 @@ apero_wave_night.set_min_nfiles('fpfiles', 1)
 apero_wave_night.set_min_nfiles('hcfiles', 1)
 apero_wave_night.set_kwarg(name='--forceext', dtype='bool',
                            default_ref='CAL.WAVE.GEN.ALWAYS_EXTRACT',
-                           helpstr='WAVE_EXTRACT_HELP')
+                           helpstr=textentry('APERO_WAVE_NIGHT_FORCEEXT_HELP'))
 apero_wave_night.set_kwarg(**no_in_qc)
 apero_wave_night.group_func = grouping.group_by_dirname
 apero_wave_night.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
@@ -1047,8 +1043,7 @@ apero_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
                          helpstr=textentry('TEMPLATE_FILE_HELP'))
 apero_mk_tellu.set_kwarg(name='--finiteres', dtype='bool',
                          default_ref='OBJ.TELL.PCLEAN.DO_FINITE_RES_CORR',
-                         helpstr='Whether to do the finite resolution '
-                                 'correction (Always false if no template)')
+                         helpstr=textentry('APERO_MK_TELLU_FINITERES_HELP'))
 apero_mk_tellu.set_kwarg(**no_in_qc)
 apero_mk_tellu.group_func = grouping.group_individually
 apero_mk_tellu.group_column = 'TOOLS.REPROCESS.OBSDIR_COL'
@@ -1170,11 +1165,9 @@ apero_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
                           helpstr=textentry('TEMPLATE_FILE_HELP'))
 apero_fit_tellu.set_kwarg(name='--finiteres', dtype='bool',
                           default_ref='OBJ.TELL.PCLEAN.DO_FINITE_RES_CORR',
-                          helpstr='Whether to do the finite resolution '
-                                  'correction (Always false if no template)')
+                          helpstr=textentry('APERO_FIT_TELLU_FINITERES_HELP'))
 apero_fit_tellu.set_kwarg(name='--onlypreclean', dtype='switch',
-                          helpstr='Only run the precleaning steps '
-                                  '(not recommended - for debugging ONLY)')
+                          helpstr=textentry('FTELLU_ONLYPRECLEAN_HELP'))
 apero_fit_tellu.set_kwarg(**add_db)
 apero_fit_tellu.set_kwarg(**blazefile)
 apero_fit_tellu.set_kwarg(**plot)
@@ -1248,15 +1241,14 @@ apero_lbl_ref.instrument = __INSTRUMENT__
 apero_lbl_ref.in_block_str = 'red'
 apero_lbl_ref.out_block_str = 'lbl'
 apero_lbl_ref.extension = 'fits'
-apero_lbl_ref.description = 'LBL Setup and reference recipe (Run before any other LBL steps)'
+apero_lbl_ref.description = textentry('APERO_LBL_REF_DESCRIPTION')
 apero_lbl_ref.epilog = ''
 apero_lbl_ref.recipe_type = 'recipe'
 apero_lbl_ref.recipe_kind = 'lbl'
 apero_lbl_ref.set_kwarg(name='--test', dtype='switch',
-                        helpstr='Run in test mode')
+                        helpstr=textentry('APERO_LBL_REF_TEST_HELP'))
 apero_lbl_ref.set_kwarg(name='--objnames', dtype=str, default='None',
-                        helpstr='Name of the objects to copy, if None copies '
-                                'all objects available.',
+                        helpstr=textentry('APERO_LBL_REF_OBJNAMES_HELP'),
                         single_call=True)
 apero_lbl_ref.group_func = grouping.no_group
 apero_lbl_ref.never_skip = True
@@ -1274,7 +1266,7 @@ apero_lbl_mask.instrument = __INSTRUMENT__
 apero_lbl_mask.in_block_str = 'red'
 apero_lbl_mask.out_block_str = 'lbl'
 apero_lbl_mask.extension = 'fits'
-apero_lbl_mask.description = 'Create LBL mask'
+apero_lbl_mask.description = textentry('APERO_LBL_MASK_DESCRIPTION')
 apero_lbl_mask.epilog = ''
 apero_lbl_mask.recipe_type = 'recipe'
 apero_lbl_mask.recipe_kind = 'lbl'
@@ -1298,7 +1290,7 @@ apero_lbl_compute.instrument = __INSTRUMENT__
 apero_lbl_compute.in_block_str = 'red'
 apero_lbl_compute.out_block_str = 'lbl'
 apero_lbl_compute.extension = 'fits'
-apero_lbl_compute.description = 'Run LBL compute'
+apero_lbl_compute.description = textentry('APERO_LBL_COMPUTE_DESCRIPTION')
 apero_lbl_compute.epilog = ''
 apero_lbl_compute.recipe_type = 'recipe'
 apero_lbl_compute.recipe_kind = 'lbl'
@@ -1307,11 +1299,10 @@ apero_lbl_compute.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_compute.set_kwarg(name='--iteration', dtype=int,
                             default=-1, reprocess=True,
-                            helpstr='Iteration number (for multiprocessing)')
+                            helpstr=textentry('LBL_COMPUTE_ITER_HELP'))
 apero_lbl_compute.set_kwarg(name='--total', dtype=int,
                             default=-1, reprocess=True,
-                            helpstr='Total number of iterations '
-                                    '(for multiprocessing)')
+                            helpstr=textentry('APERO_LBL_COMPUTE_TOTAL_HELP'))
 apero_lbl_compute.group_func = grouping.lbl_compute_group
 apero_lbl_compute.never_skip = True
 apero_lbl_compute.group_column = None
@@ -1328,7 +1319,7 @@ apero_lbl_compile.instrument = __INSTRUMENT__
 apero_lbl_compile.in_block_str = 'red'
 apero_lbl_compile.out_block_str = 'lbl'
 apero_lbl_compile.extension = 'fits'
-apero_lbl_compile.description = 'Run LBL compute'
+apero_lbl_compile.description = textentry('APERO_LBL_COMPILE_DESCRIPTION')
 apero_lbl_compile.epilog = ''
 apero_lbl_compile.recipe_type = 'recipe'
 apero_lbl_compile.recipe_kind = 'lbl'

@@ -903,6 +903,8 @@ class ImportModule:
                 eargs = [self.name, self.path, func_name, type(e), str(e),
                          string_traceback]
                 # raise an exception
+                # error: Cannot import module '{0}' from '{1}' \n Function = {2}
+                #     \n Error {3}: {4} \n \n Traceback: \n \n {5}
                 raise AperoCodedException(None, '00-000-00003', targs=eargs)
 
     def copy(self) -> 'ImportModule':

@@ -63,6 +63,7 @@ from apero_ri.core import basket_funcs as bk
 from apero_ri.core import docs
 from apero_ri.core import download_tracker as dt
 from apero_ri.core import email_backend as eb
+from apero_ri.core import ari_lang_support
 from apero_ri.core import object_funcs
 from apero_ri.core import permissions as perms
 from apero_ri.core import secret_store as ss
@@ -1340,6 +1341,9 @@ def ariapp_register_routes(self):
     )
     # Logout route (no limit needed)
     self.add_url_rule("/logout", "logout", self._logout_view)
+    # Interface language switch (public, cookie only)
+    self.add_url_rule('/set_language/<lang>', 'set_language',
+                      ari_lang_support.set_language_view)
 
     # Lightweight unauthenticated liveness probe for load balancers and
     # uptime monitors.  Deliberately does no DB/disk work.
@@ -1927,6 +1931,9 @@ def ariapp_api_admin_backups_oauth_start(self):
 
 
 def ariapp_register_context_processors(self):
+    # translate an English label (e.g. from pages.yaml) in templates
+    self.jinja_env.filters['tl'] = ari_lang_support.translate
+
     @self.context_processor
     def inject_globals():
         user_info = auth.get_effective_user(session)
@@ -1968,6 +1975,7 @@ def ariapp_register_context_processors(self):
             "ari_pages": self.ari_pages,
             "logo_exists": logo_path.exists(),
             "current_theme": current_theme,
+            **ari_lang_support.context(),
         }
 
 

@@ -31,6 +31,7 @@ from tqdm import tqdm
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore import drs_lang
 from apero.tools.module.ari import ari_core
 from apero.base import base as apero_base
 
@@ -49,6 +50,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # set the date for finder charts
@@ -235,7 +238,8 @@ def create_finder_chart(params: ParamDict, objname: str,
     :return:
     """
     # print progress
-    WLOG(params, '', 'Creating finder ')
+    # log: Creating finder
+    WLOG(params, '', textentry('40-514-00006'))
     # get directory to save finder charts to
     directory = params['ARI_FINDER']['directory']
     # set up arguments
@@ -243,8 +247,8 @@ def create_finder_chart(params: ParamDict, objname: str,
     # check whether file already exists
     abspath = os.path.join(directory, f'{objname}.pdf')
     if skip_done and os.path.exists(abspath):
-        msg = 'Skipping finder for object: {0} [{1}/{2}]'
-        WLOG(params, '', msg.format(*args))
+        # log: Skipping finder for object: {0} [{1}/{2}]
+        WLOG(params, '', textentry('40-514-00038', args=args))
         return
     elif os.path.exists(abspath):
         os.remove(abspath)
@@ -327,17 +331,21 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
     flip_x = params['ARI_FINDER']['FLIP_X']
     flip_y = params['ARI_FINDER']['FLIP_Y']
 
-    print(f'Propagating coords to {date.iso}')
+    margs = [date.iso]
+    # log: Propagating coords to {0}
+    print(textentry('40-514-00007', args=margs))
     obs_coords, obs_time = propagate_coords(objdict, date)
     # -------------------------------------------------------------------------
     # get all Gaia data around the current coordinates
-    print('Getting Gaia sources for this region')
+    # log: Getting Gaia sources for this region
+    print(textentry('40-514-00008'))
     # TODO: Deal with >2000 sources
     gaia_sources = get_gaia_sources(params, obs_coords, obs_time,
                                     radius=radius['G'])
     # -------------------------------------------------------------------------
     # Get the 2MASS source for each Gaia source
-    print('Getting 2MASS sources for this region')
+    # log: Getting 2MASS sources for this region
+    print(textentry('40-514-00009'))
     # TODO: Deal with >2000 sources
     gaia_sources = get_2mass_sources(params, gaia_sources, obs_coords, obs_time,
                                      radius=radius['J'])
@@ -348,13 +356,15 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
                        fwhm=fwhm['G'], field_of_view=field_of_view['G'],
                        sigma_limit=sigma_limit['G'], band='G',
                        scale_factor=scale_factor['G'])
-    print('\nSeeding Gaia image')
+    # log: Seeding Gaia image
+    print(textentry('40-514-00010'))
     image1, wcs1 = seed_image(gaia_sources,
                               flip_x=flip_x['G'], flip_y=flip_y['G'],
                               rotation=transform_rotate['G'].to(uu.deg),
                               **kwargs_gaia)
 
-    print('\nSeeding Gaia image (no rotation)')
+    # log: Seeding Gaia image (no rotation)
+    print(textentry('40-514-00011'))
     image3, wcs3 = seed_image(gaia_sources, flip_x=False, flip_y=False,
                               rotation=0 * uu.deg, **kwargs_gaia)
     # -------------------------------------------------------------------------
@@ -364,13 +374,15 @@ def make_finder_chart(params: ParamDict, objname: str, date: Time,
                         fwhm=fwhm['J'], field_of_view=field_of_view['J'],
                         sigma_limit=sigma_limit['J'], band='J',
                         scale_factor=scale_factor['J'])
-    print('\nSeeding 2MASS image')
+    # log: Seeding 2MASS image
+    print(textentry('40-514-00012'))
     image2, wcs2 = seed_image(gaia_sources,
                               flip_x=flip_x['J'], flip_y=flip_y['J'],
                               rotation=transform_rotate['J'].to(uu.deg),
                               **kwargs_tmass)
 
-    print('\nSeeding 2MASS image (no rotation)')
+    # log: Seeding 2MASS image (no rotation)
+    print(textentry('40-514-00013'))
     image4, wcs4 = seed_image(gaia_sources, flip_x=False, flip_y=False,
                               rotation=0 * uu.deg, **kwargs_tmass)
 
@@ -520,9 +532,9 @@ def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
             del job
             break
         except Exception as e:
-            wmsg = 'Attempt {0} Error occured {1}: {2}'
             wargs = [ncount + 1, type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            # warning: Attempt {0} Error occured {1}: {2}
+            WLOG(params, 'warning', textentry('10-514-00004', args=wargs))
             time.sleep(5)
             # try again add to counter
             ncount += 1
@@ -533,7 +545,8 @@ def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
         raise AperoCodedException(params, message=emsg)
     # deal with query being exactly 2000 (the max size)
     if len(table) == 2000:
-        print('Too many sources. Launching job asyncronously. Please wait...')
+        # log: Too many sources. Launching job asyncronously. Please wait...
+        print(textentry('40-514-00014'))
         job = gaia.launch_job_async(gaia_query)
         # get the query results
         table = job.get_results()
@@ -676,7 +689,8 @@ def get_2mass_field(params: ParamDict, obs_coords: SkyCoord, obs_time: Time,
     del job0
     # deal with query being exactly 2000 (the max size)
     if len(table0) == 2000:
-        print('Too many sources. Launching job asyncronously. Please wait...')
+        # log: Too many sources. Launching job asyncronously. Please wait...
+        print(textentry('40-514-00014'))
         job0 = tmass.launch_job_async(tmass_query)
         # get the query results
         table0 = job0.get_results()
@@ -726,9 +740,9 @@ def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
                                                       obs_time, radius)
             break
         except Exception as e:
-            wmsg = 'Attempt {0} Error occured {1}: {2}'
             wargs = [ncount + 1, type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            # warning: Attempt {0} Error occured {1}: {2}
+            WLOG(params, 'warning', textentry('10-514-00004', args=wargs))
             time.sleep(5)
             # try again add to counter
             ncount += 1

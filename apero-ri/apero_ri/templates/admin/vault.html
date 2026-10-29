@@ -70,7 +70,7 @@
      style="display:flex; align-items:center;
             justify-content:space-between;
             flex-wrap:wrap; gap:0.5rem;">
-    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
     {% if vault_sections %}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
         <button class="ari-btn ari-btn--secondary ari-btn--sm"

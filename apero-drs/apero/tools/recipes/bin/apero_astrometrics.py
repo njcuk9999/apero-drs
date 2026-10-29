@@ -108,8 +108,8 @@ def __main__(recipe, params):
         drs_astro_wrap.check_object(params, recipe, found_objs)
     # if we have no unfound object stop here
     if len(unfound_objs) == 0:
-        msg = 'All objects found in database'
-        WLOG(params, 'info', msg)
+        # log: All objects found in database
+        WLOG(params, 'info', textentry('40-512-00014'))
         return locals()
 
     # ----------------------------------------------------------------------
@@ -121,7 +121,9 @@ def __main__(recipe, params):
     for objname in unfound_objs:
         # print header title
         WLOG(params, 'info', params['LOG.HEADER'])
-        WLOG(params, 'info', '\tProcessing: {0}'.format(objname))
+        margs = [objname]
+        # log: Processing: {0}
+        WLOG(params, 'info', textentry('40-512-00006', args=margs))
         WLOG(params, 'info', params['LOG.HEADER'])
         # construct add object question
         question1 = '\n\nAdd OBJECT="{0}" to astrometric database?'
@@ -168,26 +170,27 @@ def __main__(recipe, params):
         # --------------------------------------------------------------------
         # if we still have no objects deal with no objects
         if len(astro_objs) == 0:
-            emsg = ('Invalid object "{0}". \n\t{1}'
-                    '\n\tPlease try another alias')
             eargs = [objname, reason]
-            WLOG(params, 'warning', emsg.format(*eargs), sublevel=6,
-                 colour='red')
+            # warning: Invalid object "{0}". \n {1} \n Please try another alias
+            WLOG(params, 'warning', textentry('10-512-00002', args=eargs),
+                 sublevel=6, colour='red')
         # --------------------------------------------------------------------
         # else deal with multiple objects
         elif len(astro_objs) > 1:
             # print warning
-            emsg = ('More than one object matches object "{0}" in SIMBAD. '
-                    'Please try another alias.')
-            WLOG(params, 'warning', emsg.format(objname), sublevel=6)
+            wargs = [objname]
+            # warning: More than one object matches object "{0}" in SIMBAD.
+            #     Please try another alias.
+            WLOG(params, 'warning', textentry('10-512-00003', args=wargs),
+                 sublevel=6)
             # print list of aliases for each object found
-            msg = 'List of aliases:'
-            WLOG(params, '', msg, colour='yellow')
+            WLOG(params, '', textentry('40-512-00015'), colour='yellow')
             # loop around objects found
             for a_it, astro_obj in enumerate(astro_objs):
-                msg = 'Object {0}: {1}'
                 margs = [a_it + 1, ','.join(astro_obj.aliases.split('|'))]
-                WLOG(params, '', msg.format(*margs), colour='yellow')
+                # log: Object {0}: {1}
+                WLOG(params, '', textentry('40-512-00018', args=margs),
+                     colour='yellow')
                 WLOG(params, '', '')
         # --------------------------------------------------------------------
         # make sure we add all aliases without white space
@@ -199,11 +202,13 @@ def __main__(recipe, params):
     if len(add_objs) > 0:
         # print progress
         WLOG(params, 'info', params['LOG.HEADER'])
-        WLOG(params, 'info', 'Updating pending-list online database')
+        # log: Updating pending-list online database
+        WLOG(params, 'info', textentry('40-512-00007'))
         WLOG(params, 'info', params['LOG.HEADER'])
         # add all objects in add list to google-sheet
         drs_astro_wrap.add_obj_to_sheet(params, add_objs)
         # log progress
+        # log: Updating object database (from google sheets)
         WLOG(params, '', textentry('40-503-00039'))
         # update database
         manage_databases.validate_astrometric_yaml_archive(params, log=False)

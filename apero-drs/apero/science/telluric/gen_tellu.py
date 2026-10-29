@@ -341,6 +341,7 @@ def get_tellu_objs(params: ParamDict, recipe: DrsRecipe, key: str,
     # ----------------------------------------------------------------------
     # display how many files found
     margs = [len(absfilenames), key]
+    # log: Found {0} files of type {1}
     WLOG(params, '', textentry('40-019-00039', args=margs))
     return absfilenames
 
@@ -385,21 +386,15 @@ def mask_bad_regions(params: ParamDict,
     # -------------------------------------------------------------------------
     # we can deal with 1D and 2D files
     if len(image.shape) not in [1, 2]:
-        # TODO: Add to language database
-        emsg = ('Can only mask bad regions in 1D and 2D images. '
-                '\n\tImage shape: {0}'
-                '\n\tFunction: {1}')
         eargs = [image.shape, func_name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Can only mask bad regions in 1D and 2D images. \n Image shape:
+        #     {0} \n Function: {1}
+        raise AperoCodedException(params, '09-019-00008', targs=eargs)
     if image.shape != wavemap.shape:
-        # TODO: Add to language database
-        emsg = ('Image and wavelength grid must have same dimensions'
-                '\n\tImage shape: {0} \n\tWavemap shape: {1}'
-                '\n\tFunction: {2}')
         eargs = [image.shape, wavemap.shape, func_name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Image and wavelength grid must have same dimensions \n Image
+        #     shape: {0} \n Wavemap shape: {1} \n Function: {2}
+        raise AperoCodedException(params, '09-019-00009', targs=eargs)
     # -------------------------------------------------------------------------
     # loop around bad regions and mask them
     for bad_region in bad_regions:
@@ -619,6 +614,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     if not do_precleaning:
         # log progress
+        # log: Skipping pre-cleaning (user switch)
         WLOG(params, '', textentry('10-019-00008'))
         # populate qc params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -800,6 +796,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     slope_water, slope_others = 0, 0
     valid0 = np.ones_like(spectrum, dtype=bool)
     # log progress
+    # log: Pre-cleaning data
     WLOG(params, '', textentry('40-019-00040'))
     # ----------------------------------------------------------------------
     # get reference trans
@@ -845,6 +842,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         flag_qc = False
         # log progress
         args = [iteration, dexpo, expo_water, expo_others, dv_abso * 1000]
+        # log: iteration={0} dexpo={1:.3e} dv_abso={4:.3f} [m/s] \n
+        #     expo_water={2:.3f} expo_others={3:.3f}
         WLOG(params, '', textentry('40-019-00041', args=args))
         # get the absorption spectrum
         trans = get_abso_expo(wavemap, expo_others, expo_water,
@@ -928,11 +927,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             approx_rv = approx_rv - app_vel
             approx_rv_err = float(app_vel_err)
 
-            # TODO: Add to language database
-            msg = ('\t\tApprox Rv shift: {0:.2f}+/-{1:.2f} '
-                   'increment: {2:.4f} [m/s]')
             margs = [approx_rv, approx_rv_err, app_vel]
-            WLOG(params, '', msg.format(*margs))
+            # log: Approx Rv shift: {0:.2f}+/-{1:.2f} increment: {2:.4f} [m/s]
+            WLOG(params, '', textentry('40-019-00061', args=margs))
 
             # If we have multiple rv measurements we need to check whether it
             # is converging
@@ -942,19 +939,17 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 converging2 = abs(approx_rvs[-1]) < app_vel_err
                 # if neither test is converging we are diverging
                 if not (converging1 or converging2):
-                    # TODO: Add to language database
-                    wmsg = 'RV shift not converging. Stopping RV shift.'
-                    WLOG(params, 'warning', wmsg)
+                    # warning: RV shift not converging. Stopping RV shift.
+                    WLOG(params, 'warning', textentry('10-019-00014'))
                     # set these values to values that will work
                     approx_rv, approx_rv_err, app_vel = 0, np.nan, 0
                     # we say its converged but it hasn't we just can't fit RV on
                     # this observation
                     rv_converged = True
-                    # TODO: Add to language database
-                    msg = ('\t\tSetting Approx Rv shift: {0:.2f}+/-{1:.2f} '
-                           'increment: {2:.4f} [m/s]')
                     margs = [approx_rv, approx_rv_err, app_vel]
-                    WLOG(params, '', msg.format(*margs))
+                    # log: Setting Approx Rv shift: {0:.2f}+/-{1:.2f} increment:
+                    #     {2:.4f} [m/s]
+                    WLOG(params, '', textentry('40-019-00069', args=margs))
             # shift the template
             template_props = shift_template(params, recipe, None,
                                             template_props, refprops,
@@ -1048,6 +1043,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         for qit in range(len(qc_pass)):
             if qc_pass[qit] == 0:
                 wargs = [qc_logic[qit], qc_names[qit], qc_values[qit]]
+                # warning: Telluric pre-cleaning failed QC \n Required: {0} \n
+                #     {1} = {2}
                 WLOG(params, 'warning', textentry('10-019-00010', args=wargs),
                      sublevel=8)
 
@@ -1316,6 +1313,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
                      func_name)
     # -------------------------------------------------------------------------
     # log progress
+    # log: Cleaning OH lines
     WLOG(params, '', textentry('40-019-00042'))
     # -------------------------------------------------------------------------
     # get shape of the e2ds
@@ -1419,6 +1417,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
             masked_lines += 1
     # -------------------------------------------------------------------------
     # log how many lines were masked: OH Cleaning: Num of masked lines
+    # log: OH Cleaning: Num of masked lines = {0}
     WLOG(params, '', textentry('40-019-00052', args=[masked_lines]))
     # store previous sky model
     sky_model0 = np.array(sky_model)
@@ -2055,6 +2054,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     tpclfile.add_hkey('KW_TELLUP_WATER_BOUNDS', value=','.join(wbounds))
     # ----------------------------------------------------------------------
     # print progress
+    # log: Writing pre-cleaned file to: {0}
     WLOG(params, '', textentry('40-019-00044', args=[tpclfile.filename]))
     # define multi lists
     data_list = dimages[1:]
@@ -2305,6 +2305,8 @@ def load_templates(params: ParamDict, recipe: DrsRecipe,
                     # log error
                     eargs = [os.path.basename(template_filename),
                              template_filename]
+                    # error: User defined template file (--template) does not
+                    #     exist. \n Tried: {0} \n Tried: {1}
                     raise AperoCodedException(params, '09-019-00005', 
                                               targs=eargs)
 
@@ -2313,6 +2315,7 @@ def load_templates(params: ParamDict, recipe: DrsRecipe,
     temp_key = out_temp.get_dbkey()
     # -------------------------------------------------------------------------
     # log status
+    # log: Loading {0} files
     WLOG(params, '', textentry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, recipe.shortname, temp_key, header,
@@ -2324,6 +2327,7 @@ def load_templates(params: ParamDict, recipe: DrsRecipe,
     # deal with no files in database
     if temp_image is None:
         # log that we found no templates in database
+        # log: No template found in telluric database
         WLOG(params, '', textentry('40-019-00003'))
         # store template properties
         temp_props = ParamDict()
@@ -2361,19 +2365,20 @@ def load_templates(params: ParamDict, recipe: DrsRecipe,
     # Need to deal with case where there is no s1d table
     # deal with no files in database
     if s1d_table is None:
-        # TODO: Add to language database
         # log that we found no templates in database
-        emsg = ('2D Template exists ({0}) but S1D template does not. '
-                'Something went wrong in template creation.')
         eargs = [temp_2d_filename]
-        WLOG(params, 'error', emsg.format(*eargs))
+        # error: 2D Template exists ({0}) but S1D template does not. Something
+        #     went wrong in template creation.
+        WLOG(params, 'error', textentry('09-019-00007', args=eargs))
         # return null entries
         return ParamDict()
     # -------------------------------------------------------------------------
     # log which template we are using
     wargs = [temp_2d_filename]
+    # log: Using template: {0}
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
     wargs = [temp_1d_filename]
+    # log: Using template: {0}
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
     # -------------------------------------------------------------------------
     # store template properties
@@ -2425,6 +2430,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     if not isinstance(dv, (int, float)) or not np.isfinite(dv):
         eargs = [dv, func_name]
         if log:
+            # error: BERV value unusable. BERV = '{0}' \n Function = {1}
             raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # Get the reference wavemap from reference wave props
     wavemap_ref = refprops['WAVEMAP']
@@ -2437,6 +2443,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # Log that we are shifting the template
     if log:
+        # log: Shifting template to stellar frame (using BERV)
         WLOG(params, '', textentry('40-019-00017'))
     # interpolate at shifted values
     dvshift = mp.relativistic_waveshift(dv, units='km/s')
@@ -2446,6 +2453,8 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # log the shifting of PCA components
     if log:
         wargs = [wavefile_ref, wavefile]
+        # log: Shifting template spectrum in wave grid \n in wave grid = {0} \n
+        #     out wave grid = {1}
         WLOG(params, '', textentry('40-019-00021', args=wargs))
     # shift template e2ds
     template_e2ds = wave_core.wave_to_wave(tprops['TEMP_S2D'],
@@ -2490,6 +2499,7 @@ def get_transmission_files(params: ParamDict, recipe: DrsRecipe,
     # get key
     trans_key = out_trans.get_dbkey()
     # log status
+    # log: Loading {0} files
     WLOG(params, '', textentry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
     trans_filenames = load_tellu_file(params, recipe.shortname,
@@ -2514,6 +2524,7 @@ def get_trans_model(params: ParamDict, recipe: DrsRecipe,
     # get key
     trans_key = out_trans.get_dbkey()
     # log status
+    # log: Loading {0} files
     WLOG(params, '', textentry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
     trans_model = load_tellu_file(params, recipe.shortname, trans_key, header,
@@ -2588,6 +2599,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
     if out_tellu_conv.filename in conv_paths:
         # log that we are loading tapas convolved file
         wargs = [out_tellu_conv.filename]
+        # log: Loading Tapas convolve file: {0}
         WLOG(params, '', textentry('40-019-00001', args=wargs))
         # ------------------------------------------------------------------
         # Load the convolved TAPAS atmospheric transmission from file
@@ -2613,6 +2625,7 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
         out_tellu_conv.data = tapas_all_species
         # log saving
         wargs = [out_tellu_conv.filename]
+        # log: Saving Tapas convolve file: {0}
         WLOG(params, '', textentry('40-019-00002', args=wargs))
         # save
         out_tellu_conv.write_npy(block_kind=recipe.out_block_str,
@@ -2679,10 +2692,9 @@ def load_tapas_spl(params, recipe, header, database=None):
         except Exception as e:
             # deal with counter out of bounds
             if counter > 60:
-                emsg = ('Cannot create directory {0} times: {1}\n\t{2}:{3}')
                 eargs = [counter, str(tapas_path), type(e), str(e)]
-                raise AperoCodedException(params, None,
-                                          message=emsg.format(*eargs))
+                # error: Cannot create directory {0} times: {1} \n {2}:{3}
+                raise AperoCodedException(params, '09-019-00010', targs=eargs)
             # weait for 1 second and try again
             time.sleep(1)
             counter += 1
@@ -2721,6 +2733,7 @@ def load_tapas_spl(params, recipe, header, database=None):
         # ------------------------------------------------------------------
         # log saving
         args = [out_tellu_tapas.filename]
+        # log: Writing tapas file: {0}
         WLOG(params, '', textentry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
@@ -2779,8 +2792,9 @@ def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
     #    (must be in
     for n_species, molecule in enumerate(tellu_absorbers):
         # log process
-        wmsg = 'Processing molecule: {0}'
-        WLOG(params, '', wmsg.format(molecule))
+        margs = [molecule]
+        # log: Processing molecule: {0}
+        WLOG(params, '', textentry('40-019-00060', args=margs))
         # get wavelengths
         lam = tapas_table['wavelength']
         # get molecule transmission
@@ -2788,8 +2802,9 @@ def _convolve_tapas(params, tapas_table, refprops, tellu_absorbers,
         # interpolate with Univariate Spline
         tapas_spline = mp.iuv_spline(lam, trans)
         # log the mean transmission level
-        wmsg = '\tMean Trans level: {0:.3f}'.format(np.mean(trans))
-        WLOG(params, '', wmsg)
+        margs = [np.mean(trans)]
+        # log: Mean Trans level: {0:.3f}
+        WLOG(params, '', textentry('40-019-00068', args=margs))
         # convolve all tapas absorption to the SPIRou approximate resolution
         for iord in range(ydim):
             # get the order position

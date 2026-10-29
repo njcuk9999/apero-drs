@@ -664,6 +664,17 @@ home.admin_portal.database_setup:
     top-level: False
     show: True
 
+home.admin_portal.apero_queue_setup:
+  label: APERO Queue Setup
+  parent: home.admin_portal
+  view-permission: manage.admin.apero_queue_setup
+  icon: fa-solid fa-list-check
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.cache_settings:
   label: Plot Cache
   parent: home.admin_portal
@@ -843,6 +854,19 @@ home.monitor_portal.apero_checks:
   parent: home.monitor_portal
   view-permission: monitor
   icon: fa-solid fa-square-check
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+# queues are further filtered by the linked APERO profile (see
+#   apero_queue_api_helpers.accessible_queues)
+home.monitor_portal.apero_queue:
+  label: APERO Queue
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-list-check
   quick-nav: False
   side-nav:
     pinned: False

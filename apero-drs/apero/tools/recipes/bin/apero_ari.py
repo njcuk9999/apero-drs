@@ -21,6 +21,7 @@ from apero.utils import drs_startup
 from apero.tools.module.processing import drs_processing
 from apero.tools.module.ari import ari_general as ari
 from apero.tools.module.ari import ari_pages as arip
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -34,6 +35,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -126,7 +129,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # step 2: previous data
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', 'Loading previous object data')
+    # log: Loading previous object data
+    WLOG(params, 'info', textentry('40-514-00025'))
     # get previous object data from store
     object_classes = ari.load_previous_objects(params)
 
@@ -134,7 +138,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # step 3: find new data
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', 'Finding new object data')
+    # log: Finding new object data
+    WLOG(params, 'info', textentry('40-514-00026'))
     # find new data for objects
     object_classes = ari.find_new_objects(params, recipe, object_classes)
 
@@ -142,7 +147,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # step 4: compile new data and write pages
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', 'Compiling new data and writing pages')
+    # log: Compiling new data and writing pages
+    WLOG(params, 'info', textentry('40-514-00027'))
     # make object pages
     object_classes, object_table = ari.make_object_pages(params,
                                                          object_classes)
@@ -157,7 +163,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # step 5: make top level pages and compile
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', 'Making top level pages and compiling')
+    # log: Making top level pages and compiling
+    WLOG(params, 'info', textentry('40-514-00028'))
     # make index page
     arip.make_index_page(params)
     # make profile page
@@ -166,11 +173,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # make finder page
     arip.make_finder_page(params)
     # print progress
-    WLOG(params, 'info', 'Compiling sphinx build')
+    # log: Compiling sphinx build
+    WLOG(params, 'info', textentry('40-514-00029'))
     # run sphinx build
     arip.sphinx_compile(params)
     # print progress
-    WLOG(params, 'info', 'Adding other htmls')
+    # log: Adding other htmls
+    WLOG(params, 'info', textentry('40-514-00030'))
     # add in other reductions
     arip.add_other_reductions(params)
 
@@ -178,11 +187,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # step 6: save yamls and upload
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', 'Saving yaml files and uploading')
+    # log: Saving yaml files and uploading
+    WLOG(params, 'info', textentry('40-514-00031'))
     # save object data
     ari.save_yamls(params, object_classes)
     # print progress
-    WLOG(params, 'info', 'Uploading yaml files')
+    # log: Uploading yaml files
+    WLOG(params, 'info', textentry('40-514-00032'))
     # upload
     ari.upload(params)
 

@@ -25,6 +25,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from aperocore import drs_lang
 
 from apero.base import base as apero_base
 from apero.core.drs_file import DrsFitsFile
@@ -52,6 +53,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 
@@ -74,15 +77,15 @@ def load(params: ParamDict) -> Dict[str, Any]:
         # if still doesn't exist raise error
         if not os.path.exists(yamlfile):
             # Raise an error that we cannot find the yaml file
-            emsg = 'yamlfile not found. Tried \n\t{0}\n\t{1}'
             eargs = [params['INPUTS']['yamlfile'], yamlfile]
-            raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: yamlfile not found. Tried \n {0} \n {1}
+            raise AperoCodedException(params, '09-518-00001', targs=eargs)
     # load parameters
     sparams = base.load_yaml(yamlfile)
     # print progress
-    msg = 'Loaded static parameters from {0}'
-    WLOG(params, '', msg.format(yamlfile))
+    margs = [yamlfile]
+    # log: Loaded static parameters from {0}
+    WLOG(params, '', textentry('40-518-00005', args=margs))
     # return sparams
     return sparams
 
@@ -122,9 +125,9 @@ def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile,
         datatype_list = static_file.get_hdulist_datatypes()
     # -------------------------------------------------------------------------
     # print progress
-    msg = 'Writing {0}: {1}'
     margs = [desc, static_file.filename]
-    WLOG(params, '', msg.format(*margs))
+    # log: Writing {0}: {1}
+    WLOG(params, '', textentry('40-518-00006', args=margs))
     # add core values (that should be in all headers)
     static_file.add_core_hkeys(params)
     # add instrument
@@ -141,12 +144,11 @@ def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile,
                 for rkey in ['DIM', 'VALUES']:
                     # deal with key not in value
                     if rkey not in value:
-                        emsg = ('If hdr_kwargs[{0}] is a dict it must '
-                                'have a {1} key \n\t Function: {2}')
                         eargs = [key, rkey, func_name]
-                        raise AperoCodedException(params, None,
-                                                message=emsg.format(*eargs),
-                                                targs=eargs)
+                        # error: If hdr_kwargs[{0}] is a dict it must have a {1}
+                        #     key \n Function: {2}
+                        raise AperoCodedException(params, '09-518-00004',
+                                                  targs=eargs)
                 # deal with the 1D case
                 if value['DIM'] == 1:
                     static_file.add_hkey_1d(key, values=value['VALUES'],
@@ -221,9 +223,9 @@ def update_repo(params: ParamDict, recipe, save_path: str,
             if os.path.exists(out_file):
                 os.remove(out_file)
             # print progress
-            msg = 'Replacing {0}'
             margs = [out_file]
-            WLOG(params, '', msg.format(*margs))
+            # log: Replacing {0}
+            WLOG(params, '', textentry('40-518-00008', args=margs))
             # copy file
             shutil.copy(in_file, out_file)
         # to avoid input issues on some systems
@@ -270,7 +272,8 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     :return None - writes to disk
     """
     # print progress
-    WLOG(params, 'info', 'Processing static night (to extract HC and FP)')
+    # log: Processing static night (to extract HC and FP)
+    WLOG(params, 'info', textentry('40-518-00001'))
     # get the raw files
     raw_files = dict()
     raw_files['DARK'] = sparams['files']['raw_dark_files']
@@ -305,11 +308,9 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
 
             # deal with file not found
             if not os.path.exists(in_file):
-                emsg = 'Raw {0} file not found: {1}'
                 eargs = [key, in_file]
-                raise AperoCodedException(params, None,
-                                          message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: Raw {0} file not found: {1}
+                raise AperoCodedException(params, '09-518-00003', targs=eargs)
 
             # get the out file
             out_file = os.path.join(raw_night_dir, raw_file)
@@ -329,7 +330,8 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
 def get_q2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
                     cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
     # print progress
-    WLOG(params, 'info', 'Loading static night extracted HC and FP files')
+    # log: Loading static night extracted HC and FP files
+    WLOG(params, 'info', textentry('40-518-00002'))
     # get the raw files
     raw_files = dict()
     raw_files['DARK'] = sparams['files']['raw_dark_files']
@@ -362,19 +364,17 @@ def get_q2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
         in_file = os.path.join(red_night_dir, sci_basename)
         # deal with file not found
         if not os.path.exists(in_file):
-            emsg = ('{0} file not found: {1}. Please make sure that '
-                    'apero_processing (via wavelength.run_generate_night) '
-                    'has been run successfully')
             eargs = [key, in_file]
-            raise AperoCodedException(params, None,
-                                      message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: {0} file not found: {1}. Please make sure that
+            #     apero_processing (via wavelength.run_generate_night) has been
+            #     run successfully
+            raise AperoCodedException(params, '09-518-00002', targs=eargs)
         # get the out file
         out_file = os.path.join(cal_path, sci_basename)
         # print that we are copying
-        msg = 'Copying {0} file: {1} to {2}'
         margs = [key, in_file, out_file]
-        WLOG(params, '', msg.format(*margs))
+        # log: Copying {0} file: {1} to {2}
+        WLOG(params, '', textentry('40-518-00007', args=margs))
         # copy file
         shutil.copy(in_file, out_file)
         # add to storage
@@ -423,7 +423,8 @@ def get_hc_cat_file(params: ParamDict, recipe, sparams: Dict[str, Any],
     :return ofiles: dict, updated dictionary of output files
     """
     # print progress
-    WLOG(params, 'info', 'Obtaining HC catalogue')
+    # log: Obtaining HC catalogue
+    WLOG(params, 'info', textentry('40-518-00003'))
     # get static file
     static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
     # construct the filename from file instance

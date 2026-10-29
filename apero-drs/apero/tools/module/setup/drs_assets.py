@@ -17,6 +17,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from aperocore import drs_lang
 from apero.utils import drs_data
 from apero.io import drs_path
 from apero.base import base as apero_base
@@ -47,6 +48,8 @@ ARI_TOKEN_ENVVAR = 'APERO_ARI_TOKEN'
 ARI_UPLOAD_TIMEOUT = (30, 3600)
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 
@@ -84,15 +87,15 @@ def update_remote_assets(params: ParamDict, indir: str):
     # lets make sure we have one correct file - getting this wrong can lead
     # to a lot of problems for everyone
     if not os.path.exists(os.path.join(indir, 'apero-assets.txt')):
-        emsg = 'indir={0} is not correct (should have "apero-assets.txt" file)'
         eargs = [indir]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: indir={0} is not correct (should have "apero-assets.txt" file)
+        raise AperoCodedException(params, '09-510-00001', targs=eargs)
     # -------------------------------------------------------------------------
     # Step 1: get a list of all files in indir
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Indexing assets directory')
+    # log: Indexing assets directory
+    WLOG(params, '', textentry('40-510-00009'))
     # get a list of all files in indir using os.walk
     abs_paths, rel_paths = [], []
     for root, dirs, files in os.walk(indir):
@@ -118,7 +121,8 @@ def update_remote_assets(params: ParamDict, indir: str):
     # Step 2: create the hash codes for all files
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Creating checksums for all files')
+    # log: Creating checksums for all files
+    WLOG(params, '', textentry('40-510-00010'))
     # storage of all paths
     yaml_dict = dict(setup=dict(), data=dict())
     # create a yaml file containing the path relative to indir to all files
@@ -132,7 +136,8 @@ def update_remote_assets(params: ParamDict, indir: str):
     # Step 3: Construct the tar filename
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Constructing tar filename')
+    # log: Constructing tar filename
+    WLOG(params, '', textentry('40-510-00011'))
     # get the string unix time now using base.Time
     time_now = base.Time.now()
     unixtime = str(time_now.unix).replace('.', '_')
@@ -163,14 +168,18 @@ def update_remote_assets(params: ParamDict, indir: str):
     # add the checksum filename
     checksum_path = os.path.join(abs_data_path, apero_base.CHECKSUM_FILE)
     # print progress
-    WLOG(params, '', f'Saving yaml file to: {checksum_path}')
+    margs = [checksum_path]
+    # log: Saving yaml file to: {0}
+    WLOG(params, '', textentry('40-510-00012', args=margs))
     # create yaml file
     base.write_yaml(yaml_dict, checksum_path)
     # -------------------------------------------------------------------------
     # Step 5:  make the tar file (including the yaml)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', f'Making tar file: {tar_path}')
+    margs = [tar_path]
+    # log: Making tar file: {0}
+    WLOG(params, '', textentry('40-510-00013', args=margs))
     # make tar file
     drs_path.make_tarfile(tar_path, indir, exclude_suffixes=['_assets.tar.gz'])
     # -------------------------------------------------------------------------
@@ -181,10 +190,9 @@ def update_remote_assets(params: ParamDict, indir: str):
     elif upload_mode == 'ssh':
         upload_assets_ssh(params, tar_path)
     else:
-        emsg = 'AURLS.UPLOAD_MODE={0} is invalid (must be "ssh" or "ari")'
         eargs = [upload_mode]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: AURLS.UPLOAD_MODE={0} is invalid (must be "ssh" or "ari")
+        raise AperoCodedException(params, '09-510-00006', targs=eargs)
 
 
 def upload_assets_ssh(params: ParamDict, tar_path: str):
@@ -221,11 +229,10 @@ def get_ari_url(params: ParamDict, mode_key: str) -> str:
     """
     ari_url = params['AURLS.ARI_URL']
     if drs_text.null_text(ari_url, ['None', 'Null', '']):
-        emsg = ('AURLS.ARI_URL must be set (e.g. https://ari.example.com) '
-                'when AURLS.{0} = "ari"')
         eargs = [mode_key]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: AURLS.ARI_URL must be set (e.g. https://ari.example.com) when
+        #     AURLS.{0} = "ari"
+        raise AperoCodedException(params, '09-510-00002', targs=eargs)
     return str(ari_url).rstrip('/')
 
 
@@ -242,12 +249,11 @@ def get_ari_token(params: ParamDict, mode_key: str) -> str:
     # kept out of config files as it is a secret
     token = os.environ.get(ARI_TOKEN_ENVVAR, '').strip()
     if not token:
-        emsg = ('Environment variable {0} must hold an APERO RI API token '
-                '(generate it in the APERO RI User Portal -> API Access) '
-                'when AURLS.{1} = "ari"')
         eargs = [ARI_TOKEN_ENVVAR, mode_key]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Environment variable {0} must hold an APERO RI API token
+        #     (generate it in the APERO RI User Portal -> API Access) when
+        #     AURLS.{1} = "ari"
+        raise AperoCodedException(params, '09-510-00003', targs=eargs)
     return token
 
 
@@ -271,18 +277,16 @@ def check_ari_response(params: ParamDict, response: requests.Response,
         reply = dict()
     # deal with the APERO RI admin not having set an assets directory
     if reply.get('setup_required', False):
-        emsg = ('APERO RI asset hosting is not set up. An APERO RI admin '
-                'must set the assets directory at: {0}')
         eargs = [reply.get('setup_url', '')]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: APERO RI asset hosting is not set up. An APERO RI admin must
+        #     set the assets directory at: {0}
+        raise AperoCodedException(params, '09-510-00004', targs=eargs)
     # deal with any other failure
     if not response.ok:
-        emsg = 'APERO RI {0} failed [HTTP {1}]: {2}'
         eargs = [action, response.status_code,
                  reply.get('error', response.reason)]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: APERO RI {0} failed [HTTP {1}]: {2}
+        raise AperoCodedException(params, '09-510-00005', targs=eargs)
     return reply
 
 
@@ -309,7 +313,9 @@ def upload_assets_ari(params: ParamDict, tar_path: str):
     headers['X-Content-MD5'] = drs_path.calculate_checksum(tar_path)
     query = dict(filename=os.path.basename(tar_path))
     # print progress
-    WLOG(params, '', f'Uploading {tar_path} to {url}')
+    margs = [tar_path, url]
+    # log: Uploading {0} to {1}
+    WLOG(params, '', textentry('40-510-00014', args=margs))
     # stream the tar file as the raw request body
     try:
         with open(tar_path, 'rb') as tar_fh:
@@ -317,15 +323,14 @@ def upload_assets_ari(params: ParamDict, tar_path: str):
                              timeout=ARI_UPLOAD_TIMEOUT)
             response = requests.post(url, **ul_kwargs)
     except requests.RequestException as exc:
-        emsg = 'Could not connect to APERO RI at {0}: {1}'
         eargs = [url, exc]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Could not connect to APERO RI at {0}: {1}
+        raise AperoCodedException(params, '09-510-00007', targs=eargs)
     reply = check_ari_response(params, response, 'upload')
     # print that the upload worked
-    msg = 'Uploaded {0} ({1} bytes) to APERO RI'
     margs = [reply.get('name'), reply.get('size_bytes')]
-    WLOG(params, '', msg.format(*margs))
+    # log: Uploaded {0} ({1} bytes) to APERO RI
+    WLOG(params, '', textentry('40-510-00024', args=margs))
 
 
 def download_assets_url(params: ParamDict, servers: list,
@@ -345,15 +350,17 @@ def download_assets_url(params: ParamDict, servers: list,
         # noinspection PyBroadException
         try:
             # print progress
-            msg = 'Attempting downloading tar file from: {0}'
             margs = [server + server_tarfile]
-            WLOG(params, '', msg.format(*margs), colour='magenta')
+            # log: Attempting downloading tar file from: {0}
+            WLOG(params, '', textentry('40-510-00025', args=margs),
+                 colour='magenta')
             # get the file using wget
             wget.download(server + server_tarfile, abs_asset_path)
             # new line after wget print out
             print('')
             # print that the download was successful
-            WLOG(params, '', 'Download successful', colour='magenta')
+            # log: Download successful
+            WLOG(params, '', textentry('40-510-00015'), colour='magenta')
             # break if this works
             break
         except Exception as _:
@@ -388,8 +395,9 @@ def download_assets_ari(params: ParamDict, server_tarfile: str,
     # download to a temporary name so a partial file is never used
     tmp_tarfile = tarfile + '.part'
     # print progress
-    msg = 'Attempting downloading tar file from: {0}'
-    WLOG(params, '', msg.format(url), colour='magenta')
+    margs = [url]
+    # log: Attempting downloading tar file from: {0}
+    WLOG(params, '', textentry('40-510-00025', args=margs), colour='magenta')
     try:
         dl_kwargs = dict(headers=headers, stream=True,
                          timeout=ARI_UPLOAD_TIMEOUT)
@@ -401,12 +409,12 @@ def download_assets_ari(params: ParamDict, server_tarfile: str,
     except requests.RequestException as exc:
         if os.path.exists(tmp_tarfile):
             os.remove(tmp_tarfile)
-        emsg = 'Could not download from APERO RI at {0}: {1}'
         eargs = [url, exc]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Could not download from APERO RI at {0}: {1}
+        raise AperoCodedException(params, '09-510-00008', targs=eargs)
     os.replace(tmp_tarfile, tarfile)
-    WLOG(params, '', 'Download successful', colour='magenta')
+    # log: Download successful
+    WLOG(params, '', textentry('40-510-00015'), colour='magenta')
 
 
 def check_local_assets(params: ParamDict):
@@ -434,7 +442,9 @@ def check_local_assets(params: ParamDict):
     yaml_dict = base.load_yaml(checksum_path)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Checking assets in {0}'.format(abs_asset_path))
+    margs = [abs_asset_path]
+    # log: Checking assets in {0}
+    WLOG(params, '', textentry('40-510-00016', args=margs))
     # update flag (assume we need don't need to update)
     update = False
     # check the checksums of the yaml dictionary data
@@ -444,9 +454,10 @@ def check_local_assets(params: ParamDict):
         # check if file exists
         if not os.path.exists(expected_path):
             # print warning
-            wmsg = '\tFile does not exist: {0}'
             wargs = [expected_path]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+            # warning: File does not exist: {0}
+            WLOG(params, 'warning', textentry('10-510-00001', args=wargs),
+                 sublevel=1)
             # flag that we need to update
             update = True
             break
@@ -457,9 +468,10 @@ def check_local_assets(params: ParamDict):
         # check if checksums match
         if expected_checksum != actual_checksum:
             # print warning
-            wmsg = 'Checksums do not match: {0}'
             wargs = [expected_path]
-            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=1)
+            # warning: Checksums do not match: {0}
+            WLOG(params, 'warning', textentry('10-510-00002', args=wargs),
+                 sublevel=1)
             # flag that we need to update
             update = True
             break
@@ -467,11 +479,13 @@ def check_local_assets(params: ParamDict):
     # if we don't need to update, return
     if not update:
         # print that everything is up-to-date
-        WLOG(params, '', 'Assets are up-to-date')
+        # log: Assets are up-to-date
+        WLOG(params, '', textentry('40-510-00018'))
         return False
     else:
         # print that we need to update
-        WLOG(params, '', 'Assets need updating.')
+        # log: Assets need updating.
+        WLOG(params, '', textentry('40-510-00019'))
         return True
 
 
@@ -506,15 +520,14 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
     if not drs_text.null_text(tarfile, ['None', 'Null', '']):
         if os.path.exists(tarfile):
             # print progress
-            WLOG(params, '', 'Using local assets tar file')
+            # log: Using local assets tar file
+            WLOG(params, '', textentry('40-510-00020'))
             # set local flag
             local = True
         else:
-            # TODO: Add to language database
-            emsg = 'Cannot find local assets tar file: {}'
             eargs = [tarfile]
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Cannot find local assets tar file: {}
+            raise AperoCodedException(params, '09-510-00009', targs=eargs)
     # -------------------------------------------------------------------------
     # deal with non-local tar file
     if not local:
@@ -525,7 +538,8 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
         # deal with not having the file on disk currently
         if not os.path.exists(tarfile):
             # print progress
-            WLOG(params, '', 'Downloading correct assets tar file')
+            # log: Downloading correct assets tar file
+            WLOG(params, '', textentry('40-510-00021'))
             # public urls (legacy + APERO RI public) or APERO RI API
             download_mode = str(params['AURLS.DOWNLOAD_MODE']).strip().lower()
             if download_mode == 'ari':
@@ -535,33 +549,31 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
                            server_tarfile, abs_asset_path]
                 download_assets_url(*dl_args)
             else:
-                emsg = ('AURLS.DOWNLOAD_MODE={0} is invalid (must be "url" '
-                        'or "ari")')
                 eargs = [download_mode]
-                raise AperoCodedException(params, None,
-                                          message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: AURLS.DOWNLOAD_MODE={0} is invalid (must be "url" or
+                #     "ari")
+                raise AperoCodedException(params, '09-510-00011', targs=eargs)
         else:
             # print that we are reading from local file
-            msg = 'Reading from local tar file: {0}'
             margs = [tarfile]
-            WLOG(params, '', msg.format(*margs))
+            # log: Reading from local tar file: {0}
+            WLOG(params, '', textentry('40-510-00026', args=margs))
     # -------------------------------------------------------------------------
     # Extract the tar file
     # -------------------------------------------------------------------------
     # get the assets path
     extract_path = str(abs_asset_path)
     # print progress
-    WLOG(params, '', f'Extracting tar file: {tarfile} to {extract_path}')
+    margs = [tarfile, extract_path]
+    # log: Extracting tar file: {0} to {1}
+    WLOG(params, '', textentry('40-510-00017', args=margs))
     # extract tar file
     try:
         drs_path.extract_tarfile(tarfile, extract_path)
     except Exception as e:
-        # TODO: Add to language database
-        emsg = 'Cannot extract tar file: {0} \n\t Error {1}: {2}'
         eargs = [tarfile, type(e), str(e)]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Cannot extract tar file: {0} \n Error {1}: {2}
+        raise AperoCodedException(params, '09-510-00010', targs=eargs)
 
 
 # =============================================================================

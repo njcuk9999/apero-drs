@@ -1,5 +1,5 @@
 {% extends "docs/doc_base.html" %}
-{% block title %}APERO RI – Editing: {{ page_label }}{% endblock %}
+{% block title %}APERO RI – Editing: {{ page_label | tl }}{% endblock %}
 
 {% block extra_head %}
 <link id="hljs-theme" rel="stylesheet"
@@ -21,7 +21,7 @@
 <div class="ari-page-header">
     <h1>
         <i class="fa-solid fa-pen-to-square"></i>
-        Editing: {{ page_label }}
+        Editing: {{ page_label | tl }}
         <span class="ari-doc-version__label" style="margin-left:0.5rem;">
             <i class="fa-solid fa-code-branch"></i> {{ version_name }}
         </span>

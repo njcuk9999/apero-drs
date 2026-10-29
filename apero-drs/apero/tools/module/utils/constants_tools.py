@@ -68,10 +68,14 @@ def deal_with_generate(params: ParamDict):
     backup_const = str(uconstpath) + '.backup'
     # backup files if they exist
     if uconfigpath.exists():
-        WLOG(params, '', 'Backing up config file: {0}'.format(backup_config))
+        margs = [backup_config]
+        # log: Backing up config file: {0}
+        WLOG(params, '', textentry('40-517-00002', args=margs))
         shutil.copy(uconfigpath, backup_config)
     if uconstpath.exists():
-        WLOG(params, '', 'Backing up const file: {0}'.format(backup_const))
+        margs = [backup_const]
+        # log: Backing up const file: {0}
+        WLOG(params, '', textentry('40-517-00003', args=margs))
         shutil.copy(uconstpath, backup_const)
     # get the user input
     generate = params['INPUTS']['GENERATE']
@@ -97,8 +101,12 @@ def deal_with_generate(params: ParamDict):
     uconst = install.ufile_write(params, const_lines, userconfig,
                                  install.UCONST, 'constant')
     # log writing of files
-    WLOG(params, '', 'Writing: {0}'.format(uconfig))
-    WLOG(params, '', 'Writing: {0}'.format(uconst))
+    margs = [uconfig]
+    # log: Writing: {0}
+    WLOG(params, '', textentry('40-517-00001', args=margs))
+    margs = [uconst]
+    # log: Writing: {0}
+    WLOG(params, '', textentry('40-517-00001', args=margs))
     # return success
     return True
 
@@ -121,8 +129,8 @@ def deal_with_clean(params) -> bool:
     # set function name
     func_name = display_func('deal_with_clean', __NAME__)
     # warn user this could screw things up
-    WLOG(params, 'warning', 'Cleaning constants changes core python files',
-         sublevel=2)
+    # warning: Cleaning constants changes core python files
+    WLOG(params, 'warning', textentry('10-517-00001'), sublevel=2)
     uinput = input('Do you wish to continue? [Y]es or [N]o:\t')
     # do not continue
     if 'Y' not in uinput.upper():
@@ -136,7 +144,9 @@ def deal_with_clean(params) -> bool:
     # loop around all types
     for filename in apero_base.SCRIPTS:
         # log progress
-        WLOG(params, 'info', 'Processing file: {0}'.format(filename))
+        margs = [filename]
+        # log: Processing file: {0}
+        WLOG(params, 'info', textentry('40-517-00004', args=margs))
         # get full path to script
         const_path = os.path.join(const_dir, filename)
         # load script as module
@@ -174,16 +184,16 @@ def deal_with_clean(params) -> bool:
         # loop around keys
         for row, key in enumerate(no_desc):
             # print progress
-            WLOG(params, '', '\tProcessing key: {0}'.format(key))
+            margs = [key]
+            # log: Processing key: {0}
+            WLOG(params, '', textentry('40-517-00005', args=margs))
             # get constant entry
             const_entry, start, end = get_const(key, const_string, kinds[row])
             # deal with key not found
             if start == -1:
-                # TODO: Add to language database
-                emsg = 'Key: "{0}" not found in file: {1}'
                 eargs = [key, const_path]
-                raise AperoCodedException(params, message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: Key: "{0}" not found in file: {1}
+                raise AperoCodedException(params, '09-517-00001', targs=eargs)
             # get description
             description = get_comment(start, const_string)
             # add the description to the end of the const_etnry
@@ -345,7 +355,9 @@ def create_glossary(params):
     # loop around all types
     for filename in apero_base.SCRIPTS:
         # log progress
-        WLOG(params, 'info', 'Processing file: {0}'.format(filename))
+        margs = [filename]
+        # log: Processing file: {0}
+        WLOG(params, 'info', textentry('40-517-00004', args=margs))
         # get full path to script
         const_path = os.path.join(const_dir, filename)
         # load script as module

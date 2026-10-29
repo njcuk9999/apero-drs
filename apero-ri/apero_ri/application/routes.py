@@ -2433,6 +2433,26 @@ def register_data_portal_routes(app):
         methods=['POST'],
     )
 
+    # APERO queue - admin setup API and monitor dashboard proxy
+    app.add_url_rule(
+        '/api/admin/apero-queue/<action>',
+        'api_apero_queue_admin',
+        app._api_apero_queue_admin,
+        methods=['GET', 'POST'],
+    )
+    app.add_url_rule(
+        '/monitor_portal/apero_queue/<name>/proxy/',
+        'monitor_apero_queue_proxy_index',
+        app._monitor_apero_queue_proxy,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/monitor_portal/apero_queue/<name>/proxy/<path:subpath>',
+        'monitor_apero_queue_proxy',
+        app._monitor_apero_queue_proxy,
+        methods=['GET', 'POST'],
+    )
+
     # Upload management — Admin routes
     app.add_url_rule(
         "/api/admin/uploads/config",

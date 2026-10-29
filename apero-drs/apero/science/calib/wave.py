@@ -110,23 +110,20 @@ def check_wavemap_e2ds_shape(params: ParamDict,
     e2ds_shape = e2ds_file.shape
     # Check shape[0] (number of orders)
     if wavemap_shape[0] != e2ds_shape[0]:
-        emsg = ('Initial wave solution order count ({0}) does not '
-                'match extracted E2DS order count ({1}). This '
-                'mismatch can cause line fitting to fail. Check '
-                'that the reference wave file matches the current '
-                'instrument configuration.')
         eargs = [wavemap_shape[0], e2ds_shape[0]]
-        WLOG(params, 'warning', emsg.format(*eargs))
+        # warning: Initial wave solution order count ({0}) does not match
+        #     extracted E2DS order count ({1}). This mismatch can cause line
+        #     fitting to fail. Check that the reference wave file matches the
+        #     current instrument configuration.
+        WLOG(params, 'warning', textentry('10-017-00015', args=eargs))
     # Check shape[1] (pixels per order)
     if wavemap_shape[1] != e2ds_shape[1]:
-        emsg = ('Initial wave solution pixel count ({0}) does not '
-                'match extracted E2DS pixel count ({1}). This '
-                'mismatch can cause line fitting to fail, '
-                'especially at order edges. Check that the '
-                'reference wave file matches the extraction '
-                'oversampling setting.')
         eargs = [wavemap_shape[1], e2ds_shape[1]]
-        WLOG(params, 'warning', emsg.format(*eargs))
+        # warning: Initial wave solution pixel count ({0}) does not match
+        #     extracted E2DS pixel count ({1}). This mismatch can cause line
+        #     fitting to fail, especially at order edges. Check that the
+        #     reference wave file matches the extraction oversampling setting.
+        WLOG(params, 'warning', textentry('10-017-00016', args=eargs))
 
 
 def get_waveref_filename(params: ParamDict, recipe: DrsRecipe, fiber: str,
@@ -189,6 +186,8 @@ def get_waveref_filename(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # if we still have None we have a problem
     if filename is None:
         eargs = [', '.join(keys), func_name]
+        # error: No reference wave solutions found in calibration database. \n
+        #     Keys checked: {0} \n Function = {1}
         raise AperoCodedException(params, '09-017-00007', targs=eargs)
     else:
         # return the last valid wave entry
@@ -291,6 +290,9 @@ def get_wave_solution_from_wavefile(params: ParamDict, recipe: DrsRecipe,
             # get error arguments
             eargs = cfile.dtime_eargs
             # log error
+            # error: Calibration file ({0}) was selected as the calibration file
+            #     but is not within desired limits ({2}>{3} days) \n ObsTime:
+            #     {4} \n CalibTime:{5} \n File: {1} \n Function: {6}
             raise AperoCodedException(params, '09-002-00004', targs=eargs)
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
@@ -383,6 +385,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
+            # error: If “infile” is provided must be a DrsFitsFile Instance.
+            #     Infile={0} \n Function = {1}
             raise AperoCodedException(params, '00-017-00001', targs=eargs)
     # ------------------------------------------------------------------------
     # deal with no header but an infile
@@ -390,6 +394,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
         header = infile.get_header()
     # we need a header unless reference is True
     if not ref and header is None:
+        # error: No header defined. Cannot continue. \n Function = {0}
         raise AperoCodedException(params, '00-017-00009', targs=[func_name])
     # ------------------------------------------------------------------------
     # Get in wave file
@@ -403,6 +408,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # Log progress
     # -------------------------------------------------------------------------
     wargs = [wavesource, wavefile.filename]
+    # log: Wavelength solution read from {0}. \n Wave file = {1}
     WLOG(params, '', textentry('40-017-00036', args=wargs))
     # ------------------------------------------------------------------------
     # Now deal with using wavefile
@@ -668,12 +674,15 @@ def get_wavelines(params: ParamDict, recipe, fiber: str,
         calibdbm = database
     # ------------------------------------------------------------------------
     # log progress
+    # log: Loading reference wave HC/FP line files
     WLOG(params, '', textentry('40-017-00040'))
     # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
+            # error: If “infile” is provided must be a DrsFitsFile Instance.
+            #     Infile={0} \n Function = {1}
             raise AperoCodedException(params, '00-017-00001', targs=eargs)
     # ------------------------------------------------------------------------
     # deal with no header but an infile
@@ -683,6 +692,7 @@ def get_wavelines(params: ParamDict, recipe, fiber: str,
     if header is None:
         # log error: header not defined.
         eargs = [func_name]
+        # error: No header defined. Cannot continue. \n Function = {0}
         raise AperoCodedException(params, '00-017-00009', targs=eargs)
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
@@ -833,6 +843,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if hclines is not None:
         # print progress Running get ref lines for HC
+        # log: Getting reference lines from inputs for HC (iteration = {0})
         WLOG(params, 'info', textentry('40-017-00061', args=[str_itr]))
         # get lines
         list_waves = np.array(hclines['WAVE_REF'])
@@ -847,6 +858,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     elif fplines is not None:
         # print progress Running get ref lines for HC
+        # log: Getting reference lines from inputs for FP (iteration = {0})
         WLOG(params, 'info', textentry('40-017-00062', args=[str_itr]))
         # get lines
         list_waves = np.array(fplines['WAVE_REF'])
@@ -859,10 +871,10 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # we can only do this if we have a cavity polynomial
         if cavity_poly is None:
-            emsg = ('Cannot re-calculate FP line WAVE_REF without a '
-                    'cavity polynomial. Please provide a cavity polynomial '
-                    'when supplying a previous fplines table.')
-            raise AperoCodedException(params, None, message=emsg)
+            # error: Cannot re-calculate FP line WAVE_REF without a cavity
+            #     polynomial. Please provide a cavity polynomial when supplying
+            #     a previous fplines table.
+            raise AperoCodedException(params, '09-017-00010')
         else:
             cavity_length_poly = np.array(cavity_poly)
         # get the proper cavity length from the cavity polynomial
@@ -881,6 +893,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     elif fibtype in hcfibtypes:
         # print progress Running get ref lines for HC
+        # log: Running get reference lines for HC (iteration = {0})
         WLOG(params, 'info', textentry('40-017-00049', args=[str_itr]))
         # load the line list
         wavell, ampll = drs_data.load_linelist(params)
@@ -935,6 +948,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     elif fibtype in fpfibtypes:
         # print progress Running get ref lines for FP
+        # log: running get reference lines for FP (iteration = {0})
         WLOG(params, 'info', textentry('40-017-00050', args=[str_itr]))
         # ------------------------------------------------------------------
         # deal with getting cavity poly
@@ -1036,6 +1050,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # log error and break
         eargs = [e2dsfile.name, dprtype, fiber, func_name, hcfibtypes,
                  fpfibtypes]
+        # error: e2ds file = "{0}" (dprtype={1} fiber={2}) not valid for {3} \n
+        #     Valid HC types: {4} \n Valid FP types = {5}
         raise AperoCodedException(params, '00-017-00012', targs=eargs)
     # ----------------------------------------------------------------------
     # Fit the peaks
@@ -1078,6 +1094,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # Need to check that index is in bounds
             if (np.min(index) < 0) or (np.max(index) >= nbpix):
                 eargs = [order_num, it, index, xpixi, wfit, func_name]
+                # debug: Calculated pixel index out of bound. Order = {0} Line =
+                #     {1} \n pixel vals = {2} \n pixel cent = {3} width = {4} \n
+                #     Function = {5}
                 WLOG(params, 'debug', textentry('09-017-00005', args=eargs))
                 continue
             # get the flux value in this peak
@@ -1086,6 +1105,9 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             #    catching before an exception happens in fit_gauss_with_slope)
             if len(ypix) < 5:
                 eargs = [order_num, it, index, ypix, func_name]
+                # warning: Pixel fit not possible - not enough points to fit.
+                #     Order = {0} Line = {1} \n pixel vals = {2} \n flux values
+                #     = {3} \n Function = {4}
                 WLOG(params, 'warning', textentry('09-017-00006', args=eargs),
                      sublevel=4)
                 continue
@@ -1158,6 +1180,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # log progress: Order {0}/{1} Fiber {2} Valid lines: {3}/{4}
             eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
                      fibtype]
+            # log: Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})
             WLOG(params, '', textentry('40-017-00051', args=eargs))
     # get SNR minimum value depending on fiber type
     if fibtype in hcfibtypes:
@@ -1208,9 +1231,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if fibtype in fpfibtypes and fp_count_correction:
         # print progress: Running FP peak-number corrections
-        msg = 'Running FP peak-number corrections for fiber {0} iteration {1}'
         margs = [fiber, str_itr]
-        WLOG(params, '', msg.format(*margs))
+        WLOG(params, '', textentry('40-017-00078', args=margs))
         # Collect the FP-count inputs for the aperocore helper.
         fp_count_args = [table['ORDER'], table['PIXEL_MEAS'],
                          table['PEAK_NUMBER']]
@@ -1231,15 +1253,15 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 msg = '\tOrder {0}: PEAK_NUMBER offset = {1}'
                 margs = [fixed_order, order_corrections[fixed_order]]
                 fix_lines.append(msg.format(*margs))
-            msg = ('FP peak-number corrections for fiber {0} iteration {1}: '
-                   'number of orders fixed = {2}\n{3}')
             margs = [fiber, str_itr, len(fixed_orders), '\n'.join(fix_lines)]
-            WLOG(params, '', msg.format(*margs))
+            # log: FP peak-number corrections for fiber {0} iteration {1}:
+            #     number of orders fixed = {2} \n {3}
+            WLOG(params, '', textentry('40-017-00079', args=margs))
         else:
-            msg = ('No FP peak-number corrections were applied for fiber {0} '
-                   'iteration {1}.')
             margs = [fiber, str_itr]
-            WLOG(params, '', msg.format(*margs))
+            # log: No FP peak-number corrections were applied for fiber {0}
+            #     iteration {1}.
+            WLOG(params, '', textentry('40-017-00080', args=margs))
         # Push the corrected peak numbers back into the table.
         table['PEAK_NUMBER'] = np.array(adjusted_peaks)
         # need to update WAVE_REF now we have a new PEAK_NUMBER
@@ -1285,6 +1307,7 @@ def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
     offset = opart1 * opart2
     # print offset added: Appling global fraction offset of wavemap
     margs = [1 - offset]
+    # log: Applying global fractional offset of wavemap: {0}
     WLOG(params, '', textentry('40-017-00064', args=margs))
     # update the initial wave map
     wavemap = inwavemap * (1 - offset)
@@ -1351,9 +1374,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('calc_wave_sol', __NAME__)
     # log progress
-    msg = 'Calculating wave solution. Iteration {0}'
     margs = [iteration]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Calculating wave solution. Iteration {0}
+    WLOG(params, 'info', textentry('40-017-00074', args=margs))
     # -------------------------------------------------------------------------
     # get parameters from params / inputs
     # -------------------------------------------------------------------------
@@ -1433,6 +1456,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # loop around orders
     for order_num in orders:
         # log that we are processing an order
+        # log: Measuring the wavelength in order {0}
         WLOG(params, '', textentry('40-017-00056', args=[order_num]))
         # find the hc and fp lines for the current oder
         good_fp = fpl_order == order_num
@@ -1442,6 +1466,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # log that we are skipping order: Skipped Order {0}
             #     (too few {1} lines {2} < {3})'
             margs = [order_num, 'FP', np.sum(good_fp), min_fp_lines]
+            # log: Skipped Order {0} (too few {1} lines: {2} < {3})
             WLOG(params, '', textentry('40-017-00065', args=margs))
             continue
         # skip orders flagged for removal
@@ -1493,10 +1518,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             dnum = diff / np.mean(dfit)
 
             if np.abs(dnum - np.round(dnum)) > 0.1:
-                # TODO: Add to language database
-                wmsg = 'Order {0}: FP peaks inconsistent with regular spacing'
                 wargs = [order_num]
-                WLOG(params, 'warning', wmsg.format(*wargs))
+                # warning: Order {0}: FP peaks inconsistent with regular spacing
+                WLOG(params, 'warning', textentry('10-017-00014', args=wargs))
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
             rdnum = np.round(dnum)
@@ -1511,6 +1535,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             fpl_peak_num[good_fp] = ordfp_peak_num
             # log skipping orders: Skipped Order {0} (too few {1} lines)
             margs = [order_num, 'HC', np.sum(good_hc), min_hc_lines]
+            # warning: Skipped Order {0} (too few {1} lines: {2} < {3})
             WLOG(params, 'warning', textentry('40-017-00065', args=margs),
                  sublevel=2)
             # skip to next order
@@ -1626,13 +1651,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             # update the cavity per order by 1 - the median of the res
             cavity_per_order = cavity_per_order * (1 - med_hc_res)
 
-            # TODO: Add to language database
-            msg = (f'\tCavity fit {jt + 1}: med hc res = '
-                   f'{med_hc_res * speed_of_light_ms:.3e} m/s '
-                   f'{sigma_hc_res * speed_of_light_ms:.3e} m/s '
-                   f'{err_med_hc_res * speed_of_light_ms:.3e} m/s '
-                   )
-            WLOG(params, '', msg)
+            margs = [jt + 1, med_hc_res * speed_of_light_ms,
+                     sigma_hc_res * speed_of_light_ms,
+                     err_med_hc_res * speed_of_light_ms]
+            # log: Cavity fit {0}: med hc res = {1:.3e} m/s {2:.3e} m/s {3:.3e}
+            #     m/s
+            WLOG(params, '', textentry('40-017-00081', args=margs))
 
         # print msg: Velocity RMS of HC lines relative to catalog: {0:.3f} km/s
         WLOG(params, '', textentry('40-017-00069', args=[sigma_hc_res_kms]))
@@ -1897,6 +1921,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # log message: Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
         margs = [count + 1, slope_hc_vel[1], err_hc_vel[1],
                  1000 * slope_hc_vel[0], 1000 * err_hc_vel[0]]
+        # log: Iteration {0}: HC position, Intercept {1:.3f}+-{2:.3f} m/s, Slope
+        #     {3:.3f}+-{4:.3f} m/s/um
         WLOG(params, '', textentry('40-017-00057', margs))
         # increase the count
         count += 1
@@ -1913,12 +1939,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     slope_change = np.polyfit(fpl_wave_ref - hc_wave_ref_mean, cavdiff_velo, 1)
 
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
+    # log: Change in cavity length: {0:6.2f} nm
     WLOG(params, '', textentry('40-017-00058', args=margs))
 
-    # TODO: Add to language database
-    msg = 'Change in cavity: Intercept {0:.2f} m/s, Slope {1:.2f} m/s/um'
     margs = [slope_change[1], slope_change[0] * 1000]
-    WLOG(params, '', msg.format(*margs))
+    # log: Change in cavity: Intercept {0:.2f} m/s, Slope {1:.2f} m/s/um
+    WLOG(params, '', textentry('40-017-00075', args=margs))
 
     # -------------------------------------------------------------------------
     # get the proper cavity length from the cavity polynomial
@@ -2135,6 +2161,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     for fiber in fiber_types:
         # log that we are processing fiber
         wargs = [fiber, ref_fiber]
+        # log: Calculating wavelength solution for fiber '{0}' (reference={1})
         WLOG(params, 'info', textentry('40-017-00043', args=wargs))
         # get the e2ds_files for this fiber
         hc_e2ds_file = hc_outputs[fiber]
@@ -2294,6 +2321,8 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     except Exception as e:
         # log error
         eargs = [mask_units, type(e), e, func_name]
+        # error: Fiber={0} is not valid for 'reference'. (Required '{1}') \n
+        #     File {2}: {3} \n Function = {4}
         raise AperoCodedException(params, '09-020-00002', targs=eargs)
     # add units
     wave_fp_peak = wave_fp_peak * unit
@@ -2312,6 +2341,7 @@ def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     # make table
     table = drs_table.make_table(columnnames, columnvalues)
     # print that we are saving smart fp header
+    # log: Updating smart FP mask file: {0}
     WLOG(params, '', textentry('40-017-00053', args=outfile))
     # write smart mask table to file
     drs_table.write_table(params, table, outfile, fmt='ascii.fast_no_header')
@@ -2405,6 +2435,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [e2ds_file.name, e2ds_file.filename]
+    # log: Updating {0} file with new wave solution parameters. \n Filename =
+    #     {1}
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
     e2ds_file.read_file()
@@ -2426,6 +2458,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [e2dsff_file.name, e2dsff_file.filename]
+    # log: Updating {0} file with new wave solution parameters. \n Filename =
+    #     {1}
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
     e2dsff_file.read_file()
@@ -2480,6 +2514,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [s1dw_file.name, s1dw_file.filename]
+    # log: Updating {0} file with new wave solution parameters. \n Filename =
+    #     {1}
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -2511,6 +2547,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [s1dv_file.name, s1dv_file.filename]
+    # log: Updating {0} file with new wave solution parameters. \n Filename =
+    #     {1}
     WLOG(params, '', textentry('40-017-00038', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -2557,9 +2595,9 @@ def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = f'{__NAME__}.apply_slinky_correction()'
     # print progress
-    msg = 'Running slinky correction for fiber: {0}'
     margs = [fiber]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Running slinky correction for fiber: {0}
+    WLOG(params, 'info', textentry('40-017-00076', args=margs))
     # get out the relevant properties from wprops
     wavemap = wprops['WAVEMAP']
     hclines = wprops['HCLINES']
@@ -2625,10 +2663,10 @@ def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
     fp_before = mp.robust_nanstd(fp_frac_before) * speed_of_light_ms
     fp_after = mp.robust_nanstd(fp_frac_after) * speed_of_light_ms
     # print improvement
-    msg = ('Slinky correction applied: FP RMS before: {0:.3f} m/s, '
-           'after: {1:.3f} m/s')
     margs = [fp_before, fp_after]
-    WLOG(params, '', msg.format(*margs))
+    # log: Slinky correction applied: FP RMS before: {0:.3f} m/s, after: {1:.3f}
+    #     m/s
+    WLOG(params, '', textentry('40-017-00077', args=margs))
     # -------------------------------------------------------------------------
     # push back into wprops
     wprops['WAVEMAP'] = wavemap1
@@ -3182,6 +3220,7 @@ def wave_meas_diff(params: ParamDict, ref_fiber: str,
             # -----------------------------------------------------------------
             # print dv measurement: DV({0} - {1}): {2:.3f} m/s'
             margs = [ref_fiber, fiber, wm_dv]
+            # log: DV({0} - {1}): {2:.4f} m/s
             WLOG(params, 'info', textentry('40-017-00067', args=margs))
         # ---------------------------------------------------------------------
         # add to rv props
@@ -3270,6 +3309,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         # get wave difference
         wave_diff = wprops['WAVEMAP'][1:] - wprops['WAVEMAP'][:-1]
         if mp.nanmin(wave_diff) < 0:
+            # text: Negative wavelength difference between orders
             fail_msg.append(textentry('40-017-00030'))
             qc_pass.append(0)
         else:
@@ -3284,6 +3324,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         # get wave difference
         wave_diff = wprops['WAVEMAP'][:, 1:] - wprops['WAVEMAP'][:, :-1]
         if mp.nanmin(wave_diff) < 0:
+            # text: Negative wavelength difference across orders
             fail_msg.append(textentry('40-017-00055'))
             qc_pass.append(0)
         else:
@@ -3349,18 +3390,22 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
         pargs = [ref_fiber, fiber, meddiff]
         # as a warning if QC fails
         if qc_pass[-1] == 0:
+            # warning: CCFRV[{0} ]- CCFRV[{1}] : {2:.4f} m/s
             WLOG(params, 'warning', textentry('40-017-00068', args=pargs),
                  sublevel=6)
         else:
+            # log: CCFRV[{0} ]- CCFRV[{1}] : {2:.4f} m/s
             WLOG(params, 'info', textentry('40-017-00068', args=pargs))
 
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
     # store in qc_params
@@ -3472,6 +3517,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
+    # log: Saving wave solution for fiber {0} (FP) file: {1}
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # define multi lists
     data_list = [wave_table]
@@ -3637,6 +3683,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
         hcfile.filename = os.path.join(path, hcfile.basename)
     # log that we are saving rotated image
     wargs = [fiber, hcfile.filename]
+    # log: Saving {0} line file: {1}
     WLOG(params, '', textentry('40-017-00039', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -3681,6 +3728,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
         fpfile.filename = os.path.join(path, fpfile.basename)
     # log that we are saving rotated image
     wargs = [fiber, fpfile.filename]
+    # log: Saving {0} line file: {1}
     WLOG(params, '', textentry('40-017-00039', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -3738,6 +3786,7 @@ def write_fplines(params: ParamDict, recipe: DrsRecipe, rfpl: Table,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, fplfile.filename]
+    # log: Saving {0} line file: {1}
     WLOG(params, '', textentry('40-017-00039', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -3796,6 +3845,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [cavfile.filename]
+    # log: Saving wave cavity file: {0}
     WLOG(params, '', textentry('40-017-00054', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -3935,6 +3985,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, resfile.filename]
+    # log: Saving resolution map for fiber {0} (HC) file: {1}
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # define multi lists
     data_list, name_list = tables, table_names
@@ -3968,6 +4019,7 @@ def write_resolution_map(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, rf_e2ds.filename]
+    # log: Saving resolution map for fiber {0} (HC) file: {1}
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # define multi lists
     data_list = [wprops['RES_E2DS_FWHM'], wprops['RES_E2DS_EXPO'],

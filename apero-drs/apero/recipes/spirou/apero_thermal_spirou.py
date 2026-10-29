@@ -190,6 +190,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             thermal_file = thermal_files[fiber]
             # log that we are writing thermal files to file
             wargs = [thermal_file.filename]
+            # log: Saving Thermal file {0}
             WLOG(params, '', textentry('40-016-00022', args=wargs))
             # Update keywords
             # --------------------------------------------------------------

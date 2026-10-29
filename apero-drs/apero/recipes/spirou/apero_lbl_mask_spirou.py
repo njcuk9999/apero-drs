@@ -131,9 +131,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # remove any current arguments from sys.argv
         sys.argv = [__NAME__]
     except ImportError:
-        # TODO: Add to language database
-        emsg = 'Cannot run LBL (not installed) please install LBL'
-        raise AperoCodedException(params, message=emsg)
+        # error: Cannot run LBL (not installed) please install LBL
+        raise AperoCodedException(params, '09-022-00001')
     # -------------------------------------------------------------------------
     # setup object and template names
     object_science = str(objname)
@@ -141,10 +140,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # run lbl template for self
     try:
         # print progress
-        # TODO: Add to language database
-        msg = 'Running LBL template for {0}_{1}'
         margs = [object_science, object_comparison]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Running LBL template for {0}_{1}
+        WLOG(params, 'info', textentry('40-022-00008', args=margs))
         # run compute
         lblrtn = lbl_template.main(object_science=object_science,
                                    object_comparison=object_comparison,
@@ -159,11 +157,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                            objname=object_science, tempname='')
 
     except Exception as e:
-        # TODO: Add to language database
-        emsg = 'LBL Template Exception [{0}_{1}] {2}: {3}'
         eargs = [object_science, object_comparison, type(e), str(e)]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: LBL Template Exception [{0}_{1}] {2}: {3}
+        raise AperoCodedException(params, '09-022-00002', targs=eargs)
     # -------------------------------------------------------------------------
     # setup object and template names
     object_science = str(objname)
@@ -171,9 +167,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # run lbl compute for self
     try:
         # print progress
-        msg = 'Running LBL mask for {0}_{1}'
         margs = [object_science, object_comparison]
-        WLOG(params, 'info', msg.format(*margs))
+        # log: Running LBL mask for {0}_{1}
+        WLOG(params, 'info', textentry('40-022-00009', args=margs))
         # run compute
         lblrtn = lbl_mask.main(object_science=object_science,
                                object_comparison=object_comparison,
@@ -194,11 +190,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                            insuffix=insuffix,
                            objname=object_science, tempname='')
     except Exception as e:
-        # TODO: Add to language database
-        emsg = 'LBL Mask Exception [{0}_{1}] {2}: {3}'
         eargs = [object_science, object_comparison, type(e), str(e)]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: LBL Mask Exception [{0}_{1}] {2}: {3}
+        raise AperoCodedException(params, '09-022-00003', targs=eargs)
     # --------------------------------------------------------------
     # Quality control
     # --------------------------------------------------------------

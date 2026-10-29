@@ -246,8 +246,9 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     try:
         header = fits.getheader(fileoption)
     except Exception:
-        WLOG(params, 'warning',
-             'File: {0} invalid (cannot read header)'.format(fileoption))
+        wargs = [fileoption]
+        # warning: File: {0} invalid (cannot read header)
+        WLOG(params, 'warning', textentry('10-512-00001', args=wargs))
         return params
     # locate the raw object name
     kw_objname1 = params['KW_OBJECTNAME2'][0]
@@ -257,6 +258,7 @@ def identify_from_file(params: ParamDict) -> ParamDict:
         rawobjname = header[kw_objname1]
     if rawobjname is None and kw_objname not in header:
         eargs = [kw_objname, fileoption]
+        # error: Cannot fix header key='{0}' missing \n File = {1}
         raise AperoCodedException(params, '01-001-00027', targs=eargs)
     if rawobjname is None:
         rawobjname = header[kw_objname]
@@ -264,10 +266,10 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     ra = header[params['KW_OBJRA'][0]]
     dec = header[params['KW_OBJDEC'][0]]
     # log progress
-    msg = ('Trying to identify from file: {0}'
-           '\n\t NAME = {1}\n\t RA = {2}\n\t DEC = {3}'
-           '\n\n Note "NAME" should be added as an alias later!')
-    WLOG(params, '', msg.format(fileoption, rawobjname, ra, dec))
+    margs = [fileoption, rawobjname, ra, dec]
+    # log: Trying to identify from file: {0} \n NAME = {1} \n RA = {2} \n DEC =
+    #     {3} \n \n Note "NAME" should be added as an alias later!
+    WLOG(params, '', textentry('40-512-00011', args=margs))
     # build SkyCoord and query SIMBAD region
     # astroquery >= 0.4.8 uses 'H'/'V' field names and returns lowercase
     # column names ('main_id', 'H', 'V') instead of the legacy uppercase
@@ -311,9 +313,9 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     # update inputs
     params['INPUTS'].set('OBJECTS', value=chosen)
     params['INPUTS'].set('ALIASES', value=rawobjname)
-    msg = ('Updated the following inputs:\n\t OBJECTS = {0}'
-           '\n\t ALIASES = {1}')
-    WLOG(params, '', msg.format(chosen, rawobjname))
+    margs = [chosen, rawobjname]
+    # log: Updated the following inputs: \n OBJECTS = {0} \n ALIASES = {1}
+    WLOG(params, '', textentry('40-512-00012', args=margs))
     return params
 
 
@@ -330,11 +332,14 @@ def check_database(params: ParamDict, shortname: str) -> None:
     objdbm.load_db()
     # report total count
     total = objdbm.count()
-    WLOG(params, 'info', 'Astrometric database: {0} entries'.format(total))
+    margs = [total]
+    # log: Astrometric database: {0} entries
+    WLOG(params, 'info', textentry('40-512-00001', args=margs))
     # iterate alphabetically
     entries = objdbm.get_entries(columns='*')
     if not entries:
-        WLOG(params, '', '\t(empty)')
+        # log: (empty)
+        WLOG(params, '', textentry('40-512-00004'))
         return
     # build the table header
     msg = '{0:<20s} {1:<20s} {2:<25s}'
@@ -396,9 +401,9 @@ def query_database(params: ParamDict, shortname: str,
             else:
                 unfound.append(one)
     # log a summary
-    WLOG(params, 'info',
-         'Database lookup: {0} found, {1} unfound'.format(
-             len(found), len(unfound)))
+    margs = [len(found), len(unfound)]
+    # log: Database lookup: {0} found, {1} unfound
+    WLOG(params, 'info', textentry('40-512-00002', args=margs))
     return unfound, found
 
 
@@ -418,9 +423,9 @@ def check_object(params: ParamDict, recipe: DrsRecipe,
     _ = recipe  # kept for API compat
     if not found_objs:
         return
-    msg = '{0} objects already in the local archive:'.format(
-        len(found_objs))
-    WLOG(params, '', msg)
+    margs = [len(found_objs)]
+    # log: {0} objects already in the local archive:
+    WLOG(params, '', textentry('40-512-00016', args=margs))
     for obj in found_objs:
         WLOG(params, '', '\t- {0}'.format(obj))
 
@@ -442,7 +447,9 @@ def query_simbad(params: ParamDict, rawobjname: str
     # construct the database (only used for path / config)
     objdbm = AstrometricDatabase(params, shortname='ASTRO-UP')
     # log progress
-    WLOG(params, '', 'Querying SIMBAD/Gaia for "{0}"'.format(rawobjname))
+    margs = [rawobjname]
+    # log: Querying SIMBAD/Gaia for "{0}"
+    WLOG(params, '', textentry('40-512-00003', args=margs))
     # delegate to core
     entry = objdbm.resolve_target(rawobjname)
     # nothing returned - report failure
@@ -488,24 +495,16 @@ def ask_user(params: ParamDict, recipe: DrsRecipe,
     """
     _ = recipe  # kept for API compat
     # display the candidate
-    msg = (
-        '\nCandidate astrometric entry for "{0}":'
-        '\n\t APERO_NAME    = {1}'
-        '\n\t ORIGINAL_NAME = {2}'
-        '\n\t SIMBAD_NAME   = {3}'
-        '\n\t RA / DEC      = {4} / {5}'
-        '\n\t PMRA / PMDE   = {6} / {7}'
-        '\n\t PLX           = {8}'
-        '\n\t RV            = {9}'
-        '\n\t TEFF          = {10}'
-        '\n\t SP_TYPE       = {11}'
-    )
     margs = [astro_obj.name, astro_obj.objname, astro_obj.original_name,
              astro_obj.entry.get('SIMBAD_NAME'), astro_obj.ra,
              astro_obj.dec, astro_obj.pmra, astro_obj.pmde,
              astro_obj.plx, astro_obj.rv, astro_obj.teff,
              astro_obj.sp_type]
-    WLOG(params, '', msg.format(*margs))
+    # log: Candidate astrometric entry for "{0}": \n APERO_NAME = {1} \n
+    #     ORIGINAL_NAME = {2} \n SIMBAD_NAME = {3} \n RA / DEC = {4} / {5} \n
+    #     PMRA / PMDE = {6} / {7} \n PLX = {8} \n RV = {9} \n TEFF = {10} \n
+    #     SP_TYPE = {11}
+    WLOG(params, '', textentry('40-512-00008', args=margs))
     # ask whether to accept
     question = '\nAdd OBJECT="{0}" to local astrometric archive?'
     cond = drs_installation.ask(question.format(astro_obj.name),
@@ -556,8 +555,9 @@ def add_obj_to_sheet(params: ParamDict,
     # write all entries (per-file lock, atomic write)
     objdbm.add_entries(entries, overwrite=True, merge=True)
     # log progress
-    msg = 'Added {0} entries to the local astrometric archive ({1})'
-    WLOG(params, '', msg.format(len(entries), objdbm.path))
+    margs = [len(entries), objdbm.path]
+    # log: Added {0} entries to the local astrometric archive ({1})
+    WLOG(params, '', textentry('40-512-00009', args=margs))
 
 
 def add_object_reject(params: ParamDict, raw_objname: str) -> None:
@@ -597,17 +597,16 @@ def add_object_reject(params: ParamDict, raw_objname: str) -> None:
         # skip duplicates
         if apero_objname in reject_data['OBJECTS']:
             existing = reject_data['OBJECTS'][apero_objname]
-            msg = 'Object {0} (APERO={1}) already in reject list: {2}'
-            WLOG(params, '', msg.format(objname, apero_objname,
-                                        existing.get('NOTES', '')))
+            margs = [objname, apero_objname, existing.get('NOTES', '')]
+            # log: Object {0} (APERO={1}) already in reject list: {2}
+            WLOG(params, '', textentry('40-512-00013', args=margs))
             continue
         # gather aliases / bad_astro / notes
         if autofill not in [None, 'None']:
             parts = str(autofill).split(',')
             if len(parts) != 3:
-                emsg = ('Auto fill must be in the form '
-                        'ALIASES,BAD_ASTRO,NOTES')
-                raise AperoCodedException(params, message=emsg)
+                # error: Auto fill must be in the form ALIASES,BAD_ASTRO,NOTES
+                raise AperoCodedException(params, '09-512-00001')
             aliases, bad_astro, notes = parts
         else:
             qfmt = ('Enter aliases for object={0} (APERO={1}) separate '
@@ -629,8 +628,9 @@ def add_object_reject(params: ParamDict, raw_objname: str) -> None:
         entry['NOTES'] = notes
         entry['DATE_ADDED'] = Time.now().iso
         reject_data['OBJECTS'][apero_objname] = entry
-        msg = 'Object {0} (APERO={1}) queued for rejection.'
-        WLOG(params, '', msg.format(objname, apero_objname))
+        margs = [objname, apero_objname]
+        # log: Object {0} (APERO={1}) queued for rejection.
+        WLOG(params, '', textentry('40-512-00017', args=margs))
     # write back atomically (unless test mode)
     if not test:
         import tempfile
@@ -651,7 +651,9 @@ def add_object_reject(params: ParamDict, raw_objname: str) -> None:
             if os.path.exists(tmppath):
                 os.unlink(tmppath)
             raise
-        WLOG(params, '', 'Reject list updated: {0}'.format(reject_path))
+        margs = [reject_path]
+        # log: Reject list updated: {0}
+        WLOG(params, '', textentry('40-512-00005', args=margs))
 
 
 def update_astrometrics(params: ParamDict) -> None:
@@ -671,10 +673,9 @@ def update_astrometrics(params: ParamDict) -> None:
     # run the refresh
     counts = objdbm.update_archive(overwrite_existing=overwrite)
     # log summary
-    msg = ('Archive refresh complete - resolved={0}, failed={1}, '
-           'skipped={2}')
-    WLOG(params, 'info', msg.format(counts['resolved'], counts['failed'],
-                                    counts['skipped']))
+    margs = [counts['resolved'], counts['failed'], counts['skipped']]
+    # log: Archive refresh complete - resolved={0}, failed={1}, skipped={2}
+    WLOG(params, 'info', textentry('40-512-00010', args=margs))
 
 
 def update_teffs(params: ParamDict, shortname: str) -> None:

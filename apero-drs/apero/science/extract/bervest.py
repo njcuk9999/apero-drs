@@ -14,6 +14,7 @@ import datetime
 import numpy as np
 
 from aperocore.base import base
+from aperocore import drs_lang
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -26,6 +27,8 @@ __version__ = apero_base.__version__
 __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
+# Get the text types
+textentry = drs_lang.textentry
 
 ra = 269.4479583333333
 dec = 4.746166666666666
@@ -577,35 +580,62 @@ def helcorr(obs_long, obs_lat, obs_alt, ra2000, dec2000, jd, debug=False):
 
     if debug:
         print('')
-        print('----- HELCORR.PRO - DEBUG INFO - START ----')
-        print(
-            '(obs_long (East positive),obs_lat,obs_alt) Observatory coordinates [deg,m]: ',
-            -obs_long, obs_lat, obs_alt)
-        print(
-            '(ra,dec) Object coordinates (for epoch 2000.0) [deg]: ', ra2000,
-            dec2000)
-        print(
-            '(ra,dec) Object coordinates (precessed to epoch %f) [deg]: ' % (
-                epoch), ra, dec)
-        print('(ut) Universal time (middle of exposure) [hrs]: ', ut)
-        print('(jd) Julian date (middle of exposure) (JD): ', jd)
-        print('(hjd) Heliocentric Julian date (middle of exposure) (HJD): ',
-              hjd)
-        print('(gmst) Greenwich mean sidereal time [hrs]: ', idl_mod(gmst, 24))
-        print('(lmst) Local mean sidereal time [hrs]: ', lmst)
-        print('(dlat) Latitude correction [deg]: ', dlat)
-        print('(lat) Geocentric latitude of observer [deg]: ', lat)
-        print('(r) Distance of observer from center of earth [m]: ', r)
-        print(
-            '(v) Rotational velocity of earth at the position of the observer [km/s]: ',
-            v)
-        print(
-            '(vdiurnal) Projected earth rotation and earth-moon revolution [km/s]: ',
-            vdiurnal)
-        print('(vbar) Barycentric velocity [km/s]: ', vbar)
-        print('(vhel) Heliocentric velocity [km/s]: ', vhel)
-        print('(corr) Vdiurnal+vbar [km/s]: ', corr)
-        print('----- HELCORR.PRO - DEBUG INFO - END -----')
+        # log: ----- HELCORR.PRO - DEBUG INFO - START ----
+        print(textentry('40-016-00041'))
+        margs = [-obs_long, obs_lat, obs_alt]
+        # log: (obs_long (East positive),obs_lat,obs_alt) Observatory
+        #     coordinates [deg,m]: {0} {1} {2}
+        print(textentry('40-016-00042', args=margs))
+        margs = [ra2000, dec2000]
+        # log: (ra,dec) Object coordinates (for epoch 2000.0) [deg]: {0} {1}
+        print(textentry('40-016-00043', args=margs))
+        margs = [epoch, ra, dec]
+        # log: (ra,dec) Object coordinates (precessed to epoch {0:f}) [deg]: {1}
+        #     {2}
+        print(textentry('40-016-00065', args=margs))
+        margs = [ut]
+        # log: (ut) Universal time (middle of exposure) [hrs]: {0}
+        print(textentry('40-016-00044', args=margs))
+        margs = [jd]
+        # log: (jd) Julian date (middle of exposure) (JD): {0}
+        print(textentry('40-016-00045', args=margs))
+        margs = [hjd]
+        # log: (hjd) Heliocentric Julian date (middle of exposure) (HJD): {0}
+        print(textentry('40-016-00046', args=margs))
+        margs = [idl_mod(gmst, 24)]
+        # log: (gmst) Greenwich mean sidereal time [hrs]: {0}
+        print(textentry('40-016-00047', args=margs))
+        margs = [lmst]
+        # log: (lmst) Local mean sidereal time [hrs]: {0}
+        print(textentry('40-016-00048', args=margs))
+        margs = [dlat]
+        # log: (dlat) Latitude correction [deg]: {0}
+        print(textentry('40-016-00049', args=margs))
+        margs = [lat]
+        # log: (lat) Geocentric latitude of observer [deg]: {0}
+        print(textentry('40-016-00050', args=margs))
+        margs = [r]
+        # log: (r) Distance of observer from center of earth [m]: {0}
+        print(textentry('40-016-00051', args=margs))
+        margs = [v]
+        # log: (v) Rotational velocity of earth at the position of the observer
+        #     [km/s]: {0}
+        print(textentry('40-016-00052', args=margs))
+        margs = [vdiurnal]
+        # log: (vdiurnal) Projected earth rotation and earth-moon revolution
+        #     [km/s]: {0}
+        print(textentry('40-016-00053', args=margs))
+        margs = [vbar]
+        # log: (vbar) Barycentric velocity [km/s]: {0}
+        print(textentry('40-016-00054', args=margs))
+        margs = [vhel]
+        # log: (vhel) Heliocentric velocity [km/s]: {0}
+        print(textentry('40-016-00055', args=margs))
+        margs = [corr]
+        # log: (corr) Vdiurnal+vbar [km/s]: {0}
+        print(textentry('40-016-00056', args=margs))
+        # log: ----- HELCORR.PRO - DEBUG INFO - END -----
+        print(textentry('40-016-00057'))
         print('')
 
     return corr, hjd

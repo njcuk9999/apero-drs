@@ -3,7 +3,7 @@
 
 {% block doc_content %}
 <div class="ari-page-header">
-    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
     <p style="margin:0.45rem 0 0 0; color:var(--ari-text-muted);">
         Use this checklist after running apero_ri_setup. Each step opens in a
         new tab, and completed steps are marked with a tick.

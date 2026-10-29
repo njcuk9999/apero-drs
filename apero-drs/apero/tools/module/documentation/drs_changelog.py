@@ -53,8 +53,10 @@ YES_OR_NO = '{0} {1} {2}'.format(textentry('Q_YES'), textentry('OR_TEXT'),
 # =============================================================================
 def ask_for_new_version():
     # log current version
+    # log: Current version is '{0}'
     print(textentry('40-501-00001', args=[__version__]))
     # ask if we wish to change version
+    # text: New version required?
     uinput1 = str(input(textentry('40-501-00002') +
                         ' {0}:\t'.format(YES_OR_NO)))
     # if yes change the version
@@ -63,17 +65,22 @@ def ask_for_new_version():
         uinput2a = ''
         while cond:
             # ask for new version
+            # text: Please Enter new version:
             uinput2a = str(input(textentry('40-501-00003')))
             # ask for new version again (must match)
+            # text: Please Re-Enter new version:
             uinput2b = str(input(textentry('40-501-00004')))
             # if both versions don't match
             if uinput2a != uinput2b:
                 # print that versions don't match
+                # log: Versions do not match
                 print(textentry('40-501-00005'))
             else:
                 # print the new version
+                # text: New version is '{0}'
                 print(textentry('40-501-00006').format(uinput2a))
                 # ask if new version is correct
+                # text: Is this correct?
                 qinput3 = (textentry('40-501-00007') +
                            ' {0}:\t'.format(YES_OR_NO))
                 uinput3 = str(input(qinput3))

@@ -4,7 +4,7 @@
 
 {% block doc_content %}
 <div class="ari-page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
-    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
     {% if can_add %}
     <button class="ari-btn ari-btn--primary ari-btn--sm"
             type="button" id="mi-add-btn">

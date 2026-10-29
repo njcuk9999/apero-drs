@@ -1619,6 +1619,12 @@ def make_page_view(app, page_id: str, package_dir: Path):
         if page_id == "home.admin_portal.database_setup":
             context.update(app._build_admin_db_tunnel_context(user_info, perms))
 
+        if page_id == 'home.monitor_portal.apero_queue':
+            from apero_ri.application import apero_queue_api_helpers as _aq
+            context.update(
+                _aq.build_monitor_context(app, user_info, set(perms))
+            )
+
         if page_id == "home.admin_portal.cache_settings":
             context.update(app._build_admin_cache_context(perms))
 

@@ -4,7 +4,7 @@
 {# Card grid inside a sidebar layout #}
 {% block doc_content %}
 <div class="ari-page-header">
-    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
 </div>
 
 {% block pre_cards %}{% endblock %}
@@ -17,7 +17,7 @@
         <div class="ari-card__icon">
             <i class="{{ card.icon }}"></i>
         </div>
-        <span class="ari-card__label">{{ card.label }}</span>
+        <span class="ari-card__label">{{ card.label | tl }}</span>
         {% if h %}
         <span class="ari-card__health ari-card__health--{{ h.status }}"
               title="{{ h.message }}">
@@ -34,7 +34,6 @@
     {% endfor %}
 </div>
 {% else %}
-<p style="color: var(--ari-text-muted);">No sections available with your
-current permissions.</p>
+<p style="color: var(--ari-text-muted);">{{ _('No sections available with your current permissions.') }}</p>
 {% endif %}
 {% endblock %}

@@ -416,9 +416,13 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
             eargs = [dirname, os.path.basename(filename), func_name]
+            # error: Read Error: Directory '{0}' could not be found
+            #     (file='{1}'). \n function = {2}
             raise AperoCodedException(params, '01-001-00013', targs=eargs)
         else:
             eargs = [os.path.basename(filename), dirname, func_name]
+            # error: Read Error: File '{0}' could not be found in directory
+            #     '{1}'. \n function = {2}
             raise AperoCodedException(params, '01-001-00012', targs=eargs)
     # -------------------------------------------------------------------------
     # deal with obtaining data
@@ -441,6 +445,8 @@ def readfits(params: ParamDict, filename: Union[str, Path],
                 data, header = mout
                 name = None
             else:
+                # error: Could not save text file: {0} \n Error {1}: {2} \n
+                #     Function = {3}
                 raise AperoCodedException(params, '00-008-00020', 
                                           targs=[filename, func_name])
         # deal with return just the data
@@ -464,6 +470,8 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
+        # error: Error reading file, format was incorrect (fmt='{1}'). \n File =
+        #     {0} \n Valid formats = {2} \n Function = {3}
         raise AperoCodedException(params, '00-008-00019', targs=eargs)
     # -------------------------------------------------------------------------
     # deal with return
@@ -510,6 +518,8 @@ def read_header(params: ParamDict, filename: str, ext: Union[int, None] = None,
         header = fits.getheader(filename, ext=ext)
     except Exception as e:
         eargs = [os.path.basename(filename), ext, type(e), e, func_name]
+        # error: Could not open header for file '{0}' extension={1} \n Error
+        #     {2}: {3} \n function = {4}
         raise AperoCodedException(params, '01-001-00010', targs=eargs)
     # return header
     if copy:
@@ -572,6 +582,8 @@ def _read_fitsmulti(params: ParamDict, filename: Union[Path, str],
                     except Exception as e:
                         eargs = [os.path.basename(filename), it,
                                  type(e), e, func_name]
+                        # error: Read Error: Directory '{0}' could not be found
+                        #     (file='{1}'). \n function = {2}
                         raise AperoCodedException(params, '01-001-00013',
                                                   targs=eargs)
                     # ---------------------------------------------------------
@@ -601,10 +613,14 @@ def _read_fitsmulti(params: ParamDict, filename: Union[Path, str],
                     except Exception as e:
                         eargs = [os.path.basename(filename), it,
                                  type(e), e, func_name]
+                        # error: Could not open data for file '{0}'
+                        #     extension={1} \n Error {2}: {3} \n function = {4}
                         raise AperoCodedException(params, '01-001-00007',
                                                   targs=eargs)
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
+        # error: File = '{0}' cannot be opened by astropy.io.fits \n Error {1}:
+        #     {2} \n function = {3}
         raise AperoCodedException(params, '01-001-00006', targs=eargs)
     # -------------------------------------------------------------------------
     # return data and/or header
@@ -650,6 +666,8 @@ def _read_fitsimage(params: ParamDict, filename: Union[Path, str],
                         # print error: File {0} does not have extension {1}
                         #              File may be corrupted or wrong type
                         eargs = [filename, ext]
+                        # error: File {0} does not have extension {1} \n File
+                        #     may be corrupted or wrong type
                         raise AperoCodedException(params, '00-004-00015',
                                                   targs=eargs)
                     data = np.array(hdulist[ext].data)
@@ -685,8 +703,12 @@ def _read_fitsimage(params: ParamDict, filename: Union[Path, str],
                 #   extension
                 string_trackback = traceback.format_exc()
                 eargs = [filename, extstr, type(e)]
+                # text: Read Error: Fits-Image (data) could not be read. \n
+                #     Filename = {0} {1} \n Error was type {2}
                 emsg = textentry('01-001-00014', args=eargs)
                 emsg += '\n\n' + textentry(string_trackback)
+                # error: Read Error: Fits-Image (data) could not be read. \n
+                #     Filename = {0} {1} \n Error was type {2}
                 raise AperoCodedException(params, '01-001-00014', targs=eargs,
                                           message=emsg)
     else:
@@ -704,6 +726,8 @@ def _read_fitsimage(params: ParamDict, filename: Union[Path, str],
                         # print error: File {0} does not have extension {1}
                         #              File may be corrupted or wrong type
                         eargs = [filename, ext]
+                        # error: File {0} does not have extension {1} \n File
+                        #     may be corrupted or wrong type
                         raise AperoCodedException(params, '00-004-00015',
                                                   targs=eargs)
                     header = Header(hdulist[ext].header)
@@ -737,8 +761,12 @@ def _read_fitsimage(params: ParamDict, filename: Union[Path, str],
                     extstr = ''
                 string_trackback = traceback.format_exc()
                 eargs = [filename, extstr, type(e)]
+                # text: Read Error: Fits-Image (header) could not be read. \n
+                #     Filename = {0} {1} \n Error was type {2}
                 emsg = textentry('01-001-00015', args=eargs)
                 emsg += '\n\n' + textentry(string_trackback)
+                # error: Read Error: Fits-Image (header) could not be read. \n
+                #     Filename = {0} {1} \n Error was type {2}
                 raise AperoCodedException(params, '01-001-00015', targs=eargs,
                                           message=emsg)
     else:
@@ -794,8 +822,12 @@ def _read_fitstable(params: ParamDict, filename: Union[Path, str],
         except Exception as e:
             string_trackback = traceback.format_exc()
             eargs = [filename, ext, type(e)]
+            # text: Read Error: Fits-Table (data) could not be read. \n Filename
+            #     = {0}, Ext = {1} \n Error was type {2}
             emsg = textentry('01-001-00016', args=eargs)
             emsg += '\n\n' + textentry(string_trackback)
+            # error: Read Error: Fits-Table (data) could not be read. \n
+            #     Filename = {0}, Ext = {1} \n Error was type {2}
             raise AperoCodedException(params, '01-001-00016', targs=eargs,
                                       message=emsg)
     else:
@@ -808,8 +840,12 @@ def _read_fitstable(params: ParamDict, filename: Union[Path, str],
         except Exception as e:
             string_trackback = traceback.format_exc()
             eargs = [filename, ext, type(e)]
+            # text: Read Error: Fits-Table (header) could not be read. \n
+            #     Filename = {0}, Ext = {1} \n Error was type {2}
             emsg = textentry('01-001-00017', args=eargs)
             emsg += '\n\n' + textentry(string_trackback)
+            # error: Read Error: Fits-Table (header) could not be read. \n
+            #     Filename = {0}, Ext = {1} \n Error was type {2}
             raise AperoCodedException(params, '01-001-00017', targs=eargs,
                                       message=emsg)
     else:
@@ -969,24 +1005,34 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
     if not success:
         eargs = [os.path.basename(filename), store_error[0], store_error[1],
                  func_name]
+        # error: File '{0}' already exits and cannot be overwritten. \n Error
+        #     {1}: {2} \n function = {3}
         raise AperoCodedException(params, '01-001-00003', targs=eargs)
     # ----------------------------------------------------------------------
     # header must be same length as data
     if len(data) != len(header):
         eargs = [filename, len(data), len(header), func_name]
+        # error: Length of header={2} not consistent with length of data={1} \n
+        #     File={0} \n function={3}
         raise AperoCodedException(params, '00-013-00004', targs=eargs)
     # datatype must be same length as data
     if len(data) != len(datatype):
         eargs = [filename, len(data), len(datatype), func_name]
+        # error: Length of datatype={2} not consistent with length of data={1}
+        #     \n File={0} \n function={3}
         raise AperoCodedException(params, '00-013-00005', targs=eargs)
     # names must be same length as data
     if len(names) != len(data):
         eargs = [filename, len(data), len(names), func_name]
-        raise AperoCodedException(params, '00-013-00009', targs=eargs)
+        # error: Length of name={2} not constistent with length of data={1} \n
+        #     File={0} \n function={3}
+        raise AperoCodedException(params, '00-013-00007', targs=eargs)
     # if dtype is not None must be same length as data
     if dtype is not None:
         if len(data) != len(dtype):
             eargs = [filename, len(data), len(dtype), func_name]
+            # error: Length of dtype={2} not consistent with length of data={1}
+            #     \n File={0} \n function={3}
             raise AperoCodedException(params, '00-013-00006', targs=eargs)
     # ----------------------------------------------------------------------
     # create the multi HDU list
@@ -1068,6 +1114,8 @@ def _write_fits(params: ParamDict, filename: str, data: ListImageTable,
             hdulist.close()
         except Exception as e:
             eargs = [os.path.basename(filename), type(e), e, func_name]
+            # error: Cannot write image to fits file '{0}' \n Error {1}: {2} \n
+            #     function = {3}
             raise AperoCodedException(params, '01-001-00005', targs=eargs)
     # ---------------------------------------------------------------------
     # ignore truncated comment warning since spirou images have some poorly
@@ -1108,6 +1156,7 @@ def update_extension(params: ParamDict, filename: str, extension: int,
     else:
         # log error fmt must be image or table
         eargs = [fmt]
+        # error: Argument ‘fmt’ must be either ‘image’ or ‘table’. fmt =’{0}’
         raise AperoCodedException(params, '00-004-00013', targs=eargs)
     # open hdulist
     with fits.open(filename) as hdulist:
@@ -1142,6 +1191,7 @@ def update_extension(params: ParamDict, filename: str, extension: int,
         else:
             # log error: Extension {0} not in {1}
             eargs = [extension, filename, func_name]
+            # error: Extension ‘{0}’ not in file: {1} \n Function = {2}
             raise AperoCodedException(params, '00-004-00014', targs=eargs)
         # write to file
         with warnings.catch_warnings(record=True) as _:
@@ -1151,6 +1201,8 @@ def update_extension(params: ParamDict, filename: str, extension: int,
                 nhdulist.close()
             except Exception as e:
                 eargs = [os.path.basename(filename), type(e), e, func_name]
+                # error: Cannot write image to fits file '{0}' \n Error {1}: {2}
+                #     \n function = {3}
                 raise AperoCodedException(params, '01-001-00005', targs=eargs)
 
 
@@ -1186,9 +1238,9 @@ def update_fits(params: ParamDict, filename: str, hkeys: Dict[str, str]):
         # flush to make sure we are up-to-date
         hdul.flush()
     # print progress
-    msg = 'Updating header keys {0} in file {1}'
     margs = [','.join(add_keys), filename]
-    WLOG(params, '', msg.format(*margs))
+    # log: Updating header keys {0} in file {1}
+    WLOG(params, '', textentry('40-001-00086', args=margs))
 
 
 # =============================================================================
@@ -1245,6 +1297,8 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
             valid.append(d_it)
     # if valid is empty we have a problem
     if len(valid) == 0:
+        # error: Recovery failed: Fatal I/O error cannot load file. \n
+        #     filename='{0}'
         raise AperoCodedException(params, '01-001-00001', targs=[filename])
     # return valid data
     return datastore, headerstore, names
@@ -1336,9 +1390,13 @@ def deal_with_bad_file_single(filename: Union[Path, str],
             if it > 10:
                 # raise an error
                 eargs = [filename, ext, type(e)]
+                # error: Read Error: Fits-Image (data) could not be read. \n
+                #     Filename = {0} {1} \n Error was type {2}
                 raise AperoCodedException(None, '01-001-00014', targs=eargs)
             else:
-                print('Try {0} to open {1}'.format(it, filename))
+                margs = [it, filename]
+                # log: Try {0} to open {1}
+                print(textentry('40-001-00084', args=margs))
     # deal with having an extension number
     if ext is not None:
         if flavour == 'data':

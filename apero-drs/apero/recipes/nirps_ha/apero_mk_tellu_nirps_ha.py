@@ -166,6 +166,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             allowed_dprtypes = ', '.join(params['OBJ.TELL.GEN.ALLOWED_DPRTYPES'])
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
+            # warning: DPRTYPE = ‘{0}’ is not valid for {1}. \n Allowed DPRTYPES
+            #     are: {2} \n Skipping filename = {3}
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
                  sublevel=4)
             # end log correctly
@@ -183,6 +185,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if objname in tellu_exclude_list:
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
+            # warning: File {0} is blacklisted ({1} = ‘{2}’) \n Skipping file.
             WLOG(params, 'warning', textentry('10-019-00002', args=wargs),
                  sublevel=2)
             # end log correctly
@@ -192,6 +195,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         elif objname not in tellu_include_list:
             # log that we are skipping
             args = [objname]
+            # warning: Object='{0}' is not a valid telluric (hot) star.
             WLOG(params, 'warning', textentry('10-019-00009', args=args),
                  sublevel=2)
             # end log correctly
@@ -201,6 +205,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         else:
             # log that file is validated
             args = [objname, dprtype]
+            # log: File validated: OBJECT={0} DPRTYPE={1}
             WLOG(params, 'info', textentry('40-019-00048', args=args))
         # ------------------------------------------------------------------
         # get fiber from infile

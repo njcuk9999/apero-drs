@@ -62,7 +62,9 @@ def ask_for_new_tag():
     except:
         current_tag = '0.0.0'
 
-    print(f'Current tag: {current_tag}')
+    margs = [current_tag]
+    # log: Current tag: {0}
+    print(textentry('40-501-00019', args=margs))
 
     # ask if we wish to create a new tag
     uinput1 = str(input('Do you want to create a new tag? [Y]es [N]o:\t'))
@@ -80,16 +82,21 @@ def ask_for_new_tag():
     cond = True
     while cond:
         # ask for new tag
-        print(f'\nEnter new tag in format major.minor.subversion')
-        print(f'  (e.g., 0.8.200 for next subversion after 0.8.199)')
-        print(f'  (e.g., 0.9.001 for new minor version)')
-        print(f'  (e.g., 1.0.001 for new major version)')
+        # log: Enter new tag in format major.minor.subversion
+        print(textentry('40-501-00024'))
+        # log: (e.g., 0.8.200 for next subversion after 0.8.199)
+        print(textentry('40-501-00025'))
+        # log: (e.g., 0.9.001 for new minor version)
+        print(textentry('40-501-00026'))
+        # log: (e.g., 1.0.001 for new major version)
+        print(textentry('40-501-00027'))
         new_tag = str(input('New tag: ')).strip()
 
         # Validate format
         tag_parts = new_tag.split('.')
         if len(tag_parts) != 3:
-            print('Error: Tag must have format major.minor.subversion')
+            # log: Error: Tag must have format major.minor.subversion
+            print(textentry('40-501-00034'))
             continue
 
         try:
@@ -97,7 +104,8 @@ def ask_for_new_tag():
             new_minor = int(tag_parts[1])
             new_sub = int(tag_parts[2])
         except ValueError:
-            print('Error: Tag parts must be integers')
+            # log: Error: Tag parts must be integers
+            print(textentry('40-501-00043'))
             continue
 
         # Check if it's a subversion increment
@@ -107,11 +115,19 @@ def ask_for_new_tag():
 
         # Confirm the tag
         if is_subversion:
-            print(f'\nThis is a subversion increment from {current_tag} to {new_tag}')
-            print(f'Will backfill all tags from {curr_major}.{curr_minor}.{int(curr_sub)+1} to {new_tag}')
+            margs = [current_tag, new_tag]
+            # log: This is a subversion increment from {0} to {1}
+            print(textentry('40-501-00035', args=margs))
+            margs = [curr_major, curr_minor, int(curr_sub)+1, new_tag]
+            # log: Will backfill all tags from {0}.{1}.{2} to {3}
+            print(textentry('40-501-00036', args=margs))
         else:
-            print(f'\nThis is a major/minor version change to {new_tag}')
-            print(f'Will create only the tag {new_tag}')
+            margs = [new_tag]
+            # log: This is a major/minor version change to {0}
+            print(textentry('40-501-00037', args=margs))
+            margs = [new_tag]
+            # log: Will create only the tag {0}
+            print(textentry('40-501-00038', args=margs))
 
         confirm = str(input('Is this correct? [Y]es [N]o:\t'))
         if 'Y' in confirm.upper():
@@ -141,7 +157,9 @@ def create_single_tag(tag):
 
     subprocess.run(['git', 'tag', '-a', tag, '-m', f'Version {tag}'],
                   env=env, check=True)
-    print(f'Created tag: {tag} with date {commit_date[:10]}')
+    margs = [tag, commit_date[:10]]
+    # log: Created tag: {0} with date {1}
+    print(textentry('40-501-00020', args=margs))
 
 
 def backfill_subversion_tags(end_tag, params):
@@ -218,12 +236,16 @@ def backfill_subversion_tags(end_tag, params):
     total_commits = len(commits)
     total_tags = end_sub - start_sub
 
-    WLOG(params, 'info', f'Found {total_commits} commits')
-    WLOG(params, 'info', f'Creating {total_tags} tags from '
-                         f'{prefix}{start_sub+1:03d} to {end_tag}')
+    margs = [total_commits]
+    # log: Found {0} commits
+    WLOG(params, 'info', textentry('40-501-00021', args=margs))
+    margs = [total_tags, prefix, start_sub+1, end_tag]
+    # log: Creating {0} tags from {1}{2:03d} to {3}
+    WLOG(params, 'info', textentry('40-501-00022', args=margs))
 
     if total_commits == 0:
-        WLOG(params, 'warning', 'No commits found! Tagging HEAD only.')
+        # warning: No commits found! Tagging HEAD only.
+        WLOG(params, 'warning', textentry('10-501-00001'))
         create_single_tag(end_tag)
         return
 
@@ -245,7 +267,9 @@ def backfill_subversion_tags(end_tag, params):
         try:
             subprocess.run(['git', 'rev-parse', tag_name],
                          check=True, capture_output=True)
-            WLOG(params, 'info', f'Skipping {tag_name} (already exists)')
+            margs = [tag_name]
+            # log: Skipping {0} (already exists)
+            WLOG(params, 'info', textentry('40-501-00039', args=margs))
             continue
         except:
             pass
@@ -268,8 +292,9 @@ def backfill_subversion_tags(end_tag, params):
             env=env,
             check=True
         )
-        WLOG(params, 'info', f'Created tag {tag_name} at commit '
-                             f'{commit_hash[:8]} with date {commit_date[:10]}')
+        margs = [tag_name, commit_hash[:8], commit_date[:10]]
+        # log: Created tag {0} at commit {1} with date {2}
+        WLOG(params, 'info', textentry('40-501-00028', args=margs))
 
 
 def remove_backfilled_tags(end_tag):
@@ -343,16 +368,20 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
+        # log: Running in preview mode
         WLOG(params, 'info', textentry('40-501-00008'))
     # ----------------------------------------------------------------------
     # read and ask for new tag
-    WLOG(params, '', 'Enter new tag information')
+    # log: Enter new tag information
+    WLOG(params, '', textentry('40-501-00023'))
     # set new version using new tag-based approach
     tag_info = ask_for_new_tag()
 
     if tag_info is None:
-        WLOG(params, 'info', 'No tag changes requested.')
-        WLOG(params, 'info', 'Will generate changelog with existing tags.')
+        # log: No tag changes requested.
+        WLOG(params, 'info', textentry('40-501-00029'))
+        # log: Will generate changelog with existing tags.
+        WLOG(params, 'info', textentry('40-501-00030'))
         new_tag = None
         is_subversion_increment = False
     else:
@@ -361,16 +390,21 @@ def __main__(recipe, params):
         # Handle tag creation
         if is_subversion_increment:
             # For subversion increment, backfill all intermediate tags
-            WLOG(params, 'info', f'Creating subversion tags up to {new_tag}')
+            margs = [new_tag]
+            # log: Creating subversion tags up to {0}
+            WLOG(params, 'info', textentry('40-501-00040', args=margs))
             backfill_subversion_tags(new_tag, params)
         else:
             # For major/minor version change, just create the single tag
-            WLOG(params, 'info', f'Creating new tag: {new_tag}')
+            margs = [new_tag]
+            # log: Creating new tag: {0}
+            WLOG(params, 'info', textentry('40-501-00041', args=margs))
             create_single_tag(new_tag)
 
     # ----------------------------------------------------------------------
     # create new changelog
     # log that we are updating the change log
+    # log: Updating changelog
     WLOG(params, '', textentry('40-501-00010'))
     # if not in preview mode modify the changelog directly
     if not params['INPUTS']['PREVIEW']:
@@ -399,7 +433,8 @@ def __main__(recipe, params):
                     import subprocess
                     subprocess.run(['git', 'tag', '-d', new_tag],
                                  stderr=subprocess.DEVNULL)
-            WLOG(params, 'info', 'Changes cancelled, tags removed.')
+            # log: Changes cancelled, tags removed.
+            WLOG(params, 'info', textentry('40-501-00042'))
             os.chdir(current)
             return locals()
 
@@ -419,12 +454,15 @@ def __main__(recipe, params):
 
     # push tags via git (only if new tag was created)
     if new_tag is not None:
-        WLOG(params, 'info', 'Pushing tags to remote...')
+        # log: Pushing tags to remote...
+        WLOG(params, 'info', textentry('40-501-00031'))
         os.system('git push --tags')
-        WLOG(params, 'info',
-             f'Successfully created and pushed tag(s) up to {new_tag}')
+        margs = [new_tag]
+        # log: Successfully created and pushed tag(s) up to {0}
+        WLOG(params, 'info', textentry('40-501-00032', args=margs))
     else:
-        WLOG(params, 'info', 'Changelog updated successfully (no new tags)')
+        # log: Changelog updated successfully (no new tags)
+        WLOG(params, 'info', textentry('40-501-00033'))
 
     # go back to current directory
     os.chdir(current)

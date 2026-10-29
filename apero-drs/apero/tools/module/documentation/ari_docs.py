@@ -41,6 +41,7 @@ from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from aperocore import drs_lang
 from apero.base import base as apero_base
 from apero.core import drs_file
 from apero.instruments import select
@@ -58,6 +59,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get drs classes
 ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
@@ -70,6 +73,11 @@ DrsInputFile = drs_file.DrsInputFile
 REPO_ROOT = Path(__file__).resolve().parents[5]
 # the hand-written description fragments live here
 DESC_ROOT = REPO_ROOT / 'documentation' / 'descriptions'
+# include directives in descriptions are relative to the apero-drs directory
+INCLUDE_ROOT = Path(__file__).resolve().parents[4]
+# e.g. <!-- include: apero/tools/module/processing/gui/queue_info.md -->
+INCLUDE_PATTERN = re.compile(r'^[ \t]*<!--\s*include:\s*(\S+)\s*-->[ \t]*$',
+                             flags=re.MULTILINE)
 # the apero-ri documentation tree lives here
 ARI_ROOT = REPO_ROOT / 'documentation' / 'ari'
 # every generated page sits under this ref inside a version directory
@@ -452,8 +460,30 @@ def read_description(instrument: str, kind: str,
     # use the first fragment that exists
     for candidate in candidates:
         if candidate.exists():
-            return split_front_matter(candidate.read_text(encoding='utf-8'))
+            meta, body = split_front_matter(
+                candidate.read_text(encoding='utf-8'))
+            return meta, expand_includes(body)
     return dict(), ''
+
+
+def expand_includes(body: str) -> str:
+    """
+    Replace include directives with the contents of the referenced file
+    (shares one markdown source between the docs and package resources)
+
+    :param body: str, the markdown body
+
+    :return: str, the markdown body with includes expanded
+    """
+    def _replace(match: re.Match) -> str:
+        path = (INCLUDE_ROOT / match.group(1)).resolve()
+        # only allow files inside the apero-drs directory
+        if INCLUDE_ROOT not in path.parents or not path.is_file():
+            raise ValueError('Invalid description include: {0}'.format(
+                match.group(1)))
+        return path.read_text(encoding='utf-8').rstrip('\n')
+
+    return INCLUDE_PATTERN.sub(_replace, body)
 
 
 def split_front_matter(text: str) -> Tuple[dict, str]:
@@ -976,7 +1006,9 @@ def compile_instrument(params: ParamDict, recipe: DrsRecipe, instrument: str,
         items = []
         sequence_rows = []
         for sequence in sequences:
-            WLOG(params, '', '\tSequence: {0}'.format(sequence.name))
+            margs = [sequence.name]
+            # log: Sequence: {0}
+            WLOG(params, '', textentry('40-501-00015', args=margs))
             build_sequence_page(params, sequence, instrument, seq_dir)
             slug = sequence.name.lower()
             items.append((slug, sequence.name))
@@ -1250,7 +1282,8 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Instrument-independent tools
     # -------------------------------------------------------------------------
-    WLOG(params, 'info', 'Compiling APERO tool documentation')
+    # log: Compiling APERO tool documentation
+    WLOG(params, 'info', textentry('40-501-00012'))
     iparams = reload_for(recipe, 'default')
     tool_rows: List[dict] = []
     compile_global_tools(iparams, recipe, apero_dir, tool_rows)
@@ -1275,7 +1308,9 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
         # "None"/"default" is the pseudo instrument handled above
         if instrument.upper() in ['NONE', 'DEFAULT']:
             continue
-        WLOG(params, 'info', 'Compiling {0} documentation'.format(instrument))
+        margs = [instrument]
+        # log: Compiling {0} documentation
+        WLOG(params, 'info', textentry('40-501-00014', args=margs))
         iparams = reload_for(recipe, instrument)
         sections = compile_instrument(iparams, recipe, instrument, apero_dir,
                                       recipe_rows)
@@ -1352,7 +1387,9 @@ def compile_ari_docs(params: ParamDict, recipe: DrsRecipe,
     build_index(apero_dir, 'APERO', ICONS[APERO_REF], 'APERO', intro, [],
                 related=['developer', 'reference', 'algorithms', 'glossary'],
                 table_rows=overview_rows, table_columns=overview_columns)
-    WLOG(params, '', 'Wrote APERO docs to: {0}'.format(apero_dir))
+    margs = [apero_dir]
+    # log: Wrote APERO docs to: {0}
+    WLOG(params, '', textentry('40-501-00013', args=margs))
 
 
 # =============================================================================

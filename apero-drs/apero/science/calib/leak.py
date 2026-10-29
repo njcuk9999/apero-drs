@@ -102,9 +102,13 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # check whether filetype is in allowed types
         if filetype not in allowedtypes:
+            # text: Invalid file type = '{0}'. \n function = {1}. \n Must be one
+            #     of the following:
             emsg = textentry('01-001-00020', args=[filetype, func_name])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
+            # error: Invalid file type = '{0}'. \n function = {1}. \n Must be
+            #     one of the following:
             raise AperoCodedException(params, '01-001-00020',
                                       targs=[filetype, func_name],
                                       message=emsg)
@@ -116,6 +120,8 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
         # deal with defintion not found
         if darkfpfile is None:
             eargs = [filetype, recipe.name, func_name]
+            # error: Filetype '{0}' is not valid for recipe={0} instrument={1}.
+            #     \n Function = {2}
             raise AperoCodedException(params, '09-010-00001', targs=eargs)
         # ------------------------------------------------------------------
         # get the reference start and end date
@@ -208,6 +214,8 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     # check for reference fiber in extract dict
     if ref_fiber not in extractdict:
         eargs = [ref_fiber, ', '.join(extractdict.keys()), func_name]
+        # error: Reference fiber '{0}' not found in extraction dictionary. \n
+        #     Possible fibers are: [1} \n Function = {2}
         raise AperoCodedException(params, '00-016-00024', targs=eargs)
     # get the reference file
     reffile = extractdict[ref_fiber]
@@ -219,6 +227,8 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
     if refdpr != 'FP':
         # log and raise error
         eargs = [ref_fiber, dprtype, func_name]
+        # error: Reference fiber '{0}' must be a FP. DPRTYPE = {1} \n Function =
+        #     {2}
         raise AperoCodedException(params, '00-016-00025', targs=eargs)
 
     # get the data for the reference image
@@ -254,6 +264,8 @@ def correct_ref_dark_fp(params: ParamDict, extractdict: ParamDict,
         # check that science fiber is in extraction dictionary
         if sci_fiber not in extractdict:
             eargs = [sci_fiber, ', '.join(extractdict.keys()), func_name]
+            # error: Science fiber '{0}' not found in extraction dictionary. \n
+            #     Possible fibers are: [1} \n Function = {2}
             raise AperoCodedException(params, '00-016-00026', targs=eargs)
         # get the science image
         scifile = extractdict[sci_fiber]
@@ -389,11 +401,13 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
         eprops['E2DSFF'] = e2ds
         eprops['LEAKCORR'] = np.full_like(e2ds.shape, np.nan)
         # print progress
+        # log: Not correcting FP leakage: {0}
         WLOG(params, 'info', textentry('40-016-00034', args=[reason]))
         # return update extraction properties
         return eprops
     # -------------------------------------------------------------------------
     # print progress
+    # log: Correcting FP leakage for fiber={0} dprtype={1}
     WLOG(params, 'info', textentry('40-016-00033', args=[fiber, dprtype]))
     # correct for leak
     e2ds, leakcorr, props = correct_ext_dark_fp(params, recipe, e2ds, ref_e2ds,
@@ -545,9 +559,9 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
     bad_ratio = pcheck(params, 'CAL.LEAK.BAD_RATIO_OFFSET', func=func_name,
                        override=bad_ratio)
     # print progress
-    msg = 'Correcting leakage for fiber "{0}" using reference fiber'
     margs = [fiber]
-    WLOG(params, '', msg.format(*margs))
+    # log: Correcting leakage for fiber "{0}" using reference fiber
+    WLOG(params, '', textentry('40-016-00064', args=margs))
     # group bounding percentiles
     bpercents = [low_percentile, high_percentile]
     # get size of reference image
@@ -618,6 +632,9 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
             # log warning that ref FP ratio is spurious
             wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
                      1 - bad_ratio, 1 + bad_ratio]
+            # warning: Spurious reference FP found (Order = {0}). \n
+            #     Ratio={1:.3e} Approx={2:.3e} Fraction={3:.3f} (Fraction must
+            #     agree within {4} to {5})
             WLOG(params, 'warning', textentry('10-016-00024', args=wargs),
                  sublevel=4)
             # set the ratio to the approx ratio
@@ -714,6 +731,7 @@ def get_leak_ref(params: ParamDict, recipe: DrsRecipe,
     leak_time = cfile.mjdmid
     # ------------------------------------------------------------------------
     # log which fpref file we are using
+    # log: Reading leak reference file: {0}
     WLOG(params, '', textentry('40-016-00028', args=[leak_file]))
     # return the reference image
     return leak_file, leak, leak_time
@@ -823,6 +841,7 @@ def save_uncorrected_ext_fp(params: ParamDict, recipe: DrsRecipe,
     e2dsfile.set_filename(outpath)
     # log that we are saving e2ds uncorrected debug file
     wargs = [e2dsfile.filename]
+    # log: Saving E2DS file: {0}
     WLOG(params, '', textentry('40-016-00005', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -877,7 +896,7 @@ def ref_fplines(params: ParamDict, recipe: DrsRecipe, e2dsfile: DrsFitsFile,
     # deal with allowed dprtypes
     if dprtype not in allowtypes:
         # Skipping FPLINES (DPRTYPE = {0})
-        WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
+        WLOG(params, 'debug', textentry('90-016-00004', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
     # get reference hc lines and fp lines from calibDB
@@ -915,6 +934,7 @@ def qc_leak_ref(params: ParamDict, medcubes: Dict[str, DrsFitsFile]
     # loop around fibers
     for fiber in medcubes:
         # log that we are doing qc for a specific fiber
+        # log: Quality control for fiber '{0}'
         WLOG(params, 'info', textentry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
@@ -927,10 +947,12 @@ def qc_leak_ref(params: ParamDict, medcubes: Dict[str, DrsFitsFile]
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
+            # log: QUALITY CONTROL SUCCESSFUL - Well Done -
             WLOG(params, 'info', textentry('40-005-10001'))
             passed_fiber = 1
         else:
             for farg in fail_msg:
+                # text: QUALITY CONTROL FAILED:
                 WLOG(params, 'warning', textentry('40-005-10002') + farg,
                      sublevel=6)
             passed_fiber = 0
@@ -970,6 +992,7 @@ def qc_leak(params: ParamDict, props: ParamDict, extname: Optional[str] = None
     # loop around fibers
     for fiber in outputs:
         # log that we are doing qc for a specific fiber
+        # log: Quality control for fiber '{0}'
         WLOG(params, 'info', textentry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg = []
@@ -984,10 +1007,12 @@ def qc_leak(params: ParamDict, props: ParamDict, extname: Optional[str] = None
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
+            # log: QUALITY CONTROL SUCCESSFUL - Well Done -
             WLOG(params, 'info', textentry('40-005-10001'))
             passed_fiber = 1
         else:
             for farg in fail_msg:
+                # text: QUALITY CONTROL FAILED:
                 WLOG(params, 'warning', textentry('40-005-10002') + farg,
                      sublevel=6)
             passed_fiber = 0
@@ -1050,6 +1075,7 @@ def write_leak_ref(params: ParamDict, recipe: DrsRecipe, rawfiles: List[str],
                 'KW_LEAK_KERSIZE', value=props['CAL.LEAK.REF_KERSIZE'])
         # log that we are saving rotated image
         wargs = [fiber, outfile.filename]
+        # log: Saving leak reference fiber '{0}': {1}
         WLOG(params, '', textentry('40-016-00025', args=wargs))
         # define multi lists
         data_list = [medtables[fiber]]
@@ -1125,6 +1151,8 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
             extfile.add_qckeys(qc_params[fiber])
             # log that we are saving file
             wargs = [fiber, extname, extfile.filename]
+            # log: Saving leak-corrected extracted file fiber='{0}'
+            #     filetype='{1} file: {2}
             WLOG(params, '', textentry('40-016-00030', args=wargs))
             # define multi lists
             data_list, name_list = [], []
@@ -1176,6 +1204,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [fiber, 'wave', s1dwfile.filename]
+        # log: Saving leak-corrected S1D ({1}) fiber='{0}' file: {2}
         WLOG(params, '', textentry('40-016-00031', args=wargs))
         # define multi lists
         data_list, name_list = [], []
@@ -1207,6 +1236,7 @@ def write_leak(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [fiber, 'velocity', s1dvfile.filename]
+        # log: Saving leak-corrected S1D ({1}) fiber='{0}' file: {2}
         WLOG(params, '', textentry('40-016-00031', args=wargs))
         # define multi lists
         data_list, name_list = [], []

@@ -189,9 +189,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # If we got here user did not define export or import
     # ----------------------------------------------------------------------
     # log error
-    # TODO: Add to language database
-    emsg = 'Argument Error: Must define either --exportdb or --importdb'
-    raise AperoCodedException(params, message=emsg)
+    # error: Argument Error: Must define either --exportdb or --importdb
+    raise AperoCodedException(params, '09-507-00002')
 
 
 # =============================================================================

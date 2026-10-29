@@ -21,6 +21,7 @@ from apero.utils import drs_startup
 from apero.utils import drs_utils
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -36,6 +37,8 @@ __release__ = apero_pkg.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
@@ -137,8 +140,8 @@ def __main__(recipe, params):
         # log progress
         WLOG(params, 'info', params['LOG.HEADER'])
         wargs = [filetype, intype, fiber]
-        msg = 'FILETYPE = {0}   INTYPE = {1}   FIBER = {2}'
-        WLOG(params, 'info', msg.format(*wargs))
+        # log: FILETYPE = {0} INTYPE = {1} FIBER = {2}
+        WLOG(params, 'info', textentry('40-018-00024', args=wargs))
         WLOG(params, 'info', params['LOG.HEADER'])
         # get the in file type
         infiletype = drs_file.get_file_definition(params, intype,
@@ -150,7 +153,8 @@ def __main__(recipe, params):
         fkwargs['KW_FIBER'] = fiber
         if skip_objects is not None:
             fkwargs['KW_OBJNAME'] = skip_objects
-        WLOG(params, '', 'Finding files...')
+        # log: Finding files...
+        WLOG(params, '', textentry('40-018-00020'))
         filenames1 = drs_utils.find_files(params, block_kind='red',
                                           filters=fkwargs)
         # group files
@@ -173,9 +177,9 @@ def __main__(recipe, params):
     # loop around files
     for it, odocode in enumerate(list(filenames.keys())):
         # print file currently processing
-        wmsg = 'Processing file {1} of {2} \n\t File: {0}'
         wargs = [odocode, it + 1, len(list(filenames.keys()))]
-        WLOG(params, 'info', wmsg.format(*wargs))
+        # log: Processing file {1} of {2} \n File: {0}
+        WLOG(params, 'info', textentry('40-018-00025', args=wargs))
         # ----------------------------------------------------------
         # get files associated with this odocode
         ofiles = filenames[odocode]
@@ -209,7 +213,9 @@ def __main__(recipe, params):
         if skip:
             for jt, filename in enumerate(ofiles):
                 wmsg = 'Skipping file {0}'.format(filename)
-                WLOG(params, '', 'Skipping file {0}'.format(filename))
+                margs = [filename]
+                # log: Skipping file {0}
+                WLOG(params, '', textentry('40-018-00023', args=margs))
             continue
         # --------------------------------------------------------------
         # get the first infile
@@ -230,10 +236,12 @@ def __main__(recipe, params):
             wargs = ['PyASL', bprops['USE_BERV']]
         else:
             wargs = ['Barycorrpy', bprops['USE_BERV']]
-        WLOG(params, '', '{0} BERV: {1}'.format(*wargs))
+        # log: {0} BERV: {1}
+        WLOG(params, '', textentry('40-018-00021', args=wargs))
 
         # log the change to berv parameters (input vs output)
-        WLOG(params, '', 'Final berv input parameters:')
+        # log: Final berv input parameters:
+        WLOG(params, '', textentry('40-018-00022'))
         for key in bprops:
             if key in infile.get_header():
                 wargs = [key, infile.get_header()[key], bprops[key]]
@@ -248,8 +256,9 @@ def __main__(recipe, params):
             header1 = infile1.get_header()
             # ----------------------------------------------------------
             # log progress
-            wmsg = 'Writing to file: {0}'.format(infile1.filename)
-            WLOG(params, '', wmsg)
+            margs = [infile1.filename]
+            # log: Writing to file: {0}
+            WLOG(params, '', textentry('40-090-00002', args=margs))
             # update header
             infile1.copy_original_keys(infile1, forbid_keys=False,
                                        allkeys=True)

@@ -35,6 +35,7 @@ from aperocore.constants import load_functions
 from aperocore.core import drs_log
 from apero.io import drs_table
 from aperocore.math import normal_fraction
+from aperocore import drs_lang
 from apero.tools.module.documentation import drs_markdown
 from apero.base.base import TQDM as tqdm
 from apero.instruments import select
@@ -60,6 +61,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # -----------------------------------------------------------------------------
@@ -1097,10 +1100,13 @@ class AriObject:
         #   extracted file cannot exist without a raw file
         if cond1 or cond2 or cond3:
             if cond1:
-                print(f'No raw file matching {file_ext}. '
-                      f'This should not be possible')
+                margs = [file_ext]
+                # log: No raw file matching {0}. This should not be possible
+                print(textentry('40-514-00004', args=margs))
             if cond2 or cond3:
-                print(f'No s1d file matching {file_ext}')
+                margs = [file_ext]
+                # log: No s1d file matching {0}
+                print(textentry('40-514-00005', args=margs))
             return
         # ---------------------------------------------------------------------
         # get the extracted spectrum for the spectrum with the highest SNR
@@ -3054,9 +3060,8 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
     elif mode == 'send':
         rsync_cmd = RSYNC_CMD_OUT
     else:
-        # TODO: Add to language database
-        emsg = 'Mode not recognized (must be "get" or "send")'
-        raise AperoCodedException(params, message=emsg)
+        # error: Mode not recognized (must be "get" or "send")
+        raise AperoCodedException(params, '09-514-00001')
     # --------------------------------------------------------------------------
     # get the ssh command
     ssh_dict = dict()
@@ -3072,10 +3077,9 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
     # --------------------------------------------------------------------------
     # try to do the rsync
     try:
-        # TODO: Add to language database
-        msg = 'Running rsync command: {0}'
         margs = [rsync_cmd.format(**ssh_dict)]
-        WLOG(params, '', msg.format(*margs))
+        # log: Running rsync command: {0}
+        WLOG(params, '', textentry('40-514-00037', args=margs))
         os.system(rsync_cmd.format(**ssh_dict))
     except Exception as e:
         # TODO: Add to language database

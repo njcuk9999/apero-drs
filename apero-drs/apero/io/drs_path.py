@@ -141,10 +141,12 @@ def group_files_by_time(times: np.ndarray,
                 time_thres = (time_thres * time_unit).to(uu.day)
         except uu.UnitConversionError as e:
             eargs = [str(e), func_name]
+            # error: Unit Conversion Error: {0} \n Function = {1}
             raise AperoCodedException(None, '00-008-00008', targs=eargs)
 
         except Exception as e:
             eargs = [type(e), str(e), func_name]
+            # error: {0}: {1} \n Function = {2}
             raise AperoCodedException(None, '00-008-00009', targs=eargs)
 
     elif time_unit == 'hours':
@@ -153,6 +155,8 @@ def group_files_by_time(times: np.ndarray,
         pass
     else:
         eargs = [time_unit, func_name]
+        # error: Time unit = '{0}' not supported. \n Must be 'hours' or 'days'
+        #     or a astropy.unit time quantity. \n Function = {1}
         raise AperoCodedException(None, '00-008-00010', targs=eargs)
     # ID of matched multiplets of files
     matched_id = np.zeros_like(times, dtype=int)
@@ -217,6 +221,8 @@ def makedirs(path: str):
     # catch all exceptions and pipe to drs error
     except Exception as e:
         eargs = [path, type(e), e, func_name]
+        # error: Could not create directory '{0}' \n Error {1}: {2} \n Function
+        #     = {2}
         raise AperoCodedException(None, '01-010-00002', targs=eargs)
 
 
@@ -276,6 +282,7 @@ def copyfile(src: str, dst: str, log: bool = True):
         # if logging then log
         if log:
             wargs = [src, dst]
+            # text: Copying file {0} to {1}
             wmsg = textentry('40-000-00011', args=wargs)
             drs_base.base_printer('40-000-00011', wmsg, level='',
                                   args=wargs)
@@ -284,12 +291,16 @@ def copyfile(src: str, dst: str, log: bool = True):
             shutil.copy(src, dst)
         except Exception as e:
             eargs = [src, dst, type(e), e, func_name]
+            # text: File '{0}' cannot be copied to '{1}' \n Error {2}: {3} \n
+            #     Function = {4}
             wmsg = textentry('00-004-00006', args=eargs)
             drs_base.base_printer('00-004-00006', wmsg, level='',
                                   args=eargs)
     # else raise exception
     else:
         eargs = [src, dst, func_name]
+        # error: File '{0}' cannot be copied to '{1}'. Input file does not
+        #     exist. \n Function = {2}
         raise AperoCodedException(None, '00-004-00005', targs=eargs)
 
 
@@ -511,11 +522,15 @@ def recursive_path_glob(params: ParamDict,
 
     # loading message
     if len(job_msg) > 0:
-        WLOG(params, '', 'Analying path: {0}'.format(path))
+        margs = [path]
+        # log: Analying path: {0}
+        WLOG(params, '', textentry('40-001-00085', args=margs))
     # use os walk to loop around files
     for root, dirs, files in os.walk(str(path)):
         if len(job_msg) > 0:
-            WLOG(params, '', 'Analying path: {0}'.format(root))
+            margs = [root]
+            # log: Analying path: {0}
+            WLOG(params, '', textentry('40-001-00085', args=margs))
         # get the root as a Pathlib instance
         root_instant = Path(root)
         # loop around all files
@@ -563,14 +578,14 @@ def remove_broken_symlinks(params: ParamDict, path: str):
                 path.unlink()
                 count += 1
             except Exception as e:
-                emsg = 'Failed to remove path {0}\n\tError {1}: {2}'
                 eargs = [path, type(e), str(e)]
-                WLOG(params, 'error', emsg.format(*eargs))
+                # error: Failed to remove path {0} \n Error {1}: {2}
+                WLOG(params, 'error', textentry('00-001-00060', args=eargs))
                 return
     # print how many broken symlinks we removed (as a warning)
-    wmsg = 'Remove {0} broken symlinks'
     wargs = [count]
-    WLOG(params, 'warning', wmsg.format(*wargs), sublevel=8)
+    # warning: Remove {0} broken symlinks
+    WLOG(params, 'warning', textentry('10-001-00015', args=wargs), sublevel=8)
 
 
 def calculate_checksum(filename: str) -> str:

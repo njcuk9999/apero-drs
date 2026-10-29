@@ -215,7 +215,9 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     # loop around file types
     for filetype in filetypes:
         # log progress
-        WLOG(params, '', 'Processing {0}'.format(filetype))
+        margs = [filetype]
+        # log: Processing {0}
+        WLOG(params, '', textentry('40-090-00001', args=margs))
         # get file set
         files = getattr(filemod, filetype).fileset
         # get raw table
@@ -228,11 +230,13 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         # modifiy column names
         table, modded = _modify_cols(table, mod_cols, fmt=r'{0}\*')
         # print progress - number of file types
-        msg = '\tAdding {0} file types'
-        WLOG(params, '', msg.format(len(table)))
+        margs = [len(table)]
+        # log: Adding {0} file types
+        WLOG(params, '', textentry('40-501-00045', args=margs))
         # print progress - number of columns
-        msg = '\tAdding {0} columns'
-        WLOG(params, '', msg.format(len(table.colnames)))
+        margs = [len(table.colnames)]
+        # log: Adding {0} columns
+        WLOG(params, '', textentry('40-501-00046', args=margs))
         # push to storage
         table_storage[filetype] = table
         mod_storage[filetype] = modded
@@ -257,7 +261,8 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
         abs_filename = os.path.join(def_dir, filename)
         # print progress
         margs = [filetype, abs_filename]
-        WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
+        # log: Saving {0} csv to: {1}
+        WLOG(params, '', textentry('40-501-00017', args=margs))
         # save table
         table_storage[filetype].write(abs_filename, format='csv',
                                       overwrite=True)
@@ -335,6 +340,7 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
                 else:
                     # warn msg: Section text "{0}" does not exist'
                     wargs = [absfilepath]
+                    # text: Section text file ‘{0}’ does not exist
                     wmsg = textentry('10-506-00001', args=wargs)
                     WLOG(params, 'warning', wmsg, sublevel=4)
         # ------------------------------------------------------------------
@@ -344,7 +350,9 @@ def compile_file_definitions(params: ParamDict, recipe: DrsRecipe):
     # construct markdown filename
     markdown_filename = os.path.join(def_dir, FILES_LIST_FILE)
     # log progress
-    WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
+    margs = [markdown_filename]
+    # log: Writing markdown file: {0}
+    WLOG(params, '', textentry('40-501-00016', args=margs))
     # write markdown to file
     markdown.write_page(markdown_filename)
 
@@ -506,7 +514,8 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
     for srecipe in srecipes:
         # print we are analysing recipe
         margs = [srecipe.name, srecipe.shortname]
-        WLOG(params, 'info', 'Processing {0} [{1}]'.format(*margs))
+        # log: Processing {0} [{1}]
+        WLOG(params, 'info', textentry('40-501-00018', args=margs))
         # get summary parameters
         summary = _compile_recipe(params, pconst, srecipe, outpath)
         # create page ref
@@ -629,7 +638,9 @@ def make_definitions(params: ParamDict, srecipes: List[DrsRecipe],
         markdown_basename = RDEFINITION_FILE.format(sname=summary['SHORTNAME'])
         markdown_filename = os.path.join(outpath, markdown_basename)
         # log progress
-        WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
+        margs = [markdown_filename]
+        # log: Writing markdown file: {0}
+        WLOG(params, '', textentry('40-501-00016', args=margs))
         # write markdown to file
         markdown.write_page(markdown_filename)
         # add to list
@@ -728,7 +739,9 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
     # loop around recipes
     for sequence in sequences:
         # print we are analysing recipe
-        WLOG(params, 'info', 'Processing {0}'.format(sequence.name))
+        margs = [sequence.name]
+        # log: Processing {0}
+        WLOG(params, 'info', textentry('40-090-00001', args=margs))
         # get summary parameters for sequence
         summary = _compile_sequence(params, sequence, def_dir)
         # ---------------------------------------------------------------------
@@ -784,7 +797,9 @@ def compile_recipe_sequences(params: ParamDict, recipe: DrsRecipe):
         markdown_basename = SEQUENCE_FILE.format(seqname=summary['NAME'])
         markdown_filename = os.path.join(def_dir, markdown_basename)
         # log progress
-        WLOG(params, '', 'Writing markdown file: {0}'.format(markdown_filename))
+        margs = [markdown_filename]
+        # log: Writing markdown file: {0}
+        WLOG(params, '', textentry('40-501-00016', args=margs))
         # write markdown to file
         markdown.write_page(markdown_filename)
         # add to list
@@ -1117,7 +1132,8 @@ def _compile_recipe(params: ParamDict, pconst: Instrument,
     abs_filename = os.path.join(outpath, filename)
     # print progress
     margs = [summary['NAME'], filename]
-    WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
+    # log: Saving {0} csv to: {1}
+    WLOG(params, '', textentry('40-501-00017', args=margs))
     # save outtable to file
     table.write(abs_filename, format='csv', overwrite=True)
     # save table filename to out table
@@ -1153,7 +1169,8 @@ def _compile_sequence(params: ParamDict, sequence: DrsRunSequence,
     abs_filename = os.path.join(outpath, basename)
     # print progress
     margs = [summary['NAME'], abs_filename]
-    WLOG(params, '', 'Saving {0} csv to: {1}'.format(*margs))
+    # log: Saving {0} csv to: {1}
+    WLOG(params, '', textentry('40-501-00017', args=margs))
     # save outtable to file
     stable.write(abs_filename, format='csv', overwrite=True)
     # save table filename to out table

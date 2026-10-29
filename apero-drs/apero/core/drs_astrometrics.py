@@ -387,9 +387,9 @@ def _safe_filename(apero_name: str) -> str:
     safe = clean_object(apero_name)
     # protect against an empty / null name
     if safe in ('', 'Null'):
-        emsg = ('Cannot build filename from null/empty APERO name '
-                '({0!r})').format(apero_name)
-        raise AperoCodedException(None, message=emsg)
+        eargs = [apero_name]
+        # error: Cannot build filename from null/empty APERO name ({0!r})
+        raise AperoCodedException(None, '00-512-00001', targs=eargs)
     # append the extension
     return safe + YAML_EXT
 
@@ -1898,9 +1898,10 @@ class _FileLock:
                 except (BlockingIOError, OSError):
                     if (time.time() - start) > self.timeout:
                         self._fh.close()
-                        emsg = 'Timeout acquiring lock {0}'.format(
-                            self.lockpath)
-                        raise AperoCodedException(None, message=emsg)
+                        eargs = [self.lockpath]
+                        # error: Timeout acquiring lock {0}
+                        raise AperoCodedException(None, '00-512-00021',
+                                                  targs=eargs)
                     time.sleep(self.SLEEP_INTERVAL)
         # Fallback path: O_EXCL spin-wait
         while True:
@@ -1913,8 +1914,9 @@ class _FileLock:
                 return self
             except FileExistsError:
                 if (time.time() - start) > self.timeout:
-                    emsg = 'Timeout acquiring lock {0}'.format(self.lockpath)
-                    raise AperoCodedException(None, message=emsg)
+                    eargs = [self.lockpath]
+                    # error: Timeout acquiring lock {0}
+                    raise AperoCodedException(None, '00-512-00021', targs=eargs)
                 time.sleep(self.SLEEP_INTERVAL)
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -2217,8 +2219,9 @@ class AstrometricDatabase:
         if data is None:
             return dict()
         if not isinstance(data, dict):
-            emsg = 'Astrometric yaml {0} is not a mapping'.format(fpath)
-            raise AperoCodedException(None, message=emsg)
+            eargs = [fpath]
+            # error: Astrometric yaml {0} is not a mapping
+            raise AperoCodedException(None, '00-512-00011', targs=eargs)
         return data
 
     @staticmethod
@@ -2380,14 +2383,11 @@ class AstrometricDatabase:
         # raise if caller requires at least one resolution
         if len(found_names) == 0 and not allow_empty:
             label = listname if listname is not None else func_name
-            emsg = ('No objects found in astrometric catalogue.'
-                    '\n\tPlease add objects under {0}'
-                    '\n\tListname={1}'
-                    '\n\tObjnames: "{2}"')
             eargs = [self.path, label,
                      ', '.join(str(n) for n in objnames)]
-            raise AperoCodedException(None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: No objects found in astrometric catalogue. \n Please add
+            #     objects under {0} \n Listname={1} \n Objnames: "{2}"
+            raise AperoCodedException(None, '00-512-00012', targs=eargs)
         # return the two lists
         return found_names, missing_names
 
@@ -2531,15 +2531,15 @@ class AstrometricDatabase:
         """
         # validate input early
         if not isinstance(entry, dict):
-            emsg = 'add_entry() expects a dict, got {0}'
-            raise AperoCodedException(
-                None, message=emsg.format(type(entry).__name__))
+            eargs = [type(entry).__name__]
+            # error: add_entry() expects a dict, got {0}
+            raise AperoCodedException(None, '00-512-00013', targs=eargs)
         # extract & validate the APERO_NAME
         apero_name = entry.get(APERO_NAME_KEY)
         if _is_null(apero_name):
-            emsg = 'add_entry() entry missing required key "{0}"'
-            raise AperoCodedException(
-                None, message=emsg.format(APERO_NAME_KEY))
+            eargs = [APERO_NAME_KEY]
+            # error: add_entry() entry missing required key "{0}"
+            raise AperoCodedException(None, '00-512-00014', targs=eargs)
         # refuse to write objects that exist in the rejected/ sub-dir
         # (unless explicitly allowed by the caller)
         if not allow_rejected:
@@ -2547,12 +2547,10 @@ class AstrometricDatabase:
             existing = find_yaml_in_status_dirs(astrom_root,
                                                 str(apero_name))
             if existing is not None and existing[1] == STATUS_REJECTED:
-                emsg = ('Astrometric entry "{0}" is on the reject list '
-                        '({1}); refusing to add. Pass '
-                        'allow_rejected=True to override.')
-                raise AperoCodedException(
-                    None,
-                    message=emsg.format(apero_name, existing[0]))
+                eargs = [apero_name, existing[0]]
+                # error: Astrometric entry "{0}" is on the reject list ({1});
+                #     refusing to add. Pass allow_rejected=True to override.
+                raise AperoCodedException(None, '00-512-00018', targs=eargs)
         # build the on-disk file path
         fname = _safe_filename(str(apero_name))
         fpath = os.path.join(self.path, fname)
@@ -2565,9 +2563,9 @@ class AstrometricDatabase:
             # decide what to write based on existence + flags
             if os.path.isfile(fpath):
                 if not overwrite:
-                    emsg = 'Astrometric entry already exists: {0}'
-                    raise AperoCodedException(None,
-                                              message=emsg.format(fpath))
+                    eargs = [fpath]
+                    # error: Astrometric entry already exists: {0}
+                    raise AperoCodedException(None, '00-512-00019', targs=eargs)
                 # merge with existing on-disk entry (entry overrides existing)
                 if merge:
                     try:
@@ -2590,15 +2588,12 @@ class AstrometricDatabase:
             if not skip_validation:
                 missing = validate_required_fields(final)
                 if missing:
-                    emsg = ('Astrometric entry "{0}" is missing required '
-                            'field(s): {1}. Set them on the entry, or '
-                            'set NO_PM=True if no proper motion is '
-                            'known, or pass skip_validation=True to '
-                            'bypass.')
-                    raise AperoCodedException(
-                        None,
-                        message=emsg.format(apero_name,
-                                            ', '.join(missing)))
+                    eargs = [apero_name, ', '.join(missing)]
+                    # error: Astrometric entry "{0}" is missing required
+                    #     field(s): {1}. Set them on the entry, or set
+                    #     NO_PM=True if no proper motion is known, or pass
+                    #     skip_validation=True to bypass.
+                    raise AperoCodedException(None, '00-512-00020', targs=eargs)
             # populate / refresh provenance metadata
             _stamp_metadata(final, author=DEFAULT_AUTHOR)
             # do the atomic write
@@ -2633,9 +2628,9 @@ class AstrometricDatabase:
         """
         # validate input early
         if not isinstance(entries, (list, tuple)):
-            emsg = 'add_entries() expects a list of dicts, got {0}'
-            raise AperoCodedException(
-                None, message=emsg.format(type(entries).__name__))
+            eargs = [type(entries).__name__]
+            # error: add_entries() expects a list of dicts, got {0}
+            raise AperoCodedException(None, '00-512-00015', targs=eargs)
         # write each entry in turn and collect the resulting paths
         out_paths: List[str] = []
         for entry in entries:
@@ -3449,11 +3444,11 @@ def update_entry_field(
     :return: dict, the updated entry
     """
     if not apero_name:
-        emsg = 'update_entry_field: apero_name is required'
-        raise AperoCodedException(None, message=emsg)
+        # error: update_entry_field: apero_name is required
+        raise AperoCodedException(None, '00-512-00002')
     if not key:
-        emsg = 'update_entry_field: key is required'
-        raise AperoCodedException(None, message=emsg)
+        # error: update_entry_field: key is required
+        raise AperoCodedException(None, '00-512-00003')
     fname = _safe_filename(str(apero_name))
     fpath = os.path.join(astrom_dir, fname)
     if not os.path.isfile(fpath):
@@ -3461,18 +3456,18 @@ def update_entry_field(
         if found is not None:
             fpath = found[0]
     if not os.path.isfile(fpath):
-        emsg = 'update_entry_field: no entry for {0!r} ({1})'
-        raise AperoCodedException(
-            None, message=emsg.format(apero_name, fpath))
+        eargs = [apero_name, fpath]
+        # error: update_entry_field: no entry for {0!r} ({1})
+        raise AperoCodedException(None, '00-512-00004', targs=eargs)
     entry = AstrometricDatabase._read_yaml(fpath)
     # detect APERO_NAME rename
     rename_to: Optional[str] = None
     if key == APERO_NAME_KEY:
         cleaned = clean_object(str(value)) if value is not None else ''
         if cleaned in ('', 'Null'):
-            emsg = 'update_entry_field: invalid new APERO_NAME {0!r}'
-            raise AperoCodedException(
-                None, message=emsg.format(value))
+            eargs = [value]
+            # error: update_entry_field: invalid new APERO_NAME {0!r}
+            raise AperoCodedException(None, '00-512-00016', targs=eargs)
         if cleaned != clean_object(apero_name):
             rename_to = cleaned
     # apply the edit
@@ -3487,10 +3482,10 @@ def update_entry_field(
         new_fpath = os.path.join(
             os.path.dirname(fpath), rename_to + YAML_EXT)
         if os.path.isfile(new_fpath):
-            emsg = ('update_entry_field: cannot rename {0} -> {1} '
-                    '(target already exists)')
-            raise AperoCodedException(
-                None, message=emsg.format(apero_name, rename_to))
+            eargs = [apero_name, rename_to]
+            # error: update_entry_field: cannot rename {0} -> {1} (target
+            #     already exists)
+            raise AperoCodedException(None, '00-512-00017', targs=eargs)
         AstrometricDatabase._write_yaml(fpath, entry)
         os.replace(fpath, new_fpath)
     else:
@@ -3519,20 +3514,20 @@ def upload_entry(
     :return: tuple of (yaml file path, stamped entry dict)
     """
     if not isinstance(entry, dict):
-        emsg = 'upload_entry: expected dict, got {0}'
-        raise AperoCodedException(
-            None, message=emsg.format(type(entry).__name__))
+        eargs = [type(entry).__name__]
+        # error: upload_entry: expected dict, got {0}
+        raise AperoCodedException(None, '00-512-00005', targs=eargs)
     apero_name = entry.get(APERO_NAME_KEY)
     if _is_null(apero_name):
-        emsg = 'upload_entry: entry missing required key {0!r}'
-        raise AperoCodedException(
-            None, message=emsg.format(APERO_NAME_KEY))
+        eargs = [APERO_NAME_KEY]
+        # error: upload_entry: entry missing required key {0!r}
+        raise AperoCodedException(None, '00-512-00006', targs=eargs)
     fname = _safe_filename(str(apero_name))
     fpath = os.path.join(astrom_dir, fname)
     if os.path.isfile(fpath) and not overwrite:
-        emsg = 'upload_entry: entry already exists for {0!r} ({1})'
-        raise AperoCodedException(
-            None, message=emsg.format(apero_name, fpath))
+        eargs = [apero_name, fpath]
+        # error: upload_entry: entry already exists for {0!r} ({1})
+        raise AperoCodedException(None, '00-512-00007', targs=eargs)
     os.makedirs(astrom_dir, exist_ok=True)
     _stamp_metadata(entry, author=author)
     AstrometricDatabase._write_yaml(fpath, entry)
@@ -3565,19 +3560,18 @@ def set_status(
     :return: tuple of ``(new_yaml_path, old_status, stamped_entry)``
     """
     if not apero_name:
-        emsg = 'set_status: apero_name is required'
-        raise AperoCodedException(None, message=emsg)
+        # error: set_status: apero_name is required
+        raise AperoCodedException(None, '00-512-00008')
     canonical = STATUS_ALIASES.get(new_status, new_status)
     if canonical not in STATUS_SUBDIRS:
-        emsg = ('set_status: unknown status {0!r}; '
-                'expected one of {1}')
-        raise AperoCodedException(
-            None, message=emsg.format(new_status, STATUS_SUBDIRS))
+        eargs = [new_status, STATUS_SUBDIRS]
+        # error: set_status: unknown status {0!r}; expected one of {1}
+        raise AperoCodedException(None, '00-512-00009', targs=eargs)
     found = find_yaml_in_status_dirs(astrom_root, apero_name)
     if found is None:
-        emsg = 'set_status: no yaml found for {0!r} under {1}'
-        raise AperoCodedException(
-            None, message=emsg.format(apero_name, astrom_root))
+        eargs = [apero_name, astrom_root]
+        # error: set_status: no yaml found for {0!r} under {1}
+        raise AperoCodedException(None, '00-512-00010', targs=eargs)
     old_path, old_status = found
     entry = AstrometricDatabase._read_yaml(old_path)
     # apply new STATUS *before* stamping so _stamp_metadata accepts it

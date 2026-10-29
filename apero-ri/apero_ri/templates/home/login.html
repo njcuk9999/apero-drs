@@ -27,7 +27,7 @@
         </div>
         <a href="{{ url_for('logout') }}" class="ari-btn ari-btn--danger ari-btn--block">
             <i class="fa-solid fa-right-from-bracket"></i>
-            Logout
+            {{ _('Logout') }}
         </a>
     </div>
 </div>
@@ -35,39 +35,39 @@
 {% else %}
 {# --- Login form --- #}
 <div class="ari-login-box">
-    <h2><i class="fa-solid fa-right-to-bracket"></i> Sign In</h2>
+    <h2><i class="fa-solid fa-right-to-bracket"></i> {{ _('Sign In') }}</h2>
     <form method="POST" action="{{ url_for('login') }}">
         <div class="ari-form-group">
-            <label for="username">Username</label>
+            <label for="username">{{ _('Username') }}</label>
             <input type="text" id="username" name="username"
                    value="{{ last_username|default('') }}"
                    autocomplete="username" autocapitalize="none"
                    spellcheck="false" required autofocus>
         </div>
         <div class="ari-form-group">
-            <label for="password">Password</label>
+            <label for="password">{{ _('Password') }}</label>
             <input type="password" id="password" name="password"
                    autocomplete="current-password" required>
         </div>
         <div class="ari-form-group ari-form-check">
             <label>
                 <input type="checkbox" name="remember" value="1" checked>
-                <span>Remember me</span>
+                <span>{{ _('Remember me') }}</span>
             </label>
         </div>
         <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
             <i class="fa-solid fa-right-to-bracket"></i>
-            Login
+            {{ _('Login') }}
         </button>
         <a href="{{ url_for('forgot_password') }}"
            style="display:block; margin-top:0.55rem; text-align:center; text-decoration:none; color:var(--ari-primary);">
             <i class="fa-solid fa-key"></i>
-            Forgot password?
+            {{ _('Forgot password?') }}
         </a>
         <a href="{{ url_for('register') }}" class="ari-btn ari-btn--secondary ari-btn--block"
            style="margin-top:0.55rem; text-align:center; text-decoration:none;">
             <i class="fa-solid fa-user-plus"></i>
-            Register New Account
+            {{ _('Register New Account') }}
         </a>
     </form>
 </div>

@@ -150,30 +150,40 @@ def set_polar_exposures(params: ParamDict) -> List[DrsFitsFile]:
             # add to position 1
             exposures[0] = exp
             margs = [exp.basename, 1]
+            # log: Exposure {0} in polarimetric mode, setting exposure number
+            #     {1}
             WLOG(params, '', textentry('40-021-00020', args=margs))
         # exposure 2
         elif cond2a or cond2b or cond2c:
             # add to position 1
             exposures[1] = exp
             margs = [exp.basename, 2]
+            # log: Exposure {0} in polarimetric mode, setting exposure number
+            #     {1}
             WLOG(params, '', textentry('40-021-00020', args=margs))
         # exposure 3
         elif cond3a or cond3b or cond3c:
             # add to position 1
             exposures[2] = exp
             margs = [exp.basename, 3]
+            # log: Exposure {0} in polarimetric mode, setting exposure number
+            #     {1}
             WLOG(params, '', textentry('40-021-00020', args=margs))
         # exposure 3
         elif cond4a or cond4b or cond4c:
             # add to position 1
             exposures[3] = exp
             margs = [exp.basename, 4]
+            # log: Exposure {0} in polarimetric mode, setting exposure number
+            #     {1}
             WLOG(params, '', textentry('40-021-00020', args=margs))
         # else unknown mode - raise error
         else:
             # log error: Exposure {0} must have keys {1} and {2}
             eargs = [exp_pos, params['KW_POLAR_KEY_1'][0],
                      params['KW_POLAR_KEY_2'][1], func_name]
+            # error: Exposure {0} must have keys ‘{1}’ and ‘{2}’ \n Function =
+            #     {3}
             raise AperoCodedException(params, '09-021-00010', targs=eargs)
         # stop if we already have 4 exposures
         if exp_pos > 3:
@@ -359,8 +369,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         # loop around exposures
         for it in range(len(stokes)):
             eargs = [basenames[it], exp_nums[it], stokes[it]]
+            # text: File: {0}Exp: {1}Stokes: {2}
             emsg += '\n' + textentry('09-021-00013', args=eargs)
         # pass error to logger
+        # error: Identified more than one stokes parameters in input data
         raise AperoCodedException(params, '09-021-00012', message=emsg)
     else:
         polar_dict['GLOBAL_STOKES'] = stokes[0]
@@ -373,8 +385,10 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
         # loop around exposures
         for it in range(len(objnames)):
             eargs = [basenames[it], params['KW_OBJNAME'][0], objnames[it]]
+            # text: File: {0}{1} = {2}
             emsg += '\n' + textentry('09-021-00015', args=eargs)
         # pass error to logger
+        # error: Object name from header ({0}) not consistent between files
         raise AperoCodedException(params, '09-021-00014', message=emsg)
     # set object name
     object_name = objnames[0]
@@ -474,6 +488,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             # work out key
             key_str = '{0}_{1}'.format(fiber, exp_nums[it])
             # log that we are loading data for this key
+            # log: Loading data for {0}
             WLOG(params, 'info', textentry('40-021-00022', args=[key_str]))
             # -----------------------------------------------------------------
             # add key to polar dict list
@@ -577,10 +592,9 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     if len(polar_dict['EXPOSURES']) == 8:
         polar_dict['N_EXPOSURES'] = 4
     else:
-        # TODO: Add to language database
-        emsg = ('Number of exposures in input data is not sufficient for'
-                ' polarimetry calculations')
-        raise AperoCodedException(params, message=emsg)
+        # error: Number of exposures in input data is not sufficient for
+        #     polarimetry calculations
+        raise AperoCodedException(params, '09-021-00021')
     # -------------------------------------------------------------------------
     # add object name and temperature to polar dictionary
     polar_dict['OBJECT_NAME'] = object_name
@@ -784,6 +798,7 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
     # get the number of exposures
     nexp = float(props['N_EXPOSURES'])
     # log that we are running function {0} to calculate polarization'
+    # log: Running {0} function to calculate polarization
     WLOG(params, '', textentry('40-021-00002', args=[name]))
     # ---------------------------------------------------------------------
     # delegate numerical work to the profile-independent core module
@@ -806,6 +821,7 @@ def polarimetry_diff_method(params: ParamDict, props: ParamDict,
     # set sources
     props.set_sources(['OBJ.POL.GEN.METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
     # log end of polarimetry calculations
+    # log: Routine {0} ran successfully
     WLOG(params, 'info', textentry('40-021-00023', args=[name]))
     # -------------------------------------------------------------------------
     # return loc
@@ -854,6 +870,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
     polar_interpolate_flux = pcheck(params, 'OBJ.POL.GEN.INTERPOLATE_FLUX',
                                     func=func_name, override=interp_flux)
     # log start of polarimetry calculations
+    # log: Running {0} function to calculate polarization
     WLOG(params, '', textentry('40-021-00002', args=[name]))
     # get parameters from loc
     if polar_interpolate_flux:
@@ -880,6 +897,7 @@ def polarimetry_ratio_method(params: ParamDict, props: ParamDict,
     # set sources
     props.set_sources(['OBJ.POL.GEN.METHOD', 'POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
     # log end of polarimetry calculations
+    # log: Routine {0} ran successfully
     WLOG(params, 'info', textentry('40-021-00023', args=[name]))
     # return loc
     return props
@@ -914,8 +932,9 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
     name = 'calculate_stokes_i'
     func_name = display_func(name, __NAME__)
     # log start of Stokes I calculations
-    wmsg = 'Running function {0} to calculate Stokes I total flux'
-    WLOG(params, '', wmsg.format(name))
+    margs = [name]
+    # log: Running function {0} to calculate Stokes I total flux
+    WLOG(params, '', textentry('40-021-00032', args=margs))
     # get parameters from params
     polar_interpolate_flux = pcheck(params, 'OBJ.POL.GEN.INTERPOLATE_FLUX',
                                     func=func_name, override=interp_flux)
@@ -940,8 +959,9 @@ def calculate_stokes_i(params: ParamDict, props: ParamDict,
     props.set_sources(keys, func_name)
 
     # log end of Stokes I intensity calculations
-    wmsg = 'Routine {0} run successfully'
-    WLOG(params, '', wmsg.format(name))
+    margs = [name]
+    # log: Routine {0} run successfully
+    WLOG(params, '', textentry('40-021-00033', args=margs))
 
     # return loc
     return props
@@ -971,8 +991,9 @@ def get_interp_flux(params: ParamDict, wavemap0: np.ndarray, flux0: np.ndarray,
         clean = np.isfinite(flux0[order_num]) & np.isfinite(flux0[order_num])
         # deal with whole order being NaNs
         if np.sum(clean) == 0:
-            wmsg = 'Order {0} has no good pixels (get_interp_flux)'
-            WLOG(params, 'warning', wmsg.format(order_num))
+            wargs = [order_num]
+            # warning: Order {0} has no good pixels (get_interp_flux)
+            WLOG(params, 'warning', textentry('10-021-00011', args=wargs))
             continue
         # get order values
         ordwave0 = wavemap0[order_num][clean]
@@ -1024,8 +1045,9 @@ def get_interp_blaze(params: ParamDict, wavemap0: np.ndarray,
         clean = np.isfinite(blaze0[order_num]) & np.isfinite(blaze0[order_num])
         # deal with whole order being NaNs
         if np.sum(clean) == 0:
-            wmsg = 'Order {0} has no good pixels (get_interp_flux)'
-            WLOG(params, 'warning', wmsg.format(order_num))
+            wargs = [order_num]
+            # warning: Order {0} has no good pixels (get_interp_flux)
+            WLOG(params, 'warning', textentry('10-021-00011', args=wargs))
             continue
         # get order values
         ordwave0 = wavemap0[order_num][clean]
@@ -1161,6 +1183,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     # -------------------------------------------------------------------------
     # print progress: Calculating Stokes I using {0}'
     margs = [stokesi_detection_alg]
+    # log: Calculating Stokes I total flux
     WLOG(params, '', textentry('40-021-00003', args=margs))
     # -------------------------------------------------------------------------
     # calculate continuum flux using moving median
@@ -1192,6 +1215,7 @@ def calculate_continuum(params: ParamDict, recipe: DrsRecipe, props: ParamDict
     # -------------------------------------------------------------------------
     # print progress: Calculating polar using {0}
     margs = [polar_detection_alg]
+    # log: Calculating polarization using {0}
     WLOG(params, '', textentry('40-021-00024', args=margs))
     # -------------------------------------------------------------------------
     # calculate polarization flux using moving median
@@ -1524,9 +1548,11 @@ def quality_control(params) -> Tuple[List[List[Any]], bool]:
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if passed:
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
     # store in qc_params
@@ -1623,6 +1649,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add data
     polfile.data = pol_data
     # log that we are saving pol file
+    # log: Saving POL file: {0}
     WLOG(params, '', textentry('40-021-00005', args=[polfile.filename]))
     # define multi lists
     data_list = [polerr_data, ctable]
@@ -1656,6 +1683,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add data
     stokesfile.data = stokesi_data
     # log that we are saving pol file
+    # log: Saving Stokes I file: {0}
     WLOG(params, '', textentry('40-021-00008', args=[stokesfile.filename]))
     # define multi lists
     data_list = [stokesierr_data, ctable]
@@ -1689,6 +1717,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add data
     null1file.data = null1_data
     # log that we are saving null 1 file
+    # log: Saving NULL1 file: {0}
     WLOG(params, '', textentry('40-021-00006', args=[null1file.filename]))
     # define multi lists
     data_list = [ctable]
@@ -1722,6 +1751,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add data
     null2file.data = null2_data
     # log that we are saving null 2file
+    # log: Saving NULL2 file: {0}
     WLOG(params, '', textentry('40-021-00007', args=[null2file.filename]))
     # define multi lists
     data_list = [ctable]
@@ -1755,6 +1785,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     # add data
     calibfile.data = ctable
     # log that we are saving null 2file
+    # log: Saving POL_CALIB file: {0}
     WLOG(params, '', textentry('40-021-00031', args=[calibfile.filename]))
     # define multi lists
     data_list = [wave_data, blaze_data]
@@ -1795,6 +1826,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
         s1dfile.datatype = 'table'
         # log that we are saving s1d table
         wargs = [s1dkey, s1dfile.filename]
+        # log: Saving S1D {0} to file: {1}
         WLOG(params, '', textentry('40-021-00010', args=wargs))
         # define multi lists
         data_list = [ctable]
@@ -2036,6 +2068,8 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
                 else:
                     # Log Error: Can not recognize selected mode="{0}"
                     eargs = [mode, func_name]
+                    # error: Can not recognize selected continuum mode: {0} \n
+                    #     Function={1}
                     raise AperoCodedException(params, '09-021-00018', targs=eargs)
         # ---------------------------------------------------------------------
         # if we are dealing with last bin
@@ -2213,6 +2247,8 @@ def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
             if np.sum(~mspec1) < min_points:
                 if verbose:
                     # Log warning: Minimum points {0} reached
+                    # text: Minimum number of points required reached (={0}) -
+                    #     stopping rejection
                     wmsg = textentry('10-021-00007', args=[min_points])
                     WLOG(params, 'warning', wmsg, sublevel=2)
                 break
@@ -2363,6 +2399,7 @@ def _continuum_polarization(params: ParamDict, xarr: np.ndarray,
             else:
                 # Log error: Can not recognize selected mode="{0}"
                 eargs = [mode, func_name]
+                # error: Cannot recognize selected mode: ‘{0}’ \n Function = {1}
                 raise AperoCodedException(params, '09-021-00020', targs=eargs)
         # ---------------------------------------------------------------------
         if ibin == nbins - 1:

@@ -19,6 +19,7 @@ from apero.utils import drs_startup
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -32,6 +33,8 @@ __date__ = apero_pkg.__date__
 __release__ = apero_pkg.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -82,7 +85,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     # deal with no mode set
     if 'MODE' not in params['INPUTS']:
-        WLOG(params, '', 'Must set --mode')
+        # log: Must set --mode
+        WLOG(params, '', textentry('40-511-00009'))
         return locals()
 
     mode = params['INPUTS']['MODE']
@@ -91,8 +95,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get path
         path = params['INPUTS']['path']
         if drs_text.null_text(path, ['None', 'Null', '']):
-            msg = 'Must set --path for --mode="info"'
-            WLOG(params, 'error', msg)
+            # error: Must set --path for --mode="info"
+            WLOG(params, 'error', textentry('09-511-00004'))
         # run info graphics function
         visu_info.process_path(params, path)
         # stop after this

@@ -97,12 +97,12 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # must set either objname or filename
     if objname in ['None', None] and identifier in ['None', None]:
-        emsg = 'Must set either objname or identifier'
-        raise AperoCodedException(params, message=emsg)
+        # error: Must set either objname or identifier
+        raise AperoCodedException(params, '09-521-00001')
     # must not set both - this is confusing
     if objname not in ['None', None] and identifier not in ['None', None]:
-        emsg = 'Must set either objname or identifier'
-        raise AperoCodedException(params, message=emsg)
+        # error: Must set either objname or identifier
+        raise AperoCodedException(params, '09-521-00001')
     # ----------------------------------------------------------------------
     # deal with objname set
     if objname not in ['None', None]:

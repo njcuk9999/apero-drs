@@ -194,6 +194,7 @@ def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
     datatype_list = ['table']
     name_list = ['POL_TABLE']
     # log that we are saving pol file
+    # log: Saving LSD file: {0}
     WLOG(params, '', textentry('40-021-00009', args=[lsdfile.filename]))
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
@@ -283,6 +284,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # log number of lines in original mask
     lines_num_mask = len(wavec)
     margs = [lines_num_mask]
+    # log: Number of lines in the original mask = {0}
     WLOG(params, '', textentry('40-021-00029', args=margs))
     # -------------------------------------------------------------------------
     # get a flag mask
@@ -323,6 +325,7 @@ def load_lsd_mask(params: ParamDict, props: ParamDict) -> ParamDict:
     # -------------------------------------------------------------------------
     # log the number of valid lines after filtering
     margs = [num_lines_used]
+    # log: Number of lines after filtering = {0}
     WLOG(params, '', textentry('40-021-00030', args=margs))
     # -------------------------------------------------------------------------
     # get weight from masks

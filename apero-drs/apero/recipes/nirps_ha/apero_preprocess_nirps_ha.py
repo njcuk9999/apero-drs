@@ -143,6 +143,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                          file_instance.get_header())
         # deal with bad files
         if reject_file:
+            # warning: File in reject list - skipping.
             WLOG(params, 'warning', textentry('10-503-00022'), sublevel=2)
 
         # ------------------------------------------------------------------
@@ -173,17 +174,22 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # if it wasn't found skip this file, if it was print a message
         if cond:
             eargs = [infile.name]
+            # log: File identified as {0}
             WLOG(params, 'info', textentry('40-010-00001', args=eargs))
         else:
             eargs = [infile.filename]
+            # error: File not identified. \n Skipping file {0}
             raise AperoCodedException(params, '40-010-00002', targs=eargs)
         # ------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Loading RAMP [intercept,inttime,errslope]')
+        # log: Loading RAMP [intercept,inttime,errslope]
+        WLOG(params, '', textentry('40-010-00024'))
         # get data from file instance
         datalist = infile.get_data(copy=True, extensions=[1, 2, 3])
         # print progress
-        WLOG(params, '', '\tLoaded {0}'.format(infile.filename))
+        margs = [infile.filename]
+        # log: Loaded {0}
+        WLOG(params, '', textentry('40-010-00025', args=margs))
         # get flux image from the data list
         image = datalist[0]
         # get intercept from the data list
@@ -210,7 +216,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Get out file and check skip
         # ------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Loading drs output file')
+        # log: Loading drs output file
+        WLOG(params, '', textentry('40-010-00026'))
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
         found, outfile = prep.drs_outfile_id(*oargs)
@@ -219,10 +226,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # if we didn't find the output file we should log this error
         if not found:
             eargs = [outfile.name]
+            # error: Could not find pp file with name '{0}'.
             raise AperoCodedException(params, '00-010-00003', targs=eargs)
         if skip:
             if os.path.exists(outfile.filename):
                 wargs = [infile.filename]
+                # log: File already exists and skipping done files activated. \n
+                #     Skipping file {0}
                 WLOG(params, 'info', textentry('40-010-00012', args=wargs))
                 continue
 
@@ -230,7 +240,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Check for pixel shift and/or corrupted files
         # ----------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Checking for pixel shift and/or corrupted files')
+        # log: Checking for pixel shift and/or corrupted files
+        WLOG(params, '', textentry('40-010-00027'))
         # storage
         snr_hotpix, rms_list = [], []
         shiftdx, shiftdy = 0, 0
@@ -246,6 +257,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # if full image is NaN we stop here
             if np.isnan(snr_hotpix):
                 farg = 'Full image NaN'
+                # text: QUALITY CONTROL FAILED:
                 WLOG(params, 'warning', textentry('40-005-10002') + farg,
                      sublevel=6)
                 # log complete failure
@@ -262,6 +274,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             #    is located
             if shiftdx != 0 and shiftdy != 0:
                 # log process
+                # text: Image found to be offset from engineering flat. \n
+                #     Shifting image by dx = {0} dy = {1}
                 wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
                 WLOG(params, '', wmsg)
                 # roll on the y axis
@@ -276,6 +290,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 inttime = np.roll(inttime, [shiftdx], axis=1)
             elif shiftdx != 0:
                 # log process
+                # text: Image found to be offset from engineering flat. \n
+                #     Shifting image by dx = {0} dy = {1}
                 wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
                 WLOG(params, '', wmsg)
                 # roll on the x axis
@@ -285,6 +301,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 inttime = np.roll(inttime, [shiftdx], axis=1)
             elif shiftdy != 0:
                 # log process
+                # text: Image found to be offset from engineering flat. \n
+                #     Shifting image by dx = {0} dy = {1}
                 wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
                 WLOG(params, '', wmsg)
                 # roll on the y axis
@@ -316,7 +334,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # correct image
         # ------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Applying NIRPS detector corrections')
+        # log: Applying NIRPS detector corrections
+        WLOG(params, '', textentry('40-010-00028'))
         # nirps correction for preprocessing (specific to NIRPS)
         image = prep.nirps_correction(params, recipe, image, infile.header,
                                       create_mask=False)
@@ -329,7 +348,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # correct between amplifier capacity coupling from science flux
         if sci_capc_corr:
             # print progress
-            WLOG(params, '', 'Applying sci capactivitive coupling correction')
+            # log: Applying sci capactivitive coupling correction
+            WLOG(params, '', textentry('40-010-00030'))
             image = prep.correct_sci_capacitive_coupling(params, image)
 
         # ----------------------------------------------------------------------
@@ -362,8 +382,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # divide by LED flat
         # ------------------------------------------------------------------
-        # TODO: Add to language database
-        WLOG(params, '', 'Performing LED flat')
+        # log: Performing LED flat
+        WLOG(params, '', textentry('40-010-00029'))
         # load the LED flat from calibration database
         led_flat, led_file = prep.load_led_flat(params, recipe)
         # divide image by LED flat
@@ -435,6 +455,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [outfile.filename]
+        # log: Saving rotated image in {0}
         WLOG(params, '', textentry('40-010-00009', args=wargs))
         # define multi lists
         data_list, name_list = [], []

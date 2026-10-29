@@ -91,6 +91,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
         # log and raise error: not enough tranmission maps to run pca analysis
         wargs = [trans_key, len(transfiles), npc, 'OBJ.TELLU.FIT.NUM_PCA',
                  func_name]
+        # error: Not enough transmission maps ({0}) in database to run PCA
+        #     analysis \n Number of maps = {1} number of principle components =
+        #     {2} \n Add more maps or reduced number of principle components
+        #     ({3}). \n Function = {4}
         raise AperoCodedException(params, '09-019-00003', targs=wargs)
     # ----------------------------------------------------------------------
     # check whether we can use pre-saved absorption map and create it by
@@ -115,6 +119,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
         abso1 = drs_path.numpy_load(abso1_npy.filename)
         # log that we have loaded abso from file
         wargs = [abso_npy.filename]
+        # log: Loading abso from file: {0}
         WLOG(params, '', textentry('40-019-00012', args=wargs))
         # set abso source
         abso_source = '[file] ' + abso_npy.basename
@@ -122,6 +127,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     except Exception as e:
         # debug print out: cannot load abso file
         dargs = [abso_npy, type(e), e]
+        # debug: Can not load abso from file: {0} \n Error {1}: {2}
         WLOG(params, 'debug', textentry('90-019-00001', args=dargs))
         # set up storage for the absorption
         abso = np.zeros([len(transfiles), np.prod(image.shape)])
@@ -137,14 +143,19 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
             if np.sum(np.isnan(transimage)) == np.prod(transimage):
                 # log that we are removing a trans file
                 wargs = [transfiles[it]]
+                # log: Skipping trans file due to all NaNs. File = {0}
                 WLOG(params, '', textentry('40-019-00014', args=wargs))
             # make sure we have required header key for expo_water
             elif params['KW_TELLUP_EXPO_WATER'][0] not in transhdr:
                 wargs = [params['KW_TELLUP_EXPO_WATER'][0], transfiles[it]]
+                # log: Skipping trans file (Header does not contain '{0}') \n
+                #     Filename = {1}
                 WLOG(params, '', textentry('40-019-00050', args=wargs))
             # make sure we have required header key for expo_others
             elif params['KW_TELLUP_EXPO_OTHERS'][0] not in transhdr:
                 wargs = [params['KW_TELLUP_EXPO_OTHERS'][0], transfiles[it]]
+                # log: Skipping trans file (Header does not contain '{0}') \n
+                #     Filename = {1}
                 WLOG(params, '', textentry('40-019-00050', args=wargs))
             else:
                 # push data into abso array
@@ -157,6 +168,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
         # set abso source
         abso_source = '[database] trans_file'
         # log that we are saving the abso to file
+        # log: Saving abso (npy) file: {0}
         WLOG(params, '', textentry('40-019-00013', args=[abso_npy.filename]))
         # may need to re-try this if more than one process hit at the same time
         count = 0
@@ -188,6 +200,8 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
                 # log progress: Removing/Writing abso npy file failed.
                 #     Trying again
                 eargs = [func_name, type(e), str(e)]
+                # warning: Removing/Writing of abso npy file failed. Trying
+                #     again. \n Function = {0} \n {1}: {2}
                 WLOG(params, 'warning', textentry('10-019-00012', eargs),
                      sublevel=2)
 
@@ -230,11 +244,14 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
 
     # log fraction of valid (non NaN) pixels
     fraction = mp.nansum(keep) / len(keep)
+    # log: Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}
     WLOG(params, '', textentry('40-019-00015', args=[fraction]))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as _:
         keep &= mp.nanmin(log_abso, axis=0) > -1
     fraction = mp.nansum(keep) / len(keep)
+    # log: Fraction of valid pixels with residual transmission > exp(-1) =
+    #     {0:.3f}
     WLOG(params, '', textentry('40-019-00016', args=[fraction]))
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
@@ -318,6 +335,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # deal with bad berv (nan or None)
     if not isinstance(dv, (int, float)) or not np.isfinite(dv):
         eargs = [dv, func_name]
+        # error: BERV value unusable. BERV = '{0}' \n Function = {1}
         raise AperoCodedException(params, '09-016-00004', targs=eargs)
     # Get the reference wavemap from reference wave props
     wavemap_ref = refprops['WAVEMAP']
@@ -341,6 +359,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # ------------------------------------------------------------------
     if template is not None:
         # Log that we are shifting the template
+        # log: Shifting template to stellar frame (using BERV)
         WLOG(params, '', textentry('40-019-00017'))
         # set up storage for template
         template2 = np.zeros(np.prod(image.shape))
@@ -370,6 +389,8 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
         # ------------------------------------------------------------------
         # log the shifting of PCA components
         wargs = [wavefile_ref, wavefile]
+        # log: Shifting template spectrum in wave grid \n in wave grid = {0} \n
+        #     out wave grid = {1}
         WLOG(params, '', textentry('40-019-00021', args=wargs))
         # shift template
         shift_temp = wave_core.wave_to_wave(template2, wavemap_ref,
@@ -390,6 +411,8 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # ------------------------------------------------------------------
     # log the shifting of PCA components
     wargs = [wavefile_ref, wavefile]
+    # log: Shifting PCA components in wave grid \n in wave grid = {0} \n out
+    #     wave grid = {1}
     WLOG(params, '', textentry('40-019-00018', args=wargs))
     # shift pca components (one by one)
     for comp in range(npc):
@@ -405,6 +428,8 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
     # ------------------------------------------------------------------
     # log the shifting of the tapas spectrum
     wargs = [wavefile_ref, wavefile]
+    # log: Shifting TAPAS spectrum in wave grid \n in wave grid = {0} \n out
+    #     wave grid = {1}
     WLOG(params, '', textentry('40-019-00019', args=wargs))
     # shift tapas species
     for row in range(len(tapas_all_species2)):
@@ -528,6 +553,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     for ite in range(fit_iterations):
         # log progress
         wargs = [ite + 1, fit_iterations]
+        # log: Recon calculation iteration {0} of {1}
         WLOG(params, '', textentry('40-019-00020', args=wargs))
         # ------------------------------------------------------------------
         # if we don't have a template construct one
@@ -617,6 +643,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
         # log number of kept pixels
         wargs = [mp.nansum(keep)]
+        # log: Number of pixels to keep in PC fit total = {0}
         WLOG(params, '', textentry('40-019-00022', args=wargs))
         # ------------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
@@ -853,18 +880,17 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # calculate the ratio between this fibers image and the usm of all fibers
     ratio = mp.nanmedian(image / tpreprops['PRE_SKYCORR_IMAGE'])
     # print ratio
-    # TODO: Add to language database
-    msg = '\tRatio of individual fiber={0} to sum of all fibers is: {1:.3f}'
     margs = [fiber, ratio]
-    WLOG(params, '', msg.format(*margs))
+    # log: Ratio of individual fiber={0} to sum of all fibers is: {1:.3f}
+    WLOG(params, '', textentry('40-019-00057', args=margs))
     # deal with out of bounds ratios
     if not (0.45 < ratio < 0.55):
         ratio = 0.5
-        # TODO: Add to language database
-        wmsg = ('\tRatio of individual fiber={0} to sum of all fibers is out of'
-                'bounds (0.45 < ratio < 0.55)')
         wargs = [fiber]
-        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+        # warning: Ratio of individual fiber={0} to sum of all fibers is out
+        #     ofbounds (0.45 < ratio < 0.55)
+        WLOG(params, 'warning', textentry('10-019-00013', args=wargs),
+             sublevel=3)
     # correct for the sky
     image1 = image - ratio * tpreprops['SKY_MODEL']
 
@@ -962,6 +988,7 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     # check that SNR is high enough
     if snr[snr_order] < qc_snr_min:
         fargs = [snr_order, snr[snr_order], qc_snr_min]
+        # text: low SNR in order {0}: ({1:.2f} < {2:.2f})
         fail_msg.append(textentry('40-019-00007', args=fargs))
         qc_pass.append(0)
     else:
@@ -976,10 +1003,12 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
+        # log: QUALITY CONTROL SUCCESSFUL - Well Done -
         WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
+            # text: QUALITY CONTROL FAILED:
             WLOG(params, 'warning', textentry('40-005-10002') + farg,
                  sublevel=6)
         passed = 0
@@ -1126,6 +1155,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.data = sp_out
     # ------------------------------------------------------------------
     # log that we are saving rotated image
+    # log: Saving corrected E2DS file: {0}
     WLOG(params, '', textentry('40-019-00023', args=[corrfile.filename]))
     # define multi lists
     data_list = [trans_table]
@@ -1170,6 +1200,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dwfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['wave', sc1dwfile.filename]
+    # log: Saving corrected s1d ({0}) file: {1}
     WLOG(params, '', textentry('40-019-00024', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -1203,6 +1234,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dvfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['velocity', sc1dvfile.filename]
+    # log: Saving corrected s1d ({0}) file: {1}
     WLOG(params, '', textentry('40-019-00024', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -1236,6 +1268,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # copy data
     reconfile.data = cprops['RECON_ABSO']
     # log that we are saving recon e2ds file
+    # log: Saving recon E2DS file: {0}
     WLOG(params, '', textentry('40-019-00025', args=[reconfile.filename]))
     # define multi lists
     data_list, name_list = [], []
@@ -1282,6 +1315,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dwfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['wave', rc1dwfile.filename]
+    # log: Saving recon s1d ({0}) file: {1}
     WLOG(params, '', textentry('40-019-00026', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -1328,6 +1362,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['velocity', rc1dvfile.filename]
+    # log: Saving recon s1d ({0}) file: {1}
     WLOG(params, '', textentry('40-019-00026', args=wargs))
     # define multi lists
     data_list, name_list = [], []
@@ -1361,6 +1396,7 @@ def _remove_absonpy_files(params, path, prefix):
             # create abspath
             abspath = os.path.join(path, filename)
             # debug log removal of other abso files
+            # debug: Removing old abso (npy) file: {0}
             WLOG(params, 'debug', textentry('90-019-00002', args=[abspath]))
             # remove file
             # noinspection PyBroadException

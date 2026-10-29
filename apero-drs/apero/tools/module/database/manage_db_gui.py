@@ -19,6 +19,7 @@ from aperocore.base import base
 from aperocore.core import drs_db
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore import drs_lang
 from apero.tools.module.gui import gen_gui
 from apero.tools.module.gui import widgets
 from apero.base import base as apero_base
@@ -37,6 +38,8 @@ __release__ = apero_base.__release__
 ParamDict = param_functions.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get instrument names
 INSTRUMENTS = apero_base.INSTRUMENTS
 # Get start page
@@ -216,7 +219,8 @@ def run_delete_table_app(params: ParamDict) -> DeleteTables:
     :return DeteleTables instance
     """
     # Log that we are running indexing
-    WLOG(params, '', 'Running delete table app')
+    # log: Running delete table app
+    WLOG(params, '', textentry('40-506-00030'))
     # Main code here
     app = DeleteTables()
     app.geometry("1024x768")

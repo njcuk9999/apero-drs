@@ -127,6 +127,7 @@ def __main__(recipe, params):
     if 'assets' in resets and reset:
         drs_reset.reset_assets(params, recipe, reset_dbs=reset_dbs)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
     # progress
@@ -139,6 +140,7 @@ def __main__(recipe, params):
     if 'tmp' in resets and reset:
         drs_reset.reset_tmp_folders(params, recipe, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
     # progress
@@ -151,6 +153,7 @@ def __main__(recipe, params):
     if 'red' in resets and reset:
         drs_reset.reset_reduced_folders(params, recipe, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
     # progress
@@ -163,7 +166,8 @@ def __main__(recipe, params):
     if 'calib' in resets and reset:
         drs_reset.reset_calibdb(params, recipe, log)
     else:
-        WLOG(params, '', '\tNot resetting CalibDB files.')
+        # log: Not resetting CalibDB files.
+        WLOG(params, '', textentry('40-502-00035'))
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Telluric')
@@ -175,6 +179,7 @@ def __main__(recipe, params):
     if 'tellu' in resets and reset:
         drs_reset.reset_telludb(params, recipe, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
     # progress
@@ -190,6 +195,7 @@ def __main__(recipe, params):
     if 'log' in resets and reset:
         drs_reset.reset_log(params, exclude_files)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Log']))
     # ----------------------------------------------------------------------
     # progress
@@ -202,6 +208,7 @@ def __main__(recipe, params):
     if 'plot' in resets and reset:
         drs_reset.reset_plot(params)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Plot']))
     # ----------------------------------------------------------------------
     # progress
@@ -213,6 +220,7 @@ def __main__(recipe, params):
     if 'run' in resets and reset:
         drs_reset.reset_run(params)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Run']))
     # ----------------------------------------------------------------------
     # progress
@@ -225,6 +233,7 @@ def __main__(recipe, params):
     if 'lbl' in resets and reset:
         drs_reset.reset_lbl_folders(params, recipe, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['LBL']))
     # ----------------------------------------------------------------------
     # progress
@@ -237,6 +246,7 @@ def __main__(recipe, params):
     if 'out' in resets and reset:
         drs_reset.reset_out_folders(params, recipe, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Out']))
     # ----------------------------------------------------------------------
     # progress
@@ -248,6 +258,7 @@ def __main__(recipe, params):
     if 'other' in resets and reset:
         drs_reset.reset_other_folder(params, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Other']))
     # ----------------------------------------------------------------------
     # progress
@@ -260,6 +271,7 @@ def __main__(recipe, params):
     if 'queue' in resets and reset:
         drs_reset.reset_queue(params, log)
     else:
+        # log: Not resetting {0} directory.
         WLOG(params, '', textentry('40-502-00013', args=['Queue']))
     # ----------------------------------------------------------------------
     # End of main code

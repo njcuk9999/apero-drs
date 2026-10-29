@@ -83,6 +83,7 @@ def set_ari_dir(path: Optional[str]) -> None:
     global APERO_PROFILES_FILE, DB_ACCESS_FILE, DB_TUNNELS_FILE
     global ASYNC_TASKS_FILE
     global ADMIN_HEALTH_DIR, ADMIN_HEALTH_CONFIG_FILE
+    global _ari_dir_ensured
     base = Path(path).expanduser() if path else (Path.home() / ".ari")
     ARI_DIR = base
     ADMIN_DIR = ARI_DIR / "admin"
@@ -95,6 +96,7 @@ def set_ari_dir(path: Optional[str]) -> None:
     ASYNC_TASKS_FILE = ADMIN_DIR / "async_tasks" / "async_tasks.yaml"
     ADMIN_HEALTH_DIR = ADMIN_DIR / "health"
     ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / "health_status.yaml"
+    _ari_dir_ensured = False
 
 
 # =============================================================================

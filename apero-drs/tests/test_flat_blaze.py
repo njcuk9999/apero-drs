@@ -4,6 +4,7 @@
 
 import numpy as np
 
+from aperocore import math as mp
 from aperocore.constants import param_functions
 from apero.science.calib import flat_blaze
 
@@ -57,11 +58,11 @@ def test_compute_flat_response_uses_model_spectral_groups(
     flat_response, flat_response_err = frout
 
     assert list(flat_response.keys()) == ['A', 'B', 'AB', 'C']
-    assert flat_response['AB'].shape == (2, ncols)
-    assert flat_response['A'].shape == (2, ncols)
-    assert flat_response['B'].shape == (2, ncols)
-    assert flat_response['C'].shape == (2, ncols)
-    assert flat_response_err['AB'].shape == (2, ncols)
-    assert np.allclose(np.nanmedian(flat_response['AB'], axis=1),
+    oversampling = spirou_params['CAL.EXT.EXTRACTION_OVERSAMPLING']
+    expected_shape = (2, int(np.ceil(ncols * oversampling)))
+    for fiber in flat_response:
+        assert flat_response[fiber].shape == expected_shape
+        assert flat_response_err[fiber].shape == expected_shape
+    assert np.allclose(mp.nanmedian(flat_response['AB'], axis=1),
                        [30.0, 32.0], atol=1e-5)
 

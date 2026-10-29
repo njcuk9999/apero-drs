@@ -156,6 +156,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Correction of fp file
     # ------------------------------------------------------------------
     # log process
+    # log: Processing FP reference file
     WLOG(params, 'info', textentry('40-014-00001'))
     # calibrate file
     fpprops, fpimage = gen_calib.calibrate_ppfile(params, recipe, fpfile,
@@ -165,6 +166,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Correction of hc file
     # ------------------------------------------------------------------
     # log process
+    # log: Processing HC reference file
     WLOG(params, 'info', textentry('40-014-00002'))
     # calibrate file
     hcprops, hcimage = gen_calib.calibrate_ppfile(params, recipe, hcfile,
@@ -180,9 +182,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # check file type
     filetype = fpprops['DPRTYPE']
     if filetype not in params['CAL.SHAPE.ALLOWED_FP_TYPES']:
+        # text: Invalid file type = '{0}'. \n function = {1}. \n Must be one of
+        #     the following:
         emsg = textentry('01-001-00020', args=[filetype, mainname])
         for allowedtype in params['CAL.SHAPE.ALLOWED_FP_TYPES']:
             emsg += '\n\t - "{0}"'.format(allowedtype)
+        # error: Invalid file type = '{0}'. \n function = {1}. \n Must be one of
+        #     the following:
         raise AperoCodedException(params, '01-001-00020',
                                   targs=[filetype, mainname], message=emsg)
     # get all "filetype" filenames
@@ -240,6 +246,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if dxmap is None:
         fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
                  max_dxmap_info[2]]
+        # warning: QUALITY CONTROL FAILED: The std of the dxmap for order {0}
+        #     y—pixel {1} is too large. \n std = {2:.5f} (limit = {3:.5f}) \n
+        #     Cannot continue. Exiting.
         WLOG(params, 'warning', textentry('10-014-00003', args=fargs),
              sublevel=6)
         # quality control
@@ -284,6 +293,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Need to straighten the hc data and fp data for debug
     # ----------------------------------------------------------------------
     # log progress (applying transforms)
+    # log: Shape map-making complete. Applying transforms.
     WLOG(params, '', textentry('40-014-00025'))
     # apply the dxmap and dymap
     hcimage2 = shape.ea_transform(params, hcimage, dxmap=dxmap, dymap=dymap)
@@ -320,6 +330,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]
+        # error: QC failure of reference recipe: {0}
         raise AperoCodedException(params, '09-000-00011', targs=eargs)
     # ------------------------------------------------------------------
     # Construct summary document

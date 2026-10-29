@@ -199,8 +199,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
         # deal with no thermal file from THERMALT (use THERMALI)
         if thermalfile is None:
             # print warning
-            wmsg = 'No telescope dark file found, trying a internal dark file'
-            WLOG(params, 'warning', wmsg, sublevel=6)
+            # warning: No telescope dark file found, trying a internal dark file
+            WLOG(params, 'warning', textentry('10-015-00004'), sublevel=6)
             # get the internal dark e2ds
             tout = get_thermal(params, recipe, header, fiber=fiber,
                                filename=thermal_file, kind='THERMALI_E2DS',
@@ -230,6 +230,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     if fibertype in corrtype1:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
+        # log: Correcting thermal for fiber type = {0} (mode={1})
         WLOG(params, 'info', textentry('40-016-00012', args=wargs))
         # do thermal correction
         e2dsff, tpropsff = tcorrect1(params, recipe, e2dsff, flat=flat,
@@ -237,12 +238,14 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     elif fibertype in corrtype2:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
+        # log: Correcting thermal for fiber type = {0} (mode={1})
         WLOG(params, 'info', textentry('40-016-00012', args=wargs))
         # do thermal correction
         e2dsff, tpropsff = tcorrect2(params, recipe, e2dsff, flat=flat,
                                      **tkwargs)
     else:
         # log that we are not correcting thermal
+        # log: Not correcting thermal for fiber type = {0}
         WLOG(params, 'info', textentry('40-016-00013', args=[fibertype]))
         thermalfile = 'None'
         thermaltime = np.nan
@@ -293,6 +296,7 @@ def get_thermal(params, recipe, header, fiber, kind, filename=None,
     thermal_file = cfile.filename
     thermaltime = cfile.mjdmid
     # log which thermal file we are using
+    # log: Reading thermal file: {0}
     WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the reference image
     return thermal_file, thermaltime, thermal
@@ -323,8 +327,9 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
         tprops['THERMAL_RATIO_USED'] = 'None'
         tprops.set_all_sources(func_name)
         return np.array(spectrum, dtype=float), tprops
-    WLOG(params, '', 'Applying thermal correction for '
-                     'fiber {0}'.format(fiber))
+    margs = [fiber]
+    # log: Applying thermal correction for fiber {0}
+    WLOG(params, '', textentry('40-015-00020', args=margs))
     wprops = wave.get_wavesolution(params, recipe, ref=True, fiber=fiber,
                                    database=database)
     wavemap = wprops['WAVEMAP']
@@ -433,13 +438,12 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(wavemask) == 0:
-        wmsg = ('No valid pixels in wavemask.'
-                '\n\tBlue limit = {0}; Red limit = {1}'
-                '\n\tWave[{2}] = [{3:.3f}: {4:.3f}]\n\tFunction={5}')
         wargs = [mp.nanmin(wavemap[torder]), red_limit, torder,
                  mp.nanmax(wavemap[torder]), mp.nanmin(wavemap[torder]),
                  func_name]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        # warning: No valid pixels in wavemask. \n Blue limit = {0}; Red limit =
+        #     {1} \n Wave[{2}] = [{3:.3f}: {4:.3f}] \n Function={5}
+        WLOG(params, 'warning', textentry('10-015-00003', args=wargs))
     # ----------------------------------------------------------------------
     # get the tapas data for these wavelengths
     torder_tapas = sptapas(wavemap[torder, wavemask])
@@ -551,13 +555,12 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # deal with rare case that thermal is all zeros
     if mp.nansum(wavemask) == 0:
-        wmsg = ('No valid pixels in wavemask.'
-                '\n\tBlue limit = {0}; Red limit = {1}'
-                '\n\tWave[{2}] = [{3:.3f}: {4:.3f}]\n\tFunction={5}')
         wargs = [blue_limit, red_limit, torder,
                  mp.nanmax(wavemap[torder]), mp.nanmin(wavemap[torder]),
                  func_name]
-        WLOG(params, 'warning', wmsg.format(*wargs))
+        # warning: No valid pixels in wavemask. \n Blue limit = {0}; Red limit =
+        #     {1} \n Wave[{2}] = [{3:.3f}: {4:.3f}] \n Function={5}
+        WLOG(params, 'warning', textentry('10-015-00003', args=wargs))
     # ----------------------------------------------------------------------
     # we find the median scale between the observation and the thermal
     #    background in domains where there is no transmission

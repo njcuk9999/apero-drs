@@ -456,6 +456,8 @@ class DrsRecipe(object):
         # test that sys.argv is a list
         if not isinstance(sys.argv, list):
             eargs = [sys.argv, type(sys.argv), func_name]
+            # error: sys.argv was not a list. \n sys.argv = '{0}' \n type =
+            #     '{1}' \n Function = {2}
             raise AperoCodedException(drs_params, '00-006-00013', targs=eargs)
         # ---------------------------------------------------------------------
         # get params
@@ -463,6 +465,8 @@ class DrsRecipe(object):
             params = vars(parser.parse_args(args=self.str_arg_list))
         except Exception as e:
             eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
+            # error: Could not parse arguments to argparse. \n sys.argv = {0} \n
+            #     call arguments = {1} \n Error {2}: {3} \n Function = {4}
             raise AperoCodedException(drs_params, '00-006-00014', targs=eargs)
         # ---------------------------------------------------------------------
         # record the inputs (either via self.str_arg_list or sys.argv)
@@ -512,6 +516,7 @@ class DrsRecipe(object):
             # check that kwarg is in input_parameters
             if kwarg.name not in input_parameters:
                 eargs = [kwarg.name, self.name]
+                # text: Cannot find input '{0}' for recipe '{1}'
                 emsg = textentry('00-006-00001', args=eargs)
                 kwarg.exception(emsg)
             # check that kwarg is None (should be None if we need to change it)
@@ -529,6 +534,8 @@ class DrsRecipe(object):
             # else check that we have default_ref
             elif kwarg.default_ref is None:
                 eargs = [kwarg.name, self.name]
+                # text: Attribute 'default_ref' is unset for '{0}' for recipe
+                #     '{1}'
                 emsg = textentry('00-006-00002', args=eargs)
                 kwarg.exception(emsg)
                 value, param_key = None, None
@@ -536,6 +543,8 @@ class DrsRecipe(object):
             #   constant file)
             elif kwarg.default_ref not in params:
                 eargs = [kwarg.default_ref, kwarg.name, self.name]
+                # text: Attribute 'default_ref' is not found in constants for
+                #     '{1}' for recipe '{2}'
                 emsg = textentry('00-006-00003', args=eargs)
                 kwarg.exception(emsg)
                 value, param_key = None, None
@@ -679,12 +688,10 @@ class DrsRecipe(object):
         # need to check that if required is set to False we don't have two
         # arguments
         if optional and len(self.args) > 1:
-            # TODO: Add to language class
-            emsg = ('Cannot have more than one optional positional '
-                    'argument in recipe {0} (argument {1})')
             eargs = [self.name, name]
-            raise AperoCodedException(None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Cannot have more than one optional positional argument in
+            #     recipe {0} (argument {1})
+            raise AperoCodedException(None, '00-000-00016', targs=eargs)
 
     def set_kwarg(self, name: Union[str, None] = None,
                   altnames: Union[List[str], None] = None,
@@ -781,18 +788,16 @@ class DrsRecipe(object):
         if dtype == 'switch':
             # deal with switch having a "default" argument
             if default is not None:
-                # TODO: Add to language database
-                emsg = ('Switch {0}:{1} cannot use a default value. '
-                        'A Switch always has False as the default value')
                 eargs = [self.name, name]
-                WLOG(None, 'error', emsg.format(*eargs))
+                # error: Switch {0}:{1} cannot use a default value. A Switch
+                #     always has False as the default value
+                WLOG(None, 'error', textentry('00-000-00017', args=eargs))
             # deal with switch having a "default_ref" argument
             if default_ref is not None:
-                # TODO: Add to language database
-                emsg = ('Switch {0}:{1} cannot use a default_ref value. '
-                        'A Switch always has False as the default value')
                 eargs = [self.name, name]
-                WLOG(None, 'error', emsg.format(*eargs))
+                # error: Switch {0}:{1} cannot use a default_ref value. A Switch
+                #     always has False as the default value
+                WLOG(None, 'error', textentry('00-000-00018', args=eargs))
             # make sure switch values are set to the only values they can have
             default = False
             default_ref = None
@@ -935,6 +940,8 @@ class DrsRecipe(object):
                 # print msg: Recipe {0} flag "{1}" not in base.LOG_FLAGS.
                 #            Please add to use
                 eargs = [self.name, kwarg]
+                # text: Recipe {0} flag ‘{1}’ not in base.LOG_FLAGS. Please add
+                #     to use.
                 emsg = textentry('00-007-00004', args=eargs)
                 WLOG(self.params, 'error', emsg)
             # check if kwarg is a string
@@ -998,6 +1005,8 @@ class DrsRecipe(object):
         else:
             # log that output file has no attribute 'output_dict'
             eargs = [outfile.name, func_name]
+            # text: Output file = {0} has no attribute ‘output_dict’ and
+            #     therefore cannot be added to output_files. \n Function = {1}
             emsg = textentry('00-008-00016', args=eargs)
             WLOG(self.params, 'error', emsg)
 
@@ -1016,9 +1025,10 @@ class DrsRecipe(object):
         # next check in parameters for path to module
         if (self.module is None) and (self.params is not None):
             if self.path is None:
-                # TODO: Add to language database
-                emsg = 'No path to module set for recipe {0}. Please set.'
-                WLOG(self.params, 'error', emsg.format(self.name))
+                eargs = [self.name]
+                # error: No path to module set for recipe {0}. Please set.
+                WLOG(self.params, 'error',
+                     textentry('00-000-00019', args=eargs))
             else:
                 name = self.name
                 if name.endswith('.py'):
@@ -1031,6 +1041,9 @@ class DrsRecipe(object):
         # ------------------------------------------------------------------
         # else make an error
         if self.module is None:
+            # text: Cannot find module '{0}' \n Problem with recipe defintion \n
+            #     Recipe name must match recipe python file name and be in
+            #     PYTHONPATH
             emsg = textentry('00-000-00001', args=[self.name])
             WLOG(self.params, 'error', emsg)
         # ------------------------------------------------------------------
@@ -1039,6 +1052,8 @@ class DrsRecipe(object):
             return self.module.get().main(**kwargs)
         else:
             eargs = [self.module.name, self.module.path, func_name]
+            # text: MainError: Module {0} has not attribute 'main' \n Path = {1}
+            #     \n Function = {2}
             emsg = textentry('00-000-00004', args=eargs)
             WLOG(self.params, 'error', emsg)
 
@@ -1186,6 +1201,7 @@ class DrsRecipe(object):
         # check for arg
         if kwargname not in self.kwargs:
             eargs = [kwargname, self.name]
+            # error: Cannot find input '{0}' for recipe '{1}'
             raise AperoCodedException(None, '00-006-00001', targs=eargs)
         else:
             arg = self.kwargs[kwargname]
@@ -1295,6 +1311,9 @@ class DrsRecipe(object):
             # skip any argument not in the recipe
             if arg is None:
                 eargs = [argname, value, func_name]
+                # error: Overwrite argument: Argument {0} not found in
+                #     args/kwargs. Correct DrsSequence. \n {0} = {1} \n Function
+                #     = {2}
                 raise drs_log.AperoCodedException(params, '00-503-00012',
                                                   targs=eargs)
             # check if value is a reference to a params value
@@ -2007,6 +2026,7 @@ class DrsRunSequence:
             # print out
             if logmsg:
                 wargs = [frecipe.shortname]
+                # log: Adding recipe {0} to sequence
                 WLOG(params, '', textentry('40-503-00038', args=wargs))
             # set fiber
             if add['fiber'] is not None:
@@ -2322,11 +2342,9 @@ def compile_recipe_dict(recipes: List[DrsRecipe]) -> Dict[str, DrsRecipe]:
     # loop around recipes
     for recipe in recipes:
         if recipe.name in recipe_list:
-            # TODO: Add to language database
-            emsg = 'Recipe name "{0}" duplicated in recipe list'
             eargs = [recipe.name]
-            raise AperoCodedException(None, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Recipe name "{0}" duplicated in recipe list
+            raise AperoCodedException(None, '00-000-00020', targs=eargs)
         else:
             recipe_list[recipe.name] = recipe
     # return recipe list

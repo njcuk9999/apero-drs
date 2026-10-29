@@ -91,6 +91,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
+        # log: Calculating Barycentric Corrections
         WLOG(params, 'info', textentry('40-016-00017'))
     # get parameters from params and kwargs
     dprtypes = pcheck(params, 'CAL.EXT.ALLOWED_BERV_DPRTYPES', func=func_name,
@@ -102,9 +103,8 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     if infile is not None:
         header = infile.header
     if header is None:
-        # TODO: Add to language database
-        emsg = 'Either header or infile must be defined'
-        raise AperoCodedException(params, message=emsg)
+        # error: Either header or infile must be defined
+        raise AperoCodedException(params, '09-016-00006')
     # convert header to drs_fits header
     header = drs_fits.Header(header)
     # -------------------------------------------------------------------------
@@ -119,6 +119,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # do not try to calculate berv for specific DPRTYPES
     if berv_props['DPRTYPE'] not in dprtypes:
         # log that we are skipping due to dprtype
+        # text: Skipping Barycentric correction (type={0})
         msg = textentry('40-016-00018', args=[berv_props['DPRTYPE']])
         WLOG(params, '', msg)
         # all entries returns are empty
@@ -127,6 +128,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
         return berv_props
     if kind not in ['pyasl', 'barycorrpy']:
         # log that we are skipping due to user
+        # log: Skipping Barycentric correction (Turned off by user)
         WLOG(params, '', textentry('40-016-00019'))
         # all entries returns are empty
         return assign_use_berv(params, use=False)
@@ -456,15 +458,22 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         iers_a_file = os.path.join(bc_dir, iersfile)
         iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
     except Exception as e:
-        WLOG(params, 'warning', 'IERS_A_FILE Warning:' + str(e), sublevel=8)
+        wargs = [e]
+        # warning: IERS_A_FILE Warning:{0}
+        WLOG(params, 'warning', textentry('10-016-00027', args=wargs),
+             sublevel=8)
     # try to import barycorrpy
     try:
         with warnings.catch_warnings(record=True) as _:
             import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
+        # warning: Could not import barycorrpy. \n Using BERV estimate (+/- {0}
+        #     m/s) instead. \n Function = {1}
         WLOG(params, 'warning', textentry('10-016-00003', args=wargs),
              sublevel=8)
+        # error: Could not import barycorrpy. \n Using BERV estimate (+/- {0}
+        #     m/s) instead. \n Function = {1}
         raise BaryCorrpyException(textentry('10-016-00003', args=wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['PATH.RED']
@@ -478,6 +487,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     # -------------------------------------------------------------------------
     # must check that a pid is set
     if params['PID'] is None:
+        # error: Undefined PID not recommended (PID is missing)
         raise AperoCodedException(params, '10-005-00006')
     else:
         pid = params['PID']
@@ -493,8 +503,14 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         except Exception as e1:
             # log error
             wargs1 = [type(e1), str(e1), estimate, func_name]
+            # warning: Could not calculate BERV using barycorrpy. \n Error {0}:
+            #     {1} \n Using BERV estimate (+/- {2} m/s) instead. \n Function
+            #     = {3}
             WLOG(params, 'warning', textentry('10-016-00004', args=wargs1),
                  sublevel=8)
+            # error: Could not calculate BERV using barycorrpy. \n Error {0}: {1}
+            #     \n Using BERV estimate (+/- {2} m/s) instead. \n Function =
+            #     {3}
             raise BaryCorrpyException(textentry('10-016-00004', args=wargs1))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
@@ -539,6 +555,7 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
                       override=berv_est)
     # print warning that we are using estimate
     if not quiet:
+        # warning: Calculating BERV using estimate (+/- {0} m/s)
         WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]),
              sublevel=8)
 
@@ -567,6 +584,8 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
     if np.isnan(ra2000) or np.isnan(dec2000):
         eargs = [props['OBJNAME'], props['RA'], props['DEC'], props['PMRA'],
                  props['PMDE'], props['PLX'], props['EPOCH']]
+        # error: Cannot apply space motion for object={0} \n ra: {1:.4f} dec:
+        #     {2:.4f} \n pmra: {3:.4f} pmde: {4:.4f} \n plx: {5:.4f} epoch: {6}
         raise AperoCodedException(params, '00-016-00028', targs=eargs)
     # get args
     bkwargs = dict(ra2000=ra2000, dec2000=dec2000,
@@ -585,6 +604,8 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
             bjds.append(bjd)
         except Exception as e:
             wargs = [jdtime, type(e), e, func_name]
+            # error: Could not calculate the BERV estimate for time={0}. \n
+            #     Error {1}: {2} \n Function = {3}
             raise AperoCodedException(params, '00-016-00017', targs=wargs)
     # convert lists to numpy arrays and return
     return np.array(bervs), np.array(bjds)

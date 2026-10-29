@@ -93,6 +93,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
                 return
         # otherwise we update full calibration database
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+        # log: Updating {0} database
         WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -106,6 +107,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
             if remove:
                 return
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+        # log: Updating {0} database
         WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -113,6 +115,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     # update log and index database
     if dbkind in ['log', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+        # log: Updating {0} database
         WLOG(params, 'info', textentry('40-006-00007', args=['log']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -120,6 +123,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
     # update index database
     if dbkind in ['findex', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+        # log: Updating {0} database
         WLOG(params, 'info', textentry('40-006-00007', args=['index']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -127,6 +131,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
 
     if dbkind in ['astrom', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+        # log: Updating {0} database
         WLOG(params, 'info', textentry('40-006-00007', args=['astrometric']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -134,6 +139,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
 
     if dbkind in ['reject', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
+        # log: Updating {0} database
         WLOG(params, 'info', textentry('40-006-00007', args=['reject']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -181,6 +187,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         dbmanager = drs_database.TelluricDatabase(params, recipe.shortname)
         dbmanager.load_db()
     else:
+        # error: Database kind inputted was incorrect. \n Database kind = {0}
         raise AperoCodedException(params, '09-505-00001', targs=[db_type])
     # ----------------------------------------------------------------------
     # get a list of all database paths
@@ -228,8 +235,9 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
     # log total file count and cores before processing (only if multiprocessing enabled)
     if cores > 1:
         total_files = len(db_files)
-        WLOG(params, 'info', 'Running {0} update in multiprocess mode '
-             'CORES={1} TOTAL_IT={2}'.format(db_type, cores, total_files))
+        margs = [db_type, cores, total_files]
+        # log: Running {0} update in multiprocess mode CORES={1} TOTAL_IT={2}
+        WLOG(params, 'info', textentry('40-505-00005', args=margs))
     if mp_key == 'pathos' and cores > 1:
         _multi_process_calib_tellu_pathos(params, recipe.shortname,
                                           db_type, file_set_name,
@@ -266,8 +274,9 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
     # log total blocks and cores before processing (only if multiprocessing enabled)
     if cores > 1:
         total_blocks = len(block_kinds)
-        WLOG(params, 'info', 'Running index update in multiprocess mode '
-             'CORES={0} TOTAL_IT={1}'.format(cores, total_blocks))
+        margs = [cores, total_blocks]
+        # log: Running index update in multiprocess mode CORES={0} TOTAL_IT={1}
+        WLOG(params, 'info', textentry('40-505-00006', args=margs))
     # use parallel processing if enabled and we have multiple cores
     mp_key = params['TOOLS.REPROCESS.MP_FINDEX'].lower()
     if mp_key == 'pathos' and cores > 1:
@@ -313,8 +322,9 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
                 continue
         # ---------------------------------------------------------------------
         # print progress
-        msg = 'Updating {0} for log database'
-        WLOG(params, '', msg.format(block.name))
+        margs = [block.name]
+        # log: Updating {0} for log database
+        WLOG(params, '', textentry('40-505-00010', args=margs))
         # ---------------------------------------------------------------------
         # get all files
         files = list(Path(block.path).rglob('*.fits'))
@@ -323,8 +333,10 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
         # log total file count and cores before processing (only if multiprocessing enabled)
         if cores > 1:
             total_files = len(files)
-            WLOG(params, 'info', 'Running log update in multiprocess mode '
-                 'CORES={0} TOTAL_IT={1}'.format(cores, total_files))
+            margs = [cores, total_files]
+            # log: Running log update in multiprocess mode CORES={0}
+            #     TOTAL_IT={1}
+            WLOG(params, 'info', textentry('40-505-00007', args=margs))
         # get multiprocessing method
         mp_logdb = params['TOOLS.REPROCESS.MP_LOGDB'].lower()
         # use parallel processing if enabled and we have multiple cores
@@ -349,8 +361,8 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
         # ---------------------------------------------------------------------
         # print progress
         # TODO: Add to lanagugage database
-        msg = 'Merging entries into log database.'
-        WLOG(params, 'info', msg)
+        # log: Merging entries into log database.
+        WLOG(params, 'info', textentry('40-505-00012'))
         # add unique entries to log database
         for lcode in logentries:
             # add this entry
@@ -395,10 +407,13 @@ def _calib_tellu_update_files(params: ParamDict, shortname: str,
         db_file = db_files[it]
         # log progress
         wargs = [it + 1, len(db_files), os.path.basename(db_file)]
+        # debug: Processing file {0} of {1}: {2}
         WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
         # get file set
         if not hasattr(filemod, file_set_name):
             eargs = [name, file_set_name, filemod, func_name]
+            # error: Instrument does not have {0} sequence defined. \n Please
+            #     define '{1}' in '{2}'. \n Function = {3}
             WLOG(params, 'error', textentry('00-505-00001', args=eargs))
             file_set = None
         else:
@@ -407,6 +422,7 @@ def _calib_tellu_update_files(params: ParamDict, shortname: str,
         if os.path.basename(db_file).startswith(REF_PREFIX):
             # log skipping
             wargs = [REF_PREFIX]
+            # debug: File skipped (reference prefix='{0}')
             WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
             # skip
             continue
@@ -419,6 +435,7 @@ def _calib_tellu_update_files(params: ParamDict, shortname: str,
         # append to cdb_data
         if found:
             # log that we found file
+            # debug: File identified as '{0}'
             WLOG(params, 'debug', textentry('40-505-00002', args=[kind]))
             # add the files back to the database
             if db_type == 'calibration':
@@ -472,10 +489,13 @@ def _calib_tellu_update_files_batch(params: ParamDict, shortname: str,
         db_file = db_files[it]
         # log progress
         wargs = [it + 1, len(db_files), os.path.basename(db_file)]
+        # debug: Processing file {0} of {1}: {2}
         WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
         # get file set
         if not hasattr(filemod, file_set_name):
             eargs = [name, file_set_name, filemod, func_name]
+            # error: Instrument does not have {0} sequence defined. \n Please
+            #     define '{1}' in '{2}'. \n Function = {3}
             WLOG(params, 'error', textentry('00-505-00001', args=eargs))
             file_set = None
         else:
@@ -484,6 +504,7 @@ def _calib_tellu_update_files_batch(params: ParamDict, shortname: str,
         if os.path.basename(db_file).startswith(REF_PREFIX):
             # log skipping
             wargs = [REF_PREFIX]
+            # debug: File skipped (reference prefix='{0}')
             WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
             # skip
             continue
@@ -496,6 +517,7 @@ def _calib_tellu_update_files_batch(params: ParamDict, shortname: str,
         # append to cdb_data
         if found:
             # log that we found file
+            # debug: File identified as '{0}'
             WLOG(params, 'debug', textentry('40-505-00002', args=[kind]))
             # add the files back to the database
             if db_type == 'calibration':
@@ -655,6 +677,7 @@ def _index_update_blocks(params: ParamDict, shortname: str,
     # loop around block kinds (with the indexing filter)
     for block_kind in block_kinds:
         # log block update
+        # log: Updating index database with new {0} files
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
         # update index database for block kind
         findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
@@ -698,6 +721,7 @@ def _index_update_blocks_batch(params: ParamDict, shortname: str,
             if block_kind != block_kind_arg:
                 continue
         # log block update
+        # log: Updating index database with new {0} files
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
         # update index database for block kind
         findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
@@ -1488,11 +1512,9 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
         dbmanager = drs_database.TelluricDatabase(params, recipe.shortname)
         path = params['PATH.TELLU']
     else:
-        # TODO: Add to language database
-        emsg = 'Unknown database type: {0}'
         eargs = [db_type]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Unknown database type: {0}
+        raise AperoCodedException(params, '09-505-00002', targs=eargs)
     # load database
     dbmanager.load_db()
     # -------------------------------------------------------------------------
@@ -1505,11 +1527,10 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
         try:
             since_unix = base.Time(since, format='iso').unix
         except Exception as e:
-            # TODO: Add to language database
-            wmsg = ('Cannot convert --since parameter to unix time: {0}'
-                    '\nError {1}: {2}')
             wargs = [since, type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            # warning: Cannot convert --since parameter to unix time: {0} \n
+            #     Error {1}: {2}
+            WLOG(params, 'warning', textentry('10-505-00004', args=wargs))
             return True
         # add condition
         conditions.append('(UNIXTIME > {0})'.format(since_unix))
@@ -1520,11 +1541,10 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
         try:
             before_unix = base.Time(before, format='iso').unix
         except Exception as e:
-            # TODO: Add to language database
-            wmsg = ('Cannot convert --before parameter to unix time: {0}'
-                    '\nError {1}: {2}')
             wargs = [since, type(e), str(e)]
-            WLOG(params, 'warning', wmsg.format(*wargs))
+            # warning: Cannot convert --before parameter to unix time: {0} \n
+            #     Error {1}: {2}
+            WLOG(params, 'warning', textentry('10-505-00005', args=wargs))
             return True
         # add condition
         conditions.append('(UNIXTIME < {0})'.format(before_unix))
@@ -1542,10 +1562,9 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with no conditions (should not happen)
     if len(conditions) == 0:
-        # TODO: Add to language database
-        wmsg = ('No conditions to remove from database. Invalid --since '
-                '--before and --keys arguments')
-        WLOG(params, 'warning', wmsg, sublevel=1)
+        # warning: No conditions to remove from database. Invalid --since
+        #     --before and --keys arguments
+        WLOG(params, 'warning', textentry('10-505-00002'), sublevel=1)
         return True
     # -------------------------------------------------------------------------
     # convert conditions to a string with the AND operator
@@ -1556,9 +1575,8 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with no entries found
     if len(table) == 0:
-        # TODO: Add to language database
-        wmsg = 'Warning no entries found to remove from database'
-        WLOG(params, 'warning', wmsg, sublevel=1)
+        # warning: Warning no entries found to remove from database
+        WLOG(params, 'warning', textentry('10-505-00003'), sublevel=1)
         return True
     # -------------------------------------------------------------------------
     # ask user if they wish to remove these entries (or view entries before
@@ -1566,9 +1584,9 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
     # get the number of entries
     nentries = len(table)
     # display message
-    msg = 'Found {0} entries to remove from database'
     margs = [nentries]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Found {0} entries to remove from database
+    WLOG(params, 'info', textentry('40-505-00009', args=margs))
     # -------------------------------------------------------------------------
     # loop around until user decides something
     # ask user if they wish to continue
@@ -1584,9 +1602,9 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
                       table['HUMANTIME'][row])
         elif 'Y' in uinput.upper():
             # log that we are remove entries
-            msg = 'Removing {0} entries from database'
             margs = [nentries]
-            WLOG(params, 'info', msg.format(*margs))
+            # log: Removing {0} entries from database
+            WLOG(params, 'info', textentry('40-505-00011', args=margs))
             # remove entries
             if not test:
                 dbmanager.remove_entries(condition)
@@ -1601,9 +1619,9 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
                     # check if file exists
                     if os.path.exists(fullpath):
                         # log that we are removing file from disk
-                        msg = 'Removing file from disk: {0}'
                         margs = [fullpath]
-                        WLOG(params, '', msg.format(*margs))
+                        # log: Removing file from disk: {0}
+                        WLOG(params, '', textentry('40-505-00013', args=margs))
                         # remove file
                         if not test:
                             os.remove(fullpath)
@@ -1612,7 +1630,8 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
             # return and do not continue
             return True
         else:
-            print('Invalid input, please try again')
+            # log: Invalid input, please try again
+            print(textentry('40-505-00008'))
     # -------------------------------------------------------------------------
     # if we get to here we return with a True (as we do not continue)
     return True

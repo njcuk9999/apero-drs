@@ -371,6 +371,8 @@ def group_by_dirname(rargs: Dict[str, DrsArgument],
                         #     astropy table
                         eargs = [argname, drsfiletype, func_name]
                         ekwargs = dict(targs=eargs, func_name=func_name)
+                        # error: alldict[{0}][{1}] is not a valid astropy table
+                        #     (and not None) \n Function: {2}
                         raise AperoCodedException(None, '00-006-00024',
                                                   targs=eargs)
                     # deal with no table --> no files for this argument

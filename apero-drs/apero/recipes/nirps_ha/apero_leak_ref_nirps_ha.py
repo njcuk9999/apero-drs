@@ -118,6 +118,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if num_files == 0:
         # log that no dark fp were found for this night
         wargs = [params['OBS_DIR']]
+        # warning: No dark fp files found for night={0}. Skipping leak
+        #     reference.
         WLOG(params, 'warning', textentry('10-016-00025', args=wargs),
              sublevel=4)
         # update recipe log file
@@ -160,6 +162,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # print progress
         wargs = [', '.join(darkfp_extnames)]
+        # log: Correcting leakage in reference for files: \n {0}
         WLOG(params, '', textentry('40-016-00024', args=wargs))
         # correct dark fp
         cout = leak.correct_ref_dark_fp(params, darkfp_extfiles)
@@ -203,6 +206,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ---------------------------------------------------------------------
     if not passed:
         eargs = [recipe.name]
+        # error: QC failure of reference recipe: {0}
         raise AperoCodedException(params, '09-000-00011', targs=eargs)
     # ------------------------------------------------------------------
     # update recipe log file

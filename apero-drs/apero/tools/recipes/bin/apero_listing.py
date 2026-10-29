@@ -108,6 +108,7 @@ def __main__(recipe, params):
     # deal with kind
     if block_kind.lower() in ['raw', 'tmp', 'red', 'out']:
         # print progress
+        # log: Updating listing for block_kind={0}
         WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
         # update the index database (taking into account include/exclude lists)
         findexdbm = drs_utils.update_index_db(params,
@@ -117,6 +118,7 @@ def __main__(recipe, params):
     else:
         for blockkind in ['raw', 'tmp', 'red', 'out']:
             # print progress
+            # log: Updating listing for block_kind={0}
             WLOG(params, '', textentry('40-005-00006', args=[block_kind]))
             # update the index database (taking into account include/exclude
             #    lists)

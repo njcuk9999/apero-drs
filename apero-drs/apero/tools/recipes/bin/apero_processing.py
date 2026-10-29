@@ -182,7 +182,8 @@ def __main__(recipe, params):
         if drs_queue.queue_mode_active(params):
             # add the run list to the queue (grouped by what can be run
             #   together) - runs are written to the pending queue directory
-            drs_queue.add_run_list_to_queue(params, rlist)
+            drs_queue.add_run_list_to_queue(params, rlist,
+                                            drs_group=groupname)
             # send email if configured
             drs_processing.processing_email(params, 'end', __NAME__)
             # End of main code (do not process the run list)

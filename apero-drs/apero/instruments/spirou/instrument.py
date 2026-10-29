@@ -557,6 +557,7 @@ class Spirou(instrument_mod.Instrument):
             # deal with key not existing
             if key not in params:
                 eargs = [key]
+                # error: Fiber Constant Error. Instrument requires key = {0}
                 raise AperoCodedException(params, '00-001-00052', targs=eargs)
             # if key exists add it for this fiber
             else:
@@ -973,6 +974,7 @@ def construct_objname(params: Union[ParamDict, None], pconst, header,
         # get raw object name
         if kwrawobjname not in header:
             eargs = [kwrawobjname, filename]
+            # error: Fiber Constant Error. Instrument requires key = {0}
             raise AperoCodedException(params, '00-001-00052', targs=eargs)
         else:
             rawobjname = header[kwrawobjname]
@@ -994,6 +996,7 @@ def construct_objname(params: Union[ParamDict, None], pconst, header,
         # get raw object name
         if kwrawobjname not in header:
             eargs = [kwrawobjname, filename]
+            # error: Fiber Constant Error. Instrument requires key = {0}
             raise AperoCodedException(params, '00-001-00052', targs=eargs)
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
@@ -1071,12 +1074,20 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # get objname
     if kwobjname not in header:
         eargs = [kwobjname, filename]
+        # error: Cannot update {0} database. \n Given 'outfile' ({1}) does not
+        #     have 'hdict' or 'header' defined. \n Outfile DrsFitsFile must have
+        #     'hdict' or 'header' to get required parameters from updating the
+        #     database). \n function = {2}
         raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
         eargs = [kwobstype, filename]
+        # error: Cannot update {0} database. \n Given 'outfile' ({1}) does not
+        #     have 'hdict' or 'header' defined. \n Outfile DrsFitsFile must have
+        #     'hdict' or 'header' to get required parameters from updating the
+        #     database). \n function = {2}
         raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     obstype = header[kwobstype]
@@ -1158,6 +1169,10 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     # get exptime
     if exp_timekey not in header:
         eargs = [exp_timekey, filename]
+        # error: Cannot update {0} database. \n Given 'outfile' ({1}) does not
+        #     have 'hdict' or 'header' defined. \n Outfile DrsFitsFile must have
+        #     'hdict' or 'header' to get required parameters from updating the
+        #     database). \n function = {2}
         raise AperoCodedException(params, '00-001-00027', targs=eargs)
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
@@ -1217,6 +1232,10 @@ def get_header_time(params: ParamDict, header: Any,
     # get time key from header
     if time_key not in header:
         eargs = [time_key, filename]
+        # error: Cannot update {0} database. \n Given 'outfile' ({1}) does not
+        #     have 'hdict' or 'header' defined. \n Outfile DrsFitsFile must have
+        #     'hdict' or 'header' to get required parameters from updating the
+        #     database). \n function = {2}
         raise AperoCodedException(params, '00-001-00027', targs=eargs)
 
     rawtime = header[time_key]

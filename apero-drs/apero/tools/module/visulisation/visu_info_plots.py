@@ -33,6 +33,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 from aperocore.io import drs_io
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -46,6 +47,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # get parameter dictionary
@@ -110,8 +113,9 @@ def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
                 savename = filename + ext
             # print progress
             if params.get('__VISU_VERBOSE', True):
-                msg = '\tSaving plot to {0}'
-                WLOG(params, '', msg.format(savename))
+                margs = [savename]
+                # log: Saving plot to {0}
+                WLOG(params, '', textentry('40-511-00011', args=margs))
             # save file to disk
             plt.savefig(savename)
         plt.close()

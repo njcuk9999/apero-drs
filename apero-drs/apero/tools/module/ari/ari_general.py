@@ -27,6 +27,7 @@ from apero.core import drs_rejection
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
+from aperocore import drs_lang
 from apero.tools.module.ari import ari_core
 from apero.tools.module.ari import ari_pages
 from apero.tools.module.ari import ari_calib
@@ -49,6 +50,8 @@ ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 # get exceptions
 AperoCodedException = drs_log.AperoCodedException
 # Get ARI core classes
@@ -93,11 +96,9 @@ def load_ari_params(params: ParamDict) -> ParamDict:
                                   profile_basename)
         # deal with the trial path not existing
         if not os.path.exists(trial_path):
-            # TODO: Add to language database
-            emsg = 'Cannot find profile file. Tried: {0} and {1}'
             eargs = [profile_yaml, trial_path]
-            raise AperoCodedException(params, message=emsg.format(*eargs), 
-                                      targs=eargs)
+            # error: Cannot find profile file. Tried: {0} and {1}
+            raise AperoCodedException(params, '09-514-00003', targs=eargs)
         # otherwise set profile yaml to trial path
         else:
             profile_yaml = str(trial_path)
@@ -107,18 +108,14 @@ def load_ari_params(params: ParamDict) -> ParamDict:
         try:
             ari_params = base.load_yaml(profile_yaml)
         except Exception as e:
-            # TODO: Add to language database
-            emsg = 'Error loading profile file: {0}\n\t{1}'
             eargs = [profile_yaml, e]
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Error loading profile file: {0} \n {1}
+            raise AperoCodedException(params, '09-514-00005', targs=eargs)
     # otherwise log an error message
     else:
-        # TODO: Add to language database
-        emsg = 'Cannot find profile file: {0}'
         eargs = [profile_yaml]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Cannot find profile file: {0}
+        raise AperoCodedException(params, '09-514-00002', targs=eargs)
     # ----------------------------------------------------------------------
     # deal with individual settings
     # ----------------------------------------------------------------------
@@ -139,29 +136,23 @@ def load_ari_params(params: ParamDict) -> ParamDict:
             try:
                 value = ari_params[key1][key2]
             except Exception as _:
-                # TODO: Add to language database
-                emsg = 'Yaml file {0} does not contain key: {1}'
                 eargs = [profile_yaml, key]
-                raise AperoCodedException(params, message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: Yaml file {0} does not contain key: {1}
+                raise AperoCodedException(params, '09-514-00006', targs=eargs)
         else:
             # noinspection PyBroadException
             try:
                 value = ari_params[key]
             except Exception as _:
-                # TODO: Add to language database
-                emsg = 'Yaml file {0} does not contain key'
                 eargs = [profile_yaml]
-                raise AperoCodedException(params, message=emsg.format(*eargs),
-                                          targs=eargs)
+                # error: Yaml file {0} does not contain key
+                raise AperoCodedException(params, '09-514-00007', targs=eargs)
         # deal with param key not existing in params
         param_key = ari_core.YAML_TO_PARAM[key]
         if param_key not in params:
-            # TODO: Add to language database
-            emsg = 'Param key {0} does not exist'
             eargs = [param_key]
-            raise AperoCodedException(params, message=emsg.format(*eargs),
-                                      targs=eargs)
+            # error: Param key {0} does not exist
+            raise AperoCodedException(params, '09-514-00004', targs=eargs)
         # push value into params
         params.set(key=param_key, value=value, source=profile_yaml)
 
@@ -251,11 +242,11 @@ def list_profiles(params: ParamDict):
     if (cond1 or cond2) and not view_profiles:
         return True
     # print path to profiles
-    msg1='Path to profiles: {0}'
-    WLOG(params, 'info', msg1.format(profile_path))
+    margs = [profile_path]
+    # log: Path to profiles: {0}
+    WLOG(params, 'info', textentry('40-514-00033', args=margs))
     # print available profiles message
-    msg2 = '\n\nAvailable profiles:'
-    WLOG(params, 'info', msg2)
+    WLOG(params, 'info', textentry('40-514-00034'))
     # loop around files and print any yaml files
     for filename in files:
         if filename.endswith('.yaml'):
@@ -266,11 +257,9 @@ def list_profiles(params: ParamDict):
     elif view_profiles:
         return False
     else:
-        # TODO: Add to language database
-        emsg = 'Cannot find profile file: {0}'
         eargs = [profile_name]
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Cannot find profile file: {0}
+        raise AperoCodedException(params, '09-514-00002', targs=eargs)
 
 
 def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
@@ -310,8 +299,8 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
         obj_classes[objname] = obj_class
     # -------------------------------------------------------------------------
     # log progress
-    msg = 'Getting previous state of ARI from disk'
-    WLOG(params, '', msg)
+    # log: Getting previous state of ARI from disk
+    WLOG(params, '', textentry('40-514-00035'))
     # -------------------------------------------------------------------------
     # for each object we load from disk
     for objname in list(obj_classes.keys()):
@@ -356,7 +345,8 @@ def find_new_objects(params: ParamDict, recipe: DrsRecipe,
     reject_table['IDENTIFIER'] = drs_misc.clean_reject_list(_reject_list)
     # -------------------------------------------------------------------------
     # log progress
-    WLOG(params, '', 'Compiling object files stats (this may take a while)')
+    # log: Compiling object files stats (this may take a while)
+    WLOG(params, '', textentry('40-514-00015'))
     # -------------------------------------------------------------------------
     # for each object we run several counts
     # loop around objects in the object table
@@ -392,17 +382,20 @@ def find_new_objects(params: ParamDict, recipe: DrsRecipe,
 def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
                       ) -> Tuple[Dict[str, AriObject], TableFile]:
     # log progress
-    WLOG(params, '', 'Counting LBL files')
+    # log: Counting LBL files
+    WLOG(params, '', textentry('40-514-00016'))
     # add the lbl count
     object_classes = ari_core.add_lbl_count(params, object_classes)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Creating Object pages')
+    # log: Creating Object pages
+    WLOG(params, '', textentry('40-514-00017'))
     # add object pages
     ari_pages.add_obj_pages(params, object_classes)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, '', 'Creating Object Table page')
+    # log: Creating Object Table page
+    WLOG(params, '', textentry('40-514-00018'))
     # make the object table page
     object_table = ari_pages.make_obj_table(params, object_classes)
 
@@ -412,7 +405,8 @@ def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
 def make_recipe_pages(params: ParamDict, recipe: DrsRecipe) -> TableFile:
     # ------------------------------------------------------------------
     # log progress
-    WLOG(params, '', 'Compiling apero log table (this may take a while)')
+    # log: Compiling apero log table (this may take a while)
+    WLOG(params, '', textentry('40-514-00019'))
     # ------------------------------------------------------------------
     # get the log database from apero
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
@@ -481,7 +475,8 @@ def make_calib_page(params: ParamDict, recipe: DrsRecipe) -> TableFile:
 def make_observation_page(params: ParamDict,
                           object_classes: Dict[str, AriObject]) -> TableFile:
     # log progress
-    WLOG(params, '', 'Making observation table')
+    # log: Making observation table
+    WLOG(params, '', textentry('40-514-00020'))
     obs_table = ari_pages.make_obs_table(params, object_classes)
     # return this instance
     return obs_table
@@ -548,11 +543,12 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
             # predicate matches APERO_NAME against the allowed set
             condition = lambda e: e.get('APERO_NAME') in filter_set
         else:
-            wmsg = 'filter objects is not a list. Skipping filtering.'
-            WLOG(params, 'warning', wmsg, sublevel=1)
+            # warning: filter objects is not a list. Skipping filtering.
+            WLOG(params, 'warning', textentry('10-514-00002'), sublevel=1)
     # -------------------------------------------------------------------------
     # log progress
-    WLOG(params, '', 'Loading objects from astrometric database')
+    # log: Loading objects from astrometric database
+    WLOG(params, '', textentry('40-514-00021'))
     # -------------------------------------------------------------------------
     # get the astrometric database from apero (yaml-backed)
     astrodbm = drs_astrometrics.AstrometricDatabase(params,

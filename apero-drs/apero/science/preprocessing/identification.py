@@ -92,6 +92,8 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # check we have entries
     if len(drsfileset.fileset) == 0:
         eargs = [drsfileset.name, func_name]
+        # error: Generic Drs File '{0}' has no associated files \n filename =
+        #     {1} \n {2} \n function = {3}
         raise AperoCodedException(params, '00-010-00001', targs=eargs)
     # get the associated files with this generic drs file
     fileset = list(drsfileset.fileset)
@@ -118,6 +120,8 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # deal with not being found
     if kind is None:
         eargs = [inname, '\n\t'.join(strfileset), func_name]
+        # error: Could not find file = {0} in fileset. Allowed names are: \n {0}
+        #     \n \n Function = {2}
         raise AperoCodedException(params, '00-010-00006', targs=eargs)
 
     # set the recipe if found

@@ -147,6 +147,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # log process: Processing {0}'
         iargs = [post_file.name]
         WLOG(params, 'info', params['LOG.HEADER'])
+        # log: Processing {0}
         WLOG(params, 'info', textentry('40-090-00001', args=iargs))
         WLOG(params, 'info', params['LOG.HEADER'])
         # -----------------------------------------------------------------
@@ -191,6 +192,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 for filename in filepostfile.clear_files:
                     # log progress: Removing {0}'
                     wargs = [filename]
+                    # warning: Removing reduced file: {0}
                     WLOG(params, 'warning',
                          textentry('10-090-00001', args=wargs), sublevel=2)
                     os.remove(filename)
@@ -228,10 +230,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 WLOG(params, '', params['LOG.HEADER'], colour='red')
             # report on combined number of errors (and crash)
             eargs = [len(error_storage), recipe.name]
+            # error: {0} error(s) occurred for {1}
             raise AperoCodedException(params, '00-090-00010', targs=eargs)
     # else report that no errors were found
     else:
         WLOG(params, '', params['LOG.HEADER'])
+        # log: No errors occurred during recipe run
         WLOG(params, '', textentry('40-090-00009'))
     # -------------------------------------------------------------------------
     # end the log (only successful if no skips)

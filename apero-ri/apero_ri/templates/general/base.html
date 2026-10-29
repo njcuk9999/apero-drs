@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ current_theme | default('default') }}">
+<html lang="{{ current_lang | default('en') }}" data-theme="{{ current_theme | default('default') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,17 +37,17 @@
             <img src="{{ url_for('static', filename='images/apero_logo.png') }}"
                  alt="APERO">
             {% endif %}
-            <span>Reduction Interface</span>
+            <span>{{ _('Reduction Interface') }}</span>
         </a>
 
         <div class="ari-header__spacer"></div>
 
         <!-- Desktop quick-nav -->
-        <nav class="ari-nav" aria-label="Quick navigation">
+        <nav class="ari-nav" aria-label="{{ _('Quick navigation') }}">
             {% for page in nav_pages %}
             <a href="{{ page.url }}" class="ari-nav__link"
                {% if request.path == page.url %}aria-current="page"{% endif %}
-               title="{{ page.label }}">
+               title="{{ page.label | tl }}">
                 <i class="{{ page.icon }}"></i>
             </a>
             {% endfor %}
@@ -57,21 +57,37 @@
                 <a href="{{ url_for('home_user_portal_clocks') }}"
                    class="ari-nav__link"
                    id="ari-clock-link"
-                   title="Clocks"
-                   aria-label="Clocks">
+                   title="{{ _('Clocks') }}"
+                   aria-label="{{ _('Clocks') }}">
                     <i class="fa-solid fa-clock"></i>
                 </a>
                 <div class="ari-clock-panel" id="ari-clock-panel"
-                     role="dialog" aria-label="Clocks">
+                     role="dialog" aria-label="{{ _('Clocks') }}">
                     <div class="ari-clock-panel__header">
-                        <strong>Clocks</strong>
+                        <strong>{{ _('Clocks') }}</strong>
                         <a href="{{ url_for('home_user_portal_clocks') }}"
-                           class="ari-btn ari-btn--small">Open</a>
+                           class="ari-btn ari-btn--small">{{ _('Open') }}</a>
                     </div>
                     <div class="ari-clock-panel__list" id="ari-clock-list">
-                        <div class="upm-empty">Loading...</div>
+                        <div class="upm-empty">{{ _('Loading...') }}</div>
                     </div>
                 </div>
+            </span>
+
+            <!-- Interface language -->
+            <span class="ari-lang-wrap">
+                <i class="fa-solid fa-language" aria-hidden="true"></i>
+                <select class="ari-lang-select"
+                        aria-label="{{ _('Language') }}"
+                        title="{{ _('Language') }}"
+                        onchange="window.location.href=this.value">
+                    {% for lang_opt in ari_languages %}
+                    <option value="{{ url_for('set_language', lang=lang_opt.code, next=request.full_path) }}"
+                            {% if lang_opt.code == current_lang %}selected{% endif %}>
+                        {{ lang_opt.name }}
+                    </option>
+                    {% endfor %}
+                </select>
             </span>
 
             <!-- Login / Logout link -->
@@ -80,36 +96,36 @@
                   style="position:relative; display:inline-block;">
                 <button type="button" class="ari-notif-bell ari-nav__link"
                         id="ari-notif-bell"
-                        title="Notifications"
-                        aria-label="Notifications">
+                        title="{{ _('Notifications') }}"
+                        aria-label="{{ _('Notifications') }}">
                     <i class="fa-solid fa-bell"></i>
                     <span class="ari-notif-badge"
                           id="ari-notif-badge"></span>
                 </button>
                 <div class="ari-notif-panel" id="ari-notif-panel"
-                     role="dialog" aria-label="Notifications">
+                     role="dialog" aria-label="{{ _('Notifications') }}">
                     <div class="ari-notif-panel__header">
-                        <strong>Notifications</strong>
+                        <strong>{{ _('Notifications') }}</strong>
                         <a href="/user_portal/notifications"
-                           class="ari-btn ari-btn--small">Manage</a>
+                           class="ari-btn ari-btn--small">{{ _('Manage') }}</a>
                     </div>
                     <div class="ari-notif-panel__list"
                          id="ari-notif-panel-list">
-                        <div class="upm-empty">Loading...</div>
+                        <div class="upm-empty">{{ _('Loading...') }}</div>
                     </div>
                     <div class="ari-notif-panel__footer">
                         <a href="/user_portal/messages">
                             <i class="fa-solid fa-envelope"></i>
-                            Messages
+                            {{ _('Messages') }}
                         </a>
                     </div>
                 </div>
             </span>
-            <a href="{{ url_for('logout') }}" class="ari-nav__link" title="Logout">
+            <a href="{{ url_for('logout') }}" class="ari-nav__link" title="{{ _('Logout') }}">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </a>
             {% else %}
-            <a href="{{ url_for('login') }}" class="ari-nav__link" title="Login">
+            <a href="{{ url_for('login') }}" class="ari-nav__link" title="{{ _('Login') }}">
                 <i class="fa-solid fa-right-to-bracket"></i>
             </a>
             {% endif %}
@@ -117,7 +133,7 @@
 
         <!-- Hamburger (mobile) -->
         <button class="ari-hamburger" id="ari-hamburger"
-                aria-label="Toggle navigation">
+                aria-label="{{ _('Toggle navigation') }}">
             <i class="fa-solid fa-bars"></i>
         </button>
     </header>
@@ -141,7 +157,7 @@
         {% endfor %}
 
         <div class="ari-mobile-menu__heading">
-            <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
+            <i class="{{ sidebar_icon }}"></i> {{ sidebar_label | tl }}
         </div>
         {% if doc_versions is defined and doc_versions|length > 1 %}
         <div class="ari-mobile-menu__version">
@@ -166,7 +182,7 @@
                 {% if item.has_children|default(false) %}
                 <button type="button"
                         class="ari-doc-tree__toggle"
-                        aria-label="Toggle section"
+                        aria-label="{{ _('Toggle section') }}"
                         aria-expanded="false"
                         data-doc-toggle="{{ item.id }}">
                     <i class="fa-solid fa-chevron-right"></i>
@@ -197,7 +213,7 @@
         {% for page in nav_pages %}
         <a href="{{ page.url }}" class="ari-mobile-menu__link">
             <i class="{{ page.icon }}"></i>
-            <span>{{ page.label }}</span>
+            <span>{{ page.label | tl }}</span>
         </a>
         {% endfor %}
 
@@ -205,16 +221,26 @@
         {% if logged_in %}
         <a href="{{ url_for('logout') }}" class="ari-mobile-menu__link">
             <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Logout ({{ username }})</span>
+            <span>{{ _('Logout') }} ({{ username }})</span>
         </a>
         {% else %}
         <a href="{{ url_for('login') }}" class="ari-mobile-menu__link">
             <i class="fa-solid fa-right-to-bracket"></i>
-            <span>Login</span>
+            <span>{{ _('Login') }}</span>
         </a>
         {% endif %}
         {% endif %}
         {% endif %}
+        <!-- Interface language (always available on mobile) -->
+        <div class="ari-mobile-menu__lang">
+            <i class="fa-solid fa-language" aria-hidden="true"></i>
+            {% for lang_opt in ari_languages %}
+            <a href="{{ url_for('set_language', lang=lang_opt.code, next=request.full_path) }}"
+               class="ari-mobile-menu__lang-link{% if lang_opt.code == current_lang %} ari-mobile-menu__lang-link--active{% endif %}">
+                {{ lang_opt.name }}
+            </a>
+            {% endfor %}
+        </div>
     </aside>
 
     <!-- ================================================================== -->
@@ -241,7 +267,7 @@
     <!-- Footer                                                             -->
     <!-- ================================================================== -->
     <footer class="ari-footer">
-        APERO Data Portal &mdash;
+        {{ _('APERO Data Portal') }} &mdash;
         <a href="https://apero.exoplanets.ca" target="_blank" rel="noopener">
             apero.exoplanets.ca
         </a>

@@ -1039,7 +1039,9 @@ def display_flag(params: ParamDict):
     # get the flag number
     flagnum = params['INPUTS']['flagnum']
     # print progress
-    WLOG(params, '', 'Flag mode: {0}[{1}]'.format(recipe, flagnum))
+    margs = [recipe, flagnum]
+    # log: Flag mode: {0}[{1}]
+    WLOG(params, '', textentry('40-000-00019', args=margs))
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get the recipe module
@@ -1063,17 +1065,21 @@ def display_flag(params: ParamDict):
             break
     # deal with recipe not being found
     if not found:
-        WLOG(params, 'warning', 'Invalid "recipe" argument.')
+        # warning: Invalid "recipe" argument.
+        WLOG(params, 'warning', textentry('10-000-00002'))
         return
     # get binary flags
     flags = srecipe.flags
     # deal with non-integer
     if not isinstance(flagnum, int):
-        WLOG(params, 'warning', 'Invalid flag number (must be int).')
+        # warning: Invalid flag number (must be int).
+        WLOG(params, 'warning', textentry('10-000-00003'))
     # encode the given number
     flags.encode(flagnum)
     # print the recipe name
-    WLOG(params, '', 'recipe = {0}'.format(srecipe.name))
+    margs = [srecipe.name]
+    # log: recipe = {0}
+    WLOG(params, '', textentry('40-000-00020', args=margs))
     # print the flags
     for flag in flags:
         WLOG(params, '', '\t{0:20s}: {1}'.format(flag, flags[flag]))
@@ -1100,10 +1106,14 @@ def get_cores(params):
                 cores = int(cores)
             except ValueError as e:
                 eargs = [params['CORES'], type(e), e]
+                # error: User input error: '--cores'='{0}' must be an integer \n
+                #     Error {1}: {2}
                 WLOG(params, 'error', textentry('00-503-00013', args=eargs))
                 cores = 1
             except Exception as e:
                 eargs = [type(e), e]
+                # error: User input error: '--cores' must be an integer \n Error
+                #     {1}: {2}
                 WLOG(params, 'error', textentry('00-503-00014', args=eargs))
                 cores = 1
         else:
@@ -1117,10 +1127,14 @@ def get_cores(params):
             cores = int(params['CORES'])
         except ValueError as e:
             eargs = [params['CORES'], type(e), e]
+            # error: Run file error: 'CORES'='{0}' must be an integer \n Error
+            #     {1}: {2}
             WLOG(params, 'error', textentry('00-503-00006', args=eargs))
             cores = 1
         except Exception as e:
             eargs = [type(e), e]
+            # error: Run file error: 'CORES' must be an integer \n Error {1}:
+            #     {2}
             WLOG(params, 'error', textentry('00-503-00007', args=eargs))
             cores = 1
     elif cores is None:
@@ -1138,9 +1152,13 @@ def get_cores(params):
     # -------------------------------------------------------------------------
     # check that cores is valid
     if cores < 1:
+        # error: Run file error: Number of cores must be greater than 0 \n
+        #     Current value = {0}
         WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
     if cores >= cpus:
         eargs = [cpus, cores]
+        # warning: Run file error: Number of cores must be less than {0} \n
+        #     Current value = {1}
         WLOG(params, 'warning', textentry('00-503-00009', args=eargs),
              sublevel=2)
     # return number of cores

@@ -13,6 +13,7 @@ DEFAULT_LANG: ENG
 LANGUAGES:
     - ENG
     - FR
+    - ES
 # Define the language modules for each instrument
 LANGUAGE_MODULES:
     DEFAULT:

@@ -165,10 +165,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             params, recipe.shortname, infile)
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
+                # warning: Skipping extraction DPRTYPE = {0} (Required = {1}) \n
+                #     File = {2}
                 WLOG(params, 'warning',
                      textentry('10-016-00012',
                                args=skip_conditions[1]), sublevel=2)
             if 'OBJNAME' in skip_conditions[0]:
+                # warning: Skipping extraction OBJNAME = {0} (Required = {1}) \n
+                #     File = {2}
                 WLOG(params, 'warning',
                      textentry('10-016-00013',
                                args=skip_conditions[2]), sublevel=2)
@@ -179,12 +183,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Main extraction: shape → calibrate → profiles → model
         # Returns image, image2, sprops, props, oprops, model_props, eprops_all
         # --------------------------------------------------------------------
-        WLOG(params, 'info',
-             'Running main extraction (shape, calibration, '
-             'profiles, model)')
+        # log: Running main extraction (shape, calibration, profiles, model)
+        WLOG(params, 'info', textentry('40-016-00036'))
         mprops = extract.main_extract(params, recipe, infile, pconst,
                                       database=calibdbm)
-        WLOG(params, '', 'Main extraction complete')
+        # log: Main extraction complete
+        WLOG(params, '', textentry('40-016-00037'))
         # reference spectrum used by leak correction for all science fibers
         ref_e2ds = (mprops['MODEL_PROPS']['SPECTRA']
                     [mprops['REF_FIBER']][0])
@@ -192,7 +196,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Flat response: per-order response profiles (flat extractions only)
         # --------------------------------------------------------------------
         if extract_type == 'flat':
-            WLOG(params, '', 'Computing flat-response profiles')
+            # log: Computing flat-response profiles
+            WLOG(params, '', textentry('40-016-00038'))
             frargs = [params, recipe, mprops['MODEL_PROPS'],
                       mprops['ORDER_PROPS']['ORDER_MAP'],
                       mprops['ORDER_PROPS']['ORDER_RANGES']]
@@ -204,7 +209,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Barycentric correction (skipped in quick-look mode)
         # --------------------------------------------------------------------
         if not quicklook:
-            WLOG(params, '', 'Computing barycentric velocity correction')
+            # log: Computing barycentric velocity correction
+            WLOG(params, '', textentry('40-016-00039'))
             bprops = extract.get_berv(params, infile, mprops['HEADER'])
         else:
             bprops = None
@@ -218,6 +224,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             if quicklook:
                 log2.update_flags(QUICKLOOK=True)
             wargs = [fiber, ', '.join(mprops['FIBERTYPES'])]
+            # log: Processing fiber {0} of [{1}]
             WLOG(params, 'info', textentry('40-016-00014', args=wargs))
             # per-fiber extraction properties (mutated below by calibrations)
             eprops = mprops['EPROPS_ALL'][fiber]
@@ -338,9 +345,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             # Write extraction files
             # ----------------------------------------------------------------
-            WLOG(params, '',
-                 'Fiber {0}: writing extraction '
-                 'files'.format(fiber))
+            margs = [fiber]
+            # log: Fiber {0}: writing extraction files
+            WLOG(params, '', textentry('40-016-00040', args=margs))
             if quicklook:
                 wqlargs = [params, recipe, infile, rawfiles, combine,
                            fiber, mprops['CALIB_PROPS'], lprops, eprops,

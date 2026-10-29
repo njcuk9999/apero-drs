@@ -137,10 +137,9 @@ def get_recipe_list(aparams: ParamDict, attribute: str) -> List[Any]:
     recipe_list += list(instrument.RECIPEMOD().rd.recipes)
     # deal with bad attribute
     if not hasattr(recipe_list[0], attribute):
-        emsg = 'Attribute "{0}" not found in DrsRecipe'
         eargs = [attribute]
-        raise AperoCodedException(aparams, None, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Attribute "{0}" not found in DrsRecipe
+        raise AperoCodedException(aparams, '00-510-00002', targs=eargs)
     # storage for output
     attribute_list = list(map(lambda x: getattr(x, attribute), recipe_list))
     # return recipes
@@ -157,7 +156,9 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
     dev = rparams['DEV']
     # -------------------------------------------------------------------------
     # message the list of recipes
-    msg = 'List of recipes for {0} instrument:'.format(aparams['OBS.INSTRUMENT'])
+    margs = [aparams['OBS.INSTRUMENT']]
+    # text: List of recipes for {0} instrument:
+    msg = textentry('40-510-00038', args=margs)
     # loop around recipes
     for it, shortname in enumerate(shortname_list):
         # deal with not being dev mode and showing admin recipes
@@ -171,7 +172,9 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
     WLOG(aparams, 'info', msg)
     # -------------------------------------------------------------------------
     # message the list of tools
-    msg = 'List of tools for {0} instrument:'.format(aparams['OBS.INSTRUMENT'])
+    margs = [aparams['OBS.INSTRUMENT']]
+    # text: List of tools for {0} instrument:
+    msg = textentry('40-510-00039', args=margs)
     # loop around tools
     for it, shortname in enumerate(shortname_list):
         # deal with not being dev mode and showing admin recipes
@@ -186,8 +189,9 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
     # -------------------------------------------------------------------------
     # message the list of tools
     if dev:
-        msg = ('List of dev-tools for {0} instrument:'
-               '').format(aparams['OBS.INSTRUMENT'])
+        margs = [aparams['OBS.INSTRUMENT']]
+        # text: List of dev-tools for {0} instrument:
+        msg = textentry('40-510-00040', args=margs)
         # loop around tools
         for it, shortname in enumerate(shortname_list):
             # deal with not being dev mode and showing admin recipes
@@ -222,14 +226,14 @@ def run_recipe(aparams: ParamDict, rparams: ParamDict):
 
     # deal with not having the correct recipe
     if rparams['RECIPE'] not in name_list:
-        emsg = 'Recipe "{0}" not found in recipe list'
-        WLOG(aparams, 'error', emsg.format(rparams['RECIPE']))
+        eargs = [rparams['RECIPE']]
+        # error: Recipe "{0}" not found in recipe list
+        WLOG(aparams, 'error', textentry('00-510-00001', args=eargs))
 
     # run the recipe
-    msg = 'Running recipe:'
-    msg += '\n\t {0} {1}'
     margs = [rparams['RECIPE'], ' '.join(rparams['ARGS'])]
-    WLOG(aparams, 'info', msg.format(*margs))
+    # log: Running recipe: \n {0} {1}
+    WLOG(aparams, 'info', textentry('40-510-00041', args=margs))
 
     if not rparams['DEBUG']:
         # push all arguments into sys.argv

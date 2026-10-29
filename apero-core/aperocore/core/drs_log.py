@@ -1301,6 +1301,7 @@ def format_message(params: Any, key: str,
         for msg in message[1:]:
             msg_obj += textentry(msg)
     else:
+        # error: Log Error: Message: '{0}' is not a valid log message
         raise DrsLogException(textentry('00-005-00001', args=[message]))
     # -------------------------------------------------------------------------
     # deal with text wrapping
@@ -1323,12 +1324,16 @@ def format_message(params: Any, key: str,
     # check for key in various levels (give error if not)
     if key not in params['LOG.TRIG_KEYS']:
         eargs = [key, 'LOG.TRIG_KEYS']
+        # error: Log Error: Key '{0}' is not in '{1}'
         raise DrsLogException(textentry('00-005-00002', args=eargs))
     if key not in params['LOG.WRITE_LEVELS']:
         eargs = [key, 'LOG.WRITE_LEVELS']
+        # error: Log Error: Key '{0}' is not in '{1}'
         raise DrsLogException(textentry('00-005-00003', args=eargs))
     if key not in params['LOG.REPORT_KEYS']:
         eargs = [key, 'LOG.REPORT_KEYS']
+        # error: Log Error: 'message' must be a string or a list. \n Current
+        #     value = '{0}'
         raise DrsLogException(textentry('00-005-00005', args=eargs))
     # ---------------------------------------------------------------------
     # deal with option

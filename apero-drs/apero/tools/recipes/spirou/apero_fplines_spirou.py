@@ -131,9 +131,12 @@ def __main__(recipe, params):
         # print file stats
         args = [e2dsfile.basename, e2dsfile.get_hkey('KW_DPRTYPE'),
                 e2dsfile.get_hkey('KW_OBJNAME')]
-        WLOG(params, '', '\t For file {0}'.format(*args))
-        WLOG(params, '', '\t DPRTYPE = {1}'.format(*args))
-        WLOG(params, '', '\t OBJECT = {2}'.format(*args))
+        # log: For file {0}
+        WLOG(params, '', textentry('40-017-00071', args=args))
+        # log: DPRTYPE = {1}
+        WLOG(params, '', textentry('40-017-00072', args=args))
+        # log: OBJECT = {2}
+        WLOG(params, '', textentry('40-017-00073', args=args))
         # ------------------------------------------------------------------
         # get header from file instance
         header = e2dsfile.get_header()

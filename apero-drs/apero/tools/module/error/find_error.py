@@ -26,6 +26,7 @@ from apero.utils import drs_recipe
 from apero.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 from apero.base import base as apero_base
+from aperocore.drs_lang import drs_lang_text
 
 # =============================================================================
 # Define variables
@@ -39,6 +40,8 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang_text.textentry
 # Get Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
 # Get parameter class
@@ -330,17 +333,19 @@ class Search:
         # set complete text
         if found:
             # log message to console
-            wmsg = 'Complete. APERO code searched for:  {0}'
-            wargs = [search_text]
-            WLOG(self.dataobj.drs_params, '', wmsg.format(*wargs))
+            margs = [search_text]
+            # log: Complete. APERO code searched for: {0}
+            WLOG(self.dataobj.drs_params, '',
+                 textentry('40-519-00007', args=margs))
             # log to application
             self.titlebar.title0.set('Complete. APERO code searched for: ')
             self.titlebar.title1.set(search_text)
         else:
             # log message to console
-            wmsg = 'Cannot find APERO code: {0}'
-            wargs = [search_text]
-            WLOG(self.dataobj.drs_params, '', wmsg.format(*wargs))
+            margs = [search_text]
+            # log: Cannot find APERO code: {0}
+            WLOG(self.dataobj.drs_params, '',
+                 textentry('40-519-00008', args=margs))
             # log to application
             self.titlebar.title0.set('Cannot find APERO code: ')
             self.titlebar.title1.set(search_text)
@@ -765,13 +770,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     """
     # get datastore
     datastore = LoadData(params, instrument=recipe.instrument)
-    WLOG(params, '', 'Running Error finding application')
+    # log: Running Error finding application
+    WLOG(params, '', textentry('40-519-00004'))
     # Main code here
     app = App(datastore)
     app.geometry("1024x512")
     app.mainloop()
     # end with a log message
-    WLOG(params, '', 'Program has completed successfully')
+    # log: Program has completed successfully
+    WLOG(params, '', textentry('40-519-00005'))
     # return a copy of locally defined variables in the memory
     return locals()
 
@@ -879,8 +886,9 @@ class LoadData:
         :rtype: tuple[dict, dict]
         """
         # log progress
-        wmsg = 'Generating line list for instrument = "{0}"'
-        WLOG(self.drs_params, 'info', wmsg.format(self.instrument))
+        margs = [self.instrument]
+        # log: Generating line list for instrument = "{0}"
+        WLOG(self.drs_params, 'info', textentry('40-519-00006', args=margs))
         # get package (from drs_text)
         package = __PACKAGE__
         # get level above package

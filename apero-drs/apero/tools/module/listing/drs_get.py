@@ -118,14 +118,17 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
         group_server = None
     # -------------------------------------------------------------------------
     # load "get" database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='file index'))
     findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
     # load object database (yaml-backed)
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
     objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='log'))
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
@@ -150,9 +153,9 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
         if isinstance(filter_items, str):
             filter_items = [filter_items]
         elif not isinstance(filter_items, list):
-            emsg = 'Filter {0}={1} must be a string or list'
             eargs = [_filter, filter_items]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # error: Filter {0}={1} must be a string or list
+            WLOG(params, 'error', textentry('09-509-00001', args=eargs))
         # loop around object names
         for item in filter_items:
             # skip Nones
@@ -213,6 +216,7 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
     for kw_objname in kw_objnames:
         # clean object name (as best we can)
         clean_obj_name, _ = objdbm.find_objname(kw_objname)
+        # log: Processing KW_OBJNAME={0}
         WLOG(params, '', textentry('40-509-00002', args=[clean_obj_name]))
         # write condition for this object
         if drs_text.null_text(kw_objname, ['None', '', 'Null']):
@@ -267,14 +271,17 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
         # ---------------------------------------------------------------------
         # load into file storage
         if len(inpaths[mask]) > 0:
+            # log: Found {0} entries
             WLOG(params, '', textentry('40-509-00003', args=[len(inpaths)]))
             # keep files
             db_entries['OBJNAME'][clean_obj_name] = inpaths[mask]
             db_entries['RUN_ID'][clean_obj_name] = run_ids[mask]
         else:
+            # log: Found no entries
             WLOG(params, '', textentry('40-509-00004'))
         # write that we excluded some files
         if filter_qc:
+            # log: Excluded {0} files for failing QC
             WLOG(params, '', textentry('40-509-00005', args=[np.sum(~mask)]))
     # -------------------------------------------------------------------------
     # Now get outpaths (if infile exists)
@@ -326,6 +333,7 @@ def manage_outputs(params: ParamDict, db_entries,
             for objname in all_inpaths:
                 WLOG(params, '', '')
                 WLOG(params, '', params['LOG.HEADER'])
+                # log: COPY KW_OBJNAME={0}
                 WLOG(params, '', textentry('40-509-00008', args=[objname]))
                 WLOG(params, '', params['LOG.HEADER'])
                 WLOG(params, '', '')
@@ -337,9 +345,10 @@ def manage_outputs(params: ParamDict, db_entries,
                     # ---------------------------------------------------------
                     # print string
                     copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-                    copystr = '[{0}/{1}] --> TAR[{2}]'.format(*copyargs)
                     # print copy string
-                    WLOG(params, '', copystr, wrap=False)
+                    # log: [{0}/{1}] --> TAR[{2}]
+                    WLOG(params, '', textentry('40-509-00013', args=copyargs),
+                         wrap=False)
                     tarfile_obj.add(inpath, arcname=os.path.basename(inpath))
                     # add to count
                     nfiles += 1
@@ -363,6 +372,7 @@ def manage_outputs(params: ParamDict, db_entries,
     for objname in all_inpaths:
         WLOG(params, '', '')
         WLOG(params, '', params['LOG.HEADER'])
+        # log: COPY KW_OBJNAME={0}
         WLOG(params, '', textentry('40-509-00008', args=[objname]))
         WLOG(params, '', params['LOG.HEADER'])
         WLOG(params, '', '')
@@ -407,14 +417,17 @@ def calib_filter(params: ParamDict, recipe: DrsRecipe,
         group_server = None
     # -------------------------------------------------------------------------
     # load index database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='file index'))
     calibdb = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdb.load_db()
     # load object database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
     objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='log'))
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
@@ -517,14 +530,17 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
         group_server = None
     # -------------------------------------------------------------------------
     # load index database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='file index'))
     telludb = drs_database.TelluricDatabase(params, recipe.shortname)
     telludb.load_db()
     # load object database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
     objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='log'))
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
@@ -680,9 +696,9 @@ def get_disk_entries(params: ParamDict, icolumns: List[str],
             block_path = _block.path
     # deal with no path
     if block_path is None:
-        emsg = 'Block kind {0} is invalid. Must be {1}'
         eargs = [block_kind, ','.join(block_names)]
-        WLOG(params, 'error', emsg.format(*eargs))
+        # error: Block kind {0} is invalid. Must be {1}
+        WLOG(params, 'error', textentry('09-509-00003', args=eargs))
 
     # get the suffix
     if params['INPUTS']['NODB_WILDCARD'] in ['None', 'Null', '', None]:
@@ -956,9 +972,9 @@ def _get_file_hkeys(params, files: List[str], hkeys: Dict[str, str],
     mp_mode = params['INPUTS']['MP_MODE']
 
     # print progress
-    msg = 'Getting header keys for {0} files using {1} cores'
     margs = [len(files), cores]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Getting header keys for {0} files using {1} cores
+    WLOG(params, 'info', textentry('40-509-00009', args=margs))
 
     # use parallelization if requested and cores > 1
     if mp_mode.lower() == 'pathos' and cores > 1:
@@ -1366,15 +1382,15 @@ def get_perm_outpaths(params, nosubdir: bool, db_entries,
     # load permission yaml
     if not os.path.exists(perm_yaml):
         eargs = [perm_yaml]
-        emsg = 'Permission YAML file {0} does not exist'
-        WLOG(params, 'error', emsg.format(*eargs))
+        # error: Permission YAML file {0} does not exist
+        WLOG(params, 'error', textentry('09-509-00004', args=eargs))
     perm_dict = base.load_yaml(perm_yaml)
     # -------------------------------------------------------------------------
     # load group yaml
     if not os.path.exists(group_yaml):
         eargs = [group_yaml]
-        emsg = 'Group YAML file {0} does not exist'
-        WLOG(params, 'error', emsg.format(*eargs))
+        # error: Group YAML file {0} does not exist
+        WLOG(params, 'error', textentry('09-509-00005', args=eargs))
     group_dict = base.load_yaml(group_yaml)
     # -------------------------------------------------------------------------
     # user outdir needs to have an objects and a runid directory
@@ -1466,6 +1482,7 @@ def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
     for objname in all_inpaths:
         WLOG(params, '', '')
         WLOG(params, '', params['DRS_HEADER'])
+        # log: COPY KW_OBJNAME={0}
         WLOG(params, '', textentry('40-509-00008', args=[objname]))
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', '')
@@ -1511,9 +1528,10 @@ def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
             elif do_symlink and do_copy:
                 # print string
                 copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-                copystr = '[{0}/{1}] --> SYM[{2}]'.format(*copyargs)
                 # print copy string
-                WLOG(params, '', copystr, wrap=False)
+                # log: [{0}/{1}] --> SYM[{2}]
+                WLOG(params, '', textentry('40-509-00014', args=copyargs),
+                     wrap=False)
                 # remove and symlink
                 remove_previous(outpath)
                 os.symlink(inpath, outpath)
@@ -1601,8 +1619,8 @@ def permission_commands(params, run_id: str, perm_dict: dict,
                 os.system(command)
             except Exception as _:
                 eargs = [command]
-                emsg = 'Failed to run permission command: {0}'
-                WLOG(params, 'error', emsg.format(*eargs))
+                # error: Failed to run permission command: {0}
+                WLOG(params, 'error', textentry('09-509-00002', args=eargs))
     # -------------------------------------------------------------------------
     # return commands
     return commands
@@ -1624,6 +1642,7 @@ def remove_previous(outpath: str):
 
 def all_objects(params: ParamDict, recipe: DrsRecipe):
     # load index database
+    # log: Loading {0} database…
     WLOG(params, '', textentry('40-509-00001', args='file index'))
     findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
@@ -1631,9 +1650,9 @@ def all_objects(params: ParamDict, recipe: DrsRecipe):
     objs = findexdb.get_unique(column='KW_OBJNAME',
                                condition='BLOCK_KIND="raw"')
     # print number of objects found
-    msg = 'Found {0} raw objects in file index database'
     margs = [len(objs)]
-    WLOG(params, 'info', msg.format(*margs))
+    # log: Found {0} raw objects in file index database
+    WLOG(params, 'info', textentry('40-509-00010', args=margs))
     # return objects
     return objs
 
@@ -1699,9 +1718,8 @@ def check_size_limit(params: ParamDict, inpaths: Dict[str, List[str]],
     if total_size > sizelimit:
         # print warning
         eargs = [total_size, sizelimit]
-        emsg = 'Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)'
-        raise AperoCodedException(params, message=emsg.format(*eargs),
-                                  targs=eargs)
+        # error: Total size of files ({0:.3f} GB) exceeds limit ({1:.3f} GB)
+        raise AperoCodedException(params, '09-509-00006', targs=eargs)
 
 
 # =============================================================================

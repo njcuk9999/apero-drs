@@ -208,9 +208,9 @@ class RunIniFile:
             if seq.name == seqstr:
                 return seq
         # if we got to here sequence is invalid
-        emsg = 'Invalid sequence: {0} [{1}] {2}'
         eargs = [seqstr, self.instrument, self.name]
-        WLOG(self.params, 'error', emsg.format(*eargs))
+        # error: Invalid sequence: {0} [{1}] {2}
+        WLOG(self.params, 'error', textentry('09-502-00003', args=eargs))
         return None
 
     def modify(self, key: str, value: Any):
@@ -473,9 +473,9 @@ class RunIniFile:
         
         # ---------------------------------------------------------------------
         # print message
-        msg = '\tWriting yaml file: {0}'
         margs = [self.outpath]
-        WLOG(params, '', msg.format(*margs))
+        # log: Writing yaml file: {0}
+        WLOG(params, '', textentry('40-502-00040', args=margs))
         # initialize YAML object
         yaml_inst = YAML(typ='rt')
         base.enable_scientific_floats(yaml_inst)
@@ -590,10 +590,11 @@ class RunIniFile:
                                 groups[group] = [shortname]
 
                 if not found:
-                    wmsg = ('Recipe {0} ({1}) not in valid group (add {2} to '
-                            '{3}.GROUP)')
                     wargs = [srecipe.name, shortname, recipe_kind, __NAME__]
-                    WLOG(self.params, 'warning', wmsg.format(*wargs))
+                    # warning: Recipe {0} ({1}) not in valid group (add {2} to
+                    #     {3}.GROUP)
+                    WLOG(self.params, 'warning',
+                         textentry('10-502-00010', args=wargs))
 
         # ---------------------------------------------------------------------
         if mode == 'group':
@@ -619,9 +620,9 @@ class RunIniFile:
         raw_run_dir = os.path.join(raw_dir, run_dir)
         # make sure raw run dir is present - if not we have to skip
         if not os.path.exists(raw_run_dir):
-            wmsg = 'Skipping {0} [{1}]. Run directory: {2} does not exist'
             wargs = [self.name, self.instrument, raw_run_dir]
-            WLOG(self.params, 'warning', wmsg.format(*wargs))
+            # warning: Skipping {0} [{1}]. Run directory: {2} does not exist
+            WLOG(self.params, 'warning', textentry('10-502-00009', args=wargs))
             return
         # copy params
         sparams = self.params.copy()
@@ -649,6 +650,7 @@ class RunIniFile:
         # loop around sequences
         for sequence in sequencelist:
             # log progress
+            # log: Processing sequence '{0}'
             WLOG(sparams, 'info', textentry('40-503-00009',
                                             args=[sequence[0]]))
             # generate new runs for sequence

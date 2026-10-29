@@ -212,6 +212,8 @@ class CalibFile:
             else:
                 # warn user that input file was not valid
                 wargs = [self.filename, self.key]
+                # warning: User file: {0} not found. \n Using calibration
+                #     database to find suitable {1} file.
                 WLOG(params, 'warning', textentry('10-001-00012', args=wargs),
                      sublevel=2)
                 self.filename = None
@@ -365,6 +367,7 @@ def check_files(params: ParamDict, shortname: str,
     # ----------------------------------------------------------------------
     # log checking file info
     wargs = [dprtype, objname]
+    # log: File identified as {0} (OBJ={1})
     WLOG(params, 'info', textentry('40-016-00032', args=wargs))
     # ----------------------------------------------------------------------
     # storage of outputs
@@ -511,6 +514,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     apply_upper_bound = params['IMAGE.APPLY_UPPER_BOUND']
     apply_lower_bound = params['IMAGE.APPLY_LOWER_BOUND']
     # log that we are calibrating a file
+    # log: Calibrating file: {0}
     WLOG(params, 'info', textentry('40-014-00038', args=[infile.filename]))
 
     # ----------------------------------------------------------------------
@@ -582,6 +586,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         image2 = drs_image.resize(image2, **sargs)
         # print that image has been resize
         wargs = [dprtype, image1.shape, image2.shape]
+        # log: Image {0} resized from {1} to {2}
         WLOG(params, '', textentry('40-014-00013', args=wargs))
 
     # ----------------------------------------------------------------------
@@ -628,6 +633,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if n_percentile is not None:
         # log that we are normalising
+        # log: Normalising image by percentile = {0}
         WLOG(params, '', textentry('40-014-00014', args=[n_percentile]))
         # normalise by nanpercentile
         image4 = image4 / mp.nanpercentile(image4, n_percentile)
@@ -637,6 +643,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     if cleanhotpix:
         # log progress
+        # log: Cleaning FP hot pixels
         WLOG(params, '', textentry('40-014-00012'))
         # load the bad pix file
         cfile = CalibFile()
@@ -838,13 +845,21 @@ def calib_delta_time_check(params: ParamDict, inheader: DrsHeader,
         eargs = [key, calib_filename, delta_time, max_dtime, hobstime,
                  hcalibtime, func_name]
         if required:
+            # error: Calibration file ({0}) was selected as the calibration file
+            #     but is not within desired limits ({2}>{3} days) \n ObsTime:
+            #     {4} \n CalibTime:{5} \n File: {1} \n Function: {6}
             raise AperoCodedException(params, '09-002-00004', targs=eargs)
         else:
+            # warning: Calibration file ({0}) was selected as the calibration
+            #     file but is not within desired limits ({2}>{3} days) \n
+            #     ObsTime: {4} \n CalibTime:{5} \n File: {1} \n Function: {6}
             WLOG(params, 'warning', textentry('09-002-00004', args=eargs))
             return False, eargs
     # time check successful
     else:
         margs = [key, delta_time, max_dtime, calib_filename]
+        # log: Calibration {0} within delta time threshold ({1}<{2} days) \n
+        #     File: {3}
         WLOG(params, '', textentry('40-005-10003', args=margs))
         return True, []
 
@@ -879,12 +894,12 @@ def check_fp(params: ParamDict, image: np.ndarray, filename: str,
     func_name = __NAME__ + '.check_fp()'
     # log: Validating FP file
     if iterator is None or total_num is None:
+        # log: Validating FP file: {0}
         WLOG(params, '', textentry('40-014-00043', args=[filename]))
     else:
-        # TODO: Add to language database
-        pmsg = 'Validating FP file {0} of {1}: {2} '
         args = [iterator + 1, total_num, filename]
-        WLOG(params, '', pmsg.format(*args))
+        # log: Validating FP file {0} of {1}: {2}
+        WLOG(params, '', textentry('40-000-00021', args=args))
     # get properties from params
     percentile = pcheck(params, 'CAL.GEN.CHECKFP_PERCENTILE', func=func_name,
                         override=percentile)
@@ -934,6 +949,8 @@ def check_fp_files(params: ParamDict,
         else:
             # log a warning that file removed
             wargs = [fpfile.filename]
+            # warning: FP file does not pass 2D quality control. \n Filename =
+            #     {0}
             WLOG(params, 'warning', textentry('10-001-00009', args=wargs),
                  sublevel=4)
     # deal with having no files left

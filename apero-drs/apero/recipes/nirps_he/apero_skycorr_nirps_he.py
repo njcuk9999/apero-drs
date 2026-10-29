@@ -157,6 +157,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             allowed_dprtypes = ', '.join(params['OBJ.TELL.GEN.ALLOWED_DPRTYPES'])
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
+            # warning: DPRTYPE = ‘{0}’ is not valid for {1}. \n Allowed DPRTYPES
+            #     are: {2} \n Skipping filename = {3}
             WLOG(params, 'warning', textentry('10-019-00001', args=wargs),
                  sublevel=4)
             # end log correctly

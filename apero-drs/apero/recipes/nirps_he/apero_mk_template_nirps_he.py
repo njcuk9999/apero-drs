@@ -133,6 +133,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
+        # warning: No files were found for object name = {0}, file type = {1}
         WLOG(params, 'warning', textentry('10-019-00005', args=wargs),
              sublevel=2)
         # no object files --> qc failure
@@ -211,6 +212,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get objects that match this object name
     for s1d_filetype in infile.s1d:
         # log progress
+        # log: Building {0} template.
         WLOG(params, 'info', textentry('40-019-00038', args=[s1d_filetype]))
         # Get filetype definition
         dkwargs = dict(block_kind='red')

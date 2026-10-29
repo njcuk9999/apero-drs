@@ -54,21 +54,3 @@ np.nanmax(metric_key) < limit
 | METRIC_KEY | metric_key |
 | LIMIT | limit |
 | METRIC | metric |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.nanmax(HIERARCH ESO INS PRES104 VAL) < 0.0001
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | vacuum_gauge_upper |
-| ENABLED | True |
-| METRIC_KEY | HIERARCH ESO INS PRES104 VAL |
-| LIMIT | 0.0001 |
-| METRIC | metric |

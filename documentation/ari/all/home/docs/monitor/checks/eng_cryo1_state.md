@@ -56,20 +56,3 @@ np.all(status_key == target)
 | ENABLED | True |
 | STATUS_KEY | status_key |
 | TARGET | target |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.all(HIERARCH ESO INS SENS126 == False)
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | cryo1_status_state |
-| ENABLED | True |
-| STATUS_KEY | HIERARCH ESO INS SENS126 |
-| TARGET | False |

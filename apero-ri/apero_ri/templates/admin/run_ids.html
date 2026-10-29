@@ -9,7 +9,7 @@
 
 {% block doc_content %}
 <div class="ari-page-header">
-    <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label }}</h1>
+    <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label | tl }}</h1>
 </div>
 <section id="rid-root" class="rid-workspace" aria-label="RUN IDs">
     <div id="rid-health" class="ari-ap-status ari-ap-status--info" role="status" aria-live="polite">

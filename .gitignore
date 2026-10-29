@@ -203,3 +203,6 @@ apero-drs/apero/apero-assets/*
 # Ignore lock file
 lock.lock
 
+# Ignore local pytest temp tree
+pytest-of-cook/
+

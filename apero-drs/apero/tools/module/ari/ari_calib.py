@@ -30,6 +30,7 @@ from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.io import drs_io
+from aperocore import drs_lang
 
 # =============================================================================
 # Define variables
@@ -46,6 +47,8 @@ ParamDict = param_functions.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = drs_lang.textentry
 
 
 # =============================================================================
@@ -166,7 +169,9 @@ def add_calib_page(params: ParamDict, recipe: DrsRecipe,
         calib_page.add_newline(2)
     # -----------------------------------------------------------------
     # write table page
-    print('Writing table page: {0}'.format(recipe_table.rst_path))
+    margs = [recipe_table.rst_path]
+    # log: Writing table page: {0}
+    print(textentry('40-514-00001', args=margs))
     calib_page.write_page(recipe_table.rst_path)
     return 0
 
@@ -275,7 +280,9 @@ def get_calib_props(params: ParamDict, recipe: DrsRecipe
     calib_data = get_wave_cent_x(params, calib_data)
     # -------------------------------------------------------------------------
     # save calib data to disk
-    WLOG(params, '', 'Writing file {0}'.format(calib_key_file))
+    margs = [calib_key_file]
+    # log: Writing file {0}
+    WLOG(params, '', textentry('40-514-00002', args=margs))
     Table(calib_data).write(calib_key_file, overwrite=True)
     # -------------------------------------------------------------------------
     # sort into a more usable form for plotting
@@ -382,7 +389,8 @@ def get_calib_hkeys(params: ParamDict, calib_data: Dict[str, Any],
     :return: dict, calibration properties
     """
     # print progress
-    WLOG(params, '', 'Loading calibration data')
+    # log: Loading calibration data
+    WLOG(params, '', textentry('40-514-00003'))
     # loop around all files
     for filename in tqdm(calib_files):
         basename = os.path.basename(filename)
@@ -429,7 +437,8 @@ def get_wave_cent_x(params: ParamDict, calib_data: Dict[str, np.ndarray]):
     """
     # deal with no wave data
     if np.sum(np.isfinite(calib_data['KW_EXT_NBO'])) == 0:
-        WLOG(params, 'warning', 'No WAVE_NIGHT files. Skipping WAVE_CENT_X')
+        # warning: No WAVE_NIGHT files. Skipping WAVE_CENT_X
+        WLOG(params, 'warning', textentry('10-514-00001'))
         return calib_data
     # get the nbo
     nbo = int(mp.nanmean(calib_data['KW_EXT_NBO']))
