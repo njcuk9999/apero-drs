@@ -404,6 +404,12 @@ def test_every_adapter_exports_and_round_trips(
     # known errors live in the package, not the data dir: redirect them
     monkeypatch.setattr(known_errors, 'known_errors_dir',
                         lambda: _mk(Path(os.environ['ARI_DIR']) / 'ke'))
+    task_keys = ('APERO_SYNC_ASSETS', 'LEGACY_CHECK_GSHEET')
+    for server in (server_a, server_b):
+        with server.active():
+            rows = [dict(task_key=key, active=True, frequency=12.0)
+                    for key in task_keys]
+            auth.save_async_tasks(dict(__GLOBAL__=rows))
     with server_a.active():
         names = [n for n in adapters.ADAPTERS if n != 'email']
         store.update_peer(peer_id, categories={n: True for n in names})
@@ -417,8 +423,45 @@ def test_every_adapter_exports_and_round_trips(
         moved = counts['pull'] + counts['push'] + counts['conflicts']
         assert moved == 0, (name, counts)
     with server_b.active():
+        tasks = auth.load_async_tasks()
+        assert tasks['__GLOBAL__'] == [
+            dict(task_key=key, active=True, frequency=12.0)
+            for key in task_keys]
         assert len(vault_store.load_entries()) == 1
         assert (server_b.root / 'admin' / 'general' / 'vault.yaml').exists()
+
+
+def test_async_settings_requires_local_task_configuration(pair: Any) -> None:
+    """Reject settings for tasks missing from the receiving server.
+
+    :param pair: Two isolated servers and their configured mirror peer.
+    :return: None.
+    """
+    server_a, server_b, peer_id, _ = pair
+    task_key = 'LEGACY_CHECK_GSHEET'
+    with server_a.active():
+        store.update_peer(peer_id, categories=dict(async_settings=True))
+        row = dict(task_key=task_key, active=True, frequency=12.0)
+        auth.save_async_tasks(dict(__GLOBAL__=[row]))
+    with server_b.active():
+        auth.save_async_tasks(dict())
+    summary = _run(server_a, peer_id)
+    assert not summary['ok']
+    assert any('task not configured on this server' in error
+               for error in summary['errors'])
+    with server_b.active():
+        assert auth.load_async_tasks() == dict()
+        row = dict(task_key=task_key, active=True, frequency=12.0)
+        auth.save_async_tasks(dict(__GLOBAL__=[row]))
+    summary = _run(server_a, peer_id)
+    assert summary['ok'], summary['errors']
+    with server_a.active():
+        row = dict(task_key=task_key, active=False, frequency=24.0)
+        auth.save_async_tasks(dict(__GLOBAL__=[row]))
+    summary = _run(server_a, peer_id)
+    assert summary['ok'], summary['errors']
+    with server_b.active():
+        assert auth.load_async_tasks() == dict(__GLOBAL__=[row])
 
 
 def test_rejection_list_and_checks_policy(pair: Any) -> None:
