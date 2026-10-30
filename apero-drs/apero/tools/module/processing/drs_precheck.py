@@ -9,7 +9,7 @@ Created on 2021-11-08
 
 @author: cook
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
@@ -473,7 +473,7 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
 
 
 def file_check(params: ParamDict, recipe: DrsRecipe,
-               findexdbm: Optional[FileIndexDatabase] = None):
+               findexdbm: Optional[FileIndexDatabase] = None) -> None:
     """
     Check the current index database for possible problems in the raw file set
 
@@ -748,12 +748,13 @@ def _get_infiles(srecipe: DrsRecipe) -> GetInFileReturn:
     return infiles, inargs
 
 
-def _get_rawfile(drsfile: DrsFitsFile):
+def _get_rawfile(
+    drsfile: DrsFitsFile) -> Union[DrsFitsFile, List[Any]]:
     """
     Get the most base intype (i.e. the raw file) for an output file
 
     :param drsfile: DrsFile
-    :return:
+    :return: The deepest input file or a nested list for multiple inputs.
     """
 
     if isinstance(drsfile.intype, list):
@@ -771,7 +772,8 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # Define object checking functions
 # =============================================================================
 def update_raw_findex_db(params: ParamDict, recipe: DrsRecipe,
-                         obsdir: str, findexdbm):
+                         obsdir: str,
+                         findexdbm: Optional[FileIndexDatabase]) -> None:
     """
     Update the raw file index database for a given observation directory
 

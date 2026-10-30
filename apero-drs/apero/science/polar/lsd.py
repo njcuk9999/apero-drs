@@ -89,7 +89,8 @@ def lsd_analysis_wrapper(params: ParamDict, props: ParamDict) -> ParamDict:
 
 
 def write_files(params: ParamDict, recipe: DrsRecipe, props: ParamDict,
-                polfile: DrsFitsFile, cfile: DrsFitsFile, ctable: Table):
+                polfile: DrsFitsFile, cfile: DrsFitsFile,
+                ctable: Table) -> None:
     """
     Write the LSD file to disk
 
@@ -700,7 +701,8 @@ def lsd_analysis(params: ParamDict, props: ParamDict) -> ParamDict:
     return props
 
 
-def nrefrac(wavelength: np.ndarray, density: float = 1.0):
+def nrefrac(wavelength: np.ndarray, density: float = 1.0
+            ) -> Union[np.ndarray, float]:
     """
     Calculate refractive index of air from Cauchy formula.
 
@@ -723,7 +725,7 @@ def nrefrac(wavelength: np.ndarray, density: float = 1.0):
 
 
 def convert_vacuum_to_air_wl(vacuum_wavelength: np.ndarray,
-                             air_density=1.0) -> np.ndarray:
+                             air_density: float = 1.0) -> np.ndarray:
     """
     Convert vacuum wavelengths to air wavelengths at a certain air density
 

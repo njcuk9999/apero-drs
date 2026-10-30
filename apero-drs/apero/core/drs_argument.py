@@ -96,7 +96,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
     # argparse.ArgumentParser cannot be pickled
     #   so cannot pickle DrsArgumentParser either
     def __init__(self, recipe: Any, indexdb: FileIndexDatabase,
-                 **kwargs) -> None:
+                 **kwargs: Any) -> None:
         """
         Construct the Drs Argument parser
 
@@ -3224,7 +3224,8 @@ class DrsArgument(object):
                  default: Union[Any, None] = None,
                  default_ref: Union[str, None] = None,
                  required: bool = None, reprocess: bool = False,
-                 optional: bool = False, single_call: bool = False):
+                 optional: bool = False,
+                 single_call: bool = False) -> None:
         """
         Create a DRS Argument object
 
@@ -3709,7 +3710,7 @@ class DrsArgument(object):
     ErrorStrType = Union[List[Union[drs_lang.Text, str]], drs_lang.Text, str, None]
 
     def exception(self, message: Union[drs_lang.Text, List[str], str, None] = None,
-                  errorstr: ErrorStrType = None):
+                  errorstr: ErrorStrType = None) -> None:
         """
         Internal exception generator --> raises an Argument Error with
         message including a logging code for debug purposes
@@ -4408,7 +4409,8 @@ def _fits_query(params: ParamDict, recipe: Any,
 
 
 def _check_file_logic(params: ParamDict, argname: str, logic: str,
-                      filetypes: List[DrsInputFile], types: List[DrsInputFile]):
+                      filetypes: List[DrsInputFile],
+                      types: List[DrsInputFile]) -> None:
     """
     Check the file logic for all filetypes
 

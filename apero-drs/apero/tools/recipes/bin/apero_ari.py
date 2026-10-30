@@ -11,7 +11,7 @@ Created on 2019-07-26 at 09:39
 @author: cook
 """
 import apero as apero_pkg
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -52,7 +52,8 @@ ParamDict = param_functions.ParamDict
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(profile: Optional[str] = None, **kwargs):
+def main(profile: Optional[str] = None,
+         **kwargs: Any) -> Any:
     """
     Main function for apero_log_stats.py
 
@@ -62,8 +63,7 @@ def main(profile: Optional[str] = None, **kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Startup result or recipe/parameters in debug mode.
     """
     # assign function calls (must add positional)
     fkwargs = dict(profile=profile, **kwargs)
@@ -82,14 +82,15 @@ def main(profile: Optional[str] = None, **kwargs):
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe: DrsRecipe, params: ParamDict):
+def __main__(recipe: DrsRecipe,
+            params: ParamDict) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
     :param recipe: DrsRecipe, the recipe class using this function
     :param params: ParamDict, the parameter dictionary of constants
 
-    :return: dictionary containing the local variables
+    :return: Local context containing the generated ARI products.
     """
     # ----------------------------------------------------------------------
     # Main Code

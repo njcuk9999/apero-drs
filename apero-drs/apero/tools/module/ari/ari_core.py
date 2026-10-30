@@ -429,12 +429,13 @@ class FileType:
         self.exists = True
 
     def copy_new(self) -> 'FileType':
+        """Return a new FileType initialized from this instance's identity."""
         # inherit values from self
         new = FileType(self.name, self.block_kind, self.kw_output, self.fiber,
                        self.count)
         return new
 
-    def count_files(self, objname, indexdbm, logdbm,
+    def count_files(self, objname: str, indexdbm: Any, logdbm: Any,
                     filetypes: Dict[str, 'FileType']) -> None:
         """Refresh file counts, QC masks, and observation-time statistics."""
         # deal with not wanting to count in every case
@@ -2046,7 +2047,7 @@ class AriObject:
               apero_mode: Optional[str] = None,
               fiber: Optional[str] = None,
               dprtypes: Optional[str] = None,
-              drsoutid: Optional[str] = None):
+              drsoutid: Optional[str] = None) -> str:
         """
         Create a link to pre-fill the request form
 
@@ -2438,6 +2439,12 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str,
 # =============================================================================
 def add_lbl_count(params: ParamDict, object_classes: Dict[str, AriObject]
                   ) -> Dict[str, AriObject]:
+    """Populate object records with LBL output counts and template details.
+
+    :param params: APERO parameters containing LBL data paths.
+    :param object_classes: Objects to update, keyed by canonical name.
+    :return: Updated object mapping.
+    """
     # get WLOG
     wlog = drs_log.wlog
     # -------------------------------------------------------------------------
@@ -2854,7 +2861,7 @@ def _match_file(reffile: str, files: List[str]) -> Optional[int]:
 
 
 def _header_value(keydict: Dict[str, str], header: fits.Header,
-                  filename: str):
+                  filename: str) -> Any:
     """Read and convert one configured header value.
 
     :param keydict: Header key, optional fallback, dtype, unit, and time format.
@@ -2926,6 +2933,13 @@ def _header_value(keydict: Dict[str, str], header: fits.Header,
 
 def _url_addp(key: str, value: Union[str, List[str], None],
               fmt: str = '&{0}={1}') -> str:
+    """Format one or more request parameters for a prefilled URL.
+
+    :param key: URL parameter name.
+    :param value: One value, multiple values, or None to omit the parameter.
+    :param fmt: Format string used for each key/value pair.
+    :return: Concatenated URL query fragments.
+    """
     # deal with value being None
     if value is None:
         return ''
@@ -3219,8 +3233,10 @@ def find_finder_charts(path: str, objname: str) -> Tuple[List[str], List[str]]:
     return list_of_files, list_of_descs
 
 
-def make_finder_download_table(entry, objname, item_save_path, item_rel_path,
-                               down_save_path, down_rel_path) -> str:
+def make_finder_download_table(
+    entry: Dict[str, Any], objname: str, item_save_path: str,
+    item_rel_path: str, down_save_path: str,
+    down_rel_path: str) -> str:
     """Create a finder-chart download table and return its relative path.
 
     :param entry: Finder-chart file and description lists.
@@ -3242,7 +3258,15 @@ def make_finder_download_table(entry, objname, item_save_path, item_rel_path,
     return item_rel_path + dwn_base_name
 
 
-def get_unique(values, dtype, exclude: Optional[List[Any]] = None) -> List[Any]:
+def get_unique(values: Any, dtype: Any,
+               exclude: Optional[List[Any]] = None) -> List[Any]:
+    """Return unique values converted to the requested type.
+
+    :param values: Values to deduplicate.
+    :param dtype: Callable used to convert each retained value.
+    :param exclude: Values to omit from the result.
+    :return: Unique converted values.
+    """
     # get unique dprtypes
     uniques = list(set(values))
     # deal with no excludes
@@ -3259,6 +3283,12 @@ def get_unique(values, dtype, exclude: Optional[List[Any]] = None) -> List[Any]:
 
 
 def get_objnames_headers(objname: str, indexdbm: Any) -> str:
+    """Return original object-name header values for a raw object.
+
+    :param objname: Canonical object name in the index database.
+    :param indexdbm: File-index manager used to query raw file headers.
+    :return: Comma-separated original header names.
+    """
     # set up the condition
     condition = f'BLOCK_KIND="raw" AND KW_OBJNAME="{objname}"'
     # get the possible original object names for this condition

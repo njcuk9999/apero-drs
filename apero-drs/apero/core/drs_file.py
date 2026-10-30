@@ -5741,7 +5741,7 @@ class DrsFitsFile(DrsInputFile):
 
 
 class DrsNpyFile(DrsInputFile):
-    def __init__(self, name, filetype: str = '.npy',
+    def __init__(self, name: str, filetype: str = '.npy',
                  suffix: str = '',
                  remove_insuffix: Union[bool, None] = None,
                  prefix: str = '',
@@ -6123,7 +6123,8 @@ class DrsNpyFile(DrsInputFile):
                 description: Optional[str] = None,
                 inpath: Union[str, None] = None,
                 required: Union[bool, None] = None,
-                hdulist: Dict[str, AperoDataModel] = None):
+                hdulist: Dict[str, AperoDataModel] = None
+                ) -> 'DrsNpyFile':
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -6231,7 +6232,8 @@ class DrsNpyFile(DrsInputFile):
                      description: Optional[str] = None,
                      inpath: Union[str, None] = None,
                      required: Union[bool, None] = None,
-                     hdulist: Dict[str, AperoDataModel] = None):
+                     hdulist: Dict[str, AperoDataModel] = None
+                     ) -> 'DrsNpyFile':
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -6915,7 +6917,7 @@ class DrsOutFile(DrsInputFile):
     def __init__(self, name: str, filetype: str,
                  suffix: Union[str, None] = None,
                  outclass: OutFileTypes = None,
-                 inext=None, required: bool = True,
+                 inext: Optional[str] = None, required: bool = True,
                  exclude_keys: EXCLUDE_KEYS_TYPE = None,
                  instrument: Optional[str] = None,
                  description: Union[str, None] = None,
@@ -7301,14 +7303,15 @@ class DrsOutFile(DrsInputFile):
                   name: str=None, filetype: str=None,
                   suffix: Union[str, None] = None,
                   outclass: OutFileTypes = None,
-                  inext=None, required: bool = True,
+                  inext: Optional[str] = None, required: bool = True,
                   exclude_keys: EXCLUDE_KEYS_TYPE = None,
                   instrument: Optional[str] = None,
                   description: Union[str, None] = None,
                   inpath: Union[str, None] = None,
                   filename: str = None,
                   params: ParamDict = None,
-                  header: Union[drs_fits.Header, None] = None):
+                  header: Union[drs_fits.Header, None] = None
+                  ) -> 'DrsOutFile':
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -8389,7 +8392,7 @@ class DrsLBLFile(DrsFitsFile):
     # set class name
     class_name: str = 'DrsLBLFile'
 
-    def __init__(self, name, filetype: str = '.fits',
+    def __init__(self, name: str, filetype: str = '.fits',
                  suffix: str = '',
                  remove_insuffix: Union[bool, None] = None,
                  prefix: str = '',
@@ -8565,7 +8568,8 @@ class DrsLBLFile(DrsFitsFile):
         except Exception as _:
             self.header = None
 
-    def copyother(self, drsfile, name: Union[str, None] = None,
+    def copyother(self, drsfile: 'DrsLBLFile',
+                  name: Union[str, None] = None,
                   filetype: Union[str, None] = None,
                   suffix: Union[str, None] = None,
                   remove_insuffix: Union[bool, None] = None,
@@ -8603,7 +8607,8 @@ class DrsLBLFile(DrsFitsFile):
                   nosave: Optional[bool] = None,
                   description: Union[str, None] = None,
                   inpath: Union[str, None] = None,
-                  required: Union[bool, None] = None):
+                  required: Union[bool, None] = None
+                  ) -> 'DrsLBLFile':
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)

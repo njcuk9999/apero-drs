@@ -8,7 +8,7 @@ Created on 2024-03-11
 
 @author: cook
 """
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from aperocore.base import base
 import apero as apero_pkg
@@ -46,7 +46,7 @@ textentry = drs_lang.textentry
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
 def main(objname: Optional[str] = None, identifier: Optional[str] = None,
-         **kwargs):
+         **kwargs: Any) -> Any:
     """
     Main function for apero_reset.py
 
@@ -54,8 +54,7 @@ def main(objname: Optional[str] = None, identifier: Optional[str] = None,
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Startup result or recipe/parameters in debug mode.
     """
     # assign function calls (must add positional)
     fkwargs = dict(objname=objname, identifier=identifier, **kwargs)
@@ -74,13 +73,13 @@ def main(objname: Optional[str] = None, identifier: Optional[str] = None,
     return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local context containing the selected rejection entry.
     """
     # ----------------------------------------------------------------------
     # Main Code

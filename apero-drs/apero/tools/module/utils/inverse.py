@@ -10,6 +10,7 @@ Created on 2020-03-30 at 14:47
 @author: cook
 """
 import numpy as np
+from typing import Any, List, Tuple
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -53,8 +54,9 @@ def drs_image_shape(params: ParamDict) -> tuple:
 
 
 def calc_central_localisation(params: ParamDict, recipe: object,
-                              fiber: str, header=None,
-                              filename: str = None) -> tuple:
+                              fiber: str, header: Any = None,
+                              filename: str = None
+                              ) -> Tuple[List[Any], List[Any]]:
     """Evaluate one fiber's center and width at detector midpoint."""
     # get the loco image and number of orders for this fiber
     lprops = localisation.get_coefficients(params, recipe, header,
@@ -143,7 +145,11 @@ class ProxyRecipe:
         self.shortname = shortname
 
 
-def main():
+def main() -> None:
+    """Run the standalone inverse-image test using local example data.
+
+    :return: None.
+    """
     # TEST
     from astropy.io import fits
     workspace = '/scratch3/rali/spirou/mini_data/calibDB/'

@@ -32,7 +32,7 @@ TMP_PROFILE_NAME = 'dev_profile'
 # =============================================================================
 # Define functions
 # =============================================================================
-def drs_uconfig(instrument: str):
+def drs_uconfig(instrument: str) -> None:
     """
     Make a temporary DRS_CONFIG directory for testing purposes
 
@@ -83,7 +83,7 @@ def drs_uconfig(instrument: str):
         _copy_assets(assets_path)
 
 
-def get_base_params(instrument: str):
+def get_base_params(instrument: str) -> param_functions.ParamDict:
     """
     Load the apero constants for an instrument
 
@@ -210,7 +210,7 @@ def _build_setup_params(instrument: str,
 
 def _apply_set_values(params: Any,
                       sargs: Dict[str, Any],
-                      sname: str):
+                      sname: str) -> None:
     """
     Apply setup 'sets' rules for an argument into params
 
@@ -228,7 +228,7 @@ def _apply_set_values(params: Any,
         params.set(key, value, source=f'set[{sname}]')
 
 
-def _copy_assets(target_path: str):
+def _copy_assets(target_path: str) -> None:
     """
     Copy assets into the temporary DRS_DATA assets directory
 

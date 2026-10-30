@@ -88,7 +88,7 @@ class CalibFile:
     dtime_pass: bool
     dtime_eargs: list
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Construct the calibration file class (mostly just storage and loading
         of the calibration file)
@@ -135,7 +135,7 @@ class CalibFile:
                         n_entries: Union[int, str] = 1,
                         required: bool = True, ext: Union[int, None] = None,
                         fmt: str = 'fits',
-                        kind: str = 'image'):
+                        kind: str = 'image') -> None:
         """
         Load one or many calibration files
 
@@ -722,7 +722,14 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
 
 
 def measure_effective_readout_noise(params: ParamDict, image: np.ndarray,
-                                    bkgrdfile: str):
+                                    bkgrdfile: str) -> float:
+    """Measure effective pixel-to-pixel readout noise in background pixels.
+
+    :param params: APERO parameters used to read the background mask.
+    :param image: Calibrated image from which to measure noise.
+    :param bkgrdfile: Path to the background pixel mask file.
+    :return: Robust point-to-point RMS in image units.
+    """
     # get bad pixel file
     bkgrdimage = drs_fits.readfits(params, bkgrdfile)
     # create mask from badpixmask

@@ -61,9 +61,10 @@ user_input = drs_text.user_input
 # =============================================================================
 # Define functions
 # =============================================================================
-def display_title():
-    """
-    Print the title of the script
+def display_title() -> None:
+    """Print the APERO executable title and logo.
+
+    :return: None.
     """
     # set function name
     # _ = display_func('_display_drs_title', __NAME__)
@@ -94,6 +95,10 @@ def display_title():
 
 
 def command_line_args() -> ParamDict:
+    """Parse command-line options into a parameter dictionary.
+
+    :return: Parsed executable options.
+    """
     # execute description
     description = textentry('EXECUTE_DESCRIPTION')
     # start the parser
@@ -129,6 +134,12 @@ def command_line_args() -> ParamDict:
 
 
 def get_recipe_list(aparams: ParamDict, attribute: str) -> List[Any]:
+    """Get one named attribute from every instrument recipe and tool.
+
+    :param aparams: APERO parameters used to report lookup errors.
+    :param attribute: Recipe attribute to collect.
+    :return: Values of the requested attribute in recipe order.
+    """
     # get instrument class
     instrument = load_functions.load_pconfig(INSTRUMENTS)
     # Get a list of recipes (for instrument + tools)
@@ -146,7 +157,13 @@ def get_recipe_list(aparams: ParamDict, attribute: str) -> List[Any]:
     return attribute_list
 
 
-def list_recipes(aparams: ParamDict, rparams: ParamDict):
+def list_recipes(aparams: ParamDict, rparams: ParamDict) -> None:
+    """Log the recipes and tools available for the selected instrument.
+
+    :param aparams: APERO parameters for the selected instrument.
+    :param rparams: Parsed executable options controlling list output.
+    :return: None.
+    """
 
     name_list = get_recipe_list(aparams, 'name')
     shortname_list = get_recipe_list(aparams, 'shortname')
@@ -205,7 +222,13 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict):
         WLOG(aparams, 'info', msg)
 
 
-def run_recipe(aparams: ParamDict, rparams: ParamDict):
+def run_recipe(aparams: ParamDict, rparams: ParamDict) -> None:
+    """Resolve and run the selected recipe or display its help.
+
+    :param aparams: APERO parameters for the selected instrument.
+    :param rparams: Parsed executable options and recipe arguments.
+    :return: None.
+    """
 
     name_list = get_recipe_list(aparams, 'name')
     shortname_list = get_recipe_list(aparams, 'shortname')

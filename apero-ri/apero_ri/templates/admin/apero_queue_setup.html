@@ -116,8 +116,18 @@
                 <datalist id="aqsSshHostList"></datalist>
             </div>
             <div class="ari-ae-field">
-                <label class="ari-ae-label" for="aqsRemoteHost">Remote host (from the SSH host)</label>
-                <input id="aqsRemoteHost" class="ari-ap-input" value="localhost">
+                <label class="ari-ae-label" for="aqsRemoteHost">Queue dashboard host (as seen by the SSH machine)</label>
+                <input id="aqsRemoteHost" class="ari-ap-input" value="localhost"
+                       placeholder="e.g. 127.0.0.1 or localhost"
+                       aria-describedby="aqsRemoteHostHelp">
+                <div id="aqsRemoteHostHelp" class="aqs-help">
+                    Usually <code>127.0.0.1</code> or <code>localhost</code>
+                    when the queue GUI runs on the machine you SSH into.
+                    This address is relative to that SSH machine, not your
+                    browser or the ARI server. Enter only the hostname or
+                    IP address, without <code>http://</code> or a port;
+                    set the port below.
+                </div>
             </div>
             <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsRemotePort">Remote port (apero_queue.py gui --port)</label>

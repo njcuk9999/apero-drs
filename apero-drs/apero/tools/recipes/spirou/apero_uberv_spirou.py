@@ -9,6 +9,8 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
+from typing import Any, Dict
+
 import itertools
 import os
 
@@ -69,7 +71,7 @@ RMOD.add(cal_update_berv)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for cal_update_berv.py
 
@@ -77,8 +79,7 @@ def main(**kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Startup result or recipe/parameters in debug mode.
     """
     # assign function calls (must add positional)
     fkwargs = dict(**kwargs)
@@ -98,13 +99,13 @@ def main(**kwargs):
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe, params):
+def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe:
-    :param params:
-    :return:
+    :param recipe: Recipe object created by startup.
+    :param params: APERO parameter dictionary.
+    :return: Local context containing the BERV update results.
     """
     # ----------------------------------------------------------------------
     # Main Code

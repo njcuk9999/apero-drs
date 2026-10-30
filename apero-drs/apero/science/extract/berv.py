@@ -343,7 +343,7 @@ def get_keys_from_header(params: ParamDict,
     return bprops
 
 
-def assign_use_berv(berv_props: ParamDict, use=True) -> ParamDict:
+def assign_use_berv(berv_props: ParamDict, use: bool = True) -> ParamDict:
     """
     Assigns the USE_BERV keywords (based on whether pyasl was used (EST) or
     barycorrypy was used)
@@ -496,6 +496,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     # make locked bervcalc function
     @drs_lock.synchronized(lock, pid)
     def locked_bervcalc() -> Tuple[np.ndarray, np.ndarray]:
+        """Calculate velocity and time corrections while holding the lock."""
         # try to calculate bervs and bjds
         try:
             out1 = barycorrpy.get_BC_vel(JDUTC=times, zmeas=0.0, **bkwargs)
@@ -613,6 +614,13 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
 
 def add_berv_keys(params: ParamDict, infile: DrsFitsFile,
                   props: ParamDict) -> DrsFitsFile:
+    """Add BERV measurements and provenance to a FITS file header.
+
+    :param params: APERO parameters used to resolve FITS header definitions.
+    :param infile: File object whose header receives the BERV values.
+    :param props: BERV measurements and their source properties.
+    :return: The updated input file object.
+    """
     # make sure infile has params
     infile.params = params
     # add berv keys

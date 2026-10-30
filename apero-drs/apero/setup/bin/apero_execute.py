@@ -10,6 +10,8 @@ Created on 2024-10-28 11:32
 @author: cook
 """
 
+from typing import Any, Dict
+
 from apero.base import base as apero_base
 from apero.instruments.select import INSTRUMENTS
 from apero.setup.core import drs_execute
@@ -40,7 +42,7 @@ WLOG = drs_log.wlog
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs):
+def main(**kwargs: Any) -> Dict[str, Any]:
     """
     Main function for apero_validate.py
 
@@ -48,8 +50,7 @@ def main(**kwargs):
 
     :keyword debug: int, debug level (0 for None)
 
-    :returns: dictionary of the local space
-    :rtype: dict
+    :returns: Local context containing the execution parameters and results.
     """
     # display the title
     drs_execute.display_title()
@@ -72,7 +73,11 @@ def main(**kwargs):
     return locals()
 
 
-def run():
+def run() -> None:
+    """Run the APERO recipe executable and discard its local context.
+
+    :return: None.
+    """
     _ = main()
 
 

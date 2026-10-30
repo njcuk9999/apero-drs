@@ -751,7 +751,8 @@ def calculate_polarimetry(params: ParamDict, pprops: ParamDict,
 
 
 def polarimetry_diff_method(params: ParamDict, props: ParamDict,
-                            interp_flux: Union[bool, None] = None):
+                            interp_flux: Union[bool, None] = None
+                            ) -> ParamDict:
     """
     Function to calculate polarimetry using the difference method as described
     in the paper:
@@ -1522,7 +1523,7 @@ def make_s1d(params: ParamDict, recipe: DrsRecipe,
     return s1dprops
 
 
-def quality_control(params) -> Tuple[List[List[Any]], bool]:
+def quality_control(params: ParamDict) -> Tuple[List[List[Any]], bool]:
     """
     Quality control for the polar recipe
     - currently blank
@@ -2125,7 +2126,8 @@ def continuum(params: ParamDict, xarr: np.ndarray, yarr: np.ndarray,
 def _fit_continuum(params: ParamDict, recipe: DrsRecipe, wavemap: np.ndarray,
                    spec: np.ndarray, function: str = 'polynomial',
                    degree: int = 3, niter: int = 5, rej_low: float = 2.0,
-                   rej_high: float = 2.5, grow=1, med_filt: int = 0,
+                   rej_high: float = 2.5, grow: int = 1,
+                   med_filt: int = 0,
                    percentile_low: float = 0.0, percentile_high: float = 100.0,
                    min_points: int = 10, verbose: bool = False,
                    kind: str = 'None') -> np.ndarray:

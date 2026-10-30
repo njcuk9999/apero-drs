@@ -254,7 +254,7 @@ def convert_to_e(params: ParamDict, image: np.ndarray,
 
 
 def convert_to_adu(params: ParamDict, image: np.ndarray,
-                   exptime=Union[float, None]) -> np.ndarray:
+                   exptime: Union[float, None] = None) -> np.ndarray:
     """
     Converts image from ADU/s into ADU
 
@@ -529,7 +529,7 @@ def npy_filelist(name: str, index: int, array: np.ndarray,
 
 def npy_fileclean(filenames: Union[List[str], None],
                   subdir: Union[str, None] = None,
-                  outdir: Union[str, None] = None):
+                  outdir: Union[str, None] = None) -> None:
     """
     Remove all numpy files (after no longer needed) and the sub-directory they
     were saved to (a clean up)
@@ -566,7 +566,8 @@ def npy_fileclean(filenames: Union[List[str], None],
 
 
 def large_image_combine(params: ParamDict, files: Union[List[str], np.ndarray],
-                        math: str = 'median', fmt='fits', nmax: int = 2e7,
+                        math: str = 'median', fmt: str = 'fits',
+                        nmax: int = 2e7,
                         subdir: Union[str, None] = None,
                         outdir: Union[str, None] = None,
                         func: Optional[Any] = None,
