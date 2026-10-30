@@ -2,60 +2,71 @@
 {% block title %}APERO RI - Clocks{% endblock %}
 
 {% block doc_content %}
-<div class="ari-page-header">
-    <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
-    <p class="ari-page-subtitle">
-        Live clocks across configured timezones.
-    </p>
-</div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dosis:wght@300;400;500;600&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_clocks_page.css', v='20261030a') }}">
 
-<style>
-.uc-clock-wrap {
-    border-radius: 0 0 4px 4px;
-}
+<main class="ck" id="ari-world-clocks">
+    <section class="ck-hero" aria-label="Your local time">
+        <div>
+            <h1>Your time</h1>
+            <div class="ck-big num" id="ck-big" aria-live="off">--:--</div>
+            <div class="ck-date"><b id="ck-today"></b> · <span id="ck-zone"></span></div>
+        </div>
+        <div class="ck-seg" role="group" aria-label="Clock format">
+            <button type="button" data-h12="0">24 h</button>
+            <button type="button" data-h12="1">12 h</button>
+        </div>
+    </section>
 
-#clock-table .ot-th {
-    background: #d9ebff;
-    border-right-color: #9fc3ea;
-    border-bottom-color: #9fc3ea;
-}
+    <section class="ck-map" id="ck-map" aria-label="World day and night map">
+        <svg id="ck-svg" viewBox="0 0 960 500" role="img" aria-label="World map with day and night"></svg>
+        <svg class="ck-leaders" id="ck-leaders" aria-hidden="true"></svg>
+        <div class="ck-labels" id="ck-labels"></div>
+        <div class="ck-map-note" id="ck-map-note"></div>
+        <div class="ck-map-state" id="ck-map-state" role="status">Loading map…</div>
+    </section>
 
-#clock-table .ot-th:hover {
-    background: #c6dfff;
-}
+    <section class="ck-travel" aria-label="Time travel">
+        <label for="ck-range">Time travel</label>
+        <input type="range" id="ck-range" min="-1440" max="1440" step="15" value="0">
+        <output id="ck-offset" class="is-live" for="ck-range"></output>
+        <div class="hint">
+            <span>Drag to see the time everywhere at another moment.</span>
+            <button type="button" id="ck-reset" hidden>Back to now</button>
+        </div>
+    </section>
 
-[data-theme="dark"] #clock-table .ot-th {
-    background: #1f2937;
-    border-right-color: #334155;
-    border-bottom-color: #334155;
-}
+    <section class="ck-grid" id="ck-grid" aria-label="Configured clocks">
+        <p class="ck-state">Loading clocks…</p>
+    </section>
 
-[data-theme="dark"] #clock-table .ot-th:hover {
-    background: #2b3648;
-}
-</style>
-
-<div class="ot-table-wrap uc-clock-wrap">
-    <table class="ot-table" id="clock-table">
-        <thead>
-        <tr class="ot-header-row">
-            <th class="ot-th ot-th--nonsortable">Name</th>
-            <th class="ot-th ot-th--nonsortable">Time</th>
-            <th class="ot-th ot-th--nonsortable">Difference to UTC</th>
-        </tr>
-        </thead>
-        <tbody id="clock-table-body">
-        <tr class="ot-row">
-            <td colspan="3" class="ot-cell ot-loading">Loading clocks...</td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+    <section class="ck-planner" aria-labelledby="ck-planner-title">
+        <div class="ck-planner-head">
+            <div>
+                <h2 id="ck-planner-title">Meeting planner</h2>
+                <p>24 hours across the clocks. Choose a date and click an hour.</p>
+            </div>
+            <label class="ck-planner-date" for="ck-planner-date">
+                <span>Date</span>
+                <input type="date" id="ck-planner-date">
+            </label>
+        </div>
+        <div class="ck-legend" aria-label="Local time categories">
+            <span style="--c: var(--ck-work)">Working hours</span>
+            <span style="--c: var(--ck-awake)">Awake</span>
+            <span style="--c: var(--ck-weekend)">Weekend</span>
+            <span style="--c: var(--ck-sleep)">Asleep</span>
+        </div>
+        <div class="ck-rows" id="ck-rows"></div>
+    </section>
+</main>
 
 <script>
 window.ARI_CLOCK_PAGE = {
     apiUrl: {{ url_for('api_clocks_get')|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/user_clocks_page.js', v='20260524b') }}"></script>
+<script src="{{ url_for('static', filename='js/user_clocks_page.js', v='20261030a') }}"></script>
 {% endblock %}

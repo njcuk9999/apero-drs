@@ -1,0 +1,553 @@
+#ari-world-clocks {
+    --ck-bg: #0e1015;
+    --ck-card: #171a21;
+    --ck-card-2: #1d2129;
+    --ck-line: #262b35;
+    --ck-ink: #eceef2;
+    --ck-muted: #8f97a6;
+    --ck-accent: #e66f69;
+    --ck-sun: #ffd27a;
+    --ck-work: #3fb27f;
+    --ck-awake: #4e7fd6;
+    --ck-sleep: #2a2f3a;
+    --ck-weekend: #b07ad8;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 0 54px;
+    color: var(--ck-ink);
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+#ari-world-clocks,
+#ari-world-clocks * {
+    box-sizing: border-box;
+}
+
+#ari-world-clocks .ck-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-bottom: 20px;
+}
+
+#ari-world-clocks .ck-hero h1 {
+    margin: 0 0 4px;
+    color: var(--ck-muted);
+    font: 300 18px 'Dosis', sans-serif;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+#ari-world-clocks .ck-big {
+    font: 200 88px/1 'Raleway', sans-serif;
+}
+
+#ari-world-clocks .ck-big .sec {
+    margin-left: 8px;
+    color: var(--ck-muted);
+    font-size: 36px;
+}
+
+#ari-world-clocks .ck-date {
+    margin-top: 6px;
+    color: var(--ck-muted);
+}
+
+#ari-world-clocks .ck-date b {
+    color: var(--ck-ink);
+    font-weight: 400;
+}
+
+#ari-world-clocks .ck-seg {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--ck-line);
+    border-radius: 999px;
+}
+
+#ari-world-clocks .ck-seg button {
+    padding: 5px 13px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ck-muted);
+    font: 500 14px 'Dosis', sans-serif;
+}
+
+#ari-world-clocks .ck-seg button.is-active {
+    background: var(--ck-ink);
+    color: var(--ck-bg);
+}
+
+#ari-world-clocks .ck-map {
+    --label-pad: 52px;
+    position: relative;
+    overflow: hidden;
+    padding: var(--label-pad) 0;
+    border: 1px solid var(--ck-line);
+    border-radius: 8px;
+    background: radial-gradient(ellipse at 50% 40%, #16202f, #0b0e13 75%);
+}
+
+#ari-world-clocks .ck-map > svg:not(.ck-leaders) {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+#ari-world-clocks .ck-leaders {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#ari-world-clocks .ck-leaders line {
+    stroke: rgba(255, 255, 255, .3);
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+}
+
+#ari-world-clocks .ck-leaders line.is-hot {
+    stroke: var(--ck-accent);
+    stroke-dasharray: none;
+}
+
+#ari-world-clocks .ck-sphere { fill: #0f2033; }
+#ari-world-clocks .ck-grat {
+    fill: none;
+    stroke: rgba(255, 255, 255, .07);
+    stroke-width: .6;
+}
+#ari-world-clocks .ck-land {
+    fill: #2f4a3f;
+    stroke: #44695a;
+    stroke-width: .4;
+}
+#ari-world-clocks .ck-night path {
+    fill: #02040a;
+    fill-opacity: .34;
+}
+#ari-world-clocks .ck-term {
+    fill: none;
+    stroke: rgba(255, 210, 122, .35);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+}
+#ari-world-clocks .ck-sunglow { fill: url(#ck-sunglow); }
+#ari-world-clocks .ck-sundot { fill: var(--ck-sun); }
+
+#ari-world-clocks .ck-pin circle.dot {
+    fill: var(--ck-accent);
+    stroke: #fff;
+    stroke-width: 1.5;
+}
+
+#ari-world-clocks .ck-pin circle.ring {
+    fill: none;
+    stroke: var(--ck-accent);
+    stroke-width: 1.5;
+    opacity: .6;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ck-ping 2.4s ease-out infinite;
+}
+
+#ari-world-clocks .ck-pin.is-you circle.dot,
+#ari-world-clocks .ck-pin.is-you circle.ring {
+    fill: var(--ck-sun);
+    stroke: var(--ck-sun);
+}
+
+#ari-world-clocks .ck-pin.is-hot circle.dot { stroke-width: 3; }
+
+@keyframes ck-ping {
+    from { transform: scale(1); opacity: .7; }
+    to { transform: scale(3.2); opacity: 0; }
+}
+
+#ari-world-clocks .ck-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+#ari-world-clocks .ck-label {
+    position: absolute;
+    max-width: 150px;
+    padding: 3px 8px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 6px;
+    background: rgba(12, 14, 19, .82);
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+}
+
+#ari-world-clocks .ck-label b {
+    display: block;
+    overflow: hidden;
+    color: #fff;
+    font: 500 15px 'Dosis', sans-serif;
+    text-overflow: ellipsis;
+}
+
+#ari-world-clocks .ck-label span { color: var(--ck-muted); }
+#ari-world-clocks .ck-label.is-hot { border-color: var(--ck-accent); }
+
+#ari-world-clocks .ck-map-note {
+    position: absolute;
+    bottom: calc(var(--label-pad) + 8px);
+    left: 12px;
+    color: var(--ck-muted);
+    font-size: 11px;
+}
+
+#ari-world-clocks .ck-map-state {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--ck-muted);
+}
+
+#ari-world-clocks .ck-map-state[hidden] { display: none; }
+
+#ari-world-clocks .ck-travel {
+    display: grid;
+    grid-template-columns: auto minmax(120px, 1fr) auto;
+    align-items: center;
+    gap: 8px 18px;
+    margin: 16px 0 26px;
+    padding: 14px 18px;
+    border: 1px solid var(--ck-line);
+    border-radius: 8px;
+    background: var(--ck-card);
+}
+
+#ari-world-clocks .ck-travel label {
+    margin: 0;
+    color: var(--ck-muted);
+    font: 500 15px 'Dosis', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+#ari-world-clocks .ck-travel input[type=range] {
+    width: 100%;
+    accent-color: var(--ck-accent);
+}
+
+#ari-world-clocks .ck-travel output {
+    min-width: 150px;
+    text-align: right;
+    font: 500 16px 'Dosis', sans-serif;
+}
+
+#ari-world-clocks .ck-travel output.is-live { color: var(--ck-work); }
+
+#ari-world-clocks .ck-travel .hint {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: var(--ck-muted);
+    font-size: 12px;
+}
+
+#ari-world-clocks .ck-travel button {
+    padding: 2px 12px;
+    border: 1px solid var(--ck-line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ck-ink);
+    font-size: 12px;
+}
+
+#ari-world-clocks .ck-travel button:hover {
+    border-color: var(--ck-accent);
+    color: var(--ck-accent);
+}
+
+#ari-world-clocks .ck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+#ari-world-clocks .ck-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 16px;
+    overflow: hidden;
+    padding: 18px;
+    border: 1px solid var(--ck-line);
+    border-radius: 8px;
+    background: linear-gradient(160deg, var(--ck-card-2), var(--ck-card));
+    transition: border-color .2s, transform .2s;
+}
+
+#ari-world-clocks .ck-card:hover,
+#ari-world-clocks .ck-card.is-hot {
+    transform: translateY(-2px);
+    border-color: var(--ck-accent);
+}
+
+#ari-world-clocks .ck-card.is-day {
+    background: linear-gradient(160deg, #24314a, #1a2130);
+}
+
+#ari-world-clocks .ck-card.is-you { border-style: dashed; }
+
+#ari-world-clocks .ck-face {
+    flex: none;
+    width: 92px;
+    height: 92px;
+}
+
+#ari-world-clocks .ck-face .rim {
+    fill: #f4f1ea;
+    stroke: rgba(0, 0, 0, .25);
+    stroke-width: 1;
+}
+
+#ari-world-clocks .ck-face .tick {
+    stroke: #3a3d45;
+    stroke-linecap: round;
+}
+
+#ari-world-clocks .ck-face .hh,
+#ari-world-clocks .ck-face .mh {
+    stroke: #1b1d22;
+    stroke-linecap: round;
+}
+
+#ari-world-clocks .ck-face .sh {
+    stroke: var(--ck-accent);
+    stroke-linecap: round;
+}
+
+#ari-world-clocks .ck-face .hub { fill: var(--ck-accent); }
+
+#ari-world-clocks .ck-card.is-night .ck-face .rim {
+    fill: #1b1f28;
+    stroke: rgba(255, 255, 255, .12);
+}
+
+#ari-world-clocks .ck-card.is-night .ck-face .tick { stroke: #8f97a6; }
+
+#ari-world-clocks .ck-card.is-night .ck-face .hh,
+#ari-world-clocks .ck-card.is-night .ck-face .mh { stroke: #eceef2; }
+
+#ari-world-clocks .ck-info { min-width: 0; flex: 1; }
+
+#ari-world-clocks .ck-city {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 21px 'Dosis', sans-serif;
+}
+
+#ari-world-clocks .ck-city i {
+    flex: none;
+    color: var(--ck-sun);
+    font-size: 18px;
+}
+
+#ari-world-clocks .ck-card.is-night .ck-city i { color: #9fb3d9; }
+
+#ari-world-clocks .ck-city span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#ari-world-clocks .ck-time { font: 200 36px/1.05 'Raleway', sans-serif; }
+#ari-world-clocks .ck-sub { color: var(--ck-muted); font-size: 12px; }
+#ari-world-clocks .ck-diff { margin-top: 2px; font-size: 13px; }
+
+#ari-world-clocks .ck-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    margin-top: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .06);
+    color: var(--ck-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#ari-world-clocks .ck-badge:before {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    content: '';
+}
+
+#ari-world-clocks .ck-badge.work { color: var(--ck-work); }
+#ari-world-clocks .ck-badge.awake { color: #7ea6ec; }
+#ari-world-clocks .ck-badge.weekend { color: var(--ck-weekend); }
+#ari-world-clocks .ck-badge.asleep { color: #8f97a6; }
+#ari-world-clocks .ck-state { grid-column: 1 / -1; color: var(--ck-muted); }
+
+#ari-world-clocks .ck-planner {
+    margin-top: 30px;
+    padding: 18px;
+    border: 1px solid var(--ck-line);
+    border-radius: 8px;
+    background: var(--ck-card);
+}
+
+#ari-world-clocks .ck-planner-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+}
+
+#ari-world-clocks .ck-planner h2 {
+    margin: 0 0 2px;
+    font: 400 24px 'Dosis', sans-serif;
+}
+
+#ari-world-clocks .ck-planner p {
+    margin: 0 0 14px;
+    color: var(--ck-muted);
+    font-size: 13px;
+}
+
+#ari-world-clocks .ck-planner-date {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ck-muted);
+    font: 500 14px 'Dosis', sans-serif;
+    text-transform: uppercase;
+}
+
+#ari-world-clocks .ck-planner-date input {
+    width: 155px;
+    min-height: 34px;
+    padding: 5px 8px;
+    border: 1px solid var(--ck-line);
+    border-radius: 4px;
+    background: var(--ck-card-2);
+    color: var(--ck-ink);
+    color-scheme: dark;
+}
+
+#ari-world-clocks .ck-legend {
+    display: flex;
+    gap: 6px 16px;
+    flex-wrap: wrap;
+    margin: -6px 0 12px;
+    color: var(--ck-muted);
+    font-size: 12px;
+}
+
+#ari-world-clocks .ck-legend span:before {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+    border-radius: 3px;
+    background: var(--c);
+    content: '';
+    vertical-align: -1px;
+}
+
+#ari-world-clocks .ck-rows { overflow-x: auto; padding-bottom: 4px; }
+
+#ari-world-clocks .ck-row {
+    display: grid;
+    grid-template-columns: 130px repeat(24, minmax(30px, 1fr));
+    gap: 3px;
+    min-width: 860px;
+    margin-bottom: 3px;
+}
+
+#ari-world-clocks .ck-row .name {
+    position: sticky;
+    z-index: 1;
+    left: 0;
+    display: flex;
+    overflow: hidden;
+    align-items: center;
+    padding-right: 8px;
+    background: var(--ck-card);
+    font: 500 14px 'Dosis', sans-serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#ari-world-clocks .ck-cell {
+    position: relative;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: var(--ck-sleep);
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    transition: transform .1s, box-shadow .1s;
+}
+
+#ari-world-clocks .ck-cell.work { background: var(--ck-work); }
+#ari-world-clocks .ck-cell.awake { background: var(--ck-awake); }
+#ari-world-clocks .ck-cell.weekend { background: var(--ck-weekend); }
+#ari-world-clocks .ck-cell.asleep { color: #8f97a6; }
+#ari-world-clocks .ck-cell.midnight { box-shadow: inset 2px 0 #fff; }
+#ari-world-clocks .ck-cell.col-hot { outline: 2px solid #fff; outline-offset: -1px; }
+#ari-world-clocks .ck-cell.col-sel { box-shadow: 0 0 0 2px var(--ck-accent); }
+#ari-world-clocks .ck-cell:hover { transform: translateY(-1px); }
+
+#ari-world-clocks .ck-cell small {
+    display: block;
+    font-size: 9px;
+    line-height: 1;
+    opacity: .75;
+}
+
+@media (max-width: 760px) {
+    #ari-world-clocks { padding-top: 10px; }
+    #ari-world-clocks .ck-big { font-size: 60px; }
+    #ari-world-clocks .ck-big .sec { font-size: 26px; }
+    #ari-world-clocks .ck-travel { grid-template-columns: 1fr auto; }
+    #ari-world-clocks .ck-travel input[type=range] {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    #ari-world-clocks .ck-travel output { min-width: 0; }
+    #ari-world-clocks .ck-map { --label-pad: 38px; }
+    #ari-world-clocks .ck-label {
+        max-width: 100px;
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+    #ari-world-clocks .ck-label b { font-size: 12px; }
+    #ari-world-clocks .ck-label span { display: none; }
+    #ari-world-clocks .ck-face { width: 74px; height: 74px; }
+    #ari-world-clocks .ck-time { font-size: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #ari-world-clocks .ck-pin circle.ring { animation: none; }
+    #ari-world-clocks .ck-card,
+    #ari-world-clocks .ck-cell { transition: none; }
+}

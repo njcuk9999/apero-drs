@@ -1,14 +1,11 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI – APERO Queue{% endblock %}
-{% block body_class %}ari-has-sidebar{% endblock %}
+{% block body_class %}ari-has-sidebar ari-db-index-page{% endblock %}
 
 {% block doc_content %}
+{% set selected = (apero_queue_tabs | selectattr('name', 'equalto', request.args.get('queue', '')) | list | first) %}
 <style>
-.ari-aq-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px 0; }
-.ari-aq-tab { display: inline-flex; flex-direction: column; gap: 2px;
-              min-height: 44px; justify-content: center; }
-.ari-aq-tab small { font-weight: 400; opacity: 0.8; }
-.ari-aq-frame { width: 100%; height: calc(100vh - 230px); min-height: 560px;
+.ari-aq-frame { display: block; width: 100%; height: calc(100dvh - 150px); min-height: 240px;
                 border: 1px solid var(--ari-border); border-radius: 8px;
                 background: var(--ari-card-bg); }
 .ari-aq-empty { padding: 18px; border: 1px solid var(--ari-border);
@@ -18,50 +15,54 @@
               margin-bottom: 8px; color: var(--ari-text-muted);
               font-size: 0.88em; }
 @media (max-width: 768px) {
-    .ari-aq-tab { flex: 1 1 100%; }
-    .ari-aq-frame { height: 75vh; min-height: 420px; }
+    .ari-aq-bar .ari-btn { min-height: 44px; }
 }
 </style>
 
+{% if not selected %}
 <div class="ari-page-header">
     <h1><i class="fa-solid fa-list-check"></i> APERO Queue</h1>
-    <p class="ari-page-subtitle">
-        Processing queue dashboards for the APERO profiles you can access.
-    </p>
+</div>
+{% endif %}
+<div class="ari-aq-bar">
+    {% if selected %}
+    <a class="ari-btn ari-btn--secondary ari-btn--sm"
+       href="{{ url_for('home_monitor_portal_apero_queue') }}">
+        <i class="fa-solid fa-arrow-left"></i> {{ _('Back to APERO Queue list') }}
+    </a>
+    <a class="ari-btn ari-btn--secondary ari-btn--sm"
+       href="{{ selected.proxy_url }}" target="_blank" rel="noopener">
+        <i class="fa-solid fa-up-right-from-square"></i> {{ _('Open in new tab') }}
+    </a>
+    {% endif %}
     {% if apero_queue_can_setup %}
-    <div style="margin-top:0.8rem;">
         <a class="ari-btn ari-btn--secondary ari-btn--sm"
            href="{{ url_for('home_admin_portal_apero_queue_setup') }}">
             <i class="fa-solid fa-gear"></i> APERO Queue Setup
         </a>
-    </div>
     {% endif %}
 </div>
 
-{% if apero_queue_tabs %}
-<div class="ari-aq-tabs" role="tablist">
+{% if selected %}
+<iframe id="aqFrame" class="ari-aq-frame" title="{{ selected.label }}"
+        src="{{ selected.proxy_url }}"></iframe>
+{% elif apero_queue_tabs %}
+<div class="ari-db-profiles">
     {% for tab in apero_queue_tabs %}
-    <button type="button" role="tab"
-            class="ari-btn ari-btn--secondary ari-btn--sm ari-aq-tab"
-            data-queue="{{ tab.name }}" data-url="{{ tab.proxy_url }}">
-        <span><i class="fa-solid fa-list-check"></i> {{ tab.label }}</span>
-        <small>{{ tab.instrument }} / {{ tab.profile_id }}</small>
-    </button>
+    <a class="ari-db-card"
+       style="--card-bg:var(--ari-card-bg); --card-text:var(--ari-text); --card-border:var(--ari-border);"
+       href="{{ url_for('home_monitor_portal_apero_queue', queue=tab.name) }}">
+        <div class="ari-db-card__header">
+            <span class="ari-db-card__instrument">{{ tab.instrument }}</span>
+            <span class="ari-db-card__sep">|</span>
+            <span class="ari-db-card__name">{{ tab.label }}</span>
+        </div>
+        <div class="ari-db-card__meta">
+            <span><i class="fa-solid fa-database"></i> {{ tab.profile_id }}</span>
+        </div>
+    </a>
     {% endfor %}
 </div>
-<div class="ari-aq-bar">
-    <span id="aqCurrent"></span>
-    <a id="aqOpenNew" class="ari-btn ari-btn--secondary ari-btn--sm"
-       href="#" target="_blank" rel="noopener">
-        <i class="fa-solid fa-up-right-from-square"></i> Open in new tab
-    </a>
-    <button id="aqReload" type="button"
-            class="ari-btn ari-btn--secondary ari-btn--sm">
-        <i class="fa-solid fa-rotate"></i> Reload
-    </button>
-</div>
-<iframe id="aqFrame" class="ari-aq-frame" title="APERO queue dashboard"
-        src="about:blank"></iframe>
 {% else %}
 <div class="ari-aq-empty">
     <i class="fa-solid fa-circle-info"></i>
@@ -79,9 +80,6 @@
 (function () {
     var frame = document.getElementById('aqFrame');
     if (!frame) { return; }
-    var tabs = Array.prototype.slice.call(
-        document.querySelectorAll('.ari-aq-tab'));
-    var storeKey = 'ari-apero-queue-tab';
 
     function ariTheme() {
         var theme = document.documentElement.getAttribute('data-theme');
@@ -98,39 +96,18 @@
         } catch (err) { console.log(err); }
     }
 
-    function select(name) {
-        var chosen = tabs.filter(function (btn) {
-            return btn.dataset.queue === name;
-        })[0] || tabs[0];
-        tabs.forEach(function (btn) {
-            var active = btn === chosen;
-            btn.classList.toggle('ari-btn--primary', active);
-            btn.classList.toggle('ari-btn--secondary', !active);
-            btn.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-        frame.src = chosen.dataset.url;
-        document.getElementById('aqOpenNew').href = chosen.dataset.url;
-        document.getElementById('aqCurrent').textContent =
-            chosen.textContent.replace(/\s+/g, ' ').trim();
-        try { localStorage.setItem(storeKey, chosen.dataset.queue); }
-        catch (err) { console.log(err); }
+    function fitFrame() {
+        var top = frame.getBoundingClientRect().top;
+        frame.style.height = Math.max(240, window.innerHeight - top - 12) + 'px';
     }
 
-    tabs.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            select(btn.dataset.queue);
-        });
-    });
-    document.getElementById('aqReload').addEventListener('click', function () {
-        frame.contentWindow.location.reload();
-    });
     frame.addEventListener('load', syncTheme);
     document.addEventListener('ari:theme-change', syncTheme);
-
-    var saved = null;
-    try { saved = localStorage.getItem(storeKey); }
-    catch (err) { console.log(err); }
-    select(saved);
+    window.addEventListener('resize', fitFrame);
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(fitFrame).observe(frame.parentElement);
+    }
+    fitFrame();
 })();
 </script>
 {% endblock %}

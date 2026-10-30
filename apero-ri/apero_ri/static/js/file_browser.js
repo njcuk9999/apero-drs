@@ -726,7 +726,12 @@
                     updateSelectionState();
                     fbRenderPage();
                     var msg = data.added + ' file(s) added to basket'
-                        + (data.skipped ? ' (' + data.skipped + ' already in basket)' : '') + '.';
+                        + (data.skipped ? ' (' + data.skipped + ' skipped)' : '')
+                        + '.';
+                    if (data.basket_count >= data.basket_limit) {
+                        msg += ' Basket limit reached (' + data.basket_limit
+                            + ' files); remove files before adding more.';
+                    }
                     showFbToast(msg);
                 } else {
                     alert('Failed to add to basket: ' + (data.error || 'unknown'));
@@ -805,7 +810,12 @@
             .then(function (data) {
                 if (data.success) {
                     updateBasketCounter(data.basket_count || 0);
-                    showFbToast(data.added + ' file(s) added to basket.');
+                    var msg = data.added + ' file(s) added to basket.';
+                    if (data.basket_count >= data.basket_limit) {
+                        msg += ' Basket limit reached (' + data.basket_limit
+                            + ' files); remove files before adding more.';
+                    }
+                    showFbToast(msg);
                 }
             })
             .catch(function () {});

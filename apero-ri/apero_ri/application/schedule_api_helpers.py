@@ -3,6 +3,7 @@
 """APERO RI monitor schedule API helpers."""
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 

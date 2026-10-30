@@ -4770,7 +4770,11 @@ def ariapp_api_basket_add(self: Any) -> Any:
     basket = bk.load_basket(username)
     skipped = len(new_entries) - added
     return jsonify(
-        success=True, added=added, skipped=skipped, basket_count=len(basket)
+        success=True,
+        added=added,
+        skipped=skipped,
+        basket_count=len(basket),
+        basket_limit=bk.BASKET_FILE_LIMIT,
     )
 
 

@@ -232,4 +232,9 @@ def api_basket_add_from_ftable(app: Any) -> Any:
     username = user_info["username"]
     added = bk.add_to_basket(username, entries, accessible_run_ids)
     basket = bk.load_basket(username)
-    return jsonify(success=True, added=added, basket_count=len(basket))
+    return jsonify(
+        success=True,
+        added=added,
+        basket_count=len(basket),
+        basket_limit=bk.BASKET_FILE_LIMIT,
+    )

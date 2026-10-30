@@ -10,7 +10,7 @@ Created on 2019-10-25 at 13:25
 @author: cook
 """
 import os
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 from astropy import constants as cc

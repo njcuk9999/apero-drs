@@ -10,7 +10,7 @@ Created on 2020-07-2020-07-15 17:58
 import os
 import warnings
 from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc

@@ -2052,7 +2052,7 @@ class MySQLDatabase(Database):
         """
         return conn.cursor()
 
-    def _execute(self, cursor: mysql.connection.MySQLCursor, command: str,
+    def _execute(self, cursor: Any, command: str,
                  fetch: bool = True) -> Any:
         """
         Dummy function to try to catch database UNIQUE(col) error

@@ -12,7 +12,7 @@ Created on 2021-05-10
 import glob
 import os
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 from astropy.io import fits

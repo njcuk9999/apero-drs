@@ -24,7 +24,7 @@ import uuid
 import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Collection, Dict, List, Optional, Set
+from typing import Any, Collection, Dict, List, Optional, Set, Tuple
 
 from apero_ri.base.base import BLOCK_KIND
 from apero_ri.core import secret_store as ss
@@ -39,6 +39,7 @@ _DOWNLOAD_EXPIRY_OPTIONS = {24, 48, 168}
 _DOWNLOAD_STORAGE_LIMIT_BYTES = 5 * 1024**3
 _DOWNLOAD_STORAGE_LIMIT_ELEVATED_BYTES = 50 * 1024**3
 _ELEVATED_DOWNLOAD_GROUPS = {"moderator", "developer", "admin", "super_admin"}
+BASKET_FILE_LIMIT = 2000
 
 
 # =============================================================================
@@ -46,6 +47,7 @@ _ELEVATED_DOWNLOAD_GROUPS = {"moderator", "developer", "admin", "super_admin"}
 # =============================================================================
 
 _share_tokens_lock = threading.Lock()
+_basket_add_lock = threading.Lock()
 
 
 # =============================================================================
@@ -197,34 +199,37 @@ def add_to_basket(
 
     Returns the count of newly-added entries.
     """
-    existing = load_basket(username)
-    existing_keys = {
-        (
-            str(e.get("profile_id", "") or ""),
-            str(e.get("obs_dir", "") or ""),
-            str(e.get("filename", "") or ""),
-        )
-        for e in existing
-    }
-    added = 0
-    for entry in new_entries:
-        run_id = str(entry.get("kw_run_id", "") or "").strip()
-        if run_id not in accessible_run_ids:
-            continue
-        key = (
-            str(entry.get("profile_id", "") or ""),
-            str(entry.get("obs_dir", "") or ""),
-            str(entry.get("filename", "") or ""),
-        )
-        if key in existing_keys:
-            continue
-        entry_copy = {k: v for k, v in entry.items()}
-        entry_copy["id"] = entry_copy.get("id") or str(uuid.uuid4())
-        entry_copy["added_at"] = datetime.now(timezone.utc).isoformat()
-        existing.append(entry_copy)
-        existing_keys.add(key)
-        added += 1
-    save_basket(username, existing)
+    with _basket_add_lock:
+        existing = load_basket(username)
+        existing_keys = {
+            (
+                str(e.get("profile_id", "") or ""),
+                str(e.get("obs_dir", "") or ""),
+                str(e.get("filename", "") or ""),
+            )
+            for e in existing
+        }
+        added = 0
+        for entry in new_entries:
+            run_id = str(entry.get("kw_run_id", "") or "").strip()
+            if run_id not in accessible_run_ids:
+                continue
+            key = (
+                str(entry.get("profile_id", "") or ""),
+                str(entry.get("obs_dir", "") or ""),
+                str(entry.get("filename", "") or ""),
+            )
+            if key in existing_keys:
+                continue
+            if len(existing) >= BASKET_FILE_LIMIT:
+                break
+            entry_copy = {k: v for k, v in entry.items()}
+            entry_copy["id"] = entry_copy.get("id") or str(uuid.uuid4())
+            entry_copy["added_at"] = datetime.now(timezone.utc).isoformat()
+            existing.append(entry_copy)
+            existing_keys.add(key)
+            added += 1
+        save_basket(username, existing)
     return added
 
 
