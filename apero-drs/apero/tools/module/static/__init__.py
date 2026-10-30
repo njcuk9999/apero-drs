@@ -28,7 +28,8 @@ import warnings
 # =============================================================================
 # Define functions
 # =============================================================================
-def function1():
+def function1() -> int:
+    """Return the package placeholder value."""
     return 0
 
 

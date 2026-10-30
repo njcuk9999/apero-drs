@@ -316,7 +316,7 @@ def _multi_process_identify_pool(params: ParamDict, all_files: List[str],
 
 def _process_identify_wrapper(params: ParamDict, all_files: List[str],
                               job: int, total_jobs: int, source: str,
-                              queue) -> None:
+                              queue: Any) -> None:
     """Identify one file group and place its result on the worker queue."""
     queue.put((job, _multi_identify(params, all_files, job, total_jobs,
                                     source=source)))

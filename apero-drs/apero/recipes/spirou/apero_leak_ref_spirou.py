@@ -56,7 +56,7 @@ EXTRACT_NAME = 'apero_extract_spirou.py'
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir: Optional[str] = None, **kwargs
+def main(obs_dir: Optional[str] = None, **kwargs: Any
          ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_leak_ref_spirou.py

@@ -237,7 +237,8 @@ def get_blaze(params: ParamDict, recipe: DrsRecipe,
     return fbprops
 
 
-def e2ds_correct(params, eprops: ParamDict, fbprops: ParamDict) -> ParamDict:
+def e2ds_correct(params: ParamDict, eprops: ParamDict,
+                 fbprops: ParamDict) -> ParamDict:
     """
     Correct the e2ds with the blaze (to match original apero format)
 

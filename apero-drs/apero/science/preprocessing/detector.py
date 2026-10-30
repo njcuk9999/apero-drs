@@ -440,7 +440,7 @@ def intercept_correct(intercept: np.ndarray) -> np.ndarray:
     return intercept
 
 
-def errslope_correct(errslope):
+def errslope_correct(errslope: np.ndarray) -> np.ndarray:
     """
     Correction applied to the errslope to remove bad columns at start / end
     of amplifiers
@@ -927,7 +927,8 @@ def correct_capacitive_coupling(params: ParamDict, image: np.ndarray,
 def correct_sci_capacitive_coupling(params: ParamDict, image: np.ndarray,
                                     amp_flux: Optional[float] = None,
                                     amp_dflux: Optional[float] = None,
-                                    amp_d2flux: Optional[float] = None):
+                                    amp_d2flux: Optional[float] = None
+                                    ) -> np.ndarray:
     """
     Correct the amplifier capacitive coupling between amplifiers due to
     science (or calibration) flux

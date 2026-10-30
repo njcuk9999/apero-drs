@@ -48,7 +48,7 @@ e2ds_span = """
 # =============================================================================
 # Define test functions
 # =============================================================================
-def test_plot(**kwargs) -> bokeh.models.Model:
+def test_plot(**kwargs: Any) -> bokeh.models.Model:
     """Build a demo Bokeh plot using power and axis-label keyword values."""
     plot1 = figure(height=400, width=800,
                    tools="crosshair,pan,reset,save,wheel_zoom",
@@ -67,7 +67,7 @@ def test_plot(**kwargs) -> bokeh.models.Model:
 # =============================================================================
 # noinspection PyUnresolvedReferences
 class SpectrumPlot:
-    def __init__(self, figureinst) -> None:
+    def __init__(self, figureinst: Any) -> None:
         """Set up the interactive spectrum plot and its Bokeh controls."""
         # figure this is part of
         self.figure = figureinst
@@ -239,7 +239,7 @@ class SpectrumPlot:
         """Update the selected observation identifier from a menu event."""
         self.identifier = str(event.item)
 
-    def update_order_num(self, attrname, old, new) -> None:
+    def update_order_num(self, attrname: str, old: Any, new: Any) -> None:
         """Store the selected order and refresh displayed header values."""
         _ = attrname, old, new
         self.order_num = int(self.order_num_widget.value)
@@ -262,7 +262,7 @@ class SpectrumPlot:
         self.wave_widget.step = self.xstep
         self.wave_widget.value = (self.xmin, self.xmax)
 
-    def update_wave_axis(self, attrname, old, new) -> None:
+    def update_wave_axis(self, attrname: str, old: Any, new: Any) -> None:
         """Apply the selected wavelength interval to the plot's x axis."""
         _ = attrname, old, new
         low, high = self.wave_widget.value
@@ -276,11 +276,11 @@ class SpectrumPlot:
         # self.figure.y_range = self.yrange
         # self.figure.x_range = self.xrange
 
-    def update_fiber(self, event) -> None:
+    def update_fiber(self, event: Any) -> None:
         """Store the fiber selected from the dropdown menu."""
         self.fiber = event.item
 
-    def update_lines(self, attrname, old, new) -> None:
+    def update_lines(self, attrname: str, old: Any, new: Any) -> None:
         """Refresh plotted line visibility after checkbox selection changes."""
         _ = attrname, old, new
         self.update_line_visibility()
@@ -341,7 +341,7 @@ class SpectrumPlot:
         # update tool tip
         self.hover.tooltips = self.tooltip()
 
-    def update_hkeys(self, header=None) -> None:
+    def update_hkeys(self, header: Any = None) -> None:
         """Refresh the displayed object metadata from an optional header."""
         # deal with not having header
         if header is None:
@@ -542,7 +542,7 @@ class SpectrumPlot:
         for it in range(len(self.line_labels)):
             self.plot_line(it)
 
-    def plot_line(self, it) -> None:
+    def plot_line(self, it: int) -> None:
         """Create the selected spectrum line and add it to the plot."""
         # get which checkboxs are active
         switch = self.lines_widget.active
@@ -580,7 +580,7 @@ class SpectrumPlot:
             # keep lines
             self.lines[it] = line
 
-    def logger(self, text) -> None:
+    def logger(self, text: str) -> None:
         """Append a status message to the plot's log display."""
         print(text)
         self.log_widget.text = str(LOG_HTML) + text
@@ -613,7 +613,7 @@ class SpectrumPlot:
         return tooltipstr
 
 
-def e2ds_plot(**kwargs) -> bokeh.models.Model:
+def e2ds_plot(**kwargs: Any) -> bokeh.models.Model:
     """Create the full-page interactive E2DS spectrum plotting layout."""
     _ = kwargs
     # -------------------------------------------------------------------------

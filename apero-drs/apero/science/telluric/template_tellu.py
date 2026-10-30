@@ -83,7 +83,22 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                         refprops: ParamDict, nprops: ParamDict,
                         fiber: str, qc_params: list, flag_hotstar: bool,
                         calibdb: Union[CalibrationDatabase, None] = None,
-                        **kwargs) -> ParamDict:
+                        **kwargs: Any) -> ParamDict:
+    """Build the 2-D telluric template cube and its metadata properties.
+
+    :param params: APERO parameters containing template settings.
+    :param recipe: Recipe providing plot and file output services.
+    :param filenames: Input filenames selected for the template.
+    :param reffile: Reference FITS file definition and data container.
+    :param refprops: Reference wavelength solution properties.
+    :param nprops: Normalization properties for input spectra.
+    :param fiber: Fiber used to construct the template.
+    :param qc_params: Quality-control names, values, rules, and pass flags.
+    :param flag_hotstar: Whether these inputs are hot-star observations.
+    :param calibdb: Optional already-loaded calibration database.
+    :param kwargs: Optional overrides for configured template settings.
+    :return: Template cubes, file metadata, and coverage/QC properties.
+    """
     # set function mame
     func_name = display_func('make_template_cubes', __NAME__)
     # get parameters from params/kwargs
@@ -464,12 +479,12 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     return props
 
 
-def template_bcols0(params: ParamDict):
+def template_bcols0(params: ParamDict) -> Dict[str, List[Any]]:
     """
     Construct the lists for each column in the template table
 
     :param params: ParamDict, parameter dictionary of constants
-    :return:
+    :return: Ordered table-column mapping initialized with empty lists.
     """
     # get parameters from params/kwargs
     snr_order = params['OBJ.TELLU.TEMPLATE.SNR_ORDER']
@@ -589,8 +604,24 @@ def template_bcols(params: ParamDict, b_cols: Dict[str, list],
     return b_cols
 
 
-def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
-                          flag_hotstar: bool, calibdbm, **kwargs):
+def make_1d_template_cube(
+        params: ParamDict, recipe: DrsRecipe, filenames: List[str],
+        reffile: DrsFitsFile, fiber: str, header: drs_fits.Header,
+        flag_hotstar: bool, calibdbm: CalibrationDatabase,
+        **kwargs: Any) -> ParamDict:
+    """Build a 1-D telluric template from selected input spectra.
+
+    :param params: APERO parameters containing template settings.
+    :param recipe: Recipe providing plot and file output services.
+    :param filenames: Input spectrum filenames selected for the template.
+    :param reffile: Reference file definition used to load spectra.
+    :param fiber: Fiber used to construct the template.
+    :param header: Header for the reference observation.
+    :param flag_hotstar: Whether the selected observations are hot stars.
+    :param calibdbm: Loaded calibration database manager.
+    :param kwargs: Optional overrides for configured template settings.
+    :return: 1-D template products and their metadata.
+    """
     # set function mame
     func_name = display_func('make_1d_template_cube', __NAME__)
     # get parameters from params/kwargs
@@ -1219,7 +1250,17 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
 # =============================================================================
 # QC and summary functions
 # =============================================================================
-def mk_template_qc(params, qc_params, fail_msg=None):
+def mk_template_qc(
+        params: ParamDict, qc_params: List[List[Any]],
+        fail_msg: Optional[List[str]] = None
+        ) -> Tuple[List[List[Any]], int]:
+    """Log template QC failures and return the aggregate pass status.
+
+    :param params: APERO parameters used for logging.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :param fail_msg: Optional failure messages associated with failed flags.
+    :return: QC bundle and aggregate 0/1 pass status.
+    """
     # set passed variable and fail message list
     if fail_msg is None:
         fail_msg = []
@@ -1243,7 +1284,18 @@ def mk_template_qc(params, qc_params, fail_msg=None):
     return qc_params, passed
 
 
-def mk_template_summary(recipe, params, cprops, template_file, qc_params):
+def mk_template_summary(recipe: DrsRecipe, params: ParamDict,
+                        cprops: ParamDict, template_file: DrsFitsFile,
+                        qc_params: List[List[Any]]) -> None:
+    """Add template metadata and quality results to the recipe summary.
+
+    :param recipe: Recipe whose summary plot state is updated.
+    :param params: APERO parameters supplying version/time metadata.
+    :param cprops: Template cube properties and coverage statistics.
+    :param template_file: Written template file carrying header values.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :return: None.
+    """
     # count number of files
     nfiles = len(cprops['BIG_COLS']['RowNum'])
     temp_hash = template_file.get_hkey('KW_MKTEMP_HASH', dtype=str)
@@ -1268,12 +1320,31 @@ def mk_template_summary(recipe, params, cprops, template_file, qc_params):
 # Write functions
 # =============================================================================
 def gen_template_hash(string_text: str) -> str:
+    """Create the short deterministic hash stored with a template.
+
+    :param string_text: Text whose content identifies the template inputs.
+    :return: Ten-character hash string.
+    """
     # return hash
     return str(drs_base.generate_hash(string_text, 10))
 
 
-def mk_template_write(params, recipe, infile, cprops, filetype,
-                      fiber, wprops, qc_params):
+def mk_template_write(
+        params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+        cprops: ParamDict, filetype: str, fiber: str,
+        wprops: ParamDict, qc_params: List[List[Any]]) -> DrsFitsFile:
+    """Write the 2-D template, metadata tables, and quality information.
+
+    :param params: APERO parameters used to write the output.
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param infile: Input file used to construct the template filename.
+    :param cprops: Template cube and header properties.
+    :param filetype: Template type included in the output filename.
+    :param fiber: Fiber represented by the template.
+    :param wprops: Reference wavelength solution properties.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :return: Written template file object.
+    """
     # get objname
     objname = infile.get_hkey('KW_OBJNAME', dtype=str)
     # construct suffix
@@ -1422,8 +1493,24 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     return template_file
 
 
-def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
-                         wprops, qc_params, template_2d_file):
+def mk_1d_template_write(
+        params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+        props: ParamDict, filetype: str, fiber: str,
+        wprops: ParamDict, qc_params: List[List[Any]],
+        template_2d_file: DrsFitsFile) -> ParamDict:
+    """Write the 1-D template and its associated metadata tables.
+
+    :param params: APERO parameters used to write the output.
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param infile: Input spectrum used to construct the output filename.
+    :param props: 1-D template and metadata products.
+    :param filetype: Template type included in the output filename.
+    :param fiber: Fiber represented by the template.
+    :param wprops: Reference wavelength solution properties.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :param template_2d_file: Related 2-D template file.
+    :return: Updated 1-D template properties.
+    """
     # get objname
     objname = infile.get_hkey('KW_OBJNAME', dtype=str)
     # construct suffix

@@ -59,7 +59,7 @@ textentry = drs_lang.textentry
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
 def main(obs_dir: Optional[str] = None, flatfiles: List[str] = None,
-         darkfiles: List[str] = None, **kwargs
+         darkfiles: List[str] = None, **kwargs: Any
          ) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_badpix

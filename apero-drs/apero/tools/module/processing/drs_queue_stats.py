@@ -243,6 +243,7 @@ class TaskMonitor:
         dtime = max(now - prev_time, 1e-3)
 
         def _rate(key: str) -> float:
+            """Calculate a non-negative per-second counter rate."""
             return round(max(0.0, usage[key] - prev[key]) / dtime, 3)
 
         sample = dict(t=round(now, 1), qid=self.info['qid'],
@@ -305,6 +306,7 @@ class StatsReader:
     on each call, so the dashboard can poll it cheaply)
     """
     def __init__(self) -> None:
+        """Initialize incremental offsets and task/sample result buffers."""
         self.offsets: Dict[str, int] = dict()
         self.tasks: List[Dict[str, Any]] = []
         self.samples: List[Dict[str, Any]] = []

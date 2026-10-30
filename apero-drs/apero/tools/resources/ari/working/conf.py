@@ -14,6 +14,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 from datetime import datetime
+from typing import Any
 
 
 # -- Project information -----------------------------------------------------
@@ -76,7 +77,12 @@ html_static_path = ['_static']
 html_favicon = '_static/images/favicon.ico'
 
 # add custom css
-def setup(app):
+def setup(app: Any) -> None:
+    """Register the ARI theme's custom CSS with Sphinx.
+
+    :param app: Sphinx application receiving the CSS assets.
+    :return: None.
+    """
     app.add_css_file('images/fonta/css/font-awesome.css')  # font css
     app.add_css_file('apero.css')  # give a filename you created.
 

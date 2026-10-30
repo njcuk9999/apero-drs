@@ -66,7 +66,7 @@ RMOD.add(blank)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(**kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
+def main(**kwargs: Any) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for blank
 

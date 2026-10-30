@@ -50,7 +50,7 @@ textentry = drs_lang.textentry
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_explorer.py
 

@@ -20,7 +20,8 @@ WORKSPACE = './'
 # =============================================================================
 # Define functions
 # =============================================================================
-def function():
+def function() -> None:
+    """Provide the GUI package placeholder function."""
     pass
 
 

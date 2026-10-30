@@ -197,6 +197,13 @@ class Header(fits.Header):
 
     def get_key(self, params: ParamDict, key: str,
                 default: Any = None) -> Any:
+        """Resolve an APERO keyword name and read its header value.
+
+        :param params: APERO parameter dictionary defining keyword aliases.
+        :param key: APERO keyword name or literal FITS card name.
+        :param default: Value returned if the resolved card is absent.
+        :return: Header value or the supplied default.
+        """
         # deal with key in params
         if key in params:
             drs_key, _, drs_comment = params[key]

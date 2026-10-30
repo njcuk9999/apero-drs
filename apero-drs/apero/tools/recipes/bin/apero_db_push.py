@@ -54,7 +54,7 @@ ParamDict = param_functions.ParamDict
 #     1) function calls  (i.e. main(arg1, arg2, **kwargs)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_db_push.py
 

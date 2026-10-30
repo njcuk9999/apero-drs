@@ -8,7 +8,7 @@ Created on 2020-07-2020-07-15 17:56
 @author: cook
 """
 import warnings
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 
@@ -58,6 +58,12 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 # =============================================================================
 def make_trans_cube(params: ParamDict, transfiles: List[str]
                     ) -> Tuple[np.ndarray, drs_fits.Table]:
+    """Load transmission spectra into a cube and build its metadata table.
+
+    :param params: APERO parameters used to resolve FITS header keys.
+    :param transfiles: Transmission FITS paths to load.
+    :return: Log-transmission cube and per-file metadata table.
+    """
     # -------------------------------------------------------------------------
     # print progress: Making Transmission cube
     WLOG(params, '', textentry('40-019-00054'))
@@ -120,6 +126,13 @@ def make_trans_cube(params: ParamDict, transfiles: List[str]
 
 def make_trans_model(params: ParamDict, transcube: np.ndarray,
                      transtable: drs_fits.Table) -> ParamDict:
+    """Fit zero, water, and other-species transmission residual models.
+
+    :param params: APERO parameters containing model-fit thresholds.
+    :param transcube: Log-transmission cube for the selected files.
+    :param transtable: Metadata table describing each cube plane.
+    :return: Parameter dictionary containing the fitted residual models.
+    """
     # set function name
     func_name = display_func('make_trans_model', __NAME__)
     # get values from params
@@ -155,9 +168,25 @@ def make_trans_model(params: ParamDict, transcube: np.ndarray,
     return props
 
 
-def calculate_tellu_res_absorption(params, recipe, image, template_props,
-                                   header, refprops, wprops,
-                                   bprops, tpreprops, **kwargs):
+def calculate_tellu_res_absorption(
+        params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
+        template_props: ParamDict, header: drs_fits.Header,
+        refprops: ParamDict, wprops: ParamDict, bprops: ParamDict,
+        tpreprops: ParamDict, **kwargs: Any) -> ParamDict:
+    """Estimate telluric transmission after template and wave correction.
+
+    :param params: APERO parameters and telluric correction settings.
+    :param recipe: Recipe providing plots and output configuration.
+    :param image: Input spectrum image.
+    :param template_props: Telluric template data and metadata.
+    :param header: Input FITS header with observation metadata.
+    :param refprops: Reference wavelength solution properties.
+    :param wprops: Wavelength solution for the input spectrum.
+    :param bprops: BERV and observation properties.
+    :param tpreprops: Telluric pre-cleaning results and interpolators.
+    :param kwargs: Optional overrides for configured telluric settings.
+    :return: Telluric transmission, SED, and quality properties.
+    """
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
     default_conv_width = pcheck(params, 'OBJ.TELL.MAKE.DEF_CONV_WID',
@@ -391,7 +420,18 @@ def calculate_tellu_res_absorption(params, recipe, image, template_props,
 # =============================================================================
 # QC and summary functions
 # =============================================================================
-def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
+def mk_tellu_quality_control(
+        params: ParamDict, tprops: ParamDict, infile: DrsFitsFile,
+        tpreprops: ParamDict, **kwargs: Any) -> Tuple[List[List[Any]], int]:
+    """Check telluric solution, input SNR, and recovered atmosphere values.
+
+    :param params: APERO parameters containing quality thresholds.
+    :param tprops: Telluric absorption calculation products.
+    :param infile: Input spectrum file and its header metadata.
+    :param tpreprops: Telluric pre-cleaning QC results.
+    :param kwargs: Optional overrides for quality thresholds.
+    :return: QC names/values/rules/pass flags and overall 0/1 status.
+    """
     func_name = __NAME__ + '.mk_tellu_quality_control()'
     # get parameters from params/kwargs
     snr_order = pcheck(params, 'OBJ.TELL.MAKE.QC_SNR_ORDER', 'snr_order', kwargs,
@@ -526,7 +566,19 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     return qc_params, passed
 
 
-def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
+def mk_tellu_summary(recipe: DrsRecipe, it: int, params: ParamDict,
+                     qc_params: List[List[Any]], tellu_props: ParamDict,
+                     fiber: str) -> None:
+    """Add telluric QC and statistics to the recipe summary plots.
+
+    :param recipe: Recipe whose summary plot state is updated.
+    :param it: Summary document iteration index.
+    :param params: APERO parameters supplying version and date metadata.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :param tellu_props: Telluric fit products and recovered atmospheric data.
+    :param fiber: Fiber associated with this telluric result.
+    :return: None.
+    """
     # add qc params (fiber specific)
     recipe.plot.add_qc_params(qc_params, fiber=fiber)
     # add stats
@@ -545,6 +597,11 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
 
 
 def mk_model_qc(params: ParamDict) -> Tuple[list, int]:
+    """Return the currently unconditional transmission-model QC result.
+
+    :param params: APERO parameters used for logging.
+    :return: QC rows and a 0/1 pass status.
+    """
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # no quality control currently
@@ -571,7 +628,17 @@ def mk_model_qc(params: ParamDict) -> Tuple[list, int]:
     return qc_params, passed
 
 
-def mk_model_summary(recipe, params, qc_params, tprops):
+def mk_model_summary(recipe: DrsRecipe, params: ParamDict,
+                     qc_params: List[List[Any]],
+                     tprops: ParamDict) -> None:
+    """Add transmission-model settings to the recipe summary.
+
+    :param recipe: Recipe whose summary plot state is updated.
+    :param params: APERO parameters supplying version and date metadata.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :param tprops: Fitted transmission model and its settings.
+    :return: None.
+    """
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS.VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS.DATE'])
@@ -587,8 +654,26 @@ def mk_model_summary(recipe, params, qc_params, tprops):
 # =============================================================================
 # Write functions
 # =============================================================================
-def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
-                              refprops, nprops, tprops, tpreprops, qc_params):
+def mk_tellu_write_trans_file(
+        params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
+        rawfiles: List[str], fiber: str, combine: bool,
+        refprops: ParamDict, nprops: ParamDict, tprops: ParamDict,
+        tpreprops: ParamDict, qc_params: List[List[Any]]) -> DrsFitsFile:
+    """Write the computed transmission map with calibration/QC metadata.
+
+    :param params: APERO parameters used to build the output file.
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param infile: Input file used to construct the output filename/header.
+    :param rawfiles: Raw input basenames represented by the result.
+    :param fiber: Fiber associated with the transmission map.
+    :param combine: Whether the input result combines multiple raw files.
+    :param refprops: Reference wavelength solution properties.
+    :param nprops: Normalization/blaze properties.
+    :param tprops: Telluric absorption calculation products.
+    :param tpreprops: Telluric pre-cleaning settings and products.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :return: Written transmission file object.
+    """
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     transfile = recipe.outputs['TELLU_TRANS'].newcopy(params=params,
@@ -712,7 +797,18 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
 
 def mk_write_model(params: ParamDict, recipe: DrsRecipe, infile: DrsFitsFile,
                    tprops: ParamDict, transtable: drs_fits.Table, fiber: str,
-                   qc_params: list):
+                   qc_params: List[List[Any]]) -> DrsFitsFile:
+    """Write fitted transmission components and metadata to a model file.
+
+    :param params: APERO parameters used to write the output.
+    :param recipe: Recipe providing output definitions and run metadata.
+    :param infile: Input file used to construct the output filename/header.
+    :param tprops: Fitted transmission model products and settings.
+    :param transtable: Per-file transmission metadata table.
+    :param fiber: Fiber associated with the model.
+    :param qc_params: QC names, values, rules, and pass flags.
+    :return: Written transmission model file object.
+    """
     # ------------------------------------------------------------------
     # write the template file (TELLU_TEMP)
     # ------------------------------------------------------------------

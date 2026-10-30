@@ -1405,7 +1405,8 @@ class DrsRecipe(object):
         except Exception:
             return None
 
-    def _parse_args(self, dictionary: Union[Dict[str, Any], None] = None):
+    def _parse_args(self, dictionary: Union[Dict[str, Any], None] = None
+                    ) -> None:
         """
         Parse a dictionary of arguments into argparser in the format required
         to match up to the recipe.args/recipe.kwarg assigned to this

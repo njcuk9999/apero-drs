@@ -44,7 +44,7 @@ ParamDict = param_functions.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_explorer.py
 

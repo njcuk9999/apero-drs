@@ -60,7 +60,7 @@ pcheck = param_functions.PCheck(wlog=WLOG)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
 def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
-         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
+         **kwargs: Any) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_loc
 

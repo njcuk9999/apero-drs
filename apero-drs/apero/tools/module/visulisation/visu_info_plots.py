@@ -567,7 +567,7 @@ def plot_lbl_rdb_thumbnail(params: ParamDict, filename: str,
     plotend(params, filename, thumbnail=True)
 
 
-def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
+def lbl_trumpet_plot(frame: Any, wavemap: np.ndarray, y: np.ndarray,
                      ey: np.ndarray, mask: np.ndarray,
                      mask_on_label: str, mask_off_label: str,
                      on_color: str = 'blue', off_color: str = 'cyan',

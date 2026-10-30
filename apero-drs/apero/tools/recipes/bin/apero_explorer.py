@@ -54,7 +54,7 @@ NAMES = dict(zip(recipe_defaults.DATABASE_NAMES,
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(**kwargs):
+def main(**kwargs: Any) -> Any:
     """
     Main function for apero_explorer.py
 

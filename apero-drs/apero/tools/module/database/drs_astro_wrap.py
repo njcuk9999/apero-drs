@@ -113,6 +113,7 @@ class AstroObj:
         self._refresh_from_entry()
 
     def __repr__(self) -> str:
+        """Return the canonical display representation of this object."""
         return 'AstroObj[{0}]'.format(self.name)
 
     __str__ = __repr__

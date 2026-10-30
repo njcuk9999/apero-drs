@@ -89,7 +89,8 @@ def _set_imshow_defaults(plt: Any) -> None:
 
     old_imshow = plt.imshow
 
-    def _imshow(*args: Tuple[Any, ...], **kwargs: Any):
+    def _imshow(*args: Tuple[Any, ...], **kwargs: Any) -> Any:
+        """Apply APERO defaults before delegating to Matplotlib imshow."""
         kwargs.setdefault('aspect', 'auto')
         kwargs.setdefault('origin', 'lower')
         return old_imshow(*args, **kwargs)

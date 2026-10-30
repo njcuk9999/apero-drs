@@ -22,6 +22,12 @@ from aperocore.io import drs_io
 class MarkDownPage:
     def __init__(self, page_ref: str,
                  initial_lines: List[str] = None) -> None:
+        """Initialize a Markdown page with an optional opening block.
+
+        :param page_ref: Reference label emitted at the top of the page.
+        :param initial_lines: Optional lines inserted before the reference.
+        :return: None.
+        """
         # store the page reference
         self.page_ref = page_ref
         # storage of lines for output file
@@ -64,6 +70,14 @@ class MarkDownPage:
                               names: Optional[List[str]] = None,
                               sectionname: Optional[str] = 'Contents',
                               maxdepth: int = 1) -> None:
+        """Append a Sphinx toctree or a named-reference contents list.
+
+        :param items: Page paths or reference labels for the entries.
+        :param names: Optional display names paired with reference labels.
+        :param sectionname: Optional heading/caption for the contents section.
+        :param maxdepth: Maximum toctree depth when names are omitted.
+        :return: None.
+        """
 
         self.add_newline()
         # no names means items are url links to other pages

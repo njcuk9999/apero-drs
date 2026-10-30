@@ -87,7 +87,12 @@ def do_skip(params: ParamDict, recipe_test: str) -> bool:
         return skip_done
 
 
-def run_mkdirs(params: ParamDict):
+def run_mkdirs(params: ParamDict) -> None:
+    """Create the standard LBL output directory structure.
+
+    :param params: APERO parameters containing the LBL output path.
+    :return: None.
+    """
     # get the lbl path
     lbl_in_path = params['PATH.LBL']
     # loop around directories
@@ -98,7 +103,7 @@ def run_mkdirs(params: ParamDict):
         os.makedirs(path, exist_ok=True)
 
 
-def run_apero_get(params: ParamDict):
+def run_apero_get(params: ParamDict) -> None:
     """
     Run the apero get on all profiles
 
@@ -196,7 +201,7 @@ def run_apero_get(params: ParamDict):
 
 
 def apero_wave_static(params: ParamDict, fibers: List[str],
-                      outpath: str, symlinks: bool = False):
+                      outpath: str, symlinks: bool = False) -> None:
     """
     Copy the APERO static wave files to the LBL directory
 
@@ -290,7 +295,7 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
                inprefix: Optional[str] = None,
                insuffix: Optional[str] = None,
                objname: Optional[str] = None,
-               tempname: Optional[str] = None):
+               tempname: Optional[str] = None) -> None:
     """
     Add an output file to the file index database
 
@@ -491,6 +496,16 @@ def fake_hkeys(params: ParamDict, filename: str,
                drsfile: DrsInputFile,
                objname: Optional[str] = None,
                tempname: Optional[str] = None) -> Dict[str, Any]:
+    """Build file-index header values for an LBL output file.
+
+    :param params: APERO parameter dictionary.
+    :param filename: LBL output filename to describe.
+    :param header_fits_file: Optional FITS file supplying observation keys.
+    :param drsfile: Output file definition providing the file name/type.
+    :param objname: Optional canonical object name.
+    :param tempname: Optional LBL template name.
+    :return: Header-key mapping for the file-index database.
+    """
     # set function name
     func_name = __NAME__ + '.fake_hkeys()'
     # get rkeys from pseudo constants
@@ -585,7 +600,7 @@ def dtemp(params: ParamDict) -> Union[Dict[str, str], None]:
         return valid_dtemp_files
 
 
-def add_log(params: ParamDict, lblinstance: Any):
+def add_log(params: ParamDict, lblinstance: Any) -> None:
     """
     Add the LBL log (from the lbl instance) to the apero logs
     this is a fudge as all time stamps will be "now" not when they were run

@@ -72,7 +72,7 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # Everything else is controlled from recipe_definition
 def main(obs_dir: Optional[str] = None, hcfiles: Optional[List[str]] = None,
          fpfiles: Optional[List[str]] = None,
-         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
+         **kwargs: Any) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
     """
     Main function for apero_wave_ref
 

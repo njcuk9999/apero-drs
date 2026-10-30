@@ -73,7 +73,11 @@ def get_args() -> Dict[str, Any]:
     return dict(vars(args))
 
 
-def main():
+def main() -> Any:
+    """Run the selected language database utility.
+
+    :return: Result of the finder GUI, if requested; otherwise None.
+    """
     # Note: cannot use any package other than apero.lang - as we are
     #       updating the language in this package
 

@@ -545,6 +545,7 @@ def locker(params: ParamDict, lockfile: str, my_func: Callable[..., Any],
     # define wrapper lock file function
     @synchronized(lock, params['PID'])
     def locked_function() -> Any:
+        """Call the wrapped function while holding the requested lock."""
         return my_func(*args, **kwargs)
     # ------------------------------------------------------------------
     # try to run locked read function
