@@ -825,31 +825,25 @@ def line_pattern_matrix(wavemap: np.ndarray, wavec: np.ndarray,
         #     v = c Δλ / λ
         wavediff = wavemap[linemask] - wavec[line_it]
         linevelo = speed_of_light * wavediff / wavec[line_it]
-        # loop around pixels and calculate the line pattern matrix for
-        #   flux and polar - for all valid positions
-        for pix in range(len(linepos)):
-            # linear interpolation
-            # -----------------------------------------------------------------
-            # find position in velocities where our velocity should be inserted
-            jpos = np.searchsorted(velocities, linevelo[pix], side='right')
-            # -----------------------------------------------------------------
-            # get the weight of the velocity
-            vpart1 = velocities[jpos] - linevelo[pix]
-            vpart2 = linevelo[pix] - velocities[jpos - 1]
-            # -----------------------------------------------------------------
-            # calculate the polar line pattern matrix element
-            pol_lpm_pix1 = weight[line_it] * vpart1 / dvel
-            pol_lpm_pix2 = weight[line_it] * vpart2 / dvel
-            # add to polar line pattern matrix
-            pol_lpm[linepos[pix]][jpos - 1] += pol_lpm_pix1
-            pol_lpm[linepos[pix]][jpos] += pol_lpm_pix2
-            # -----------------------------------------------------------------
-            # calculate the flux line pattern matrix element
-            flux_lpm_pix1 = depth[line_it] * vpart1 / dvel
-            flux_lpm_pix2 = depth[line_it] * vpart2 / dvel
-            # add to polar line pattern matrix
-            flux_lpm[linepos[pix]][jpos - 1] += flux_lpm_pix1
-            flux_lpm[linepos[pix]][jpos] += flux_lpm_pix2
+        # linear interpolation, for all pixels of this line at once
+        #   (linepos is unique within a line, so no element is hit twice)
+        # find position in velocities where our velocity should be inserted
+        jpos = np.searchsorted(velocities, linevelo, side='right')
+        # get the weight of the velocity
+        vpart1 = velocities[jpos] - linevelo
+        vpart2 = linevelo - velocities[jpos - 1]
+        # calculate the polar line pattern matrix elements
+        pol_lpm_pix1 = weight[line_it] * vpart1 / dvel
+        pol_lpm_pix2 = weight[line_it] * vpart2 / dvel
+        # add to polar line pattern matrix
+        pol_lpm[linepos, jpos - 1] += pol_lpm_pix1
+        pol_lpm[linepos, jpos] += pol_lpm_pix2
+        # calculate the flux line pattern matrix elements
+        flux_lpm_pix1 = depth[line_it] * vpart1 / dvel
+        flux_lpm_pix2 = depth[line_it] * vpart2 / dvel
+        # add to flux line pattern matrix
+        flux_lpm[linepos, jpos - 1] += flux_lpm_pix1
+        flux_lpm[linepos, jpos] += flux_lpm_pix2
     # ------------------------------------------------------------------------
     # return the
     return flux_lpm, pol_lpm
@@ -884,9 +878,7 @@ def calculate_lsd_profile(params: ParamDict, flux: np.ndarray,
     lpmt_x_s2 = np.zeros_like(lpmt)
     # Then calculate dot product between MT . S^2, where S^2=covariance matrix
     #   MT.S^2 = MT.(1/FLUXERR^2)
-    # loop around each matrix element
-    for it in range(lpmt.shape[0]):
-        lpmt_x_s2[it] = lpmt[it] / (fluxerr ** 2)
+    np.divide(lpmt, fluxerr ** 2, out=lpmt_x_s2)
     # -------------------------------------------------------------------------
     # calculate autocorrelation
     #  MT.S^2.M

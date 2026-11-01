@@ -410,9 +410,14 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
         epad = np.pad(evalid, pad, constant_values=np.nan)
         shape = (zpad.shape[0] // bin_size, bin_size,
                  zpad.shape[1] // bin_size, bin_size)
+        # bottleneck needs an int axis: gather each tile onto the last axis
+        nyb, nxb = shape[0], shape[2]
+        tile_shape = (nyb, nxb, bin_size * bin_size)
+        ztiles = zpad.reshape(shape).transpose(0, 2, 1, 3)
+        etiles = epad.reshape(shape).transpose(0, 2, 1, 3)
         with warnings.catch_warnings(record=True) as _:
-            z = np.nanmedian(zpad.reshape(shape), axis=(1, 3))
-            e = np.nanmedian(epad.reshape(shape), axis=(1, 3))
+            z = mp.nanmedian(ztiles.reshape(tile_shape), axis=2)
+            e = mp.nanmedian(etiles.reshape(tile_shape), axis=2)
         count = np.isfinite(zpad).reshape(shape).sum(axis=(1, 3))
         e = e / np.sqrt(count)
         ystarts = np.arange(0, full_ny, bin_size)
@@ -495,24 +500,35 @@ def fit_lower_envelope_2d(image: np.ndarray, err: np.ndarray,
     # -------------------------------------------------------------------
     # anneal, then iterate to the fixed point
     # -------------------------------------------------------------------
+    # loop invariants of _run: scaled errors per anneal step and e[ok]
+    anneal_esafe = [esafe * scale for scale in anneal]
+    final_esafe = esafe * 1.0
+    nanneal = len(anneal_esafe)
+    e_ok = e[ok]
+
     def _run(fpos: float) -> Tuple[np.ndarray, np.ndarray, int]:
         """anneal, then iterate the weighted fit to the fixed point"""
         coef = np.array(start)
         surf = _surface(coef)
         npass = 0
-        for it, scale in enumerate(list(anneal) + [1.0] * niter):
-            nsig = (zc - surf) / (esafe * scale)
+        for it in range(nanneal + niter):
+            if it < nanneal:
+                escale = anneal_esafe[it]
+            else:
+                escale = final_esafe
+            nsig = (zc - surf) / escale
             np.clip(nsig, -40.0, 40.0, out=nsig)
             gauss = np.exp(-0.5 * nsig * nsig)
             # equation from the docstring above, pixel by pixel
             w = gauss / (gauss + f_bad)
-            w *= np.where(nsig < 0.0, 1.0, fpos)
+            # x * 1.0 == x, so only the non-negative side needs scaling
+            np.multiply(w, fpos, out=w, where=~(nsig < 0.0))
             w *= ivar
             if not np.any(w > 0):
                 break
             coef = _solve(w)
             new = _surface(coef)
-            move = np.max(np.abs((new - surf)[ok]) / e[ok])
+            move = np.max(np.abs((new - surf)[ok]) / e_ok)
             surf = new
             npass = it + 1
             if it >= len(anneal) and move < tol:

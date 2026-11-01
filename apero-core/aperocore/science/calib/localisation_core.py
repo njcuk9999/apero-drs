@@ -88,21 +88,18 @@ def build_order_position_map(shape: Tuple[int, int],
             rows = np.arange(ylo, yhi)[:, np.newaxis]
             dist = np.abs(rows - cen[np.newaxis, :])
             # nearest trace, no width condition
+            # basic slices are views, so masked writes update the parents
             closer = dist < nearest_d[ylo:yhi]
             subn = nearest[ylo:yhi]
             subn[closer] = offset + itrace + 1
-            nearest[ylo:yhi] = subn
             subnd = nearest_d[ylo:yhi]
             subnd[closer] = dist[closer]
-            nearest_d[ylo:yhi] = subnd
             # the trace that owns the pixel, which needs the width
             take = (dist <= half) & (dist < closest[ylo:yhi])
             sub = omap[ylo:yhi]
             sub[take] = offset + itrace + 1
-            omap[ylo:yhi] = sub
             subd = closest[ylo:yhi]
             subd[take] = dist[take]
-            closest[ylo:yhi] = subd
         offset += ntrace
     return omap, nearest, ranges
 

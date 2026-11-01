@@ -237,10 +237,18 @@ def slinky_fit(xvector: np.ndarray, yvector: np.ndarray, yerr: np.ndarray,
     # pre-compute ratios of the x grid and original x vector to e-width
     xvbis = grid_x / wslinky
     xbis = xvector / wslinky
+    # on an ascending grid only points within +-11 can pass |dd| < 10
+    if np.all(np.diff(xvbis) >= 0):
+        ilo = np.searchsorted(xvbis, xbis - 11.0, side='left')
+        ihi = np.searchsorted(xvbis, xbis + 11.0, side='right')
+    else:
+        ilo = np.zeros(len(xvector), dtype=int)
+        ihi = np.full(len(xvector), npts, dtype=int)
     # Loop over each data point
     for it in range(len(xvector)):
+        lo, hi = ilo[it], ihi[it]
         # Calculate the distance between the grid points and the data point
-        dd = xvbis - xbis[it]
+        dd = xvbis[lo:hi] - xbis[it]
         # only keep those within 10 e-widths
         good = np.abs(dd) < 10
         # mask the original distance
@@ -248,9 +256,9 @@ def slinky_fit(xvector: np.ndarray, yvector: np.ndarray, yerr: np.ndarray,
         # Calculate the weight of the data point
         weight2 = np.exp(-0.5 * dd2 ** 2) / yerr[it] ** 2
         # Add the weight to the grid weights
-        weights[good] += weight2
+        weights[lo:hi][good] += weight2
         # Add the weighted y value to the grid y values
-        grid_y[good] += weight2 * yvector[it]
+        grid_y[lo:hi][good] += weight2 * yvector[it]
     # Normalize the y values by the weights
     grid_y /= weights
     # return the grid x and y values

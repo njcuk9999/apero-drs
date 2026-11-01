@@ -418,14 +418,13 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     # -------------------------------------------------------------------------
     # loop around orders
     for order_num in is_order1:
-        # get this orders pixels
-        mask_region = (all_labels1 == order_num)
+        # get this orders pixel positions (row-major, same as np.where)
+        coords = label_props1[order_num - 1].coords
+        ypix1, xpix1 = coords[:, 0], coords[:, 1]
         # get the flux values of the pixels for this order
-        value = image[mask_region]
+        value = image[ypix1, xpix1]
         # get the low flux bound (more than 5% of peak flux)
         low_flux = value < mp.nanpercentile(value, 95) * 0.05
-        # get the positions so we can mask them with the low_flux mask
-        ypix1, xpix1 = np.where(mask_region)
         # mask mask_orders with low_flux for this order region
         mask_orders[ypix1[low_flux], xpix1[low_flux]] = 0
     # -------------------------------------------------------------------------
@@ -653,12 +652,12 @@ def calc_localisation(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
     width_pos = np.zeros([len(valid_labels)])
     # loop around each order
     for wit, valid_label in enumerate(valid_labels):
-        # we get back the map of all pixels in this order (from the labelling)
-        ordpixmap = all_labels2 == valid_label
+        # we get back the pixels in this order (from the labelling)
+        ordcoords = label_props2[valid_label - 1].coords
         # we sum all the pixels in the y direction (this is the width in pixels
         #  we have per x pixel
-        sumpixmap_x = np.sum(ordpixmap, axis=0)
-        sumpixmap_y = np.sum(ordpixmap, axis=1)
+        sumpixmap_x = np.bincount(ordcoords[:, 1], minlength=nbxpix)
+        sumpixmap_y = np.bincount(ordcoords[:, 0], minlength=nbypix)
         # get valid pixels within this order
         thres = mp.nanpercentile(sumpixmap_x, 90)
         validsumpixmap = np.where(sumpixmap_x > 0.5 * thres)[0]

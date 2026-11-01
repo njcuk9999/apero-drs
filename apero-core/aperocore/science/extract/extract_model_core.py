@@ -213,8 +213,9 @@ def background_model(image: np.ndarray, size: Tuple[int, int] = (31, 7),
     error = np.full((nyc, nxc), np.nan)
     for row0 in range(0, nyc, chunk):
         row1 = min(row0 + chunk, nyc)
-        block = window[row0:row1].reshape(row1 - row0, nxc,
-                                          ky * kx).astype(np.float32)
+        # single float32 cast straight from the strided window view
+        block = np.ascontiguousarray(window[row0:row1], dtype=np.float32)
+        block = block.reshape(row1 - row0, nxc, ky * kx)
         # Sort each box to estimate the median and a robust scatter from the
         #   same finite pixel set without materialising a per-box loop.
         sorted_box = np.sort(block, axis=2)
@@ -482,6 +483,8 @@ def weighted_fit_batch(profile1: np.ndarray, profile2: np.ndarray,
     amp1, amp2, zero_point, _ = xout
     weight = unit.copy()
     noise2 = float(noise) ** 2
+    # unit does not change inside the loop
+    usable = unit > 0
     for _ in range(int(n_iter)):
         # The robust weights are updated from the current residuals, so the
         #   next linear solve follows the same two-profile model with lower
@@ -496,7 +499,7 @@ def weighted_fit_batch(profile1: np.ndarray, profile2: np.ndarray,
                 robust = gauss / (gauss + 1e-3)
             else:
                 robust = (nu + 1.0) / (nu + nsig2)
-            weight = np.where(unit > 0, robust / variance, 0.0)
+            weight = np.where(usable, robust / variance, 0.0)
         amp1, amp2, zero_point = _solve3(profile1c, profile2c, sciencec,
                                          unit, weight)
     amp1, amp2, zero_point = _blank_unfittable(amp1, amp2, zero_point,
@@ -555,6 +558,9 @@ def extract_orders(image: np.ndarray, profile1: np.ndarray,
         rib_sci = np.array(image[y1:y2], dtype=float)
         rib1 = np.array(profile1[y1:y2], dtype=float)
         rib2 = np.array(profile2[y1:y2], dtype=float)
+        # rib1/rib2 are never modified, so their NaN-zeroed forms are fixed
+        nrib1 = np.nan_to_num(rib1)
+        nrib2 = np.nan_to_num(rib2)
         if robust:
             for _ in range(nclip):
                 xargs = [rib1, rib2, rib_sci, noise]
@@ -563,8 +569,7 @@ def extract_orders(image: np.ndarray, profile1: np.ndarray,
                                trace_nan_frac=trace_nan_frac)
                 xout = weighted_fit_batch(*xargs, **xkwargs)
                 amp1, amp2, zero_point = xout[:3]
-                model = (amp1 * np.nan_to_num(rib1)
-                         + amp2 * np.nan_to_num(rib2) + zero_point)
+                model = amp1 * nrib1 + amp2 * nrib2 + zero_point
                 err = np.sqrt(np.abs(model) + noise ** 2)
                 with np.errstate(invalid='ignore'):
                     rib_sci[(rib_sci - model) / err > nsig_clip] = np.nan
@@ -575,8 +580,7 @@ def extract_orders(image: np.ndarray, profile1: np.ndarray,
                            trace_nan_frac=trace_nan_frac)
             xout = weighted_fit_batch(*xargs, **xkwargs)
             amp1, amp2, zero_point = xout[:3]
-            model = (amp1 * np.nan_to_num(rib1)
-                     + amp2 * np.nan_to_num(rib2) + zero_point)
+            model = amp1 * nrib1 + amp2 * nrib2 + zero_point
         zero_point[zero_point == 0] = np.nan
         med = mp.nanmedian(zero_point)
         mad = mp.nanmedian(np.abs(zero_point - med))
@@ -587,8 +591,8 @@ def extract_orders(image: np.ndarray, profile1: np.ndarray,
         zero_points[order_num] = zero_point
         if not products:
             continue
-        mod1 = amp1 * np.nan_to_num(rib1)
-        mod2 = amp2 * np.nan_to_num(rib2)
+        mod1 = amp1 * nrib1
+        mod2 = amp2 * nrib2
         mod1[:, bad] = np.nan
         mod2[:, bad] = np.nan
         model1[y1:y2] = mod1

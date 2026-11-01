@@ -132,12 +132,14 @@ def sample_bilinear(coarse: Union[np.ndarray, List[np.ndarray]],
     flat01 = flat00 + 1
     flat10 = flat00 + ncol
     flat11 = flat10 + 1
+    one_minus_wx = 1.0 - wx
+    one_minus_wy = 1.0 - wy
     outs = []
     for one_map in maps:
         flat = one_map.ravel()
-        top = flat[flat00] * (1.0 - wx) + flat[flat01] * wx
-        bottom = flat[flat10] * (1.0 - wx) + flat[flat11] * wx
-        outs.append(top * (1.0 - wy) + bottom * wy)
+        top = flat[flat00] * one_minus_wx + flat[flat01] * wx
+        bottom = flat[flat10] * one_minus_wx + flat[flat11] * wx
+        outs.append(top * one_minus_wy + bottom * wy)
     return outs[0] if single else outs
 
 
@@ -234,7 +236,8 @@ def irregular_savgol(xpos: np.ndarray, values: np.ndarray,
         np.clip(gauss, 0.0, None, out=gauss)
     else:
         gauss = np.exp(-0.5 * (delta / window) ** 2)
-    weight = gauss * ivar[iidx]
+    ivar_i = ivar[iidx]
+    weight = gauss * ivar_i
     yval = values[iidx]
     delta2 = delta * delta
     filled = cnt > 0
@@ -246,13 +249,16 @@ def irregular_savgol(xpos: np.ndarray, values: np.ndarray,
         out[filled] = np.add.reduceat(samples, starts)
         return out
 
-    smom = [_sum(weight), _sum(weight * delta), _sum(weight * delta2),
-            _sum(weight * delta2 * delta), _sum(weight * delta2 * delta2)]
-    rhs = [_sum(weight * yval), _sum(weight * delta * yval),
-           _sum(weight * delta2 * yval)]
-    wt2 = gauss * gauss * ivar[iidx]
-    cmom = [_sum(wt2), _sum(wt2 * delta), _sum(wt2 * delta2),
-            _sum(wt2 * delta2 * delta), _sum(wt2 * delta2 * delta2)]
+    # products are left-associative, so these reuse identical subterms
+    w_d = weight * delta
+    w_d2 = weight * delta2
+    smom = [_sum(weight), _sum(w_d), _sum(w_d2),
+            _sum(w_d2 * delta), _sum(w_d2 * delta2)]
+    rhs = [_sum(weight * yval), _sum(w_d * yval), _sum(w_d2 * yval)]
+    wt2 = gauss * gauss * ivar_i
+    c_d2 = wt2 * delta2
+    cmom = [_sum(wt2), _sum(wt2 * delta), _sum(c_d2),
+            _sum(c_d2 * delta), _sum(c_d2 * delta2)]
     m00, m01, m02 = smom[0], smom[1], smom[2]
     m11, m12, m22 = smom[2], smom[3], smom[4]
     cof0 = m11 * m22 - m12 * m12
@@ -580,7 +586,11 @@ def convolve_irregular(
     sum_wy = np.bincount(rows, weights=w * ys[cols], minlength=n_out)
     sum_w2e2 = np.bincount(rows, weights=(w * es[cols]) ** 2,
                            minlength=n_out)
-    sum_cell = np.bincount(rows, weights=cell_w, minlength=n_out)
+    if weighting == 'integral':
+        # w is cell_w here, so this is the same bincount as sum_w
+        sum_cell = sum_w
+    else:
+        sum_cell = np.bincount(rows, weights=cell_w, minlength=n_out)
     # coverage: average fraction of kernel mass backed by data per group
     coverage = np.zeros(n_out)
     np.divide(sum_cell, ngroups, out=coverage, where=ngroups > 0)

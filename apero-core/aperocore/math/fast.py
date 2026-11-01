@@ -554,9 +554,11 @@ def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
         if np.sum(np.isfinite(weights)) == 0:
             guess = np.nan
         else:
-            guess = np.nansum(value * weights) / np.nansum(weights)
+            # weights is exactly odd_good / error2, so reuse its sum
+            sum_weights = np.nansum(weights)
+            guess = np.nansum(value * weights) / sum_weights
             # work out the bulk error
-            bulk_error = np.sqrt(1.0 / np.nansum(odd_good / error2))
+            bulk_error = np.sqrt(1.0 / sum_weights)
         # keep track of the number of iterations
         ite += 1
 

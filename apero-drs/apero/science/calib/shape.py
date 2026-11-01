@@ -878,14 +878,10 @@ def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
                     ribbon_fp[:, ix] = spline_fp(ypix[order_num, ix] + widths)
 
             # normalizing ribbon stripes to their median abs dev
-            for iw in range(width):
-                # for the hc data
-                norm_fp = mp.nanmedian(np.abs(ribbon_fp[iw, :]))
-                # deal with a row of zeros
-                if norm_fp == 0.0:
-                    continue
-                # for the fp data
-                ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
+            norms_fp = mp.nanmedian(np.abs(ribbon_fp), axis=1)
+            # deal with rows of zeros (left un-normalised)
+            nonzero = norms_fp != 0.0
+            ribbon_fp[nonzero] = ribbon_fp[nonzero] / norms_fp[nonzero, None]
             # range explored in slopes
             #
             # Once we have searched through a range of slopes and found the
@@ -900,6 +896,9 @@ def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
             # log: Range slope exploration: {0:.3f} -> {1:.3f} deg
             WLOG(params, '', textentry('40-014-00017', args=wargs))
+            # ribbon_fp is fixed from here on, so build each row spline once
+            row_splines = [mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
+                           for iw in range(width)]
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
@@ -917,10 +916,8 @@ def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
                 for iw in range(width):
                     # get the ddx value
                     ddx = (iw - width / 2.0) * slope
-                    # get the spline
-                    spline = mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
                     # calculate the new ribbon values
-                    ribbon_fp2[iw, :] = spline(xpix + ddx)
+                    ribbon_fp2[iw, :] = row_splines[iw](xpix + ddx)
                 # record the profile of the ribbon
                 profile = mp.nanmean(ribbon_fp2, axis=0)
                 # loop around the sections to record rv content
@@ -1006,10 +1003,8 @@ def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
             for iw in range(width):
                 # get the x shift
                 ddx = (iw - width / 2.0) * yfit
-                # calculate the spline at this width
-                spline_fp = mp.iuv_spline(xpix, ribbon_fp[iw, :], ext=1)
                 # push spline values with shift into ribbon2
-                ribbon_fp2[iw, :] = spline_fp(xpix + ddx)
+                ribbon_fp2[iw, :] = row_splines[iw](xpix + ddx)
 
             # -------------------------------------------------------------
             # get the median values of the fp and hc
@@ -1149,6 +1144,10 @@ def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
             #    dx+rotation values and update the reference DX map
             fracs = ypix[order_num] - np.fix(ypix[order_num])
             widths = np.arange(width)
+            # splev is pointwise, so evaluate every column in one call
+            ddx_all = spline(widths[None, :] - fracs[:, None])
+            # offsets of the ribbon rows about the order centre
+            widthrange = np.arange(-width // 2, width // 2)
 
             for ix in range(dim2):
                 # get slope
@@ -1156,10 +1155,9 @@ def calculate_dxmap(params: ParamDict, recipe: DrsRecipe, fpdata: np.ndarray,
                 # get dx0 with slope factor added
                 dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope
                 # get the ypix at this value
-                widthrange = np.arange(-width // 2, width // 2)
                 ypix2 = int(ypix[order_num, ix]) + widthrange
                 # get the ddx
-                ddx = spline(widths - fracs[ix])
+                ddx = ddx_all[ix]
                 # set the zero shifts to NaNs
                 ddx[ddx == 0] = np.nan
                 # only set positive ypixels

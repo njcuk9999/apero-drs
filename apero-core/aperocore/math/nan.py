@@ -69,8 +69,9 @@ def nanpad(oimage: np.ndarray) -> np.ndarray:
         # median the neghbours and pad back into the input image
         with warnings.catch_warnings(record=True) as _:
             image[gy, gx] = fast.nanmedian(tmp, axis=1)
-        # find NaNs again and pad again if needed
-        gy, gx = np.where(~np.isfinite(image))
+        # only (gy, gx) were written, so remaining NaNs are a subset of them
+        still_bad = ~np.isfinite(image[gy, gx])
+        gy, gx = gy[still_bad], gx[still_bad]
     # return padded image
     return image
 
@@ -99,13 +100,16 @@ def fill_nans(image: Union[np.ndarray, List[np.ndarray]],
         bad = ~np.isfinite(out)
         if not bad.any():
             continue
+        ncol = out.shape[1]
         smooth = np.zeros_like(out)
-        for column in range(out.shape[1]):
+        # smooth is only read at bad pixels, so only those rows/cols are needed
+        for column in np.flatnonzero(bad.any(axis=0)):
+            rows = np.flatnonzero(bad[:, column])
             start = max(0, column - box_size)
-            stop = min(out.shape[1], column + box_size + 1)
+            stop = min(ncol, column + box_size + 1)
             with warnings.catch_warnings(record=True) as _:
-                smooth[:, column] = fast.nanmedian(out[:, start:stop],
-                                                   axis=1)
+                smooth[rows, column] = fast.nanmedian(out[rows, start:stop],
+                                                      axis=1)
         out[bad] = smooth[bad]
     # return in the same form as the input
     return outs[0] if single else outs

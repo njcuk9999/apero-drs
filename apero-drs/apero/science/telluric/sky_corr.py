@@ -9,7 +9,7 @@ Created on 2020-07-2020-07-15 17:58
 """
 import os
 import warnings
-from typing import List, Optional, Tuple, Union
+from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -740,6 +740,35 @@ def mk_skymodel_summary(recipe: DrsRecipe, params: ParamDict,
 # =============================================================================
 # Correction skycorr functions
 # =============================================================================
+def _region_pixels(reg_id: np.ndarray
+                   ) -> Iterator[Tuple[Any, Tuple[np.ndarray, ...]]]:
+    """
+    Yield each region id with the indices of its pixels
+
+    Pixels of each region are in row-major order, i.e. the same order as
+    boolean indexing with ``reg_id == region_id``.
+
+    :param reg_id: numpy array, the region id of every pixel
+
+    :return: iterator of (region id, tuple of index arrays)
+    """
+    reg_id = np.asarray(reg_id)
+    reg_flat = reg_id.ravel()
+    # stable sort: within a region, flat indices stay ascending
+    order = np.argsort(reg_flat, kind='stable')
+    sorted_ids = reg_flat[order]
+    # start of each run of equal ids (NaN ids each start a run)
+    edges = np.flatnonzero(sorted_ids[1:] != sorted_ids[:-1]) + 1
+    starts = np.r_[0, edges]
+    ends = np.r_[edges, sorted_ids.size]
+    pix_all = np.unravel_index(order, reg_id.shape)
+    for start, end in zip(starts, ends):
+        if end <= start:
+            continue
+        region_id = sorted_ids[start]
+        yield region_id, tuple(pix[start:end] for pix in pix_all)
+
+
 def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
                          infile: DrsFitsFile, wprops: ParamDict,
                          rawfiles: List[str], combine: bool,
@@ -846,22 +875,24 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     finite_mask = np.isfinite(image_calib)
     finite_mask &= np.isfinite(sky_model_ref)
     # loop around each line
-    for region_id in region_ids:
-        # mask all areas with this region id
-        reg_mask = reg_id == region_id
+    for region_id, reg_pix in _region_pixels(reg_id):
+        # region 0 means no line (NaN ids never matched a pixel)
+        if region_id not in region_ids:
+            continue
         # make sure calib and model are finite
-        reg_maskf = reg_mask & finite_mask
+        reg_finite = finite_mask[reg_pix]
+        reg_pixf = tuple(pix[reg_finite] for pix in reg_pix)
         # fit amplitude in calib fiber and apply to science fiber
-        amp_num = np.sum(image_calib[reg_maskf] * sky_model_ref[reg_maskf])
-        amp_den = np.sum(sky_model_ref[reg_maskf] ** 2)
+        amp_num = np.sum(image_calib[reg_pixf] * sky_model_ref[reg_pixf])
+        amp_den = np.sum(sky_model_ref[reg_pixf] ** 2)
         amp = amp_num / amp_den
         # negative amps should be set to zero
         if amp < 0:
             amp = 0
         # apply to weights and scale (including areas with nans)
-        sfactor = amp * weights[reg_mask]
-        sky_corr_sci[reg_mask] = sky_model_sci[reg_mask] * sfactor
-        sky_corr_ref[reg_mask] = sky_model_ref[reg_mask] * sfactor
+        sfactor = amp * weights[reg_pix]
+        sky_corr_sci[reg_pix] = sky_model_sci[reg_pix] * sfactor
+        sky_corr_ref[reg_pix] = sky_model_ref[reg_pix] * sfactor
     # -------------------------------------------------------------------------
     # spline back to the input files wavelength grid
     for order_num in range(nbo):
@@ -999,14 +1030,16 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     finite_mask = np.isfinite(image1)
     finite_mask &= np.isfinite(sky_model_ref)
     # loop around each line
-    for region_id in region_ids:
-        # mask all areas with this region id
-        reg_mask = reg_id == region_id
+    for region_id, reg_pix in _region_pixels(reg_id):
+        # region 0 means no line (NaN ids never matched a pixel)
+        if region_id not in region_ids:
+            continue
         # make sure calib and model are finite
-        reg_maskf = reg_mask & finite_mask
+        reg_finite = finite_mask[reg_pix]
+        reg_pixf = tuple(pix[reg_finite] for pix in reg_pix)
         # get the gradients for this region
-        grad1 = grad[reg_maskf]
-        grad1_ref = gradient[reg_maskf]
+        grad1 = grad[reg_pixf]
+        grad1_ref = gradient[reg_pixf]
         # dot product of the gradients
         with warnings.catch_warnings(record=True) as _:
             amp = mp.nansum(grad1 * grad1_ref) / mp.nansum(grad1_ref ** 2)
@@ -1014,8 +1047,8 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         if amp < 0 and fmodel is None:
             amp = 0
         # apply to weights and scale (including areas with nans)
-        sfactor = amp * weights[reg_mask]
-        sky_corr_sci1[reg_mask] = sky_model_sci[reg_mask] * sfactor
+        sfactor = amp * weights[reg_pix]
+        sky_corr_sci1[reg_pix] = sky_model_sci[reg_pix] * sfactor
     # -------------------------------------------------------------------------
     # shift the image back to the original wave grid
     sky_corr_sci = wave_to_wave(params, sky_corr_sci1, sky_wavemap, wavemap,

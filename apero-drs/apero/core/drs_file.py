@@ -4332,14 +4332,17 @@ class DrsFitsFile(DrsInputFile):
                 data = mp.nansum(datacube, axis=0)
         # else if we want to subtract the data
         elif math in ['subtract', '-']:
+            data = np.array(datacube[0], dtype=float)
             for im in range(1, len(datacube)):
                 data -= datacube[im]
         # else if we want to divide the data
         elif math in ['divide', '/']:
+            data = np.array(datacube[0], dtype=float)
             for im in range(1, len(datacube)):
                 data /= datacube[im]
         # else if we want to multiple the data
-        elif math in ['multiple', 'times', '*']:
+        elif math in ['multiply', 'multiple', 'times', '*']:
+            data = np.array(datacube[0], dtype=float)
             for im in range(1, len(datacube)):
                 data *= datacube[im]
         # elif if mean/average

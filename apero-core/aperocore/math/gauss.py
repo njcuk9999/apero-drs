@@ -157,7 +157,7 @@ def gaussian_function_nn(x: Union[list, np.ndarray],
         fout = (a[0] * ez) + a[3]
     elif n == 5:
         fout = (a[0] * ez) + a[3] + (a[4] * x)
-    elif n == 5:
+    elif n == 6:
         fout = (a[0] * ez) + a[3] + (a[4] * x) + (a[5] * x ** 2)
     else:
         emsg = 'Dimensions of "a" not supposed. len(a) must be 3, 4, 5 or 6'

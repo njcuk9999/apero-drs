@@ -953,8 +953,7 @@ def make_1d_template_cube(
     # ----------------------------------------------------------------------
     # calculate residuals from the median
     residual_cube = np.array(big_cube)
-    for it in range(big_cube.shape[-1]):
-        residual_cube[:, it] -= median
+    residual_cube -= median[:, None]
     # calculate rms (median of residuals)
     norm_frac = mp.normal_fraction() * 100
     rms = mp.nanpercentile(np.abs(residual_cube), norm_frac, axis=1)
@@ -1201,11 +1200,15 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     # map back on to original expo vector
     res_expo = spline_expo(index)
     # -------------------------------------------------------------------------
+    # the kernels only depend on wavemap/res_fwhm/res_expo (fixed below)
+    rc_kernels = gen_tellu.get_res_conv_kernels(wavemap, res_fwhm, res_expo)
+    rc_kwargs = dict(kernels=rc_kernels)
     # calculate the first iteration in the Lucy-Richardson deconvolution
-    deconv = gen_tellu.variable_res_conv(wavemap, flux, res_fwhm, res_expo)
+    deconv = gen_tellu.variable_res_conv(wavemap, flux, res_fwhm, res_expo,
+                                         **rc_kwargs)
     # reconvolve (should be very similar to the flux)
     reconv = gen_tellu.variable_res_conv(wavemap, deconv, res_fwhm,
-                                         res_expo)
+                                         res_expo, **rc_kwargs)
     # find the difference
     res = reconv - flux
     # -------------------------------------------------------------------------
@@ -1220,14 +1223,15 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     while (p99 > p99_iteration_threshold) and (iteration < niterations_max):
         # reconvolve the deconvolve spectrum
         reconv = gen_tellu.variable_res_conv(wavemap, deconv, res_fwhm,
-                                             res_expo)
+                                             res_expo, **rc_kwargs)
         # find the difference
         res = reconv - flux
         # we filter residuals such that we only keep derivatives of the 2 over
         # the width of a window that is 1.5 FWHM in size.
         res = savgol_filter(res, savgol_window, 2)
         # convolve the difference
-        corr = gen_tellu.variable_res_conv(wavemap, res, res_fwhm, res_expo)
+        corr = gen_tellu.variable_res_conv(wavemap, res, res_fwhm, res_expo,
+                                           **rc_kwargs)
         # find the amplitude of the feedback term
         p99 = mp.nanpercentile(corr[valid], 99)
         # update the deconvolved spectrum

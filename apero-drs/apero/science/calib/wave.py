@@ -1722,10 +1722,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # find expected next PEAK_NUM considering next WAVE_MEAS
         # if it differs from actual next value, offset all value after this
         # point to have a discontinuity
-        wavepeak_it = fpl_wave_meas[good][line_it] * fpl_peak_num[good][line_it]
-        wavepeak_it = wavepeak_it / fpl_wave_meas[good][line_it + 1]
+        # a[good][i] is a[good[i]], so index directly (no full gathers)
+        it0, it1 = good[line_it], good[line_it + 1]
+        wavepeak_it = fpl_wave_meas[it0] * fpl_peak_num[it0]
+        wavepeak_it = wavepeak_it / fpl_wave_meas[it1]
         # distance to next peak
-        peakdist = np.round(wavepeak_it) - fpl_peak_num[good][line_it + 1]
+        peakdist = np.round(wavepeak_it) - fpl_peak_num[it1]
         # deal with an undefined peak distances
         if not np.isfinite(peakdist):
             continue

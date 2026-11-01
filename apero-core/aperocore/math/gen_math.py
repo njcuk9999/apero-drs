@@ -303,7 +303,7 @@ def linear_minimization(vector: np.ndarray, sample: np.ndarray,
     keep = None
     # we check if there are NaNs in the vector or the sample
     # if there are NaNs, we'll fit the rest of the domain
-    isnan = (np.sum(np.isnan(vector)) != 0) or (np.sum(np.isnan(sample)) != 0)
+    isnan = np.isnan(vector).any() or np.isnan(sample).any()
     # ----------------------------------------------------------------------
     # case 1: sample is not flipped relative to the input vector
     if case == 1:
@@ -992,22 +992,16 @@ def square_medbin(image: np.ndarray, binexpo: int = 8) -> np.ndarray:
     # nsize (N)
     nsize = squ_shape[0]
 
-    # intermediate image with median binned version of input image
-    image2 = np.zeros([2 ** binexpo, 2 ** binexpo])
+    # number of bins per axis and pixels per bin
+    nbin = 2 ** binexpo
     npix = int(2 ** (nsize - binexpo))
-    # loop around both dimensions
-    for ypix_it in range(2 ** binexpo):
-        for xpix_it in range(2 ** binexpo):
-            # get slicing parameters
-            y_start = ypix_it * npix
-            y_end = y_start + npix
-            x_start = xpix_it * npix
-            x_end = x_start + npix
-            # image slice
-            simage = image[y_start:y_end, x_start:x_end]
-            # calculate the median of this slice
-            with warnings.catch_warnings(record=True) as _:
-                image2[ypix_it, xpix_it] = fast.nanmedian(simage)
+    # (nbin, nbin, npix*npix): each cell's pixels in the same C order as a
+    #   per-cell slice, so the median sees identical values in order
+    cells = image.reshape(nbin, npix, nbin, npix).transpose(0, 2, 1, 3)
+    cells = cells.reshape(nbin, nbin, npix * npix)
+    # intermediate image with median binned version of input image
+    with warnings.catch_warnings(record=True) as _:
+        image2 = np.array(fast.nanmedian(cells, axis=2), dtype=float)
     # filter with a 3x3 box
     image2 = median_filter(image2, size=[3, 3])
 
@@ -1060,13 +1054,17 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101,
     """
     # set function name
     # _ = display_func('lowpassfilter', __NAME__)
+    # length of the input vector
+    nvect = len(input_vect)
     # indices along input vector
-    index = np.arange(len(input_vect))
+    index = np.arange(nvect)
+    # finite mask computed once and sliced per box
+    finite = np.isfinite(input_vect)
     # placeholders for x and y position along vector
     xmed = []
     ymed = []
     # loop through the lenght of the input vector
-    for it in np.arange(-width // 2, len(input_vect) + width // 2, width // 4):
+    for it in np.arange(-width // 2, nvect + width // 2, width // 4):
         # if we are at the start or end of vector, we go 'off the edge' and
         # define a box that goes beyond it. It will lead to an effectively
         # smaller 'width' value, but will provide a consistent result at edges.
@@ -1076,22 +1074,25 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101,
         if low_bound < 0:
             low_bound = 0
         # deal with upper bounds out of bounds --> set to max
-        if high_bound > (len(input_vect) - 1):
-            high_bound = (len(input_vect) - 1)
+        if high_bound > (nvect - 1):
+            high_bound = (nvect - 1)
         # get the pixel bounds
         pixval = index[low_bound:high_bound]
         # do not low pass if not enough points
         if len(pixval) < 3:
             continue
+        # finite mask for this box
+        box_finite = finite[low_bound:high_bound]
         # if no finite value, skip
-        if np.mean(np.isfinite(input_vect[pixval])) <= frac_valid_min:
+        if np.mean(box_finite) <= frac_valid_min:
             continue
         # we don't want any infs or nans in our xmed or ymed
-        pixval = pixval[np.isfinite(input_vect[pixval])]
+        pixval = pixval[box_finite]
         # mean position along vector and NaN median value of
         # points at those positions
         xmed.append(fast.nanmean(pixval))
-        ymed.append(fast.nanmedian(input_vect[pixval]))
+        box_values = input_vect[low_bound:high_bound][box_finite]
+        ymed.append(fast.nanmedian(box_values))
     # convert to arrays
     xmed = np.array(xmed, dtype=float)
     ymed = np.array(ymed, dtype=float)
@@ -1114,7 +1115,7 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101,
     # deal with trimming to valid domain
     if trim_valid:
         # get the valid regions of this order
-        valid_pos = np.where(np.isfinite(input_vect))[0]
+        valid_pos = np.where(finite)[0]
         # get the start and end of the valid region (so we don't over
         # interpolate the edges)
         min_valid, max_valid = np.min(valid_pos), np.max(valid_pos)

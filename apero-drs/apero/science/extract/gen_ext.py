@@ -1269,7 +1269,7 @@ def calculate_snr(e2dsff: np.ndarray, e2dsff_err: np.ndarray,
 
         e2dsff_cent = e2dsff[blaze_lower:blaze_upper]
         e2dsff_err_cent = e2dsff_err[blaze_lower:blaze_upper]
-        snr = np.nanmedian(e2dsff_cent / e2dsff_err_cent, axis=1)
+        snr = mp.nanmedian(e2dsff_cent / e2dsff_err_cent, axis=1)
     return snr
 
 

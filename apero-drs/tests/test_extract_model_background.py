@@ -16,6 +16,22 @@ ParamDict = param_functions.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
+def test_calculate_snr_matches_numpy_exactly() -> None:
+    """The optimized SNR reduction must preserve NumPy's exact values."""
+    e2dsff = np.arange(8 * 16, dtype=float).reshape(8, 16) + 1.0
+    e2dsff_err = np.linspace(1.0, 3.0, 8 * 16).reshape(8, 16)
+    e2dsff[2, ::3] = np.nan
+    e2dsff_err[4, ::4] = np.nan
+    e2dsff_err[3, 5] = 0.0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        expected = np.nanmedian(
+            e2dsff[2:6] / e2dsff_err[2:6], axis=1)
+
+    actual = gen_ext.calculate_snr(e2dsff, e2dsff_err, blaze_width=2)
+
+    assert np.array_equal(actual, expected, equal_nan=True)
+
+
 def test_model_background_correction_returns_expected_props(
         spirou_params) -> None:
     """The APERO wrapper should return corrected image/background products."""

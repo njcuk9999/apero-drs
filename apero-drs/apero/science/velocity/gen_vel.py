@@ -1237,9 +1237,9 @@ def ccf_calculation_per_order(
         # spline to monitor if line falls on a NaN
         spl_valid = mp.iuv_spline(wa_ord, weight_ord, k=1, ext=1)
         # make sure the doppler shifted line is also valid
-        valid2 = np.full((len(rv_ccf), len(omask_centers)), np.nan)
-        for rv_element in range(len(rv_ccf)):
-            valid2[rv_element] = spl_valid(omask_centers * wave_shifts[rv_element])
+        #   (spline evaluation is pointwise: one call for all rv shifts)
+        centers_all = omask_centers[None, :] * wave_shifts[:, None]
+        valid2 = spl_valid(centers_all.ravel()).reshape(centers_all.shape)
         # lines must be 99% valid
         keep = mp.nanmin(valid2, axis=0) > 0.99
         # ------------------------------------------------------------------
@@ -1279,17 +1279,23 @@ def ccf_calculation_per_order(
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
+        # line centres for every rv shift (pointwise spline evaluation)
+        centers_all = omask_centers[None, :] * wave_shifts[:, None]
+        # only the count at the last rv shift is kept
+        if len(rv_ccf) > 0:
+            numlines = np.sum(spline_bl(centers_all[-1]) != 0)
         # loop around the rvs and calculate the CCF at this point
-        for rv_element in range(len(rv_ccf)):
-            centers_tmp = omask_centers * wave_shifts[rv_element]
-            numlines = np.sum(spline_bl(centers_tmp) != 0)
-            # CCF is the division of the sums
-            with warnings.catch_warnings(record=True) as _:
-                # the ccf is the sum of the spline of the spectrum
-                ccf_element = spline_sp(centers_tmp)
+        with warnings.catch_warnings(record=True) as _:
+            # the ccf is the sum of the spline of the spectrum
+            ccf_all = spline_sp(centers_all.ravel())
+            ccf_all = ccf_all.reshape(centers_all.shape)
+            omask_weights2 = omask_weights ** 2
+            for rv_element in range(len(rv_ccf)):
+                # CCF is the division of the sums
+                ccf_element = ccf_all[rv_element]
                 ccf_ord[rv_element] = mp.nansum(ccf_element * omask_weights)
 
-                sig_ccf_element = ccf_element * omask_weights ** 2
+                sig_ccf_element = ccf_element * omask_weights2
                 sig_ord[rv_element] = np.sqrt(mp.nansum(sig_ccf_element))
         # ------------------------------------------------------------------
         # deal with NaNs in ccf

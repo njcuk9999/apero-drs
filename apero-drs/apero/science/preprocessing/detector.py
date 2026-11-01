@@ -168,12 +168,9 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # using the intercept
     # -------------------------------------------------------------------------
     # remove median per-column intercept
-    for it in range(nbx):
-        # get intercept median
-        with warnings.catch_warnings(record=True) as _:
-            intmed = mp.nanmedian(intercept[:, it])
-            # subtract off the median
-        intercept[:, it] = intercept[:, it] - intmed
+    with warnings.catch_warnings(record=True) as _:
+        intmed_cols = mp.nanmedian(intercept[:, :nbx], axis=0)
+    intercept[:, :nbx] = intercept[:, :nbx] - intmed_cols
     # remove per-region intercept - loop around the box sizes
     for it in range(intboxsize):
         for jt in range(intboxsize):
@@ -418,8 +415,7 @@ def median_one_over_f_noise(params: ParamDict, image: np.ndarray) -> np.ndarray:
                 smaller = residual_low_f_tmp < residual_low_f
             residual_low_f[smaller] = residual_low_f_tmp[smaller]
     # subtract the 1/f noise from the image
-    for pixel in range(dim2):
-        image[:, pixel] -= residual_low_f
+    image[:, :dim2] -= residual_low_f[:, None]
     # return the corrected image
     return image
 
@@ -433,9 +429,8 @@ def intercept_correct(intercept: np.ndarray) -> np.ndarray:
 
     :return: np.ndarray, the corrected intercept image
     """
-    # loop around each column and correct intercept by median of that column
-    for it in range(intercept.shape[1]):
-        intercept[:, it] = intercept[:, it] - mp.nanmedian(intercept[:, it])
+    # correct each column by its median
+    intercept[:] = intercept - mp.nanmedian(intercept, axis=0)
     # return the intercept
     return intercept
 
@@ -536,19 +531,19 @@ def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
     # -------------------------------------------------------------------------
     # remove the dc and slope (in x and y) from background
     ypix, xpix = np.indices([2*med_size+1,2*med_size+1])
-    for ibox in range(np.sum(mask)):
-        # cut out this hotpixel
-        box = cube_hotpix[:, :, ibox]
-        # get the slope in the x and y direction
-        gx = mp.nanmedian(np.diff(box,axis=1))
-        gy = mp.nanmedian(np.diff(box,axis=0))
+    # number of hot pixel boxes kept
+    nbox = cube_hotpix.shape[2]
+    # reshape(-1, 0) is ill-defined, and with no boxes there is nothing to do
+    if nbox > 0:
+        # per-box median gradient in x and y (each box in C order, as before)
+        gx_diff = np.diff(cube_hotpix, axis=1).reshape(-1, nbox)
+        gy_diff = np.diff(cube_hotpix, axis=0).reshape(-1, nbox)
+        gx = mp.nanmedian(gx_diff, axis=0)
+        gy = mp.nanmedian(gy_diff, axis=0)
         # subtracting off the median gradient in x and y
-        box -= (gx * xpix + gy * ypix)
-        # subtract off the median of the image (the dc)
-        med = mp.nanmedian(box)
-        box -= med
-        # push this back in to the cube of hot pixels
-        cube_hotpix[:, :, ibox] = box
+        cube_hotpix -= (gx * xpix[:, :, None] + gy * ypix[:, :, None])
+        # subtract off the median of each box (the dc)
+        cube_hotpix -= mp.nanmedian(cube_hotpix.reshape(-1, nbox), axis=0)
     # -------------------------------------------------------------------------
     # combine each of the hotpixel boxes back into one box
     med_hotpix = mp.nanmedian(cube_hotpix, axis=2)

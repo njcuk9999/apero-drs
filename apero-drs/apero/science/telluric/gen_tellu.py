@@ -13,7 +13,7 @@ import os
 import time
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy import constants as cc
@@ -815,16 +815,20 @@ def tellu_preclean(
     # log: Pre-cleaning data
     WLOG(params, '', textentry('40-019-00040'))
     # ----------------------------------------------------------------------
+    # exponent-independent absorption products are shared by these calls
+    abso_cache = dict()
     # get reference trans
     trans_others = get_abso_expo(wavemap, hdr_airmass, 0.0, spl_others,
                                  spl_water, res_fwhm=res_fwhm,
                                  res_expo=res_expo, dv_abso=dv_abso,
                                  wavestart=wavestart,
-                                 waveend=waveend, dvgrid=dvgrid)
+                                 waveend=waveend, dvgrid=dvgrid,
+                                 cache=abso_cache)
     trans_water = get_abso_expo(wavemap, 0.0, 4.0, spl_others, spl_water,
                                 res_fwhm=res_fwhm, res_expo=res_expo,
                                 dv_abso=dv_abso, wavestart=wavestart,
-                                waveend=waveend, dvgrid=dvgrid)
+                                waveend=waveend, dvgrid=dvgrid,
+                                cache=abso_cache)
     # -------------------------------------------------------------------------
     # remove low transmissions - not useful here
     trans_others[trans_others < 0.1] = np.nan
@@ -866,7 +870,8 @@ def tellu_preclean(
                               spl_others, spl_water, res_fwhm=res_fwhm,
                               res_expo=res_expo, dv_abso=dv_abso,
                               wavestart=wavestart,
-                              waveend=waveend, dvgrid=dvgrid)
+                              waveend=waveend, dvgrid=dvgrid,
+                              cache=abso_cache)
         # avoid division by very small values
         trans[trans < 0.01] = 0.01
         # divide spectrum by transmission
@@ -1466,7 +1471,8 @@ def get_abso_expo(wavemap: np.ndarray, expo_others: float,
                   expo_water: float, spl_others: Any, spl_water: Any,
                   res_fwhm: np.ndarray, res_expo: np.ndarray,
                   dv_abso: float, wavestart: float, waveend: float,
-                  dvgrid: float, no_convolve: bool = False
+                  dvgrid: float, no_convolve: bool = False,
+                  cache: Optional[Dict[str, Any]] = None
                   ) -> np.ndarray:
     """
     Returns an absorption spectrum from exponents describing water and 'others'
@@ -1486,6 +1492,9 @@ def get_abso_expo(wavemap: np.ndarray, expo_others: float,
     :param dvgrid: float, the s1d bin grid (constant in velocity)
     :param no_convolve: bool, if True no convolution performed (important for
                         finite resolution effect)
+    :param cache: dict or None, if given, exponent-independent products
+                  (magic grid, splined tapas, resolution maps, kernels) are
+                  stored here and reused by later calls with the same inputs
 
     :return: Absorption spectrum sampled on the requested wavelength grid.
     """
@@ -1511,23 +1520,43 @@ def get_abso_expo(wavemap: np.ndarray, expo_others: float,
     # # normalize the kernel
     # ker /= np.sum(ker)
     # ----------------------------------------------------------------------
-    # create a magic grid onto which we spline our transmission, same as
-    #   for the s1d_v in km/s
-    magic_grid = mp.get_magic_grid(wavestart, waveend, dvgrid * 1000)
-    # spline onto magic grid
-    sp_others = spl_others(magic_grid)
-    sp_water = spl_water(magic_grid)
-    # spline the res fwhm and res expo
-    sp_fwhm_magic = mp.iuv_spline(wavemap, res_fwhm, k=1, ext=3)
-    sp_expo_magic = mp.iuv_spline(wavemap, res_expo, k=1, ext=3)
-    # push res fwhm and res expo onto magic grid
-    res_fwhm_magic = sp_fwhm_magic(magic_grid)
-    res_expo_magic = sp_expo_magic(magic_grid)
-    # ----------------------------------------------------------------------
-    # for numerical stability, we may have values very slightly below 0 from
-    #     the spline above. negative values don't work with fractional exponents
-    sp_others[sp_others < 0.0] = 0.0
-    sp_water[sp_water < 0.0] = 0.0
+    # these products do not depend on the exponents or dv_abso
+    cache_key = (id(wavemap), id(spl_others), id(spl_water), id(res_fwhm),
+                 id(res_expo), wavestart, waveend, dvgrid)
+    if cache is not None and cache.get('KEY') == cache_key:
+        magic_grid = cache['MAGIC_GRID']
+        sp_others = cache['SP_OTHERS']
+        sp_water = cache['SP_WATER']
+        res_fwhm_magic = cache['RES_FWHM_MAGIC']
+        res_expo_magic = cache['RES_EXPO_MAGIC']
+    else:
+        # create a magic grid onto which we spline our transmission, same as
+        #   for the s1d_v in km/s
+        magic_grid = mp.get_magic_grid(wavestart, waveend, dvgrid * 1000)
+        # spline onto magic grid
+        sp_others = spl_others(magic_grid)
+        sp_water = spl_water(magic_grid)
+        # spline the res fwhm and res expo
+        sp_fwhm_magic = mp.iuv_spline(wavemap, res_fwhm, k=1, ext=3)
+        sp_expo_magic = mp.iuv_spline(wavemap, res_expo, k=1, ext=3)
+        # push res fwhm and res expo onto magic grid
+        res_fwhm_magic = sp_fwhm_magic(magic_grid)
+        res_expo_magic = sp_expo_magic(magic_grid)
+        # ------------------------------------------------------------------
+        # for numerical stability, we may have values very slightly below 0
+        #     from the spline above. negative values don't work with
+        #     fractional exponents
+        sp_others[sp_others < 0.0] = 0.0
+        sp_water[sp_water < 0.0] = 0.0
+        # store for the next call (never modified after this point)
+        if cache is not None:
+            cache.clear()
+            cache['KEY'] = cache_key
+            cache['MAGIC_GRID'] = magic_grid
+            cache['SP_OTHERS'] = sp_others
+            cache['SP_WATER'] = sp_water
+            cache['RES_FWHM_MAGIC'] = res_fwhm_magic
+            cache['RES_EXPO_MAGIC'] = res_expo_magic
     # ----------------------------------------------------------------------
     # applying optical depths
     trans_others = sp_others ** expo_others
@@ -1538,8 +1567,15 @@ def get_abso_expo(wavemap: np.ndarray, expo_others: float,
     if no_convolve:
         trans_convolved = np.array(trans)
     else:
-        trans_convolved = variable_res_conv(magic_grid, trans, res_fwhm_magic,
-                                            res_expo_magic)
+        # the convolution kernels only depend on the cached grid/maps
+        rc_kernels = None
+        if cache is not None:
+            if 'KERNELS' not in cache:
+                kargs = [magic_grid, res_fwhm_magic, res_expo_magic]
+                cache['KERNELS'] = get_res_conv_kernels(*kargs)
+            rc_kernels = cache['KERNELS']
+        vargs = [magic_grid, trans, res_fwhm_magic, res_expo_magic]
+        trans_convolved = variable_res_conv(*vargs, kernels=rc_kernels)
     # ----------------------------------------------------------------------
     # spline that onto the input grid and allow a velocity shift
     magic_shift = magic_grid * (1 + dv_abso / speed_of_light)
@@ -1567,9 +1603,72 @@ def get_abso_expo(wavemap: np.ndarray, expo_others: float,
     return out_vector
 
 
+def res_conv_kernels(wavemap: np.ndarray, res_fwhm: np.ndarray,
+                     res_expo: np.ndarray, ker_thres: float = 1e-4
+                     ) -> Iterator[Tuple[int, np.ndarray]]:
+    """
+    Yield the (offset, kernel) pairs used by variable_res_conv
+
+    The kernels depend only on the wavelength grid and resolution maps, so
+    callers that convolve several spectra on the same grid can build them
+    once (see get_res_conv_kernels).
+
+    :param wavemap: np.ndarray (1D), wavelength grid
+    :param res_fwhm: np.ndarray (1D), fwhm at each pixel
+    :param res_expo: np.ndarray (1D), PSF exponent at each pixel
+    :param ker_thres: float, amplitude of kernel at which we stop
+
+    :return: iterator of (pixel offset, kernel) tuples
+    """
+    # get the width of the scanning of the kernel. Default is 3 FWHM
+    scale1 = np.max(res_fwhm)
+    scale2 = mp.median(np.gradient(wavemap) / wavemap) * speed_of_light
+    range_scan = 20 * (scale1 / scale2)
+    # round scan range to pixel level
+    range_scan = int(np.ceil(range_scan))
+    # sorting by distance to center of kernel
+    range2 = np.arange(-range_scan, range_scan)
+    range2 = range2[np.argsort(abs(range2))]
+    # calculate the super gaussian width
+    ew = (res_fwhm / 2) / (2 * np.log(2)) ** (1 / res_expo)
+    # loop around each offset constructing local kernels
+    for offset in range2:
+        # get the dv offset
+        dv = speed_of_light * (wavemap / np.roll(wavemap, offset) - 1)
+        # calculate the kernel at this offset
+        ker = mp.super_gauss_fast(dv, ew, res_expo)
+        # stop convolving when threshold reached
+        if np.max(ker) < ker_thres:
+            break
+        yield offset, ker
+
+
+def get_res_conv_kernels(wavemap: np.ndarray, res_fwhm: np.ndarray,
+                         res_expo: np.ndarray, ker_thres: float = 1e-4
+                         ) -> List[Tuple[int, np.ndarray]]:
+    """
+    Build the variable_res_conv kernels once for reuse on the same grid
+
+    :param wavemap: np.ndarray (1D or 2D e2ds), wavelength grid
+    :param res_fwhm: np.ndarray, fwhm at each pixel (same shape as wavemap)
+    :param res_expo: np.ndarray, PSF exponent (same shape as wavemap)
+    :param ker_thres: float, amplitude of kernel at which we stop
+
+    :return: list of (pixel offset, kernel) tuples
+    """
+    # variable_res_conv works on ravelled e2ds arrays
+    if np.ndim(wavemap) == 2:
+        wavemap = wavemap.ravel()
+        res_fwhm = res_fwhm.ravel()
+        res_expo = res_expo.ravel()
+    return list(res_conv_kernels(wavemap, res_fwhm, res_expo, ker_thres))
+
+
 def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
                       res_fwhm: np.ndarray, res_expo: np.ndarray,
-                      ker_thres: float = 1e-4, ) -> np.ndarray:
+                      ker_thres: float = 1e-4,
+                      kernels: Optional[List[Tuple[int, np.ndarray]]] = None
+                      ) -> np.ndarray:
     """
     Convolve with a variable kernel in resolution space
 
@@ -1581,6 +1680,9 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
                      would be gaussian
     :param ker_thres: float, optional, amplitude of kernel at which we stop
                       convolution
+    :param kernels: list or None, precomputed kernels for this exact
+                    wavemap/res_fwhm/res_expo/ker_thres (from
+                    get_res_conv_kernels); None builds them here
 
     :return: np.ndarray, the convolved spectrum
     """
@@ -1598,33 +1700,18 @@ def variable_res_conv(wavemap: np.ndarray, spectrum: np.ndarray,
     sumker = np.zeros_like(spectrum)
     spectrum2 = np.zeros_like(spectrum)
     # -------------------------------------------------------------------------
-    # get the width of the scanning of the kernel. Default is 3 FWHM
-    scale1 = np.max(res_fwhm)
-    scale2 = mp.median(np.gradient(wavemap) / wavemap) * speed_of_light
-    range_scan = 20 * (scale1 / scale2)
-    # round scan range to pixel level
-    range_scan = int(np.ceil(range_scan))
     # mask nan pixels
     valid_pix = np.isfinite(spectrum)
     # set to zero the pixels that are NaNs
     spectrum[~valid_pix] = 0.0
     # convert non valid pixels to floats
     valid_pix = valid_pix.astype(float)
-    # sorting by distance to center of kernel
-    range2 = np.arange(-range_scan, range_scan)
-    range2 = range2[np.argsort(abs(range2))]
-    # calculate the super gaussian width
-    ew = (res_fwhm / 2) / (2 * np.log(2)) ** (1 / res_expo)
+    # kernels depend only on the grid and resolution maps
+    if kernels is None:
+        kernels = res_conv_kernels(wavemap, res_fwhm, res_expo, ker_thres)
     # -------------------------------------------------------------------------
-    # loop around each offset scanning the sum and constructing local kernels
-    for offset in range2:
-        # get the dv offset
-        dv = speed_of_light * (wavemap / np.roll(wavemap, offset) - 1)
-        # calculate the kernel at this offset
-        ker = mp.super_gauss_fast(dv, ew, res_expo)
-        # stop convolving when threshold reached
-        if np.max(ker) < ker_thres:
-            break
+    # loop around each offset scanning the sum with the local kernels
+    for offset, ker in kernels:
         # no weight if the pixel was a NaN value
         ker = ker * valid_pix
         # add this kernel to the convolved spectrum
@@ -1714,17 +1801,22 @@ def finite_res_correction(params: ParamDict, template_props: ParamDict,
                              wavestart=s1d_wavestart, waveend=s1d_waveend,
                              dvgrid=dvgrid, no_convolve=True)
     # spectrum as we observe it. Absorption happens at infinite resolution
+    #   (all three convolutions share one grid, so share the kernels)
+    s1d_kernels = get_res_conv_kernels(s1d_wave, res_s1d_fwhm, res_s1d_expo)
     finite_error_numer = variable_res_conv(s1d_wave,
                                            s1d_deconv * s1d_abso,
-                                           res_s1d_fwhm, res_s1d_expo)
+                                           res_s1d_fwhm, res_s1d_expo,
+                                           kernels=s1d_kernels)
     # telluric spectrum as we observe it, infinite resolution abso gets
     #     convolved
     finite_error_denom = variable_res_conv(s1d_wave, s1d_abso,
-                                           res_s1d_fwhm, res_s1d_expo)
+                                           res_s1d_fwhm, res_s1d_expo,
+                                           kernels=s1d_kernels)
     # spectrum as we wish we had observed it. Convolved but unaffected by
     #    tellurics
     pristine_conv_s1d = variable_res_conv(s1d_wave, s1d_deconv,
-                                          res_s1d_fwhm, res_s1d_expo)
+                                          res_s1d_fwhm, res_s1d_expo,
+                                          kernels=s1d_kernels)
     # spectrum as we correct it for tellurics. Numerator is the observed
     #    denominator is the telluric abso convolved and ratio is the
     #    corrected spectrum with finite-resolution errors in

@@ -166,7 +166,7 @@ def gen_abso_pca_calc(params: ParamDict, recipe: DrsRecipe,
             tout = drs_fits.readfits(params, filename, gethdr=True)
             transimage, transhdr = tout
             # test whether whole transimage is NaNs
-            if np.sum(np.isnan(transimage)) == np.prod(transimage):
+            if np.sum(np.isnan(transimage)) == np.prod(transimage.shape):
                 # log that we are removing a trans file
                 wargs = [transfiles[it]]
                 # log: Skipping trans file due to all NaNs. File = {0}
@@ -292,11 +292,13 @@ def gen_abso_pca_calc(params: ParamDict, recipe: DrsRecipe,
     else:
         # create pc image
         pc = np.zeros([np.prod(image.shape), npc])
-    # fill pc image
+    # fill pc image (accumulate in contiguous rows, same jt order)
     with warnings.catch_warnings(record=True) as _:
+        pc_rows = np.zeros([npc, pc.shape[0]])
         for it in range(npc):
             for jt in range(log_abso.shape[0]):
-                pc[:, it] += eig_u[jt, it] * log_abso[jt, :]
+                pc_rows[it] += eig_u[jt, it] * log_abso[jt, :]
+        pc[:, :npc] = pc_rows.T
     # if we are adding the derivatives add them now
     if add_deriv_pc:
         # first extra is the first derivative

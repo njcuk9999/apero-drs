@@ -184,16 +184,22 @@ def ref_top_bottom(image: np.ndarray, tamp: int, ntop: int,
     weightarr = weightarr.reshape(dim1, pix_in_amp_2)
     # loop around each amplifier
     for amp_num in range(tamp):
-        # get the pixel mask for this amplifier
-        pixmask = (amp_num * dim2 // tamp) + 2 * np.arange(pix_in_amp_2)
+        # first column of this amplifier
+        amp_start = amp_num * dim2 // tamp
         # loop around the even and then the odd pixels
         for oddeven in range(2):
+            # every other column of this amplifier as a strided view
+            col0 = amp_start + oddeven
+            cols = slice(col0, col0 + 2 * pix_in_amp_2, 2)
+            # contiguous copies keep the median input identical in layout
+            bottom_pix = np.ascontiguousarray(image[:nbottom, cols])
+            top_pix = np.ascontiguousarray(image[dim1 - ntop:, cols])
             # work out the median of the bottom pixels for this amplifier
-            bottom = mp.nanmedian(image[:nbottom, pixmask + oddeven])
-            top = mp.nanmedian(image[dim1 - ntop:, pixmask + oddeven])
+            bottom = mp.nanmedian(bottom_pix)
+            top = mp.nanmedian(top_pix)
             # work out contribution to subtract from top and bottom
             contrib = (top * weightarr) + (bottom * (1 - weightarr))
             # subtraction contribution from image for this amplifier
-            image[:, pixmask + oddeven] -= contrib
+            image[:, cols] -= contrib
     # return corrected image
     return image
