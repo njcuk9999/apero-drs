@@ -2211,10 +2211,11 @@ def gen_run_from_seq(params: ParamDict, sequence,
             return []
     # deal with empty database (after conditions)
     if idb_len == 0:
-        eargs = [ref_condition, func_name]
+        wargs = [ref_condition, func_name]
         # warning: No rows in database (after reference conditions applied) \n
         #     Condition = {0} \n Function = {1}
-        WLOG(params, 'warning', '00-503-00018', targs=eargs, sublevel=8)
+        wmsg = textentry('00-503-00018', args=wargs)
+        WLOG(params, 'warning', wmsg, sublevel=8)
         # get response for how to continue (skip or exit)
         response = prompt(params)
         if not response:

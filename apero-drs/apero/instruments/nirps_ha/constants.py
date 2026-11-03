@@ -355,7 +355,7 @@ CDict.set('NOSCI_CAPC_DPRTYPES', value=['HCONE', 'HCTWO'], source=__NAME__,
           group=cgroup)
 
 # Define the default file type for pp_ref (used as --filtetype argument)
-CDict.set('REF_FILETYPE', value='FLAT_FLAT', source=__NAME__, group=cgroup)
+CDict.set('REF_FILETYPE', value=['FLAT_FLAT'], source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS

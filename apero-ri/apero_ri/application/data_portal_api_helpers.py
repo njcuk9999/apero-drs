@@ -2322,6 +2322,7 @@ def api_tess_rotation(app: Any) -> _ApiResponse:
         resolve_cache_root,
     )
     from apero_ri.core.run_tessilator import get_tess_cached
+    from apero_ri.core.run_tessilator import run_tessilator
 
     cfg = load_cache_config(base_dir)
     cache_root = resolve_cache_root(base_dir, cfg)

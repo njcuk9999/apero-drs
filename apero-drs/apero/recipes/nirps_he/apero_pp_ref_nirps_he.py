@@ -126,7 +126,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             #     one of the following:
             raise AperoCodedException(params, '01-001-00020',
                                       targs=[filetype, mainname],
-                                      message=msg)
+                                      message=emsg)
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
         rawfiletype = 'RAW_{0}'.format(filetype)

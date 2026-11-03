@@ -599,7 +599,7 @@ queue_recipe.set_kwarg(name='--qpath', dtype=str, default='None',
 queue_recipe.set_kwarg(name='--qid', dtype=str, default='None',
                        helpstr=textentry('QUEUE_RECIPE_QID_HELP'))
 queue_recipe.set_kwarg(name='--qresult', dtype='options', default='None',
-                       options=['success', 'failed', 'None'],
+                       options=['success', 'failed', 'pending', 'None'],
                        helpstr=textentry('QUEUE_RECIPE_QRESULT_HELP'))
 queue_recipe.set_kwarg(name='--template', dtype=str, default='None',
                        helpstr=textentry('QUEUE_RECIPE_TEMPLATE_HELP'))

@@ -53,3 +53,44 @@ def test_queue_description_includes_gui_info():
     info = open(drs_queue_gui.GUI_INFO_PATH, encoding='utf-8').read()
     assert 'include:' not in body
     assert info.strip() in body
+
+
+def test_activity_messages_are_separate_and_bounded() -> None:
+    """Each page retains only its own bounded activity history.
+
+    :return: None.
+    """
+    state = drs_queue_gui.GuiState()
+    state.add_message('run progress')
+    state.add_message('generate progress', 'generate')
+    state.add_message('action result', 'actions')
+    assert state.activity_messages['run'][0].endswith('run progress')
+    assert state.activity_messages['generate'][0].endswith(
+        'generate progress')
+    assert state.activity_messages['actions'][0].endswith('action result')
+    for index in range(drs_queue_gui.GUI_MAX_MESSAGES + 1):
+        state.add_message(str(index), 'generate')
+    assert len(state.activity_messages['generate']) == (
+        drs_queue_gui.GUI_MAX_MESSAGES)
+    assert len(state.activity_messages['run']) == 1
+    assert len(state.activity_messages['actions']) == 1
+
+
+def test_console_jobs_are_retained_per_page(tmp_path) -> None:
+    """Later reset output does not replace the Generate console.
+
+    :param tmp_path: Path, pytest temporary directory.
+    :return: None.
+    """
+    state = drs_queue_gui.GuiState()
+    for channel in ['generate', 'actions']:
+        path = tmp_path / (channel + '.log')
+        path.write_text(channel + ' output\n', encoding='utf-8')
+        state.jobs[channel] = dict(kind=channel, path=str(path))
+    state.job = state.jobs['actions']
+    generated = drs_queue_gui.get_job_data(state, 'generate')
+    reset = drs_queue_gui.get_job_data(state, 'actions')
+    assert generated['lines'] == ['generate output']
+    assert reset['lines'] == ['actions output']
+    assert drs_queue_gui.get_job_data(state, 'run') == {}
+    assert drs_queue_gui.get_job_data(state)['kind'] == 'actions'

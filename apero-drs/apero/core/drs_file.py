@@ -4341,7 +4341,7 @@ class DrsFitsFile(DrsInputFile):
             for im in range(1, len(datacube)):
                 data /= datacube[im]
         # else if we want to multiple the data
-        elif math in ['multiply', 'multiple', 'times', '*']:
+        elif math in ['multiply', 'times', '*']:
             data = np.array(datacube[0], dtype=float)
             for im in range(1, len(datacube)):
                 data *= datacube[im]

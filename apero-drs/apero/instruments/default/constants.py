@@ -759,10 +759,11 @@ CDict.add('NOSCI_CAPC_DPRTYPES', value=None,
                       'science capacitive coupling')
 
 # Define the default file type for pp_ref (used as --filtetype argument)
-CDict.add('REF_FILETYPE', value=None, dtype=str,
+CDict.add('REF_FILETYPE', value=None, dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define the default file type for pp_ref '
-                      '(used as --filtetype argument)')
+                      '(used as --filetype argument). Must be a list '
+                      'even if only one file type is given.')
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS

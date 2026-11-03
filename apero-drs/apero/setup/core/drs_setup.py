@@ -640,6 +640,12 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     clean_install(params)
 
     # ----------------------------------------------------------------------
+    # Populate the raw directory
+    # ----------------------------------------------------------------------
+    from apero.tools.module.processing import drs_processing
+    drs_processing.sync_external_raw(aparams)
+
+    # ----------------------------------------------------------------------
     # print out instructions on what to do next
     # ----------------------------------------------------------------------
     margs = [params['NAME']]
@@ -691,7 +697,8 @@ def display_title():
     WLOG(None, '', drs_header)
 
 
-def end_all(params, recipename='apero_setup.py'):
+def end_all(params: Optional[ParamDict],
+            recipename: str = 'apero_setup.py') -> None:
     """
     Quick end script
     """
@@ -735,7 +742,14 @@ def fix_config_path(params: ParamDict) -> ParamDict:
     return params
 
 
-def create_paths(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def create_paths(params: ParamDict,
+                 sargs: Dict[str, SetupArgument]) -> None:
+    """Validate configured paths and create any missing directories.
+
+    :param params: Setup parameters containing resolved path values.
+    :param sargs: Argument definitions used to identify path settings.
+    :return: None. Creates missing directories or raises on failure.
+    """
     # -------------------------------------------------------------------------
     # print progress
     # log: Validating paths
@@ -774,7 +788,7 @@ def create_paths(params: ParamDict, sargs: Dict[str, SetupArgument]):
         WLOG(None, '', textentry('40-510-00004'))
 
 
-def create_yamls(params: Any):
+def create_yamls(params: ParamDict) -> None:
     """
     Create the yaml files from allparams
 
@@ -857,7 +871,9 @@ def create_yamls(params: Any):
     base.write_yaml(database_dict, str(database_path))
 
 
-def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def create_user_configs(
+    params: ParamDict, sargs: Dict[str, SetupArgument]
+) -> None:
     """
     Create the user_config.yaml and user_constants.yaml files
     for the user specified instrument
@@ -923,7 +939,12 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
                         log=False)
 
 
-def create_setup_files(params: ParamDict):
+def create_setup_files(params: ParamDict) -> None:
+    """Create the shell/profile files for the configured APERO installation.
+
+    :param params: Setup parameters including target paths and profile name.
+    :return: None. Writes configured files beneath the user config directory.
+    """
     # get config directory
     userconfig = Path(params['CONFIG_PATH'])
     # setup the user config directory
@@ -1052,7 +1073,12 @@ def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
     os.chmod(destination, 0o755)
 
 
-def clean_install(params: ParamDict):
+def clean_install(params: ParamDict) -> None:
+    """Run the requested pre-install cleanup, if enabled.
+
+    :param params: Setup parameters controlling cleanup and prompt behavior.
+    :return: None. Performs cleanup or raises when reset fails.
+    """
     # clean install
     if not params['CLEAN_START']:
         return

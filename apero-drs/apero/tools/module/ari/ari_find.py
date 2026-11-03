@@ -575,12 +575,13 @@ def get_gaia_sources(params: ParamDict, coords: SkyCoord, obstime: Time,
         except Exception as e:
             wargs = [ncount + 1, type(e), str(e)]
             # warning: Attempt {0} Error occured {1}: {2}
-            WLOG(params, 'warning', textentry('10-514-00004', args=wargs))
+            wmsg = textentry('10-514-00004', args=wargs)
+            WLOG(params, 'warning', wmsg)
             time.sleep(5)
             # try again add to counter
             ncount += 1
             # store message for eventual error message
-            emsg = str(wmsg.format(*wargs))
+            emsg = str(wmsg)
     # break if we tried 10 times and it still fails
     if ncount >= 10:
         raise AperoCodedException(params, message=emsg)
@@ -783,12 +784,13 @@ def get_2mass_sources(params: ParamDict, gaia_sources: Dict[str, List[float]],
         except Exception as e:
             wargs = [ncount + 1, type(e), str(e)]
             # warning: Attempt {0} Error occured {1}: {2}
-            WLOG(params, 'warning', textentry('10-514-00004', args=wargs))
+            wmsg = textentry('10-514-00004', args=wargs)
+            WLOG(params, 'warning', wmsg)
             time.sleep(5)
             # try again add to counter
             ncount += 1
             # store message for eventual error message
-            emsg = str(wmsg.format(*wargs))
+            emsg = str(wmsg)
     # break if we tried 10 times and it still fails
     if ncount >= 10:
         raise AperoCodedException(params, message=emsg)

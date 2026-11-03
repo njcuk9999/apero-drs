@@ -172,15 +172,13 @@ SARGS['USE_EXTERNAL_RAW'] = SetupArgument(name='USE_EXTERNAL_RAW',
                                           argname='--use-external-raw',
                                           default_value=False, dtype='bool',
                                           ask=False,
-                                                                                  helpstr=str(drs_setup.textentry(
-                                                                                          '40-510-00047')))
+                                          helpstr=str(drs_setup.textentry('40-510-00047')))
 # the external raw directory (must exist, never created by setup)
 SARGS['EXTERNAL_RAW'] = SetupArgument(name='EXTERNAL_RAW',
                                       argname='--external-raw',
                                       default_value=None, dtype='str',
                                       ask=False,
-                                                                          helpstr=str(drs_setup.textentry(
-                                                                                  '40-510-00048')),
+                                      helpstr=str(drs_setup.textentry('40-510-00048')),
                                       aperoname='PATH.EXTERNAL_RAW')
 # how to link external raw files into RAWDIR
 SARGS['EXTERNAL_RAW_TYPE'] = SetupArgument(name='EXTERNAL_RAW_TYPE',
@@ -189,8 +187,7 @@ SARGS['EXTERNAL_RAW_TYPE'] = SetupArgument(name='EXTERNAL_RAW_TYPE',
                                            dtype='str',
                                            options=EXTERNAL_RAW_TYPES,
                                            ask=False,
-                                                                                   helpstr=str(drs_setup.textentry(
-                                                                                           '40-510-00049')),
+                                           helpstr=str(drs_setup.textentry('40-510-00049')),
                                            aperoname='IPATH.'
                                                      'EXTERNAL_RAW_TYPE')
 # whether to always create nre directories without asking user

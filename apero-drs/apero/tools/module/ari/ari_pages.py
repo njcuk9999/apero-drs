@@ -1258,6 +1258,8 @@ def add_recipe_tables(params: ParamDict, table: Table,
 # =============================================================================
 def make_finder_page(params: ParamDict) -> None:
     """Update finder charts as configured and write the ARI finder page."""
+    import pandas as pd
+
     # load object database (yaml-backed)
     objdbm = drs_astrometrics.AstrometricDatabase(params, shortname='ARI')
     objdbm.load_db()

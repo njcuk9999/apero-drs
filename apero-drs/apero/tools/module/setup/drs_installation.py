@@ -1941,6 +1941,8 @@ def update(params: ParamDict, args: argparse.Namespace) -> ParamDict:
     all_params['GLOBAL.LANGUAGE'] = language
     all_params.set_source('GLOBAL.LANGUAGE', language)
     # load params for instrument
+    from apero.instruments import select
+
     iparams = load_functions.load_config(select.INSTRUMENTS, cache=False)
     # ------------------------------------------------------------------
     # loop around data paths

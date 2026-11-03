@@ -88,7 +88,7 @@ def _system_move(qpath: str, qid: str, qresult: str) -> bool:
 
     :param qpath: str, the absolute path to the queue directory
     :param qid: str, the queue id of the task ("{group}/{run_file}")
-    :param qresult: str, the result of the task ('success' or 'failed')
+    :param qresult: str, 'success', 'failed', or 'pending' for unstarted work
 
     :return: bool, True if the move was successful
     """
@@ -99,6 +99,8 @@ def _system_move(qpath: str, qid: str, qresult: str) -> bool:
     # work out the destination state from the result
     if qresult.lower() in ['success', 'complete', 'true', '1']:
         to_state = QUEUE_COMPLETE_DIR
+    elif qresult.lower() == 'pending':
+        to_state = 'pending'
     else:
         to_state = QUEUE_FAILED_DIR
     # construct source and destination paths

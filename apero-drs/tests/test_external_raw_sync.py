@@ -9,6 +9,8 @@ from typing import Any
 import pytest
 
 from apero.tools.module.processing import drs_processing
+from apero.setup.core import drs_setup
+from apero.tools.module.setup import drs_assets
 
 
 def _quiet_sync(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -98,3 +100,104 @@ def test_hardlink_sync_removes_stale_managed_file(
     source.unlink()
     drs_processing.sync_external_raw(params)
     assert not os.path.lexists(destination)
+
+
+@pytest.mark.parametrize('source_mode', ['symlink', 'hardlink', None, 'missing'])
+def test_setup_populates_raw_after_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    spirou_params: drs_setup.ParamDict, source_mode: str | None
+) -> None:
+    """Setup mirrors configured raw files after cleanup, before completion.
+
+    :param tmp_path: temporary directory for raw files and setup config
+    :param monkeypatch: fixture isolating setup side effects
+    :param spirou_params: profile-free APERO parameters from apero.dev
+    :param source_mode: link mode, disabled source, or missing directory
+    :return: None
+    """
+    _quiet_sync(monkeypatch)
+    external = tmp_path / 'external'
+    raw = tmp_path / 'raw'
+    config = tmp_path / 'config'
+    config.mkdir()
+    if source_mode != 'missing':
+        external.mkdir()
+        (external / 'data.fits').write_bytes(b'raw data')
+    link_type = source_mode if source_mode in ['symlink', 'hardlink'] else None
+    profile = spirou_params.copy()
+    profile['PATH.EXTERNAL_RAW'] = str(external) if source_mode else None
+    profile['PATH.RAW'] = str(raw)
+    profile['PATH.OTHER'] = str(tmp_path / 'other')
+    profile['IPATH.EXTERNAL_RAW_TYPE'] = link_type
+    setup_params = drs_setup.ParamDict()
+    setup_params['CONFIG_PATH'] = str(config)
+    setup_params['NAME'] = 'test_setup'
+    events = []
+
+    def noop(*args: Any, **kwargs: Any) -> None:
+        """Suppress setup side effects outside raw synchronization.
+
+        :param args: ignored positional arguments
+        :param kwargs: ignored keyword arguments
+        :return: None
+        """
+
+    def cleanup(params: drs_setup.ParamDict) -> None:
+        """Record cleanup before synchronization.
+
+        :param params: setup parameters
+        :return: None
+        """
+        events.append('cleanup')
+        assert not raw.exists()
+
+    def log(params: Any, level: str, message: Any, **kwargs: Any) -> None:
+        """Record setup completion for ordering assertions.
+
+        :param params: setup logging parameters
+        :param level: logging level
+        :param message: language database message
+        :param kwargs: additional logging options
+        :return: None
+        """
+        if message.tkey == '40-510-00042':
+            events.append('complete')
+            if link_type:
+                assert (raw / 'data.fits').read_bytes() == b'raw data'
+
+    original_sync = drs_processing.sync_external_raw
+
+    def sync(params: drs_setup.ParamDict) -> None:
+        """Run the real sync and record its setup ordering.
+
+        :param params: loaded APERO profile parameters
+        :return: None
+        """
+        assert params is profile
+        events.append('sync')
+        original_sync(params)
+
+    for name in ['create_paths', 'create_yamls', 'create_user_configs',
+                 'create_setup_files', 'create_install_script']:
+        monkeypatch.setattr(drs_setup, name, noop)
+    monkeypatch.setattr(drs_setup, 'clean_install', cleanup)
+    monkeypatch.setattr(drs_setup, 'WLOG', log)
+    monkeypatch.setattr(drs_processing, 'sync_external_raw', sync)
+    monkeypatch.setattr(drs_assets, 'check_local_assets', lambda params: False)
+    monkeypatch.setattr(drs_setup.base, 'DPARAMS', drs_setup.base.DPARAMS)
+    monkeypatch.setattr(drs_setup.base, 'IPARAMS', drs_setup.base.IPARAMS)
+    monkeypatch.setattr(drs_setup.base, 'load_database_yaml', lambda: dict())
+    monkeypatch.setattr(drs_setup.base, 'load_install_yaml', lambda: dict())
+    monkeypatch.setattr(drs_setup.load_functions, 'load_config',
+                        lambda *args, **kwargs: profile)
+    monkeypatch.setenv(drs_setup.base.USER_ENV, str(config))
+
+    drs_setup.run_setup(setup_params, dict())
+
+    assert events == ['cleanup', 'sync', 'complete']
+    if link_type == 'symlink':
+        assert (raw / 'data.fits').is_symlink()
+    elif link_type == 'hardlink':
+        assert os.path.samefile(raw / 'data.fits', external / 'data.fits')
+    else:
+        assert not raw.exists()

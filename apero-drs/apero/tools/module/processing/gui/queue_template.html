@@ -125,7 +125,8 @@ tr.failed { background: #fadddd; }
 .row-actions { white-space: nowrap; }
 .row-actions select { padding: 4px 6px; font-size: 12px; }
 .action-buttons button { margin-right: 8px; margin-bottom: 8px; }
-#log { background: #222; color: #ddd; font-family: monospace;
+#log, #generate-log, #actions-log {
+    background: #222; color: #ddd; font-family: monospace;
        font-size: 12px; padding: 10px; border-radius: 6px;
        max-height: 220px; overflow-y: auto; margin-top: 12px;
        white-space: pre-wrap; }
@@ -647,8 +648,13 @@ html[data-theme="dark"] button.info-btn { background: #1f6feb; color: #fff;
     <div class="brand">APERO Queue</div>
     <div class="meta">Queue path: XX_QPATH_XX</div>
     <div id="tabbar">
-        <button id="tab-btn-control" class="active"
-                onclick="setTab('control')">Control</button>
+        <button id="tab-btn-info" class="active"
+            onclick="setTab('info')">Info</button>
+        <button id="tab-btn-generate"
+            onclick="setTab('generate')">Generate</button>
+        <button id="tab-btn-run" onclick="setTab('run')">Run</button>
+        <button id="tab-btn-actions"
+            onclick="setTab('actions')">Actions</button>
         <button id="tab-btn-processes" onclick="setTab('processes')">
             Processes
         </button>
@@ -674,9 +680,9 @@ html[data-theme="dark"] button.info-btn { background: #1f6feb; color: #fff;
 
 <div class="main-wrap">
 
-<div id="tab-control" class="tabpage active">
+<div id="tab-run" class="tabpage">
 <div class="tabdesc">
-Control queue execution, script generation, and operational actions.
+Queue execution and batch templates.
 </div>
 <div class="section-card summary-card">
 <div class="summary" id="summary-control"></div>
@@ -684,19 +690,14 @@ Control queue execution, script generation, and operational actions.
 <div id="control-content" class="content-block">
 
 <div class="controltabbar">
-<button id="ctab-btn-info" class="active"
-        onclick="setControlTab('info')">Info</button>
-<button id="ctab-btn-generate"
-        onclick="setControlTab('generate')">Generate</button>
-<button id="ctab-btn-run"
-        onclick="setControlTab('run')">Run</button>
-<button id="ctab-btn-batch" onclick="setControlTab('batch')">Batch</button>
-<button id="ctab-btn-chain" onclick="setControlTab('chain')">Chain</button>
-<button id="ctab-btn-action" onclick="setControlTab('action')">
-    Actions
-</button>
+<button id="ctab-btn-run" class="active"
+        onclick="setControlTab('run')">Single Process</button>
+<button id="ctab-btn-batch" onclick="setControlTab('batch')">
+    Batch Script</button>
+<button id="ctab-btn-chain" onclick="setControlTab('chain')">
+    Chain Batch Script</button>
 <button id="ctab-btn-template" onclick="setControlTab('template')">
-    Template
+    Create Batch Template
 </button>
 </div>
 <div class="section-divider"></div>
@@ -794,7 +795,9 @@ Run queued recipes directly from this machine using APERO multiprocessing.
 </div>
 <label>Cores (tasks to run at once)</label>
 <input id="run-cores" type="number" min="1" value="1">
-<label>Total tasks for this command (blank = one cycle, "all" = no limit)</label>
+<label for="run-ntasks">Total tasks for this command (blank = run
+<span id="run-default-tasks">1</span> pending tasks,
+"all" = "run all pending tasks")</label>
 <input id="run-ntasks" type="text" value="">
 <label>Multiprocessing mode</label>
 <select id="run-mpmode">
@@ -1278,7 +1281,8 @@ function escapeHtml(value) {
 }
 
 function setTab(tabName) {
-    ['control', 'processes', 'status', 'stats'].forEach(function (name) {
+    ['info', 'generate', 'run', 'actions', 'processes', 'status', 'stats']
+    .forEach(function (name) {
         var active = (name === tabName);
         document.getElementById('tab-' + name).classList.toggle(
             'active', active);
@@ -1291,8 +1295,7 @@ function setTab(tabName) {
 }
 
 function setControlTab(tabName) {
-    var tabs = ['info', 'generate', 'run', 'batch', 'chain', 'action',
-                'template'];
+    var tabs = ['run', 'batch', 'chain', 'template'];
     tabs.forEach(function (name) {
         var page = document.getElementById('ctab-' + name);
         var btn = document.getElementById('ctab-btn-' + name);
@@ -1306,6 +1309,37 @@ function setControlTab(tabName) {
         }
     });
 }
+
+function initNavigation() {
+    var main = document.querySelector('.main-wrap');
+    ['info', 'generate', 'action'].forEach(function (name) {
+        var panel = document.getElementById('ctab-' + name);
+        panel.id = 'tab-' + (name === 'action' ? 'actions' : name);
+        panel.className = 'tabpage';
+        main.insertBefore(panel, document.getElementById('tab-run'));
+        if (name !== 'info') {
+            var channel = name === 'action' ? 'actions' : 'generate';
+            var console = document.getElementById('console-section')
+                .cloneNode(true);
+            console.querySelectorAll('[id]').forEach(function (node) {
+                node.id = channel + '-' + node.id;
+            });
+            console.id = channel + '-console-section';
+            console.querySelector('button').onclick = function () {
+                toggleJobOutput(channel);
+            };
+            panel.appendChild(console);
+            var activity = document.getElementById('activity').cloneNode(true);
+            activity.id = channel + '-activity';
+            activity.querySelector('#log').id = channel + '-log';
+            panel.appendChild(activity);
+        }
+    });
+    setControlTab('run');
+    setTab('info');
+}
+
+initNavigation();
 
 function setSingleStateFilter(state) {
     var states = ['pending', 'running', 'complete', 'failed'];
@@ -1807,6 +1841,8 @@ function buildTemplateCli() {
 }
 
 function updateCliCommands() {
+    document.getElementById('run-default-tasks').textContent =
+        document.getElementById('run-cores').value || '1';
     document.getElementById('cli-run').value = buildRunCli();
     document.getElementById('cli-batch').value = buildBatchCli();
     document.getElementById('cli-chain').value = buildChainCli();
@@ -1958,22 +1994,19 @@ function refreshState() {
         }
         lastDataVersion = data.data_version;
         if (data.job_running || jobShown) { refreshJob(); }
-        var log = document.getElementById('log');
         var selection = window.getSelection();
-        var hasSelection = selection && selection.toString().length > 0;
-        var isInLog = false;
-        if (hasSelection && selection.anchorNode) {
-            isInLog = log.contains(selection.anchorNode);
-        }
-        // Do not overwrite while user is selecting/copying log text
-        if (isInLog) {
-            return;
-        }
-        var newText = data.messages.join('\n');
-        if (log.textContent !== newText) {
-            log.textContent = newText;
-            log.scrollTop = log.scrollHeight;
-        }
+        ['run', 'generate', 'actions'].forEach(function (channel) {
+            var id = channel === 'run' ? 'log' : channel + '-log';
+            var log = document.getElementById(id);
+            if (selection && selection.toString() && selection.anchorNode &&
+                    log.contains(selection.anchorNode)) { return; }
+            var histories = data.activity_messages || {};
+            var newText = (histories[channel] || []).join('\n');
+            if (log.textContent !== newText) {
+                log.textContent = newText;
+                log.scrollTop = log.scrollHeight;
+            }
+        });
     });
 }
 
@@ -1987,10 +2020,10 @@ function refreshAll() {
 // ---------------------------------------------------------------------
 var lastDataVersion = null;
 var jobShown = false;
-var jobOutputHidden = false;
+var jobOutputHidden = {};
 var generateMode = 'static';
 var processingOptions = [];
-var lastJobText = null;
+var lastJobText = {};
 
 // colour ANSI lines (same palette as the task log viewer)
 function ansiLinesHtml(lines) {
@@ -2015,11 +2048,18 @@ function reloadAfterChange() {
 }
 
 function refreshJob() {
-    apiGet('/api/job', function (job) {
+    ['generate', 'actions'].forEach(function (channel) {
+    apiGet('/api/job?channel=' + channel, function (job) {
         if (!job || !job.kind) { return; }
+        var text = (job.lines || []).join('\n');
+        if (!job.running && lastJobText[channel] === job.path + text) {
+            return;
+        }
         jobShown = true;
-        document.getElementById('console-section').style.display = 'block';
-        var badge = document.getElementById('job-badge');
+        var prefix = channel + '-';
+        document.getElementById(prefix + 'console-section').style.display =
+            'block';
+        var badge = document.getElementById(prefix + 'job-badge');
         if (job.running) {
             badge.textContent = 'running';
             badge.className = 'pill pill-running';
@@ -2030,31 +2070,49 @@ function refreshJob() {
             badge.textContent = 'failed (' + job.returncode + ')';
             badge.className = 'pill pill-bad';
         }
-        document.getElementById('job-title').textContent =
+        document.getElementById(prefix + 'job-title').textContent =
             job.kind + ' (started ' + job.started + ')';
-        var cmd = document.getElementById('job-cmd');
+        var cmd = document.getElementById(prefix + 'job-cmd');
         cmd.textContent = job.cmd;
         cmd.title = job.path;
-        var out = document.getElementById('job-output');
+        var out = document.getElementById(prefix + 'job-output');
         var atEnd = out.scrollTop + out.clientHeight >=
                     out.scrollHeight - 20;
-        var text = (job.lines || []).join('\n');
-        if (lastJobText !== text) {
-            lastJobText = text;
+        var selection = window.getSelection();
+        if (selection && selection.toString() && selection.anchorNode &&
+                out.contains(selection.anchorNode)) { return; }
+        if (lastJobText[channel] !== job.path + text) {
+            lastJobText[channel] = job.path + text;
             out.innerHTML = ansiLinesHtml(job.lines || []);
             if (atEnd) { out.scrollTop = out.scrollHeight; }
         }
         // stop polling once a finished job has been shown
         if (!job.running) { jobShown = false; }
     });
+    });
 }
 
-function toggleJobOutput() {
-    jobOutputHidden = !jobOutputHidden;
-    document.getElementById('job-output').style.display =
-        jobOutputHidden ? 'none' : 'block';
-    document.getElementById('job-toggle').textContent =
-        jobOutputHidden ? 'Show output' : 'Hide output';
+function toggleJobOutput(channel) {
+    var prefix = channel ? channel + '-' : '';
+    channel = channel || 'run';
+    jobOutputHidden[channel] = !jobOutputHidden[channel];
+    document.getElementById(prefix + 'job-output').style.display =
+        jobOutputHidden[channel] ? 'none' : 'block';
+    document.getElementById(prefix + 'job-toggle').textContent =
+        jobOutputHidden[channel] ? 'Show output' : 'Hide output';
+}
+
+function showActionResult(data) {
+    document.getElementById('actions-console-section').style.display =
+        'block';
+    document.getElementById('actions-job-title').textContent = 'Action result';
+    document.getElementById('actions-job-cmd').textContent = '';
+    document.getElementById('actions-job-output').textContent =
+        data.message || data.error || JSON.stringify(data, null, 2);
+    var badge = document.getElementById('actions-job-badge');
+    var failed = data.success === false || !!data.error;
+    badge.textContent = failed ? 'failed' : 'done';
+    badge.className = 'pill ' + (failed ? 'pill-bad' : 'pill-ok');
 }
 
 // ---------------------------------------------------------------------
@@ -3128,6 +3186,7 @@ function doReset() {
     }
     if (!confirm(msg)) { return; }
     apiPost('/api/reset', {qstate: state, dry_run: dryRun}, function (data) {
+        showActionResult(data);
         refreshAll();
     });
 }
@@ -3143,6 +3202,7 @@ function doAction(qaction, qid, message) {
     setActionCli(qaction, qid || '');
     apiPost('/api/action', {qaction: qaction, qid: qid},
             function (data) {
+                showActionResult(data);
                 refreshAll();
             });
 }

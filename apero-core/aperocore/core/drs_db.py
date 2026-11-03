@@ -638,7 +638,8 @@ class AperoDatabase:
                 sql += ' WHERE {0}'.format(condition)
             # exec_driver_sql skips SQLAlchemy's text-parsing (~35us/call)
             with self.engine.begin() as conn:
-                count = conn.exec_driver_sql(sql).scalar()
+                query_kwargs = dict(execution_options=dict(no_parameters=True))
+                count = conn.exec_driver_sql(sql, **query_kwargs).scalar()
             return count
         # return the count with retry
         return _retry_operation(_execute_count, max_retries=5, retry_delay=2)
@@ -677,7 +678,8 @@ class AperoDatabase:
                 sql += ' WHERE {0}'.format(condition)
             # exec_driver_sql skips SQLAlchemy's text-parsing (~35us/call)
             with self.engine.begin() as conn:
-                result = conn.exec_driver_sql(sql).fetchall()
+                query_kwargs = dict(execution_options=dict(no_parameters=True))
+                result = conn.exec_driver_sql(sql, **query_kwargs).fetchall()
             # flatten result
             items = [item for sublist in result for item in sublist]
             # remove None from items
@@ -782,7 +784,8 @@ class AperoDatabase:
             # execute the query
             # exec_driver_sql skips SQLAlchemy's text-parsing (~35us/call)
             with self.engine.begin() as conn:
-                result = conn.exec_driver_sql(sql)
+                query_kwargs = dict(execution_options=dict(no_parameters=True))
+                result = conn.exec_driver_sql(sql, **query_kwargs)
                 # capture column keys before Result is exhausted
                 keys = list(result.keys())
                 # Get column types from table metadata for NULL->NaN

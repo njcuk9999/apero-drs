@@ -70,7 +70,7 @@ Repository = 'https://github.com/njcuk9999/apero-drs'
 [project.optional-dependencies]
 full = ["aperocore @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.running#subdirectory=apero-core",
         "lbl @ git+https://github.com/njcuk9999/lbl.git"]
-dev = ["pytest>=8,<9"]
+dev = ["pytest>=8,<9", "ruff>=0.17,<0.18"]
 
 [tool.setuptools_scm]
 root = ".."

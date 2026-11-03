@@ -232,6 +232,9 @@ class GuiState:
         self.busy = False
         # the activity log messages (most recent last)
         self.messages: List[str] = []
+        self.activity_messages: Dict[str, List[str]] = dict(
+            generate=[], run=[], actions=[])
+        self.jobs: Dict[str, Dict[str, Any]] = dict()
         # the worker thread for the current action
         self.worker: Optional[threading.Thread] = None
         # set by "stop all running" so an active queue run starts nothing new
@@ -244,17 +247,21 @@ class GuiState:
         # lock protecting the state
         self._lock = threading.Lock()
 
-    def add_message(self, message: str) -> None:
+    def add_message(self, message: str, channel: str = 'run') -> None:
         """
         Add a timestamped message to the activity log
 
         :param message: str, the message to add
+        :param channel: str, the owning page: generate, run or actions
         :return: None.
         """
         with self._lock:
             # timestamp the message
             stamp = time.strftime('%H:%M:%S')
             self.messages.append('[{0}] {1}'.format(stamp, message))
+            history = self.activity_messages[channel]
+            history.append(self.messages[-1])
+            del history[:-GUI_MAX_MESSAGES]
             # keep the log bounded
             if len(self.messages) > GUI_MAX_MESSAGES:
                 self.messages = self.messages[-GUI_MAX_MESSAGES:]
@@ -288,7 +295,12 @@ class GuiState:
                 target(*args)
             except Exception as gui_error:
                 emsg = '{0} FAILED: {1}'
-                self.add_message(emsg.format(name, gui_error))
+                channel = 'run'
+                if name == 'Generate':
+                    channel = 'generate'
+                elif name == 'Reset':
+                    channel = 'actions'
+                self.add_message(emsg.format(name, gui_error), channel)
             finally:
                 with self._lock:
                     self.busy = False
@@ -1044,7 +1056,7 @@ def action_reset(params: ParamDict, state: GuiState,
     else:
         message = 'Reset: removed {0} entries from {1}'
     message = message.format(n_removed, ', '.join(states))
-    state.add_message(message)
+    state.add_message(message, 'actions')
     # construct the response
     return dict(removed=n_removed, message=message)
 
@@ -1080,7 +1092,7 @@ def action_queue(params: ParamDict, state: GuiState,
     # run action core
     result = drs_queue.queue_action_core(params, qaction, qid)
     # log it for the activity panel
-    state.add_message(result['message'])
+    state.add_message(result['message'], 'actions')
     # return action result
     return result
 
@@ -1333,13 +1345,15 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
     log_path = os.path.join(log_dir, '{0}-{1}.log'.format(kind.lower(),
                                                           stamp))
     display = _display_command(cmd)
+    channel = 'generate' if kind == 'Generate' else 'actions'
 
     def _run() -> None:
         """Execute the command, update job state, and record its result."""
         state.job = dict(kind=kind, cmd=display, path=log_path,
                          running=True, returncode=None,
                          started=time.strftime('%H:%M:%S'))
-        state.add_message('{0} started: {1}'.format(kind, display))
+        state.jobs[channel] = state.job
+        state.add_message('{0} started: {1}'.format(kind, display), channel)
         env = dict(os.environ)
         env['PYTHONUNBUFFERED'] = '1'
         # the command runs from home, so make the apero packages this gui
@@ -1381,11 +1395,11 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
         drs_queue_procs.finish(drs_queue.get_proc_dir(params), proc_id,
                                returncode)
         if returncode == 0:
-            state.add_message('{0} finished'.format(kind))
+            state.add_message('{0} finished'.format(kind), channel)
         else:
             tail = '\n'.join(_job_tail(log_path, 10))
             state.add_message('{0} FAILED (exit code {1}):\n{2}'.format(
-                kind, returncode, tail))
+                kind, returncode, tail), channel)
         if on_done is not None:
             on_done(returncode)
         # anything that changed on disk must be reloaded by the browser
@@ -1419,17 +1433,20 @@ def _job_tail(path: str, nlines: int, keep_ansi: bool = False) -> List[str]:
     return text.splitlines()[-nlines:]
 
 
-def get_job_data(state: GuiState) -> Dict[str, Any]:
+def get_job_data(state: GuiState,
+                 channel: Optional[str] = None) -> Dict[str, Any]:
     """
     Get the current/last generate or reset job (with its output tail)
 
     :param state: GuiState, the shared gui state
+    :param channel: str or None, page owning the job, or latest job
 
     :return: dict, the job (empty if no job has run yet)
     """
-    if state.job is None:
+    source = state.job if channel is None else state.jobs.get(channel)
+    if source is None:
         return dict()
-    job = dict(state.job)
+    job = dict(source)
     job['lines'] = _job_tail(job['path'], GUI_JOB_TAIL, keep_ansi=True)
     return job
 
@@ -1461,7 +1478,7 @@ def action_generate(params: ParamDict, state: GuiState,
         pending = drs_queue.list_queue_entries(
             params, states=[drs_queue.QUEUE_PENDING_DIR])
         state.add_message('Queue now has {0} pending task(s)'.format(
-            len(pending)))
+            len(pending)), 'generate')
 
     return _start_job(params, state, 'Generate', cmd, on_done=_report)
 
@@ -1647,13 +1664,16 @@ def _make_handler(
             elif route == '/api/state':
                 job = state.job or dict()
                 data = dict(busy=state.busy, messages=state.messages,
+                            activity_messages=state.activity_messages,
                             data_version=state.data_version,
                             job_running=bool(job.get('running')),
                             job_kind=job.get('kind'))
                 self._send(json.dumps(data))
             # the current/last generate or reset command output
             elif route == '/api/job':
-                self._send(json.dumps(get_job_data(state)))
+                query = parse_qs(parsed.query)
+                channel = query.get('channel', [None])[0]
+                self._send(json.dumps(get_job_data(state, channel)))
             # the run files that generate can use
             elif route == '/api/runfiles':
                 self._send(json.dumps(dict(names=list_runfiles(params))))

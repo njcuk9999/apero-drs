@@ -2083,10 +2083,6 @@ class ARIApp(Flask):
         )
         return ach.api_apero_checks_policy_build_status(self)
 
-
-        kwargs = dict(profile_id=profile_id)
-        return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)
-
     def _ri_object_page_view(
         self, profile_id: str, objname: str
     ) -> Any:

@@ -447,6 +447,8 @@ def add_run_list_to_queue(params: ParamDict, runlist: List[Any],
             # convert the run item into a queue dictionary
             queue_dict = _run_item_to_dict(run_item, group_dirname,
                                            drs_group)
+            stop_exce_text = params.get('STOP_AT_EXCEPTION', False)
+            queue_dict['STOP_AT_EXCEPTION'] = drs_text.true_text(stop_exce_text)
             # construct the run yaml file name (sorts by priority)
             run_filename = QUEUE_RUN_FORMAT.format(run_item.priority)
             # construct the run yaml file path
@@ -484,6 +486,7 @@ def _add_db_push_group(pending_dir: str, group_dirname: str,
 
     :return: str, the push group directory name
     """
+    # Suffix the group name so the database push sorts immediately after it.
     push_dirname = '{0}-{1}'.format(group_dirname, QUEUE_DB_PUSH_SHORTNAME)
     push_path = os.path.join(pending_dir, push_dirname)
     os.makedirs(push_path, exist_ok=True)
@@ -498,6 +501,7 @@ def _add_db_push_group(pending_dir: str, group_dirname: str,
     queue_dict['group'] = push_dirname
     queue_dict['state'] = QUEUE_STATE_PENDING
     queue_dict['priority'] = int(priority)
+    # Write one pending run entry for the follow-on push group.
     run_path = os.path.join(push_path, QUEUE_RUN_FORMAT.format(priority))
     base.write_yaml(queue_dict, run_path, width=float('inf'))
     return push_dirname
@@ -653,6 +657,7 @@ def release_running(params: ParamDict, qids: List[str]) -> int:
     """
     queue_path = get_queue_path(params)
     moved = 0
+    # Serialize state changes and ignore malformed identifiers.
     with QueueLock(params):
         for qid in qids:
             if '/' not in str(qid):
@@ -700,6 +705,7 @@ def find_stale_running(params: ParamDict) -> List[Dict[str, str]]:
     unregistered = bool(user_jobs) and len(user_jobs - registered) > 0
     host = socket.gethostname()
     stale = []
+    # Check remaining entries by recorded PID, then by age if PID is absent.
     for entry in entries:
         qid = '{0}/{1}'.format(entry['group'], entry['run'])
         if qid in covered:
@@ -745,6 +751,7 @@ def fail_stale_running(params: ParamDict,
         msg = 'Queue: {0} stale running task(s) found'
         result['message'] = msg.format(len(stale))
         return result
+    # Move each confirmed stale entry and append its diagnosis to the log.
     queue_path = get_queue_path(params)
     stamp = time.strftime('%Y-%m-%d %H:%M:%S')
     with QueueLock(params):
@@ -824,6 +831,7 @@ def stop_process(params: ParamDict, record: Dict[str, Any],
     if record.get('kind') == 'run':
         if own and cancel is not None:
             cancel.set()
+        # Move claimed tasks out of running before terminating the runner.
         queue_path = get_queue_path(params)
         for qid in qids:
             if '/' not in str(qid):
@@ -1075,6 +1083,34 @@ def list_queue_entries(params: ParamDict,
 NextGroupReturn = Tuple[Optional[str], List[str], List[str]]
 
 
+def _blocking_failure(params: ParamDict) -> Optional[Dict[str, str]]:
+    """Find a failed task whose policy blocks further queue execution.
+
+    :param params: Queue profile parameters.
+    :return: Failed entry or None when failures allow continuation.
+    """
+    # Inspect failures in queue order and return the first blocking one.
+    entries = list_queue_entries(params, states=[QUEUE_FAILED_DIR])
+    for entry in entries:
+        task = _load_run_yaml(entry['path'])
+        if task is None:
+            continue
+        if _stops_on_failure(task):
+            return entry
+    return None
+
+
+def _stops_on_failure(task: Dict[str, Any]) -> bool:
+    """Check the persisted processing and reference failure policy.
+
+    :param task: Queue task metadata.
+    :return: Whether a task failure must prevent further execution.
+    """
+    stop = drs_text.true_text(task.get('STOP_AT_EXCEPTION', False))
+    reference = drs_text.true_text(task.get('is_reference', False))
+    return stop or reference
+
+
 def get_next_group(params: ParamDict) -> NextGroupReturn:
     """
     Get the next (i.e. earliest unfinished) group in the queue
@@ -1111,6 +1147,10 @@ def get_next_group(params: ParamDict) -> NextGroupReturn:
     # sort the run file names (priority order)
     pending_runs.sort()
     running_runs.sort()
+    # A blocking failure pauses the queue even when later groups are pending.
+    failure = _blocking_failure(params)
+    if failure is not None:
+        return failure['group'], [], []
     # return the group and its pending/running run files
     return group, pending_runs, running_runs
 
@@ -1198,6 +1238,7 @@ def _load_run_yaml(run_path: str) -> Optional[Dict[str, Any]]:
     :return: dict or None, the run dictionary (None if it stays unreadable
              or has no runstring)
     """
+    # Retry briefly because claims and state moves can expose a partial file.
     for _ in range(5):
         try:
             run_dict = base.load_yaml(run_path)
@@ -1343,6 +1384,13 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
     # claim tasks inside the queue lock (so parallel apero_queues do not
     #   claim the same tasks)
     with QueueLock(params):
+        failure = _blocking_failure(params)
+        if failure is not None:
+            summary['group'] = failure['group']
+            summary['message'] = textentry(
+                '10-513-00007', args=[failure['run'], failure['group']])
+            _progress(progress, summary['message'])
+            return summary
         # get the next unfinished group
         group, pending_runs, running_runs = get_next_group(params)
         # deal with an empty queue
@@ -1374,6 +1422,8 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         for run_file in claimed_runs:
             move_run_file(queue_path, group, run_file,
                           QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
+    # Register claims after releasing the queue lock to avoid callback work
+    # extending the critical section.
     if on_claim is not None:
         on_claim(['{0}/{1}'.format(group, run_file)
                   for run_file in claimed_runs])
@@ -1414,6 +1464,7 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
         task['runstring'] = str(run_dict['runstring'])
         task['drs_group'] = run_dict.get('drs_group')
         task['shortname'] = str(run_dict.get('shortname', ''))
+        task['STOP_AT_EXCEPTION'] = str(_stops_on_failure(run_dict))
         task['recipe'] = str(run_dict.get('recipe', ''))
         task['stats_dir'] = get_stats_dir(queue_path)
         tasks.append(task)
@@ -1499,6 +1550,7 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     if ntasks is not None:
         label += ' --ntasks {0}'.format(ntasks)
     proc_dir = get_proc_dir(params)
+    # Register this runner before it can claim work; always close the record.
     rkwargs = dict(pid=os.getpid(), owner=owner, cmd=label)
     proc_id = drs_queue_procs.register(proc_dir, 'run', label, **rkwargs)
 
@@ -1972,6 +2024,12 @@ def batch_queue(params: ParamDict, per_batch: int,
     fail_stale_running(params)
     # claim tasks inside the queue lock
     with QueueLock(params):
+        failure = _blocking_failure(params)
+        if failure is not None:
+            summary['group'] = failure['group']
+            summary['message'] = textentry(
+                '10-513-00007', args=[failure['run'], failure['group']])
+            return summary
         # get the next unfinished group
         group, pending_runs, running_runs = get_next_group(params)
         # deal with an empty queue
@@ -2287,6 +2345,23 @@ def _chunk_list(values: List[str], size: int) -> List[List[str]]:
     return chunks
 
 
+def _failure_script_lines(queue_path: str, qids: List[str]) -> List[str]:
+    """Stop a failed script and release its not-yet-started tasks.
+
+    :param queue_path: Absolute queue directory.
+    :param qids: Queue IDs of unstarted tasks belonging to this script.
+    :return: Bash lines implementing the failure guard.
+    """
+    # On a protected failure, release later tasks so they can be retried.
+    lines = ['if [ $task_status -ne 0 ]; then']
+    for qid in qids:
+        command = ['apero_queue.py', 'system', '--qpath=' + queue_path,
+                   '--qid=' + qid, '--qresult=pending']
+        lines.append('    ' + shlex.join(command))
+    lines.extend(['    exit 1', 'fi'])
+    return lines
+
+
 def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
                               dry_run: bool) -> None:
     """
@@ -2302,6 +2377,7 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
     # unbuffered python output lets the queue gui stream task logs live
     lines.append('export PYTHONUNBUFFERED=1')
     lines.append('fail_count=0')
+    # Dry runs print commands only; real chunks execute and finalize each task.
     if dry_run:
         for task in tasks:
             lines.append('echo "Running: {0}"'.format(task['shortname']))
@@ -2309,7 +2385,7 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
             lines.append('echo "Would have run: {0}"'.format(ecmd))
         lines.append('exit 0')
     else:
-        for task in tasks:
+        for task_index, task in enumerate(tasks):
             lines.append('echo "Running: {0}"'.format(task['shortname']))
             group, run_file = str(task['qid']).split('/', 1)
             log_path = get_task_log_path(str(task['qpath']), group,
@@ -2329,6 +2405,10 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
                              task['qpath'], task['qid']))
             lines.append('    fail_count=$((fail_count + 1))')
             lines.append('fi')
+            if _stops_on_failure(task):
+                # Stop this chunk and return its not-yet-started tasks.
+                remaining = [item['qid'] for item in tasks[task_index + 1:]]
+                lines.extend(_failure_script_lines(task['qpath'], remaining))
         lines.append('if [ $fail_count -eq 0 ]; then')
         lines.append('    exit 0')
         lines.append('fi')
@@ -2376,6 +2456,7 @@ def _write_chain_worker_script(worker_path: str, template: Dict[str, Any],
         lines.append('#SBATCH --mail-user={0}'.format(template['mail_user']))
         lines.append('#SBATCH --mail-type={0}'.format(template['mail_type']))
     lines.append('')
+    # Each array index selects one generated chunk after environment setup.
     lines.append('echo "RUNNING: activation scripts"')
     for act_line in template['activation']:
         lines.append('echo "{0}"'.format(act_line.replace('"', '\\"')))
@@ -2410,6 +2491,7 @@ def _write_chain_submit_script(submit_path: str,
     lines = ['#!/bin/bash', 'set -e']
     lines.append('echo "Submitting APERO chain: {0}"'.format(chain_name))
     lines.append('PREV_JOB_ID=""')
+    # Submit the first group directly; gate each later group on afterok.
     for meta in worker_meta:
         group = str(meta['group'])
         script_path = str(meta['worker'])
@@ -2471,7 +2553,12 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
     queue_path = get_queue_path(params)
     # stale running tasks would block the chain forever
     fail_stale_running(params)
-    # claim queue work inside the lock
+    failure = _blocking_failure(params)
+    if failure is not None:
+        summary['message'] = textentry(
+            '10-513-00007', args=[failure['run'], failure['group']])
+        return summary
+    # Claim all pending groups together only when no queue task is running.
     with QueueLock(params):
         grouped = _group_queue_entries(params)
         if len(grouped) == 0:
@@ -2499,7 +2586,7 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         if len(grouped_runs) == 0:
             summary['message'] = 'Nothing to chain (no pending tasks)'
             return summary
-    # set up output directories for this chain
+    # Create a unique output tree for task chunks, Slurm scripts, and logs.
     chain_root = get_chain_root(params)
     os.makedirs(chain_root, exist_ok=True)
     chain_name = '{0}-{1}'.format(QUEUE_CHAIN_PREFIX, os.getpid())
@@ -2515,7 +2602,7 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
     for path in [chain_dir, scripts_dir, tasks_dir, logs_dir, errors_dir]:
         os.makedirs(path, exist_ok=True)
     summary['chain_dir'] = chain_dir
-    # one worker array script per queue group
+    # Generate ordered task chunks and one Slurm array worker per group.
     max_parallel = _template_parallel_limit(template)
     worker_meta = []
     for g_it, group in enumerate(sorted(grouped_runs)):
@@ -2546,6 +2633,7 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
                 item = dict(shortname=str(run_dict['shortname']),
                             recipe=str(run_dict.get('recipe', '')),
                             command=command, qid=qid, qpath=queue_path)
+                item['STOP_AT_EXCEPTION'] = str(_stops_on_failure(run_dict))
                 chunk_tasks.append(item)
             task_name = 'chunk_{0:06d}.sh'.format(c_it + 1)
             task_path = os.path.join(group_task_dir, task_name)
@@ -2565,11 +2653,11 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         worker_meta.append(meta)
         summary['workers'].append(worker_path)
     summary['n_groups'] = len(worker_meta)
-    # write the top-level submit script
+    # Chain workers in group order so afterok preserves queue dependencies.
     submit_path = os.path.join(chain_dir, 'submit_chain.sh')
     _write_chain_submit_script(submit_path, worker_meta, chain_name)
     summary['submit_script'] = submit_path
-    # optionally submit immediately
+    # Optionally submit now and register the resulting Slurm jobs for control.
     if submit:
         if shutil.which('sbatch') is None:
             summary['message'] = ('"sbatch" not found on this machine - '
@@ -2709,6 +2797,8 @@ def queue_system(params: ParamDict) -> None:
     # work out the destination state from the result
     if qresult in ['success', 'complete', 'true', '1']:
         to_state = QUEUE_COMPLETE_DIR
+    elif qresult == 'pending':
+        to_state = QUEUE_PENDING_DIR
     else:
         to_state = QUEUE_FAILED_DIR
     # move the run file from running to the destination state
@@ -2953,6 +3043,7 @@ def _stop_running_entry(params: ParamDict, queue_path: str, group: str,
     # a pid recorded on another machine cannot be signalled from here
     if pid_host not in [None, socket.gethostname()]:
         return 0, 0
+    # Move first so the worker sees the stop; restore running if kill fails.
     with QueueLock(params):
         moved = move_run_file(queue_path, group, run_file,
                               QUEUE_RUNNING_DIR, to_state)
@@ -3054,6 +3145,7 @@ def _kill_pid(pid: int) -> bool:
         return None
 
     # send TERM first and allow a short grace period
+    # escalate to KILL if the process ignores SIGTERM
     for sig, n_checks in [(signal.SIGTERM, 20), (signal.SIGKILL, 20)]:
         result = _signal(sig)
         if result is not None:
@@ -3075,6 +3167,7 @@ def _stop_all_running(params: ParamDict) -> Tuple[int, int, int]:
     queue_path = get_queue_path(params)
     entries = list_queue_entries(params, states=[QUEUE_RUNNING_DIR])
     stopped, moved, failed = 0, 0, 0
+    # Stop and account for each snapshot entry independently.
     for entry in entries:
         sargs = [params, queue_path, entry['group'], entry['run'],
                  QUEUE_PENDING_DIR]
@@ -3407,6 +3500,9 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
               for task in tasks}
     run_paths = {task['run_file']: task['run_path'] for task in tasks}
     starts = dict()
+    halted = threading.Event()
+    protected = {task['run_file']: _stops_on_failure(task)
+                 for task in tasks}
 
     def _started(task: Dict[str, str]) -> None:
         """Record a task start and notify the optional progress callback."""
@@ -3416,6 +3512,9 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
     def _finished(run_file: str, success: bool, tail: str) -> None:
         """Record task completion and report failures with log context."""
         results[run_file] = success
+        # Protected failures stop later starts in linear mode.
+        if not success and protected[run_file]:
+            halted.set()
         duration = time.time() - starts.get(run_file, time.time())
         status = 'DONE  ' if success else 'FAILED'
         # a stop action moves the task out of running before killing it
@@ -3435,6 +3534,8 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
     if mpmode == 'linear' or cores == 1 or len(tasks) == 1:
         # loop around tasks
         for t_it, task in enumerate(tasks):
+            if halted.is_set():
+                break
             if cancel is not None and cancel.is_set():
                 break
             # a stop action moved the remaining claimed tasks out of running
@@ -3451,6 +3552,11 @@ def _execute_tasks(params: ParamDict, tasks: List[Dict[str, str]],
             # run the task
             _started(task)
             _finished(*_run_task(task))
+        if halted.is_set():
+            unstarted = [task['group'] + '/' + task['run_file']
+                         for task in tasks
+                         if task['run_file'] not in results]
+            release_running(params, unstarted)
         # return the results
         return results
     # all claimed tasks start at once (never more claimed than cores)
@@ -3593,6 +3699,7 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
     # add the runstrings (or dry-run echoes)
     # unbuffered python output lets the queue gui stream task logs live
     lines.append('export PYTHONUNBUFFERED=1')
+    # Dry-run reads pending entries; claimed batch tasks live in running.
     state_dir = QUEUE_PENDING_DIR if dry_run else QUEUE_RUNNING_DIR
     for r_it, run_file in enumerate(batch_runs):
         # read the queue yaml to get the runstring and shortname
@@ -3627,6 +3734,11 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
             lines.append('    apero_queue.py system --qpath={0} --qid={1} '
                          '--qresult=failed'.format(queue_path, qid))
             lines.append('fi')
+            if _stops_on_failure(run_dict):
+                # Return the rest of a protected batch to pending on failure.
+                remaining = [group + '/' + name
+                             for name in batch_runs[r_it + 1:]]
+                lines.extend(_failure_script_lines(queue_path, remaining))
         lines.append('')
     # -------------------------------------------------------------------------
     # write the batch script to disk

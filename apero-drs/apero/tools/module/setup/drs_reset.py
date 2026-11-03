@@ -862,13 +862,8 @@ def remove_all(params: ParamDict, path: str, log: bool = True,
         WLOG(params, 'warning', textentry('40-502-00005', args=[path]),
              sublevel=2)
         # user input
-        if sys.version_info.major < 3:
-            # noinspection PyUnresolvedReferences
-            # text: Create directory {0}?
-            uinput = raw_input(textentry('40-502-00006', args=path))
-        else:
-            # text: Create directory {0}?
-            uinput = input(textentry('40-502-00006', args=path))
+        # text: Create directory {0}?
+        uinput = input(str(textentry('40-502-00006', args=[path])))
         # check user input
         if 'Y' in uinput.upper():
             # make directories
