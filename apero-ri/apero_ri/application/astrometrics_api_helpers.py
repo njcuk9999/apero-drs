@@ -2595,7 +2595,7 @@ def _resolve_online_using_drs(name):
 
     simbad = dra._resolve_from_name(
         name,
-        simbad_url=dra.SIMBAD_TAP,
+        simbad_url=dra.SIMBAD_TAPS,
         gaia_url=dra.GAIA_TAP,
         vizier_url=dra.VIZIER_TAP,
     )

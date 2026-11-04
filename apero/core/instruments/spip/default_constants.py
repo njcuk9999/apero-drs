@@ -235,9 +235,11 @@ CALIB_CHECK_FP_THRES.value = 100
 CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
 CALIB_CHECK_FP_CENT_SIZE.value = 100
 
-# Define the SIMBAD TAP url
-SIMBAD_TAP_URL = SIMBAD_TAP_URL.copy(__NAME__)
-SIMBAD_TAP_URL.value = 'http://simbad.cds.unistra.fr/simbad/sim-tap'
+# Define the SIMBAD TAP urls (comma separated): main server first, then
+#   mirrors. The first responding server is used (checked once per process)
+SIMBAD_TAP_URLS = SIMBAD_TAP_URLS.copy(__NAME__)
+SIMBAD_TAP_URLS.value = ('https://simbad.cds.unistra.fr/simbad/sim-tap,'
+                         'https://simbad.harvard.edu/simbad/sim-tap')
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)

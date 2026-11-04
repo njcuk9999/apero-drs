@@ -14,6 +14,9 @@ import os
 import socket
 import sys
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -128,6 +131,100 @@ PROPERTY_UNCERTAINTY = dict()
 PROPERTY_UNCERTAINTY['VSINI'] = 'vsini_err'
 # bibsheet
 BIB_SHEET_COL_NAME = 'Simbad_Bibcode'
+# tiny query used to test whether a SIMBAD TAP server responds
+SIMBAD_TEST_ADQL = 'SELECT TOP 1 oid FROM basic'
+# timeout (seconds) for the up-check of each SIMBAD server
+SIMBAD_CHECK_TIMEOUT = 10.0
+# {tuple of candidate urls -> selected url} (one check per process)
+_SIMBAD_SELECTED_URL: Dict[Tuple[str, ...], str] = dict()
+
+
+# =============================================================================
+# Define SIMBAD mirror functions
+# =============================================================================
+def _simbad_tap_is_up(url: str) -> bool:
+    """
+    Test whether a SIMBAD TAP server answers a trivial ADQL query.
+
+    :param url: str, TAP base url (``.../sim-tap``) or its ``/sync``
+                endpoint
+
+    :return: bool, True if the server returned HTTP 200
+    """
+    # normalise to the synchronous endpoint
+    sync_url = str(url).rstrip('/')
+    if not sync_url.endswith('/sync'):
+        sync_url += '/sync'
+    # build the query string for the test query
+    query = dict(REQUEST='doQuery', LANG='ADQL', FORMAT='json',
+                 QUERY=SIMBAD_TEST_ADQL)
+    full_url = sync_url + '?' + urllib.parse.urlencode(query)
+    # any network / http / malformed-url failure counts as "down"
+    try:
+        with urllib.request.urlopen(full_url,
+                                    timeout=SIMBAD_CHECK_TIMEOUT) as resp:
+            return resp.status == 200
+    except (urllib.error.URLError, OSError, ValueError):
+        return False
+
+
+def get_simbad_tap_url(params: ParamDict) -> str:
+    """
+    Return the first responding SIMBAD TAP url from SIMBAD_TAP_URLS.
+
+    The check is done only once per process; later calls return the
+    cached choice. If no server responds the first url is returned.
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: str, the selected SIMBAD TAP url
+    """
+    # get the ordered list of servers (main first, then mirrors)
+    urls = tuple(params.listp('SIMBAD_TAP_URLS', dtype=str))
+    # only check once per process
+    if urls in _SIMBAD_SELECTED_URL:
+        return _SIMBAD_SELECTED_URL[urls]
+    # default to the main server if nothing responds
+    selected = urls[0]
+    # with a single url there is nothing to fall back to
+    if len(urls) > 1:
+        for url in urls:
+            if _simbad_tap_is_up(url):
+                selected = url
+                break
+            wmsg = 'SIMBAD server {0} is not responding'
+            WLOG(params, 'warning', wmsg.format(url))
+    # report a switch to a mirror
+    if selected != urls[0]:
+        msg = 'Using SIMBAD mirror: {0}'
+        WLOG(params, '', msg.format(selected))
+    # cache and return
+    _SIMBAD_SELECTED_URL[urls] = selected
+    return selected
+
+
+def use_simbad_mirror(params: ParamDict) -> str:
+    """
+    Point astroquery's SIMBAD client at the first responding server.
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: str, the selected SIMBAD host name
+    """
+    from astroquery import simbad as aq_simbad
+    # get the host name of the working server (checked once per process)
+    server = urllib.parse.urlparse(get_simbad_tap_url(params)).netloc
+    # astroquery only accepts servers in its own list
+    if server not in aq_simbad.conf.servers_list:
+        aq_simbad.conf.servers_list.append(server)
+    # conf.server is a fixed-option config item (custom hosts rejected)
+    try:
+        aq_simbad.conf.server = server
+    except TypeError:
+        pass
+    # the shared instance copied conf.server at import time
+    Simbad.server = server
+    return server
 
 
 # =============================================================================
@@ -662,8 +759,8 @@ class AstroObj:
                                  'AstroObj')
         # get preferred bibcode list
         bibcodes = get_bibcode_list(params)
-        # simbad tap url
-        simbad_tap_url = params['SIMBAD_TAP_URL']
+        # simbad tap url (first responding server: main or mirror)
+        simbad_tap_url = get_simbad_tap_url(params)
         # deal with no simbad query
         if propname not in PROPERTY_QUERIES:
             wmsg = ('Skipping property simbad check for {0} '
@@ -988,6 +1085,8 @@ class AstroObj:
 def query_simbad(params: ParamDict, rawobjname: str,
                  report: bool = True, update: bool = False
                  ) -> Tuple[List[AstroObj], str]:
+    # use the first responding SIMBAD server (main or mirror)
+    use_simbad_mirror(params)
     # ---------------------------------------------------------------------
     # get results
     with warnings.catch_warnings(record=True) as _:
@@ -1413,6 +1512,8 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     coord = SkyCoord(ra, dec, unit="deg")  # Create SkyCoord object
 
     # Query Simbad for H and V magnitudes in a small region around the coordinates
+    # use the first responding SIMBAD server (main or mirror)
+    use_simbad_mirror(params)
     # get results
     with warnings.catch_warnings(record=True) as _:
         # reset avoids carrying fields from previous SIMBAD calls

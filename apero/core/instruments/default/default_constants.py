@@ -57,7 +57,7 @@ __all__ = [
     'ARELDATE_GSHEET_ACOL', 'ARELDATE_GSHEET_LCOL',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
-    'SIMBAD_TAP_URL',
+    'SIMBAD_TAP_URLS',
     'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
     'CALIB_CHECK_FP_CENT_SIZE', 'COMBINE_METRIC1_TYPES',
     'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GSHEET_MAIN_LIST_ID',
@@ -786,10 +786,14 @@ CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
                                  description=('define the check FP center '
                                               'image size [px]'))
 
-# Define the SIMBAD TAP url
-SIMBAD_TAP_URL = Const('SIMBAD_TAP_URL', value=None, dtype=str, source=__NAME__,
-                       group=cgroup,
-                       description='Define the SIMBAD TAP url')
+# Define the SIMBAD TAP urls (comma separated): main server first, then
+#   mirrors. The first responding server is used (checked once per process)
+SIMBAD_TAP_URLS = Const('SIMBAD_TAP_URLS', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define the SIMBAD TAP urls (comma '
+                                    'separated): main server first, then '
+                                    'mirrors. The first responding server '
+                                    'is used (checked once per process)')
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
