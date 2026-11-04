@@ -50,6 +50,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
+from aperocore.core import drs_simbad
 from aperocore.core import drs_text
 
 # fcntl is POSIX-only; on Windows we silently fall back to lock-file polling
@@ -409,9 +410,10 @@ def _safe_filename(apero_name: str) -> str:
 # TAP endpoints
 # Default TAP endpoints (used when no per-call URL is supplied; the
 # AstrometricDatabase class overrides these from params - see
-# `SIMBAD_TAPURL`, `GAIA_URL`, `VIZIER_TAPURL` constants in
+# `SIMBAD_TAPURLS`, `GAIA_URL`, `VIZIER_TAPURL` constants in
 # apero/instruments/default/constants.py).
-SIMBAD_TAP = 'https://simbad.cds.unistra.fr/simbad/sim-tap/sync'
+# SIMBAD: main server first then mirrors (first responding one is used)
+SIMBAD_TAPS = list(drs_simbad.SIMBAD_TAP_URLS)
 GAIA_TAP = 'https://gea.esac.esa.int/tap-server/tap/sync'
 VIZIER_TAP = 'https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync'
 
@@ -534,19 +536,30 @@ def _tap_get(endpoint: str, adql: str, fmt: str = 'json',
 
 
 def _simbad_json(adql: str, timeout: int = 30,
-                 url: Optional[str] = None) -> Optional[dict]:
+                 url: Optional[Union[str, List[str]]] = None
+                 ) -> Optional[dict]:
     """
     Run an ADQL query against the SIMBAD TAP and return parsed JSON.
 
     :param adql: str, the ADQL query
     :param timeout: int, request timeout in seconds
-    :param url: optional TAP base or sync URL; defaults to
-                :data:`SIMBAD_TAP`.
+    :param url: optional TAP base/sync URL or ordered list of URLs
+                (main then mirrors); defaults to :data:`SIMBAD_TAPS`.
+                With a list, the first responding server is used
+                (checked once per process).
     :return: parsed JSON dict, or ``None`` on failure
     """
     import json
-    # resolve endpoint
-    endpoint = _to_sync_url(url, SIMBAD_TAP)
+    # build the candidate server list
+    if isinstance(url, str) and _nv(url) is not None:
+        urls = [url]
+    elif url is None or isinstance(url, str):
+        urls = SIMBAD_TAPS
+    else:
+        urls = list(url) or SIMBAD_TAPS
+    # pick the first responding server and resolve its sync endpoint
+    selected = drs_simbad.select_simbad_url(urls)
+    endpoint = _to_sync_url(selected, SIMBAD_TAPS[0])
     # fetch raw bytes
     raw = _tap_get(endpoint, adql, fmt='json', timeout=timeout)
     if raw is None:
@@ -1501,7 +1514,7 @@ def _resolve_from_gaia_name(name: str,
 # Top-level resolver
 # -----------------------------------------------------------------------------
 def _resolve_from_name(name: str,
-                       simbad_url: Optional[str] = None,
+                       simbad_url: Optional[Union[str, List[str]]] = None,
                        gaia_url: Optional[str] = None,
                        vizier_url: Optional[str] = None
                        ) -> Optional[Dict[str, Any]]:
@@ -1512,8 +1525,9 @@ def _resolve_from_name(name: str,
     entry via :func:`_update_yaml_from_simbad`.
 
     :param name: str, the target name to resolve
-    :param simbad_url: optional override for the SIMBAD TAP endpoint;
-                       defaults to module-level :data:`SIMBAD_TAP`.
+    :param simbad_url: optional SIMBAD TAP endpoint or ordered list of
+                       endpoints (main then mirrors); defaults to
+                       module-level :data:`SIMBAD_TAPS`.
     :param gaia_url: optional override for the Gaia TAP endpoint.
     :param vizier_url: optional override for the VizieR TAP endpoint.
     :return: dict of normalised SIMBAD/Gaia/VizieR results, or ``None``
@@ -2002,9 +2016,34 @@ class AstrometricDatabase:
         self.pconst = None
         self.database = None
         # TAP endpoints (read from params; fall back to module defaults)
-        self.simbad_url = self._read_param('SIMBAD_TAPURL', SIMBAD_TAP)
-        self.gaia_url = self._read_param('GAIA_URL', GAIA_TAP)
-        self.vizier_url = self._read_param('VIZIER_TAPURL', VIZIER_TAP)
+        # SIMBAD is a list (main then mirrors); the first responding
+        #   server is chosen lazily on the first SIMBAD query
+        self.simbad_url = self._read_list_param('ASTROM.SIMBAD_TAPURLS',
+                                                SIMBAD_TAPS)
+        self.gaia_url = self._read_param('ASTROM.GAIA_URL', GAIA_TAP)
+        self.vizier_url = self._read_param('ASTROM.VIZIER_TAPURL',
+                                           VIZIER_TAP)
+
+    def _read_list_param(self, key: str, default: List[str]) -> List[str]:
+        """
+        Best-effort list-param lookup that tolerates missing keys.
+
+        :param key: str, the parameter key
+        :param default: list of str, returned if the key is missing/empty
+
+        :return: list of str, the non-null values
+        """
+        try:
+            values = self.params[key]
+        except Exception:
+            return list(default)
+        if values is None:
+            return list(default)
+        # keep only non-null entries
+        out = [str(value) for value in values if not _is_null(value)]
+        if len(out) == 0:
+            return list(default)
+        return out
 
     def _read_param(self, key: str, default: str) -> str:
         '''Best-effort param lookup that tolerates missing keys.'''

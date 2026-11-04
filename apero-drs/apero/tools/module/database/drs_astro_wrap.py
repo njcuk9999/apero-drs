@@ -30,6 +30,7 @@ from aperocore import drs_lang
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore.core import drs_simbad
 from aperocore.core import drs_text
 
 
@@ -276,6 +277,8 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     # column names ('main_id', 'H', 'V') instead of the legacy uppercase
     # ('MAIN_ID', 'FLUX_H', 'FLUX_V')
     coord = SkyCoord(ra, dec, unit='deg')
+    # use the first responding SIMBAD server (main or mirror)
+    drs_simbad.use_simbad_mirror(params['ASTROM.SIMBAD_TAPURLS'])
     with warnings.catch_warnings(record=True):
         _sim = Simbad()
         _sim.add_votable_fields('H', 'V')

@@ -29,6 +29,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from aperocore.core import drs_simbad
+
 # -----------------------------------------------------------------------
 # TeeWriter – copy stdout to the real console AND a queue
 # -----------------------------------------------------------------------
@@ -410,6 +412,8 @@ def _run_in_workdir(
     os.chdir(str(work_dir))
     try:
         _suppress_tess_warnings()
+        # tessilator queries SIMBAD via astroquery: use a responding mirror
+        drs_simbad.use_simbad_mirror()
         return _try_names(work_dir, names_to_try, tess_mod)
     finally:
         os.chdir(orig_cwd)

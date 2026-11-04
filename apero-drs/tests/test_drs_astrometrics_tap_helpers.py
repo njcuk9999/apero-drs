@@ -55,6 +55,9 @@ def test_simbad_json_returns_none_on_invalid_json(monkeypatch) -> None:
         return b'not-json'
 
     monkeypatch.setattr(astro, '_tap_get', _fake_tap_get)
+    # skip the network up-check of the SIMBAD servers
+    monkeypatch.setattr(astro.drs_simbad, 'select_simbad_url',
+                        lambda urls: urls[0])
     assert astro._simbad_json('SELECT 1') is None
 
 

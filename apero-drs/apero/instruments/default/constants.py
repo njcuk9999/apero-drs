@@ -108,12 +108,16 @@ CDict.add('AREL_GSHEET_LCOL', value=None, dtype=str, source=__NAME__,
 cgroup = 'ASTROM'
 CDict.add_group(cgroup, description='ASTROMETRIC DATABASE SETTINGS')
 
-# Define the SIMBAD TAP URL for astrometric resolution
-CDict.add('SIMBAD_TAPURL',
-          value='https://simbad.cds.unistra.fr/simbad/sim-tap/sync',
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the SIMBAD TAP endpoint URL for '
-                      'astrometric resolution')
+# Define the SIMBAD TAP URLs for astrometric resolution: main server first,
+#   then mirrors. The first responding server is used (checked once per
+#   process)
+CDict.add('SIMBAD_TAPURLS', value=None, dtype=list, dtypei=str,
+          source=__NAME__, group=cgroup,
+          description='Define the SIMBAD TAP URLs for astrometric '
+                      'resolution: main server first, then mirrors. The '
+                      'first responding server is used (checked once per '
+                      'process). Used by core.drs_astrometrics and the '
+                      'astroquery SIMBAD calls in apero_astrometrics')
 
 # Define the Gaia TAP URL for astrometric resolution
 CDict.add('GAIA_URL',

@@ -64,6 +64,17 @@ CDict.set('AREL_GSHEET_LCOL', source=__NAME__, group=cgroup,
           value='LBL_REL_DATE')
 
 # =============================================================================
+# ASTROMETRIC DATABASE SETTINGS
+# =============================================================================
+cgroup = 'ASTROM'
+# Define the SIMBAD TAP URLs for astrometric resolution: main server first,
+#   then mirrors. The first responding server is used (checked once per
+#   process)
+CDict.set('SIMBAD_TAPURLS', source=__NAME__, group=cgroup,
+          value=['https://simbad.cds.unistra.fr/simbad/sim-tap',
+                 'https://simbad.harvard.edu/simbad/sim-tap'])
+
+# =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
 cgroup = 'IMAGE'
