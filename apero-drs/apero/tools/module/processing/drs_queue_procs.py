@@ -131,7 +131,8 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
              log_paths: Optional[List[str]] = None,
              log_globs: Optional[List[str]] = None,
              slurm_jobs: Optional[List[str]] = None,
-             qids: Optional[List[str]] = None) -> Optional[str]:
+             qids: Optional[List[str]] = None,
+             artifact_paths: Optional[List[str]] = None) -> Optional[str]:
     """
     Record a new process (never raises - registry problems must not stop
     the actual work)
@@ -147,6 +148,7 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
                       that only exist later (sbatch .out/.err files)
     :param slurm_jobs: list of str or None, Slurm job ids
     :param qids: list of str or None, queue ids handled by this process
+    :param artifact_paths: Explicitly owned generated scripts/index files.
 
     :return: str or None, the process id (None if recording failed)
     """
@@ -158,6 +160,7 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
                   finished=None, returncode=None, stopped=False,
                   log_paths=list(log_paths or []),
                   log_globs=list(log_globs or []),
+                  artifact_paths=list(artifact_paths or []),
                   slurm_jobs=[str(job) for job in (slurm_jobs or [])],
                   qids=list(qids or [])[-MAX_QIDS:])
     try:
@@ -210,21 +213,83 @@ def finish(proc_dir: str, proc_id: Optional[str], returncode: int,
     update(proc_dir, proc_id, **fields)
 
 
-def remove(proc_dir: str, proc_ids: List[str]) -> int:
+def owned_file(path: str, roots: List[str]) -> bool:
+    """Check that a regular file resolves inside a trusted artifact root.
+
+    :param path: Candidate file path.
+    :param roots: Trusted artifact directories, never record-supplied paths.
+    :return: Whether deletion is bounded to an owned directory.
     """
-    Remove process records (does not stop anything)
+    if os.path.islink(path) or not os.path.isfile(path):
+        return False
+    absolute = os.path.abspath(path)
+    resolved = os.path.realpath(path)
+    for root in roots:
+        boundary = os.path.abspath(root) + os.sep
+        if absolute.startswith(boundary) and resolved.startswith(boundary):
+            return True
+    return False
+
+
+def remove(proc_dir: str, proc_ids: List[str],
+           artifact_roots: Optional[List[str]] = None,
+           protected_qids: Optional[List[str]] = None) -> int:
+    """
+    Remove inactive records and their unshared, owned log files.
 
     :param proc_dir: str, the registry directory
     :param proc_ids: list of str, the process ids
+    :param artifact_roots: Additional trusted log directories, or None.
+    :param protected_qids: Retained queue IDs, None preserves scripts.
 
     :return: int, the number of records removed
     """
+    roots = [os.path.join(os.path.dirname(proc_dir), 'queue_gui_jobs')]
+    roots.extend(artifact_roots or [])
+    records = load_all(proc_dir)
+    jobs = [job for record in records
+            for job in record.get('slurm_jobs') or []]
+    slurm = slurm_states(jobs) if jobs else None
+    targets = set(proc_ids)
+    selected = []
+    for record in records:
+        if record['id'] not in targets:
+            continue
+        if proc_status(record, slurm) in ['running', 'pending', 'unknown']:
+            continue
+        selected.append(record)
     removed = 0
-    for proc_id in proc_ids:
-        path = _proc_path(proc_dir, proc_id)
-        if path is not None and os.path.exists(path):
+    deleted = []
+    for record in selected:
+        path = _proc_path(proc_dir, record['id'])
+        if path is None:
+            continue
+        try:
             os.remove(path)
-            removed += 1
+        except OSError:
+            continue
+        deleted.append(record)
+        removed += 1
+    retained = load_all(proc_dir)
+    protected = {os.path.realpath(path) for record in retained
+                 for path in log_files(record)
+                 + list(record.get('artifact_paths') or [])}
+    held = set(protected_qids or [])
+    held.update(qid for record in retained for qid in record.get('qids') or [])
+    for record in deleted:
+        paths = log_files(record)
+        known_queue = protected_qids is not None
+        shared_tasks = held.intersection(record.get('qids') or [])
+        if known_queue and not shared_tasks:
+            paths += list(record.get('artifact_paths') or [])
+        for path in paths:
+            if os.path.realpath(path) in protected:
+                continue
+            if owned_file(path, roots):
+                try:
+                    os.remove(path)
+                except OSError:
+                    continue
     return removed
 
 

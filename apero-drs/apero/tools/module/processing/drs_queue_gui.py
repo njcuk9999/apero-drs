@@ -610,7 +610,8 @@ def get_stats_data(params: ParamDict) -> Dict[str, Any]:
     with _STATS_READER.lock:
         tasks = list(_STATS_READER.tasks)
         samples = list(_STATS_READER.samples)
-    key = (stats_dir, len(tasks), len(samples))
+        revision = _STATS_READER.revision
+    key = (stats_dir, revision, len(tasks), len(samples))
     with _STATS_LOCK:
         if _STATS_CACHE.get('key') == key:
             return _STATS_CACHE['value']
@@ -725,7 +726,7 @@ def action_process(params: ParamDict, state: GuiState, op: str,
     :param params: ParamDict, the parameter dictionary of constants
     :param state: GuiState, the shared gui state (cancel event/log)
     :param op: str, 'stop' (ids), 'remove' (ids), 'clear_finished' or
-               'clear_all' (records only - nothing is stopped)
+               'clear_all' (inactive records and owned orphan artifacts)
     :param ids: list of str or None, the process ids
 
     :return: dict(success, message)
@@ -755,10 +756,31 @@ def action_process(params: ParamDict, state: GuiState, op: str,
             active = ['running', 'pending', 'unknown']
             targets = [row['id'] for row in data
                        if op == 'clear_all' or row['status'] not in active]
-        removed = drs_queue_procs.remove(proc_dir, targets)
-        message = 'Removed {0} process record(s)'.format(removed)
+        os.makedirs(drs_queue.get_queue_path(params), exist_ok=True)
+        with drs_queue.QueueLock(params):
+            records = [record for record in drs_queue_procs.load_all(proc_dir)
+                       if record['id'] in targets]
+            roots = drs_queue.process_artifact_roots(params)
+            queued = ['{group}/{run}'.format(**entry)
+                      for entry in drs_queue.list_queue_entries(params)]
+            removed = drs_queue_procs.remove(proc_dir, targets, roots, queued)
+            retained = drs_queue_procs.load_all(proc_dir)
+            kept_ids = {record['id'] for record in retained}
+            qids = [qid for record in records if record['id'] not in kept_ids
+                    for qid in record.get('qids') or []]
+            held = [qid for record in retained
+                    for qid in record.get('qids') or []]
+            drs_queue.cleanup_task_artifacts(params, qids, held)
+        margs = [removed, len(set(targets)) - removed]
+        message = textentry('40-513-00042', args=margs)
+        for channel, job in list(state.jobs.items()):
+            if not job.get('running') and not os.path.exists(job['path']):
+                del state.jobs[channel]
+                if state.job is job:
+                    state.job = None
+        state.data_version += 1
         state.add_message(message)
-        return dict(success=True, message=message)
+        return dict(success=removed == len(set(targets)), message=message)
     return dict(success=False, message='unknown process action: ' + str(op))
 
 
@@ -1050,6 +1072,10 @@ def action_reset(params: ParamDict, state: GuiState,
         states = list(drs_queue.QUEUE_SUB_DIRS)
     # do the reset (non-interactive core)
     n_removed = drs_queue.reset_queue(params, states, dry_run=dry_run)
+    if not dry_run:
+        state.data_version += 1
+        with _DETAIL_LOCK:
+            _DETAIL_CACHE.clear()
     # log the reset in the activity log
     if dry_run:
         message = 'Reset dry-run: would remove {0} entries from {1}'
@@ -1380,8 +1406,9 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
                                            stdin=stdin, env=env,
                                            cwd=os.path.expanduser('~'),
                                            start_new_session=True)
-                rkwargs = dict(cmd=display, pid=process.pid, owner='gui',
-                               log_paths=[log_path])
+                rkwargs: Dict[str, Any] = dict(cmd=display, pid=process.pid,
+                                               owner='gui',
+                                               log_paths=[log_path])
                 proc_id = drs_queue_procs.register(
                     drs_queue.get_proc_dir(params), kind.lower(), display,
                     **rkwargs)

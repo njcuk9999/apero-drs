@@ -55,3 +55,60 @@ def test_ppref_default_reaches_raw_file_lookup(
         module.__main__(recipe, params)
     boundary.assert_called_once_with(params, 'RAW_FLAT_FLAT',
                                      block_kind='raw', required=False)
+
+
+@pytest.mark.parametrize('instrument', ['NIRPS_HA', 'NIRPS_HE'])
+def test_ppref_led_flat_reference_dates(
+    monkeypatch: pytest.MonkeyPatch, instrument: str,
+) -> None:
+    """Reach LED creation using the current reference-date parameter names.
+
+    :param monkeypatch: Fixture replacing science, database, and file I/O.
+    :param instrument: NIRPS mode whose full PPREF orchestration is exercised.
+    :return: None.
+    """
+    params = get_base_params(instrument)
+    params['INPUTS'] = dict(FILETYPE=params['PP.REF_FILETYPE'])
+    params['OBS_DIR'] = 'test-night'
+    params['GLOBAL.PSNAPSHOT'] = False
+    module_name = ('apero.recipes.{0}.apero_pp_ref_{0}'
+                   .format(instrument.lower()))
+    module = importlib.import_module(module_name)
+    infile = mock.Mock()
+    infile.name = 'FLAT_FLAT'
+    infile.basename = 'test.fits'
+    recipe = mock.Mock()
+    outfile = mock.Mock()
+    outfile.filename = 'test_mask.fits'
+    recipe.outputs = dict(PP_REF=mock.Mock())
+    recipe.outputs['PP_REF'].newcopy.return_value = outfile
+    rawfile = mock.Mock()
+    rawfile.newcopy.return_value = infile
+    monkeypatch.setattr(module.drs_file, 'get_file_definition',
+                        mock.Mock(return_value=rawfile))
+    monkeypatch.setattr(module.drs_utils, 'find_files',
+                        mock.Mock(return_value=['test.fits']))
+    monkeypatch.setattr(module.drs_file, 'fix_header',
+                        mock.Mock(return_value=infile))
+    monkeypatch.setattr(module.drs_file, 'combine',
+                        mock.Mock(return_value=(infile,)))
+    database = mock.Mock()
+    monkeypatch.setattr(module.drs_database, 'CalibrationDatabase',
+                        mock.Mock(return_value=database))
+    monkeypatch.setattr(module, 'WLOG', mock.Mock())
+    monkeypatch.setattr(module.drs_startup, 'file_processing_update',
+                        mock.Mock())
+    mask_result = ([[1]], dict())
+    mask_result[1]['PP.PPM_MASK_NSIG'] = 3
+    monkeypatch.setattr(module.preprocessing, 'nirps_order_mask',
+                        mock.Mock(return_value=mask_result))
+    led_file = mock.Mock()
+    create_led = mock.Mock(return_value=led_file)
+    monkeypatch.setattr(module.preprocessing, 'create_led_flat', create_led)
+    module.__main__(recipe, params)
+    led_args = [params, recipe, module.file_definitions.raw_led_led,
+                module.file_definitions.raw_dark_dark,
+                params['REF.FIND_STARTDATE'], params['REF.FIND_ENDDATE'],
+                params['REF.FIND_TIMECOL']]
+    create_led.assert_called_once_with(*led_args)
+    database.add_calib_file.assert_any_call(led_file)

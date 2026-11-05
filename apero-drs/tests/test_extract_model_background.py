@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for APERO model-background extraction wrappers."""
 
+import ast
+from pathlib import Path
+
 import numpy as np
+import pytest
 
 from aperocore.constants import param_functions
 from apero.science.extract import model_background
@@ -16,20 +20,61 @@ ParamDict = param_functions.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
+@pytest.mark.parametrize('instrument', ['spirou', 'nirps_ha', 'nirps_he'])
+def test_flat_response_recipe_uses_extracted_file(instrument: str) -> None:
+    """Keep flat-response recipe inputs aligned with file definitions.
+
+    :param instrument: Instrument whose extraction recipe is checked.
+    :return: None.
+    """
+    recipe_root = Path(__file__).parents[1] / 'apero' / 'recipes'
+    recipe_path = recipe_root / instrument / f'apero_extract_{instrument}.py'
+    recipe_tree = ast.parse(recipe_path.read_text())
+    response_calls = [node for node in ast.walk(recipe_tree)
+                      if isinstance(node, ast.Call)
+                      and isinstance(node.func, ast.Attribute)
+                      and node.func.attr == 'write_flat_response']
+    assert len(response_calls) == 1
+    input_node = response_calls[0].args[2]
+    assert isinstance(input_node, ast.Name)
+    assert input_node.id == 'e2dsfile'
+
+
 def test_calculate_snr_matches_numpy_exactly() -> None:
     """The optimized SNR reduction must preserve NumPy's exact values."""
     e2dsff = np.arange(8 * 16, dtype=float).reshape(8, 16) + 1.0
     e2dsff_err = np.linspace(1.0, 3.0, 8 * 16).reshape(8, 16)
     e2dsff[2, ::3] = np.nan
     e2dsff_err[4, ::4] = np.nan
-    e2dsff_err[3, 5] = 0.0
+    e2dsff_err[3, 7] = 0.0
     with np.errstate(divide='ignore', invalid='ignore'):
         expected = np.nanmedian(
-            e2dsff[2:6] / e2dsff_err[2:6], axis=1)
+            e2dsff[:, 6:10] / e2dsff_err[:, 6:10], axis=1)
 
     actual = gen_ext.calculate_snr(e2dsff, e2dsff_err, blaze_width=2)
 
+    assert actual.shape == (8,)
     assert np.array_equal(actual, expected, equal_nan=True)
+
+
+def test_calculate_snr_preserves_nirps_orders() -> None:
+    """Use central pixels for all 75 orders and clip oversized windows.
+
+    :return: None.
+    """
+    order_values = np.arange(75, dtype=float) + 1.0
+    e2dsff = np.full((75, 8176), 10000.0)
+    e2dsff[:, 3988:4188] = order_values[:, None]
+    e2dsff_err = np.full(e2dsff.shape, 2.0)
+
+    actual = gen_ext.calculate_snr(e2dsff, e2dsff_err, blaze_width=100)
+
+    assert actual.shape == (75,)
+    np.testing.assert_array_equal(actual, order_values / 2.0)
+
+    full_window = gen_ext.calculate_snr(e2dsff, e2dsff_err, blaze_width=5000)
+    expected = np.nanmedian(e2dsff / e2dsff_err, axis=1)
+    np.testing.assert_array_equal(full_window, expected)
 
 
 def test_model_background_correction_returns_expected_props(

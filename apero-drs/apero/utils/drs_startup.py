@@ -1722,6 +1722,7 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
         title += '  git:' + params['GIT_BRANCH']
     # print the time now
     title += f'\n  Time now {Time.now().iso}'
+    title += f'\n  DRS_UCONFIG: {os.environ.get("DRS_UCONFIG", "Not set")}'
     title += colors.ENDC
     # Log title
     _display_title(params, title, group, printonly, logonly)

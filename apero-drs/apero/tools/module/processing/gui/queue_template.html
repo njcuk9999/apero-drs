@@ -46,6 +46,8 @@ body { font-family: sans-serif; margin: 0; background: #f1f4f8;
                        margin-right: 8px; }
 .summary .summary-btn:hover { filter: brightness(0.95); }
 .summary .s-pending { background: #e6a817; color: #fff; }
+.summary .s-all { background: #52657a; color: #fff; }
+.summary .task-btn.s-all { color: #52657a; border-color: #52657a; }
 .summary .s-running { background: #2a7de1; color: #fff; }
 .summary .s-complete { background: #2e9e4f; color: #fff; }
 .summary .s-failed { background: #d33c3c; color: #fff; }
@@ -147,7 +149,7 @@ tr.failed { background: #fadddd; }
 .summary-card { display: flex; align-items: center; gap: 10px;
                 flex-wrap: wrap; }
 .summary { display: grid; align-items: center;
-           grid-template-columns: auto repeat(4, max-content);
+           grid-template-columns: auto repeat(5, max-content);
            column-gap: 8px; row-gap: 6px; }
 .summary .summary-btn { margin-right: 0; text-align: left; }
 .summary-label { font-size: 12px; font-weight: bold;
@@ -1344,7 +1346,7 @@ initNavigation();
 function setSingleStateFilter(state) {
     var states = ['pending', 'running', 'complete', 'failed'];
     states.forEach(function (name) {
-        activeStates[name] = (name === state);
+        activeStates[name] = (state === 'all' || name === state);
     });
     states.forEach(function (name) {
         var btn = document.querySelector(
@@ -1661,11 +1663,11 @@ function nextPage() {
     }
 }
 
-function summaryRow(label, kind, counts, unit, btnClass) {
-    // label + 4 buttons are cells of one grid shared by both rows
+function summaryRow(label, kind, counts, unit, btnClass, total) {
     var html = '<span class="summary-label">' + label + '</span>';
-    ['pending', 'running', 'complete', 'failed'].forEach(function (state) {
-        var count = counts[state] || 0;
+    ['all', 'pending', 'running', 'complete', 'failed']
+    .forEach(function (state) {
+        var count = state === 'all' ? total : (counts[state] || 0);
         html += '<button type="button" class="summary-btn ' + btnClass +
                 ' s-' + state + '" onclick="gotoStatusFilter(\'' + state +
                 '\', \'' + kind + '\')">' + state.toUpperCase() + ': ' +
@@ -1683,9 +1685,9 @@ function renderSummary() {
         });
     });
     var html = summaryRow('Groups', 'group', groupCounts, 'group',
-                          'group-btn') +
+                          'group-btn', groupData.length) +
                summaryRow('Tasks', 'individual', statusCounts, 'task',
-                          'task-btn');
+                          'task-btn', allData.length);
     document.getElementById('summary-control').innerHTML = html;
     document.getElementById('summary-status').innerHTML = html;
 }

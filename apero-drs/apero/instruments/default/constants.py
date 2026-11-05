@@ -5505,6 +5505,15 @@ CDict.add('WAVEREF_EXPECTED', value=False,
                       'expected vs measured debug plot'
                       '(will plot once for hc once for fp)')
 
+# turn on the wave lines "what went wrong" debug plot (guesses and fits
+#  for every order with fewer than 50% of the expected lines found)
+CDict.add('WAVE_ORD_BAD', value=False,
+          dtype=bool, source=__NAME__, user=True,
+          active=False, group=cgroup,
+          description='turn on the wave lines "what went wrong" debug '
+                      'plot (guesses and fits for every order with '
+                      'fewer than 50% of the expected lines found)')
+
 # turn on the FP peak-number correction residual debug plot
 CDict.add('WAVE_FP_COUNT_CORR', value=False,
           dtype=bool, source=__NAME__, user=True,

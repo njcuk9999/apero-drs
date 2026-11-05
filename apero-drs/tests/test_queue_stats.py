@@ -1,5 +1,9 @@
 """Tests for the APERO queue task statistics (Stats tab)."""
 import sys
+import json
+import os
+from pathlib import Path
+from typing import Any
 
 from apero.tools.module.processing import drs_queue_gui
 from apero.tools.module.processing import drs_queue_stats as stats
@@ -8,6 +12,82 @@ from apero.tools.module.processing import drs_queue_stats as stats
 CHILD = ('import time; data = bytearray(50 * 1024 * 1024); '
          'end = time.time() + 1.5\n'
          'while time.time() < end: sum(range(1000))')
+
+
+def test_reader_rewrite_and_delete(tmp_path: Path) -> None:
+    """Rebuild cached records after atomic replacement and deletion.
+
+    :param tmp_path: Temporary stats directory.
+    :return: None.
+    """
+    path = tmp_path / 'tasks-test.jsonl'
+    path.write_text(json.dumps(dict(qid='G/R1')) + '\n')
+    reader = stats.StatsReader()
+    reader.update(str(tmp_path))
+    replacement = tmp_path / 'replacement'
+    replacement.write_text(json.dumps(dict(qid='G/R2')) + '\n')
+    replacement.replace(path)
+    reader.update(str(tmp_path))
+    assert [task['qid'] for task in reader.tasks] == ['G/R2']
+    previous = path.stat()
+    path.write_text(json.dumps(dict(qid='G/R3')) + '\n')
+    os.utime(path, ns=(previous.st_atime_ns, previous.st_mtime_ns + 1000000))
+    reader.update(str(tmp_path))
+    assert [task['qid'] for task in reader.tasks] == ['G/R3']
+    path.write_text('')
+    reader.update(str(tmp_path))
+    assert reader.tasks == []
+    path.unlink()
+    reader.update(str(tmp_path))
+    assert reader.tasks == []
+
+
+def test_remove_exact_qids_from_shared_stores(tmp_path: Path) -> None:
+    """Filtering preserves other tasks, malformed lines, and reader state.
+
+    :param tmp_path: Temporary stats directory.
+    :return: None.
+    """
+    for prefix in [stats.TASK_PREFIX, stats.SAMPLE_PREFIX]:
+        path = tmp_path / (prefix + 'shared.jsonl')
+        rows = [dict(qid='G/R1'), dict(qid='G/R10')]
+        path.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    reader = stats.StatsReader()
+    reader.update(str(tmp_path))
+    stats.remove_qids(str(tmp_path), ['G/R1'])
+    reader.update(str(tmp_path))
+    assert [row['qid'] for row in reader.tasks] == ['G/R10']
+    assert [row['qid'] for row in reader.samples] == ['G/R10']
+    malformed = tmp_path / 'tasks-broken.jsonl'
+    malformed.write_bytes(b'not json\n{"qid":')
+    stats.remove_qids(str(tmp_path), ['G/R10'])
+    reader.update(str(tmp_path))
+    assert reader.tasks == reader.samples == []
+    assert malformed.read_bytes() == b'not json\n{"qid":'
+    assert not (tmp_path / 'tasks-shared.jsonl').exists()
+
+
+def test_gui_cache_notices_same_count_rewrite(tmp_path: Path,
+                                             monkeypatch: Any) -> None:
+    """Replacing one task with one other task invalidates aggregation.
+
+    :param tmp_path: Temporary stats root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path))
+    directory = tmp_path / 'output' / 'stats'
+    directory.mkdir(parents=True)
+    path = directory / 'tasks-cache.jsonl'
+    row = dict(qid='G/R1', start=1, end=2)
+    path.write_text(json.dumps(row) + '\n')
+    assert drs_queue_gui.get_stats_data(None)['tasks']['qid'] == ['G/R1']
+    row['qid'] = 'G/R2'
+    replacement = directory / 'replacement'
+    replacement.write_text(json.dumps(row) + '\n')
+    replacement.replace(path)
+    assert drs_queue_gui.get_stats_data(None)['tasks']['qid'] == ['G/R2']
 
 
 def test_monitor_wrapper_records_task_and_samples(tmp_path):

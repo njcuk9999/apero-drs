@@ -25655,6 +25655,35 @@ item.comment = 'Used in: tools/module/processing/drs_queue.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00042
+# =============================================================================
+item = langlist.create('40-513-00042', kind='all-code')
+item.value['ENG'] = ('Removed {0} process record(s); retained {1} active, '
+                     'unknown or unavailable record(s). Nothing was stopped.')
+item.value['FR'] = ('{0} processus retires ; {1} actifs, inconnus ou '
+                    'indisponibles conserves. Aucun processus arrete.')
+item.value['ES'] = ('{0} procesos eliminados; {1} activos, desconocidos o '
+                    'no disponibles conservados. Ningun proceso detenido.')
+item.arguments = '{0}=removed, {1}=retained'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00043
+# =============================================================================
+item = langlist.create('40-513-00043', kind='all-code')
+item.value['ENG'] = ('Queue cleanup preserved {0} active, unknown or unsafe '
+                     'entries. Nothing was stopped.')
+item.value['FR'] = ('Nettoyage : {0} entrees actives, inconnues ou non sures '
+                    'conservees. Aucun processus arrete.')
+item.value['ES'] = ('Limpieza: {0} entradas activas, desconocidas o inseguras '
+                    'conservadas. Ningun proceso detenido.')
+item.arguments = '{0}=retained'
+item.comment = ('Used in: tools/module/processing/drs_queue.py, '
+                'tools/module/setup/drs_reset.py')
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')

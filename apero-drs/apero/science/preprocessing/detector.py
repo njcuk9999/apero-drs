@@ -788,7 +788,7 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe,
     WLOG(params, '', textentry('40-010-00038'))
     # only keep 10 LED files (uniformly distributed in time)
     time_mask = drs_utils.uniform_time_list(led_times, 10)
-    led_files = raw_led_files[time_mask]
+    led_files = np.array(raw_led_files)[time_mask]
     infiles = np.array(infiles)[time_mask]
     # get cube and led table
     cube, led_table = construct_led_cube(params, led_files, ref_dark)

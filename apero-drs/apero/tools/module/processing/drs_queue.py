@@ -1759,11 +1759,78 @@ def queue_status(params: ParamDict) -> None:
                 position = position + rows
 
 
+def active_processes(params: ParamDict) -> List[Dict[str, Any]]:
+    """Find live or unverifiable registered work without stopping it.
+
+    :param params: Queue profile parameters.
+    :return: Active or unknown process records.
+    """
+    records = drs_queue_procs.load_all(get_proc_dir(params))
+    jobs = [job for record in records
+            for job in record.get('slurm_jobs') or []]
+    slurm = drs_queue_procs.slurm_states(jobs) if jobs else None
+    return [record for record in records
+            if drs_queue_procs.proc_status(record, slurm)
+            in ['running', 'pending', 'unknown']]
+
+
+def cleanup_task_artifacts(params: ParamDict, qids: List[str],
+                           protected_qids: List[str]) -> None:
+    """Delete inaccessible task logs and exact task statistics.
+
+    :param params: Queue profile parameters.
+    :param qids: Removed task identifiers.
+    :param protected_qids: Task IDs still referenced by process records.
+    :return: None.
+    """
+    queue_path = get_queue_path(params)
+    retained = set(protected_qids)
+    retained.update('{group}/{run}'.format(**entry)
+                    for entry in list_queue_entries(params))
+    targets = []
+    root = os.path.join(queue_path, QUEUE_TASK_LOGS_DIR)
+    for qid in set(qids) - retained:
+        parts = str(qid).split('/')
+        if len(parts) != 2 or any(part in ['', '.', '..'] for part in parts):
+            continue
+        group, run_file = parts
+        path = get_task_log_path(queue_path, group, run_file)
+        if drs_queue_procs.owned_file(path, [root]):
+            try:
+                os.remove(path)
+                os.rmdir(os.path.dirname(path))
+            except OSError:
+                pass
+        targets.append(qid)
+    stats_dir = get_stats_dir(queue_path)
+    if os.path.realpath(stats_dir) == os.path.abspath(stats_dir):
+        drs_queue_stats.remove_qids(stats_dir, targets)
+
+
+def process_artifact_roots(params: ParamDict) -> List[str]:
+    """Get trusted Slurm log roots without trusting registry paths.
+
+    :param params: Queue profile parameters.
+    :return: Owned batch and chain artifact directories.
+    """
+    queue_path = get_queue_path(params)
+    roots = [os.path.join(queue_path, QUEUE_LOGS_DIR),
+             os.path.join(queue_path, QUEUE_ERRORS_DIR),
+             os.path.join(queue_path, QUEUE_SCRIPTS_DIR)]
+    chain_root = get_chain_root(params)
+    if os.path.isdir(chain_root):
+        for name in os.listdir(chain_root):
+            if not name.startswith(QUEUE_CHAIN_PREFIX + '-'):
+                continue
+            roots.append(os.path.join(chain_root, name))
+    return roots
+
+
 def reset_queue(params: ParamDict, states: List[str],
                 dry_run: bool = False) -> int:
     """
-    Reset the queue (non-interactive core): remove all run yaml files
-    (and group directories) from the given queue state directories
+    Remove selected inactive queue entries and their orphaned artifacts.
+    Running entries and tasks held by active processes are preserved.
 
     Note: this function does NOT ask for confirmation - it is used by
     queue_reset (cli, which asks first) and by the gui/flask (which
@@ -1776,35 +1843,40 @@ def reset_queue(params: ParamDict, states: List[str],
 
     :return: int, the number of entries removed (or that would be removed)
     """
-    # get the queue path
     queue_path = get_queue_path(params)
-    # count what we are about to remove
-    entries = list_queue_entries(params, states=states)
-    # deal with nothing to reset
-    if len(entries) == 0:
+    if not os.path.isdir(queue_path):
         return 0
-    # dry-run only reports counts and leaves queue untouched
-    if dry_run:
-        return len(entries)
-    # -------------------------------------------------------------------------
-    # remove the group directories in the selected states
+    states = [state for state in states if state in QUEUE_SUB_DIRS]
     with QueueLock(params):
-        for state in states:
-            # construct the state directory path
-            state_path = os.path.join(queue_path, state)
-            # skip states that do not exist
-            if not os.path.isdir(state_path):
+        active = active_processes(params)
+        held = [qid for record in active for qid in record.get('qids') or []]
+        entries = list_queue_entries(params, states=states)
+        selected = []
+        for entry in entries:
+            qid = '{group}/{run}'.format(**entry)
+            if entry['state'] == QUEUE_RUNNING_DIR or qid in held:
                 continue
-            # loop around group directories and remove them
-            for group in os.listdir(state_path):
-                # only remove queue group directories
-                if not group.startswith('APERO-QUEUE-GROUP-'):
-                    continue
-                # remove the group directory (and all its yaml files)
-                shutil.rmtree(os.path.join(state_path, group),
-                              ignore_errors=True)
-    # return the number of entries removed
-    return len(entries)
+            root = os.path.join(queue_path, entry['state'])
+            if drs_queue_procs.owned_file(entry['path'], [root]):
+                selected.append(entry)
+        skipped = len(entries) - len(selected)
+        if skipped:
+            WLOG(params, 'warning', textentry('40-513-00043', args=[skipped]))
+        if dry_run:
+            return len(selected)
+        removed = []
+        for entry in selected:
+            try:
+                os.remove(entry['path'])
+            except OSError:
+                continue
+            removed.append('{group}/{run}'.format(**entry))
+            try:
+                os.rmdir(os.path.dirname(entry['path']))
+            except OSError:
+                pass
+        cleanup_task_artifacts(params, removed, held)
+    return len(removed)
 
 
 def queue_reset(params: ParamDict) -> None:
@@ -2123,8 +2195,9 @@ def batch_queue(params: ParamDict, per_batch: int,
             qids = ['{0}/{1}'.format(group, run_file)
                     for run_file in claimed_runs]
             label = 'batch {0} ({1} job(s))'.format(group, len(job_ids))
-            rkwargs = dict(log_globs=log_globs, slurm_jobs=job_ids,
-                           qids=qids)
+            rkwargs: Dict[str, Any] = dict(log_globs=log_globs,
+                                           slurm_jobs=job_ids, qids=qids,
+                                           artifact_paths=summary['scripts'])
             drs_queue_procs.register(get_proc_dir(params), 'batch', label,
                                      **rkwargs)
     # -------------------------------------------------------------------------
@@ -2677,8 +2750,14 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
                     for group in grouped_runs
                     for run_file in grouped_runs[group]]
             label = '{0} ({1} group(s))'.format(chain_name, len(worker_meta))
-            rkwargs = dict(cmd='bash ' + submit_path, log_globs=log_globs,
-                           slurm_jobs=job_ids, qids=qids)
+            artifact_paths = [submit_path] + list(summary['workers'])
+            for directory, _, filenames in os.walk(tasks_dir):
+                artifact_paths.extend(os.path.join(directory, name)
+                                      for name in filenames)
+            rkwargs: Dict[str, Any] = dict(cmd='bash ' + submit_path,
+                                           log_globs=log_globs,
+                                           slurm_jobs=job_ids, qids=qids,
+                                           artifact_paths=artifact_paths)
             drs_queue_procs.register(get_proc_dir(params), 'chain', label,
                                      **rkwargs)
             summary['message'] = ('Chain created and submitted: {0} '

@@ -576,6 +576,14 @@ WAVEREF_EXPECTED:
   figsize:
   - 6.4
   - 4.8
+WAVE_ORD_BAD:
+  kind: debug
+  func: plot_functions.plot_wave_ord_bad
+  dpi: 100
+  description: WAVE_ORD_BAD
+  figsize:
+  - 16
+  - 12
 WAVE_FP_COUNT_CORR:
   kind: debug
   func: plot_functions.plot_wave_fp_count_corr

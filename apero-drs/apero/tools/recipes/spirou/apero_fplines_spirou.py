@@ -60,6 +60,8 @@ get_ext_fplines.set_arg(name='files', dtype='files', pos='1+',
                         helpstr=(textentry('FILES_HELP') +
                                  'Currently allowed types: E2DS, E2DSFF'))
 get_ext_fplines.set_outputs(EXT_FPLINES=FMOD.files.out_ext_fplines)
+# calc_wave_lines (via extract.ref_fplines) can plot bad-order diagnostics
+get_ext_fplines.set_debug_plots('WAVE_ORD_BAD')
 # add recipe to recipe definition
 RMOD.add(get_ext_fplines)
 

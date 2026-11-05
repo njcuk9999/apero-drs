@@ -1170,7 +1170,9 @@ CDict.set('CAVITY_FIT_ITRS1', value=3, source=__NAME__, author='EA', group=cgrou
 CDict.set('ORDER_OFFSET_ITRS', value=2, source=__NAME__, author='EA', group=cgroup)
 
 # Define the maximum bulk offset of lines in an order can have
-CDict.set('MAX_ORDER_BULKOFFSET', value=10, source=__NAME__, author='EA', group=cgroup)
+# Note: was 10 before 2x extraction sampling
+CDict.set('MAX_ORDER_BULKOFFSET', value=20, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the required precision that the cavity width change must converge
 # to (will be a fraction of the error)
@@ -1248,10 +1250,13 @@ CDict.set('NSIG_MIN_HC', value=3, source=__NAME__, author='EA', group=cgroup)
 CDict.set('NSIG_MIN_FP', value=3, source=__NAME__, author='EA', group=cgroup)
 
 # minimum distance to the edge of the array to consider a line
-CDict.set('REF_EDGE_WMAX', value=20, source=__NAME__, author='EA', group=cgroup)
+# Note: was 20 before 2x extraction sampling
+CDict.set('REF_EDGE_WMAX', value=40, source=__NAME__, author='EA', group=cgroup)
 
 # value in pixel (+/-) for the box size around each HC line to perform fit
-CDict.set('REF_HC_BOXSIZE', value=13, source=__NAME__, author='EA', group=cgroup)
+# Note: was 13 before 2x extraction sampling
+CDict.set('REF_HC_BOXSIZE', value=26, source=__NAME__,
+          author='EA', group=cgroup)
 
 # get valid hc dprtypes
 CDict.set('REF_HC_FIBTYPES', value=['HCONE', 'HCTWO'], source=__NAME__, group=cgroup)
@@ -1272,7 +1277,9 @@ CDict.set('REF_FP_NHIGH', value=30000, source=__NAME__, author='EA', group=cgrou
 CDict.set('REF_FP_POLYINV', value=4, source=__NAME__, author='EA', group=cgroup)
 
 # Define the guess HC exponential width [pixels]
-CDict.set('REF_HC_GUESS_EWID', value=1, source=__NAME__, author='EA', group=cgroup)
+# Note: was 1 before 2x extraction sampling
+CDict.set('REF_HC_GUESS_EWID', value=2, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the fiber offset (in pixels) away from reference fiber
 CDict.set('FIBER_OFFSET_MOD',
@@ -1418,7 +1425,8 @@ CDict.set('MODE', value=0, source=__NAME__, author='EA',
 
 # width of the box for fitting HC lines. Lines will be fitted from -W to +W,
 # so a 2*W+1 window
-CDict.set('HC_FITBOX_SIZE', value=6, source=__NAME__, author='EA', group=cgroup)
+# Note: was 6 before 2x extraction sampling
+CDict.set('HC_FITBOX_SIZE', value=12, source=__NAME__, author='EA', group=cgroup)
 
 # number of sigma above local RMS for a line to be flagged as such
 CDict.set('FITBOX_SIGMA', value=2.0, source=__NAME__, author='EA', group=cgroup)
@@ -1434,10 +1442,12 @@ CDict.set('FITBOX_RMS_DEVMAX', value=0.2, source=__NAME__,
           author='EA', group=cgroup)
 
 # the e-width of the line expressed in pixels.
-CDict.set('FITBOX_EWMIN', value=1.0, source=__NAME__,
-          author='EA', group=cgroup)  # 0.7
-CDict.set('FITBOX_EWMAX', value=3.0, source=__NAME__,
-          author='EA', group=cgroup)  # 1.1
+# Note: was 1.0 before 2x extraction sampling
+CDict.set('FITBOX_EWMIN', value=2.0, source=__NAME__,
+          author='EA', group=cgroup)
+# Note: was 3.0 before 2x extraction sampling
+CDict.set('FITBOX_EWMAX', value=6.0, source=__NAME__,
+          author='EA', group=cgroup)
 
 # Define the file type for saving the initial guess at the hc peak list
 CDict.set('LL_FILEFMT', value='ascii.rst', source=__NAME__,
@@ -1599,7 +1609,8 @@ CDict.set('DOPD0', value=2.4e7, source=__NAME__, group=cgroup)
 CDict.set('CAVFIT_DEG', value=9, source=__NAME__, group=cgroup)
 
 # Define the FP jump size that is too large
-CDict.set('LARGE_JUMP', value=250, source=__NAME__, group=cgroup)
+# Note: was 250 before 2x extraction sampling
+CDict.set('LARGE_JUMP', value=500, source=__NAME__, group=cgroup)
 
 # Index of FP line to start order cross-matching from
 CDict.set('CROSSM_INDEX', value=-2, source=__NAME__, group=cgroup)
@@ -2401,6 +2412,10 @@ CDict.set('WAVE_SLINKY_FIT', value=True, source=__NAME__, group=cgroup)
 # turn on the wave lines hc/fp expected vs measured debug plot
 # (will plot once for hc once for fp)
 CDict.set('WAVEREF_EXPECTED', value=True, source=__NAME__, group=cgroup)
+
+# turn on the wave lines "what went wrong" debug plot (guesses and fits
+#  for every order with fewer than 50% of the expected lines found)
+CDict.set('WAVE_ORD_BAD', value=True, source=__NAME__, group=cgroup)
 
 # turn on the FP peak-number correction residual debug plot
 CDict.set('WAVE_FP_COUNT_CORR', value=True, source=__NAME__, group=cgroup)

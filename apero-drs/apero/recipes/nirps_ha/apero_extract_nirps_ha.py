@@ -369,7 +369,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 resp_data = flat_response.get(fiber)
                 if resp_data is not None:
                     resp_file = flat_blaze.write_flat_response(
-                        params, recipe, infile, resp_data, fiber)
+                        params, recipe, e2dsfile, resp_data, fiber)
                     # add to calibDB so get_flat_response can retrieve it
                     if params['INPUTS']['DATABASE']:
                         calibdbm.add_calib_file(resp_file)

@@ -1090,6 +1090,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     period_meas = np.full(length, np.nan)
     shape_meas = np.full(length, np.nan)
     offset_meas = np.full(length, np.nan)
+    # storage of the per-order guess/fit history (for WAVE_ORD_BAD plot)
+    ord_fit_dict = dict()
     # ----------------------------------------------------------------------
     # TODO: this loop is super slow
     # loop around orders
@@ -1106,9 +1108,17 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # value by fitting wavelength to pixel
         owave = wavemap[order_num]
         # ------------------------------------------------------------------
+        # storage of every line attempt in this order (for debug plot)
+        order_lines = []
         # loop around lines
         valid_lines = 0
         for it in range(len(order_waves)):
+            # record of this line attempt (status updated as we go)
+            line_rec = dict(xref=order_pixels[it], wref=order_waves[it],
+                            wfit=order_wfit[it], index=None, ypix=None,
+                            guess=None, popt=None, model=None, cond1=False,
+                            cond2=False, nsig=np.nan, status='unknown')
+            order_lines.append(line_rec)
             # get the x pixel position
             xpixi = int(np.round(order_pixels[it]))
             # get the width
@@ -1122,9 +1132,14 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 #     {1} \n pixel vals = {2} \n pixel cent = {3} width = {4} \n
                 #     Function = {5}
                 WLOG(params, 'debug', textentry('09-017-00005', args=eargs))
+                # flag line as falling off the edge of the order
+                line_rec['status'] = 'out_of_bounds'
                 continue
             # get the flux value in this peak
             ypix = sorder[index]
+            # keep the fitted window for the debug plot
+            line_rec['index'] = np.array(index)
+            line_rec['ypix'] = np.array(ypix)
             # deal with less points than fit (shouldn't happen but worth
             #    catching before an exception happens in fit_gauss_with_slope)
             if len(ypix) < 5:
@@ -1134,8 +1149,13 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                 #     = {3} \n Function = {4}
                 WLOG(params, 'warning', textentry('09-017-00006', args=eargs),
                      sublevel=4)
+                # flag line as having too few pixels to fit
+                line_rec['status'] = 'too_few_points'
                 continue
             # --------------------------------------------------------------
+            # flag lines with NaNs in the window (these are never fit)
+            if not np.all(np.isfinite(ypix)):
+                line_rec['status'] = 'non_finite'
             # only continue if we have all finite values
             if np.all(np.isfinite(ypix)):
                 # try fitting a gaussian with a slope
@@ -1153,6 +1173,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         #   [amplitude, mean position, FWHM, DC, slope]
                         guess = [ymax - ymin, index[posmax], guess_hc_ewid,
                                  ymin, 0]
+                        # keep the guess (before the fit can fail)
+                        line_rec['guess'] = list(guess)
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
@@ -1165,6 +1187,8 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                                                     return_model=True)
                         # get parameters from fit
                         p0, popt, pcov, warns, model = out
+                        # keep the guess used by the airy fit
+                        line_rec['guess'] = list(p0)
                         # force popt[0] to positive
                         popt[0] = abs(popt[0])
                         # get width condition
@@ -1173,6 +1197,25 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     rms = mp.nanstd(ypix - model)
                     # if we find 'good' values add to storage
                     cond1 = np.abs(popt[1] - xpixi) < wfit
+                    # keep the fit and the conditions for the debug plot
+                    line_rec['popt'] = np.array(popt)
+                    line_rec['model'] = np.array(model)
+                    line_rec['cond1'] = bool(cond1)
+                    line_rec['cond2'] = bool(cond2)
+                    # significance of the fit (recorded even if rejected)
+                    with warnings.catch_warnings(record=True) as _:
+                        line_rec['nsig'] = np.abs(popt[0]) / rms
+                    # flag why the line was (or was not) accepted
+                    if not np.all(np.isfinite(popt)):
+                        line_rec['status'] = 'fit_nan'
+                    elif not cond1 and not cond2:
+                        line_rec['status'] = 'fail_pos_width'
+                    elif not cond1:
+                        line_rec['status'] = 'fail_pos'
+                    elif not cond2:
+                        line_rec['status'] = 'fail_width'
+                    else:
+                        line_rec['status'] = 'valid'
                     if cond1 and cond2:
                         amp[good[it]] = popt[0]
                         pixel_m[good[it]] = popt[1]
@@ -1195,7 +1238,15 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         valid_lines += 1
                 # ignore any bad lines
                 except RuntimeError:
-                    pass
+                    # flag that the least-squares fit did not converge
+                    line_rec['status'] = 'fit_error'
+        # ------------------------------------------------------------------
+        # store the guess/fit history of this order for the debug plot
+        ord_fit_dict[order_num] = dict(flux=np.array(sorder),
+                                       wave=np.array(owave),
+                                       lines=order_lines,
+                                       valid_lines=valid_lines,
+                                       n_expected=len(order_waves))
         # log that we skippec an order
         if order_num in remove_orders:
             # log we are skipping order: Skipped Order {0}
@@ -1228,6 +1279,40 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # calculate the difference
     diffpix = pixel_m - list_pixels
     diffvelo = speed_of_light_ms * (1 - (wave_m / list_waves))
+
+    # ----------------------------------------------------------------------
+    # plot that loops through orders and plots the measured lines vs the
+    # expected lines (for orders with <50% found)
+    # ----------------------------------------------------------------------
+    # input parameters that control the line list / fit (per fiber type)
+    if fibtype in hcfibtypes:
+        ob_params = {'CAL.WAVE.LL.REF_HC_BOXSIZE': hcboxsize,
+                     'CAL.WAVE.LL.REF_HC_GUESS_EWID': guess_hc_ewid,
+                     'CAL.WAVE.LL.NSIG_MIN_HC': nsig_min_hc,
+                     'CAL.WAVE.LL.REF_FITDEG': fitdeg,
+                     'CAL.WAVE.LL.REF_EDGE_WMAX': wmax,
+                     'CAL.WAVE.GEN.REMOVE_ORDERS': remove_orders}
+    else:
+        ob_params = {'CAL.WAVE.LL.NSIG_MIN_FP': nsig_min_fp,
+                     'CAL.WAVE.LL.REF_FP_NLOW': fp_nlow,
+                     'CAL.WAVE.LL.REF_FP_NHIGH': fp_nhigh,
+                     'CAL.WAVE.LL.REF_FP_POLYINV': fp_inv_itr,
+                     'CAL.WAVE.FP.CAVFIT_DEG': cfitdeg,
+                     'CAL.WAVE.FP.DOPD0': cavity_pedestal,
+                     'CAL.WAVE.GEN.CAVITY_FIT_ITRS2': cavity_fit_iterations2,
+                     'CAL.WAVE.LL.REF_EDGE_WMAX': wmax,
+                     'CAL.WAVE.GEN.REMOVE_ORDERS': remove_orders}
+    # flag whether the line list was supplied or computed here
+    if hclines is not None or fplines is not None:
+        ob_params['line list source'] = 'input table'
+    else:
+        ob_params['line list source'] = 'computed'
+    obkwargs = dict(ord_fit_dict=ord_fit_dict, fiber=fiber, fibtype=fibtype,
+                    is_hc=fibtype in hcfibtypes, hc_ewid=guess_hc_ewid,
+                    nsig_min=nsig_min, iteration=iteration, frac_min=0.5,
+                    fit_params=ob_params)
+    recipe.plot('WAVE_ORD_BAD', **obkwargs)
+
     # ----------------------------------------------------------------------
     # Plot the expected lines vs measured line positions
     # ----------------------------------------------------------------------

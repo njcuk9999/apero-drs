@@ -805,41 +805,36 @@ def reset_queue(params: ParamDict, log: bool = True) -> None:
     :return: None, resets the queue directory
     """
     queue_path = drs_queue.get_queue_path(params)
+    os.makedirs(queue_path, exist_ok=True)
     keep = [drs_queue.QUEUE_BATCH_TEMPLATE_DIR,
-            drs_queue.QUEUE_BATCH_TEMPLATE]
-    # warn that running tasks will lose their queue entries
-    running = drs_queue.list_queue_entries(
-        params, states=[drs_queue.QUEUE_RUNNING_DIR])
-    if len(running) > 0:
-        wargs = [len(running)]
-        # warning: Queue has {0} running entries - any task still running will
-        #     no longer be tracked by the queue
-        WLOG(params, 'warning', textentry('10-502-00011', args=wargs),
-             sublevel=2)
-    # remove everything in the queue directory except the templates
-    if os.path.exists(queue_path):
+            drs_queue.QUEUE_BATCH_TEMPLATE, drs_queue.QUEUE_LOCK_FILE]
+    with drs_queue.QueueLock(params):
+        running = drs_queue.list_queue_entries(
+            params, states=[drs_queue.QUEUE_RUNNING_DIR])
+        active = [record for record in drs_queue.active_processes(params)
+                  if record.get('kind') != 'reset']
+        if running or active:
+            wargs = [len(running) + len(active)]
+            WLOG(params, 'warning', textentry('40-513-00043', args=wargs))
+            return
         for name in sorted(os.listdir(queue_path)):
             if name in keep:
                 continue
             path = os.path.join(queue_path, name)
             if log:
                 margs = [path]
-                # log: Removing: {0}
                 WLOG(params, '', textentry('40-502-00030', args=margs))
             if os.path.isdir(path) and not os.path.islink(path):
                 shutil.rmtree(path, ignore_errors=True)
             else:
                 os.remove(path)
-    # chain scripts point at queue entries that no longer exist
-    chain_root = drs_queue.get_chain_root(params)
-    if os.path.exists(chain_root):
-        if log:
-            margs = [chain_root]
-            # log: Removing: {0}
-            WLOG(params, '', textentry('40-502-00030', args=margs))
-        shutil.rmtree(chain_root, ignore_errors=True)
-    # recreate the empty queue state directories
-    drs_queue.setup_queue_directories(params)
+        chain_root = drs_queue.get_chain_root(params)
+        if os.path.exists(chain_root):
+            if log:
+                margs = [chain_root]
+                WLOG(params, '', textentry('40-502-00030', args=margs))
+            shutil.rmtree(chain_root, ignore_errors=True)
+        drs_queue.setup_queue_directories(params)
 
 
 def remove_all(params: ParamDict, path: str, log: bool = True,

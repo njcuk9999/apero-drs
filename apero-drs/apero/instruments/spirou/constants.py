@@ -2700,6 +2700,10 @@ CDict.set('WAVE_HC_DIFF_HIST', value=True, source=__NAME__, group=cgroup)
 # (will plot once for hc once for fp)
 CDict.set('WAVEREF_EXPECTED', value=True, source=__NAME__, group=cgroup)
 
+# turn on the wave lines "what went wrong" debug plot (guesses and fits
+#  for every order with fewer than 50% of the expected lines found)
+CDict.set('WAVE_ORD_BAD', value=True, source=__NAME__, group=cgroup)
+
 # turn on the FP peak-number correction residual debug plot
 CDict.set('WAVE_FP_COUNT_CORR', value=True, source=__NAME__, group=cgroup)
 

@@ -18,6 +18,7 @@ from typing import Any, Dict, Generator, Tuple, Union
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
+from scipy import signal
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -3825,6 +3826,472 @@ def plot_waveref_expected(plotter: Plotter, graph: Graph,
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
+
+
+def plot_wave_ord_bad(plotter: Plotter, graph: Graph,
+                      kwargs: Dict[str, Any]) -> None:
+    """
+    Graph: Wave solution reference "what went wrong" peak-fitting plot.
+
+    Loops around the orders where fewer than frac_min of the expected
+    lines were accepted by the peak fitting and shows (one order per
+    figure) the spectrum, every guess and every fit attempted, and the
+    position / width / significance criteria used to accept a line.
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+                   - ord_fit_dict: dict, per-order fit history keyed by
+                     order number (flux, wave, lines, valid_lines,
+                     n_expected)
+                   - fiber: str, the fiber name
+                   - fibtype: str, the fiber DPRTYPE
+                   - is_hc: bool, True for HC (gaussian) fits, False for
+                     FP (airy) fits
+                   - hc_ewid: float, the HC guess FWHM [pixels]
+                   - nsig_min: float, the minimum line significance
+                   - iteration: int/str/None, the iteration identifier
+                   - frac_min: float, fraction of expected lines below
+                     which an order is plotted (default 0.5)
+                   - order: int/None, plot a single order if set
+                   - fit_params: dict/None, input parameter name -> value
+                     shown as a table below the legend (only the HC or
+                     FP parameters relevant to this fiber type)
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    ord_fit_dict = kwargs['ord_fit_dict']
+    fiber = kwargs['fiber']
+    fibtype = kwargs['fibtype']
+    is_hc = kwargs['is_hc']
+    hc_ewid = kwargs['hc_ewid']
+    nsig_min = kwargs['nsig_min']
+    iteration = kwargs.get('iteration', None)
+    frac_min = kwargs.get('frac_min', 0.5)
+    order = kwargs.get('order', None)
+    fit_params = kwargs.get('fit_params', None)
+    # ------------------------------------------------------------------
+    # colour / label for every line status (order sets legend order)
+    status_props = dict(valid=('g', 'valid'),
+                        fail_pos=('r', 'fail: position (cond1)'),
+                        fail_width=('m', 'fail: width (cond2)'),
+                        fail_pos_width=('darkred',
+                                        'fail: position + width'),
+                        fit_nan=('orange', 'fail: fit NaN'),
+                        fit_error=('brown', 'fail: fit did not converge'),
+                        non_finite=('c', 'skip: NaN flux'),
+                        too_few_points=('y', 'skip: too few points'),
+                        out_of_bounds=('k', 'skip: off order edge'),
+                        unknown=('gray', 'unknown'))
+    # select the model used for the guess / fit
+    if is_hc:
+        model_func = mp.gauss_fit_s
+    else:
+        model_func = mp.ea_airy_function
+    # width limits applied by the cond2 criteria (as a ratio)
+    if is_hc:
+        width_lims = [0.5, 2.0]
+        wlabel = 'FWHM / guess FWHM'
+    else:
+        width_lims = [0.5, 1.5]
+        wlabel = 'period / wfit'
+    # ------------------------------------------------------------------
+    # find the orders with fewer than frac_min of the expected lines
+    bad_orders = []
+    for order_num in sorted(ord_fit_dict.keys()):
+        oprops = ord_fit_dict[order_num]
+        # orders with no expected lines cannot be "bad"
+        if oprops['n_expected'] == 0:
+            continue
+        # flag orders with too few valid lines
+        if oprops['valid_lines'] < frac_min * oprops['n_expected']:
+            bad_orders.append(order_num)
+    # deal with a specific order requested
+    if order is not None:
+        bad_orders = [order]
+    # nothing to plot (all orders are fine)
+    if len(bad_orders) == 0:
+        return
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.array(bad_orders).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around the bad orders
+    for order_num in order_gen:
+        # get this orders fit history
+        oprops = ord_fit_dict[order_num]
+        flux = oprops['flux']
+        owave = oprops['wave']
+        lines = oprops['lines']
+        xpix = np.arange(len(flux))
+
+        # map (fractional) pixel positions onto the input wavemap [nm]
+        def to_wave(xvals: Any) -> Any:
+            """
+            Convert pixel position(s) to wavelength using the input
+            wavemap of this order.
+
+            :param xvals: float or numpy array, pixel position(s)
+
+            :return: float or numpy array, wavelength(s) [nm]
+            """
+            return np.interp(xvals, xpix, owave)
+        # ------------------------------------------------------------------
+        # set up plot (spectrum + position, width and nsig panels)
+        gkwargs = dict(height_ratios=[3, 1, 1, 1])
+        fig, frames = graph.set_figure(plotter, nrows=4, ncols=1,
+                                       sharex=True, gridspec_kw=gkwargs)
+        frame0, frame1, frame2, frame3 = frames
+        # transform: x in data units, y in axes units (for marker rugs)
+        xtrans0 = frame0.get_xaxis_transform()
+        # ------------------------------------------------------------------
+        # panel 0: spectrum with all guesses and fits
+        # ------------------------------------------------------------------
+        frame0.plot(owave, flux, color='0.3', lw=0.8, ds='steps-mid',
+                    label='spectrum', zorder=1)
+        # legend proxies for the line styles / shading used below
+        frame0.plot([], [], color='tab:blue', ls='--', lw=0.7,
+                    label='guess (v = guess centre)')
+        frame0.plot([], [], color='k', lw=1.0,
+                    label='fit (o = fit centre, colour = outcome)')
+        frame0.fill_between([], [], color='0.5', alpha=0.25,
+                            label='fit window of rejected line '
+                                  '(colour = reason)')
+        frame0.plot([], [], color='k', marker='.', ls='None', ms=4,
+                    label='window data of rejected line')
+        # counter for each status (for the summary text)
+        counts = dict()
+        # storage for the diagnostic panels (lines with a finite fit)
+        dxs, dys, wys, nys, cols = [], [], [], [], []
+        # storage for lines without a finite fit (rug in lower panels)
+        nofit_x, nofit_cols = [], []
+        # loop around every expected line
+        for line in lines:
+            # get the colour and label for this status
+            status = line['status']
+            counts[status] = counts.get(status, 0) + 1
+            colour, slabel = status_props.get(status, status_props['unknown'])
+            # mark every expected line at the top (colour = outcome)
+            frame0.plot(to_wave(line['xref']), 0.97, marker='v', ms=6,
+                        color=colour, ls='None', transform=xtrans0,
+                        label=slabel, zorder=6)
+            # mark the expected position of the line
+            frame0.axvline(to_wave(line['xref']), color=colour, ls=':', lw=0.5,
+                           alpha=0.5, zorder=0)
+            # get the fit parameters (None if never fit)
+            popt = line['popt']
+            has_fit = popt is not None and np.all(np.isfinite(popt))
+            # lines without a usable fit go to the lower-panel rugs
+            if not has_fit:
+                nofit_x.append(to_wave(line['xref']))
+                nofit_cols.append(colour)
+            # skip lines that never had a fit window
+            if line['index'] is None:
+                continue
+            # rejected lines: shade window and show the data fitted
+            if status != 'valid':
+                frame0.axvspan(to_wave(line['index'][0]),
+                               to_wave(line['index'][-1]), color=colour,
+                               alpha=0.12, zorder=0)
+                frame0.plot(to_wave(line['index']), line['ypix'],
+                            marker='.', ms=4, color=colour, ls='None',
+                            zorder=3)
+            # fine grid for the guess / fit models
+            xfine = np.linspace(line['index'][0], line['index'][-1],
+                                10 * len(line['index']))
+            # plot the initial guess
+            if line['guess'] is not None:
+                gmodel = model_func(xfine, *line['guess'])
+                frame0.plot(to_wave(xfine), gmodel, color='tab:blue', ls='--',
+                            lw=0.7, alpha=0.8, zorder=2)
+                # mark the guess centre at the guess peak height
+                gx0 = np.array([line['guess'][1]])
+                frame0.plot(to_wave(gx0), model_func(gx0, *line['guess']),
+                            marker='v', ms=4, color='tab:blue', ls='None',
+                            zorder=3)
+            # plot the fit (if it produced finite parameters)
+            if has_fit:
+                fmodel = model_func(xfine, *popt)
+                frame0.plot(to_wave(xfine), fmodel, color=colour, lw=1.0,
+                            zorder=4)
+                # fitted centre (at the fitted peak height)
+                fx0 = np.array([popt[1]])
+                frame0.plot(to_wave(fx0), model_func(fx0, *popt), marker='o',
+                            ms=4, mfc='none', color=colour, ls='None',
+                            zorder=5)
+                # store the diagnostics
+                dxs.append(to_wave(line['xref']))
+                dys.append(popt[1] - line['xref'])
+                if is_hc:
+                    wys.append(popt[2] / hc_ewid)
+                else:
+                    wys.append(popt[2] / line['wfit'])
+                nys.append(line['nsig'])
+                cols.append(colour)
+        # ------------------------------------------------------------------
+        # find peaks in the spectrum that are not in the line list
+        upeaks = _ord_bad_unassigned_peaks(flux, lines)
+        frame0.plot(to_wave(upeaks), flux[upeaks], marker='x', ms=6, color='k',
+                    ls='None', zorder=7,
+                    label='peak not in line list ({0})'.format(len(upeaks)))
+        # ------------------------------------------------------------------
+        # panel 1: fitted centre - expected centre (cond1 = |dx| < wfit)
+        # ------------------------------------------------------------------
+        xref_all = np.array([line['xref'] for line in lines])
+        wfit_all = np.array([line['wfit'] for line in lines])
+        sort = np.argsort(xref_all)
+        frame1.fill_between(to_wave(xref_all[sort]), -wfit_all[sort],
+                            wfit_all[sort],
+                            color='g', alpha=0.15, step='mid',
+                            label='cond1 pass region (+/- wfit)')
+        frame1.axhline(0, color='k', lw=0.5)
+        # keep the y range sensible (failed fits can be very large)
+        ylim1 = 3 * np.max(wfit_all) if len(wfit_all) else 1
+        _ord_bad_scatter(frame1, dxs, dys, cols, [-ylim1, ylim1],
+                         nofit_x, nofit_cols)
+        frame1.set(ylabel='x$_{fit}$ - x$_{ref}$ [pix]')
+        frame1.legend(loc=1, fontsize='small', ncol=3)
+        # ------------------------------------------------------------------
+        # panel 2: width ratio (cond2)
+        # ------------------------------------------------------------------
+        frame2.axhspan(width_lims[0], width_lims[1], color='g', alpha=0.15,
+                       label='cond2 pass region')
+        frame2.axhline(1, color='k', lw=0.5)
+        _ord_bad_scatter(frame2, dxs, wys, cols, [0, 2 * width_lims[1]],
+                         nofit_x, nofit_cols)
+        frame2.set(ylabel=wlabel)
+        frame2.legend(loc=1, fontsize='small', ncol=3)
+        # ------------------------------------------------------------------
+        # panel 3: significance of fitted lines (nsig > nsig_min kept)
+        # ------------------------------------------------------------------
+        frame3.axhline(nsig_min, color='r', ls='--',
+                       label='nsig min = {0}'.format(nsig_min))
+        # log y range spanning the threshold and all finite nsig values
+        nsig_arr = np.array(nys, dtype=float)
+        nsig_pos = nsig_arr[np.isfinite(nsig_arr) & (nsig_arr > 0)]
+        ylow3 = 0.3 * min([nsig_min] + list(nsig_pos))
+        yhigh3 = 3 * max([nsig_min] + list(nsig_pos))
+        frame3.set_yscale('log')
+        _ord_bad_scatter(frame3, dxs, nys, cols, [ylow3, yhigh3],
+                         nofit_x, nofit_cols)
+        frame3.set(xlabel='Wavelength [nm]', ylabel='nsig')
+        frame3.legend(loc=1, fontsize='small', ncol=3)
+        # ------------------------------------------------------------------
+        # summary text of the line statuses
+        ctext = ['valid (cond1 & cond2) {0}/{1} (need {2:.0f})'
+                 ''.format(oprops['valid_lines'], oprops['n_expected'],
+                           frac_min * oprops['n_expected'])]
+        for status in status_props:
+            if status in counts and status != 'valid':
+                ctext.append('{0}: {1}'.format(status_props[status][1],
+                                               counts[status]))
+        ctext.append('peaks not in line list: {0}'.format(len(upeaks)))
+        frame0.text(0.01, 0.92, '\n'.join(ctext), transform=frame0.transAxes,
+                    va='top', ha='left', fontsize='small',
+                    bbox=dict(facecolor='w', alpha=0.8))
+        ulegend(frame0, plotter, loc='upper left', fontsize='small',
+                bbox_to_anchor=(1.01, 1.0), borderaxespad=0)
+        frame0.set(ylabel='Flux')
+        # ------------------------------------------------------------------
+        # set title (order_num is the e2ds extraction order index)
+        title = ('Extraction order {0} (bad order {1}/{2})  Fiber {3}  '
+                 'Type {4}  [{5:.2f}-{6:.2f} nm]'
+                 ''.format(order_num, bad_orders.index(order_num) + 1,
+                           len(bad_orders), fiber, fibtype,
+                           mp.nanmin(owave), mp.nanmax(owave)))
+        if iteration is not None:
+            title += '  (Iteration {0})'.format(iteration)
+        frame0.set_title(title)
+        # leave room on the right for the spectrum legend
+        fig.subplots_adjust(left=0.06, right=0.78, top=0.95, bottom=0.06,
+                            hspace=0.08)
+        # table of the input parameters (bottom right, next to frame3)
+        if fit_params is not None:
+            _ord_bad_param_table(fig, frame3, fit_params, frac_min,
+                                 legend_frame=frame0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'mode{0}_fiber{1}_order{2}'.format(fibtype, fiber,
+                                                     order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
+def _ord_bad_param_table(fig: Any, frame: Any, fit_params: Dict[str, Any],
+                         frac_min: float, legend_frame: Any = None,
+                         maxlen: int = 22) -> None:
+    """
+    Draw a small monospace table of input parameters to the right of the
+    bottom panel, bottom-aligned with it (used by plot_wave_ord_bad).
+
+    :param fig: matplotlib figure
+    :param frame: matplotlib axis (bottom panel) to align the table with
+    :param fit_params: dict, parameter name -> value
+    :param frac_min: float, fraction of expected lines needed (added as a
+                     row so the "bad order" threshold is visible)
+    :param legend_frame: matplotlib axis owning the main legend (the table
+                         left edge is aligned with that legend) or None
+    :param maxlen: int, maximum number of characters for a value
+
+    :return: None, adds the table text to frame
+    """
+    # copy so we do not modify the caller's dictionary
+    rows = dict(fit_params)
+    rows['bad order threshold'] = '< {0:.0%} valid'.format(frac_min)
+    # format the values (truncate long values e.g. lists)
+    names, values = [], []
+    for name, value in rows.items():
+        if isinstance(value, float):
+            svalue = '{0:.6g}'.format(value)
+        else:
+            svalue = str(value)
+        if len(svalue) > maxlen:
+            svalue = svalue[:maxlen - 3] + '...'
+        names.append(str(name))
+        values.append(svalue)
+    # build the fixed-width table text
+    width = max(len(name) for name in names)
+    header = '{0:<{1}}  {2}'.format('Parameter', width, 'Value')
+    lines = [header, '-' * len(header)]
+    for name, svalue in zip(names, values):
+        lines.append('{0:<{1}}  {2}'.format(name, width, svalue))
+    # box padding (in units of the font size)
+    box_pad = 0.4
+    # create the table text (position refined below in display coords)
+    text = frame.text(1.01, 0.0, '\n'.join(lines),
+                      transform=frame.transAxes, va='bottom', ha='left',
+                      family='monospace', fontsize='x-small', clip_on=False,
+                      bbox=dict(boxstyle='square,pad={0}'.format(box_pad),
+                                facecolor='w', edgecolor='0.6', alpha=0.9))
+    # noinspection PyBroadException
+    try:
+        renderer = fig.canvas.get_renderer()
+        # bottom panel box in display (pixel) coordinates
+        fbox = frame.get_window_extent(renderer=renderer)
+        # points -> pixels
+        pt2px = fig.dpi / 72.0
+        # the text box extends pad beyond the text on every side
+        pad_px = box_pad * text.get_fontsize() * pt2px
+        # left edge: same gap from the frames as the legend (if present)
+        xdisp = fbox.x0 + 1.01 * fbox.width + pad_px
+        if legend_frame is not None and legend_frame.get_legend():
+            legend = legend_frame.get_legend()
+            lbox = legend.get_window_extent(renderer=renderer)
+            xdisp = lbox.x0 + pad_px
+        # bottom edge of the box == bottom edge of the bottom panel
+        ydisp = fbox.y0 + pad_px
+        # convert display coordinates to axes coordinates
+        xpos, ypos = frame.transAxes.inverted().transform((xdisp, ydisp))
+        text.set_position((xpos, ypos))
+    except Exception as _:
+        pass
+
+
+def _ord_bad_unassigned_peaks(flux: np.ndarray, lines: list,
+                              nsig_peak: float = 5.0,
+                              match_frac: float = 0.35) -> np.ndarray:
+    """
+    Find significant peaks in an order spectrum that are not close to any
+    expected line-list position (used by plot_wave_ord_bad).
+
+    :param flux: numpy array (1D), the order spectrum
+    :param lines: list of dicts, the line records (need 'xref' and 'wfit')
+    :param nsig_peak: float, minimum peak prominence in units of the robust
+                      pixel-to-pixel noise
+    :param match_frac: float, a peak is matched to an expected line if it
+                       is within match_frac * wfit of it (min 1.5 pixels)
+
+    :return: numpy array (1D) of int, pixel positions of unassigned peaks
+    """
+    # replace NaNs so find_peaks can run (they can never be peaks)
+    finite = np.isfinite(flux)
+    if np.sum(finite) < 3:
+        return np.array([], dtype=int)
+    fflux = np.where(finite, flux, mp.nanmedian(flux[finite]))
+    # robust per-pixel noise from the first difference
+    noise = mp.robust_nanstd(np.diff(fflux)) / np.sqrt(2)
+    # deal with a flat spectrum
+    if not np.isfinite(noise) or noise <= 0:
+        return np.array([], dtype=int)
+    # find peaks that stand out from the noise
+    peaks, _ = signal.find_peaks(fflux, prominence=nsig_peak * noise)
+    # no expected lines: every peak is unassigned
+    if len(lines) == 0 or len(peaks) == 0:
+        return peaks
+    # expected positions and their match tolerances
+    xrefs = np.array([line['xref'] for line in lines], dtype=float)
+    tols = np.array([line['wfit'] for line in lines], dtype=float)
+    tols = np.maximum(match_frac * tols, 1.5)
+    # distance from every peak to every expected line
+    dist = np.abs(peaks[:, None] - xrefs[None, :])
+    # keep peaks that do not match any expected line
+    unassigned = ~np.any(dist < tols[None, :], axis=1)
+    return peaks[unassigned]
+
+
+def _ord_bad_scatter(frame: Any, xvals: list, yvals: list, cols: list,
+                     ylim: list, nofit_x: list, nofit_cols: list) -> None:
+    """
+    Scatter diagnostic values for plot_wave_ord_bad, clipping off-scale
+    values to the panel edges (as triangles) and showing lines without a
+    usable fit as crosses along the bottom of the panel.
+
+    :param frame: matplotlib axis to plot on
+    :param xvals: list of float, expected line positions [nm]
+    :param yvals: list of float, diagnostic values to plot
+    :param cols: list of str, colour of each point (line outcome)
+    :param ylim: list of 2 floats, the y range of the panel
+    :param nofit_x: list of float, positions of lines without a fit [nm]
+    :param nofit_cols: list of str, colours of lines without a fit
+
+    :return: None, plots onto frame
+    """
+    xvals = np.array(xvals, dtype=float)
+    yvals = np.array(yvals, dtype=float)
+    cols = np.array(cols, dtype=object)
+    # NaN diagnostics (e.g. nsig undefined) are shown with the no-fit rug
+    finite = np.isfinite(yvals)
+    # points inside, above and below the panel range
+    inside = finite & (yvals >= ylim[0]) & (yvals <= ylim[1])
+    above = finite & (yvals > ylim[1])
+    below = finite & (yvals < ylim[0])
+    # plot in-range points
+    if np.any(inside):
+        frame.scatter(xvals[inside], yvals[inside], c=list(cols[inside]),
+                      s=12, zorder=3)
+    # transform: x in data units, y in axes units
+    xtrans = frame.get_xaxis_transform()
+    # off-scale high / low values pinned to the panel edge
+    if np.any(above):
+        frame.scatter(xvals[above], np.full(np.sum(above), 0.95),
+                      c=list(cols[above]), marker='^', s=25,
+                      transform=xtrans, zorder=3, label='off scale')
+    if np.any(below):
+        frame.scatter(xvals[below], np.full(np.sum(below), 0.05),
+                      c=list(cols[below]), marker='v', s=25,
+                      transform=xtrans, zorder=3, label='off scale')
+    # lines without a usable fit / value as crosses on the bottom edge
+    rug_x = list(nofit_x) + list(xvals[~finite])
+    rug_c = list(nofit_cols) + list(cols[~finite])
+    if len(rug_x) > 0:
+        frame.scatter(rug_x, np.full(len(rug_x), 0.15), c=rug_c,
+                      marker='x', s=25, transform=xtrans, zorder=3,
+                      label='no fit / value (colour = reason)')
+    # set the panel range
+    frame.set_ylim(ylim[0], ylim[1])
 
 
 def plot_wave_fp_count_corr(plotter: Plotter, graph: Graph,

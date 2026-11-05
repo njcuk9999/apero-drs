@@ -58,6 +58,7 @@ refcalib_ofile = out.RefCalibOutFile()
 tellu_ofile = out.TelluOutFile()
 reftellu_ofile = out.RefTelluOutFile()
 tellu_set_ofile = out.TelluSetOutFile()
+static_ofile = out.StaticFile()
 
 # =============================================================================
 # Raw Files
@@ -2309,6 +2310,19 @@ post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
 
 # add to post processed file set
 post_file.addset(post_v_file)
+
+# =============================================================================
+# Static files
+# =============================================================================
+static_file = drs_finput('DRS_STATIC', filetype='.fits')
+
+static_wave_ref = drs_finput('STATIC_WAVE_REF', filetype='.fits',
+                             fibers=valid_efibers,
+                             prefix='static_nirps_ha_wave_ref',
+                             outclass=static_ofile,
+                             description='Static wavelength solution file')
+static_wave_ref.hdulist['WAVE'] = AperoImageModel('WAVE')
+static_file.addset(static_wave_ref)
 
 # =============================================================================
 # Other Files

@@ -1256,19 +1256,20 @@ def calculate_snr(e2dsff: np.ndarray, e2dsff_err: np.ndarray,
 
     :param e2dsff: 2D array of extracted spectrum (orders x pixels)
     :param e2dsff_err: 2D array of extracted spectrum errors (orders x pixels)
+    :param blaze_width: Half-width of the central window in extracted pixels.
 
     :return: 1D array of per-order SNR
     """
     # get the central pixel position
-    cent_pos = int(len(e2dsff) / 2)
+    cent_pos = e2dsff.shape[1] // 2
     # get the blaze window size
-    blaze_lower = cent_pos - blaze_width
-    blaze_upper = cent_pos + blaze_width
+    blaze_lower = max(0, cent_pos - blaze_width)
+    blaze_upper = min(e2dsff.shape[1], cent_pos + blaze_width)
     # Avoid division by zero
     with np.errstate(divide='ignore', invalid='ignore'):
 
-        e2dsff_cent = e2dsff[blaze_lower:blaze_upper]
-        e2dsff_err_cent = e2dsff_err[blaze_lower:blaze_upper]
+        e2dsff_cent = e2dsff[:, blaze_lower:blaze_upper]
+        e2dsff_err_cent = e2dsff_err[:, blaze_lower:blaze_upper]
         snr = mp.nanmedian(e2dsff_cent / e2dsff_err_cent, axis=1)
     return snr
 

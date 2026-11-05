@@ -248,9 +248,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     raw_led_file = file_definitions.raw_led_led
     raw_dark_file = file_definitions.raw_dark_dark
     # get the reference start and end date
-    start_date = params['REF_FIND_START_DATE']
-    end_date = params['REF_FIND_END_DATE']
-    find_time_col = params['REF_FIND_TIME_COL']
+    start_date = params['REF.FIND_STARTDATE']
+    end_date = params['REF.FIND_ENDDATE']
+    find_time_col = params['REF.FIND_TIMECOL']
     # create the led flat
     led_outfile = preprocessing.create_led_flat(params, recipe, raw_led_file,
                                                 raw_dark_file, start_date,

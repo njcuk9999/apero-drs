@@ -27,14 +27,17 @@ Created on 2026-10-28
 @author: cook
 """
 import argparse
+from contextlib import contextmanager
+import fcntl
 import json
 import os
 import socket
 import subprocess
 import sys
 import threading
+import tempfile
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 # =============================================================================
 # Define variables
@@ -52,6 +55,74 @@ except (AttributeError, ValueError, OSError):
     CLOCK_TICKS = 100
 # serialises writes from monitor threads of the same process
 _WRITE_LOCK = threading.Lock()
+
+
+@contextmanager
+def _store_lock(stats_dir: str) -> Iterator[None]:
+    """Serialize appends and cleanup across threads and processes.
+
+    :param stats_dir: Directory containing the JSONL stores.
+    :return: Context holding the stable store lock.
+    """
+    with _WRITE_LOCK:
+        os.makedirs(stats_dir, exist_ok=True)
+        lock_path = os.path.join(stats_dir, '.stats.lock')
+        with open(lock_path, 'a') as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+
+def remove_qids(stats_dir: str, qids: List[str]) -> None:
+    """Remove exact task IDs without discarding other or malformed lines.
+
+    :param stats_dir: Owned statistics directory.
+    :param qids: Task IDs whose artifacts are no longer referenced.
+    :return: None.
+    """
+    targets = set(qids)
+    if not targets or not os.path.isdir(stats_dir):
+        return
+    with _store_lock(stats_dir):
+        for name in sorted(os.listdir(stats_dir)):
+            known = name.startswith((TASK_PREFIX, SAMPLE_PREFIX))
+            if not known or not name.endswith('.jsonl'):
+                continue
+            path = os.path.join(stats_dir, name)
+            if os.path.islink(path) or not os.path.isfile(path):
+                continue
+            temporary = None
+            try:
+                with open(path, 'rb') as source:
+                    lines = source.readlines()
+                retained = []
+                for line in lines:
+                    try:
+                        record = json.loads(line)
+                    except (ValueError, UnicodeError):
+                        retained.append(line)
+                        continue
+                    if not isinstance(record, dict):
+                        retained.append(line)
+                    elif not isinstance(record.get('qid'), str):
+                        retained.append(line)
+                    elif record['qid'] not in targets:
+                        retained.append(line)
+                if retained == lines:
+                    continue
+                if not retained:
+                    os.remove(path)
+                    continue
+                with tempfile.NamedTemporaryFile(dir=stats_dir,
+                                                  delete=False) as output:
+                    temporary = output.name
+                    output.writelines(retained)
+                os.replace(temporary, path)
+            finally:
+                if temporary is not None and os.path.exists(temporary):
+                    os.remove(temporary)
 
 
 # =============================================================================
@@ -286,11 +357,12 @@ class TaskMonitor:
 
     def _write(self, prefix: str, record: Dict[str, Any]) -> None:
         """Append one json line to this process' stats file."""
+        if self.stats_dir is None:
+            return
         name = '{0}{1}-{2}.jsonl'.format(prefix, self.info['host'],
                                          os.getpid())
         try:
-            with _WRITE_LOCK:
-                os.makedirs(self.stats_dir, exist_ok=True)
+            with _store_lock(self.stats_dir):
                 with open(os.path.join(self.stats_dir, name), 'a') as sfile:
                     sfile.write(json.dumps(record) + '\n')
         except OSError:
@@ -308,6 +380,8 @@ class StatsReader:
     def __init__(self) -> None:
         """Initialize incremental offsets and task/sample result buffers."""
         self.offsets: Dict[str, int] = dict()
+        self.identities: Dict[str, tuple] = dict()
+        self.revision = 0
         self.tasks: List[Dict[str, Any]] = []
         self.samples: List[Dict[str, Any]] = []
         self.lock = threading.Lock()
@@ -319,33 +393,50 @@ class StatsReader:
         :param stats_dir: str, the stats directory
         """
         with self.lock:
+            files = dict()
+            if os.path.isdir(stats_dir):
+                for name in sorted(os.listdir(stats_dir)):
+                    known = name.startswith((TASK_PREFIX, SAMPLE_PREFIX))
+                    if not known or not name.endswith('.jsonl'):
+                        continue
+                    path = os.path.join(stats_dir, name)
+                    try:
+                        info = os.stat(path)
+                    except OSError:
+                        continue
+                    files[path] = info
+            changed = not set(self.offsets).issubset(files)
+            for path, info in files.items():
+                if path in self.identities:
+                    previous = self.identities[path]
+                    changed |= (info.st_dev, info.st_ino) != previous[:2]
+                    changed |= info.st_size < previous[2]
+                    same_size = info.st_size == previous[2]
+                    changed |= same_size and info.st_mtime_ns != previous[3]
+            if changed:
+                self.offsets, self.tasks, self.samples = dict(), [], []
+                self.identities.clear()
+                self.revision += 1
             if not os.path.isdir(stats_dir):
                 self.offsets, self.tasks, self.samples = dict(), [], []
                 return
-            for name in sorted(os.listdir(stats_dir)):
-                if not name.endswith('.jsonl'):
-                    continue
+            for path, info in files.items():
+                name = os.path.basename(path)
                 if name.startswith(TASK_PREFIX):
                     target = self.tasks
                 elif name.startswith(SAMPLE_PREFIX):
                     target = self.samples
                 else:
                     continue
-                path = os.path.join(stats_dir, name)
                 offset = self.offsets.get(path, 0)
+                self.identities[path] = (info.st_dev, info.st_ino,
+                                         info.st_size, info.st_mtime_ns)
                 try:
-                    size = os.path.getsize(path)
+                    with open(path, 'rb') as sfile:
+                        sfile.seek(offset)
+                        data = sfile.read()
                 except OSError:
                     continue
-                # a removed/rewritten stats directory - start again
-                if size < offset:
-                    self.offsets, self.tasks, self.samples = dict(), [], []
-                    return self.update(stats_dir)
-                if size == offset:
-                    continue
-                with open(path, 'rb') as sfile:
-                    sfile.seek(offset)
-                    data = sfile.read(size - offset)
                 # only complete lines (a writer may be mid-line)
                 cut = data.rfind(b'\n')
                 if cut < 0:

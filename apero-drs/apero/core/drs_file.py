@@ -4148,7 +4148,7 @@ class DrsFitsFile(DrsInputFile):
             if not found:
                 self.output_dict[key] = 'None'
 
-    def combine(self, infiles: List['DrsFitsFile'],
+    def combine(self, input_files: List['DrsFitsFile'],
                 math: Union[str, None] = 'sum',
                 same_type: bool = True,
                 path: Union[str, None] = None,
@@ -4201,8 +4201,11 @@ class DrsFitsFile(DrsInputFile):
         # --------------------------------------------------------------------
         # cube
         datacube0, headers0, basenames0 = [], [], []
+
+        # add "self" to the list of input files (so we combine self with input_files)
+        all_input_files = np.append([self], input_files)
         # combine data into cube
-        for infile in [self] + infiles:
+        for infile in all_input_files:
             # check data is read for infile
             infile.check_read()
             # check that infile matches in name to self
