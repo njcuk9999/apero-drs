@@ -5,10 +5,12 @@ APERO RI: Async task management
 
 """
 
+import hashlib
 import json
 import multiprocessing as mp
 import os
 import shutil
+import tempfile
 import time
 from concurrent.futures import (
     ProcessPoolExecutor,
@@ -127,6 +129,18 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                     f"Profile {profile_name}: failed — {exc}"
                 )
                 ctx["tlog"](f"ERROR: {err_msg}")
+                try:
+                    _save_profile_query_state(
+                        ctx["profiles"][profile_name],
+                        profile_name,
+                        status="failed",
+                        error=str(exc),
+                    )
+                except OSError as state_exc:
+                    ctx["tlog"](
+                        f"Profile {profile_name}: unable to record refresh "
+                        f"failure status: {state_exc}"
+                    )
                 self.info += (
                     f"\n## Object Query for APERO Profile: {profile_name}\n\n"
                     f"- **ERROR**: {err_msg}\n"
@@ -159,18 +173,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         )
 
         tlog(f'Profile {a_it + 1}/{len(ctx["profile_names"])}: {profile_name}')
-
-        # check if DB has changed since last run
-        db_updates, should_skip, skip_reason = self._check_db_skip(
-            aparams, ctx["force_run"]
+        _save_profile_query_state(
+            aparams, profile_name, status="running"
         )
-        if should_skip:
-            self.info += (
-                f"\n## Object Query for APERO Profile: {profile_name}\n\n"
-                f"- Skipped query run. {skip_reason}\n"
-            )
-            tlog(f"Profile {profile_name}: skipped. {skip_reason}")
-            return
 
         # Guard: check that all configured paths are accessible.
         # If an sshfs/remote drive is down, path.is_dir() returns
@@ -191,15 +196,15 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 f"\n## Object Query for APERO Profile: {profile_name}\n\n"
                 f"- **Skipped** (path check failed): {msg}\n"
             )
-            return
+            raise RuntimeError(msg)
 
         # query distinct object names
         object_names, obj_query_time = self._query_object_names(
             aparams, profile_name, tlog, ctx.get("filters", {})
         )
 
-        # Ensure output directory exists. Per-object cleanup is now conditional
-        # and handled inside the worker after raw fingerprint checks.
+        # Ensure output directory exists. Workers publish staged tables only
+        # after all database and header reads for an object succeed.
         local_objdir = _resolve_objects_dir(aparams, profile_name)
         local_objdir.mkdir(parents=True, exist_ok=True)
 
@@ -207,6 +212,11 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         timing_per_obj, output_files, header_rows_total = self._run_object_loop(
             ctx, aparams, profile_name, object_names
         )
+        if stop_event is not None and stop_event.is_set():
+            raise RuntimeError(
+                f"Profile {profile_name}: refresh cancelled before "
+                "all objects were processed"
+            )
 
         # report and persist
         self._report_profile_results(
@@ -217,12 +227,18 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             tlog,
         )
         self.output_files += output_files
-        self._persist_db_updates(
+        self._invalidate_profile_plot_cache(
+            aparams, instrument, profile_name, tlog
+        )
+        object_filters = ctx.get("filters", {})
+        is_partial = any(
+            str(object_filters.get(key, "")).strip()
+            for key in ("OBJNAME_INCLUDE", "OBJNAME_EXCLUDE")
+        )
+        _save_profile_query_state(
             aparams,
-            instrument,
             profile_name,
-            db_updates,
-            tlog,
+            status="partial" if is_partial else "success",
         )
         self.last_run = datetime.now(timezone.utc).isoformat()
 
@@ -264,23 +280,6 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             "tlog": tlog,
             "stop_event": params.get("STOP_EVENT"),
         }
-
-    @staticmethod
-    def _check_db_skip(
-        aparams: Dict[str, Any], force_run: bool,
-    ) -> tuple[Dict[str, Any], bool, str]:
-        """Return (db_updates, should_skip, reason)."""
-        db_updates = {}
-        try:
-            should_skip, db_updates, skip_reason = (
-                apero_async.should_skip_profile_query(
-                    aparams, force_run=force_run
-                )
-            )
-        except Exception as exc:
-            should_skip = False
-            skip_reason = f"Database update-time check unavailable: {exc}"
-        return db_updates, should_skip, skip_reason
 
     def _query_object_names(
         self,
@@ -450,7 +449,16 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                         return timing, output_files, header_rows_total
 
                     objname, global_idx = futures[fut]
-                    result = fut.result()
+                    try:
+                        result = fut.result()
+                    except Exception as exc:
+                        tlog(
+                            f"Profile {profile_name}: {objname} failed: "
+                            f"{exc}"
+                        )
+                        raise RuntimeError(
+                            f"Object {objname} refresh failed"
+                        ) from exc
                     done += 1
                     self.subprogress = done / max(1, total)
                     timing.append(result["object_total"])
@@ -504,9 +512,17 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 f"Profile {profile_name}: {objname} START "
                 f"({o_it + 1}/{total})."
             )
-            result = _run_single_object_job(
-                aparams, objname, profile_name, force_run
-            )
+            try:
+                result = _run_single_object_job(
+                    aparams, objname, profile_name, force_run
+                )
+            except Exception as exc:
+                tlog(
+                    f"Profile {profile_name}: {objname} failed: {exc}"
+                )
+                raise RuntimeError(
+                    f"Object {objname} refresh failed"
+                ) from exc
             timing.append(result["object_total"])
             header_rows_total += int(result["header_rows"])
             output_files.extend(result.get("output_files", []))
@@ -542,29 +558,14 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             f"avg={ave:.2f}s, total={total_time:.2f}s."
         )
 
-    def _persist_db_updates(
+    def _invalidate_profile_plot_cache(
         self,
         aparams: Dict[str, Any],
         instrument: str,
         profile_name: str,
-        db_updates: Dict[str, Any],
         tlog: Any,
     ) -> None:
-        """Persist DB fingerprint and invalidate stale plot cache."""
-        if not db_updates:
-            return
-        try:
-            tlog(f"Profile {profile_name}: persisting DB update fingerprint.")
-            apero_async.save_profile_db_table_updates(
-                instrument, profile_name, db_updates
-            )
-        except Exception as exc:
-            self.info += (
-                f"\n- Warning: failed to persist database-update "
-                f"fingerprint for {profile_name}: {exc}\n"
-            )
-            tlog(f"Profile {profile_name}: fingerprint persist failed: {exc}")
-        # Invalidate stale plot cache for this profile
+        """Invalidate stale plot cache after object data has been refreshed."""
         try:
             from apero_ri.core.plot_cache import (
                 invalidate_profile,
@@ -704,6 +705,47 @@ def _resolve_objects_dir(
         / profile_name
         / "objects"
     )
+
+
+def _profile_query_state_path(
+    aparams: Dict[str, Any], profile_name: str,
+) -> Path:
+    """Return the persisted refresh status file for an APERO profile."""
+    return _resolve_objects_dir(aparams, profile_name).parent / (
+        ".object_query_state.json"
+    )
+
+
+def _save_profile_query_state(
+    aparams: Dict[str, Any],
+    profile_name: str,
+    status: str,
+    error: str = "",
+) -> None:
+    """Atomically save profile refresh status without losing last success."""
+    state_path = _profile_query_state_path(aparams, profile_name)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        state = {}
+    except json.JSONDecodeError:
+        state = {}
+    if not isinstance(state, dict):
+        state = {}
+
+    now = datetime.now(timezone.utc).isoformat()
+    state["status"] = status
+    state["last_attempt_at"] = now
+    state["error"] = str(error or "")
+    if status == "success":
+        state["last_success_at"] = now
+
+    tmp_path = state_path.with_name(state_path.name + ".tmp")
+    tmp_path.write_text(
+        json.dumps(state, sort_keys=True, indent=2), encoding="utf-8"
+    )
+    os.replace(tmp_path, state_path)
 
 
 # =============================================================================
@@ -923,21 +965,10 @@ def _run_single_object_job(
     """Run one object query+header workflow and return summary metrics."""
     worker_pid = os.getpid()
     start_total = time.time()
-
-    # Run a lightweight change query first to avoid full per-object
-    # result fetches when raw rows did not change.
-    current_raw_fp = _raw_change_fingerprint(aparams, objname)
-
-    instrument = aparams.get("INSTRUMENT", "unknown")
-    local_dir = (
-        Path(aparams.get("LOCAL_DATA_DIR", str(secret_store.get_ari_dir())))
-        / "tasks"
-        / instrument
-        / apero_profile_name
-        / "objects"
-    )
+    local_dir = _resolve_objects_dir(aparams, apero_profile_name)
     local_dir.mkdir(parents=True, exist_ok=True)
-    prev_raw_fp = _load_object_raw_fingerprint(local_dir, objname)
+    current_product_fp = _product_change_fingerprint(aparams, objname)
+    prev_product_fp = _load_object_product_fingerprint(local_dir, objname)
 
     # If existing LBL files still contain null security fields, force a
     # rebuild so IDENTIFIER-based backfilling can repair them.
@@ -945,13 +976,14 @@ def _run_single_object_job(
 
     is_changed = (
         force_run
-        or (prev_raw_fp is None)
-        or (current_raw_fp != prev_raw_fp)
+        or (prev_product_fp is None)
+        or (current_product_fp != prev_product_fp)
         or needs_lbl_security_fix
     )
     if not is_changed:
-        raw_path = local_dir / f"ftable_raw_{objname}.json"
-        output_files = [str(raw_path)] if raw_path.exists() else []
+        output_files = [
+            str(path) for path in _object_output_paths(local_dir, objname)
+        ]
         return {
             "object_total": float(time.time() - start_total),
             "header_time": 0.0,
@@ -961,26 +993,54 @@ def _run_single_object_job(
             "skipped": True,
         }
 
-    # Data changed (or force mode): delete stale object files, then rebuild all.
-    _remove_object_outputs(local_dir, objname)
-    outputs = object_query_db(aparams, objname, apero_profile_name)
-    htime = object_query_headers(aparams, objname, apero_profile_name, outputs)
-    _save_object_raw_fingerprint(local_dir, objname, current_raw_fp)
+    stage_root = tempfile.TemporaryDirectory(
+        prefix=".object-query-", dir=local_dir.parent
+    )
+    try:
+        stage_params = dict(aparams)
+        stage_params["LOCAL_DATA_DIR"] = stage_root.name
+        stage_params["INSTRUMENT"] = (
+            aparams.get("INSTRUMENT")
+            or aparams.get("general", {}).get("INSTRUMENT")
+            or "unknown"
+        )
+        stage_dir = _resolve_objects_dir(stage_params, apero_profile_name)
+        outputs = object_query_db(
+            stage_params, objname, apero_profile_name
+        )
+        htime = object_query_headers(
+            stage_params, objname, apero_profile_name, outputs
+        )
+        staged_paths = _object_output_paths(stage_dir, objname)
+        if not any(path.name == f"htable_{objname}.json"
+                   for path in staged_paths):
+            raise RuntimeError(
+                f"Object query did not create an htable for {objname}"
+            )
+
+        updated_product_fp = _product_change_fingerprint(aparams, objname)
+        if updated_product_fp != current_product_fp:
+            raise RuntimeError(
+                f"Indexed products changed during refresh for {objname}; "
+                "retrying on the next task run"
+            )
+
+        _publish_object_outputs(stage_dir, local_dir, objname)
+        _save_object_product_fingerprint(
+            local_dir, objname, updated_product_fp
+        )
+        output_files = [
+            str(path) for path in _object_output_paths(local_dir, objname)
+        ]
+    finally:
+        stage_root.cleanup()
 
     result_rows = outputs.get("results", {})
-    header_rows = 0
-    if isinstance(result_rows, dict):
-        for rows in result_rows.values():
-            if isinstance(rows, list):
-                header_rows += len(rows)
-
-    output_files = [str(local_dir / f"htable_{objname}.json")]
-    if isinstance(result_rows, dict):
-        for fkind, rows in result_rows.items():
-            if isinstance(rows, list) and rows:
-                output_files.append(
-                    str(local_dir / f"ftable_{fkind}_{objname}.json")
-                )
+    header_rows = sum(
+        len(rows)
+        for rows in result_rows.values()
+        if isinstance(rows, list)
+    ) if isinstance(result_rows, dict) else 0
 
     return {
         "object_total": float(time.time() - start_total),
@@ -992,79 +1052,62 @@ def _run_single_object_job(
     }
 
 
-def _extract_raw_last_modified_fingerprint(raw_rows: Any) -> str:
-    """Build a stable fingerprint from raw-query LAST_MODIFIED values."""
-    if not isinstance(raw_rows, list) or not raw_rows:
-        return "none:0"
-    values = []
-    for row in raw_rows:
-        if isinstance(row, dict):
-            values.append(str(row.get("LAST_MODIFIED", "") or "").strip())
-    values = [v for v in values if v]
-    if not values:
-        return f"empty:{len(raw_rows)}"
-    return f"{max(values)}:{len(values)}"
-
-
-def _raw_change_query(
+def _product_change_query(
     rparams: Dict[str, Any], objname: str,
 ) -> str:
-    """Construct a compact per-object raw change fingerprint query."""
+    """Construct a per-object query covering every indexed product."""
     objname_safe = objname.replace("'", "''")
-    scitype_list = ", ".join([
-        f"'{kind}'" for kind in rparams["SCIENCE_TYPES"]
-    ])
     query = """
     SELECT
-        COUNT(*) AS NROWS,
-        MAX(fdb.LAST_MODIFIED) AS MAX_LAST_MODIFIED
+        fdb.BLOCK_KIND AS BLOCK_KIND,
+        fdb.KW_OUTPUT AS KW_OUTPUT,
+        fdb.KW_FIBER AS KW_FIBER,
+        fdb.KW_DPRTYPE AS KW_DPRTYPE,
+        fdb.KW_RUN_ID AS KW_RUN_ID,
+        fdb.KW_PI_NAME AS KW_PI_NAME,
+        fdb.IDENTIFIER AS IDENTIFIER,
+        fdb.OBS_DIR AS OBS_DIR,
+        fdb.FILENAME AS FILENAME,
+        fdb.LAST_MODIFIED AS LAST_MODIFIED
     FROM {FINDEX_TABLENAME} fdb
     WHERE fdb.KW_OBJNAME = '{OBJNAME}'
-      AND fdb.BLOCK_KIND = 'raw'
-      AND fdb.KW_DPRTYPE IN ({SCITYPES})
+    ORDER BY fdb.BLOCK_KIND, fdb.KW_OUTPUT, fdb.KW_FIBER,
+             fdb.KW_DPRTYPE, fdb.IDENTIFIER, fdb.OBS_DIR,
+             fdb.FILENAME, fdb.LAST_MODIFIED
     """
     return query.format(
         OBJNAME=objname_safe,
-        SCITYPES=scitype_list,
         **rparams,
     )
 
 
-def _raw_change_fingerprint(
+def _product_change_fingerprint(
     aparams: Dict[str, Any], objname: str,
 ) -> str:
-    """Return a stable raw-change fingerprint from a compact DB query."""
+    """Return a stable fingerprint of all indexed products for an object."""
     rparams = _check_required(aparams)
-    query = _raw_change_query(rparams, objname)
+    query = _product_change_query(rparams, objname)
     db_params = apero_async.get_db_params(aparams)
     results = apero_async.database_query(db_params, query)
-    if not isinstance(results, list) or len(results) == 0:
-        return "none:0"
-    row = results[0]
-    if not isinstance(row, dict):
-        return "none:0"
-
-    try:
-        nrows = int(row.get("NROWS", 0) or 0)
-    except Exception:
-        nrows = 0
-    max_last_modified = str(
-        row.get("MAX_LAST_MODIFIED", "") or ""
-    ).strip()
-    if nrows <= 0:
-        return "none:0"
-    return f"{max_last_modified}:{nrows}"
+    if not isinstance(results, list):
+        raise RuntimeError(
+            f"Product fingerprint query returned invalid data for {objname}"
+        )
+    encoded = json.dumps(
+        results, sort_keys=True, separators=(",", ":"), default=str
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _object_state_file(local_dir: Path, objname: str) -> Path:
-    """Return per-object state filename used for raw fingerprint caching."""
+    """Return per-object state filename used for product fingerprints."""
     return Path(local_dir) / f".state_{objname}.json"
 
 
-def _load_object_raw_fingerprint(
+def _load_object_product_fingerprint(
     local_dir: Path, objname: str
 ) -> Optional[str]:
-    """Load previously stored raw fingerprint for one object."""
+    """Load the current product fingerprint for one object."""
     state_file = _object_state_file(local_dir, objname)
     if not state_file.exists():
         return None
@@ -1074,40 +1117,96 @@ def _load_object_raw_fingerprint(
         return None
     if not isinstance(payload, dict):
         return None
-    value = payload.get("raw_last_modified_fingerprint", None)
+    if payload.get("schema_version") != 2:
+        return None
+    value = payload.get("product_fingerprint", None)
     return None if value in (None, "") else str(value)
 
 
-def _save_object_raw_fingerprint(
+def _save_object_product_fingerprint(
     local_dir: Path, objname: str, fingerprint: str
 ) -> None:
-    """Persist raw fingerprint for one object."""
+    """Atomically persist the successfully published product fingerprint."""
     state_file = _object_state_file(local_dir, objname)
     payload = {
-        "raw_last_modified_fingerprint": str(fingerprint or ""),
+        "schema_version": 2,
+        "product_fingerprint": str(fingerprint or ""),
         "saved_at": datetime.now(timezone.utc).isoformat(),
     }
-    state_file.write_text(
-        json.dumps(payload, sort_keys=True, indent=2),
-        encoding="utf-8",
+    tmp_path = state_file.with_name(state_file.name + ".tmp")
+    tmp_path.write_text(
+        json.dumps(payload, sort_keys=True, indent=2), encoding="utf-8"
     )
+    os.replace(tmp_path, state_file)
 
 
-def _remove_object_outputs(local_dir: Path, objname: str) -> None:
-    """Delete existing ftable/htable outputs for a single object."""
+def _object_output_paths(local_dir: Path, objname: str) -> list[Path]:
+    """Return the generated table files for one object."""
     local_dir = Path(local_dir)
     if not local_dir.exists():
-        return
-    hname = f"htable_{objname}.json"
+        return []
     fsuffix = f"_{objname}.json"
-    for entry in local_dir.iterdir():
-        if not entry.is_file():
-            continue
-        name = entry.name
-        is_hfile = name == hname
-        is_ftable = name.startswith("ftable_") and name.endswith(fsuffix)
-        if is_hfile or is_ftable:
-            entry.unlink(missing_ok=True)
+    return [
+        path for path in local_dir.iterdir()
+        if path.is_file()
+        and (
+            path.name == f"htable_{objname}.json"
+            or (
+                path.name.startswith("ftable_")
+                and path.name.endswith(fsuffix)
+            )
+        )
+    ]
+
+
+def _publish_object_outputs(
+    stage_dir: Path, local_dir: Path, objname: str,
+) -> None:
+    """Publish staged tables and roll back if replacing a file fails."""
+    staged_paths = _object_output_paths(stage_dir, objname)
+    staged_names = {path.name for path in staged_paths}
+    if f"htable_{objname}.json" not in staged_names:
+        raise RuntimeError(f"Staged object tables lack an htable for {objname}")
+
+    local_dir.mkdir(parents=True, exist_ok=True)
+    old_paths = _object_output_paths(local_dir, objname)
+    old_names = {path.name for path in old_paths}
+    backup_root = tempfile.TemporaryDirectory(
+        prefix=".object-query-backup-", dir=local_dir.parent
+    )
+    backup_dir = Path(backup_root.name)
+    try:
+        for old_path in old_paths:
+            shutil.copy2(old_path, backup_dir / old_path.name)
+        try:
+            for staged_path in staged_paths:
+                os.replace(staged_path, local_dir / staged_path.name)
+
+            for old_path in old_paths:
+                if old_path.name not in staged_names:
+                    old_path.unlink()
+        except OSError as publish_error:
+            rollback_errors = []
+            for path in _object_output_paths(local_dir, objname):
+                if path.name not in old_names:
+                    try:
+                        path.unlink()
+                    except OSError as rollback_error:
+                        rollback_errors.append(str(rollback_error))
+            for name in old_names:
+                try:
+                    os.replace(backup_dir / name, local_dir / name)
+                except OSError as rollback_error:
+                    rollback_errors.append(str(rollback_error))
+            if rollback_errors:
+                detail = "; ".join(rollback_errors)
+                raise RuntimeError(
+                    f"Publishing tables failed and rollback was incomplete: "
+                    f"{detail}"
+                ) from publish_error
+            raise
+    finally:
+        backup_root.cleanup()
 
 
 def _needs_lbl_security_rebuild(local_dir: Path, objname: str) -> bool:
@@ -1194,11 +1293,14 @@ def object_query_headers(
             # check if path exists - on SSHFS this can raise OSError
             try:
                 path_exists = abspath.exists()
-            except OSError:
-                path_exists = False
+            except OSError as exc:
+                raise OSError(
+                    f"Cannot access indexed file {abspath}"
+                ) from exc
             if not path_exists:
-                header_dict[identifier] = apero_async.fill_dict_null(hkeys)
-                continue
+                raise FileNotFoundError(
+                    f"Indexed file is missing: {abspath}"
+                )
             # -----------------------------------------------------------------
             # check if file is fits file
             if abspath.suffix != ".fits":
@@ -1207,9 +1309,10 @@ def object_query_headers(
             # otherwise we open the file
             try:
                 hdr = fits.getheader(abspath)
-            except OSError:
-                header_dict[identifier] = apero_async.fill_dict_null(hkeys)
-                continue
+            except OSError as exc:
+                raise OSError(
+                    f"Cannot read FITS header from {abspath}"
+                ) from exc
             # loop around header key and load into header list
             for hkey in hkeys:
                 _hvalue = apero_async.get_hdr_key(hdr, hkey, hkeys[hkey])

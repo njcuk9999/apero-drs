@@ -766,7 +766,9 @@ def api_async_tasks_list(app: Any) -> Any:
         tid = tc.get("id", "")
         rt = task_runner.get_task_status(tid) if tid else {"found": False}
         if not rt.get("found"):
-            persisted = task_runner.get_persisted_task_info_error(tid)
+            persisted = task_runner.get_persisted_task_info_error(
+                tid, instrument
+            )
             import_error = str(
                 import_errors.get(tc.get("task_key", ""), "")
             ).strip()
@@ -841,7 +843,9 @@ def api_async_tasks_global_list(app: Any) -> Any:
         tid = tc.get("id", "")
         rt = task_runner.get_task_status(tid) if tid else {"found": False}
         if not rt.get("found"):
-            persisted = task_runner.get_persisted_task_info_error(tid)
+            persisted = task_runner.get_persisted_task_info_error(
+                tid, global_scope
+            )
             import_error = str(
                 import_errors.get(tc.get("task_key", ""), "")
             ).strip()
@@ -1025,24 +1029,30 @@ def api_async_tasks_status(app: Any) -> Any:
 
     ids_param = request.args.get("ids", "").strip()
     task_ids = [i for i in ids_param.split(",") if i.strip()]
+    queue_status = task_runner.get_status()
     if not task_ids:
-        queue_status = task_runner.get_status()
-        current_info = queue_status.get("current_info") or {}
-        current_id = str(current_info.get("task_id", "")).strip()
-        queue_ids = [
-            str(item.get("task_id", "")).strip()
-            for item in (queue_status.get("queue_info") or [])
-            if isinstance(item, dict)
-        ]
-        task_ids = [tid for tid in [current_id] + queue_ids if tid]
+        queues = queue_status.get("named_queues")
+        queue_views = (
+            list(queues.values()) if isinstance(queues, dict)
+            else [queue_status]
+        )
+        for queue_view in queue_views:
+            entries = [queue_view.get("current_info") or {}]
+            entries.extend(queue_view.get("queue_info") or [])
+            for item in entries:
+                tid = str(item.get("task_id", "")).strip()
+                if tid and tid not in task_ids:
+                    task_ids.append(tid)
 
     all_tasks = load_async_tasks()
     task_cfg_map: dict = {}
+    task_scope_map: dict = {}
     for _inst, tc_list in all_tasks.items():
         for tc in tc_list:
             tid = tc.get("id", "")
             if tid:
                 task_cfg_map[tid] = tc
+                task_scope_map[tid] = _inst
 
     statuses: dict = {}
     from apero_ri import tasks as task_module
@@ -1052,7 +1062,9 @@ def api_async_tasks_status(app: Any) -> Any:
         if not rt.get("found"):
             tc = task_cfg_map.get(tid, {})
             task_key = str(tc.get("task_key", "") or "")
-            persisted = task_runner.get_persisted_task_info_error(tid)
+            persisted = task_runner.get_persisted_task_info_error(
+                tid, task_scope_map.get(tid, "")
+            )
             import_error = str(
                 task_module.IMPORT_ERRORS.get(task_key, "") or ""
             ).strip()
@@ -1089,7 +1101,6 @@ def api_async_tasks_status(app: Any) -> Any:
                 "log_path": "",
             }
         statuses[tid] = rt
-    queue_status = task_runner.get_status()
     return jsonify(success=True, statuses=statuses, queue=queue_status)
 
 

@@ -102,6 +102,29 @@
     </span>
 </div>
 
+{% if object_query_status.status in
+      ['running', 'failed', 'partial', 'stale', 'unknown'] %}
+<div class="op-verify-banner" role="status">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <div class="op-verify-banner__msg">
+        {% if object_query_status.status == 'partial' %}
+        A filtered object refresh completed. Other objects in this profile
+        may still have stale product data.
+        {% elif object_query_status.status == 'stale' %}
+        This object has an old product cache that cannot be verified.
+        Product data shown here may be stale until the next refresh.
+        {% else %}
+        The object-product refresh is {{ object_query_status.status }}.
+        Product data shown here may be stale.
+        {% endif %}
+        {% if object_query_status.last_success_at %}
+        Last successful full refresh:
+        {{ object_query_status.last_success_at }}.
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <div class="ari-sg-tabs op-tabs" id="op-tabs">
     <button class="ari-sg-tab" data-tab="all">
         <i class="fa-solid fa-table-cells-large"></i> All

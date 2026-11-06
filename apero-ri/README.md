@@ -32,6 +32,17 @@ Then you just need to forward the port you select, and it should work.
 
 The web-server will only work while `apero_ri_run` is running.
 
+## Async tasks
+
+The Admin Portal's Async Tasks page lists tasks for the selected instrument
+or global scope. Switching scopes clears the previous selection and ignores
+responses from the old scope.
+
+The Queue tab combines all named queues, including instrument workers and
+APERO checks. The first running task has the progress summary; additional
+running tasks appear above pending tasks with their runtime status and
+Stop/Log controls. Recent History combines completed runs across queues.
+
 ## Search
 
 The top-level **Search** page at `/search` is available from the home page,
@@ -197,4 +208,3 @@ can import any thing from:
 
 aperocore
 apero
-

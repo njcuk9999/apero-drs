@@ -25,6 +25,9 @@
     var POLL_SLOW_MS = 5000;
     var OUTPUT_PREVIEW_PER_TYPE = 3;
     var pollIntervalMs = POLL_SLOW_MS;
+    var viewVersion = 0;
+    var taskRequestVersion = 0;
+    var taskListController = null;
     var dragSrcId = null;
 
     /* -----------------------------------------------------------------------
@@ -366,9 +369,11 @@
             btn.textContent = inst;
             btn.dataset.instrument = inst;
             btn.addEventListener('click', function () {
+                resetTaskView();
                 currentInstrument = inst;
                 highlightInstrumentCard();
                 loadTasks();
+                startPoll();
             });
             instrumentCards.appendChild(btn);
         });
@@ -384,6 +389,7 @@
 
     function selectTab(value) {
         if (!tabsEl) return;
+        resetTaskView();
         // Update active styling
         Array.from(tabsEl.querySelectorAll('.ari-sg-tab')).forEach(function (b) {
             b.classList.toggle('ari-sg-tab--active', b.dataset.value === value);
@@ -437,11 +443,37 @@
     /* -----------------------------------------------------------------------
        Task list
     ----------------------------------------------------------------------- */
+    function resetTaskView() {
+        viewVersion += 1;
+        taskRequestVersion += 1;
+        if (taskListController) taskListController.abort();
+        taskListController = null;
+        allTasks = [];
+        currentProfileNames = [];
+        selectedTaskId = null;
+        showDetail(null);
+        renderTaskLists();
+    }
+
     function loadTasks() {
         if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) return;
-        fetch(urls.list + '?instrument=' + encodeURIComponent(currentInstrument))
+        return loadTaskList(urls.list + '?instrument=' + encodeURIComponent(currentInstrument));
+    }
+
+    function loadGlobalTasks() {
+        return loadTaskList(urls.globalList);
+    }
+
+    function loadTaskList(url) {
+        var instrument = currentInstrument;
+        var version = ++taskRequestVersion;
+        if (taskListController) taskListController.abort();
+        taskListController = new AbortController();
+        var controller = taskListController;
+        return fetch(url, {signal: controller.signal})
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                if (version !== taskRequestVersion || instrument !== currentInstrument) return;
                 if (!data.success) { showToast('Failed to load tasks: ' + data.error, 'error'); return; }
                 allTasks = data.tasks || [];
                 currentProfileNames = Array.isArray(data.profile_names)
@@ -457,25 +489,13 @@
                         showDetail(null);
                     }
                 }
-            });
-    }
-
-    function loadGlobalTasks() {
-        fetch(urls.globalList)
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (!data.success) { showToast('Failed to load global tasks: ' + data.error, 'error'); return; }
-                allTasks = data.tasks || [];
-                renderTaskLists();
-                updateRunningBadge(data.queue);
-                if (selectedTaskId) {
-                    var selected = allTasks.find(function (t) { return t.id === selectedTaskId; });
-                    if (selected) {
-                        showDetail(selected);
-                    } else {
-                        showDetail(null);
-                    }
-                }
+            })
+            .catch(function (error) {
+                if (error.name === 'AbortError' || version !== taskRequestVersion) return;
+                showToast('Failed to load tasks: ' + error.message, 'error');
+            })
+            .finally(function () {
+                if (taskListController === controller) taskListController = null;
             });
     }
 
@@ -1622,7 +1642,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (!d.success) return;
-                    var q = d.queue || {};
+                    var q = combinedQueue(d.queue);
                     var busy = q.queue_length > 0 || q.current;
                     if (busy) {
                         runAllModal.style.display = '';
@@ -2874,19 +2894,26 @@
     }
 
     function refreshQueueView() {
+        var version = viewVersion;
         return fetch(urls.status)
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                if (!d.success) return;
+                if (version !== viewVersion || currentView !== 'queue') return;
+                if (!d.success) { showToast('Failed to load tasks: ' + d.error, 'error'); return; }
                 updatePollCadence(d.queue);
                 renderQueuePanel(d.queue, d.statuses || {});
+            })
+            .catch(function (error) {
+                if (version !== viewVersion || currentView !== 'queue') return;
+                showToast('Failed to load tasks: ' + error.message, 'error');
             });
     }
 
     function renderQueuePanel(queue, statuses) {
         if (!queue) return;
+        queue = combinedQueue(queue);
         var current = queue.current;
-        var pending = queue.queue || [];
+        var pending = queue.additional_currents.concat(queue.queue || []);
 
         if (current) {
             var currentInfo = queue.current_info || {};
@@ -2939,11 +2966,15 @@
         if (pending.length === 0) {
             queuePendingList.innerHTML = '<div class="ari-sg-empty-small">Queue is empty</div>';
         } else {
-            var pendingInfo = Array.isArray(queue.queue_info) ? queue.queue_info : [];
+            var pendingInfo = queue.additional_current_info.concat(queue.queue_info || []);
             queuePendingList.innerHTML = pending.map(function (entry, idx) {
                 var info = pendingInfo[idx] || {};
                 var instrument = info.instrument || entry[0] || '';
                 var taskName = info.task_name || info.task_id || entry[1] || '';
+                if (idx < queue.additional_currents.length) {
+                    var runningStatus = statuses[info.task_id || entry[1]] || {};
+                    taskName = '[' + (runningStatus.status || 'in_progress') + '] ' + taskName;
+                }
                 var taskId = info.task_id || entry[1] || '';
                 return '<div class="at-queue-item">' +
                     '<span class="at-queue-item__inst">' + esc(instrument) + '</span>' +
@@ -3010,7 +3041,41 @@
     /* -----------------------------------------------------------------------
        Running badge
     ----------------------------------------------------------------------- */
+    function combinedQueue(queue) {
+        queue = queue || {};
+        var named = queue.named_queues;
+        if (!named) {
+            return Object.assign({}, queue, {
+                additional_currents: [],
+                additional_current_info: [],
+            });
+        }
+        var currents = [];
+        var currentInfo = [];
+        var pending = [];
+        var pendingInfo = [];
+        Object.keys(named).forEach(function (name) {
+            var item = named[name];
+            if (item.current) {
+                currents.push(item.current);
+                currentInfo.push(item.current_info || {});
+            }
+            pending = pending.concat(item.queue || []);
+            pendingInfo = pendingInfo.concat(item.queue_info || []);
+        });
+        return Object.assign({}, queue, {
+            current: currents[0] || null,
+            current_info: currentInfo[0] || null,
+            additional_currents: currents.slice(1),
+            additional_current_info: currentInfo.slice(1),
+            queue: pending,
+            queue_info: pendingInfo,
+            queue_length: pending.length,
+        });
+    }
+
     function updateRunningBadge(queue) {
+        queue = combinedQueue(queue);
         var busy = queue && (queue.queue_length > 0 || queue.current);
         runningBadge.style.display = busy ? '' : 'none';
     }
@@ -3034,21 +3099,23 @@
     }
 
     function updatePollCadence(queue) {
+        queue = combinedQueue(queue);
         var busy = !!(queue && (queue.queue_length > 0 || queue.current));
         pollIntervalMs = busy ? POLL_FAST_MS : POLL_SLOW_MS;
     }
 
     function pollStatus() {
+        var version = viewVersion;
         if (currentInstrument === null) {
             // queue tab
             refreshQueueView()
-                .catch(function () {})
                 .finally(function () {
-                    scheduleNextPoll(pollIntervalMs);
+                    if (version === viewVersion) scheduleNextPoll(pollIntervalMs);
                 });
             return;
         }
         if (!allTasks.length) {
+            if (!taskListController) refreshCurrentTasks();
             pollIntervalMs = POLL_SLOW_MS;
             scheduleNextPoll(pollIntervalMs);
             return;
@@ -3058,6 +3125,7 @@
         fetch(urls.status + '?ids=' + encodeURIComponent(ids))
             .then(function (r) { return r.json(); })
             .then(function (d) {
+                if (version !== viewVersion) return;
                 if (!d.success) return;
                 updatePollCadence(d.queue);
                 // Merge runtime statuses back into allTasks
@@ -3069,10 +3137,11 @@
                 if (selectedTaskId) updateDetailRuntime();
             })
             .catch(function () {
+                if (version !== viewVersion) return;
                 pollIntervalMs = POLL_SLOW_MS;
             })
             .finally(function () {
-                scheduleNextPoll(pollIntervalMs);
+                if (version === viewVersion) scheduleNextPoll(pollIntervalMs);
             });
     }
 

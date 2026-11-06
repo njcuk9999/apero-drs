@@ -539,22 +539,24 @@ def _persist_task_info_error(
     _write_text_file(_task_error_file_path(instrument, task_id), error or "")
 
 
-def get_persisted_task_info_error(task_id: str) -> Dict[str, str]:
+def get_persisted_task_info_error(
+    task_id: str, instrument: str = "",
+) -> Dict[str, str]:
     """Return persisted task info/error from dedicated files."""
-    scope = _task_instruments.get(task_id, "")
+    scope = instrument or _task_instruments.get(task_id, "")
     info_path = _task_info_file_path(scope, task_id)
     err_path = _task_error_file_path(scope, task_id)
 
     info = _read_text_file(info_path)
     error = _read_text_file(err_path)
 
-    if not info:
+    if not info and not info_path.is_file():
         found = _resolve_existing_task_data_file(
             task_id, _task_info_rel_dir, ".md"
         )
         if found is not None:
             info = _read_text_file(found)
-    if not error:
+    if not error and not err_path.is_file():
         found = _resolve_existing_task_data_file(
             task_id, _task_errors_rel_dir, ".txt"
         )

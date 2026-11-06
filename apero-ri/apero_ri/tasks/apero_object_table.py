@@ -155,7 +155,9 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             try:
                 should_skip, db_updates, skip_reason = (
                     apero_async.should_skip_profile_query(
-                        aparams, force_run=force_run
+                        aparams,
+                        force_run=force_run,
+                        update_key="database-update-object-table",
                     )
                 )
             except Exception as exc:
@@ -230,7 +232,10 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
                             "update fingerprint."
                         )
                         apero_async.save_profile_db_table_updates(
-                            instrument, apero_profile, db_updates
+                            instrument,
+                            apero_profile,
+                            db_updates,
+                            update_key="database-update-object-table",
                         )
                     except Exception as exc:
                         tlog(

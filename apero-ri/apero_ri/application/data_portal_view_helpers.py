@@ -1,5 +1,6 @@
 """Data Portal view helper functions for ARIApp."""
 
+import json
 import time
 from pathlib import Path
 from typing import Any
@@ -201,6 +202,58 @@ def ri_object_page_view(
         objname=objname,
     )
 
+    base_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    profile_dir = (
+        base_dir / 'tasks' / profile['instrument'] / profile_id
+    )
+    refresh_state_path = profile_dir / '.object_query_state.json'
+    object_query_status = {}
+    try:
+        loaded_state = json.loads(
+            refresh_state_path.read_text(encoding='utf-8')
+        )
+    except FileNotFoundError:
+        pass
+    except (OSError, json.JSONDecodeError) as exc:
+        app.logger.warning(
+            'Could not read object-query status for %s: %s',
+            profile_id,
+            exc,
+        )
+        object_query_status = {'status': 'unknown'}
+    else:
+        if isinstance(loaded_state, dict):
+            object_query_status = loaded_state
+        else:
+            object_query_status = {'status': 'unknown'}
+    if not object_query_status:
+        objects_dir = profile_dir / 'objects'
+        object_state_path = (
+            objects_dir / f'.state_{objname}.json'
+        )
+        try:
+            object_state = json.loads(
+                object_state_path.read_text(encoding='utf-8')
+            )
+        except FileNotFoundError:
+            object_state = None
+        except (OSError, json.JSONDecodeError) as exc:
+            app.logger.warning(
+                'Could not read object cache state for %s/%s: %s',
+                profile_id,
+                objname,
+                exc,
+            )
+            object_state = None
+            object_query_status = {'status': 'unknown'}
+        if object_state is not None and not isinstance(object_state, dict):
+            object_query_status = {'status': 'unknown'}
+        elif isinstance(object_state, dict) and (
+            object_state.get('schema_version') != 2
+            or not object_state.get('product_fingerprint')
+        ):
+            object_query_status = {'status': 'stale'}
+
     finder_cached = False
     try:
         from apero_ri.core.plot_cache import (
@@ -208,8 +261,6 @@ def ri_object_page_view(
             get_finder_cached, _profile_dir, _load_meta,
             _db_fingerprint_matches,
         )
-        base_dir = Path(app.args.data_dir
-                        or str(Path.home() / '.ari'))
         cfg = load_cache_config(base_dir)
         if is_cache_enabled(cfg=cfg):
             cache_root = resolve_cache_root(base_dir, cfg)
@@ -272,6 +323,7 @@ def ri_object_page_view(
         'plot_yaxis_zoom': plot_yaxis_zoom,
         'plotable_output_types': sorted(PLOTABLE_OUTPUT_TYPES),
         'frame_output_prefixes': list(FRAME_OUTPUT_PREFIXES),
+        'object_query_status': object_query_status,
     }
     return render_template('data_portal/object_page.html', **context)
 

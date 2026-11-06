@@ -902,6 +902,7 @@ def should_skip_profile_query(
     aparams: Dict[str, Any],
     table_keys: Optional[Sequence[str]] = None,
     force_run: bool = False,
+    update_key: str = "database-update",
 ) -> Tuple[bool, Dict[str, str], str]:
     """Return whether a profile query can be skipped based on table updates."""
     if force_run:
@@ -915,7 +916,7 @@ def should_skip_profile_query(
     keys = list(table_keys or DB_UPDATE_TABLE_KEYS)
     current_updates = get_profile_db_table_updates(aparams, keys)
 
-    stored_updates = aparams.get("database-update", {})
+    stored_updates = aparams.get(update_key, {})
     if not isinstance(stored_updates, dict):
         stored_updates = {}
     missing_keys = [key for key in keys if key not in stored_updates]
@@ -937,9 +938,12 @@ def should_skip_profile_query(
 
 
 def save_profile_db_table_updates(
-    instrument: str, profile_name: str, updates: Dict[str, str]
+    instrument: str,
+    profile_name: str,
+    updates: Dict[str, str],
+    update_key: str = "database-update",
 ) -> None:
-    """Persist per-profile table update fingerprints in apero_profiles.yaml."""
+    """Persist task-specific and legacy cache fingerprints in profile data."""
     from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 
     profiles = load_apero_profiles()
@@ -968,7 +972,10 @@ def save_profile_db_table_updates(
     ):
         profiles[instrument_key][profile_key] = {}
 
-    profiles[instrument_key][profile_key]["database-update"] = dict(updates)
+    profile_data = profiles[instrument_key][profile_key]
+    profile_data[update_key] = dict(updates)
+    if update_key != "database-update":
+        profile_data["database-update"] = dict(updates)
     save_apero_profiles(profiles)
 
 
@@ -995,7 +1002,10 @@ def check_profile_paths_accessible(
         if not pstr:
             continue
         p = Path(pstr)
-        accessible = p.is_dir() if not p.suffix else p.exists()
+        try:
+            accessible = p.is_dir() if not p.suffix else p.exists()
+        except OSError:
+            accessible = False
         if not accessible:
             missing.append((str(key), pstr))
     return missing
