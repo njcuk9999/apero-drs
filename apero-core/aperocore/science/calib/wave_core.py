@@ -355,6 +355,8 @@ def table_adjust_fp_peak_number(
         if peak_dtype.kind in ['i', 'u']:
             peaks = peaks.astype(peak_dtype)
         return peaks, res_dict
+    
+    disp_before = np.inf
     # Try iterative order-by-order integer corrections.
     for it in range(max_tries):
         # Use only finite orders when constructing the robust fit.
@@ -366,28 +368,35 @@ def table_adjust_fp_peak_number(
             res_dict['stop_reason'] = 'fit_degree_too_small'
             break
         # Fit a smooth trend of the peak number at the reference pixel.
-        fit, _ = mp.robust_polyfit(valid_orders, midcount[valid_orders],
-                                   degree=use_degree,
-                                   nsigcut=nsigcut)
-        # Evaluate the fitted trend for all orders.
-        model = np.polyval(fit, np.arange(len(midcount)))
-        # Work out the residuals in units of FP peaks.
-        res = midcount - model
+        # fit, _ = mp.robust_polyfit(valid_orders, midcount[valid_orders],
+        #                            degree=use_degree,
+        #                            nsigcut=nsigcut)
+        # # Evaluate the fitted trend for all orders.
+        # model = np.polyval(fit, np.arange(len(midcount)))
+        # # Work out the residuals in units of FP peaks.
+        # res = midcount - model
+
+        med_step = np.nanmedian(np.diff(midcount))
+        # find the deviation away from the expected median step between orders
+        res_count = midcount - med_step * np.arange(max_order + 1)
+        res_count = res_count - np.nanmedian(res_count[valid_orders])
+        # fit and remove the polynomial fit to this deviation
+        fit, _ = mp.robust_polyfit(valid_orders, res_count[valid_orders],
+                                   degree=3, nsigcut=nsigcut)
+        res_count[valid_orders] = res_count[valid_orders] - np.polyval(fit, valid_orders)
+
         # Identify the order with the largest absolute residual.
-        worst = int(mp.nanargmax(np.abs(res)))
+        worst = int(mp.nanargmax(np.abs(res_count)))
         # The candidate correction is the nearest integer peak offset.
-        shift = int(np.round(res[worst]))
+        shift = int(np.round(res_count[worst]))
         # Keep a trial version so we can compare dispersions.
         midcount_trial = np.array(midcount)
         midcount_trial[worst] -= shift
-        # Keep the residuals to the same fit for the trial correction.
-        trial_res = midcount_trial - model
+
         # Compare the residual dispersions before and after the shift.
-        disp_before = float(mp.nanstd(res))
-        disp_after = float(mp.nanstd(trial_res))
+        disp_after = float(mp.nanstd(res_count))
         # Save this attempted iteration for plotting.
-        res_dict['residuals'].append(np.array(res))
-        res_dict['trial_residuals'].append(np.array(trial_res))
+        res_dict['residuals'].append(np.array(res_count))
         res_dict['fit_coeffs'].append(np.array(fit))
         res_dict['worst_order'].append(worst)
         res_dict['worst_shift'].append(shift)
@@ -405,6 +414,8 @@ def table_adjust_fp_peak_number(
             res_dict['accepted'].append(True)
             res_dict['n_iterations'] += 1
             res_dict['order_corrections'] = np.array(corrections)
+            # update the dispersion for the next iteration
+            disp_before = float(disp_after)
             continue
         # Otherwise nothing useful is left to correct.
         res_dict['accepted'].append(False)

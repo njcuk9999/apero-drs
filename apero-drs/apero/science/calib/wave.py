@@ -1371,17 +1371,32 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
             # log: No FP peak-number corrections were applied for fiber {0}
             #     iteration {1}.
             WLOG(params, '', textentry('40-017-00080', args=margs))
+
         # Push the corrected peak numbers back into the table.
         table['PEAK_NUMBER'] = np.array(adjusted_peaks)
+        # ---------------------------------------------------------------------
         # need to update WAVE_REF now we have a new PEAK_NUMBER
-        wave_ref = wave_core.update_wave_with_npeak(np.array(table['WAVE_REF']),
-                                                    table['PEAK_NUMBER'],
+        wave_ref = wave_core.update_wave_with_npeak(table['WAVE_REF'],
+                                                    table["PEAK_NUMBER"],
                                                     cavity_length_poly,
                                                     cavity_pedestal,
                                                     fp_inv_itr,
                                                     inst_wavestart,
                                                     inst_waveend)
+        # push the updated wave_ref back into the table
         table['WAVE_REF'] = np.array(wave_ref)
+        # ---------------------------------------------------------------------
+        # Need to also update wave meas using a spline of pixel_ref + wave_ref
+        wave_meas = np.full(len(table), np.nan)
+        for order_num in range(nbo):
+            ordermask = table["ORDER"] == order_num
+            if np.sum(ordermask) > 0:
+                ref_spline = mp.iuv_spline(table['PIXEL_REF'][ordermask],
+                                           table['WAVE_REF'][ordermask])
+                wave_meas[ordermask] = ref_spline(table['PIXEL_MEAS'''][ordermask])
+        # push the updated wave meas back into the table
+        table['WAVE_MEAS'] = np.array(wave_meas)
+        # ---------------------------------------------------------------------
         # Plot the residual history of the FP peak-number corrections.
         plot_kwargs = dict(resdict=res_dict, fiber=fiber,
                            iteration=str_itr)
@@ -1799,65 +1814,65 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Loop 2: Find offsets
     # -------------------------------------------------------------------------
-    # find all non-NaN files
-    good = np.where(np.isfinite(fpl_wave_meas))[0]
-
-    # loop around each line (apart from the last)
-    for line_it in range(len(good) - 1):
-        # find expected next PEAK_NUM considering next WAVE_MEAS
-        # if it differs from actual next value, offset all value after this
-        # point to have a discontinuity
-        # a[good][i] is a[good[i]], so index directly (no full gathers)
-        it0, it1 = good[line_it], good[line_it + 1]
-        wavepeak_it = fpl_wave_meas[it0] * fpl_peak_num[it0]
-        wavepeak_it = wavepeak_it / fpl_wave_meas[it1]
-        # distance to next peak
-        peakdist = np.round(wavepeak_it) - fpl_peak_num[it1]
-        # deal with an undefined peak distances
-        if not np.isfinite(peakdist):
-            continue
-        # make distance an integer (nearest pixel)
-        peakdist = int(peakdist)
-        # if there is no change in distances continue
-        if peakdist == 0:
-            continue
-        # else add the distance to all future peaks
-        fpl_peak_num[good[line_it + 1]:] += peakdist
+    # # find all non-NaN files
+    # good = np.where(np.isfinite(fpl_wave_meas))[0]
+    #
+    # # loop around each line (apart from the last)
+    # for line_it in range(len(good) - 1):
+    #     # find expected next PEAK_NUM considering next WAVE_MEAS
+    #     # if it differs from actual next value, offset all value after this
+    #     # point to have a discontinuity
+    #     # a[good][i] is a[good[i]], so index directly (no full gathers)
+    #     it0, it1 = good[line_it], good[line_it + 1]
+    #     wavepeak_it = fpl_wave_meas[it0] * fpl_peak_num[it0]
+    #     wavepeak_it = wavepeak_it / fpl_wave_meas[it1]
+    #     # distance to next peak
+    #     peakdist = np.round(wavepeak_it) - fpl_peak_num[it1]
+    #     # deal with an undefined peak distances
+    #     if not np.isfinite(peakdist):
+    #         continue
+    #     # make distance an integer (nearest pixel)
+    #     peakdist = int(peakdist)
+    #     # if there is no change in distances continue
+    #     if peakdist == 0:
+    #         continue
+    #     # else add the distance to all future peaks
+    #     fpl_peak_num[good[line_it + 1]:] += peakdist
     # -------------------------------------------------------------------------
-    # find the bulk offset that leads to a minimisation of the STDDEV of the
-    #    cavity length through domain
-    bulk_offset = [0]
-    rms = [mp.nanstd(fpl_wave_meas * fpl_peak_num)]
-    # keep track of which way we are going
-    sign = 1
-    # start a counter to make sure our while loop doesn't go on forever
-    count = 0
-    # loop around until the rms is zero
-    while (np.argmin(rms) == 0) or (np.argmin(rms) == (len(rms) - 1)):
-        if sign == 1:
-            new_bulk = mp.nanmax(np.abs(bulk_offset)) + 1
-        else:
-            new_bulk = -mp.nanmax(np.abs(bulk_offset))
-        bulk_offset = np.append(bulk_offset, new_bulk)
-        # calculate the new rms
-        new_rms = mp.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
-        rms = np.append(rms, new_rms)
-        # flip the sign
-        sign *= -1
-        # sort the bulk offsets in order
-        offsetsort = np.argsort(bulk_offset)
-        # sort the bulk offsets from smallest to largest
-        bulk_offset = bulk_offset[offsetsort]
-        # also sort the rms
-        rms = list(np.array(rms)[offsetsort])
-        # deal with too many iterations
-        if count > mp.nanmin(fpl_peak_num):
-            # log error: Too many iterations for bulk offset N={0}
-            raise AperoCodedException(params, '09-017-00009', targs=[count])
-        # add to count
-        count += 1
-    # update all peaks with current best offset
-    fpl_peak_num += bulk_offset[np.argmin(rms)]
+    # # find the bulk offset that leads to a minimisation of the STDDEV of the
+    # #    cavity length through domain
+    # bulk_offset = [0]
+    # rms = [mp.nanstd(fpl_wave_meas * fpl_peak_num)]
+    # # keep track of which way we are going
+    # sign = 1
+    # # start a counter to make sure our while loop doesn't go on forever
+    # count = 0
+    # # loop around until the rms is zero
+    # while (np.argmin(rms) == 0) or (np.argmin(rms) == (len(rms) - 1)):
+    #     if sign == 1:
+    #         new_bulk = mp.nanmax(np.abs(bulk_offset)) + 1
+    #     else:
+    #         new_bulk = -mp.nanmax(np.abs(bulk_offset))
+    #     bulk_offset = np.append(bulk_offset, new_bulk)
+    #     # calculate the new rms
+    #     new_rms = mp.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
+    #     rms = np.append(rms, new_rms)
+    #     # flip the sign
+    #     sign *= -1
+    #     # sort the bulk offsets in order
+    #     offsetsort = np.argsort(bulk_offset)
+    #     # sort the bulk offsets from smallest to largest
+    #     bulk_offset = bulk_offset[offsetsort]
+    #     # also sort the rms
+    #     rms = list(np.array(rms)[offsetsort])
+    #     # deal with too many iterations
+    #     if count > mp.nanmin(fpl_peak_num):
+    #         # log error: Too many iterations for bulk offset N={0}
+    #         raise AperoCodedException(params, '09-017-00009', targs=[count])
+    #     # add to count
+    #     count += 1
+    # # update all peaks with current best offset
+    # fpl_peak_num += bulk_offset[np.argmin(rms)]
     # -------------------------------------------------------------------------
     # Find cavity width now peak offsets have been found
     # -------------------------------------------------------------------------

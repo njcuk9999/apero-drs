@@ -1251,7 +1251,7 @@ CDict.set('REF_EDGE_WMAX', value=40, source=__NAME__, author='EA', group=cgroup)
 
 # value in pixel (+/-) for the box size around each HC line to perform fit
 # Note: was 13 before 2x extraction sampling --> then 26
-CDict.set('REF_HC_BOXSIZE', value=39, source=__NAME__,
+CDict.set('REF_HC_BOXSIZE', value=26, source=__NAME__,
           author='EA', group=cgroup)
 
 # get valid hc dprtypes
