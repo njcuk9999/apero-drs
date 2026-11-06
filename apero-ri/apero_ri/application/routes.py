@@ -1886,7 +1886,7 @@ def register_data_portal_routes(app: Any) -> None:
     app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
-        app._ri_object_table_view,
+        app._ri_obs_table_view,
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/query-db",

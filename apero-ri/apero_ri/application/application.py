@@ -1228,9 +1228,23 @@ class ARIApp(Flask):
     # Object table sub-page + API
     # -----------------------------------------------------------------
     def _ri_object_table_view(self, profile_id: str) -> Any:
-        """Render the observation table page for one profile."""
-        kwargs = dict(profile_id=profile_id)
-        return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)
+        """Render the object table.
+
+        :param profile_id: Reduction profile identifier.
+        :return: Rendered object table response.
+        """
+        table_kwargs = dict(profile_id=profile_id)
+        return data_portal_view_helpers.ri_object_table_view(self,
+                                                           **table_kwargs)
+
+    def _ri_obs_table_view(self, profile_id: str) -> Any:
+        """Render the observation table.
+
+        :param profile_id: Reduction profile identifier.
+        :return: Rendered observation table response.
+        """
+        table_kwargs = dict(profile_id=profile_id)
+        return data_portal_view_helpers.ri_obs_table_view(self, **table_kwargs)
 
     def _ri_find_object_view(self, profile_id: str) -> Any:
         """Legacy Find Object URL now redirects to object table."""

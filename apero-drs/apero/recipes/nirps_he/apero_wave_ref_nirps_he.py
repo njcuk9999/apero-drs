@@ -246,6 +246,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
         # iterate twice so we have a good cavity length to start
         for iteration in range(3):
+            # print central wavelength
+            # TODO: remove this print statement when done debugging
+            print(wprops['WAVEMAP'][:, 4088])
             # -----------------------------------------------------------------
             # generate the hc reference lines
             hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wprops['WAVEMAP'],
