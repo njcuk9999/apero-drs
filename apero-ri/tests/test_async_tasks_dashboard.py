@@ -100,6 +100,7 @@ window.testDashboard = {
     combinedQueue, loadTasks, loadGlobalTasks, pollStatus,
     scope: value => {currentInstrument = value; viewVersion++;},
     tasks: () => allTasks,
+    loading: () => taskListLoading,
     stubRender: () => {
         renderTaskLists = () => {};
         updateRunningBadge = () => {};
@@ -115,6 +116,7 @@ dashboard.stubRender();
     const old = dashboard.loadTasks();
     dashboard.scope('NIRPS');
     const current = dashboard.loadTasks();
+    assert.equal(dashboard.loading(), true);
     pending[1]({json: async () => ({
         success: true, tasks: [{id: 'nirps'}]
     })});
@@ -123,6 +125,7 @@ dashboard.stubRender();
         success: true, tasks: [{id: 'spirou'}]
     })});
     await old;
+    assert.equal(dashboard.loading(), false);
     assert.equal(dashboard.tasks()[0].id, 'nirps');
     dashboard.pollStatus();
     dashboard.scope('__GLOBAL__');

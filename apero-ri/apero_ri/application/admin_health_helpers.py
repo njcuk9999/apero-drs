@@ -362,7 +362,7 @@ def build_admin_card_health_uncached(
                     else:
                         status = str(task_cfg.get("last_status", "") or "")
                         persisted = task_runner.get_persisted_task_info_error(
-                            task_id
+                            task_id, instrument
                         )
                         error = str(
                             persisted.get("error", "")

@@ -57,6 +57,21 @@ def test_product_fingerprint_covers_non_raw_products(monkeypatch) -> None:
     assert "fdb.KW_OUTPUT AS KW_OUTPUT" in query
     assert "fdb.BLOCK_KIND = 'raw'" not in query
 
+    import sqlite3
+    columns = [
+        "BLOCK_KIND", "OBS_DIR", "FILENAME", "KW_IDENTIFIER",
+        "KW_DPRTYPE", "KW_OUTPUT", "KW_FIBER", "KW_RUN_ID",
+        "KW_PI_NAME", "KW_OBJNAME", "LAST_MODIFIED",
+    ]
+    conn = sqlite3.connect(":memory:")
+    conn.execute(f"CREATE TABLE findex ({', '.join(columns)})")
+    conn.execute(
+        "INSERT INTO findex (KW_OBJNAME, KW_IDENTIFIER) "
+        "VALUES ('TOI249', 'id1')"
+    )
+    rows = conn.execute(query).fetchall()
+    assert len(rows) == 1 and "id1" in rows[0]
+
 
 def test_refresh_checkpoints_are_independent(monkeypatch) -> None:
     """A different task's DB marker cannot suppress this task's refresh."""
