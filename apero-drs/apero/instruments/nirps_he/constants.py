@@ -1279,12 +1279,12 @@ CDict.set('REF_HC_GUESS_EWID', value=4, source=__NAME__,
 
 # Define the fiber offset (in pixels) away from reference fiber
 CDict.set('FIBER_OFFSET_MOD',
-          value={"A": 0.0, "B": -20.0},
+          value={"A": 0.0, "B": 39.3997},
           source=__NAME__, author='EA', group=cgroup)
 
 # Define the fiber scale factor from reference fiber
 CDict.set('FIBER_SCALE_MOD',
-          value={"A": 1.0, "B": 0.99766},
+          value={"A": 1.0, "B": 1.00253724},
           source=__NAME__, author='EA', group=cgroup)
 
 # =============================================================================

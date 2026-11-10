@@ -1612,7 +1612,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         xfit1 = ordfp_pix_meas[1:]
         yfit1 = ordfp_pix_meas[1:] - ordfp_pix_meas[:-1]
 
-        # get the step before and after each FP peak (except the first and last)
+        # # get the step before and after each FP peak (except the first and last)
         step_before = np.roll(ordfp_pix_meas, -1) - ordfp_pix_meas
         step_after = ordfp_pix_meas - np.roll(ordfp_pix_meas, 1)
         # calculate the change in step for each peak
@@ -1627,30 +1627,30 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                          wavesol_fit_degree,
                                          nsig_cut, domain=[0, nbxpix])
         # ---------------------------------------------------------------------
-        # counting steps backward
-        # maybe first step is wrong, we'll see later by x-matching with HC lines
-        # after this step, we know that lines within the order have
-        # *relative* numbers that are ok
-        for step_fp in range(1, len(ordfp_pix_meas)):
-            # find expected step between previous and current FP peak
-            # We start numbering at 1 as the 0th serves as a relative
-            # starting point
-            diff = ordfp_pix_meas[step_fp] - ordfp_pix_meas[step_fp - 1]
-
-            dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1:step_fp + 1],
-                                domain=[0, nbxpix])
-
-            dnum = diff / np.mean(dfit)
-
-            if np.abs(dnum - np.round(dnum)) > 0.1:
-                wargs = [order_num]
-                # warning: Order {0}: FP peaks inconsistent with regular spacing
-                WLOG(params, 'warning', textentry('10-017-00014', args=wargs))
-            # dnum is always very close to an integer value, we round it
-            # we subtract the steps, FP peaks go in decreasing number
-            rdnum = np.round(dnum)
-            ordfp_peak_num[step_fp] = ordfp_peak_num[step_fp - 1] - rdnum
-        # ---------------------------------------------------------------------
+        # # counting steps backward
+        # # maybe first step is wrong, we'll see later by x-matching with HC lines
+        # # after this step, we know that lines within the order have
+        # # *relative* numbers that are ok
+        # for step_fp in range(1, len(ordfp_pix_meas)):
+        #     # find expected step between previous and current FP peak
+        #     # We start numbering at 1 as the 0th serves as a relative
+        #     # starting point
+        #     diff = ordfp_pix_meas[step_fp] - ordfp_pix_meas[step_fp - 1]
+        #
+        #     dfit = mp.val_cheby(fit_step, ordfp_pix_meas[step_fp - 1:step_fp + 1],
+        #                         domain=[0, nbxpix])
+        #
+        #     dnum = diff / np.mean(dfit)
+        #
+        #     if np.abs(dnum - np.round(dnum)) > 0.1:
+        #         wargs = [order_num]
+        #         # warning: Order {0}: FP peaks inconsistent with regular spacing
+        #         WLOG(params, 'warning', textentry('10-017-00014', args=wargs))
+        # # dnum is always very close to an integer value, we round it
+        # # we subtract the steps, FP peaks go in decreasing number
+        # rdnum = np.round(dnum)
+        # ordfp_peak_num[step_fp] = ordfp_peak_num[step_fp - 1] - rdnum
+        # # ---------------------------------------------------------------------
         # if we don't have more than "min_hc_lines" hc lines, we store the
         #   new values and skip to next order
         # ---------------------------------------------------------------------
@@ -1677,7 +1677,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # we find the steps in FP lines at the position of all HC lines
         step_hc = mp.val_cheby(fit_step, ordhc_pix_meas, domain=[0, nbxpix])
         # get the derivative of the wave fit
-        d_hc_wave_fit = np.polynomial.chebyshev.chebder(hc_wave_fit)
+        # we not that the cheby deriv has to be scalted to the relevant domain
+        # we go from nbpix to a domain defined between -1 and +1, hence the
+        # scaling here.
+        d_hc_wave_fit = np.polynomial.chebyshev.chebder(hc_wave_fit,scl=2/nbxpix)
         # get the step in waves
         step_hc_wave = mp.val_cheby(d_hc_wave_fit, ordhc_pix_meas,
                                     domain=[0, nbxpix]) * step_hc
@@ -1692,6 +1695,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         #     offset that defines the wavelength solution leading to the
         #     smallest RMS between predicted and catalog HC peak positions
         offset = np.arange(-max_fp_c_offset, max_fp_c_offset + 1)
+        offset = [0]
         # set up storage of sigmas
         osigmas = np.zeros_like(offset, dtype=float)
         # loop around offsets
@@ -1814,65 +1818,65 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Loop 2: Find offsets
     # -------------------------------------------------------------------------
-    # # find all non-NaN files
-    # good = np.where(np.isfinite(fpl_wave_meas))[0]
-    #
-    # # loop around each line (apart from the last)
-    # for line_it in range(len(good) - 1):
-    #     # find expected next PEAK_NUM considering next WAVE_MEAS
-    #     # if it differs from actual next value, offset all value after this
-    #     # point to have a discontinuity
-    #     # a[good][i] is a[good[i]], so index directly (no full gathers)
-    #     it0, it1 = good[line_it], good[line_it + 1]
-    #     wavepeak_it = fpl_wave_meas[it0] * fpl_peak_num[it0]
-    #     wavepeak_it = wavepeak_it / fpl_wave_meas[it1]
-    #     # distance to next peak
-    #     peakdist = np.round(wavepeak_it) - fpl_peak_num[it1]
-    #     # deal with an undefined peak distances
-    #     if not np.isfinite(peakdist):
-    #         continue
-    #     # make distance an integer (nearest pixel)
-    #     peakdist = int(peakdist)
-    #     # if there is no change in distances continue
-    #     if peakdist == 0:
-    #         continue
-    #     # else add the distance to all future peaks
-    #     fpl_peak_num[good[line_it + 1]:] += peakdist
+    # find all non-NaN files
+    good = np.where(np.isfinite(fpl_wave_meas))[0]
+
+    # loop around each line (apart from the last)
+    for line_it in range(len(good) - 1):
+        # find expected next PEAK_NUM considering next WAVE_MEAS
+        # if it differs from actual next value, offset all value after this
+        # point to have a discontinuity
+        # a[good][i] is a[good[i]], so index directly (no full gathers)
+        it0, it1 = good[line_it], good[line_it + 1]
+        wavepeak_it = fpl_wave_meas[it0] * fpl_peak_num[it0]
+        wavepeak_it = wavepeak_it / fpl_wave_meas[it1]
+        # distance to next peak
+        peakdist = np.round(wavepeak_it) - fpl_peak_num[it1]
+        # deal with an undefined peak distances
+        if not np.isfinite(peakdist):
+            continue
+        # make distance an integer (nearest pixel)
+        peakdist = int(peakdist)
+        # if there is no change in distances continue
+        if peakdist == 0:
+            continue
+        # else add the distance to all future peaks
+        fpl_peak_num[good[line_it + 1]:] += peakdist
     # -------------------------------------------------------------------------
-    # # find the bulk offset that leads to a minimisation of the STDDEV of the
-    # #    cavity length through domain
-    # bulk_offset = [0]
-    # rms = [mp.nanstd(fpl_wave_meas * fpl_peak_num)]
-    # # keep track of which way we are going
-    # sign = 1
-    # # start a counter to make sure our while loop doesn't go on forever
-    # count = 0
-    # # loop around until the rms is zero
-    # while (np.argmin(rms) == 0) or (np.argmin(rms) == (len(rms) - 1)):
-    #     if sign == 1:
-    #         new_bulk = mp.nanmax(np.abs(bulk_offset)) + 1
-    #     else:
-    #         new_bulk = -mp.nanmax(np.abs(bulk_offset))
-    #     bulk_offset = np.append(bulk_offset, new_bulk)
-    #     # calculate the new rms
-    #     new_rms = mp.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
-    #     rms = np.append(rms, new_rms)
-    #     # flip the sign
-    #     sign *= -1
-    #     # sort the bulk offsets in order
-    #     offsetsort = np.argsort(bulk_offset)
-    #     # sort the bulk offsets from smallest to largest
-    #     bulk_offset = bulk_offset[offsetsort]
-    #     # also sort the rms
-    #     rms = list(np.array(rms)[offsetsort])
-    #     # deal with too many iterations
-    #     if count > mp.nanmin(fpl_peak_num):
-    #         # log error: Too many iterations for bulk offset N={0}
-    #         raise AperoCodedException(params, '09-017-00009', targs=[count])
-    #     # add to count
-    #     count += 1
-    # # update all peaks with current best offset
-    # fpl_peak_num += bulk_offset[np.argmin(rms)]
+    # find the bulk offset that leads to a minimisation of the STDDEV of the
+    #    cavity length through domain
+    bulk_offset = [0]
+    rms = [mp.nanstd(fpl_wave_meas * fpl_peak_num)]
+    # keep track of which way we are going
+    sign = 1
+    # start a counter to make sure our while loop doesn't go on forever
+    count = 0
+    # loop around until the rms is zero
+    while (np.argmin(rms) == 0) or (np.argmin(rms) == (len(rms) - 1)):
+        if sign == 1:
+            new_bulk = mp.nanmax(np.abs(bulk_offset)) + 1
+        else:
+            new_bulk = -mp.nanmax(np.abs(bulk_offset))
+        bulk_offset = np.append(bulk_offset, new_bulk)
+        # calculate the new rms
+        new_rms = mp.nanstd(fpl_wave_meas * (new_bulk + fpl_peak_num))
+        rms = np.append(rms, new_rms)
+        # flip the sign
+        sign *= -1
+        # sort the bulk offsets in order
+        offsetsort = np.argsort(bulk_offset)
+        # sort the bulk offsets from smallest to largest
+        bulk_offset = bulk_offset[offsetsort]
+        # also sort the rms
+        rms = list(np.array(rms)[offsetsort])
+        # deal with too many iterations
+        if count > mp.nanmin(fpl_peak_num):
+            # log error: Too many iterations for bulk offset N={0}
+            raise AperoCodedException(params, '09-017-00009', targs=[count])
+        # add to count
+        count += 1
+    # update all peaks with current best offset
+    fpl_peak_num += bulk_offset[np.argmin(rms)]
     # -------------------------------------------------------------------------
     # Find cavity width now peak offsets have been found
     # -------------------------------------------------------------------------
@@ -2777,9 +2781,36 @@ def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
     fp_wave_ref = np.array(fplines['WAVE_REF'])
     fp_wave_meas = np.array(fplines['WAVE_MEAS'])
     fp_order_num = np.array(fplines['ORDER'])
+    fp_peak_num = np.array(fplines['PEAK_NUMBER'])
+    fp_nsig = np.array(fplines['NSIG'])
+    # -------------------------------------------------------------------------
+    # filter peaks (use the best of each peak)
+    u_fp_wave_ref = []
+    u_fp_wave_meas = []
+    u_fp_order_num = []
+    for upeak in set(fp_peak_num):
+        # get the indices of this peak
+        idx = np.where(fp_peak_num == upeak)[0]
+        # if we only have one then just append it to the unique lists
+        if np.sum(idx) == 1:
+            best_idx = idx[0]
+            u_fp_wave_ref.append(fp_wave_ref[best_idx])
+            u_fp_wave_meas.append(fp_wave_meas[best_idx])
+            u_fp_order_num.append(fp_order_num[best_idx])
+            continue
+        # get the index of the best (closest to reference) line
+        best_idx = fp_nsig[idx].argmax()
+        # append the best line to the unique lists
+        u_fp_wave_ref.append(fp_wave_ref[idx][best_idx])
+        u_fp_wave_meas.append(fp_wave_meas[idx][best_idx])
+        u_fp_order_num.append(fp_order_num[idx][best_idx])
+    # convert to numpy arrays
+    u_fp_wave_ref = np.array(u_fp_wave_ref)[::-1]
+    u_fp_wave_meas = np.array(u_fp_wave_meas)[::-1]
+    u_fp_order_num = np.array(u_fp_order_num)[::-1]
     # -------------------------------------------------------------------------
     # Calculate velocity shift: dv = (1 - wavelength_ref/wavelength_meas) * c
-    fp_ratio = np.array(fp_wave_ref) / np.array(fp_wave_meas)
+    fp_ratio = np.array(u_fp_wave_ref) / np.array(u_fp_wave_meas)
     fp_dv = (1 - fp_ratio) * speed_of_light_ms
     # set the dv uncertainties to constant for now
     fp_dv_err = np.repeat(10.0, len(fp_dv))
@@ -2788,18 +2819,18 @@ def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     if ref or not np.isfinite(ew_cov):
         # calculate the equivalent width covariance
-        ew_cov, popt, cov_dv = wave_core.slinky_ewidth(fp_wave_ref, fp_dv)
+        ew_cov, popt, cov_dv = wave_core.slinky_ewidth(u_fp_wave_ref, fp_dv)
         # plot the covariance
         recipe.plot('WAVE_SLINKY_EW_COV', gridx=cov_dv[0], gridy=cov_dv[1],
                     coeffs=popt, ew_cov=ew_cov, fiber=fiber)
     # -------------------------------------------------------------------------
     # Step 1: Calculate out slinky correction
     # -------------------------------------------------------------------------
-    slinky = wave_core.slinky_fit(fp_wave_ref, fp_dv, yerr=fp_dv_err,
+    slinky = wave_core.slinky_fit(u_fp_wave_ref, fp_dv, yerr=fp_dv_err,
                                  wslinky=ew_cov)
     # plot the slinky fit
-    recipe.plot('WAVE_SLINKY_FIT', wavegrid=fp_wave_ref, dv=fp_dv,
-                orders=fp_order_num, slinky=slinky, fiber=fiber)
+    recipe.plot('WAVE_SLINKY_FIT', wavegrid=u_fp_wave_ref, dv=fp_dv,
+                orders=u_fp_order_num, slinky=slinky, fiber=fiber)
     # -------------------------------------------------------------------------
     # Step 2: Apply slinky correction to wavemap
     # -------------------------------------------------------------------------
