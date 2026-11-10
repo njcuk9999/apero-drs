@@ -28,6 +28,7 @@
     var viewVersion = 0;
     var taskRequestVersion = 0;
     var taskListController = null;
+    var taskListLoading = false;
     var dragSrcId = null;
 
     /* -----------------------------------------------------------------------
@@ -448,6 +449,7 @@
         taskRequestVersion += 1;
         if (taskListController) taskListController.abort();
         taskListController = null;
+        taskListLoading = false;
         allTasks = [];
         currentProfileNames = [];
         selectedTaskId = null;
@@ -470,6 +472,8 @@
         if (taskListController) taskListController.abort();
         taskListController = new AbortController();
         var controller = taskListController;
+        taskListLoading = true;
+        if (!allTasks.length) renderTaskLists();
         return fetch(url, {signal: controller.signal})
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -496,6 +500,9 @@
             })
             .finally(function () {
                 if (taskListController === controller) taskListController = null;
+                if (version !== taskRequestVersion) return;
+                taskListLoading = false;
+                if (!allTasks.length) renderTaskLists();
             });
     }
 
@@ -513,8 +520,8 @@
         var inactive = allTasks.filter(function (t) { return t.active === false; });
         var draggable = (currentInstrument !== GLOBAL_SCOPE);
 
-        activeCount.textContent   = active.length;
-        inactiveCount.textContent = inactive.length;
+        activeCount.textContent   = taskListLoading && !allTasks.length ? '…' : active.length;
+        inactiveCount.textContent = taskListLoading && !allTasks.length ? '…' : inactive.length;
 
         renderList(activeList, active, draggable);
         renderList(inactiveList, inactive, false);
@@ -523,7 +530,9 @@
     function renderList(container, tasks, draggable) {
         container.innerHTML = '';
         if (tasks.length === 0) {
-            container.innerHTML = '<div class="ari-sg-empty-small">None</div>';
+            container.innerHTML = taskListLoading
+                ? '<div class="ari-sg-loading">Loading…</div>'
+                : '<div class="ari-sg-empty-small">None</div>';
             return;
         }
         tasks.forEach(function (task) {

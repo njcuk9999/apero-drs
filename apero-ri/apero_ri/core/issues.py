@@ -72,9 +72,10 @@ def _load(data_dir: Path) -> List[Dict[str, Any]]:
     p = _store_path(data_dir)
     if not p.exists():
         return []
+    loader = getattr(_yaml, 'CSafeLoader', _yaml.SafeLoader)
     try:
         with p.open('r', encoding='utf-8') as fh:
-            data = _yaml.safe_load(fh) or []
+            data = _yaml.load(fh, Loader=loader) or []
         if isinstance(data, list):
             return data
     except Exception:  # noqa: BLE001
@@ -92,9 +93,11 @@ def _save(data_dir: Path,
     import yaml as _yaml
     p = _store_path(data_dir)
     tmp = p.with_suffix('.tmp')
+    dumper = getattr(_yaml, 'CSafeDumper', _yaml.SafeDumper)
     with tmp.open('w', encoding='utf-8') as fh:
-        _yaml.safe_dump(
-            issues, fh, sort_keys=False, allow_unicode=True)
+        _yaml.dump(
+            issues, fh, Dumper=dumper, sort_keys=False,
+            allow_unicode=True)
     tmp.replace(p)
 
 

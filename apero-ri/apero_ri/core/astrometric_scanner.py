@@ -58,9 +58,10 @@ def _safe_listdir(path: Path) -> List[str]:
 def _load_yaml(path: Path) -> Optional[Dict[str, Any]]:
     """Load a yaml mapping or return ``None`` on failure."""
     import yaml as _yaml
+    loader = getattr(_yaml, 'CSafeLoader', _yaml.SafeLoader)
     try:
         with path.open('r', encoding='utf-8') as fh:
-            data = _yaml.safe_load(fh)
+            data = _yaml.load(fh, Loader=loader)
         if isinstance(data, dict):
             return data
     except Exception as exc:  # noqa: BLE001
@@ -170,6 +171,13 @@ def scan_pending_verification(
     """
     count = 0
     sub = Path(astrom_root) / 'pending'
+    open_names = {
+        it.get('apero_name') or ''
+        for it in _issues._load(data_dir)
+        if it.get('label') == LABEL_VERIFY
+        and it.get('status') == 'open'
+        and not it.get('instrument') and not it.get('field')
+    }
     for fname in _safe_listdir(sub):
         if not fname.endswith('.yaml'):
             continue
@@ -183,6 +191,9 @@ def scan_pending_verification(
             entry.get('APERO_NAME') or entry.get('OBJNAME')
             or fpath.stem
         )
+        if apero_name in open_names:
+            count += 1
+            continue
         reason = (
             'Astrometric entry "{0}" is pending verification.'
         ).format(apero_name)
@@ -200,6 +211,7 @@ def scan_pending_verification(
             dedupe_key='verify:{0}'.format(apero_name),
         )
         if it.get('id'):
+            open_names.add(apero_name)
             count += 1
     return count
 

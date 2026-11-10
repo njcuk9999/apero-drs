@@ -24,6 +24,7 @@ import pandas as pd
 
 from apero_ri.core.secret_store import get_ari_dir
 from apero_ri.tasks import apero_async
+from apero_ri.tasks import legacy_gsheet_auth
 
 
 # =============================================================================
@@ -105,25 +106,9 @@ def _open_worksheet(payload: Dict[str, Any],
                     sheet_id: str,
                     sheet_name: str) -> Any:
     """Authorize Google access and open the requested worksheet."""
-    import gspread
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-
-    scopes = payload.get('scopes')
-    if not isinstance(scopes, list) or len(scopes) == 0:
-        scopes = list(_SCOPES)
-    creds = Credentials(
-        token=None,
-        refresh_token=str(payload.get('refresh_token') or ''),
-        token_uri=str(payload.get('token_uri')
-                      or 'https://oauth2.googleapis.com/token'),
-        client_id=str(payload.get('client_id') or ''),
-        client_secret=str(payload.get('client_secret') or ''),
-        scopes=scopes,
+    spreadsheet = legacy_gsheet_auth.open_spreadsheet(
+        payload, sheet_id, _SCOPES
     )
-    creds.refresh(Request())
-    client = gspread.authorize(creds)
-    spreadsheet = client.open_by_key(sheet_id)
     return spreadsheet.worksheet(sheet_name)
 
 

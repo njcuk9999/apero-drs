@@ -1065,14 +1065,14 @@ def _product_change_query(
         fdb.KW_DPRTYPE AS KW_DPRTYPE,
         fdb.KW_RUN_ID AS KW_RUN_ID,
         fdb.KW_PI_NAME AS KW_PI_NAME,
-        fdb.IDENTIFIER AS IDENTIFIER,
+        fdb.KW_IDENTIFIER AS IDENTIFIER,
         fdb.OBS_DIR AS OBS_DIR,
         fdb.FILENAME AS FILENAME,
         fdb.LAST_MODIFIED AS LAST_MODIFIED
     FROM {FINDEX_TABLENAME} fdb
     WHERE fdb.KW_OBJNAME = '{OBJNAME}'
     ORDER BY fdb.BLOCK_KIND, fdb.KW_OUTPUT, fdb.KW_FIBER,
-             fdb.KW_DPRTYPE, fdb.IDENTIFIER, fdb.OBS_DIR,
+             fdb.KW_DPRTYPE, fdb.KW_IDENTIFIER, fdb.OBS_DIR,
              fdb.FILENAME, fdb.LAST_MODIFIED
     """
     return query.format(
