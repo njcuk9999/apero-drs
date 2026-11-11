@@ -2,10 +2,12 @@
 
 import os
 import re
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from apero_ri.core import audit_log
+from apero_ri.core import ari_lang_support
 from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 from apero_ri.core.permissions import load_parameters
 from apero_ri.application import profile_utils
@@ -930,6 +932,17 @@ def api_apero_profiles_save(
     if not instrument or not name:
         return jsonify(success=False, error="Missing fields"), 400
 
+    original_instrument = str(
+        data.get('original_instrument', instrument)
+    ).strip()
+    moving = original_instrument != instrument
+    if moving:
+        params = load_parameters()
+        valid = params.get('instruments', {}).get('value', [])
+        if instrument not in valid:
+            error = ari_lang_support.translate('Invalid instrument')
+            return jsonify(success=False, error=error), 400
+
     if not re.match(r"^[\w\-]+$", name):
         return (
             jsonify(
@@ -1101,8 +1114,20 @@ def api_apero_profiles_save(
     if not science_types:
         return jsonify(success=False, error="SCIENCE_TYPES is required"), 400
 
-    all_profiles = load_apero_profiles(hydrate=False, include_temporary=True)
+    all_profiles = deepcopy(
+        load_apero_profiles(hydrate=False, include_temporary=True)
+    )
+    source_profiles = all_profiles.get(original_instrument, {})
+    if moving and name not in source_profiles:
+        error = ari_lang_support.translate('Profile not found')
+        return jsonify(success=False, error=error), 404
     inst_profiles = all_profiles.setdefault(instrument, {})
+    if moving and name in inst_profiles:
+        error = ari_lang_support.translate(
+            'A profile with this name already exists for that instrument.'
+        )
+        return jsonify(success=False, error=error), 409
+    existing_profile = source_profiles.get(name, {})
 
     if name in inst_profiles:
         order = inst_profiles[name].get("DISPLAY_ORDER", 999)
@@ -1113,12 +1138,8 @@ def api_apero_profiles_save(
         )
         order = max_order + 1
 
-    if name in inst_profiles:
-        existing_groups = inst_profiles[name].get("groups", [])
-        existing_disabled = _profile_disabled(inst_profiles[name])
-    else:
-        existing_groups = []
-        existing_disabled = False
+    existing_groups = existing_profile.get('groups', [])
+    existing_disabled = _profile_disabled(existing_profile)
     new_groups = data.get("groups", existing_groups)
     if not isinstance(new_groups, list):
         return jsonify(success=False, error="groups must be a list"), 400
@@ -1129,19 +1150,27 @@ def api_apero_profiles_save(
             400,
         )
 
-    profile_data = {"DISPLAY_ORDER": order, "groups": new_groups}
+    profile_data = dict(existing_profile) if moving else dict()
+    profile_data['DISPLAY_ORDER'] = order
+    profile_data['groups'] = new_groups
     profile_data['disabled'] = _to_bool(
         data.get('disabled', existing_disabled)
     )
     profile_data['temporary'] = _to_bool(data.get('temporary', False))
     profile_data.update(values)
-    profile_data["database"] = dict(db_values)
-    profile_data["paths"] = dict(path_values)
-    profile_data["general"] = {
-        "INSTRUMENT": instrument,
-        "SCIENCE_FIBER": science_fiber,
-        "SCIENCE_TYPES": science_types,
-    }
+    database = dict(profile_data.get('database', {}))
+    database.update(db_values)
+    profile_data['database'] = database
+    paths = dict(profile_data.get('paths', {}))
+    paths.update(path_values)
+    profile_data['paths'] = paths
+    general = dict(profile_data.get('general', {}))
+    general['INSTRUMENT'] = instrument
+    if 'instrument' in general:
+        general['instrument'] = instrument
+    general['SCIENCE_FIBER'] = science_fiber
+    general['SCIENCE_TYPES'] = science_types
+    profile_data['general'] = general
     if _apero_instrument_profile:
         profile_data["APERO_INSTRUMENT_PROFILE"] = _apero_instrument_profile
         preset_path = (
@@ -1161,6 +1190,8 @@ def api_apero_profiles_save(
                 ),
                 400,
             )
+    if moving:
+        del source_profiles[name]
     inst_profiles[name] = profile_data
     all_profiles[instrument] = inst_profiles
     save_apero_profiles(all_profiles)

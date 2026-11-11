@@ -61,6 +61,8 @@
 
     var formTitle = document.getElementById('form-title');
     var profileNameInput = document.getElementById('profile-name');
+    var profileInstrumentField = document.getElementById('profile-instrument-field');
+    var profileInstrumentSelect = document.getElementById('profile-instrument');
     var profileVersionInput = document.getElementById('profile-version');
     var profileServerInput = document.getElementById('profile-server');
     var profileDbSource = document.getElementById('profile-db-source');
@@ -848,6 +850,8 @@
     /* -- Add / Edit form ------------------------------------------------- */
     function resetForm() {
         editingProfile = null;
+        profileInstrumentField.style.display = 'none';
+        profileInstrumentSelect.value = currentInstrument;
         formDirty = false;
         dbTestPassed = false;
         tablesTestPassed = false;
@@ -895,6 +899,8 @@
 
     function enterEditMode(profile) {
         editingProfile = profile.name;
+        profileInstrumentSelect.value = currentInstrument;
+        profileInstrumentField.style.display = '';
         formDirty = false;
         profileNameInput.value = profile.name;
         profileNameInput.disabled = true;
@@ -995,6 +1001,8 @@
 
     function enterDuplicateMode(profile, newName) {
         editingProfile = null;
+        profileInstrumentField.style.display = 'none';
+        profileInstrumentSelect.value = currentInstrument;
         formDirty = false;
         dbTestPassed = true;
         tablesTestPassed = true;
@@ -1916,11 +1924,12 @@
     /* -- Collect all form values ----------------------------------------- */
     function collectFormData() {
         var payload = {
-            instrument: currentInstrument,
+            instrument: editingProfile ? profileInstrumentSelect.value : currentInstrument,
             name: profileNameInput.value.trim(),
             apero_version: profileVersionInput.value.trim(),
             reduction_server: profileServerInput.value.trim(),
         };
+        if (editingProfile) payload.original_instrument = currentInstrument;
         var dbPayload = buildDbPayload();
         Object.keys(dbPayload).forEach(function (key) {
             payload[key] = dbPayload[key];
@@ -2068,8 +2077,7 @@
                 formDirty = false;
                 var verb = editingProfile ? 'Updated' : 'Created';
                 showToast(verb + ' "' + payload.name + '"', 'success');
-                resetForm();
-                loadProfiles();
+                selectInstrument(payload.instrument);
             } else {
                 var errMsg = data.error || '';
                 if (!errMsg && res.text) {
@@ -2465,6 +2473,7 @@
     }
 
     /* -- Event listeners ------------------------------------------------- */
+    profileInstrumentSelect.addEventListener('change', markDirty);
     [profileNameInput, profileVersionInput, profileServerInput].forEach(function (el) {
         el.addEventListener('input', function () {
             markDirty();

@@ -4,6 +4,21 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+Instrument:
+  ES: Instrumento
+  FR: Instrument
+Changing the instrument moves this profile; it does not create a copy.:
+  ES: Cambiar el instrumento mueve este perfil; no crea una copia.
+  FR: Changer l'instrument déplace ce profil sans en créer une copie.
+Invalid instrument:
+  ES: Instrumento no válido
+  FR: Instrument non valide
+Profile not found:
+  ES: Perfil no encontrado
+  FR: Profil introuvable
+A profile with this name already exists for that instrument.:
+  ES: Ya existe un perfil con este nombre para ese instrumento.
+  FR: Un profil portant ce nom existe déjà pour cet instrument.
 APERO Check Information:
   ES: Información de las comprobaciones de APERO
   FR: Informations sur les vérifications APERO

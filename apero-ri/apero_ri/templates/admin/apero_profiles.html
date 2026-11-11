@@ -66,6 +66,15 @@
 
             <!-- Profile identity -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-tag"></i> Profile Identity</h4>
+            <div id="profile-instrument-field" class="ari-ap-form__field" style="display:none;">
+                <label for="profile-instrument">{{ _('Instrument') }} <span class="ari-required">*</span></label>
+                <select id="profile-instrument" class="ari-ap-input">
+                    {% for instrument in instruments %}
+                    <option value="{{ instrument }}">{{ instrument }}</option>
+                    {% endfor %}
+                </select>
+                <small>{{ _('Changing the instrument moves this profile; it does not create a copy.') }}</small>
+            </div>
             <div class="ari-ap-form__field">
                 <label for="profile-name">Profile Name <span class="ari-required">*</span></label>
                 <input type="text" id="profile-name" class="ari-ap-input"
@@ -448,5 +457,5 @@ window.ARI_APERO_PROFILES = {
     sciProfileData: {{ sci_profiles|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}?v=20261110a"></script>
 {% endblock %}
