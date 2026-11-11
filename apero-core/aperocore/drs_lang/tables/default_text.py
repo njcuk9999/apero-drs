@@ -25684,6 +25684,45 @@ item.comment = ('Used in: tools/module/processing/drs_queue.py, '
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00044
+# =============================================================================
+item = langlist.create('40-513-00044', kind='all-code')
+item.value['ENG'] = 'Queue dashboard unavailable. Restart the server or retry.'
+item.value['FR'] = 'Tableau de file indisponible. Redemarrez ou reessayez.'
+item.value['ES'] = 'Panel de cola no disponible. Reinicie o reintente.'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_server.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00045
+# =============================================================================
+item = langlist.create('40-513-00045', kind='all-code')
+item.value['ENG'] = 'Restart server'
+item.value['FR'] = 'Redemarrer le serveur'
+item.value['ES'] = 'Reiniciar servidor'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00046
+# =============================================================================
+item = langlist.create('40-513-00046', kind='all-code')
+item.value['ENG'] = ('Restart the dashboard server? Active GUI actions may '
+                     'be interrupted. Queue files are kept; running tasks '
+                     'and submitted Slurm jobs are not stopped.')
+item.value['FR'] = ('Redemarrer le tableau ? Les actions actives peuvent etre '
+                    'interrompues. Les fichiers de file sont conserves ; '
+                    'les taches et jobs Slurm ne sont pas arretes.')
+item.value['ES'] = ('Reiniciar el panel? Las acciones activas pueden '
+                    'interrumpirse. Se conservan los archivos de cola; '
+                    'las tareas y jobs Slurm no se detienen.')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')

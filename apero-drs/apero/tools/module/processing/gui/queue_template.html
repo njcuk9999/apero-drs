@@ -672,8 +672,10 @@ html[data-theme="dark"] button.info-btn { background: #1f6feb; color: #fff;
     <button id="theme-toggle" onclick="toggleTheme()">Theme</button>
     <button onclick="refreshAll()">&#8635; Refresh</button>
     <button id="lv-reopen" onclick="lvShow()">Logs (0)</button>
-    <button id="btn-shutdown" class="danger"
-            onclick="shutdownServer()">Shutdown GUI</button>
+    <span id="btn-shutdown">
+    <button id="btn-restart" onclick="restartServer()">XX_RESTART_LABEL_XX</button>
+    <button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
+    </span>
     <span id="busy">&#9203; action running...</span>
     <span id="status-error"></span>
 </div>
@@ -1260,19 +1262,36 @@ function toggleTheme() {
     applyTheme(theme);
 }
 
+function apiFetch(url, options) {
+    options = options || {};
+    var controller = options.controller || new AbortController();
+    delete options.controller;
+    options.signal = controller.signal;
+    options.cache = 'no-store';
+    var timer = setTimeout(function () { controller.abort(); }, 30000);
+    return fetch(apiUrl(url), options).then(function (resp) {
+        if (!resp.ok) { throw new Error('HTTP ' + resp.status); }
+        return resp.json();
+    }).finally(function () { clearTimeout(timer); });
+}
+
+var pendingGets = {};
+
 function apiGet(url, callback) {
-    fetch(apiUrl(url)).then(function (resp) { return resp.json(); })
+    if (pendingGets[url]) { return; }
+    pendingGets[url] = true;
+    apiFetch(url)
               .then(callback)
-              .catch(function (err) { console.log(err); });
+              .catch(function (err) { console.log(err); })
+              .finally(function () { delete pendingGets[url]; });
 }
 
 function apiPost(url, data, callback) {
-    fetch(apiUrl(url), {
+    apiFetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
-    }).then(function (resp) { return resp.json(); })
-      .then(callback)
+    }).then(callback)
       .catch(function (err) { console.log(err); });
 }
 
@@ -1883,15 +1902,17 @@ function toggleActivationInfo() {
 }
 
 var statusLoading = false;
+var statusController = null;
 
-function refreshStatus(keepPage) {
-    if (statusLoading) { return; }
+function refreshStatus(keepPage, force) {
+    if (statusLoading && !force) { return; }
+    if (statusController) { statusController.abort(); }
+    var controller = new AbortController();
+    statusController = controller;
     statusLoading = true;
-    fetch(apiUrl('/api/status')).then(function (resp) {
-        return resp.json();
-    })
+    apiFetch('/api/status', {controller: controller})
     .then(function (data) {
-        statusLoading = false;
+        if (statusController !== controller) { return; }
         var errorEl = document.getElementById('status-error');
         // keep showing the last good status if this refresh failed
         if (!data || data.error || !data.entries) {
@@ -1907,10 +1928,15 @@ function refreshStatus(keepPage) {
         applyFilter(keepPage);
     })
     .catch(function (err) {
-        statusLoading = false;
+        if (statusController !== controller) { return; }
         document.getElementById('status-error').textContent =
             'Status refresh failed: ' + err;
         console.log(err);
+    }).finally(function () {
+        if (statusController === controller) {
+            statusLoading = false;
+            statusController = null;
+        }
     });
 }
 
@@ -2013,7 +2039,7 @@ function refreshState() {
 }
 
 function refreshAll() {
-    refreshStatus();
+    refreshStatus(false, true);
     refreshState();
 }
 
@@ -3244,6 +3270,36 @@ function saveTemplate() {
 function shutdownServer() {
     if (!confirm('Shut down the queue GUI server?')) { return; }
     apiPost('/api/shutdown', {}, function (data) {});
+}
+
+function restartServer() {
+    if (!confirm(XX_RESTART_PROMPT_XX)) { return; }
+    var button = document.getElementById('btn-restart');
+    button.disabled = true;
+    apiFetch('/api/shutdown', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({restart: true})
+    }).then(function () {
+        var attempts = 0;
+        function waitForServer() {
+            apiFetch('/api/state').then(function () {
+                location.reload();
+            }).catch(function (err) {
+                attempts += 1;
+                if (attempts < 60) { setTimeout(waitForServer, 1000); }
+                else {
+                    button.disabled = false;
+                    document.getElementById('status-error').textContent =
+                        String(err);
+                }
+            });
+        }
+        setTimeout(waitForServer, 1000);
+    }).catch(function (err) {
+        button.disabled = false;
+        document.getElementById('status-error').textContent = String(err);
+    });
 }
 
 document.getElementById('filter')

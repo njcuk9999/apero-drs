@@ -1011,7 +1011,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     gradient = np.array(sc_props['SKY_GRADIENT'])
     # -------------------------------------------------------------------------
     # shift the image on to the sky wave grid
-    image1 = wave_to_wave(params, image, wavemap, sky_wavemap, reshape=True)
+    image1 = wave_to_wave(image, wavemap, sky_wavemap, reshape=True)
     # find the gradients of this image
     if fmodel is None:
         grad = np.gradient(image1, axis=1)
@@ -1051,7 +1051,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
         sky_corr_sci1[reg_pix] = sky_model_sci[reg_pix] * sfactor
     # -------------------------------------------------------------------------
     # shift the image back to the original wave grid
-    sky_corr_sci = wave_to_wave(params, sky_corr_sci1, sky_wavemap, wavemap,
+    sky_corr_sci = wave_to_wave(sky_corr_sci1, sky_wavemap, wavemap,
                                 reshape=True)
     # set nans to zeros
     sky_corr_sci[np.isnan(sky_corr_sci)] = 0.0

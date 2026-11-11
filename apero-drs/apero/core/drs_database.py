@@ -949,13 +949,16 @@ class TelluricDatabase(DatabaseManager):
         if ttable is None:
             filenames = None
             objnames = None
-        elif isinstance(ttable, list):
+        elif isinstance(ttable, (list, tuple)):
             filenames, objnames = ttable
         else:
             filenames = ttable['FILENAME']
             objnames = ttable['OBJECT']
         # set object name(s) if still None
-        if objnames is not None:
+        if isinstance(filenames, str):
+            if objnames in [None, 'None', 'Null', '']:
+                objnames = 'OTHER'
+        elif objnames is not None:
             for o_it, objname in enumerate(objnames):
                 if objname in [None, 'None', 'Null', '']:
                     objnames[o_it] = 'OTHER'
@@ -991,7 +994,10 @@ class TelluricDatabase(DatabaseManager):
         # make all files absolute paths
         if isinstance(filenames, str):
             # construct file directory
-            filedir = self.filedir.joinpath(key, objnames)
+            if objnames == 'OTHER':
+                filedir = self.filedir.joinpath(objnames)
+            else:
+                filedir = self.filedir.joinpath(key, objnames)
             # get out file name
             outfilename = Path(filedir).joinpath(filenames).absolute()
             # check that outfile name exists
@@ -1009,7 +1015,10 @@ class TelluricDatabase(DatabaseManager):
             # loop around filenames
             for f_it, filename in enumerate(filenames):
                 # construct file directory
-                filedir = self.filedir.joinpath(key, str(objnames[f_it]))
+                if objnames[f_it] == 'OTHER':
+                    filedir = self.filedir.joinpath('OTHER')
+                else:
+                    filedir = self.filedir.joinpath(key, str(objnames[f_it]))
                 # -------------------------------------------------------------
                 # counter to exist
                 counter = 0

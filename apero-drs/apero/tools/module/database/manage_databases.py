@@ -417,6 +417,16 @@ def create_telluric_database(params: ParamDict, pconst: Instrument,
     if verbose:
         # log: Created telluric database
         WLOG(params, '', textentry('40-506-00018'))
+    # =====================================================================
+    # TODO: REMOVE THIS TEMPORARY ASSET CSV IMPORT ONCE APERO RECIPES
+    # PRODUCE SKY_MODEL PRODUCTS AND REGISTER THEM IN THE TELLURIC DATABASE.
+    # Until then, reset.tellu.csv supplies the required sky model entries.
+    # Calibration databases must remain unseeded from asset CSV files.
+    # =====================================================================
+    reset_abspath = os.path.join(asset_dir, reset_path, 'reset.tellu.csv')
+    if os.path.exists(reset_abspath):
+        reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
+        telludb.add_from_pandas(reset_entries, if_exists='append')
     # ---------------------------------------------------------------------
     return telludb
 
