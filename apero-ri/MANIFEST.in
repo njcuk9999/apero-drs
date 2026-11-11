@@ -5,6 +5,7 @@ include */*/README.md
 include apero/info.yaml
 include apero_ri/resources/ari_lang.yaml
 include apero_ri/static/data/countries.geojson
+include apero_ri/static/data/zone.tab
 include apero_ri/static/data/README.md
 include apero_ri/static/css/user_statistics.css
 include apero_ri/static/js/user_statistics.js

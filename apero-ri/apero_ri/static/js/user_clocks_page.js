@@ -71,6 +71,55 @@
         return zone === 'LOCAL' ? localZone : zone;
     }
 
+    function zoneLocation(zone) {
+        var actual = actualZone(zone);
+        if (zoneMeta[actual]) return zoneMeta[actual];
+        try {
+            var canonical = new Intl.DateTimeFormat('en', {
+                timeZone: actual
+            }).resolvedOptions().timeZone;
+            return zoneMeta[canonical];
+        } catch (error) {
+            return undefined;
+        }
+    }
+
+    function loadZoneCoordinates() {
+        if (!config.zoneCoordinatesUrl) return;
+        fetch(config.zoneCoordinatesUrl).then(function (response) {
+            if (!response.ok) throw new Error('Timezone data request failed');
+            return response.text();
+        }).then(function (table) {
+            table.split('\n').forEach(function (line) {
+                if (!line || line.charAt(0) === '#') return;
+                var fields = line.split('\t');
+                var match = /^([+-])(\d{2})(\d{2})(\d{2})?([+-])(\d{3})(\d{2})(\d{2})?$/.exec(fields[1]);
+                if (!match || !fields[2]) return;
+                var latitude = Number(match[2]) + Number(match[3]) / 60
+                    + Number(match[4] || 0) / 3600;
+                var longitude = Number(match[6]) + Number(match[7]) / 60
+                    + Number(match[8] || 0) / 3600;
+                var meta = {
+                    lat: latitude * (match[1] === '-' ? -1 : 1),
+                    lon: longitude * (match[5] === '-' ? -1 : 1)
+                };
+                if (!zoneMeta[fields[2]]) zoneMeta[fields[2]] = meta;
+                try {
+                    var canonical = new Intl.DateTimeFormat('en', {
+                        timeZone: fields[2]
+                    }).resolvedOptions().timeZone;
+                    if (!zoneMeta[canonical]) zoneMeta[canonical] = meta;
+                } catch (error) {
+                    return;
+                }
+            });
+            buildPins();
+            tick();
+        }).catch(function () {
+            return;
+        });
+    }
+
     function now() {
         var current = Date.now();
         var base = state.baseDate === null ? current : state.baseDate;
@@ -276,7 +325,7 @@
                 var clock = clocks[index];
                 var value = parts(date, clock.timezone);
                 var offset = offsetOf(date, clock.timezone);
-                var meta = zoneMeta[actualZone(clock.timezone)];
+                var meta = zoneLocation(clock.timezone);
                 var isDay = meta
                     ? sunAltitude(meta.lon, meta.lat, sun) > -0.833
                     : value.h >= 7 && value.h < 19;
@@ -367,7 +416,7 @@
 
     function pinClocks() {
         return clockList().filter(function (clock) {
-            return !!zoneMeta[actualZone(clock.timezone)];
+            return !!zoneLocation(clock.timezone);
         });
     }
 
@@ -376,7 +425,7 @@
         var clocks = pinClocks();
         state.map.svg.querySelector('.ck-pins').innerHTML = clocks.map(
             function (clock) {
-                var meta = zoneMeta[actualZone(clock.timezone)];
+                var meta = zoneLocation(clock.timezone);
                 var point = state.map.projection([meta.lon, meta.lat]);
                 var index = clockList().indexOf(clock);
                 return '<g class="ck-pin' + (clock.you ? ' is-you' : '')
@@ -406,7 +455,7 @@
         var clocks = pinClocks();
         var labels = Array.prototype.slice.call(get('ck-labels').children);
         var items = labels.map(function (label, index) {
-            var meta = zoneMeta[actualZone(clocks[index].timezone)];
+            var meta = zoneLocation(clocks[index].timezone);
             var point = state.map.projection([meta.lon, meta.lat]);
             return {
                 label: label,
@@ -707,4 +756,5 @@
     bind();
     initMap();
     loadClocks();
+    loadZoneCoordinates();
 }());

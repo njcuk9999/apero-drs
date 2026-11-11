@@ -65,8 +65,9 @@
 
 <script>
 window.ARI_CLOCK_PAGE = {
-    apiUrl: {{ url_for('api_clocks_get')|tojson }}
+    apiUrl: {{ url_for('api_clocks_get')|tojson }},
+    zoneCoordinatesUrl: {{ url_for('static', filename='data/zone.tab')|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/user_clocks_page.js', v='20261030a') }}"></script>
+<script src="{{ url_for('static', filename='js/user_clocks_page.js', v='20261111a') }}"></script>
 {% endblock %}
