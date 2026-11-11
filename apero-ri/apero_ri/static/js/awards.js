@@ -117,8 +117,21 @@
         });
     }
 
+    if (kind === 'activity') {
+        COLUMNS.push({
+            key: 'active_days',
+            label: labels.active_days,
+            numeric: true,
+            render: function (row) {
+                return Number(row.active_days || 0).toLocaleString() +
+                    medalIcon(row.activity_medal, labels.active_days);
+            }
+        });
+    }
+
     var metricKey = kind === 'instrument' ? 'inst:' + instrument :
-        (kind === 'service' ? 'total_hours' : 'download_' + kind);
+        (kind === 'service' ? 'total_hours' :
+            (kind === 'activity' ? 'active_days' : 'download_' + kind));
     allRows = allRows.filter(function (row) {
         if (kind === 'instrument') return Number((row.instruments || {})[instrument] || 0) > 0;
         if (kind === 'service') return Number(row.total_hours || 0) > 0 || Number(row.issues_resolved || 0) > 0;

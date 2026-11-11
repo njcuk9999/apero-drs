@@ -4,6 +4,78 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+User Statistics:
+  FR: Statistiques des utilisateurs
+  ES: Estadísticas de usuarios
+Authentication required.:
+  FR: Authentification requise.
+  ES: Se requiere autenticación.
+User statistics permission required.:
+  FR: Autorisation requise pour les statistiques des utilisateurs.
+  ES: Se requiere permiso para las estadísticas de usuarios.
+User-days:
+  FR: Jours-utilisateurs
+  ES: Días-usuario
+Active users:
+  FR: Utilisateurs actifs
+  ES: Usuarios activos
+Registered users:
+  FR: Utilisateurs inscrits
+  ES: Usuarios registrados
+Calendar days:
+  FR: Jours calendaires
+  ES: Días naturales
+Weekly user-days:
+  FR: Jours-utilisateurs par semaine
+  ES: Días-usuario por semana
+Users by country:
+  FR: Utilisateurs par pays
+  ES: Usuarios por país
+Country:
+  FR: Pays
+  ES: País
+Region:
+  FR: Région
+  ES: Región
+Week:
+  FR: Semaine
+  ES: Semana
+Countries:
+  FR: Pays
+  ES: Países
+Regions:
+  FR: Régions
+  ES: Regiones
+Start date:
+  FR: Date de début
+  ES: Fecha de inicio
+End date:
+  FR: Date de fin
+  ES: Fecha de fin
+Selected period:
+  FR: Période sélectionnée
+  ES: Período seleccionado
+Export PDF:
+  FR: Exporter en PDF
+  ES: Exportar PDF
+Unknown:
+  FR: Inconnu
+  ES: Desconocido
+No qualified activity in this period.:
+  FR: Aucune activité qualifiée sur cette période.
+  ES: No hay actividad válida en este período.
+Loading user statistics...:
+  FR: Chargement des statistiques des utilisateurs...
+  ES: Cargando estadísticas de usuarios...
+Unable to load user statistics.:
+  FR: Impossible de charger les statistiques des utilisateurs.
+  ES: No se pueden cargar las estadísticas de usuarios.
+Enter valid ISO dates with start on or before end.:
+  FR: Saisissez des dates ISO valides, avec le début avant ou égal à la fin.
+  ES: Introduzca fechas ISO válidas, con el inicio anterior o igual al final.
+? A user-day requires two distinct successful navigations per UTC day. Counts begin at rollout; no IP addresses are saved. Unavailable locations are listed as unknown.
+: FR: Un jour-utilisateur nécessite deux navigations réussies distinctes par jour UTC. Les comptes commencent au déploiement ; aucune adresse IP n'est enregistrée. Les localisations indisponibles sont indiquées comme inconnues.
+  ES: Un día-usuario requiere dos navegaciones correctas distintas por día UTC. Los recuentos comienzan con el despliegue; no se guardan direcciones IP. Las ubicaciones no disponibles figuran como desconocidas.
 Instrument:
   ES: Instrumento
   FR: Instrument

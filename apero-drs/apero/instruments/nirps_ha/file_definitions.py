@@ -2216,11 +2216,11 @@ post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        fiber='A', required=False,
                        block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_W', out_tellu_rc1d_v, fiber='A',
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='RECON_flux', outcol='Recon',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?
-post_s_file.add_column('S1D_W', out_tellu_rc1d_v, fiber='A',
+post_s_file.add_column('S1D_V', out_tellu_rc1d_v, fiber='A',
                        incol='RECON_eflux', outcol='ReconErr',
                        required=False, block_kind='red', clear_file=True)
 # TODO: from telluric database?

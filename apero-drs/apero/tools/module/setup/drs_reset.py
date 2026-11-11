@@ -703,12 +703,9 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
     # get database paths
     databases = manage_databases.list_databases(params, recipe.shortname)
 
-    reset_root = drs_data.construct_path(params, '',
-                                         params['IPATH.RESET_ASSETS'])
-    version_path = os.path.join(reset_root, drs_assets.ASSETS_VERSION_FILE)
     # now check whether we need to download the assets
     update_assets = drs_assets.check_local_assets(params)
-    if update_assets or not os.path.isfile(version_path):
+    if update_assets:
         drs_assets.update_local_assets(params)
 
     # load pseudo constants
@@ -723,9 +720,6 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
     # loop around files and folders in assets dir
     #   we want to backup any new files the user as copied
     #   i.e. new masks etc
-    profile_version = os.path.join(asset_path1, drs_assets.ASSETS_VERSION_FILE)
-    if os.path.isfile(profile_version):
-        os.remove(profile_version)
     reset_dbdir(params, name, asset_path1, abs_reset_path1, log=log,
                 relative_path='MODULE', backup=True)
     # -------------------------------------------------------------------------
@@ -738,7 +732,6 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
         # also copy the core files into the same path
         reset_dbdir(params, name, asset_path2, abs_reset_path2, log=log,
                     relative_path=common_dir)
-    shutil.copy2(version_path, profile_version)
     # if user wants to reset all databases we do this here
     if reset_dbs:
         # first reset the db_pending directory

@@ -163,6 +163,24 @@
            title="{{ label }} ({{ medal_name }})"></i>
         {% endif %}
         {% endmacro %}
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+                {{ download_award_labels.active_users }}
+            </h3>
+            <div class="upu-kv">
+                <div class="upu-kv__key">{{ download_award_labels.active_days }}</div>
+                <div class="upu-kv__val">
+                    {{ activity_stats.active_days }}
+                    {% set activity_medal = activity_stats.activity_medal %}
+                    {% if activity_medal %}
+                    <i class="fa-solid fa-medal upu-medal upu-medal--{{ activity_medal }}"
+                       title="{{ download_award_labels.active_days }} ({{ download_award_labels[activity_medal] }})"
+                       aria-label="{{ download_award_labels.active_days }} ({{ download_award_labels[activity_medal] }})"></i>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
         {% if download_stats %}
         <section class="upu-user-detail__card">
             <h3 class="upu-user-detail__title">

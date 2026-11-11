@@ -70,6 +70,10 @@
 
 {% block doc_content %}
 <h1 class="ms-title"><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label | tl }}</h1>
+<section class="aw-section" aria-labelledby="aw-active-users">
+    <h2 id="aw-active-users">{{ awards_labels.active_users }}</h2>
+    {{ leaderboard('aw-activity', 'activity', awards_labels.active_days) }}
+</section>
 <section class="aw-section" aria-labelledby="aw-monitors">
     <h2 id="aw-monitors">{{ awards_labels.monitors }}</h2>
     {% for instrument in instruments %}
@@ -93,5 +97,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/awards.js') }}?v=20261111a"></script>
+<script src="{{ url_for('static', filename='js/awards.js') }}?v=20261111b"></script>
 {% endblock %}

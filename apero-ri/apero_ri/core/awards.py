@@ -154,7 +154,7 @@ _INSTRUMENT_MEDALS = ('gold', 'silver', 'bronze')
 def compute_awards(
     data_dir: Path, instruments: List[str]
 ) -> Dict[str, Dict]:
-    """Compute monitoring and download awards for recorded users.
+    """Compute monitoring, download and activity awards for recorded users.
 
     :param data_dir: ARI directory containing schedule and issue records.
     :param instruments: Instruments included in monitoring awards.
@@ -169,12 +169,17 @@ def compute_awards(
         - ``issues_medal``: 'gold'/'silver'/'bronze'/None
         - ``download_bytes``/``download_files``: combined tracker totals
         - ``download_medals``: bytes/files -> medal or None
+        - ``active_days``: total distinct active days
+        - ``activity_medal``: top-three distinct positive day totals
 
     Download records use the tracker's application-configured ARI directory.
     Resetting usage counters also resets the corresponding award totals.
     """
+    from apero_ri.core import user_statistics
+
     user_hours = compute_user_hours(data_dir, instruments)
     issue_counts = compute_resolved_issue_counts(data_dir)
+    activity = user_statistics.activity_awards(data_dir)
 
     awards: Dict[str, Dict] = {}
     for username, entry in user_hours.items():
@@ -224,7 +229,17 @@ def compute_awards(
             entry['download_files'] = (
                 entry.get('download_files', 0) + usage['total_files'])
 
+    for username, activity_entry in activity.items():
+        entry = awards.setdefault(username, dict(
+            username=username, who=username, total_hours=0.0,
+            instruments=dict(), instrument_medals=dict(),
+            service_medal=None, issues_resolved=0, issues_medal=None))
+        entry['active_days'] = activity_entry['active_days']
+        entry['activity_medal'] = activity_entry['activity_medal']
+
     for entry in awards.values():
+        entry.setdefault('active_days', 0)
+        entry.setdefault('activity_medal', None)
         entry.setdefault('download_bytes', 0)
         entry.setdefault('download_files', 0)
         entry['download_medals'] = dict()

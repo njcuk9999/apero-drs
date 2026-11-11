@@ -1035,6 +1035,21 @@ class ARIApp(Flask):
             return None
         return user_info
 
+    def _admin_user_statistics_view(self) -> Any:
+        """Return the dedicated admin statistics page."""
+        from apero_ri.application import user_statistics_helpers as ush
+        return ush.page(self)
+
+    def _api_admin_user_statistics(self) -> Any:
+        """Return authorized selected statistics and themed Bokeh items."""
+        from apero_ri.application import user_statistics_helpers as ush
+        return ush.api(self)
+
+    def _api_admin_user_statistics_pdf(self) -> Any:
+        """Download the authorized selected statistics PDF."""
+        from apero_ri.application import user_statistics_helpers as ush
+        return ush.api(self, pdf=True)
+
     def _api_user_account_get(self) -> Any:
         """Return account details for the current user."""
         return _impls.ariapp_api_user_account_get(self)

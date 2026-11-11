@@ -87,8 +87,14 @@
       icons.push(medalIcon(downloadMedals[kind],
         downloadLabels[kind] + ': ' + total + unit));
     });
-    if (!icons.length) return '';
-    return '<div class="upu-user-card__awards">' + icons.join('') + '</div>';
+    icons.push(medalIcon(awards.activity_medal, downloadLabels.active_days
+      + ': ' + Number(awards.active_days || 0)));
+    var activity = '<span class="upu-user-card__meta-line">'
+      + '<i class="fa-solid fa-calendar-check" aria-hidden="true"></i> '
+      + escapeHtml(downloadLabels.active_days) + ': '
+      + Number(awards.active_days || 0).toLocaleString() + '</span>';
+    return activity + '<div class="upu-user-card__awards">'
+      + icons.join('') + '</div>';
   }
 
   function escapeHtml(s) {

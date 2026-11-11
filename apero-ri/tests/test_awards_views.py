@@ -104,6 +104,8 @@ def awards_app(monkeypatch: pytest.MonkeyPatch,
     monkeypatch.setattr(helpers, 'resolve_user_permissions',
                         lambda groups, config: state['permissions'])
     monkeypatch.setattr(helpers, 'get_public_permissions', lambda: set())
+    state['accounts'] = dict()
+    monkeypatch.setattr(helpers, 'load_users', lambda: state['accounts'])
     parameters = dict(instruments=dict(value=['SPIROU', 'NIRPS']))
     monkeypatch.setattr(helpers.perms_mod, 'load_parameters',
                         lambda: parameters)
@@ -158,6 +160,39 @@ def test_monitor_awards_access(
     state['user'] = None
     assert client.get('/monitor_portal/awards').status_code == 302
     assert state['calls'] == 1
+
+
+@pytest.mark.parametrize('portal', ['user_portal', 'monitor_portal'])
+@pytest.mark.parametrize('account, expected', [
+    (dict(first_names=' Ada ', last_name=' Lovelace '), 'Ada Lovelace'),
+    (dict(first_names='Ada', last_name=''), 'Ada'),
+    (dict(first_names=None, last_name='Lovelace'), 'Lovelace'),
+    (dict(first_names=' ', last_name=None), 'reader'),
+    (dict(), 'reader'),
+])
+def test_awards_account_names(
+    awards_app: tuple[Flask, dict[str, Any]], portal: str,
+    account: dict[str, Any], expected: str,
+) -> None:
+    """Use current account names instead of schedule names or usernames.
+
+    :param awards_app: Isolated application and authentication state.
+    :param portal: Portal serving the shared awards page.
+    :param account: Account name fields, potentially absent or blank.
+    :param expected: Expected display name in the leaderboard payload.
+    :return: None.
+    """
+    app, state = awards_app
+    state['permissions'] = {'view.user', 'monitor.SPIROU'}
+    state['accounts']['reader'] = account
+    downloader = '</script><script>bad()</script>'
+    state['accounts'][downloader] = dict(
+        first_names='Download', last_name='User')
+    html = app.test_client().get(f'/{portal}/awards').get_data(as_text=True)
+    payload = html.split('<script id="aw-data" type="application/json">')[1]
+    rows = json.loads(payload.split('</script>')[0])
+    assert rows[0]['who'] == expected
+    assert rows[1]['who'] == 'Download User'
 
 
 def test_awards_template_payload(
@@ -290,7 +325,7 @@ def test_awards_standalone_preview(
     html = html.replace('/static/', static_url)
     preview = tmp_path / 'awards-preview.html'
     preview.write_text(html, encoding='utf-8')
-    assert html.count('class="aw-board"') == 5
+    assert html.count('class="aw-board"') == 6
     print(f'Awards browser preview: {preview}')
 
 

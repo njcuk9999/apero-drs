@@ -37,12 +37,13 @@ __NAME__ = 'apero_ri.application.user_portal_view_helpers'
 def _download_award_labels() -> dict[str, str]:
     """Return existing award labels in the current request's language.
 
-    :return: Localized download headings and medal names.
+    :return: Localized download/activity headings and medal names.
     """
     language = ari_lang_support.get_language()
     labels = dict()
     for key, english, french, spanish in default_text.AWARDS_UI_TEXT:
-        if key not in ('DOWNLOADS', 'BYTES', 'FILES',
+        if key not in ('DOWNLOADS', 'BYTES', 'FILES', 'ACTIVE_USERS',
+                   'ACTIVE_DAYS',
                        'GOLD', 'SILVER', 'BRONZE'):
             continue
         translations = dict(en=english, fr=french, es=spanish)
@@ -208,6 +209,7 @@ def user_portal_user_card_view(app: Any, username: str) -> Any:
 
     monitor_stats = None
     download_stats = None
+    activity_stats = dict(active_days=0, activity_medal=None)
     try:
         target_perms = resolve_user_permissions(
             record.get('groups', []), app.ari_groups)
@@ -219,6 +221,9 @@ def user_portal_user_card_view(app: Any, username: str) -> Any:
             'instruments', {}).get('value', [])
         all_awards = awards_core.compute_awards(data_dir, instruments)
         entry = all_awards.get(username)
+        if entry:
+            activity_stats['active_days'] = entry.get('active_days', 0)
+            activity_stats['activity_medal'] = entry.get('activity_medal')
         if entry and (entry.get('download_bytes', 0) > 0
                       or entry.get('download_files', 0) > 0):
             download_stats = entry
@@ -249,6 +254,7 @@ def user_portal_user_card_view(app: Any, username: str) -> Any:
         'target_user': target_user,
         'monitor_stats': monitor_stats,
         'download_stats': download_stats,
+        'activity_stats': activity_stats,
         'download_award_labels': _download_award_labels(),
     }
     try:

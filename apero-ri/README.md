@@ -152,6 +152,18 @@ for that topology:
 | `ARI_PROXY_COUNT` | Number of trusted reverse proxies in front of the app (e.g. `1` for a single nginx). Enables `X-Forwarded-*` handling so client IPs, rate limits, and HTTPS detection are correct. | `0` (off) |
 | `ARI_HTTPS` | Set to `1` when the site is served over HTTPS. Marks session cookies `Secure` and enables HSTS. | off |
 | `ARI_MAX_CONTENT_MB` | Maximum request body size in MB. | `128` |
+| `ARI_GEOIP_DB` | Optional local MaxMind GeoIP2 City `.mmdb` file. Only country and region are retained; client addresses are used for lookup in memory. | unset |
+
+For optional country and region summaries, install the `geoip` extra and
+provide a locally obtained MaxMind GeoIP2 City database:
+
+```bash
+pip install -e './apero-ri[geoip]'
+ARI_GEOIP_DB=/path/to/GeoIP2-City.mmdb apero_ri_run --port=1234
+```
+
+The database is not bundled because its license and update terms are separate.
+Without it, activity is still counted and locations are reported as unknown.
 
 Example nginx site config:
 

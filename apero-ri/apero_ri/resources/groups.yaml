@@ -33,6 +33,7 @@ super_admin:
 # ==============================================================================
 admin:
   permissions:
+    - view.admin.user_statistics
     # can they manage apero profiles
     - manage.apero_profile
     # which groups can they manage

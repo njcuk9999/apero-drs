@@ -425,6 +425,8 @@ def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
             'download_bytes': 0,
             'download_files': 0,
             'download_medals': dict(bytes=None, files=None),
+            'active_days': 0,
+            'activity_medal': None,
         }
     return {
         'total_hours': round(entry.get('total_hours', 0.0), 2),
@@ -437,4 +439,6 @@ def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
         'download_files': entry.get('download_files', 0),
         'download_medals': entry.get('download_medals',
                                      dict(bytes=None, files=None)),
+        'active_days': entry.get('active_days', 0),
+        'activity_medal': entry.get('activity_medal'),
     }

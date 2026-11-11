@@ -576,6 +576,17 @@ home.admin_portal.miscellaneous.clock:
     top-level: False
     show: True
 
+home.admin_portal.user_statistics:
+  label: User Statistics
+  parent: home.admin_portal
+  view-permission: view.admin.user_statistics
+  icon: fa-solid fa-chart-column
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.user_db_access:
   label: User Database Access
   parent: home.admin_portal

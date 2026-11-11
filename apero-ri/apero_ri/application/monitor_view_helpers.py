@@ -958,11 +958,16 @@ def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
         'instruments', {}).get('value', [])
     awards = awards_core.compute_awards(data_dir, instruments)
 
+    users = load_users() or dict()
     rows = []
     for entry in awards.values():
+        account = users.get(entry['username'], dict())
+        name_parts = [str(account.get(field) or '').strip()
+                      for field in ('first_names', 'last_name')]
+        display_name = ' '.join(part for part in name_parts if part)
         row = {
             'username': entry['username'],
-            'who': entry.get('who') or entry['username'],
+            'who': display_name or entry['username'],
             'total_hours': round(entry.get('total_hours', 0.0), 2),
             'service_medal': entry.get('service_medal'),
             'issues_resolved': entry.get('issues_resolved', 0),
@@ -970,6 +975,8 @@ def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
             'download_bytes': entry.get('download_bytes', 0),
             'download_files': entry.get('download_files', 0),
             'download_medals': entry.get('download_medals', {}),
+            'active_days': entry.get('active_days', 0),
+            'activity_medal': entry.get('activity_medal'),
             'instrument_medals': entry.get('instrument_medals', {}),
             'instruments': {
                 inst: round(

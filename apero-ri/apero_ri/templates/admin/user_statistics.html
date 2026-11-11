@@ -1,0 +1,56 @@
+{% extends "general/sidebar_base.html" %}
+{% block extra_head %}{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_statistics.css', v='20261111d') }}">
+{% endblock %}
+{% block doc_content %}
+<section class="us-page" aria-labelledby="us-heading">
+  <header class="us-heading">
+    <h1 id="us-heading"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> {{ statistics_labels.TITLE }}</h1>
+    <button id="us-export" type="button" class="ari-btn ari-btn--secondary" disabled>
+      <i class="fa-solid fa-file-pdf" aria-hidden="true"></i> {{ statistics_labels.EXPORT }}
+    </button>
+  </header>
+  <form id="us-filters" class="us-filters">
+    <label>{{ statistics_labels.START }}<input id="us-start" name="start" type="date" required></label>
+    <label>{{ statistics_labels.END }}<input id="us-end" name="end" type="date" required></label>
+    <div class="us-sliders" role="group" aria-label="{{ statistics_labels.PERIOD }}">
+      <label>{{ statistics_labels.START }}<input id="us-range-start" type="range" min="0" max="1" value="0" disabled></label>
+      <label>{{ statistics_labels.END }}<input id="us-range-end" type="range" min="0" max="1" value="1" disabled></label>
+    </div>
+  </form>
+  <p id="us-status" class="us-status" role="status" aria-live="polite">{{ statistics_labels.LOADING }}</p>
+  <dl class="us-kpis">
+    {% for label, key in [('USER_DAYS', 'total_user_days'), ('ACTIVE_USERS', 'unique_users'), ('REGISTERED_USERS', 'registered_users'), ('CALENDAR_DAYS', 'calendar_days')] %}
+    <div><dt>{{ statistics_labels[label] }}</dt><dd id="us-{{ key }}">-</dd></div>
+    {% endfor %}
+  </dl>
+  <section class="us-section" aria-labelledby="us-weekly-heading">
+    <h2 id="us-weekly-heading">{{ statistics_labels.WEEKLY }}</h2>
+    <div id="us-weekly" class="us-plot us-plot--weekly"></div>
+  </section>
+  <section class="us-section" aria-labelledby="us-world-heading">
+    <h2 id="us-world-heading">{{ statistics_labels.WORLD }}</h2>
+    <div id="us-world" class="us-plot us-plot--world"></div>
+  </section>
+  <div class="us-breakdowns">
+    {% for kind, columns in [('countries', ['COUNTRY', 'USERS', 'USER_DAYS']), ('regions', ['COUNTRY', 'REGION', 'USERS', 'USER_DAYS'])] %}
+    <section class="us-section" aria-labelledby="us-{{ kind }}-heading">
+      <h2 id="us-{{ kind }}-heading">{{ statistics_labels[kind.upper()] }}</h2>
+      <div class="ot-table-wrap">
+        <table class="ot-table us-table">
+          <thead><tr class="ot-header-row">{% for key in columns %}<th scope="col" class="ot-th ot-th--nonsortable">{{ statistics_labels[key] }}</th>{% endfor %}</tr></thead>
+          <tbody id="us-{{ kind }}"></tbody>
+        </table>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  <p class="us-privacy">{{ statistics_labels.PRIVACY }}</p>
+  <iframe id="us-download" title="{{ statistics_labels.EXPORT }}" hidden></iframe>
+</section>
+{% endblock %}
+{% block extra_scripts %}{{ super() }}
+{{ bokeh_js | safe }}
+<script>window.USER_STATISTICS = {{ {'labels': statistics_labels, 'api': url_for('api_admin_user_statistics'), 'pdf': url_for('api_admin_user_statistics_pdf')} | tojson }};</script>
+<script src="{{ url_for('static', filename='js/user_statistics.js', v='20261111c') }}"></script>
+{% endblock %}

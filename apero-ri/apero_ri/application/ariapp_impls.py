@@ -71,6 +71,7 @@ from apero_ri.core import sshfs_backend as sb
 from apero_ri.core import task_runner
 from apero_ri.core import upload_data as upd
 from apero_ri.core import user_data as ud
+from apero_ri.core import user_statistics
 from apero_ri.core.log import configure_logging, get_logger
 from apero_ri.tasks import apero_async
 
@@ -1314,7 +1315,7 @@ def ariapp_configure_production_hardening(self: Any) -> None:
     # --- Security headers on every response --------------------------------
     @self.after_request
     def _security_headers(response: Any) -> Any:
-        """Add default security and static-cache headers to a response."""
+        """Add response headers and record qualified HTML navigation."""
         hdrs = response.headers
         hdrs.setdefault("X-Content-Type-Options", "nosniff")
         hdrs.setdefault("X-Frame-Options", "SAMEORIGIN")
@@ -1333,6 +1334,39 @@ def ariapp_configure_production_hardening(self: Any) -> None:
             hdrs['Cache-Control'] = (
                 f'public, max-age={static_cache_s}, immutable'
             )
+        fetch_mode = request.headers.get('Sec-Fetch-Mode', '')
+        fetch_dest = request.headers.get('Sec-Fetch-Dest', '')
+        accept = request.headers.get('Accept', '').lower()
+        is_document_navigation = (
+            fetch_mode == 'navigate' and fetch_dest == 'document'
+        ) or (
+            not fetch_mode and not fetch_dest
+            and 'text/html' in accept
+        )
+        is_page = (
+            request.method == 'GET'
+            and response.status_code == 200
+            and response.mimetype == 'text/html'
+            and not req_path.startswith(('/api/', '/static/'))
+            and req_path not in ('/healthz', '/robots.txt')
+            and is_document_navigation
+            and not session.get('login_as')
+        )
+        if is_page:
+            try:
+                user_info = auth.get_effective_user(session)
+                username = str((user_info or {}).get('username') or '')
+                if username:
+                    local_path = req_path.rstrip('/') or '/'
+                    country, region = user_statistics.location_for_address(
+                        request.remote_addr or '')
+                    data_root = Path(
+                        self.args.data_dir or Path.home() / '.ari')
+                    user_statistics.record_page_view(
+                        data_root, username, local_path,
+                        country=country, region=region)
+            except Exception as exc:  # noqa: BLE001
+                log.debug('Could not record user activity: %s', exc)
         return response
 
 

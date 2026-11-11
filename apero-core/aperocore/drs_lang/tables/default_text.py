@@ -29116,6 +29116,9 @@ langlist.add(item)
 # =============================================================================
 AWARDS_UI_TEXT = [
     ('TITLE', 'Awards', 'Récompenses', 'Premios'),
+    ('ACTIVE_USERS', 'Most active users', 'Utilisateurs les plus actifs',
+     'Usuarios más activos'),
+    ('ACTIVE_DAYS', 'Active days', 'Jours actifs', 'Días activos'),
     ('MONITORS', 'Instrument monitors', 'Moniteurs par instrument',
      'Monitores por instrumento'),
     ('DOWNLOADS', 'Downloads', 'Téléchargements', 'Descargas'),

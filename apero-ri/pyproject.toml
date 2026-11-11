@@ -89,6 +89,7 @@ Repository = 'https://github.com/njcuk9999/apero-drs'
 api = ["aperodrs @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.running#subdirectory=apero-drs"]
 full = ["apero @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.running#subdirectory=apero-drs"]
 dev = ["apero", "pytest>=8,<9", "pytest-flask>=1.3,<2"]
+geoip = ["geoip2>=4.8,<6"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

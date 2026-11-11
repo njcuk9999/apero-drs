@@ -492,7 +492,15 @@ html[data-theme="dark"] .gen-choice-desc { color: #8b949e; }
 .stat-lbl { font-size: 11px; color: #6b7a90; text-transform: uppercase;
             letter-spacing: 0.04em; }
 .stats-table-wrap { overflow-x: auto; margin-bottom: 14px; }
-.stats-table-wrap th { cursor: default; }
+.stats-table-wrap th { cursor: pointer; }
+.stats-table-wrap th[aria-sort="ascending"]::after { content: ' \25B2'; }
+.stats-table-wrap th[aria-sort="descending"]::after { content: ' \25BC'; }
+.stats-table-wrap .stats-column-filter { width: 100%; min-width: 70px;
+    box-sizing: border-box; padding: 5px; background: #fff; color: #253045;
+    border: 1px solid #c9d4e3; border-radius: 4px; }
+html[data-theme="dark"] .stats-table-wrap .stats-column-filter {
+    background: #0d1117; color: #e6edf3; border-color: #30363d; }
+.stats-table-wrap .stats-filter-row th { cursor: default; padding: 4px; }
 .stats-table-wrap td.num { text-align: right;
                            font-variant-numeric: tabular-nums; }
 .tbar { height: 8px; border-radius: 3px; min-width: 2px; }
@@ -2598,10 +2606,28 @@ function drawChart(id, series, opts) {
 
 function renderStats() {
     if (!statsData) { return; }
+    var active = document.activeElement;
+    var focused = active && active.classList.contains('stats-column-filter');
+    var container = focused ? active.closest('.stats-table-wrap') : null;
+    var inputs = container ? Array.prototype.slice.call(
+        container.querySelectorAll('.stats-column-filter')) : [];
+    var inputIndex = focused ? inputs.indexOf(active) : -1;
+    var start = focused ? active.selectionStart : null;
+    var end = focused ? active.selectionEnd : null;
     var note = statsData.n_tasks + ' task(s) measured, ' +
                statsData.n_samples + ' resource sample(s)';
     document.getElementById('stats-note').textContent = note;
     if (statsTab === 'timing') { renderTiming(); } else { renderPerf(); }
+    if (container && inputIndex >= 0) {
+        var replacement = container.querySelectorAll('.stats-column-filter')
+            [inputIndex];
+        if (replacement) {
+            replacement.focus({preventScroll: true});
+            if (start !== null && end !== null) {
+                replacement.setSelectionRange(start, end);
+            }
+        }
+    }
 }
 
 function statsCard(label, value) {
@@ -2683,22 +2709,30 @@ function renderTiming() {
         html += '<tr><td><span class="swatch" style="background:' +
             statsColor(tr.type) + '"></span>' + escapeHtml(tr.type) +
             '</td><td class="num">' + tr.n + '</td><td class="num">' +
-            tr.fail + '</td><td class="num">' + fmtDuration(tr.med) +
-            '</td><td class="num">' + fmtDuration(tr.mean) +
-            '</td><td class="num">' + fmtDuration(quantile(tr.durs, 0.9)) +
-            '</td><td class="num">' +
+            tr.fail + '</td><td class="num" data-sort-value="' + tr.med +
+            '">' + fmtDuration(tr.med) +
+            '</td><td class="num" data-sort-value="' + tr.mean + '">' +
+            fmtDuration(tr.mean) +
+            '</td><td class="num" data-sort-value="' +
+            quantile(tr.durs, 0.9) + '">' + fmtDuration(quantile(tr.durs, 0.9)) +
+            '</td><td class="num" data-sort-value="' +
+            tr.durs[tr.durs.length - 1] + '">' +
             fmtDuration(tr.durs[tr.durs.length - 1]) +
-            '</td><td class="num">' + fmtDuration(tr.total) +
-            '</td><td class="num">' + fmtDuration(tr.wait) +
+            '</td><td class="num" data-sort-value="' + tr.total + '">' +
+            fmtDuration(tr.total) +
+            '</td><td class="num" data-sort-value="' +
+            (isFinite(tr.wait) ? tr.wait : '') + '">' + fmtDuration(tr.wait) +
             '</td><td class="num">' + tr.cpu.toFixed(2) +
             '</td><td class="num">' + tr.ram.toFixed(2) +
-            '</td><td><div class="tbar" style="width:' + pct.toFixed(1) +
+            '</td><td data-sort-value="' + tr.med + '" data-filter-value="' +
+            fmtDuration(tr.med) + '"><div class="tbar" style="width:' + pct.toFixed(1) +
             '%;background:' + statsColor(tr.type) + '"></div></td></tr>';
     });
     html += '</tbody></table>';
     document.getElementById('stats-table').innerHTML = tableRows.length ?
         html : '<div class="chart-empty">No finished tasks measured yet' +
                '</div>';
+    prepareStatsTable('stats-table');
     // duration scatter (failed tasks in red)
     var split = document.getElementById('stats-split').checked ||
                 !document.getElementById('stats-type').value;
@@ -2755,6 +2789,79 @@ function queueWait(row) {
     return wait >= 0 ? wait : null;
 }
 
+var statsTableStates = {};
+
+function prepareStatsTable(id) {
+    var container = document.getElementById(id);
+    var table = container.querySelector('table');
+    if (!table) { return; }
+    var state = statsTableStates[id] || {filters: {}, column: -1, asc: true};
+    statsTableStates[id] = state;
+    var headers = Array.prototype.slice.call(table.tHead.rows[0].cells);
+    var filterRow = table.tHead.insertRow();
+    filterRow.className = 'stats-filter-row';
+    var rows = Array.prototype.slice.call(table.tBodies[0].rows);
+
+    function apply() {
+        rows.forEach(function (row) {
+            row.hidden = !headers.every(function (_, index) {
+                var filter = (state.filters[index] || '').toLowerCase();
+                var cell = row.cells[index];
+                var value = cell.dataset.filterValue || cell.textContent;
+                return value.toLowerCase().indexOf(filter) !== -1;
+            });
+        });
+        headers.forEach(function (header, index) {
+            header.setAttribute('aria-sort', index === state.column ?
+                (state.asc ? 'ascending' : 'descending') : 'none');
+        });
+        if (state.column < 0) { return; }
+        rows.sort(function (left, right) {
+            var a = left.cells[state.column];
+            var b = right.cells[state.column];
+            var av = a.dataset.sortValue || a.textContent.trim();
+            var bv = b.dataset.sortValue || b.textContent.trim();
+            var an = Number(av), bn = Number(bv);
+            var numeric = av !== '' && bv !== '' &&
+                          Number.isFinite(an) && Number.isFinite(bn);
+            var result = numeric ? an - bn :
+                av.localeCompare(bv, undefined, {numeric: true});
+            return state.asc ? result : -result;
+        });
+        rows.forEach(function (row) { table.tBodies[0].appendChild(row); });
+    }
+
+    headers.forEach(function (header, index) {
+        header.tabIndex = 0;
+        function sort() {
+            state.asc = state.column === index ? !state.asc : true;
+            state.column = index;
+            apply();
+        }
+        header.addEventListener('click', sort);
+        header.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                sort();
+            }
+        });
+        var cell = document.createElement('th');
+        var input = document.createElement('input');
+        input.className = 'stats-column-filter';
+        input.type = 'search';
+        input.placeholder = 'Filter';
+        input.setAttribute('aria-label', 'Filter ' + header.textContent.trim());
+        input.value = state.filters[index] || '';
+        input.addEventListener('input', function () {
+            state.filters[index] = input.value;
+            apply();
+        });
+        cell.appendChild(input);
+        filterRow.appendChild(cell);
+    });
+    apply();
+}
+
 function statsTopTable(rows, valueFn, columns) {
     var top = rows.slice().sort(function (a, b) {
         return valueFn(b) - valueFn(a);
@@ -2772,7 +2879,8 @@ function statsTopTable(rows, valueFn, columns) {
             escapeHtml(lvRunLabel(r.qid, r.recipe)) + '</td><td>' +
             '<span class="swatch" style="background:' +
             statsColor(r.shortname) + '"></span>' +
-            escapeHtml(r.shortname) + '</td><td class="num">' +
+            escapeHtml(r.shortname) + '</td><td class="num" data-sort-value="' +
+            r.duration + '">' +
             fmtDuration(r.duration) + '</td>' + columns.map(function (col) {
                 return '<td class="num">' + col.fmt(r) + '</td>';
             }).join('') + '</tr>';
@@ -2850,6 +2958,8 @@ function renderResourceTables() {
                 return r.duration > 0 ?
                        ((r.cpu_s || 0) / r.duration).toFixed(2) : '-';
             }}]);
+    ['stats-resources', 'stats-top-io', 'stats-top-ram'].forEach(
+        prepareStatsTable);
     document.querySelectorAll('#stab-perf .stats-task').forEach(function (tr) {
         tr.addEventListener('click', function () {
             var qid = tr.dataset.qid;

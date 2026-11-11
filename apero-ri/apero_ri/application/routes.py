@@ -11,6 +11,16 @@ def register_static_routes(app: Any) -> None:
     """
     _lim = app._limiter
 
+    app.add_url_rule('/admin_portal/user_statistics',
+                     'admin_user_statistics_view',
+                     app._admin_user_statistics_view)
+    app.add_url_rule('/api/admin/user-statistics',
+                     'api_admin_user_statistics',
+                     app._api_admin_user_statistics)
+    app.add_url_rule('/api/admin/user-statistics/pdf',
+                     'api_admin_user_statistics_pdf',
+                     app._api_admin_user_statistics_pdf)
+
     # Registration and account APIs — rate-limited
     app.add_url_rule(
         "/api/auth/register/start",
