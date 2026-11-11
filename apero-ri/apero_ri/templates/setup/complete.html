@@ -22,19 +22,34 @@
     <p>
         {{ _('Install or refresh the GeoLite2 City database using a MaxMind account ID and license key. The credentials are used for this download only and are not saved. ARI stores the database locally under its cache.') }}
     </p>
+    <p>
+        <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+           target="_blank" rel="noopener noreferrer">
+            {{ _('Sign up for a free MaxMind GeoLite account') }}
+        </a>
+        ·
+        <a href="https://www.maxmind.com/en/accounts/current/license-key"
+           target="_blank" rel="noopener noreferrer">
+            {{ _('Get or manage a MaxMind license key') }}
+        </a>
+    </p>
     {% if geoip_installed %}
     <p role="status">{{ _('A GeoLite2 City database is installed.') }}</p>
-    {% endif %}
     <p>
-           {{ _("GeoLite users must keep the database current under MaxMind's terms.") }}
-           {{ _('To refresh it later, run apero_ri_setup --force and return to this page.') }}
+        {{ _('After ARI starts, install or update GeoLite from the Admin Portal First Time Guide. You do not need to rerun setup.') }}
     </p>
+    {% else %}
+    <p>
+        {{ _('GeoLite users must keep the database current under MaxMind\'s terms.') }}
+    </p>
+    {% endif %}
     <p>
         {{ _('Review the') }}
         <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
            target="_blank" rel="noopener noreferrer">{{ _('GeoLite terms') }}</a>
         {{ _('before downloading.') }}
     </p>
+    {% if not geoip_installed %}
     <form method="POST" action="{{ url_for('setup_geoip_install') }}">
         <input type="hidden" name="csrf_token" value="{{ geoip_token }}">
         <div class="ari-form-group">
@@ -57,6 +72,7 @@
             {{ _('GeoLite database') }}
         </button>
     </form>
+    {% endif %}
     {% else %}
     <p>Setup is not complete yet. Finish the earlier steps first.</p>
     {% endif %}

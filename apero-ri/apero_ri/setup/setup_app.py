@@ -712,7 +712,7 @@ class SetupApp(Flask):
                 'network access, and database permission.'), "error")
         else:
             flash(ari_lang_support.translate(
-                'GeoLite2 City database installed. Restart ARI to use it.'),
+                'GeoLite2 City database installed and active.'),
                 "success")
         return redirect(url_for("setup_complete"))
 

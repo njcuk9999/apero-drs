@@ -20,6 +20,12 @@ def register_static_routes(app: Any) -> None:
     app.add_url_rule('/api/admin/user-statistics/pdf',
                      'api_admin_user_statistics_pdf',
                      app._api_admin_user_statistics_pdf)
+    app.add_url_rule(
+        '/api/admin/geoip/install',
+        'api_admin_geoip_install',
+        app._api_admin_geoip_install,
+        methods=['POST'],
+    )
 
     # Registration and account APIs — rate-limited
     app.add_url_rule(

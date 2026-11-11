@@ -265,6 +265,7 @@ def _build_first_time_guide_steps(
         },
         {
             'page_id': 'home.admin_portal.first_time_guide',
+            'kind': 'geoip',
             'endpoint': None,
             'title': 'GeoLite Location Database',
             'purpose': (
@@ -275,8 +276,9 @@ def _build_first_time_guide_steps(
             'sub_steps': [
                 {
                     'text': (
-                        'Run apero_ri_setup --force, open the completion '
-                        'page, and download or update GeoLite2 City.'
+                        'Use the form below to install or update GeoLite2 City '
+                        'directly from this running ARI site. No setup rerun '
+                        'or server restart is needed.'
                     ),
                 },
                 {
@@ -1618,6 +1620,8 @@ def make_page_view(
             context['first_time_steps'] = _build_first_time_guide_steps(
                 app, user_info, perms
             )
+            context['geoip_install_url'] = url_for(
+                'api_admin_geoip_install')
 
         if page_id == "home.astrometrics":
             try:

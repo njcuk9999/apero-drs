@@ -112,11 +112,12 @@ def _geo(country: str, region: str) -> tuple[str, str]:
     return country, ' '.join(region.split())[:128]
 
 
-@functools.lru_cache(maxsize=1)
-def _geoip_reader(database_path: str) -> object:
+@functools.lru_cache(maxsize=2)
+def _geoip_reader(database_path: str, modified_ns: int) -> object:
     """Open a local MaxMind City database once per worker process.
 
     :param database_path: Local MMDB path configured by the operator.
+    :param modified_ns: Modification timestamp used to reopen updated files.
     :return: GeoIP2 reader retained only in process memory.
     :raises ImportError: GeoIP2 is not installed in the ARI environment.
     """
@@ -142,7 +143,8 @@ def location_for_address(address: str) -> tuple[str, str]:
         return '', ''
     try:
         with _GEOIP_LOCK:
-            reader = _geoip_reader(str(database))
+            modified_ns = database.stat().st_mtime_ns
+            reader = _geoip_reader(str(database), modified_ns)
             location = reader.city(address)
     except Exception:
         return '', ''

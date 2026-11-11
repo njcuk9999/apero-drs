@@ -80,7 +80,7 @@ def test_geolite_guide_step_reports_install_status(tmp_path):
                 if item["title"] == "GeoLite Location Database")
     assert step["endpoint"] is None
     assert step["complete"] is False
-    assert "apero_ri_setup --force" in step["sub_steps"][0]["text"]
+    assert "this running ARI site" in step["sub_steps"][0]["text"]
 
     database = tmp_path / "cache" / "geoip" / "GeoLite2-City.mmdb"
     database.parent.mkdir(parents=True)

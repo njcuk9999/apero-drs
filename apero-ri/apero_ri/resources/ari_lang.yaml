@@ -10,9 +10,33 @@
 "Optional: enable country and region summaries for qualified user activity.":
   FR: "Facultatif : activer les résumés par pays et région pour l'activité utilisateur qualifiée."
   ES: "Opcional: habilitar resúmenes por país y región para la actividad de usuario cualificada."
-"Run apero_ri_setup --force, open the completion page, and download or update GeoLite2 City.":
+"Use the form below to install or update GeoLite2 City directly from this running ARI site. No setup rerun or server restart is needed.":
   FR: Exécutez apero_ri_setup --force, ouvrez la page de fin et téléchargez ou actualisez GeoLite2 City.
   ES: Ejecute apero_ri_setup --force, abra la página de finalización y descargue o actualice GeoLite2 City.
+"Use the form below to install or update GeoLite2 City directly from this running ARI site. No setup rerun or server restart is needed.":
+  FR: "Utilisez le formulaire ci-dessous pour installer ou actualiser GeoLite2 City directement depuis ARI. Il n'est pas nécessaire de relancer la configuration ni de redémarrer le serveur."
+  ES: "Use el formulario siguiente para instalar o actualizar GeoLite2 City directamente desde ARI. No es necesario volver a ejecutar la configuración ni reiniciar el servidor."
+"Downloading and validating GeoLite2 City...":
+  FR: Téléchargement et validation de GeoLite2 City...
+  ES: Descargando y validando GeoLite2 City...
+"GeoLite update failed.":
+  FR: La mise à jour de GeoLite a échoué.
+  ES: Falló la actualización de GeoLite.
+"GeoLite2 City database installed and active.":
+  FR: La base GeoLite2 City est installée et active.
+  ES: La base GeoLite2 City está instalada y activa.
+"After ARI starts, install or update GeoLite from the Admin Portal First Time Guide. You do not need to rerun setup.":
+  FR: Après le démarrage d'ARI, installez ou actualisez GeoLite dans le guide de première configuration du portail Admin. Il n'est pas nécessaire de relancer la configuration.
+  ES: Después de iniciar ARI, instale o actualice GeoLite desde la guía de configuración inicial del Portal de Administración. No es necesario volver a ejecutar la configuración.
+"Submit GeoLite credentials over HTTPS or from localhost.":
+  FR: Saisissez les identifiants GeoLite via HTTPS ou depuis localhost.
+  ES: Envíe las credenciales de GeoLite por HTTPS o desde localhost.
+"Request origin rejected.":
+  FR: L'origine de la requête a été refusée.
+  ES: Se rechazó el origen de la solicitud.
+"JSON request required.":
+  FR: Une requête JSON est requise.
+  ES: Se requiere una solicitud JSON.
 "Use a MaxMind account ID and license key. The credentials are used only for the download and are not saved.":
   FR: Utilisez un identifiant de compte MaxMind et une clé de licence. Ces identifiants servent uniquement au téléchargement et ne sont pas enregistrés.
   ES: Use un ID de cuenta MaxMind y una clave de licencia. Las credenciales solo se usan para la descarga y no se guardan.
@@ -34,9 +58,6 @@
 "GeoLite users must keep the database current under MaxMind's terms.":
   FR: Les utilisateurs de GeoLite doivent maintenir la base à jour conformément aux conditions de MaxMind.
   ES: Los usuarios de GeoLite deben mantener la base actualizada según los términos de MaxMind.
-"To refresh it later, run apero_ri_setup --force and return to this page.":
-  FR: Pour l'actualiser plus tard, exécutez apero_ri_setup --force et revenez à cette page.
-  ES: Para actualizarla más adelante, ejecute apero_ri_setup --force y vuelva a esta página.
 "Review the":
   FR: Consultez les
   ES: Consulte los
@@ -52,6 +73,12 @@
 "MaxMind license key":
   FR: Clé de licence MaxMind
   ES: Clave de licencia de MaxMind
+"Sign up for a free MaxMind GeoLite account":
+  FR: Créer un compte GeoLite MaxMind gratuit
+  ES: Registrarse para obtener una cuenta gratuita de MaxMind GeoLite
+"Get or manage a MaxMind license key":
+  FR: Obtenir ou gérer une clé de licence MaxMind
+  ES: Obtener o administrar una clave de licencia de MaxMind
 "I have permission to download GeoLite and agree to its terms.":
   FR: Je suis autorisé à télécharger GeoLite et j'accepte ses conditions.
   ES: Tengo permiso para descargar GeoLite y acepto sus términos.

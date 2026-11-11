@@ -155,14 +155,18 @@ for that topology:
 | `ARI_GEOIP_DB` | Optional override for the GeoLite2 City `.mmdb` path installed by setup. Only country and region are retained; client addresses are used for lookup in memory. | ARI cache database |
 
 GeoIP2 is installed with ARI. To enable country and region summaries, open
-the setup completion page and submit a MaxMind account ID and license key.
-The setup app downloads and validates the latest GeoLite2 City database.
-Credentials are used only for the download and are not saved. The database is
-stored in `<ARI data directory>/cache/geoip/GeoLite2-City.mmdb`.
+**Admin Portal → First Time Guide** in the running ARI site and use the
+GeoLite Location Database form. This works for an existing installation;
+there is no setup rerun or server restart. Enter a MaxMind account ID and
+license key; ARI downloads and validates the latest GeoLite2 City database.
+Credentials are used only for the download and are not saved. The database is stored in
+`<ARI data directory>/cache/geoip/GeoLite2-City.mmdb`.
+Create a free GeoLite account at
+https://www.maxmind.com/en/geolite-free-ip-geolocation-data and get a key at
+https://www.maxmind.com/en/accounts/current/license-key.
 
-MaxMind requires GeoLite databases to be kept current. To update later, run
-`apero_ri_setup --force` and use the update form on the completion page. Restart
-ARI after installing or updating the database. The database is not bundled
+MaxMind requires GeoLite databases to be kept current. Return to the same
+First Time Guide form to update the database. The database is not bundled
 because its license and update terms are separate. Without a local database,
 activity is still counted and locations are reported as unknown.
 

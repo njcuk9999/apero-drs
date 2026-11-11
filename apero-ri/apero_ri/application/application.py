@@ -26,6 +26,7 @@ from typing import Any, List, Optional
 
 import yaml
 from apero_ri.application import (
+    admin_geoip_api_helpers,
     admin_assets_api_helpers,
     admin_backup_api_helpers,
     admin_cache_helpers,
@@ -1049,6 +1050,10 @@ class ARIApp(Flask):
         """Download the authorized selected statistics PDF."""
         from apero_ri.application import user_statistics_helpers as ush
         return ush.api(self, pdf=True)
+
+    def _api_admin_geoip_install(self) -> Any:
+        """Install or update GeoLite from the running admin portal."""
+        return admin_geoip_api_helpers.api_install(self)
 
     def _api_user_account_get(self) -> Any:
         """Return account details for the current user."""

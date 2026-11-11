@@ -84,6 +84,52 @@
                             {% endfor %}
                         </ol>
                         {% endif %}
+                        {% if item.kind == 'geoip' %}
+                        <p>
+                            <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+                               target="_blank" rel="noopener noreferrer">
+                                {{ _('Sign up for a free MaxMind GeoLite account') }}
+                            </a>
+                            ·
+                            <a href="https://www.maxmind.com/en/accounts/current/license-key"
+                               target="_blank" rel="noopener noreferrer">
+                                {{ _('Get or manage a MaxMind license key') }}
+                            </a>
+                        </p>
+                        <form class="ftg-geoip-form"
+                              data-api-url="{{ geoip_install_url }}"
+                              style="display:grid; gap:0.5rem; max-width:32rem; margin-top:0.8rem;">
+                            <label>
+                                {{ _('MaxMind account ID') }}
+                                <input name="account_id" required
+                                       autocomplete="off">
+                            </label>
+                            <label>
+                                {{ _('MaxMind license key') }}
+                                <input name="license_key" type="password"
+                                       required autocomplete="new-password">
+                            </label>
+                            <label>
+                                <input name="accept_terms" type="checkbox"
+                                       required>
+                                {{ _('I have permission to download GeoLite and agree to its terms.') }}
+                                <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+                                   target="_blank" rel="noopener noreferrer">
+                                    {{ _('GeoLite terms') }}
+                                </a>
+                            </label>
+                            <button type="submit"
+                                    class="ari-btn ari-btn--secondary"
+                                    style="justify-self:start;">
+                                <i class="fa-solid fa-download"
+                                   aria-hidden="true"></i>
+                                {{ _('Download') if not item.complete else _('Update') }}
+                                {{ _('GeoLite database') }}
+                            </button>
+                            <p class="ftg-geoip-status" role="status"
+                               aria-live="polite" hidden></p>
+                        </form>
+                        {% endif %}
                     </div>
                 </div>
                 <div>
@@ -107,4 +153,45 @@
     </div>
     {% endif %}
 </div>
+<script>
+(function () {
+    'use strict';
+    document.querySelectorAll('.ftg-geoip-form').forEach(function (form) {
+        var status = form.querySelector('.ftg-geoip-status');
+        var button = form.querySelector('button[type="submit"]');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var data = new FormData(form);
+            status.hidden = false;
+            status.textContent = {{ _('Downloading and validating GeoLite2 City...') | tojson }};
+            button.disabled = true;
+            fetch(form.dataset.apiUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    account_id: data.get('account_id'),
+                    license_key: data.get('license_key'),
+                    accept_terms: data.get('accept_terms') === 'on'
+                })
+            }).then(function (response) {
+                return response.json().then(function (payload) {
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.error ||
+                            {{ _('GeoLite update failed.') | tojson }});
+                    }
+                    return payload;
+                });
+            }).then(function (payload) {
+                status.textContent = payload.message;
+                form.reset();
+                window.location.reload();
+            }).catch(function (error) {
+                status.textContent = error.message;
+                button.disabled = false;
+            });
+        });
+    });
+}());
+</script>
 {% endblock %}

@@ -314,7 +314,8 @@ def test_local_geoip_keeps_only_location(
             addresses.append(address)
             return location
 
-    monkeypatch.setattr(stats, '_geoip_reader', lambda path: Reader())
+    monkeypatch.setattr(
+        stats, '_geoip_reader', lambda path, modified_ns: Reader())
     assert stats.location_for_address('192.0.2.10') == ('CA', 'Quebec')
     assert addresses == ['192.0.2.10']
     assert stats.location_for_address('') == ('', '')
@@ -349,7 +350,8 @@ def test_setup_database_is_discovered_without_environment_variable(
 
     monkeypatch.delenv('ARI_GEOIP_DB', raising=False)
     monkeypatch.setenv('ARI_DIR', str(tmp_path))
-    monkeypatch.setattr(stats, '_geoip_reader', lambda path: Reader())
+    monkeypatch.setattr(
+        stats, '_geoip_reader', lambda path, modified_ns: Reader())
     assert stats.location_for_address('192.0.2.2') == ('CA', 'Quebec')
     assert calls == ['192.0.2.2']
 
