@@ -1358,10 +1358,9 @@ def ariapp_configure_production_hardening(self: Any) -> None:
                 username = str((user_info or {}).get('username') or '')
                 if username:
                     local_path = req_path.rstrip('/') or '/'
+                    data_root = Path(self._resolve_local_data_dir())
                     country, region = user_statistics.location_for_address(
-                        request.remote_addr or '')
-                    data_root = Path(
-                        self.args.data_dir or Path.home() / '.ari')
+                        request.remote_addr or '', data_root)
                     user_statistics.record_page_view(
                         data_root, username, local_path,
                         country=country, region=region)

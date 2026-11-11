@@ -126,10 +126,11 @@ def _geoip_reader(database_path: str, modified_ns: int) -> object:
     return Reader(database_path)
 
 
-def location_for_address(address: str) -> tuple[str, str]:
+def location_for_address(address: str, data_dir: Path) -> tuple[str, str]:
     """Resolve an address locally and return only country and region.
 
     :param address: Transient client address; it is never persisted or logged.
+    :param data_dir: Configured ARI local data directory.
     :return: ISO2 country and subdivision name, or empty values when the local
         database is unavailable or the address cannot be resolved.
     """
@@ -137,7 +138,7 @@ def location_for_address(address: str) -> tuple[str, str]:
     if configured_path:
         database = Path(configured_path).expanduser()
     else:
-        database = (secret_store.get_ari_dir() / 'cache' / 'geoip'
+        database = (Path(data_dir) / 'cache' / 'geoip'
                     / 'GeoLite2-City.mmdb')
     if not database.is_file() or not address:
         return '', ''

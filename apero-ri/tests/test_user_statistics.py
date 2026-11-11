@@ -128,11 +128,22 @@ def test_app_records_only_successful_page_navigations(
 
     app = Flask(__name__)
     app.secret_key = 'activity-test-only'
-    app.args = SimpleNamespace(data_dir=str(tmp_path))
+    app.args = SimpleNamespace(data_dir=str(tmp_path / 'other'))
+    app._resolve_local_data_dir = lambda: tmp_path
     monkeypatch.setattr(ariapp_impls.auth, 'get_effective_user',
                         lambda current_session: dict(username='reader'))
-    monkeypatch.setattr(stats, 'location_for_address',
-                        lambda address: ('CA', 'Quebec'))
+    database = tmp_path / 'cache' / 'geoip' / 'GeoLite2-City.mmdb'
+    database.parent.mkdir(parents=True)
+    database.touch()
+    location = SimpleNamespace(
+        country=SimpleNamespace(iso_code='CA'),
+        subdivisions=SimpleNamespace(
+            most_specific=SimpleNamespace(name='Quebec')))
+    reader = SimpleNamespace(city=lambda address: location)
+    monkeypatch.setattr(stats, '_geoip_reader',
+                        lambda path, modified_ns: reader)
+    monkeypatch.setenv('ARI_DIR', str(tmp_path / 'other'))
+    monkeypatch.delenv('ARI_GEOIP_DB', raising=False)
     monkeypatch.setenv('ARI_PROXY_COUNT', '0')
     ariapp_impls.ariapp_configure_production_hardening(app)
     app.add_url_rule('/one', 'one', lambda: '<h1>One</h1>')
@@ -316,9 +327,10 @@ def test_local_geoip_keeps_only_location(
 
     monkeypatch.setattr(
         stats, '_geoip_reader', lambda path, modified_ns: Reader())
-    assert stats.location_for_address('192.0.2.10') == ('CA', 'Quebec')
+    assert stats.location_for_address('192.0.2.10', tmp_path) == (
+        'CA', 'Quebec')
     assert addresses == ['192.0.2.10']
-    assert stats.location_for_address('') == ('', '')
+    assert stats.location_for_address('', tmp_path) == ('', '')
 
 
 def test_setup_database_is_discovered_without_environment_variable(
@@ -349,10 +361,11 @@ def test_setup_database_is_discovered_without_environment_variable(
                     most_specific=SimpleNamespace(name='Quebec')))
 
     monkeypatch.delenv('ARI_GEOIP_DB', raising=False)
-    monkeypatch.setenv('ARI_DIR', str(tmp_path))
+    monkeypatch.setenv('ARI_DIR', str(tmp_path / 'other'))
     monkeypatch.setattr(
         stats, '_geoip_reader', lambda path, modified_ns: Reader())
-    assert stats.location_for_address('192.0.2.2') == ('CA', 'Quebec')
+    assert stats.location_for_address('192.0.2.2', tmp_path) == (
+        'CA', 'Quebec')
     assert calls == ['192.0.2.2']
 
 
