@@ -60,3 +60,35 @@ def test_apero_checks_guide_step_uses_resolved_data_dir_and_api_access_link():
     assert "/tmp/ari-test/apero-assets/astrometrics" in step["sub_steps"][1]["text"]
     assert "/tmp/ari-test/api_config.json" in step["sub_steps"][2]["text"]
     assert step["sub_steps"][2]["link"]["endpoint"] == "home_admin_portal_api_config"
+
+
+def test_geolite_guide_step_reports_install_status(tmp_path):
+    class DummyApp:
+        def _get_admin_health(self, **kwargs):
+            return {}, None, None
+
+        def _build_admin_db_tunnel_context(self, *args, **kwargs):
+            return {"db_tunnels": [], "db_local_databases": []}
+
+        def _resolve_local_data_dir(self):
+            return tmp_path
+
+    steps = page_view_helpers._build_first_time_guide_steps(
+        DummyApp(), None, []
+    )
+    step = next(item for item in steps
+                if item["title"] == "GeoLite Location Database")
+    assert step["endpoint"] is None
+    assert step["complete"] is False
+    assert "apero_ri_setup --force" in step["sub_steps"][0]["text"]
+
+    database = tmp_path / "cache" / "geoip" / "GeoLite2-City.mmdb"
+    database.parent.mkdir(parents=True)
+    database.touch()
+    steps = page_view_helpers._build_first_time_guide_steps(
+        DummyApp(), None, []
+    )
+    step = next(item for item in steps
+                if item["title"] == "GeoLite Location Database")
+    assert step["complete"] is True
+    assert step["message"] == "A GeoLite2 City database is installed."

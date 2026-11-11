@@ -264,6 +264,37 @@ def _build_first_time_guide_steps(
             ],
         },
         {
+            'page_id': 'home.admin_portal.first_time_guide',
+            'endpoint': None,
+            'title': 'GeoLite Location Database',
+            'purpose': (
+                'Optional: enable country and region summaries for '
+                'qualified user activity.'
+            ),
+            'optional': True,
+            'sub_steps': [
+                {
+                    'text': (
+                        'Run apero_ri_setup --force, open the completion '
+                        'page, and download or update GeoLite2 City.'
+                    ),
+                },
+                {
+                    'text': (
+                        'Use a MaxMind account ID and license key. The '
+                        'credentials are used only for the download and '
+                        'are not saved.'
+                    ),
+                },
+                {
+                    'text': (
+                        'Restart ARI after installation. Keep the database '
+                        'current under MaxMind terms.'
+                    ),
+                },
+            ],
+        },
+        {
             'page_id': 'home.admin_portal.async_tasks',
             'title': 'Async Tasks',
             'purpose': (
@@ -320,13 +351,26 @@ def _build_first_time_guide_steps(
             is_complete = setup_status.get('complete', False)
             message = setup_status.get('message', message)
             status = setup_status.get('status', status)
+        elif step.get('title') == 'GeoLite Location Database':
+            geoip_path = (
+                Path(resolved_data_dir) / 'cache' / 'geoip'
+                / 'GeoLite2-City.mmdb'
+            )
+            is_complete = geoip_path.is_file()
+            if is_complete:
+                message = 'A GeoLite2 City database is installed.'
+                status = 'ok'
+            else:
+                message = 'No GeoLite2 City database is installed.'
+                status = 'pending'
 
         row = dict(step)
         row['step_number'] = index
         row['status'] = status or 'pending'
         row['complete'] = is_complete
         row['message'] = message
-        row['endpoint'] = page_id_to_endpoint(page_id)
+        row['endpoint'] = step.get(
+            'endpoint', page_id_to_endpoint(page_id))
         out.append(row)
 
     return out

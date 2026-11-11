@@ -4,6 +4,24 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+"GeoLite Location Database":
+  FR: Base de données de localisation GeoLite
+  ES: Base de datos de ubicación GeoLite
+"Optional: enable country and region summaries for qualified user activity.":
+  FR: "Facultatif : activer les résumés par pays et région pour l'activité utilisateur qualifiée."
+  ES: "Opcional: habilitar resúmenes por país y región para la actividad de usuario cualificada."
+"Run apero_ri_setup --force, open the completion page, and download or update GeoLite2 City.":
+  FR: Exécutez apero_ri_setup --force, ouvrez la page de fin et téléchargez ou actualisez GeoLite2 City.
+  ES: Ejecute apero_ri_setup --force, abra la página de finalización y descargue o actualice GeoLite2 City.
+"Use a MaxMind account ID and license key. The credentials are used only for the download and are not saved.":
+  FR: Utilisez un identifiant de compte MaxMind et une clé de licence. Ces identifiants servent uniquement au téléchargement et ne sont pas enregistrés.
+  ES: Use un ID de cuenta MaxMind y una clave de licencia. Las credenciales solo se usan para la descarga y no se guardan.
+"Restart ARI after installation. Keep the database current under MaxMind terms.":
+  FR: Redémarrez ARI après l'installation. Maintenez la base à jour conformément aux conditions de MaxMind.
+  ES: Reinicie ARI después de la instalación. Mantenga la base actualizada según los términos de MaxMind.
+"No GeoLite2 City database is installed.":
+  FR: Aucune base de données GeoLite2 City n'est installée.
+  ES: No hay instalada una base de datos GeoLite2 City.
 "Optional: Country and region statistics":
   FR: Statistiques facultatives par pays et région
   ES: Estadísticas opcionales por país y región

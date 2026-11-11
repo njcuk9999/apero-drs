@@ -33,14 +33,20 @@
                             <span style="font-weight:700; color:var(--ari-primary);">
                                 Step {{ item.step_number }}
                             </span>
+                            {% if item.endpoint %}
                             <a href="{{ url_for(item.endpoint) }}"
                                target="_blank"
                                rel="noopener noreferrer"
                                style="font-weight:700; color:inherit; text-decoration:none;">
-                                {{ item.title }}
+                                {{ item.title | tl }}
                                 <i class="fa-solid fa-arrow-up-right-from-square"
                                    style="font-size:0.78rem;"></i>
                             </a>
+                            {% else %}
+                            <span style="font-weight:700; color:inherit;">
+                                {{ item.title | tl }}
+                            </span>
+                            {% endif %}
                             {% if item.optional %}
                             <span style="font-size:0.75rem; color:var(--ari-text-muted); border:1px solid var(--ari-border); border-radius:999px; padding:0.05rem 0.45rem;">
                                 Optional
@@ -48,11 +54,11 @@
                             {% endif %}
                         </div>
                         <div style="font-size:0.9rem; color:var(--ari-text-muted); margin-top:0.2rem;">
-                            {{ item.purpose }}
+                            {{ item.purpose | tl }}
                         </div>
                         {% if item.message %}
                         <div style="font-size:0.84rem; color:var(--ari-text-muted); margin-top:0.2rem;">
-                            {{ item.message }}
+                            {{ item.message | tl }}
                         </div>
                         {% endif %}
                         {% if item.sub_steps %}
@@ -60,7 +66,7 @@
                             {% for sub_step in item.sub_steps %}
                             <li style="margin:0.12rem 0;">
                                 {% if sub_step is mapping %}
-                                {{ sub_step.get('text', '') }}
+                                {{ sub_step.get('text', '') | tl }}
                                 {% if sub_step.get('link') %}
                                 <a href="{{ url_for(sub_step.get('link').get('endpoint')) }}"
                                    target="_blank"
@@ -72,7 +78,7 @@
                                 </a>
                                 {% endif %}
                                 {% else %}
-                                {{ sub_step }}
+                                {{ sub_step | tl }}
                                 {% endif %}
                             </li>
                             {% endfor %}
