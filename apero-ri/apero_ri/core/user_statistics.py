@@ -341,6 +341,21 @@ def summary(data_dir: Path, start: str | None = None,
             connection.close()
 
 
+def reset_activity(data_dir: Path) -> int:
+    """Delete recorded user-days without removing the database file.
+
+    :param data_dir: ARI local data directory.
+    :return: Number of active and pending user-days deleted.
+    """
+    reader = _reader(data_dir)
+    if reader is None:
+        return 0
+    reader.close()
+    with closing(sqlite3.connect(_path(data_dir), timeout=_TIMEOUT)) as conn:
+        with conn:
+            return conn.execute('DELETE FROM user_days').rowcount
+
+
 def activity_awards(data_dir: Path) -> dict:
     """Rank all-time positive user-day scores using three distinct scores.
 

@@ -1,14 +1,19 @@
 {% extends "general/sidebar_base.html" %}
 {% block extra_head %}{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user_statistics.css', v='20261111d') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_statistics.css', v='20261111e') }}">
 {% endblock %}
 {% block doc_content %}
 <section class="us-page" aria-labelledby="us-heading">
   <header class="us-heading">
     <h1 id="us-heading"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> {{ statistics_labels.TITLE }}</h1>
+    <div class="us-actions">
     <button id="us-export" type="button" class="ari-btn ari-btn--secondary" disabled>
       <i class="fa-solid fa-file-pdf" aria-hidden="true"></i> {{ statistics_labels.EXPORT }}
     </button>
+    <button id="us-reset" type="button" class="ari-btn ari-btn--danger">
+      <i class="fa-solid fa-trash" aria-hidden="true"></i> {{ statistics_labels.RESET }}
+    </button>
+    </div>
   </header>
   <form id="us-filters" class="us-filters">
     <label>{{ statistics_labels.START }}<input id="us-start" name="start" type="date" required></label>
@@ -51,6 +56,6 @@
 {% endblock %}
 {% block extra_scripts %}{{ super() }}
 {{ bokeh_js | safe }}
-<script>window.USER_STATISTICS = {{ {'labels': statistics_labels, 'api': url_for('api_admin_user_statistics'), 'pdf': url_for('api_admin_user_statistics_pdf')} | tojson }};</script>
-<script src="{{ url_for('static', filename='js/user_statistics.js', v='20261111c') }}"></script>
+<script>window.USER_STATISTICS = {{ {'labels': statistics_labels, 'api': url_for('api_admin_user_statistics'), 'pdf': url_for('api_admin_user_statistics_pdf'), 'reset': url_for('api_admin_user_statistics_reset'), 'csrf': statistics_reset_token} | tojson }};</script>
+<script src="{{ url_for('static', filename='js/user_statistics.js', v='20261111e') }}"></script>
 {% endblock %}

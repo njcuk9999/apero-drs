@@ -31,6 +31,33 @@ __release__ = base.__release__
 # Get the language list
 langlist = drs_lang_list.LanguageList(__NAME__)
 
+item = langlist.create('USER_STATISTICS_RESET', kind='text')
+item.value['ENG'] = 'Reset statistics'
+item.value['FR'] = 'Réinitialiser les statistiques'
+item.value['ES'] = 'Restablecer estadísticas'
+item.arguments = 'None'
+item.comment = 'ARI user activity reset button'
+langlist.add(item)
+
+item = langlist.create('USER_STATISTICS_RESET_CONFIRM', kind='text')
+item.value['ENG'] = ('Delete all user activity history and activity awards? '
+                     'This cannot be undone.')
+item.value['FR'] = ("Supprimer tout l'historique et les récompenses "
+                    "d'activité ? Cette action est irréversible.")
+item.value['ES'] = ('¿Eliminar todo el historial y los premios de actividad? '
+                    'Esta acción no se puede deshacer.')
+item.arguments = 'None'
+item.comment = 'ARI user activity reset confirmation'
+langlist.add(item)
+
+item = langlist.create('USER_STATISTICS_RESET_ERROR', kind='text')
+item.value['ENG'] = 'Unable to reset user statistics.'
+item.value['FR'] = 'Impossible de réinitialiser les statistiques.'
+item.value['ES'] = 'No se pueden restablecer las estadísticas.'
+item.arguments = 'None'
+item.comment = 'ARI user activity reset failure'
+langlist.add(item)
+
 
 # =============================================================================
 # 00-000-00000

@@ -20,6 +20,9 @@ def register_static_routes(app: Any) -> None:
     app.add_url_rule('/api/admin/user-statistics/pdf',
                      'api_admin_user_statistics_pdf',
                      app._api_admin_user_statistics_pdf)
+    app.add_url_rule('/api/admin/user-statistics/reset',
+                     'api_admin_user_statistics_reset',
+                     app._api_admin_user_statistics_reset, methods=['POST'])
     app.add_url_rule(
         '/api/admin/geoip/install',
         'api_admin_geoip_install',

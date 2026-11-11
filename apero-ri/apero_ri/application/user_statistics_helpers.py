@@ -6,6 +6,8 @@ from functools import lru_cache
 from html import escape
 from io import BytesIO
 import json
+import hmac
+import secrets
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +51,10 @@ UI_TEXT = dict(
     LOADING='Loading user statistics...',
     ERROR='Unable to load user statistics.',
     INVALID='Enter valid ISO dates with start on or before end.',
+    RESET='Reset statistics',
+    RESET_CONFIRM=('Delete all user activity history and activity awards? '
+                   'This cannot be undone.'),
+    RESET_ERROR='Unable to reset user statistics.',
     PRIVACY=('A user-day requires two distinct successful navigations per '
              'UTC day. Counts begin at rollout; no IP addresses are saved. '
              'Unavailable locations are listed as unknown.'))
@@ -67,7 +73,10 @@ def labels() -> dict[str, str]:
     result = dict()
     for key, english in UI_TEXT.items():
         translated = lang.translate(english)
-        entry = textentry('USER_STATISTICS_' + key, message=translated)
+        if key in ('RESET', 'RESET_CONFIRM', 'RESET_ERROR'):
+            entry = textentry('USER_STATISTICS_' + key)
+        else:
+            entry = textentry('USER_STATISTICS_' + key, message=translated)
         result[key] = str(entry)
     return result
 
@@ -99,7 +108,28 @@ def page(app: Any) -> str:
     context.update(page_id=PAGE_ID, page_label=labels()['TITLE'])
     context.update(page_icon='fa-solid fa-chart-column')
     context.update(statistics_labels=labels(), bokeh_js=_bokeh_resources())
+    context['statistics_reset_token'] = session.setdefault(
+        'statistics_reset_csrf', secrets.token_urlsafe(32))
     return render_template('admin/user_statistics.html', **context)
+
+
+def reset(app: Any) -> Any:
+    """Clear activity records after authorization and CSRF validation.
+
+    :param app: ARI application resolving the local data root.
+    :return: JSON success with the number of deleted user-days.
+    """
+    _require_statistics(app)
+    expected = str(session.get('statistics_reset_csrf') or '')
+    provided = str(request.headers.get('X-CSRF-Token') or '')
+    if session.get('login_as') or not expected or not hmac.compare_digest(
+        expected, provided
+    ):
+        abort(403, description=labels()['FORBIDDEN'])
+    removed = user_statistics.reset_activity(Path(app._resolve_local_data_dir()))
+    response = jsonify(success=True, removed=removed)
+    response.headers['Cache-Control'] = 'private, no-store'
+    return response
 
 
 @lru_cache(maxsize=1)

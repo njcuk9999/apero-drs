@@ -112,7 +112,45 @@ def statistics_app(monkeypatch: pytest.MonkeyPatch,
     app.add_url_rule('/api/admin/user-statistics/pdf',
                      'api_admin_user_statistics_pdf',
                      lambda: ARIApp._api_admin_user_statistics_pdf(owner))
+    app.add_url_rule('/api/admin/user-statistics/reset',
+                     'api_admin_user_statistics_reset',
+                     lambda: ARIApp._api_admin_user_statistics_reset(owner),
+                     methods=['POST'])
     return app, state
+
+
+def test_reset_requires_permission_and_csrf(
+    statistics_app: tuple[Flask, dict], tmp_path: Path,
+) -> None:
+    """Only a non-impersonating authorized session can clear activity.
+
+    :param statistics_app: Isolated app and access state.
+    :param tmp_path: Isolated activity data root.
+    :return: None.
+    """
+    app, state = statistics_app
+    client = app.test_client()
+    record = helpers.user_statistics.record_page_view
+    record(tmp_path, 'alice', '/one')
+    record(tmp_path, 'alice', '/two')
+    url = '/api/admin/user-statistics/reset'
+    assert client.post(url).status_code == 403
+    with client.session_transaction() as sess:
+        sess['statistics_reset_csrf'] = 'test-token'
+    headers = {'X-CSRF-Token': 'test-token'}
+    state['perms'] = {'view.admin'}
+    assert client.post(url, headers=headers).status_code == 403
+    state['perms'] = {helpers.PERMISSION}
+    with client.session_transaction() as sess:
+        sess['login_as'] = 'someone'
+    assert client.post(url, headers=headers).status_code == 403
+    with client.session_transaction() as sess:
+        sess.pop('login_as')
+    assert helpers.user_statistics.summary(tmp_path)['total_user_days'] == 1
+    response = client.post(url, headers=headers)
+    assert response.status_code == 200
+    assert response.json['removed'] == 1
+    assert helpers.user_statistics.summary(tmp_path)['total_user_days'] == 0
 
 
 @pytest.mark.parametrize('path', ['/admin_portal/user_statistics',

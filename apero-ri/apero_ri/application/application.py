@@ -1051,6 +1051,11 @@ class ARIApp(Flask):
         from apero_ri.application import user_statistics_helpers as ush
         return ush.api(self, pdf=True)
 
+    def _api_admin_user_statistics_reset(self) -> Any:
+        """Reset recorded activity statistics."""
+        from apero_ri.application import user_statistics_helpers as ush
+        return ush.reset(self)
+
     def _api_admin_geoip_install(self) -> Any:
         """Install or update GeoLite from the running admin portal."""
         return admin_geoip_api_helpers.api_install(self)

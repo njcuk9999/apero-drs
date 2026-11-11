@@ -146,6 +146,25 @@
         params.delete("theme");
         byId("download").src = config.pdf + "?" + params;
     });
+    byId("reset").addEventListener("click", async () => {
+        if (!window.confirm(ui.RESET_CONFIRM)) return;
+        const button = byId("reset");
+        button.disabled = true;
+        try {
+            const response = await fetch(config.reset, {
+                method: "POST", credentials: "same-origin",
+                headers: {"X-CSRF-Token": config.csrf}
+            });
+            if (!response.ok) throw new Error(ui.RESET_ERROR);
+            start.value = "";
+            end.value = "";
+            await refresh();
+        } catch (error) {
+            message(ui.RESET_ERROR, true);
+        } finally {
+            button.disabled = false;
+        }
+    });
     document.addEventListener("ari:theme-change", schedule);
     const initial = new URLSearchParams(location.search);
     start.value = initial.get("start") || "";

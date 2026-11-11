@@ -52,6 +52,23 @@ def _qualify(root: Path, username: str, day: datetime.date,
     assert stats.record_page_view(root, username, '/two', **view_kwargs)
 
 
+def test_reset_activity(tmp_path: Path) -> None:
+    """Clear active and pending records without creating a missing store.
+
+    :param tmp_path: Isolated ARI data root.
+    :return: None.
+    """
+    assert stats.reset_activity(tmp_path) == 0
+    assert not stats._path(tmp_path).exists()
+    _qualify(tmp_path, 'alice', _DAY, 'CA', 'Quebec')
+    stats.record_page_view(tmp_path, 'bob', '/one', day=_DAY)
+    assert stats.reset_activity(tmp_path) == 2
+    assert stats._path(tmp_path).exists()
+    assert stats.activity_awards(tmp_path) == dict()
+    assert stats.summary(tmp_path)['total_user_days'] == 0
+    _qualify(tmp_path, 'alice', _DAY, 'CA', 'Quebec')
+
+
 def test_qualification_privacy_and_saturation(tmp_path: Path) -> None:
     """Check refresh deduplication, hash-only storage and no active rewrites.
 
