@@ -11,11 +11,38 @@
   FR: "Facultatif : activer les résumés par pays et région pour l'activité utilisateur qualifiée."
   ES: "Opcional: habilitar resúmenes por país y región para la actividad de usuario cualificada."
 "Use the form below to install or update GeoLite2 City directly from this running ARI site. No setup rerun or server restart is needed.":
-  FR: Exécutez apero_ri_setup --force, ouvrez la page de fin et téléchargez ou actualisez GeoLite2 City.
-  ES: Ejecute apero_ri_setup --force, abra la página de finalización y descargue o actualice GeoLite2 City.
-"Use the form below to install or update GeoLite2 City directly from this running ARI site. No setup rerun or server restart is needed.":
   FR: "Utilisez le formulaire ci-dessous pour installer ou actualiser GeoLite2 City directement depuis ARI. Il n'est pas nécessaire de relancer la configuration ni de redémarrer le serveur."
   ES: "Use el formulario siguiente para instalar o actualizar GeoLite2 City directamente desde ARI. No es necesario volver a ejecutar la configuración ni reiniciar el servidor."
+"Open GeoLite Location Database":
+  FR: Ouvrir la base de données de localisation GeoLite
+  ES: Abrir la base de datos de ubicación GeoLite
+"Install or update the GeoLite2 City database from this running ARI site. This does not rerun setup.":
+  FR: Installez ou actualisez la base GeoLite2 City depuis ARI. Cela ne relance pas la configuration.
+  ES: Instale o actualice la base GeoLite2 City desde ARI. Esto no vuelve a ejecutar la configuración.
+"MaxMind account and license key":
+  FR: Compte MaxMind et clé de licence
+  ES: Cuenta MaxMind y clave de licencia
+"Create a free MaxMind GeoLite account":
+  FR: Créer un compte GeoLite MaxMind gratuit
+  ES: Crear una cuenta gratuita de MaxMind GeoLite
+"Sign in and accept the GeoLite End User License Agreement.":
+  FR: Connectez-vous et acceptez le contrat de licence utilisateur final GeoLite.
+  ES: Inicie sesión y acepte el acuerdo de licencia de usuario final de GeoLite.
+"Open Manage License Keys":
+  FR: Ouvrir la gestion des clés de licence
+  ES: Abrir la gestión de claves de licencia
+"Create a license key and enter it below with your account ID.":
+  FR: Créez une clé de licence et saisissez-la ci-dessous avec votre identifiant de compte.
+  ES: Cree una clave de licencia e introdúzcala abajo junto con el ID de cuenta.
+"The account ID and license key are used only for the download. ARI does not save them.":
+  FR: L'identifiant de compte et la clé de licence servent uniquement au téléchargement. ARI ne les enregistre pas.
+  ES: El ID de cuenta y la clave de licencia solo se usan para la descarga. ARI no los guarda.
+"MaxMind requires GeoLite databases to be kept current. Return to this page to update the database.":
+  FR: MaxMind exige que les bases GeoLite restent à jour. Revenez sur cette page pour actualiser la base.
+  ES: MaxMind requiere mantener actualizadas las bases GeoLite. Vuelva a esta página para actualizarla.
+"Review GeoLite terms":
+  FR: Consulter les conditions GeoLite
+  ES: Consultar los términos de GeoLite
 "Downloading and validating GeoLite2 City...":
   FR: Téléchargement et validation de GeoLite2 City...
   ES: Descargando y validando GeoLite2 City...

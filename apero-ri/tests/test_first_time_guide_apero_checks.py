@@ -57,9 +57,11 @@ def test_apero_checks_guide_step_uses_resolved_data_dir_and_api_access_link():
         if item["page_id"] == "home.admin_portal.apero_checks_policy"
     )
 
-    assert "/tmp/ari-test/apero-assets/astrometrics" in step["sub_steps"][1]["text"]
+    astrom_text = step["sub_steps"][1]["text"]
+    assert "/tmp/ari-test/apero-assets/astrometrics" in astrom_text
     assert "/tmp/ari-test/api_config.json" in step["sub_steps"][2]["text"]
-    assert step["sub_steps"][2]["link"]["endpoint"] == "home_admin_portal_api_config"
+    api_link = step["sub_steps"][2]["link"]["endpoint"]
+    assert api_link == "home_admin_portal_api_config"
 
 
 def test_geolite_guide_step_reports_install_status(tmp_path):
@@ -78,9 +80,11 @@ def test_geolite_guide_step_reports_install_status(tmp_path):
     )
     step = next(item for item in steps
                 if item["title"] == "GeoLite Location Database")
-    assert step["endpoint"] is None
+    assert step["endpoint"] == "home_admin_portal_geoip_database"
     assert step["complete"] is False
-    assert "this running ARI site" in step["sub_steps"][0]["text"]
+    text = step["sub_steps"][0]["text"]
+    assert "this running ARI site" in text
+    assert "apero_ri_setup --force" not in text
 
     database = tmp_path / "cache" / "geoip" / "GeoLite2-City.mmdb"
     database.parent.mkdir(parents=True)

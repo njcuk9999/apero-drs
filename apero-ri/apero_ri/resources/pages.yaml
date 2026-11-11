@@ -444,6 +444,17 @@ home.admin_portal.first_time_guide:
     top-level: False
     show: True
 
+home.admin_portal.geoip_database:
+  label: GeoLite Location Database
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-earth-americas
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.users:
   label: User Management
   parent: home.admin_portal

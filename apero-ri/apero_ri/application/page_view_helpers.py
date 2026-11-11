@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from pathlib import Path
 import json
+import secrets
 import threading
 import time as _time
 from typing import Any
@@ -266,7 +267,7 @@ def _build_first_time_guide_steps(
         {
             'page_id': 'home.admin_portal.first_time_guide',
             'kind': 'geoip',
-            'endpoint': None,
+            'endpoint': 'home_admin_portal_geoip_database',
             'title': 'GeoLite Location Database',
             'purpose': (
                 'Optional: enable country and region summaries for '
@@ -1620,8 +1621,15 @@ def make_page_view(
             context['first_time_steps'] = _build_first_time_guide_steps(
                 app, user_info, perms
             )
+
+        if page_id == 'home.admin_portal.geoip_database' and user_info:
             context['geoip_install_url'] = url_for(
                 'api_admin_geoip_install')
+            context['geoip_installed'] = (
+                Path(app._resolve_local_data_dir()) / 'cache' / 'geoip'
+                / 'GeoLite2-City.mmdb').is_file()
+            context['geoip_csrf_token'] = session.setdefault(
+                'geoip_install_csrf', secrets.token_urlsafe(32))
 
         if page_id == "home.astrometrics":
             try:

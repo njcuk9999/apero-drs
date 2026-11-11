@@ -1,0 +1,113 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - {{ page_label | tl }}{% endblock %}
+
+{% block doc_content %}
+<section class="ari-page-header">
+    <h1><i class="{{ page_icon }}" aria-hidden="true"></i>
+        {{ page_label | tl }}</h1>
+    <p>{{ _('Install or update the GeoLite2 City database from this running ARI site. This does not rerun setup.') }}</p>
+</section>
+
+<section class="ari-sg-section">
+    <h2>{{ _('MaxMind account and license key') }}</h2>
+    <ol>
+        <li>
+            <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+               target="_blank" rel="noopener noreferrer">
+                {{ _('Create a free MaxMind GeoLite account') }}
+            </a>
+        </li>
+        <li>{{ _('Sign in and accept the GeoLite End User License Agreement.') }}</li>
+        <li>
+            <a href="https://www.maxmind.com/en/accounts/current/license-key"
+               target="_blank" rel="noopener noreferrer">
+                {{ _('Open Manage License Keys') }}
+            </a>
+        </li>
+        <li>{{ _('Create a license key and enter it below with your account ID.') }}</li>
+    </ol>
+    <p>{{ _('The account ID and license key are used only for the download. ARI does not save them.') }}</p>
+    <p>{{ _('MaxMind requires GeoLite databases to be kept current. Return to this page to update the database.') }}</p>
+    <p>
+        <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+           target="_blank" rel="noopener noreferrer">{{ _('Review GeoLite terms') }}</a>
+    </p>
+    {% if geoip_installed %}
+    <p role="status">{{ _('A GeoLite2 City database is installed.') }}</p>
+    {% else %}
+    <p role="status">{{ _('No GeoLite2 City database is installed.') }}</p>
+    {% endif %}
+</section>
+
+<form id="geoip-install-form" class="ari-sg-section"
+      data-api-url="{{ geoip_install_url }}"
+      data-csrf-token="{{ geoip_csrf_token }}"
+      style="display:grid; gap:0.75rem; max-width:36rem;">
+    <label>
+        {{ _('MaxMind account ID') }}
+        <input name="account_id" autocomplete="off" required>
+    </label>
+    <label>
+        {{ _('MaxMind license key') }}
+        <input name="license_key" type="password"
+               autocomplete="new-password" required>
+    </label>
+    <label>
+        <input name="accept_terms" type="checkbox" required>
+        {{ _('I have permission to download GeoLite and agree to its terms.') }}
+    </label>
+    <button class="ari-btn ari-btn--primary" type="submit">
+        <i class="fa-solid fa-download" aria-hidden="true"></i>
+        {{ _('Update') if geoip_installed else _('Download') }}
+        {{ _('GeoLite database') }}
+    </button>
+    <p id="geoip-status" role="status" aria-live="polite" hidden></p>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+(function () {
+    'use strict';
+    var form = document.getElementById('geoip-install-form');
+    var status = document.getElementById('geoip-status');
+    var button = form.querySelector('button[type="submit"]');
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data = new FormData(form);
+        status.hidden = false;
+        status.textContent = {{ _('Downloading and validating GeoLite2 City...') | tojson }};
+        button.disabled = true;
+        fetch(form.dataset.apiUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': form.dataset.csrfToken
+            },
+            body: JSON.stringify({
+                account_id: data.get('account_id'),
+                license_key: data.get('license_key'),
+                accept_terms: data.get('accept_terms') === 'on'
+            })
+        }).then(function (response) {
+            return response.json().then(function (payload) {
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.error ||
+                        {{ _('GeoLite update failed.') | tojson }});
+                }
+                return payload;
+            });
+        }).then(function (payload) {
+            status.textContent = payload.message;
+            form.reset();
+            window.location.reload();
+        }).catch(function (error) {
+            status.textContent = error.message;
+            button.disabled = false;
+        });
+    });
+}());
+</script>
+{% endblock %}

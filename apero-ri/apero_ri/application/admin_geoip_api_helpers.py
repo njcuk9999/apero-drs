@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ipaddress
+import hmac
 from pathlib import Path
 from typing import Any
 
@@ -34,10 +35,13 @@ def api_install(app: Any) -> Any:
     if session.get('login_as'):
         return jsonify(success=False, error='Unauthorized'), 403
 
-    origin = request.headers.get('Origin', '')
-    expected_origin = request.host_url.rstrip('/')
-    if not origin or origin != expected_origin:
-        return jsonify(success=False, error='Request origin rejected.'), 403
+    expected_token = str(session.get('geoip_install_csrf') or '')
+    provided_token = str(request.headers.get('X-CSRF-Token') or '')
+    if not expected_token or not hmac.compare_digest(
+        expected_token, provided_token
+    ):
+        return jsonify(
+            success=False, error='Invalid or expired form token.'), 403
 
     try:
         is_loopback = ipaddress.ip_address(

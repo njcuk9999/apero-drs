@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from flask import Flask
+from flask import Flask, session
 
 from apero.dev import get_base_params
 from aperocore.base import base
@@ -53,6 +53,10 @@ def geoip_client(monkeypatch: pytest.MonkeyPatch,
 
     owner = Owner()
     state['data_dir'] = tmp_path
+    state['csrf'] = 'csrf-test-token'
+    app.add_url_rule(
+        '/geoip-page', 'geoip_page',
+        lambda: _seed_geoip_session(state))
     monkeypatch.setattr(
         helpers.setup_geoip, 'install_database',
         lambda root, account, key: state['installed'].append(
@@ -60,10 +64,12 @@ def geoip_client(monkeypatch: pytest.MonkeyPatch,
     app.add_url_rule(
         '/api/admin/geoip/install', 'install',
         lambda: helpers.api_install(owner), methods=['POST'])
-    return app.test_client(), state
+    client = app.test_client()
+    assert client.get('/geoip-page').status_code == 200
+    return client, state
 
 
-def test_admin_geoip_install_requires_admin_and_same_origin(
+def test_admin_geoip_install_requires_admin_and_valid_csrf(
     geoip_client: tuple[Any, dict[str, Any]],
 ) -> None:
     """Reject non-admin, login-as, and cross-origin credential posts.
@@ -73,7 +79,7 @@ def test_admin_geoip_install_requires_admin_and_same_origin(
     """
     client, state = geoip_client
     body = dict(account_id='acct', license_key='key', accept_terms=True)
-    headers = {'Origin': 'http://localhost'}
+    headers = {'X-CSRF-Token': state['csrf']}
     assert client.post(
         '/api/admin/geoip/install', json=body).status_code == 403
     state['user'] = None
@@ -88,7 +94,7 @@ def test_admin_geoip_install_requires_admin_and_same_origin(
         current_session.pop('login_as')
     assert client.post(
         '/api/admin/geoip/install', json=body,
-        headers={'Origin': 'https://evil.example'}).status_code == 403
+        headers={'X-CSRF-Token': 'wrong-token'}).status_code == 403
     assert state['installed'] == []
 
 
@@ -101,7 +107,7 @@ def test_admin_geoip_install_validates_terms_and_passes_credentials_once(
     :return: None.
     """
     client, state = geoip_client
-    headers = {'Origin': 'http://localhost'}
+    headers = {'X-CSRF-Token': state['csrf']}
     body = dict(account_id='acct', license_key='secret', accept_terms=False)
     response = client.post('/api/admin/geoip/install', json=body,
                            headers=headers)
@@ -116,6 +122,44 @@ def test_admin_geoip_install_validates_terms_and_passes_credentials_once(
     assert state['installed'] == [
         (state['data_dir'], 'acct', 'secret')]
     assert b'secret' not in response.data
+
+
+def _seed_geoip_session(state: dict[str, Any]) -> str:
+    """Set the token as the dedicated page would and return a marker.
+
+    :param state: Test state with the expected token.
+    :return: A plain marker response.
+    """
+    session['geoip_install_csrf'] = state['csrf']
+    return 'ok'
+
+
+def test_dedicated_page_is_registered_and_has_account_instructions(
+    geoip_client: tuple[Any, dict[str, Any]],
+) -> None:
+    """Register a separate page with account and EULA guidance.
+
+    :param geoip_client: Isolated app client for wiring extra page route.
+    :return: None.
+    """
+    from pathlib import Path
+    import yaml
+
+    client, _ = geoip_client
+    assert client.get('/geoip-page').status_code == 200
+    root = Path(__file__).resolve().parents[1] / 'apero_ri'
+    pages = yaml.safe_load(
+        (root / 'resources' / 'pages.yaml').read_text(encoding='utf-8'))
+    page = pages['home.admin_portal.geoip_database']
+    assert page['parent'] == 'home.admin_portal'
+    assert page['view-permission'] == 'view.admin'
+    assert page['side-nav']['show'] is True
+    template = (root / 'templates' / 'admin' / 'geoip_database.html')
+    source = template.read_text(encoding='utf-8')
+    assert 'Create a free MaxMind GeoLite account' in source
+    expected = 'Sign in and accept the GeoLite End User License Agreement.'
+    assert expected in source
+    assert 'Open Manage License Keys' in source
 
 
 def test_admin_geoip_route_is_registered() -> None:
