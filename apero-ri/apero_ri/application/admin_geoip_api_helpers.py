@@ -56,6 +56,17 @@ def api_install(app: Any) -> Any:
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
         return jsonify(success=False, error='JSON request required.'), 400
+
+    action = str(payload.get('action') or 'install').strip()
+    data_dir = Path(app._resolve_local_data_dir())
+    if action == 'set_health_check':
+        status = setup_geoip.set_health_check_enabled(
+            data_dir, bool(payload.get('enabled')))
+        app._refresh_admin_health_after_change(user_info, {'view.admin'})
+        return jsonify(success=True, status=setup_geoip.get_status(data_dir))
+    if action != 'install':
+        return jsonify(success=False, error='Unknown GeoLite action.'), 400
+
     if payload.get('accept_terms') is not True:
         message = ari_lang_support.translate(
             'Accept the GeoLite terms before downloading the database.')
@@ -68,7 +79,6 @@ def api_install(app: Any) -> Any:
             'MaxMind account ID and license key are required.')
         return jsonify(success=False, error=message), 400
 
-    data_dir = Path(app._resolve_local_data_dir())
     try:
         setup_geoip.install_database(data_dir, account_id, license_key)
     except Exception:
@@ -77,9 +87,15 @@ def api_install(app: Any) -> Any:
             'network access, and database permission.')
         return jsonify(success=False, error=message), 400
 
+    app._refresh_admin_health_after_change(user_info, {'view.admin'})
     message = ari_lang_support.translate(
         'GeoLite2 City database installed and active.')
-    return jsonify(success=True, message=message)
+    app._refresh_admin_health_after_change(user_info, {'view.admin'})
+    return jsonify(
+        success=True,
+        message=f'{message} {setup_geoip.database_path(data_dir)}',
+        status=setup_geoip.get_status(data_dir),
+    )
 
 
 # =============================================================================

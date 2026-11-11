@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
 import tarfile
 import tempfile
+import threading
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import requests
@@ -28,11 +31,20 @@ DOWNLOAD_URL = (
 )
 MAX_ARCHIVE_BYTES = 250 * 1024 * 1024
 MAX_DATABASE_BYTES = 500 * 1024 * 1024
+MAX_DAILY_DOWNLOADS = 3
+MIN_DOWNLOAD_INTERVAL = timedelta(hours=1)
+UPDATE_AFTER_DAYS = 30
+_STATUS_LOCK = threading.Lock()
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def _utcnow() -> datetime:
+    """Return the current UTC time for download accounting."""
+    return datetime.now(timezone.utc)
+
+
 def database_path(data_dir: Path) -> Path:
     """Return the standard local cache path for the City database.
 
@@ -40,6 +52,155 @@ def database_path(data_dir: Path) -> Path:
     :return: GeoLite2 City MMDB path under the excluded cache directory.
     """
     return Path(data_dir) / 'cache' / 'geoip' / DATABASE_NAME
+
+
+def _status_path(data_dir: Path) -> Path:
+    """Return the durable metadata path for attempts and health settings."""
+    return Path(data_dir) / 'admin' / 'general' / 'geoip_status.json'
+
+
+def _load_status(data_dir: Path) -> dict[str, Any]:
+    """Load stored download and health metadata with safe defaults."""
+    path = _status_path(data_dir)
+    try:
+        value = json.loads(path.read_text(encoding='utf-8'))
+        if isinstance(value, dict):
+            return value
+    except (OSError, ValueError):
+        pass
+    return dict(total_requests=0, requests_date='', requests_today=0,
+                last_attempt_at='', last_success_at='',
+                health_check_enabled=True)
+
+
+def _save_status(data_dir: Path, status: dict[str, Any]) -> None:
+    """Atomically persist metadata without storing MaxMind credentials."""
+    path = _status_path(data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix('.tmp')
+    temporary.write_text(json.dumps(status, sort_keys=True), encoding='utf-8')
+    try:
+        temporary.chmod(0o600)
+    except OSError:
+        pass
+    os.replace(temporary, path)
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
+
+
+def set_health_check_enabled(data_dir: Path, enabled: bool) -> dict[str, Any]:
+    """Persist whether GeoLite freshness is included in admin health.
+
+    :param data_dir: ARI local data directory.
+    :param enabled: Whether an installed database can report stale status.
+    :return: Updated GeoLite download and health metadata.
+    """
+    with _STATUS_LOCK:
+        status = _load_status(data_dir)
+        status['health_check_enabled'] = bool(enabled)
+        _save_status(data_dir, status)
+    return status
+
+
+def get_status(data_dir: Path) -> dict[str, Any]:
+    """Return database preview, update time, quota counters and health state.
+
+    :param data_dir: ARI local data directory.
+    :return: Local-only status; no GeoIP lookup or network request is made.
+    """
+    status = _load_status(data_dir)
+    today = _utcnow().date().isoformat()
+    path = database_path(data_dir)
+    preview = None
+    modified_at = ''
+    if path.is_file():
+        try:
+            from geoip2.database import Reader
+
+            reader: Any = Reader(str(path))
+            metadata = reader.metadata()
+            preview = dict(
+                database_type=metadata.database_type,
+                build_date=datetime.fromtimestamp(
+                    metadata.build_epoch, timezone.utc).isoformat(),
+                ip_version=metadata.ip_version,
+                node_count=metadata.node_count,
+                record_size=metadata.record_size,
+                languages=list(metadata.languages or []),
+            )
+            reader.close()
+            modified_at = datetime.fromtimestamp(
+                path.stat().st_mtime, timezone.utc).isoformat()
+        except Exception:
+            preview = None
+        if not status.get('last_success_at') and modified_at:
+            status['last_success_at'] = modified_at
+    status.update(
+        installed=path.is_file(),
+        database_path=str(path),
+        file_modified_at=modified_at,
+        preview=preview,
+        health_check_enabled=bool(
+            status.get('health_check_enabled', True)),
+        total_requests=int(status.get('total_requests', 0) or 0),
+        requests_today=(
+            int(status.get('requests_today', 0) or 0)
+            if status.get('requests_date') == today else 0),
+        requests_date=today,
+        last_attempt_at=str(status.get('last_attempt_at', '') or ''),
+        last_success_at=str(status.get('last_success_at', '') or ''),
+    )
+    return status
+
+
+def health_status(data_dir: Path) -> dict[str, str]:
+    """Return a local-only freshness health result for admin health checks.
+
+    Missing databases and an explicitly disabled check are non-errors.
+
+    :param data_dir: ARI local data directory.
+    :return: status/message pair for the admin health page.
+    """
+    status = get_status(data_dir)
+    if not status['installed']:
+        return dict(
+            status='ok', message='No database installed; check skipped.')
+    if not status['health_check_enabled']:
+        return dict(
+            status='ok', message='GeoLite freshness check is disabled.')
+    last_success = str(status.get('last_success_at') or
+                       status.get('file_modified_at') or '')
+    if not last_success:
+        return dict(
+            status='warning',
+            message=(
+                'GeoLite database is installed, but update time is unknown.'
+            ),
+        )
+    try:
+        updated = datetime.fromisoformat(last_success)
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return dict(
+            status='warning',
+            message='GeoLite database update time is invalid.',
+        )
+    age = _utcnow() - updated.astimezone(timezone.utc)
+    if age > timedelta(days=UPDATE_AFTER_DAYS):
+        return dict(
+            status='warning',
+            message=(
+                'GeoLite database was last updated {days} days ago; '
+                'consider updating it.'
+            ).format(days=age.days),
+        )
+    return dict(
+        status='ok',
+        message='GeoLite database is within the update window.',
+    )
 
 
 def install_database(data_dir: Path, account_id: str,
@@ -60,6 +221,37 @@ def install_database(data_dir: Path, account_id: str,
     if not account_id or not license_key:
         raise ValueError('MaxMind account ID and license key are required.')
 
+    now = _utcnow()
+    today = now.date().isoformat()
+    with _STATUS_LOCK:
+        status = _load_status(data_dir)
+        if status.get('requests_date') != today:
+            status['requests_date'] = today
+            status['requests_today'] = 0
+        last_attempt = str(status.get('last_attempt_at') or '')
+        request_count = int(status.get('requests_today', 0) or 0)
+        if request_count >= MAX_DAILY_DOWNLOADS:
+            raise RuntimeError(
+            'GeoLite download limit reached for today; '
+            'try again tomorrow.')
+        if last_attempt:
+            try:
+                previous = datetime.fromisoformat(last_attempt)
+                if previous.tzinfo is None:
+                    previous = previous.replace(tzinfo=timezone.utc)
+                elapsed = now - previous.astimezone(timezone.utc)
+                if elapsed < MIN_DOWNLOAD_INTERVAL:
+                    raise RuntimeError(
+                        'Please wait one hour between GeoLite '
+                        'download attempts.')
+            except ValueError:
+                pass
+        status['requests_today'] = int(status.get('requests_today', 0) or 0) + 1
+        status['total_requests'] = (
+            int(status.get('total_requests', 0) or 0) + 1)
+        status['last_attempt_at'] = now.isoformat()
+        _save_status(data_dir, status)
+
     destination = database_path(data_dir)
     destination.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -76,6 +268,10 @@ def install_database(data_dir: Path, account_id: str,
         _validate_database(staged_path)
         staged_path.chmod(0o600)
         os.replace(staged_path, destination)
+    with _STATUS_LOCK:
+        status = _load_status(data_dir)
+        status['last_success_at'] = _utcnow().isoformat()
+        _save_status(data_dir, status)
     return destination
 
 

@@ -2,6 +2,7 @@
 
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from apero_ri.application import run_ids_api_helpers
@@ -9,6 +10,7 @@ from apero_ri.core import backup_backend as bb
 from apero_ri.core import email_backend as eb
 from apero_ri.core import sshfs_backend as sb
 from apero_ri.core import task_runner
+from apero_ri.setup import geoip as setup_geoip
 from apero_ri.core.auth import (
     get_effective_user,
     get_users_for_instrument,
@@ -198,6 +200,21 @@ def build_admin_card_health_uncached(
         health["home.admin_portal.users"]["duration_s"] = round(
             time.monotonic() - _t0, 2
         )
+
+    _t0 = time.monotonic()
+    if "view.admin" in perms:
+        try:
+            health['home.admin_portal.geoip_database'] = (
+                setup_geoip.health_status(Path(app._resolve_local_data_dir()))
+            )
+        except Exception as exc:
+            health['home.admin_portal.geoip_database'] = {
+                'status': 'error',
+                'message': f'GeoLite database health check failed: {exc}',
+            }
+    if 'home.admin_portal.geoip_database' in health:
+        health['home.admin_portal.geoip_database']['duration_s'] = round(
+            time.monotonic() - _t0, 2)
 
     _t0 = time.monotonic()
     if "view.admin" in perms:
@@ -549,10 +566,12 @@ def build_admin_card_health_uncached(
     if any(perm.startswith('manage.run_id.') for perm in perms):
         page_id = 'home.admin_portal.run_ids'
         try:
-            health[page_id] = run_ids_api_helpers.build_run_id_health(app, perms)
+            health[page_id] = run_ids_api_helpers.build_run_id_health(
+                app, perms)
         except Exception as exc:
-            health[page_id] = dict(status='error',
-                                   message=f'RUN ID health check failed: {exc}')
+            health[page_id] = dict(
+                status='error',
+                message=f'RUN ID health check failed: {exc}')
         health[page_id]['duration_s'] = round(time.monotonic() - _t0, 2)
 
     _t0 = time.monotonic()
@@ -628,6 +647,16 @@ def build_admin_health_rows(
             "and should be reviewed.",
 
             "error": "User assignment checks failed.",
+        },
+        'home.admin_portal.geoip_database': {
+            'ok': (
+                'GeoLite is not installed, disabled, or within the update '
+                'window.'
+            ),
+            'warning': (
+                'GeoLite is due for an update or its update time is unknown.'
+            ),
+            'error': 'GeoLite database health could not be checked.',
         },
         "home.admin_portal.science_groups": {
             "ok": "All users are assigned to at least one science group.",

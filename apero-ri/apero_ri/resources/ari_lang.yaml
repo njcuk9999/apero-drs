@@ -22,6 +22,159 @@
 "MaxMind account and license key":
   FR: Compte MaxMind et clé de licence
   ES: Cuenta MaxMind y clave de licencia
+"Database status":
+  FR: État de la base de données
+  ES: Estado de la base de datos
+"Database location":
+  FR: Emplacement de la base de données
+  ES: Ubicación de la base de datos
+"Last successful update":
+  FR: Dernière mise à jour réussie
+  ES: Última actualización correcta
+"Last download attempt":
+  FR: Dernière tentative de téléchargement
+  ES: Último intento de descarga
+"Requests today":
+  FR: Requêtes aujourd'hui
+  ES: Solicitudes de hoy
+"Total download requests":
+  FR: Nombre total de demandes de téléchargement
+  ES: Total de solicitudes de descarga
+"Database preview":
+  FR: Aperçu de la base de données
+  ES: Vista previa de la base de datos
+"Edition":
+  FR: Édition
+  ES: Edición
+"Build date":
+  FR: Date de génération
+  ES: Fecha de compilación
+"IP version":
+  FR: Version IP
+  ES: Versión IP
+"Database nodes":
+  FR: Nœuds de la base de données
+  ES: Nodos de la base de datos
+"Record size":
+  FR: Taille des enregistrements
+  ES: Tamaño de registro
+"Languages":
+  FR: Langues
+  ES: Idiomas
+"Install the database to preview its build metadata.":
+  FR: Installez la base pour afficher ses métadonnées de génération.
+  ES: Instale la base para ver sus metadatos de compilación.
+"Update health check":
+  FR: Vérification de mise à jour
+  ES: Comprobación de actualización
+"ARI suggests updating if the installed database is more than 30 days old. This check is local only and never contacts MaxMind.":
+  FR: ARI recommande une mise à jour si la base installée date de plus de 30 jours. Cette vérification est locale et ne contacte jamais MaxMind.
+  ES: ARI recomienda actualizar si la base instalada tiene más de 30 días. Esta comprobación es local y nunca contacta con MaxMind.
+"Enable the GeoLite freshness check in Admin Health":
+  FR: Activer la vérification d'actualité de GeoLite dans l'état de santé Admin
+  ES: Activar la comprobación de vigencia de GeoLite en Salud de Administración
+"Health-check setting saved.":
+  FR: Paramètre de vérification de santé enregistré.
+  ES: Configuración de comprobación de estado guardada.
+"Unable to save health setting.":
+  FR: Impossible d'enregistrer le paramètre de vérification de santé.
+  ES: No se pudo guardar la configuración de comprobación de estado.
+"No database installed; check skipped.":
+  FR: Aucune base installée ; vérification ignorée.
+  ES: No hay base instalada; se omite la comprobación.
+"GeoLite freshness check is disabled.":
+  FR: La vérification d'actualité de GeoLite est désactivée.
+  ES: La comprobación de vigencia de GeoLite está desactivada.
+"GeoLite database was last updated {days} days ago; consider updating it.":
+  FR: La base GeoLite a été mise à jour il y a {days} jours ; envisagez de l'actualiser.
+  ES: La base GeoLite se actualizó hace {days} días; considere actualizarla.
+"GeoLite database is within the update window.":
+  FR: La base GeoLite est dans la période de mise à jour recommandée.
+  ES: La base GeoLite está dentro del período recomendado de actualización.
+"GeoLite database is installed, but update time is unknown.":
+  FR: La base GeoLite est installée, mais sa date de mise à jour est inconnue.
+  ES: La base GeoLite está instalada, pero se desconoce cuándo se actualizó.
+"GeoLite database update time is invalid.":
+  FR: La date de mise à jour de la base GeoLite est invalide.
+  ES: La fecha de actualización de la base GeoLite no es válida.
+"MaxMind currently limits GeoLite database downloads to 30 per account per day. ARI allows at most 3 attempts per day and enforces a one-hour cooldown.":
+  FR: MaxMind limite actuellement les téléchargements GeoLite à 30 par compte et par jour. ARI autorise au plus 3 tentatives par jour et impose un délai d'une heure entre elles.
+  ES: MaxMind limita actualmente las descargas de GeoLite a 30 por cuenta y día. ARI permite como máximo 3 intentos al día e impone una espera de una hora.
+"Database status":
+  FR: État de la base de données
+  ES: Estado de la base de datos
+"Database location":
+  FR: Emplacement de la base de données
+  ES: Ubicación de la base de datos
+"Last successful update":
+  FR: Dernière mise à jour réussie
+  ES: Última actualización correcta
+"Last download attempt":
+  FR: Dernière tentative de téléchargement
+  ES: Último intento de descarga
+"Requests today":
+  FR: Requêtes aujourd'hui
+  ES: Solicitudes de hoy
+"Total download requests":
+  FR: Nombre total de demandes de téléchargement
+  ES: Total de solicitudes de descarga
+"Database preview":
+  FR: Aperçu de la base de données
+  ES: Vista previa de la base de datos
+"Edition":
+  FR: Édition
+  ES: Edición
+"Build date":
+  FR: Date de génération
+  ES: Fecha de compilación
+"IP version":
+  FR: Version IP
+  ES: Versión IP
+"Database nodes":
+  FR: Nœuds de la base de données
+  ES: Nodos de la base de datos
+"Record size":
+  FR: Taille des enregistrements
+  ES: Tamaño de registro
+"Languages":
+  FR: Langues
+  ES: Idiomas
+"Install the database to preview its build metadata.":
+  FR: Installez la base pour afficher ses métadonnées de génération.
+  ES: Instale la base para ver sus metadatos de compilación.
+"Update health check":
+  FR: Vérification de mise à jour
+  ES: Comprobación de actualización
+"ARI suggests updating if the installed database is more than 30 days old. This check is local only and never contacts MaxMind.":
+  FR: ARI recommande une mise à jour si la base installée date de plus de 30 jours. Cette vérification est locale et ne contacte jamais MaxMind.
+  ES: ARI recomienda actualizar si la base instalada tiene más de 30 días. Esta comprobación es local y nunca contacta con MaxMind.
+"Enable the GeoLite freshness check in Admin Health":
+  FR: Activer la vérification d'actualité de GeoLite dans l'état de santé Admin
+  ES: Activar la comprobación de vigencia de GeoLite en Salud de Administración
+"Health-check setting saved.":
+  FR: Paramètre de vérification de santé enregistré.
+  ES: Configuración de comprobación de estado guardada.
+"No database installed; check skipped.":
+  FR: Aucune base installée ; vérification ignorée.
+  ES: No hay base instalada; se omite la comprobación.
+"GeoLite freshness check is disabled.":
+  FR: La vérification d'actualité de GeoLite est désactivée.
+  ES: La comprobación de vigencia de GeoLite está desactivada.
+"GeoLite database was last updated {days} days ago; consider updating it.":
+  FR: La base GeoLite a été mise à jour il y a {days} jours ; envisagez de l'actualiser.
+  ES: La base GeoLite se actualizó hace {days} días; considere actualizarla.
+"GeoLite database is within the update window.":
+  FR: La base GeoLite est dans la période de mise à jour recommandée.
+  ES: La base GeoLite está dentro del período recomendado de actualización.
+"GeoLite database is installed, but update time is unknown.":
+  FR: La base GeoLite est installée, mais sa date de mise à jour est inconnue.
+  ES: La base GeoLite está instalada, pero se desconoce cuándo se actualizó.
+"GeoLite database update time is invalid.":
+  FR: La date de mise à jour de la base GeoLite est invalide.
+  ES: La fecha de actualización de la base GeoLite no es válida.
+"MaxMind currently limits GeoLite database downloads to 30 per account per day. ARI allows at most 3 attempts per day and enforces a one-hour cooldown.":
+  FR: MaxMind limite actuellement les téléchargements GeoLite à 30 par compte et par jour. ARI autorise au plus 3 tentatives par jour et impose un délai d'une heure entre elles.
+  ES: MaxMind limita actualmente las descargas de GeoLite a 30 por cuenta y día. ARI permite como máximo 3 intentos al día e impone una espera de una hora.
 "Create a free MaxMind GeoLite account":
   FR: Créer un compte GeoLite MaxMind gratuit
   ES: Crear una cuenta gratuita de MaxMind GeoLite

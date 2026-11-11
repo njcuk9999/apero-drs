@@ -222,6 +222,29 @@ def test_awards_template_payload(
     assert rows[0]['issues_medal'] == 'silver'
     assert rows[0]['instruments'] == dict(SPIROU=12.35)
     assert rows[1]['total_hours'] == 0
+    assert rows[0]['is_self'] is True
+    assert rows[1]['is_self'] is False
+
+
+def test_awards_viewer_without_records(
+    awards_app: tuple[Flask, dict[str, Any]],
+) -> None:
+    """Include a signed-in viewer who has no recorded awards.
+
+    :param awards_app: Isolated application and authentication state.
+    :return: None.
+    """
+    app, state = awards_app
+    state['user'] = dict(username='newuser', groups=['general.SPIROU'])
+    state['accounts']['newuser'] = dict(first_names='New', last_name='User')
+    html = app.test_client().get('/user_portal/awards').get_data(as_text=True)
+    payload = html.split('<script id="aw-data" type="application/json">')[1]
+    rows = json.loads(payload.split('</script>')[0])
+    viewer = next(row for row in rows if row['username'] == 'newuser')
+    assert viewer['is_self'] is True
+    assert viewer['who'] == 'New User'
+    assert viewer['total_hours'] == 0
+    assert viewer['active_days'] == 0
 
 
 @pytest.mark.parametrize('language, heading', [

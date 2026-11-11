@@ -959,6 +959,9 @@ def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
     awards = awards_core.compute_awards(data_dir, instruments)
 
     users = load_users() or dict()
+    if user_info and user_info.get('username'):
+        username = user_info['username']
+        awards.setdefault(username, dict(username=username))
     rows = []
     for entry in awards.values():
         account = users.get(entry['username'], dict())
@@ -967,6 +970,8 @@ def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
         display_name = ' '.join(part for part in name_parts if part)
         row = {
             'username': entry['username'],
+            'is_self': bool(user_info and
+                            entry['username'] == user_info.get('username')),
             'who': display_name or entry['username'],
             'total_hours': round(entry.get('total_hours', 0.0), 2),
             'service_medal': entry.get('service_medal'),

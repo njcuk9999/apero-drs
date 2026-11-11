@@ -1623,11 +1623,14 @@ def make_page_view(
             )
 
         if page_id == 'home.admin_portal.geoip_database' and user_info:
+            from apero_ri.setup import geoip as setup_geoip
+
+            local_data_dir = Path(app._resolve_local_data_dir())
             context['geoip_install_url'] = url_for(
                 'api_admin_geoip_install')
-            context['geoip_installed'] = (
-                Path(app._resolve_local_data_dir()) / 'cache' / 'geoip'
-                / 'GeoLite2-City.mmdb').is_file()
+            context['geoip_status'] = setup_geoip.get_status(local_data_dir)
+            context['geoip_health'] = setup_geoip.health_status(
+                local_data_dir)
             context['geoip_csrf_token'] = session.setdefault(
                 'geoip_install_csrf', secrets.token_urlsafe(32))
 

@@ -10,86 +10,54 @@
 <link rel="stylesheet"
     href="{{ url_for('static', filename='css/user_portal_user_cards.css') }}?v=20260501a">
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/awards.css') }}?v=20261111a">
+    href="{{ url_for('static', filename='css/awards.css') }}?v=20261111b">
 {% endblock %}
 
-{% macro leaderboard(prefix, kind, heading, instrument='') %}
-<div class="aw-board" data-aw-prefix="{{ prefix }}" data-aw-kind="{{ kind }}" data-aw-instrument="{{ instrument }}">
-<h3>{{ heading }}</h3>
-<div class="ot-table-wrap">
-    <table id="{{ prefix }}-table" class="ot-table">
-        <caption class="aw-caption">{{ heading }}</caption>
-        <thead>
-            <tr id="{{ prefix }}-header-row" class="ot-header-row"></tr>
-            <tr id="{{ prefix }}-filter-row" class="ot-filter-row"></tr>
-        </thead>
-        <tbody id="{{ prefix }}-tbody">
-            <tr><td class="ot-loading" colspan="4">
-                <i class="fa-solid fa-spinner fa-spin"></i> {{ awards_labels.loading }}
-            </td></tr>
-        </tbody>
-    </table>
-</div>
-
-<div class="ot-pagination">
-    <div id="{{ prefix }}-page-info" class="ot-page-info" aria-live="polite"></div>
-    <div class="ot-page-controls">
-        <button id="{{ prefix }}-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary"
-            title="{{ awards_labels.first }}" aria-label="{{ awards_labels.first }}" disabled>
-            <i class="fa-solid fa-angles-left"></i>
-        </button>
-        <button id="{{ prefix }}-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary"
-            title="{{ awards_labels.previous }}" aria-label="{{ awards_labels.previous }}" disabled>
-            <i class="fa-solid fa-angle-left"></i>
-        </button>
-        <span class="ot-page-num">
-            {{ awards_labels.page }}&nbsp;<input id="{{ prefix }}-page-input" class="ot-page-input"
-                             type="number" min="1" value="1" aria-label="{{ awards_labels.page }}">
-            / <span id="{{ prefix }}-page-total">1</span>
-        </span>
-        <button id="{{ prefix }}-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary"
-            title="{{ awards_labels.next }}" aria-label="{{ awards_labels.next }}" disabled>
-            <i class="fa-solid fa-angle-right"></i>
-        </button>
-        <button id="{{ prefix }}-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary"
-            title="{{ awards_labels.last }}" aria-label="{{ awards_labels.last }}" disabled>
-            <i class="fa-solid fa-angles-right"></i>
-        </button>
-        <label class="ot-perpage-label">
-            {{ awards_labels.rows }}
-            <select id="{{ prefix }}-perpage" class="ot-filter-select">
-                <option value="10">10</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-        </label>
+{% macro leaderboard(prefix, kind, heading, icon, instrument='') %}
+<article class="aw-board" data-aw-kind="{{ kind }}" data-aw-instrument="{{ instrument }}"
+    aria-labelledby="{{ prefix }}-heading">
+    <div class="aw-board-heading">
+        <span class="aw-board-icon"><i class="{{ icon }}" aria-hidden="true"></i></span>
+        <h3 id="{{ prefix }}-heading">{{ heading }}</h3>
+        <i class="fa-solid fa-trophy aw-board-trophy" aria-hidden="true"></i>
     </div>
-</div>
-</div>
+    <ol class="aw-list" aria-labelledby="{{ prefix }}-heading">
+        <li class="aw-empty"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            {{ awards_labels.loading }}</li>
+    </ol>
+</article>
 {% endmacro %}
 
 {% block doc_content %}
 <h1 class="ms-title"><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label | tl }}</h1>
 <section class="aw-section" aria-labelledby="aw-active-users">
-    <h2 id="aw-active-users">{{ awards_labels.active_users }}</h2>
-    {{ leaderboard('aw-activity', 'activity', awards_labels.active_days) }}
+    <h2 id="aw-active-users"><i class="fa-solid fa-star" aria-hidden="true"></i> {{ awards_labels.active_users }}</h2>
+    <div class="aw-grid">
+        {{ leaderboard('aw-activity', 'activity', awards_labels.active_days, 'fa-solid fa-calendar-check') }}
+    </div>
 </section>
 <section class="aw-section" aria-labelledby="aw-monitors">
-    <h2 id="aw-monitors">{{ awards_labels.monitors }}</h2>
+    <h2 id="aw-monitors"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i> {{ awards_labels.monitors }}</h2>
+    <div class="aw-grid">
     {% for instrument in instruments %}
-        {{ leaderboard('aw-inst-' ~ loop.index, 'instrument', instrument, instrument) }}
+        {{ leaderboard('aw-inst-' ~ loop.index, 'instrument', instrument, 'fa-solid fa-satellite-dish', instrument) }}
     {% else %}
         <p>{{ awards_labels.empty }}</p>
     {% endfor %}
+    </div>
 </section>
 <section class="aw-section" aria-labelledby="aw-downloads">
-    <h2 id="aw-downloads">{{ awards_labels.downloads }}</h2>
-    {{ leaderboard('aw-bytes', 'bytes', awards_labels.bytes) }}
-    {{ leaderboard('aw-files', 'files', awards_labels.files) }}
+    <h2 id="aw-downloads"><i class="fa-solid fa-download" aria-hidden="true"></i> {{ awards_labels.downloads }}</h2>
+    <div class="aw-grid">
+        {{ leaderboard('aw-bytes', 'bytes', awards_labels.bytes, 'fa-solid fa-database') }}
+        {{ leaderboard('aw-files', 'files', awards_labels.files, 'fa-solid fa-file-arrow-down') }}
+    </div>
 </section>
 <section class="aw-section" aria-labelledby="aw-service">
-    <h2 id="aw-service">{{ awards_labels.service }}</h2>
-    {{ leaderboard('aw-service-table', 'service', awards_labels.service) }}
+    <h2 id="aw-service"><i class="fa-solid fa-handshake-angle" aria-hidden="true"></i> {{ awards_labels.service }}</h2>
+    <div class="aw-grid">
+        {{ leaderboard('aw-service-table', 'service', awards_labels.service, 'fa-solid fa-award') }}
+    </div>
 </section>
 <script id="aw-data" type="application/json">{{ awards_rows | tojson }}</script>
 <script id="aw-labels" type="application/json">{{ awards_labels | tojson }}</script>
@@ -97,5 +65,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/awards.js') }}?v=20261111b"></script>
+<script src="{{ url_for('static', filename='js/awards.js') }}?v=20261111c"></script>
 {% endblock %}

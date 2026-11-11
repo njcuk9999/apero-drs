@@ -1,68 +1,170 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI - {{ page_label | tl }}{% endblock %}
 
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/geoip_database.css') }}?v=20261111b">
+{% endblock %}
+
 {% block doc_content %}
-<section class="ari-page-header">
-    <h1><i class="{{ page_icon }}" aria-hidden="true"></i>
-        {{ page_label | tl }}</h1>
-    <p>{{ _('Install or update the GeoLite2 City database from this running ARI site. This does not rerun setup.') }}</p>
-</section>
+<main class="gd-page">
+    <header class="gd-heading">
+        <div>
+            <h1>
+                <i class="{{ page_icon }}" aria-hidden="true"></i>
+                {{ page_label | tl }}
+            </h1>
+            <p>{{ _('Install or update the GeoLite2 City database from this running ARI site. This does not rerun setup.') }}</p>
+        </div>
+        <span id="gd-state"
+              class="gd-state {{ 'gd-state--ready' if geoip_status.installed else 'gd-state--empty' }}">
+            <i class="fa-solid {{ 'fa-circle-check' if geoip_status.installed else 'fa-circle-minus' }}"
+               aria-hidden="true"></i>
+            {{ _('Installed') if geoip_status.installed else _('Not installed') }}
+        </span>
+    </header>
 
-<section class="ari-sg-section">
-    <h2>{{ _('MaxMind account and license key') }}</h2>
-    <ol>
-        <li>
-            <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
-               target="_blank" rel="noopener noreferrer">
-                {{ _('Create a free MaxMind GeoLite account') }}
-            </a>
-        </li>
-        <li>{{ _('Sign in and accept the GeoLite End User License Agreement.') }}</li>
-        <li>
-            <a href="https://www.maxmind.com/en/accounts/current/license-key"
-               target="_blank" rel="noopener noreferrer">
-                {{ _('Open Manage License Keys') }}
-            </a>
-        </li>
-        <li>{{ _('Create a license key and enter it below with your account ID.') }}</li>
-    </ol>
-    <p>{{ _('The account ID and license key are used only for the download. ARI does not save them.') }}</p>
-    <p>{{ _('MaxMind requires GeoLite databases to be kept current. Return to this page to update the database.') }}</p>
-    <p>
-        <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
-           target="_blank" rel="noopener noreferrer">{{ _('Review GeoLite terms') }}</a>
-    </p>
-    {% if geoip_installed %}
-    <p role="status">{{ _('A GeoLite2 City database is installed.') }}</p>
-    {% else %}
-    <p role="status">{{ _('No GeoLite2 City database is installed.') }}</p>
-    {% endif %}
-</section>
+    <section class="gd-section" aria-labelledby="gd-database-heading">
+        <h2 id="gd-database-heading">{{ _('Database status') }}</h2>
+        <p id="gd-health-result"
+           class="gd-health{% if geoip_health.status == 'warning' %} gd-health--warning{% endif %}"
+           role="status">{{ geoip_health.message | tl }}</p>
+        <dl class="gd-facts">
+            <div class="gd-fact gd-fact--path">
+                <dt>{{ _('Database location') }}</dt>
+                <dd><code id="gd-path">{{ geoip_status.database_path }}</code></dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Last successful update') }}</dt>
+                <dd id="gd-last-success">
+                    {{ geoip_status.last_success_at or _('Never') }}
+                </dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Last download attempt') }}</dt>
+                <dd id="gd-last-attempt">
+                    {{ geoip_status.last_attempt_at or _('Never') }}
+                </dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Requests today') }}</dt>
+                <dd id="gd-requests-today">
+                    {{ geoip_status.requests_today }} / 3
+                </dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Total download requests') }}</dt>
+                <dd id="gd-requests-total">{{ geoip_status.total_requests }}</dd>
+            </div>
+        </dl>
+    </section>
 
-<form id="geoip-install-form" class="ari-sg-section"
-      data-api-url="{{ geoip_install_url }}"
-      data-csrf-token="{{ geoip_csrf_token }}"
-      style="display:grid; gap:0.75rem; max-width:36rem;">
-    <label>
-        {{ _('MaxMind account ID') }}
-        <input name="account_id" autocomplete="off" required>
-    </label>
-    <label>
-        {{ _('MaxMind license key') }}
-        <input name="license_key" type="password"
-               autocomplete="new-password" required>
-    </label>
-    <label>
-        <input name="accept_terms" type="checkbox" required>
-        {{ _('I have permission to download GeoLite and agree to its terms.') }}
-    </label>
-    <button class="ari-btn ari-btn--primary" type="submit">
-        <i class="fa-solid fa-download" aria-hidden="true"></i>
-        {{ _('Update') if geoip_installed else _('Download') }}
-        {{ _('GeoLite database') }}
-    </button>
-    <p id="geoip-status" role="status" aria-live="polite" hidden></p>
-</form>
+    <section class="gd-section" aria-labelledby="gd-preview-heading">
+        <h2 id="gd-preview-heading">{{ _('Database preview') }}</h2>
+        {% if geoip_status.preview %}
+        <dl class="gd-facts gd-facts--preview">
+            <div class="gd-fact">
+                <dt>{{ _('Edition') }}</dt>
+                <dd>{{ geoip_status.preview.database_type }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Build date') }}</dt>
+                <dd>{{ geoip_status.preview.build_date }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('IP version') }}</dt>
+                <dd>{{ geoip_status.preview.ip_version }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Database nodes') }}</dt>
+                <dd>{{ '{:,}'.format(geoip_status.preview.node_count) }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Record size') }}</dt>
+                <dd>{{ geoip_status.preview.record_size }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Languages') }}</dt>
+                <dd>{{ geoip_status.preview.languages | join(', ') }}</dd>
+            </div>
+        </dl>
+        {% else %}
+        <p class="gd-muted">
+            {{ _('Install the database to preview its build metadata.') }}
+        </p>
+        {% endif %}
+    </section>
+
+    <section class="gd-section" aria-labelledby="gd-health-heading">
+        <h2 id="gd-health-heading">{{ _('Update health check') }}</h2>
+        <p>
+            {{ _('ARI suggests updating if the installed database is more than 30 days old. This check is local only and never contacts MaxMind.') }}
+        </p>
+        <label class="gd-toggle">
+            <input id="gd-health-enabled" type="checkbox"
+                   {% if geoip_status.health_check_enabled %}checked{% endif %}>
+            <span>{{ _('Enable the GeoLite freshness check in Admin Health') }}</span>
+        </label>
+        <p id="gd-health-status" class="gd-muted" role="status"
+           aria-live="polite"></p>
+    </section>
+
+    <section class="gd-section" aria-labelledby="gd-download-heading">
+        <h2 id="gd-download-heading">{{ _('Install or update') }}</h2>
+        <ol class="gd-instructions">
+            <li>
+                <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+                   target="_blank" rel="noopener noreferrer">
+                    {{ _('Create a free MaxMind GeoLite account') }}
+                </a>
+            </li>
+            <li>
+                {{ _('Sign in and accept the GeoLite End User License Agreement.') }}
+            </li>
+            <li>
+                <a href="https://www.maxmind.com/en/accounts/current/license-key"
+                   target="_blank" rel="noopener noreferrer">
+                    {{ _('Open Manage License Keys') }}
+                </a>
+            </li>
+            <li>
+                {{ _('Create a license key and enter it below with your account ID.') }}
+            </li>
+        </ol>
+        <p class="gd-muted">
+            {{ _('The account ID and license key are used only for the download. ARI does not save them.') }}
+        </p>
+        <form id="geoip-install-form" class="gd-form"
+              data-api-url="{{ geoip_install_url }}"
+              data-csrf-token="{{ geoip_csrf_token }}">
+            <label>
+                {{ _('MaxMind account ID') }}
+                <input name="account_id" autocomplete="off" required>
+            </label>
+            <label>
+                {{ _('MaxMind license key') }}
+                <input name="license_key" type="password"
+                       autocomplete="new-password" required>
+            </label>
+            <label class="gd-terms">
+                <input name="accept_terms" type="checkbox" required>
+                {{ _('I have permission to download GeoLite and agree to its terms.') }}
+            </label>
+            <button id="gd-download-button"
+                    class="ari-btn ari-btn--primary" type="submit">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                {{ _('Update') if geoip_status.installed else _('Download') }}
+                {{ _('GeoLite database') }}
+            </button>
+            <p id="gd-download-status" role="status" aria-live="polite"
+               hidden></p>
+        </form>
+        <p class="gd-note">
+            {{ _('MaxMind currently limits GeoLite database downloads to 30 per account per day. ARI allows at most 3 attempts per day and enforces a one-hour cooldown.') }}
+        </p>
+    </section>
+</main>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -71,8 +173,11 @@
 (function () {
     'use strict';
     var form = document.getElementById('geoip-install-form');
-    var status = document.getElementById('geoip-status');
-    var button = form.querySelector('button[type="submit"]');
+    var status = document.getElementById('gd-download-status');
+    var button = document.getElementById('gd-download-button');
+    var healthToggle = document.getElementById('gd-health-enabled');
+    var healthStatus = document.getElementById('gd-health-status');
+
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         var data = new FormData(form);
@@ -101,11 +206,42 @@
             });
         }).then(function (payload) {
             status.textContent = payload.message;
-            form.reset();
-            window.location.reload();
+            window.setTimeout(function () { window.location.reload(); }, 1800);
         }).catch(function (error) {
             status.textContent = error.message;
             button.disabled = false;
+        });
+    });
+
+    healthToggle.addEventListener('change', function () {
+        healthToggle.disabled = true;
+        fetch(form.dataset.apiUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': form.dataset.csrfToken
+            },
+            body: JSON.stringify({
+                action: 'set_health_check',
+                enabled: healthToggle.checked
+            })
+        }).then(function (response) {
+            return response.json().then(function (payload) {
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.error ||
+                        {{ _('Unable to save health setting.') | tojson }});
+                }
+                return payload;
+            });
+        }).then(function () {
+            healthStatus.textContent = {{ _('Health-check setting saved.') | tojson }};
+            window.setTimeout(function () { window.location.reload(); }, 500);
+        }).catch(function (error) {
+            healthToggle.checked = !healthToggle.checked;
+            healthStatus.textContent = error.message;
+        }).finally(function () {
+            healthToggle.disabled = false;
         });
     });
 }());

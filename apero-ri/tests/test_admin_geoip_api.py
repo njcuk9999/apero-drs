@@ -51,6 +51,11 @@ def geoip_client(monkeypatch: pytest.MonkeyPatch,
             """Return the fixture's private data directory."""
             return tmp_path
 
+        def _refresh_admin_health_after_change(self, user: Any,
+                                               perms: Any) -> None:
+            """No-op health-cache refresh for this isolated request test."""
+            return None
+
     owner = Owner()
     state['data_dir'] = tmp_path
     state['csrf'] = 'csrf-test-token'
@@ -122,6 +127,25 @@ def test_admin_geoip_install_validates_terms_and_passes_credentials_once(
     assert state['installed'] == [
         (state['data_dir'], 'acct', 'secret')]
     assert b'secret' not in response.data
+
+
+def test_admin_geoip_health_toggle_persists_without_download(
+    geoip_client: tuple[Any, dict[str, Any]],
+) -> None:
+    """Toggle freshness monitoring without consuming a download request.
+
+    :param geoip_client: Isolated API client and mutable auth state.
+    :return: None.
+    """
+    client, state = geoip_client
+    headers = {'X-CSRF-Token': state['csrf']}
+    response = client.post(
+        '/api/admin/geoip/install',
+        json=dict(action='set_health_check', enabled=False),
+        headers=headers)
+    assert response.status_code == 200
+    assert response.json['status']['health_check_enabled'] is False
+    assert state['installed'] == []
 
 
 def _seed_geoip_session(state: dict[str, Any]) -> str:
