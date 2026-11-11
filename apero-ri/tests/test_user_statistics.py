@@ -320,6 +320,54 @@ def test_local_geoip_keeps_only_location(
     assert stats.location_for_address('') == ('', '')
 
 
+def test_setup_database_is_discovered_without_environment_variable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Use the setup-installed cache path when no override is configured.
+
+    :param tmp_path: Isolated ARI data directory.
+    :param monkeypatch: Replace the local MMDB reader.
+    :return: None.
+    """
+    from types import SimpleNamespace
+
+    database = tmp_path / 'cache' / 'geoip' / 'GeoLite2-City.mmdb'
+    database.parent.mkdir(parents=True)
+    database.touch()
+    calls = []
+
+    class Reader:
+        """Minimal GeoIP reader stand-in."""
+
+        def city(self, address: str) -> object:
+            """Return one country and region without retaining address."""
+            calls.append(address)
+            return SimpleNamespace(
+                country=SimpleNamespace(iso_code='CA'),
+                subdivisions=SimpleNamespace(
+                    most_specific=SimpleNamespace(name='Quebec')))
+
+    monkeypatch.delenv('ARI_GEOIP_DB', raising=False)
+    monkeypatch.setenv('ARI_DIR', str(tmp_path))
+    monkeypatch.setattr(stats, '_geoip_reader', lambda path: Reader())
+    assert stats.location_for_address('192.0.2.2') == ('CA', 'Quebec')
+    assert calls == ['192.0.2.2']
+
+
+def test_invalid_geoip_database_is_rejected(tmp_path: Path) -> None:
+    """Reject non-MMDB content with the installed MaxMind reader.
+
+    :param tmp_path: Temporary invalid database file.
+    :return: None.
+    """
+    from apero_ri.setup.geoip import _validate_database
+
+    invalid_database = tmp_path / 'not-an-mmdb'
+    invalid_database.write_bytes(b'not a MaxMind database')
+    with pytest.raises(RuntimeError, match='not a valid MMDB database'):
+        _validate_database(invalid_database)
+
+
 def test_concurrent_initialization_and_qualification(tmp_path: Path) -> None:
     """Independent worker connections qualify exactly once per user-day.
 

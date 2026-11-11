@@ -152,18 +152,20 @@ for that topology:
 | `ARI_PROXY_COUNT` | Number of trusted reverse proxies in front of the app (e.g. `1` for a single nginx). Enables `X-Forwarded-*` handling so client IPs, rate limits, and HTTPS detection are correct. | `0` (off) |
 | `ARI_HTTPS` | Set to `1` when the site is served over HTTPS. Marks session cookies `Secure` and enables HSTS. | off |
 | `ARI_MAX_CONTENT_MB` | Maximum request body size in MB. | `128` |
-| `ARI_GEOIP_DB` | Optional local MaxMind GeoIP2 City `.mmdb` file. Only country and region are retained; client addresses are used for lookup in memory. | unset |
+| `ARI_GEOIP_DB` | Optional override for the GeoLite2 City `.mmdb` path installed by setup. Only country and region are retained; client addresses are used for lookup in memory. | ARI cache database |
 
-For optional country and region summaries, install the `geoip` extra and
-provide a locally obtained MaxMind GeoIP2 City database:
+GeoIP2 is installed with ARI. To enable country and region summaries, open
+the setup completion page and submit a MaxMind account ID and license key.
+The setup app downloads and validates the latest GeoLite2 City database.
+Credentials are used only for the download and are not saved. The database is
+stored in `<ARI data directory>/cache/geoip/GeoLite2-City.mmdb`.
 
-```bash
-pip install -e './apero-ri[geoip]'
-ARI_GEOIP_DB=/path/to/GeoIP2-City.mmdb apero_ri_run --port=1234
-```
+MaxMind requires GeoLite databases to be kept current. To update later, run
+`apero_ri_setup --force` and use the update form on the completion page. Restart
+ARI after installing or updating the database. The database is not bundled
+because its license and update terms are separate. Without a local database,
+activity is still counted and locations are reported as unknown.
 
-The database is not bundled because its license and update terms are separate.
-Without it, activity is still counted and locations are reported as unknown.
 
 Example nginx site config:
 

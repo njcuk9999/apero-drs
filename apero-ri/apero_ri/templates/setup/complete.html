@@ -18,6 +18,45 @@
         <label>Next step</label>
         <input type="text" value="Run apero_ri_run" readonly>
     </div>
+    <h3>{{ _('Optional: Country and region statistics') }}</h3>
+    <p>
+        {{ _('Install or refresh the GeoLite2 City database using a MaxMind account ID and license key. The credentials are used for this download only and are not saved. ARI stores the database locally under its cache.') }}
+    </p>
+    {% if geoip_installed %}
+    <p role="status">{{ _('A GeoLite2 City database is installed.') }}</p>
+    {% endif %}
+    <p>
+           {{ _("GeoLite users must keep the database current under MaxMind's terms.") }}
+           {{ _('To refresh it later, run apero_ri_setup --force and return to this page.') }}
+    </p>
+    <p>
+        {{ _('Review the') }}
+        <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+           target="_blank" rel="noopener noreferrer">{{ _('GeoLite terms') }}</a>
+        {{ _('before downloading.') }}
+    </p>
+    <form method="POST" action="{{ url_for('setup_geoip_install') }}">
+        <input type="hidden" name="csrf_token" value="{{ geoip_token }}">
+        <div class="ari-form-group">
+            <label for="geoip-account-id">{{ _('MaxMind account ID') }}</label>
+            <input id="geoip-account-id" name="account_id" required
+                   autocomplete="off">
+        </div>
+        <div class="ari-form-group">
+            <label for="geoip-license-key">{{ _('MaxMind license key') }}</label>
+            <input id="geoip-license-key" name="license_key" type="password"
+                   required autocomplete="new-password">
+        </div>
+        <label>
+            <input type="checkbox" name="accept_terms" value="yes" required>
+              {{ _('I have permission to download GeoLite and agree to its terms.') }}
+        </label>
+        <button type="submit" class="ari-btn ari-btn--primary">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            {{ _('Update') if geoip_installed else _('Download') }}
+            {{ _('GeoLite database') }}
+        </button>
+    </form>
     {% else %}
     <p>Setup is not complete yet. Finish the earlier steps first.</p>
     {% endif %}

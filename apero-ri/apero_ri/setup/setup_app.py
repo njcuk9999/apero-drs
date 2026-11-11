@@ -5,13 +5,17 @@
 import os
 import re
 import secrets
+import hmac
+import ipaddress
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
 from apero_ri.core import auth
+from apero_ri.core import ari_lang_support
 from apero_ri.core import email_backend as eb
 from apero_ri.core.permissions import load_parameters
+from apero_ri.setup import geoip as setup_geoip
 from apero_ri.setup.bootstrap import (
     ensure_directory_layout,
     is_setup_complete,
@@ -110,13 +114,14 @@ class SetupApp(Flask):
                 "setup_email",
                 "setup_admin",
                 "setup_complete",
+                "setup_geoip_install",
             }
             active_step = (
                 request.endpoint
                 if request.endpoint in active_routes
                 else "setup_welcome"
             )
-            return {
+            context = {
                 "local_data_dir": str(self.local_data_dir),
                 "provider_defaults": eb.PROVIDER_DEFAULTS,
                 "setup_email_configured": self._email_configured(email_cfg),
@@ -126,6 +131,8 @@ class SetupApp(Flask):
                 "completed_step": self._completed_step(),
                 "test_mode": self.test_mode,
             }
+            context.update(ari_lang_support.context())
+            return context
 
     def _register_routes(self) -> None:
         """Bind setup wizard views and the directory-browsing endpoint."""
@@ -143,6 +150,12 @@ class SetupApp(Flask):
             "/admin", "setup_admin", self._admin_step, methods=["GET", "POST"]
         )
         self.add_url_rule("/complete", "setup_complete", self._complete_step)
+        self.add_url_rule(
+            "/geoip/install",
+            "setup_geoip_install",
+            self._geoip_install,
+            methods=["POST"],
+        )
         self.add_url_rule(
             "/api/browse-dirs", "setup_browse_dirs", self._browse_dirs
         )
@@ -636,12 +649,72 @@ class SetupApp(Flask):
         """Render the final setup state and current email configuration."""
         state = load_setup_state(self.local_data_dir)
         email_cfg = eb.load_email_config()
+        geoip_token = session.setdefault(
+            "setup_geoip_token", secrets.token_urlsafe(32))
+        geoip_path = setup_geoip.database_path(self.local_data_dir)
         return render_template(
             "setup/complete.html",
             page_title="Setup Complete",
             setup_state=state,
             email_cfg=email_cfg,
+            geoip_token=geoip_token,
+            geoip_installed=geoip_path.is_file(),
         )
+
+    def _geoip_install(self) -> Any:
+        """Install or update GeoLite using credentials submitted once.
+
+        :return: Redirect to setup completion after the attempt.
+        """
+        expected = str(session.get("setup_geoip_token", ""))
+        supplied = str(request.form.get("csrf_token", ""))
+        if not expected or not hmac.compare_digest(expected, supplied):
+            flash(ari_lang_support.translate(
+                'The setup form expired. Reload the page and try again.'),
+                "error")
+            return redirect(url_for("setup_complete"))
+        if not load_setup_state(self.local_data_dir).get('completed'):
+            flash(ari_lang_support.translate(
+                'Complete APERO RI setup before installing GeoLite.'),
+                "error")
+            return redirect(url_for("setup_complete"))
+        try:
+            local_client = ipaddress.ip_address(
+                request.remote_addr or '').is_loopback
+        except ValueError:
+            local_client = False
+        if not request.is_secure and not local_client:
+            flash(ari_lang_support.translate(
+                'Submit GeoLite credentials from localhost or use HTTPS.'),
+                "error")
+            return redirect(url_for("setup_complete"))
+        if self.test_mode:
+            flash(ari_lang_support.translate(
+                'TEST MODE: GeoLite was not downloaded.'), "warning")
+            return redirect(url_for("setup_complete"))
+        account_id = str(request.form.get("account_id", "")).strip()
+        license_key = str(request.form.get("license_key", "")).strip()
+        if not account_id or not license_key:
+            flash(ari_lang_support.translate(
+                'MaxMind account ID and license key are required.'), "error")
+            return redirect(url_for("setup_complete"))
+        if request.form.get('accept_terms') != 'yes':
+            flash(ari_lang_support.translate(
+                'Accept the GeoLite terms before downloading the database.'),
+                "error")
+            return redirect(url_for("setup_complete"))
+        try:
+            setup_geoip.install_database(
+                self.local_data_dir, account_id, license_key)
+        except Exception:
+            flash(ari_lang_support.translate(
+                'GeoLite download failed. Check the account ID, license key, '
+                'network access, and database permission.'), "error")
+        else:
+            flash(ari_lang_support.translate(
+                'GeoLite2 City database installed. Restart ARI to use it.'),
+                "success")
+        return redirect(url_for("setup_complete"))
 
 
 # =============================================================================

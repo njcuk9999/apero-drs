@@ -4,6 +4,72 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+"Optional: Country and region statistics":
+  FR: Statistiques facultatives par pays et région
+  ES: Estadísticas opcionales por país y región
+"Install or refresh the GeoLite2 City database using a MaxMind account ID and license key. The credentials are used for this download only and are not saved. ARI stores the database locally under its cache.":
+  FR: Installez ou actualisez la base GeoLite2 City avec un identifiant de compte MaxMind et une clé de licence. Ces identifiants ne servent qu'à ce téléchargement et ne sont pas enregistrés. ARI stocke la base localement dans son cache.
+  ES: Instale o actualice la base GeoLite2 City con un ID de cuenta MaxMind y una clave de licencia. Las credenciales solo se usan para esta descarga y no se guardan. ARI almacena la base localmente en su caché.
+"A GeoLite2 City database is installed.":
+  FR: Une base de données GeoLite2 City est installée.
+  ES: Hay una base de datos GeoLite2 City instalada.
+"GeoLite users must keep the database current under MaxMind's terms.":
+  FR: Les utilisateurs de GeoLite doivent maintenir la base à jour conformément aux conditions de MaxMind.
+  ES: Los usuarios de GeoLite deben mantener la base actualizada según los términos de MaxMind.
+"To refresh it later, run apero_ri_setup --force and return to this page.":
+  FR: Pour l'actualiser plus tard, exécutez apero_ri_setup --force et revenez à cette page.
+  ES: Para actualizarla más adelante, ejecute apero_ri_setup --force y vuelva a esta página.
+"Review the":
+  FR: Consultez les
+  ES: Consulte los
+"GeoLite terms":
+  FR: conditions de GeoLite
+  ES: términos de GeoLite
+"before downloading.":
+  FR: avant le téléchargement.
+  ES: antes de descargar.
+"MaxMind account ID":
+  FR: Identifiant de compte MaxMind
+  ES: ID de cuenta de MaxMind
+"MaxMind license key":
+  FR: Clé de licence MaxMind
+  ES: Clave de licencia de MaxMind
+"I have permission to download GeoLite and agree to its terms.":
+  FR: Je suis autorisé à télécharger GeoLite et j'accepte ses conditions.
+  ES: Tengo permiso para descargar GeoLite y acepto sus términos.
+"Download":
+  FR: Télécharger
+  ES: Descargar
+"Update":
+  FR: Actualiser
+  ES: Actualizar
+"GeoLite database":
+  FR: la base de données GeoLite
+  ES: la base de datos GeoLite
+"The setup form expired. Reload the page and try again.":
+  FR: Le formulaire de configuration a expiré. Rechargez la page et réessayez.
+  ES: El formulario de configuración caducó. Recargue la página e inténtelo de nuevo.
+"Complete APERO RI setup before installing GeoLite.":
+  FR: Terminez la configuration d'APERO RI avant d'installer GeoLite.
+  ES: Complete la configuración de APERO RI antes de instalar GeoLite.
+"Submit GeoLite credentials from localhost or use HTTPS.":
+  FR: Saisissez les identifiants GeoLite depuis localhost ou utilisez HTTPS.
+  ES: Envíe las credenciales de GeoLite desde localhost o use HTTPS.
+"TEST MODE: GeoLite was not downloaded.":
+  FR: "MODE TEST : GeoLite n'a pas été téléchargé."
+  ES: "MODO DE PRUEBA: no se descargó GeoLite."
+"Accept the GeoLite terms before downloading the database.":
+  FR: Acceptez les conditions de GeoLite avant de télécharger la base.
+  ES: Acepte los términos de GeoLite antes de descargar la base.
+"GeoLite download failed. Check the account ID, license key, network access, and database permission.":
+  FR: Échec du téléchargement GeoLite. Vérifiez l'identifiant du compte, la clé de licence, l'accès réseau et les autorisations de la base.
+  ES: No se pudo descargar GeoLite. Compruebe el ID de cuenta, la clave de licencia, el acceso a la red y los permisos de la base.
+"GeoLite2 City database installed. Restart ARI to use it.":
+  FR: La base GeoLite2 City est installée. Redémarrez ARI pour l'utiliser.
+  ES: Se instaló la base GeoLite2 City. Reinicie ARI para usarla.
+"MaxMind account ID and license key are required.":
+  FR: L'identifiant de compte MaxMind et la clé de licence sont obligatoires.
+  ES: Se requieren el ID de cuenta de MaxMind y la clave de licencia.
 User Statistics:
   FR: Statistiques des utilisateurs
   ES: Estadísticas de usuarios

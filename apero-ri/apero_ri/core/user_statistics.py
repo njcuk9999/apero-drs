@@ -118,7 +118,7 @@ def _geoip_reader(database_path: str) -> object:
 
     :param database_path: Local MMDB path configured by the operator.
     :return: GeoIP2 reader retained only in process memory.
-    :raises ImportError: Optional geoip extra is not installed.
+    :raises ImportError: GeoIP2 is not installed in the ARI environment.
     """
     from geoip2.database import Reader
 
@@ -129,17 +129,20 @@ def location_for_address(address: str) -> tuple[str, str]:
     """Resolve an address locally and return only country and region.
 
     :param address: Transient client address; it is never persisted or logged.
-    :return: ISO2 country and subdivision name, or empty values when disabled,
-        unresolvable, or when the optional database is unavailable.
+    :return: ISO2 country and subdivision name, or empty values when the local
+        database is unavailable or the address cannot be resolved.
     """
-    database_path = os.environ.get('ARI_GEOIP_DB', '').strip()
-    if not database_path or not address:
-        return '', ''
-    if not Path(database_path).is_file():
+    configured_path = os.environ.get('ARI_GEOIP_DB', '').strip()
+    if configured_path:
+        database = Path(configured_path).expanduser()
+    else:
+        database = (secret_store.get_ari_dir() / 'cache' / 'geoip'
+                    / 'GeoLite2-City.mmdb')
+    if not database.is_file() or not address:
         return '', ''
     try:
         with _GEOIP_LOCK:
-            reader = _geoip_reader(database_path)
+            reader = _geoip_reader(str(database))
             location = reader.city(address)
     except Exception:
         return '', ''
