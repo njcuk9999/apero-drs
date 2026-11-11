@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""APERO RI monitor "awards"/service-medal helpers.
+"""APERO RI monitoring, download and service-medal helpers.
 
 Combines all-time monitor schedule statistics (hours/days served per
 instrument, from :mod:`apero_ri.core.schedule`) with resolved-issue
@@ -10,6 +10,8 @@ counts (from :mod:`apero_ri.core.issues`) to compute per-user medals:
 - All-instrument "service" hours -> bronze/silver/gold at
   50/100/200 hours.
 - Resolved-issue counts -> bronze/silver/gold at 250/500/1000.
+- Combined API/basket volume and files -> top three distinct positive
+    totals, with equal totals earning the same medal.
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ from typing import Dict, List, Optional
 
 from apero_ri.core import schedule as schedule_core
 from apero_ri.core import issues as issues_core
+from apero_ri.core import download_tracker
 
 
 __NAME__ = 'apero_ri.core.awards'
@@ -151,8 +154,10 @@ _INSTRUMENT_MEDALS = ('gold', 'silver', 'bronze')
 def compute_awards(
     data_dir: Path, instruments: List[str]
 ) -> Dict[str, Dict]:
-    """Compute the full awards payload for all monitors.
+    """Compute monitoring and download awards for recorded users.
 
+    :param data_dir: ARI directory containing schedule and issue records.
+    :param instruments: Instruments included in monitoring awards.
     :return: dict keyed by username, each value a dict with:
         - ``who``: display name
         - ``total_hours``: lifetime hours across all instruments
@@ -162,6 +167,11 @@ def compute_awards(
         - ``service_medal``: 'gold'/'silver'/'bronze'/None
         - ``issues_resolved``: int
         - ``issues_medal``: 'gold'/'silver'/'bronze'/None
+        - ``download_bytes``/``download_files``: combined tracker totals
+        - ``download_medals``: bytes/files -> medal or None
+
+    Download records use the tracker's application-configured ARI directory.
+    Resetting usage counters also resets the corresponding award totals.
     """
     user_hours = compute_user_hours(data_dir, instruments)
     issue_counts = compute_resolved_issue_counts(data_dir)
@@ -201,5 +211,29 @@ def compute_awards(
         })
         entry['issues_resolved'] = count
         entry['issues_medal'] = issues_medal(count)
+
+    for category in ('api', 'basket'):
+        for usage in download_tracker.list_all_usage(category):
+            username = usage['username']
+            entry = awards.setdefault(username, dict(
+                username=username, who=username, total_hours=0.0,
+                instruments=dict(), instrument_medals=dict(),
+                service_medal=None, issues_resolved=0, issues_medal=None))
+            entry['download_bytes'] = (
+                entry.get('download_bytes', 0) + usage['total_bytes'])
+            entry['download_files'] = (
+                entry.get('download_files', 0) + usage['total_files'])
+
+    for entry in awards.values():
+        entry.setdefault('download_bytes', 0)
+        entry.setdefault('download_files', 0)
+        entry['download_medals'] = dict()
+    for metric in ('bytes', 'files'):
+        field = 'download_' + metric
+        scores = sorted({entry[field] for entry in awards.values()
+                         if entry[field] > 0}, reverse=True)
+        medals = dict(zip(scores[:3], _INSTRUMENT_MEDALS))
+        for entry in awards.values():
+            entry['download_medals'][metric] = medals.get(entry[field])
 
     return awards

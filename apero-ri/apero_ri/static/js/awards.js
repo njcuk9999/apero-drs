@@ -1,45 +1,60 @@
 (function () {
     'use strict';
 
+    var labels = JSON.parse(document.getElementById('aw-labels').textContent);
+    document.querySelectorAll('.aw-board').forEach(function (board) {
+    var prefix = board.dataset.awPrefix;
+    var kind = board.dataset.awKind;
+    var instrument = board.dataset.awInstrument;
+
     function el(id) {
-        return document.getElementById(id);
+        return document.getElementById(id.replace(/^aw-/, prefix + '-'));
     }
 
     function esc(s) {
         return String(s == null ? '' : s)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function medalIcon(medalName, title) {
-        if (!medalName) {
+        if (['gold', 'silver', 'bronze'].indexOf(medalName) < 0) {
             return '';
         }
         return (
             '<i class="fa-solid fa-medal upu-medal upu-medal--' + medalName +
-            '" title="' + esc(title) + ' (' + medalName + ')"></i>'
+            '" role="img" aria-label="' + esc(labels[medalName]) +
+            '" title="' + esc(title + ' - ' + labels[medalName]) + '"></i>'
         );
     }
 
-    var dataEl = el('aw-data');
+    var dataEl = document.getElementById('aw-data');
     var allRows = [];
     try {
         allRows = JSON.parse(dataEl ? dataEl.textContent : '[]') || [];
     } catch (e) {
         allRows = [];
     }
-    var instruments = window.ARI_AWARDS_INSTRUMENTS || [];
+    var instruments = kind === 'instrument' ? [instrument] : [];
 
     // ── Columns ──────────────────────────────────────────────────
     var COLUMNS = [
-        {key: 'username', label: 'Username', filterable: true},
-        {key: 'who', label: 'Name', filterable: true}
+        {key: 'username', label: labels.username, filterable: true,
+            render: function (row) {
+                return '<a class="ari-user-link" data-username="' +
+                    esc(row.username) + '" href="/user_portal/users/' +
+                    encodeURIComponent(row.username) + '">' +
+                    esc(row.username) + '</a>';
+            }},
+        {key: 'who', label: labels.name, filterable: true}
     ];
     instruments.forEach(function (inst) {
         COLUMNS.push({
             key: 'inst:' + inst,
-            label: inst + ' hours',
+            label: labels.hours,
             filterable: false,
             numeric: true,
             getValue: function (row) {
@@ -49,37 +64,69 @@
                 var hours = (row.instruments || {})[inst];
                 var medal = (row.instrument_medals || {})[inst];
                 var txt = hours != null ? Number(hours).toFixed(2) : '—';
-                return txt + medalIcon(medal, inst + ' top monitor');
+                return txt + medalIcon(medal, inst);
             }
         });
     });
+    if (kind === 'service') {
     COLUMNS.push({
         key: 'total_hours',
-        label: 'Total hours',
+        label: labels.hours,
         filterable: false,
         numeric: true,
         render: function (row) {
             return (
                 Number(row.total_hours || 0).toFixed(2) +
-                medalIcon(row.service_medal, 'Service award')
+                medalIcon(row.service_medal, labels.service)
             );
         }
     });
     COLUMNS.push({
         key: 'issues_resolved',
-        label: 'Issues resolved',
+        label: labels.issues,
         filterable: false,
         numeric: true,
         render: function (row) {
             return (
                 String(row.issues_resolved || 0) +
-                medalIcon(row.issues_medal, 'Issue resolution award')
+                medalIcon(row.issues_medal, labels.issues)
             );
         }
     });
+    }
+    if (kind === 'bytes' || kind === 'files') {
+        COLUMNS.push({
+            key: 'download_' + kind,
+            label: labels[kind],
+            numeric: true,
+            render: function (row) {
+                var value = Number(row['download_' + kind] || 0);
+                var text = value.toLocaleString();
+                if (kind === 'bytes') {
+                    var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
+                    var unit = 0;
+                    while (value >= 1024 && unit < units.length - 1) {
+                        value /= 1024;
+                        unit += 1;
+                    }
+                    text = value.toLocaleString(undefined,
+                        {maximumFractionDigits: 2}) + ' ' + units[unit];
+                }
+                return text + medalIcon((row.download_medals || {})[kind], labels[kind]);
+            }
+        });
+    }
+
+    var metricKey = kind === 'instrument' ? 'inst:' + instrument :
+        (kind === 'service' ? 'total_hours' : 'download_' + kind);
+    allRows = allRows.filter(function (row) {
+        if (kind === 'instrument') return Number((row.instruments || {})[instrument] || 0) > 0;
+        if (kind === 'service') return Number(row.total_hours || 0) > 0 || Number(row.issues_resolved || 0) > 0;
+        return Number(row[metricKey] || 0) > 0;
+    });
 
     // ── State ────────────────────────────────────────────────────
-    var sortCol = 'total_hours';
+    var sortCol = metricKey;
     var sortDir = -1;
     var colFilters = {};
     var filteredRows = allRows.slice();
@@ -117,8 +164,9 @@
                 th.classList.add(sortDir > 0 ? 'ot-th--asc' : 'ot-th--desc');
             }
 
-            var lbl = document.createElement('span');
-            lbl.className = 'ot-th__label';
+            var lbl = document.createElement('button');
+            lbl.type = 'button';
+            lbl.className = 'ot-th__label aw-sort';
             lbl.textContent = col.label;
             th.appendChild(lbl);
 
@@ -132,6 +180,9 @@
                 icn.innerHTML = '<i class="fa-solid fa-sort ot-sort-idle"></i>';
             }
             th.appendChild(icn);
+            if (sortCol === col.key) {
+                th.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending');
+            }
 
             th.addEventListener('click', function () {
                 if (sortCol === col.key) {
@@ -150,12 +201,13 @@
                 var inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = 'ot-filter-input';
-                inp.placeholder = 'Filter…';
+                inp.placeholder = labels.filter;
+                inp.setAttribute('aria-label', labels.filter + ': ' + col.label);
                 inp.value = colFilters[col.key] || '';
                 inp.addEventListener('input', function () {
                     colFilters[col.key] = inp.value.trim().toLowerCase();
                     currentPage = 1;
-                    applyFilterSort();
+                    applyFilterSort(true);
                 });
                 tf.appendChild(inp);
             }
@@ -163,7 +215,7 @@
         });
     }
 
-    function applyFilterSort() {
+    function applyFilterSort(keepHeaders) {
         var rows = allRows.slice();
 
         Object.keys(colFilters).forEach(function (key) {
@@ -190,7 +242,7 @@
                 if (col.numeric) {
                     av = Number(av || 0);
                     bv = Number(bv || 0);
-                    return (av - bv) * sortDir;
+                    return (av - bv) * sortDir || String(a.username).localeCompare(String(b.username));
                 }
                 av = String(av == null ? '' : av).toLowerCase();
                 bv = String(bv == null ? '' : bv).toLowerCase();
@@ -199,7 +251,7 @@
         }
 
         filteredRows = rows;
-        renderHeaders();
+        if (!keepHeaders) renderHeaders();
         updatePagination();
         renderPage();
     }
@@ -226,8 +278,9 @@
         }
         pageRowOffset = perPage ? (currentPage - 1) * perPage : 0;
         var n = filteredRows.length;
-        pageInfo.textContent = n + ' monitor' + (n !== 1 ? 's' : '');
+        pageInfo.textContent = n.toLocaleString();
         pageInput.value = currentPage;
+        pageInput.max = tp;
         pageTotal.textContent = tp;
         btnFirst.disabled = currentPage <= 1;
         btnPrev.disabled = currentPage <= 1;
@@ -240,7 +293,7 @@
         if (!rows.length) {
             tbody.innerHTML = (
                 '<tr><td colspan="' + COLUMNS.length +
-                '" class="ot-empty">No monitors found.</td></tr>'
+                '" class="ot-loading">' + esc(labels.empty) + '</td></tr>'
             );
             return;
         }
@@ -299,4 +352,5 @@
 
     perpageSelect.value = String(perPage);
     applyFilterSort();
+    });
 })();

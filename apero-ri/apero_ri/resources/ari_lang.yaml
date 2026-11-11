@@ -594,3 +594,9 @@ You do not have permission to access this page.:
 username:
   ES: nombre_usuario
   FR: nom_utilisateur
+User not found.:
+  ES: Usuario no encontrado.
+  FR: Utilisateur introuvable.
+User information unavailable.:
+  ES: Información del usuario no disponible.
+  FR: Informations utilisateur indisponibles.

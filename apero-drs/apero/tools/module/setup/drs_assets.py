@@ -47,6 +47,7 @@ ARI_PUBLIC_PREFIX = '/apero-assets/'
 ARI_TOKEN_ENVVAR = 'APERO_ARI_TOKEN'
 # timeout (connect, read) in seconds for the APERO RI upload
 ARI_UPLOAD_TIMEOUT = (30, 3600)
+ASSETS_VERSION_FILE = 'version.txt'
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -102,6 +103,9 @@ def update_remote_assets(params: ParamDict, indir: str) -> None:
     for root, dirs, files in os.walk(indir):
         # loop around files
         for filename in files:
+            is_root = os.path.abspath(root) == os.path.abspath(indir)
+            if is_root and filename == ASSETS_VERSION_FILE:
+                continue
             # remove any assets tar files from the directory
             if filename.endswith('_assets.tar.gz'):
                 if os.path.exists(filename):
@@ -576,13 +580,25 @@ def update_local_assets(params: ParamDict,
     margs = [tarfile, extract_path]
     # log: Extracting tar file: {0} to {1}
     WLOG(params, '', textentry('40-510-00017', args=margs))
+    version_path = os.path.join(extract_path, ASSETS_VERSION_FILE)
+    if os.path.exists(version_path):
+        os.remove(version_path)
     # extract tar file
     try:
         drs_path.extract_tarfile(tarfile, extract_path)
     except Exception as e:
+        if os.path.exists(version_path):
+            os.remove(version_path)
         eargs = [tarfile, type(e), str(e)]
         # error: Cannot extract tar file: {0} \n Error {1}: {2}
         raise AperoCodedException(params, '09-510-00010', targs=eargs)
+    archive_name = os.path.basename(tarfile)
+    if archive_name.endswith('_assets.tar.gz'):
+        archive_name = archive_name[:-len('_assets.tar.gz')]
+    elif archive_name.endswith('.tar.gz'):
+        archive_name = archive_name[:-len('.tar.gz')]
+    with open(version_path, 'w', encoding='utf-8') as version_file:
+        version_file.write(archive_name + '\n')
 
 
 # =============================================================================

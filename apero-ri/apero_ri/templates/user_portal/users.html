@@ -78,5 +78,6 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/user_portal_users.js', v='20260501a') }}"></script>
+<script>window.USER_DOWNLOAD_AWARD_LABELS = {{ download_award_labels | tojson }};</script>
+<script src="{{ url_for('static', filename='js/user_portal_users.js', v='20261111a') }}"></script>
 {% endblock %}

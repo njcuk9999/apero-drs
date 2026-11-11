@@ -157,13 +157,35 @@
             </div>
         </section>
 
-        {% if monitor_stats %}
         {% macro medal(medal_name, label) %}
         {% if medal_name %}
         <i class="fa-solid fa-medal upu-medal upu-medal--{{ medal_name }}"
            title="{{ label }} ({{ medal_name }})"></i>
         {% endif %}
         {% endmacro %}
+        {% if download_stats %}
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                {{ download_award_labels.downloads | tl }}
+            </h3>
+            <div class="upu-kv">
+                {% for kind, field in [('bytes', 'download_bytes'), ('files', 'download_files')] %}
+                <div class="upu-kv__key">{{ download_award_labels[kind] | tl }}</div>
+                <div class="upu-kv__val">
+                    {{ download_stats[field] }}{% if kind == 'bytes' %} B{% endif %}
+                    {% set download_medal = download_stats.download_medals.get(kind) %}
+                    {% if download_medal %}
+                    <i class="fa-solid fa-medal upu-medal upu-medal--{{ download_medal }}"
+                       title="{{ download_award_labels[kind] }} ({{ download_award_labels[download_medal] }})"
+                       aria-label="{{ download_award_labels[kind] }} ({{ download_award_labels[download_medal] }})"></i>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+        {% if monitor_stats %}
         <section class="upu-user-detail__card">
             <h3 class="upu-user-detail__title">
                 <i class="fa-solid fa-chart-line"></i>

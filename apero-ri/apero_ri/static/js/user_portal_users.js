@@ -1,6 +1,7 @@
 // user_portal_users.js - directory + send-message
 (function () {
   'use strict';
+  var downloadLabels = window.USER_DOWNLOAD_AWARD_LABELS || {};
   var grid = document.getElementById('upm-users-grid');
   var search = document.getElementById('upm-search');
   var countEl = document.getElementById('upm-count');
@@ -56,8 +57,10 @@
 
   function medalIcon(medalName, title) {
     if (!medalName) return '';
+    var label = title + ' (' + (downloadLabels[medalName] || medalName) + ')';
     return '<i class="fa-solid fa-medal upu-medal upu-medal--' + medalName
-      + '" title="' + escapeHtml(title) + ' (' + medalName + ')"></i>';
+      + '" title="' + escapeHtml(label)
+      + '" aria-label="' + escapeHtml(label) + '"></i>';
   }
 
   function awardsHtml(u) {
@@ -76,6 +79,14 @@
         'Issue resolution award – ' + awards.issues_resolved
         + ' resolved'));
     }
+    var downloadMedals = awards.download_medals || {};
+    ['bytes', 'files'].forEach(function (kind) {
+      if (!downloadMedals[kind]) return;
+      var total = awards['download_' + kind] || 0;
+      var unit = kind === 'bytes' ? ' B' : '';
+      icons.push(medalIcon(downloadMedals[kind],
+        downloadLabels[kind] + ': ' + total + unit));
+    });
     if (!icons.length) return '';
     return '<div class="upu-user-card__awards">' + icons.join('') + '</div>';
   }

@@ -2,6 +2,7 @@
 <html data-theme="dark">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>APERO Queue</title>
 <script>
 // apply the saved theme before first paint (dark is the default)
@@ -34,6 +35,16 @@ body { font-family: sans-serif; margin: 0; background: #f1f4f8;
 #tabbar button.active { background: #3c88ea; color: #fff;
                         border-color: #3c88ea; }
 #global-actions { display: flex; align-items: center; gap: 8px; }
+#global-actions button { white-space: nowrap; }
+#btn-shutdown { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 900px) {
+    #topbar { flex-direction: column; align-items: stretch; }
+    #tabbar { display: flex; flex-wrap: wrap; gap: 6px; }
+    #tabbar button { margin-right: 0; }
+    #global-actions { flex-wrap: wrap; }
+    .meta { overflow-wrap: anywhere; }
+    #status-error { flex-basis: 100%; }
+}
 .tabpage { display: none; }
 .tabpage.active { display: block; background: #fff;
                   border: 1px solid #d5deeb; border-radius: 10px;
@@ -2041,6 +2052,14 @@ function refreshState() {
 function refreshAll() {
     refreshStatus(false, true);
     refreshState();
+    if (document.getElementById('tab-processes').classList.contains('active')) {
+        refreshProcesses();
+    }
+    if (document.getElementById('tab-stats').classList.contains('active')) {
+        refreshStats();
+    }
+    refreshRunfiles();
+    refreshTemplateNames();
 }
 
 // ---------------------------------------------------------------------
@@ -2154,9 +2173,7 @@ var PROC_ACTIVE = {running: true, pending: true, unknown: true};
 function refreshProcesses() {
     if (procLoading) { return; }
     procLoading = true;
-    fetch(apiUrl('/api/processes')).then(function (resp) {
-        return resp.json();
-    }).then(function (data) {
+    apiFetch('/api/processes').then(function (data) {
         procLoading = false;
         if (!data || !data.processes) { return; }
         procData = data.processes;
@@ -2364,9 +2381,7 @@ function setStatsTab(name) {
 function refreshStats() {
     if (statsLoading) { return; }
     statsLoading = true;
-    fetch(apiUrl('/api/stats')).then(function (resp) {
-        return resp.json();
-    }).then(function (data) {
+    apiFetch('/api/stats').then(function (data) {
         statsLoading = false;
         if (!data || data.error) { return; }
         statsData = data;
@@ -3740,7 +3755,7 @@ function lvPoll(tab) {
         url = '/api/log?qid=' + encodeURIComponent(tab.qid) +
               '&offset=' + tab.offset;
     }
-    fetch(apiUrl(url)).then(function (resp) { return resp.json(); })
+    apiFetch(url)
     .then(function (data) {
         tab.loading = false;
         if (!lvTabs[tab.qid]) { return; }

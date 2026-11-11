@@ -3,6 +3,30 @@
     margin: 0 0.1rem;
 }
 
-#aw-table .upu-medal {
+.aw-board .upu-medal {
     margin-left: 0.35rem;
+}
+
+.aw-section { margin: 1.5rem 0 2rem; min-width: 0; }
+.aw-section h2 { font-size: 1.25rem; padding-bottom: .6rem; }
+.aw-section h2,
+[data-theme="dark"] .aw-section h2 {
+    border-bottom: 1px solid var(--ari-border);
+    color: var(--ari-text);
+}
+.aw-board { margin: 1.25rem 0 1.75rem; min-width: 0; }
+.aw-board h3 { font-size: 1rem; overflow-wrap: anywhere; }
+.aw-board .ot-cell { overflow-wrap: anywhere; }
+.aw-sort,
+[data-theme="dark"] .aw-sort {
+    color: inherit; background: transparent; border: 0;
+}
+.aw-sort { cursor: pointer; font: inherit; text-align: left; padding: .25rem 0; }
+.aw-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 768px) {
+    .aw-board .ari-btn, .aw-sort, .aw-board select,
+    .aw-board input { min-height: 44px; }
+    .aw-board .ari-user-link { display: inline-flex; align-items: center; min-height: 44px; }
+    .aw-board .ot-table-wrap { max-width: 100%; overflow-x: auto; }
+    .aw-board .ot-page-controls { display: flex; flex-wrap: wrap; gap: .35rem; }
 }

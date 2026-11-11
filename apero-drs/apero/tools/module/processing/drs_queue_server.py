@@ -57,7 +57,8 @@ class QueueServer(ThreadingHTTPServer):
             self.backend_port = probe.getsockname()[1]
         environment = os.environ.copy()
         environment[WORKER_PORT_ENV] = str(self.backend_port)
-        self.worker = subprocess.Popen(self.command, env=environment)
+        worker_kwargs = dict(env=environment, start_new_session=True)
+        self.worker = subprocess.Popen(self.command, **worker_kwargs)
 
     def restart_worker(self) -> None:
         """Replace only the dashboard process, not its task process group.

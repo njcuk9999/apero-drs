@@ -115,6 +115,32 @@
 .dm-user-table th:nth-child(2),
 .dm-user-table th:nth-child(3) { text-align: right; }
 .dm-user-table tr:hover td { background: #f7f9fc; }
+.dm-user-link,
+[data-theme="dark"] .dm-user-link {
+    color: var(--ari-primary);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}
+.dm-user-link:focus-visible {
+    outline: 2px solid var(--ari-primary);
+    outline-offset: 3px;
+}
+.dm-user-info,
+[data-theme="dark"] .dm-user-info {
+    position: fixed;
+    z-index: 1100;
+    max-width: min(320px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 6px;
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+}
 .dm-empty {
     color: var(--op-muted, #5f6b78);
     font-size: 0.9rem;
@@ -255,7 +281,9 @@
                 data-total-bytes="{{ u.total_bytes }}"
                 data-total-files="{{ u.total_files }}"
                 data-last="{{ u.last_download_at }}">
-                <td>{{ u.username }}</td>
+                  <td><a class="dm-user-link"
+                      href="{{ url_for('user_portal_user_card_view', username=u.username) }}"
+                      data-dm-user="{{ u.username }}">{{ u.username }}</a></td>
                 <td>{{ u.total_size_fmt }}</td>
                 <td>{{ u.total_files }}</td>
                 <td>{{ u.last_download_fmt }}</td>
@@ -346,7 +374,9 @@
                 data-total-bytes="{{ u.total_bytes }}"
                 data-total-files="{{ u.total_files }}"
                 data-last="{{ u.last_download_at }}">
-                <td>{{ u.username }}</td>
+                  <td><a class="dm-user-link"
+                      href="{{ url_for('user_portal_user_card_view', username=u.username) }}"
+                      data-dm-user="{{ u.username }}">{{ u.username }}</a></td>
                 <td>{{ u.total_size_fmt }}</td>
                 <td>{{ u.total_files }}</td>
                 <td>{{ u.last_download_fmt }}</td>
@@ -372,8 +402,15 @@
 </div><!-- ari-up-shell -->
 
 <div class="dm-toast" id="dmToast"></div>
+<div class="dm-user-info" id="dm-user-info" role="tooltip" hidden></div>
 
 <script>
+window.DM_USER_INFO = {
+    directoryUrl: {{ url_for('api_users_directory') | tojson }},
+    loading: {{ _('Loading...') | tojson }},
+    unknown: {{ _('User not found.') | tojson }},
+    unavailable: {{ _('User information unavailable.') | tojson }}
+};
 var CAN_MANAGE = {{ can_manage | tojson }};
 var DM_URLS = {
     saveSettings: {{ url_for('api_admin_dm_save_settings') | tojson }},
@@ -473,4 +510,5 @@ document.querySelectorAll('.dm-user-table th[data-sort]').forEach(function(th) {
     });
 });
 </script>
+<script src="{{ url_for('static', filename='js/download_management_users.js', v='20261111b') }}"></script>
 {% endblock %}

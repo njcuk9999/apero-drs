@@ -929,16 +929,28 @@ def monitor_schedule_view(app: Any) -> _ViewResult:
                            **context)
 
 
-def monitor_awards_view(app: Any) -> _ViewResult:
-    """Render the monitor portal "Awards" leaderboard page."""
+def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
+    """Render the shared awards leaderboard with portal-specific access.
+
+    :param app: ARI application with data and sidebar configuration.
+    :param user_portal: Require user access instead of monitor access.
+    :return: Rendered awards page or an access-denied response.
+    """
+    from aperocore.drs_lang import textentry
+    from aperocore.drs_lang.tables import default_text
+    from apero_ri.core import ari_lang_support
+
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
             user_info['groups'], app.ari_groups)
     else:
         perms = get_public_permissions()
-    if not _has_any_monitor_perm(perms):
-        flash('Monitor access required.', 'warning')
+    if user_portal and not user_info:
+        return redirect(url_for('login'))
+    if user_portal and 'view.user' not in perms:
+        return '', 403
+    if not user_portal and not _has_any_monitor_perm(perms):
         return redirect(url_for('become_monitor_view'))
 
     data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
@@ -955,6 +967,9 @@ def monitor_awards_view(app: Any) -> _ViewResult:
             'service_medal': entry.get('service_medal'),
             'issues_resolved': entry.get('issues_resolved', 0),
             'issues_medal': entry.get('issues_medal'),
+            'download_bytes': entry.get('download_bytes', 0),
+            'download_files': entry.get('download_files', 0),
+            'download_medals': entry.get('download_medals', {}),
             'instrument_medals': entry.get('instrument_medals', {}),
             'instruments': {
                 inst: round(
@@ -966,17 +981,27 @@ def monitor_awards_view(app: Any) -> _ViewResult:
         rows.append(row)
     rows.sort(key=lambda r: r['total_hours'], reverse=True)
 
-    page_id = 'home.monitor_portal.awards'
+    labels = dict()
+    language = ari_lang_support.get_language()
+    for key, english, french, spanish in default_text.AWARDS_UI_TEXT:
+        translations = dict(en=english, fr=french, es=spanish)
+        label = textentry('AWARDS_' + key, message=translations[language])
+        labels[key.lower()] = str(label)
+
+    portal = 'user_portal' if user_portal else 'monitor_portal'
+    page_id = f'home.{portal}.awards'
     context = {
         'page_id': page_id,
-        'page_label': 'Awards',
+        'page_label': labels['title'],
         'page_icon': 'fa-solid fa-trophy',
-        'sidebar_root': 'home.monitor_portal',
-        'sidebar_label': 'Monitor Portal',
-        'sidebar_icon': 'fa-solid fa-chart-line',
-        'sidebar_url': '/monitor_portal',
+        'sidebar_root': f'home.{portal}',
+        'sidebar_label': 'User Portal' if user_portal else 'Monitor Portal',
+        'sidebar_icon': ('fa-solid fa-user' if user_portal
+                         else 'fa-solid fa-chart-line'),
+        'sidebar_url': f'/{portal}',
         'instruments': instruments,
-        'awards_rows_json': json.dumps(rows),
+        'awards_rows': rows,
+        'awards_labels': labels,
     }
     try:
         context.update(

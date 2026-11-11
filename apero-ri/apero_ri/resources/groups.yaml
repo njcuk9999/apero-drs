@@ -205,12 +205,14 @@ monitor.NIRPS:
 # User group - access to data portal and documentation
 # ==============================================================================
 general.SPIROU:
-  permissions: []
+  permissions:
+    - view.user
   groups:
     - public
 
 general.NIRPS:
-  permissions: []
+  permissions:
+    - view.user
   groups:
     - public
 
