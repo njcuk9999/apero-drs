@@ -45,7 +45,7 @@
             '" title="' + escapeHtml(description) + '"></i>';
     }
 
-    document.querySelectorAll('.aw-board').forEach(function (board) {
+    document.querySelectorAll('.aw-board, .acc-stat').forEach(function (board) {
         var kind = board.dataset.awKind;
         var instrument = board.dataset.awInstrument;
         var metricLabel = kind === 'instrument' || kind === 'service' ?
@@ -58,10 +58,30 @@
             return metric(right, kind, instrument) - metric(left, kind, instrument) ||
                 String(left.username).localeCompare(String(right.username));
         });
+        var self = allRows.find(function (row) { return row.is_self; });
+        if (board.classList.contains('acc-stat')) {
+            var selfRank = eligible.indexOf(self);
+            var value = self ? metric(self, kind, instrument) : 0;
+            var medal = self ? (kind === 'instrument' ?
+                (self.instrument_medals || {})[instrument] :
+                kind === 'service' ? self.service_medal :
+                kind === 'activity' ? self.activity_medal :
+                (self.download_medals || {})[kind]) : null;
+            board.querySelector('.acc-stat-value').innerHTML =
+                escapeHtml(formatMetric(value, kind)) + medalIcon(medal, metricLabel);
+            board.querySelector('.acc-stat-rank').textContent = selfRank < 0 ?
+                labels.unranked : labels.rank + ' #' + (selfRank + 1);
+            if (kind === 'service') {
+                board.querySelector('.acc-stat-secondary').innerHTML =
+                    escapeHtml(labels.issues) + ': ' +
+                    Number(self && self.issues_resolved || 0).toLocaleString() +
+                    medalIcon(self && self.issues_medal, labels.issues);
+            }
+            return;
+        }
         var selected = eligible.slice(0, 10).map(function (row, index) {
             return {row: row, rank: index + 1};
         });
-        var self = allRows.find(function (row) { return row.is_self; });
         if (self && !selected.some(function (item) { return item.row === self; })) {
             var selfRank = eligible.indexOf(self);
             selected.push({row: self, rank: selfRank < 0 ? null : selfRank + 1});

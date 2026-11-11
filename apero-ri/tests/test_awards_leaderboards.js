@@ -10,13 +10,15 @@ const script = fs.readFileSync(path.join(__dirname, '../apero_ri/static/js/award
 const labels = {
     hours: 'Hours', issues: 'Issues', active_days: 'Active days',
     bytes: 'Bytes', files: 'Files', empty: 'No results',
-    gold: 'Gold', silver: 'Silver', bronze: 'Bronze'
+    gold: 'Gold', silver: 'Silver', bronze: 'Bronze',
+    rank: 'Rank', unranked: 'Unranked'
 };
 
 function render(rows, kind, instrument = 'SPIROU') {
     const list = {innerHTML: ''};
     const board = {
         dataset: {awKind: kind, awInstrument: instrument},
+        classList: {contains: () => false},
         querySelector: () => list
     };
     const document = {
@@ -71,4 +73,55 @@ test('a viewer without activity appears unranked and content is escaped', () => 
 
 test('empty categories without a viewer show the empty state', () => {
     assert.match(render([], 'activity'), /No results/);
+});
+
+function renderStat(rows, kind, instrument = 'SPIROU') {
+    const fields = {
+        '.acc-stat-value': {innerHTML: ''},
+        '.acc-stat-rank': {textContent: ''},
+        '.acc-stat-secondary': {innerHTML: ''}
+    };
+    const board = {
+        dataset: {awKind: kind, awInstrument: instrument},
+        classList: {contains: () => true},
+        querySelector: (selector) => fields[selector]
+    };
+    const document = {
+        getElementById: (id) => ({
+            textContent: JSON.stringify(id === 'aw-labels' ? labels : rows)
+        }),
+        querySelectorAll: () => [board]
+    };
+    vm.runInNewContext(script, {document});
+    return fields;
+}
+
+for (const kind of ['activity', 'instrument', 'service', 'bytes', 'files']) {
+    test(kind + ' account position agrees with the leaderboard', () => {
+        const rows = users(13);
+        const summary = renderStat(rows, kind);
+        assert.equal(summary['.acc-stat-rank'].textContent, 'Rank #14');
+        assert.match(render(rows, kind), /<span class="aw-rank">14<\/span>/);
+    });
+    test(kind + ' account zero values are unranked', () => {
+        const summary = renderStat([{username: 'self', is_self: true}], kind);
+        assert.equal(summary['.acc-stat-rank'].textContent, 'Unranked');
+    });
+}
+
+test('service ranks issue-only users and displays their issue medal', () => {
+    const rows = [{username: 'self', is_self: true, issues_resolved: 250,
+        issues_medal: 'bronze'}];
+    const summary = renderStat(rows, 'service');
+    assert.equal(summary['.acc-stat-rank'].textContent, 'Rank #1');
+    assert.match(summary['.acc-stat-secondary'].innerHTML, /Issues: 250/);
+    assert.match(summary['.acc-stat-secondary'].innerHTML, /upu-medal--bronze/);
+});
+
+test('ties use the same username ordering in summary and leaderboard', () => {
+    const rows = users(1);
+    rows[1].active_days = rows[0].active_days;
+    assert.equal(renderStat(rows, 'activity')['.acc-stat-rank'].textContent,
+        'Rank #2');
+    assert.match(render(rows, 'activity'), /<span class="aw-rank">2<\/span>/);
 });

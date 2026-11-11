@@ -2,14 +2,59 @@
 {% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
 {% block title %}APERO RI – Account{% endblock %}
 
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_account.css') }}?v=20261111a">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user_portal_user_cards.css') }}?v=20260501a">
+{% endblock %}
+
+{% macro award_stat(kind, heading, icon, instrument='') %}
+<div class="acc-stat" data-aw-kind="{{ kind }}" data-aw-instrument="{{ instrument }}">
+    <div class="acc-stat-heading"><i class="{{ icon }}" aria-hidden="true"></i> {{ heading }}</div>
+    <div class="acc-stat-value">&mdash;</div>
+    <div class="acc-stat-rank">{{ awards_labels.loading }}</div>
+    {% if kind == 'service' %}<div class="acc-stat-secondary"></div>{% endif %}
+</div>
+{% endmacro %}
+
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="fa-solid fa-id-card"></i> Account</h1>
 </div>
 
-<div class="ari-login-box">
+{% if awards_labels is defined %}
+<section class="acc-awards" aria-labelledby="acc-awards-title">
+    <div class="acc-section-heading">
+        <h2 id="acc-awards-title"><i class="fa-solid fa-trophy" aria-hidden="true"></i> {{ awards_labels.summary }}</h2>
+        <a class="ari-btn ari-btn--secondary ari-btn--sm" href="{{ url_for('user_awards_view') }}">
+            {{ awards_labels.title }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        </a>
+    </div>
+    {% if awards_error is defined %}
+    <p>{{ awards_labels.unavailable }}</p>
+    {% else %}
+    <div class="acc-stats">
+        {{ award_stat('activity', awards_labels.active_days, 'fa-solid fa-calendar-check') }}
+        {{ award_stat('bytes', awards_labels.bytes, 'fa-solid fa-database') }}
+        {{ award_stat('files', awards_labels.files, 'fa-solid fa-file-arrow-down') }}
+        {{ award_stat('service', awards_labels.service ~ ' - ' ~ awards_labels.hours, 'fa-solid fa-handshake-angle') }}
+        {% for instrument in instruments %}
+        {{ award_stat('instrument', instrument ~ ' - ' ~ awards_labels.hours, 'fa-solid fa-satellite-dish', instrument) }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% if awards_error is not defined %}
+<script id="aw-data" type="application/json">{{ awards_rows | tojson }}</script>
+<script id="aw-labels" type="application/json">{{ awards_labels | tojson }}</script>
+<script src="{{ url_for('static', filename='js/awards.js') }}?v=20261111d"></script>
+{% endif %}
+{% endif %}
+
+<div class="ari-login-box acc-details">
     <h2><i class="fa-solid fa-user-gear"></i> Account Details</h2>
 
+    <div class="acc-fields">
     <div class="ari-form-group">
         <label for="acc-username">Username</label>
         <input type="text" id="acc-username" disabled>
@@ -60,8 +105,10 @@
         <label for="acc-primary-inst">Primary Institution</label>
         <select id="acc-primary-inst"></select>
     </div>
+    </div>
 
     <h3 style="margin-top:1rem;"><i class="fa-solid fa-key"></i> Change Password</h3>
+    <div class="acc-fields acc-passwords">
     <div class="ari-form-group">
         <label for="acc-current-password">Current Password</label>
         <input type="password" id="acc-current-password" autocomplete="current-password">
@@ -74,8 +121,9 @@
         <label for="acc-confirm-password">Confirm New Password</label>
         <input type="password" id="acc-confirm-password" autocomplete="new-password">
     </div>
+    </div>
 
-    <button id="acc-save" class="ari-btn ari-btn--primary ari-btn--block">
+    <button id="acc-save" class="ari-btn ari-btn--primary">
         <i class="fa-solid fa-floppy-disk"></i> Save Account Changes
     </button>
 </div>

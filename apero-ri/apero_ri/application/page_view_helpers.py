@@ -38,7 +38,8 @@ from apero_ri.core.permissions import (
     page_id_to_template,
     resolve_user_permissions,
 )
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import current_app, flash, redirect, render_template
+from flask import request, session, url_for
 
 
 _APERO_POLICY_CACHE = dict(
@@ -1563,6 +1564,17 @@ def make_page_view(
 
         if page_id == "home.user_portal.data_access" and user_info:
             context.update(app._build_user_data_access_context(user_info))
+
+        if (page_id == 'home.user_portal.account' and user_info
+                and 'view.user' in perms):
+            from apero_ri.application import monitor_view_helpers
+            try:
+                payload = monitor_view_helpers.awards_payload(app, user_info)
+                context.update(payload)
+            except Exception:
+                current_app.logger.exception('Failed to build account awards')
+                context['awards_error'] = True
+                context['awards_labels'] = monitor_view_helpers.awards_labels()
 
         if page_id == "home.user_portal.support" and user_info:
             context.update(app._build_user_support_context(user_info))

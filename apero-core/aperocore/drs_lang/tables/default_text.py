@@ -29116,6 +29116,12 @@ langlist.add(item)
 # =============================================================================
 AWARDS_UI_TEXT = [
     ('TITLE', 'Awards', 'Récompenses', 'Premios'),
+    ('SUMMARY', 'Your awards', 'Vos récompenses', 'Tus premios'),
+    ('RANK', 'Rank', 'Classement', 'Posición'),
+    ('UNRANKED', 'Unranked', 'Non classé', 'Sin clasificación'),
+    ('UNAVAILABLE', 'Awards are temporarily unavailable.',
+     'Les récompenses sont temporairement indisponibles.',
+     'Los premios no están disponibles temporalmente.'),
     ('ACTIVE_USERS', 'Most active users', 'Utilisateurs les plus actifs',
      'Usuarios más activos'),
     ('ACTIVE_DAYS', 'Active days', 'Jours actifs', 'Días activos'),

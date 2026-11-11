@@ -247,6 +247,77 @@ def test_awards_viewer_without_records(
     assert viewer['active_days'] == 0
 
 
+def test_account_awards_summary(
+    awards_app: tuple[Flask, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Render account awards only with permission and tolerate failures.
+
+    :param awards_app: Isolated application and authentication state.
+    :param monkeypatch: Fixture for the generic page factory dependencies.
+    :param tmp_path: Isolated awards data directory.
+    :return: None.
+    """
+    from apero_ri.application import monitor_view_helpers as awards_helpers
+    from apero_ri.application import page_view_helpers as page_helpers
+
+    app, state = awards_app
+    page_id = 'home.user_portal.account'
+    owner: Any = SimpleNamespace(
+        args=SimpleNamespace(data_dir=str(tmp_path)), ari_groups=dict(),
+        ari_pages={page_id: dict(label='Account', icon='fa-user',
+                                 **{'view-permission': 'view.home'})})
+    monkeypatch.setattr(page_helpers, 'get_effective_user',
+                        lambda session: state['user'])
+    monkeypatch.setattr(page_helpers, 'resolve_user_permissions',
+                        lambda groups, config: state['permissions'])
+    monkeypatch.setattr(page_helpers, 'has_view_permission',
+                        lambda permission, perms: permission in perms)
+    monkeypatch.setattr(page_helpers, 'find_full_nav_root', lambda *args: None)
+    monkeypatch.setattr(page_helpers, 'is_parent_page', lambda *args: False)
+    monkeypatch.setattr(page_helpers, 'page_id_to_template',
+                        lambda *args: 'user_portal/account.html')
+    for endpoint in ('api_user_account_get', 'api_user_account_update',
+                     'api_user_account_request_primary_email',
+                     'api_user_account_confirm_primary_email'):
+        app.add_url_rule('/test/' + endpoint, endpoint, lambda: '')
+    app.add_url_rule('/user_portal/account', 'account_test',
+                     page_helpers.make_page_view(owner, page_id, _ROOT))
+    state['permissions'] = {'view.home', 'view.user'}
+    response = app.test_client().get('/user_portal/account',
+                                     headers={'Accept-Language': 'fr'})
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert 'Vos récompenses' in html
+    assert 'data-aw-kind="instrument"' in html
+    assert 'id="acc-save"' in html
+    assert 'id="aw-data"' in html
+
+    state['permissions'] = {'view.home'}
+    html = app.test_client().get('/user_portal/account').get_data(as_text=True)
+    assert 'id="acc-save"' in html
+    assert 'id="aw-data"' not in html
+    assert state['calls'] == 1
+
+    state['permissions'].add('view.user')
+    def fail(*unused: Any) -> Any:
+        """Simulate an unavailable awards data source.
+
+        :param unused: Ignored function arguments.
+        :return: Never returns.
+        """
+        raise RuntimeError('unavailable')
+
+    monkeypatch.setattr(awards_helpers, 'awards_payload', fail)
+    response = app.test_client().get('/user_portal/account')
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert 'Awards are temporarily unavailable.' in html
+    assert 'id="acc-save"' in html
+    assert 'id="aw-data"' not in html
+
+
 @pytest.mark.parametrize('language, heading', [
     ('en', 'Downloads'), ('fr', 'Téléchargements'), ('es', 'Descargas'),
 ])

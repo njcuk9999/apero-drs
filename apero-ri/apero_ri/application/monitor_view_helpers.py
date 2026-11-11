@@ -929,30 +929,31 @@ def monitor_schedule_view(app: Any) -> _ViewResult:
                            **context)
 
 
-def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
-    """Render the shared awards leaderboard with portal-specific access.
+def awards_labels() -> dict[str, str]:
+    """Return award labels localized for the current request.
 
-    :param app: ARI application with data and sidebar configuration.
-    :param user_portal: Require user access instead of monitor access.
-    :return: Rendered awards page or an access-denied response.
+    :return: Labels indexed by lowercase award text key.
     """
     from aperocore.drs_lang import textentry
     from aperocore.drs_lang.tables import default_text
     from apero_ri.core import ari_lang_support
 
-    user_info = get_effective_user(session)
-    if user_info:
-        perms = resolve_user_permissions(
-            user_info['groups'], app.ari_groups)
-    else:
-        perms = get_public_permissions()
-    if user_portal and not user_info:
-        return redirect(url_for('login'))
-    if user_portal and 'view.user' not in perms:
-        return '', 403
-    if not user_portal and not _has_any_monitor_perm(perms):
-        return redirect(url_for('become_monitor_view'))
+    labels = dict()
+    language = ari_lang_support.get_language()
+    for key, english, french, spanish in default_text.AWARDS_UI_TEXT:
+        translations = dict(en=english, fr=french, es=spanish)
+        label = textentry('AWARDS_' + key, message=translations[language])
+        labels[key.lower()] = str(label)
+    return labels
 
+
+def awards_payload(app: Any, user_info: Any) -> dict[str, Any]:
+    """Build the localized awards dataset for an authenticated viewer.
+
+    :param app: ARI application with data directory configuration.
+    :param user_info: Effective authenticated user.
+    :return: Instruments, leaderboard rows, and localized labels.
+    """
     data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
     instruments = perms_mod.load_parameters().get(
         'instruments', {}).get('value', [])
@@ -993,13 +994,32 @@ def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
         rows.append(row)
     rows.sort(key=lambda r: r['total_hours'], reverse=True)
 
-    labels = dict()
-    language = ari_lang_support.get_language()
-    for key, english, french, spanish in default_text.AWARDS_UI_TEXT:
-        translations = dict(en=english, fr=french, es=spanish)
-        label = textentry('AWARDS_' + key, message=translations[language])
-        labels[key.lower()] = str(label)
+    return dict(instruments=instruments, awards_rows=rows,
+                awards_labels=awards_labels())
 
+
+def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
+    """Render the shared awards leaderboard with portal-specific access.
+
+    :param app: ARI application with data and sidebar configuration.
+    :param user_portal: Require user access instead of monitor access.
+    :return: Rendered awards page or an access-denied response.
+    """
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+    if user_portal and not user_info:
+        return redirect(url_for('login'))
+    if user_portal and 'view.user' not in perms:
+        return '', 403
+    if not user_portal and not _has_any_monitor_perm(perms):
+        return redirect(url_for('become_monitor_view'))
+
+    awards_context = awards_payload(app, user_info)
+    labels = awards_context['awards_labels']
     portal = 'user_portal' if user_portal else 'monitor_portal'
     page_id = f'home.{portal}.awards'
     context = {
@@ -1011,10 +1031,8 @@ def monitor_awards_view(app: Any, user_portal: bool = False) -> _ViewResult:
         'sidebar_icon': ('fa-solid fa-user' if user_portal
                          else 'fa-solid fa-chart-line'),
         'sidebar_url': f'/{portal}',
-        'instruments': instruments,
-        'awards_rows': rows,
-        'awards_labels': labels,
     }
+    context.update(awards_context)
     try:
         context.update(
             app._build_sidebar_context(page_id, perms, user_info)
