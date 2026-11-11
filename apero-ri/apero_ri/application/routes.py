@@ -1563,6 +1563,11 @@ def register_data_portal_routes(app: Any) -> None:
         app._user_portal_users_view,
     )
     app.add_url_rule(
+        '/user_portal/awards',
+        'user_awards_view',
+        app._user_awards_view,
+    )
+    app.add_url_rule(
         "/user_portal/users/<username>",
         "user_portal_user_card_view",
         app._user_portal_user_card_view,

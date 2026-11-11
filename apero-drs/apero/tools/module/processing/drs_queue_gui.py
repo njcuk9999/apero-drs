@@ -49,6 +49,7 @@ from aperocore import drs_lang
 from apero.base import base as apero_base
 from apero.tools.module.processing import drs_queue
 from apero.tools.module.processing import drs_queue_procs
+from apero.tools.module.processing import drs_queue_server
 from apero.tools.module.processing import drs_queue_stats
 
 # =============================================================================
@@ -871,6 +872,9 @@ def render_dashboard(params: ParamDict,
     html = html.replace('XX_MPMODE_XX',
                         json.dumps(drs_queue.get_queue_mpmode(params)))
     html = html.replace('XX_INFO_XX', render_info_html())
+    html = html.replace('XX_RESTART_LABEL_XX', textentry('40-513-00045'))
+    html = html.replace('XX_RESTART_PROMPT_XX',
+                        json.dumps(textentry('40-513-00046')))
     # return the rendered html
     return html
 
@@ -1864,20 +1868,31 @@ def queue_gui(params: ParamDict) -> None:
         except (TypeError, ValueError):
             rows = GUI_DEFAULT_ROWS
     # -------------------------------------------------------------------------
+    worker_port = os.environ.get(drs_queue_server.WORKER_PORT_ENV)
+    if worker_port is not None:
+        host, port = GUI_DEFAULT_HOST, int(worker_port)
+    supervised = worker_port is None
     # create the shared gui state
     state = GuiState()
     state.add_message('Queue GUI started')
     # periodically fail running entries nothing is running any more
-    threading.Thread(target=_stale_watcher, args=(params, state),
-                     daemon=True).start()
+    if not supervised:
+        threading.Thread(target=_stale_watcher, args=(params, state),
+                         daemon=True).start()
     # create the request handler class
     handler = _make_handler(params, state, rows)
     # -------------------------------------------------------------------------
     # start the server (try the next ports if the default is taken)
     server = None
-    for p_it in range(GUI_PORT_ATTEMPTS):
+    port_attempts = GUI_PORT_ATTEMPTS if supervised else 1
+    for p_it in range(port_attempts):
         try:
-            server = ThreadingHTTPServer((host, port + p_it), handler)
+            address = (host, port + p_it)
+            if supervised:
+                command = [sys.executable] + sys.orig_argv[1:]
+                server = drs_queue_server.QueueServer(address, command)
+            else:
+                server = ThreadingHTTPServer(address, handler)
             port = port + p_it
             break
         except OSError:
@@ -1888,6 +1903,8 @@ def queue_gui(params: ParamDict) -> None:
         # error: Queue: Could not find a free port (tried {0}-{1})
         WLOG(params, 'error', textentry('09-513-00003', args=eargs))
         return
+    if supervised:
+        server.start_worker()
     # -------------------------------------------------------------------------
     # log where the dashboard is
     url = 'http://{0}:{1}/'.format(host, port)
@@ -1896,16 +1913,22 @@ def queue_gui(params: ParamDict) -> None:
     WLOG(params, 'info', textentry('40-513-00028', args=margs))
     # try to open the dashboard in a browser (ignore failures - e.g. on
     #   a headless machine the user can open the url manually)
-    try:
-        import webbrowser
-        webbrowser.open(url)
-    except Exception as _:
-        pass
+    if supervised:
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception as _:
+            pass
     # -------------------------------------------------------------------------
     # serve until shutdown (Ctrl+C or the dashboard shutdown button)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
+        if supervised:
+            try:
+                state.busy = server.worker_request('/api/state')['busy']
+            except Exception:
+                state.busy = False
         # optional interactive stop when Ctrl+C is used from terminal
         if state.busy:
             prompt = ('Queue: Action is running. Stop running tasks and '
@@ -1916,8 +1939,12 @@ def queue_gui(params: ParamDict) -> None:
                 user_input = ''
             if user_input.startswith('y'):
                 state.cancel.set()
-                result = drs_queue.queue_action_core(params,
-                                                     'stop_all_running')
+                if supervised:
+                    stop_form = dict(qaction='stop_all_running')
+                    result = server.worker_request('/api/action', stop_form)
+                else:
+                    result = drs_queue.queue_action_core(
+                        params, 'stop_all_running')
                 if result['success']:
                     WLOG(params, 'info', result['message'])
                 else:
@@ -1928,6 +1955,8 @@ def queue_gui(params: ParamDict) -> None:
                 WLOG(params, '', textentry('40-513-00023'))
     finally:
         server.server_close()
+        if supervised:
+            server.finish_worker()
     # if action still running, keep process alive until worker completes
     if state.busy and state.worker is not None:
         # log: Queue: Waiting for active action to finish

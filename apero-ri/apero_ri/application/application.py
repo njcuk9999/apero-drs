@@ -1766,6 +1766,11 @@ class ARIApp(Flask):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_awards_view(self)
 
+    def _user_awards_view(self) -> Any:
+        """Return the shared awards page for user-portal visitors."""
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_awards_view(self, user_portal=True)
+
     def _monitor_processing_logs_view(self) -> Any:
         """Render the processing-log browser."""
         from apero_ri.application import monitor_view_helpers as mvh

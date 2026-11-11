@@ -25684,6 +25684,45 @@ item.comment = ('Used in: tools/module/processing/drs_queue.py, '
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00044
+# =============================================================================
+item = langlist.create('40-513-00044', kind='all-code')
+item.value['ENG'] = 'Queue dashboard unavailable. Restart the server or retry.'
+item.value['FR'] = 'Tableau de file indisponible. Redemarrez ou reessayez.'
+item.value['ES'] = 'Panel de cola no disponible. Reinicie o reintente.'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_server.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00045
+# =============================================================================
+item = langlist.create('40-513-00045', kind='all-code')
+item.value['ENG'] = 'Restart server'
+item.value['FR'] = 'Redemarrer le serveur'
+item.value['ES'] = 'Reiniciar servidor'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00046
+# =============================================================================
+item = langlist.create('40-513-00046', kind='all-code')
+item.value['ENG'] = ('Restart the dashboard server? Active GUI actions may '
+                     'be interrupted. Queue files are kept; running tasks '
+                     'and submitted Slurm jobs are not stopped.')
+item.value['FR'] = ('Redemarrer le tableau ? Les actions actives peuvent etre '
+                    'interrompues. Les fichiers de file sont conserves ; '
+                    'les taches et jobs Slurm ne sont pas arretes.')
+item.value['ES'] = ('Reiniciar el panel? Las acciones activas pueden '
+                    'interrumpirse. Se conservan los archivos de cola; '
+                    'las tareas y jobs Slurm no se detienen.')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')
@@ -29071,6 +29110,53 @@ item.value['ES'] = 'PROCESO LINEAL: evento activado - omitiendo ID{0:05d}'
 item.arguments = '{0}=priority'
 item.comment = 'Used in: tools/module/processing/drs_processing.py'
 langlist.add(item)
+
+# =============================================================================
+# AWARDS_* - shared ARI leaderboard text
+# =============================================================================
+AWARDS_UI_TEXT = [
+    ('TITLE', 'Awards', 'Récompenses', 'Premios'),
+    ('MONITORS', 'Instrument monitors', 'Moniteurs par instrument',
+     'Monitores por instrumento'),
+    ('DOWNLOADS', 'Downloads', 'Téléchargements', 'Descargas'),
+    ('BYTES', 'Download volume', 'Volume téléchargé', 'Volumen descargado'),
+    ('FILES', 'Files downloaded', 'Fichiers téléchargés',
+     'Archivos descargados'),
+    ('SERVICE', 'Service and issues', 'Service et problèmes',
+     'Servicio e incidencias'),
+    ('HOURS', 'Total hours', 'Heures totales', 'Horas totales'),
+    ('ISSUES', 'Issues resolved', 'Problèmes résolus',
+     'Incidencias resueltas'),
+    ('USERNAME', 'Username', "Nom d'utilisateur", 'Usuario'),
+    ('NAME', 'Name', 'Nom', 'Nombre'),
+    ('FILTER', 'Filter', 'Filtrer', 'Filtrar'),
+    ('ROWS', 'Rows per page', 'Lignes par page', 'Filas por página'),
+    ('PAGE', 'Page', 'Page', 'Página'),
+    ('FIRST', 'First page', 'Première page', 'Primera página'),
+    ('PREVIOUS', 'Previous page', 'Page précédente', 'Página anterior'),
+    ('NEXT', 'Next page', 'Page suivante', 'Página siguiente'),
+    ('LAST', 'Last page', 'Dernière page', 'Última página'),
+    ('LOADING', 'Loading...', 'Chargement...', 'Cargando...'),
+    ('EMPTY', 'No awards found.', 'Aucune récompense trouvée.',
+     'No se encontraron premios.'),
+    ('GOLD', 'Gold', 'Or', 'Oro'),
+    ('SILVER', 'Silver', 'Argent', 'Plata'),
+    ('BRONZE', 'Bronze', 'Bronze', 'Bronce'),
+    ('USER_UNKNOWN', 'User not found.', 'Utilisateur introuvable.',
+     'Usuario no encontrado.'),
+    ('USER_UNAVAILABLE', 'User information unavailable.',
+     'Informations utilisateur indisponibles.',
+    'Información del usuario no disponible.'),
+]
+for awards_key, awards_eng, awards_fr, awards_es in AWARDS_UI_TEXT:
+    item = langlist.create('AWARDS_' + awards_key, kind='text')
+    item.value['ENG'] = awards_eng
+    item.value['FR'] = awards_fr
+    item.value['ES'] = awards_es
+    item.arguments = 'None'
+    item.comment = 'Used in: ARI shared awards leaderboard'
+    langlist.add(item)
+
 
 # =============================================================================
 # Start of code

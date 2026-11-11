@@ -382,7 +382,7 @@ def table_adjust_fp_peak_number(
         res_count = res_count - np.nanmedian(res_count[valid_orders])
         # fit and remove the polynomial fit to this deviation
         fit, _ = mp.robust_polyfit(valid_orders, res_count[valid_orders],
-                                   degree=3, nsigcut=nsigcut)
+                                   degree=5, nsigcut=nsigcut)
         res_count[valid_orders] = res_count[valid_orders] - np.polyval(fit, valid_orders)
 
         # Identify the order with the largest absolute residual.

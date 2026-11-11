@@ -3762,10 +3762,8 @@ data:
   nirps_ha/reset/runs/trigger_night_calibrun.yaml: b12eaccbd7f94d6f0f9500ad239e7da0
   nirps_ha/reset/runs/trigger_night_scirun.ini: 0473e26686e6f8671e7ab299121e5d63
   nirps_ha/reset/runs/trigger_night_scirun.yaml: 47b567b8d06b32b3069677f812609925
-  nirps_ha/reset/telludb/OTHER/sky_model_ha.fits: 3ced68262a7f5c21817f8c8db2780e80
+  nirps_ha/reset/telludb/OTHER/sky_model_ha.fits: a85c80a85d032ccff1312afedab67634
   nirps_ha/reset/telludb/OTHER/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
-  nirps_ha/reset/telludb/sky_model_ha.fits: a85c80a85d032ccff1312afedab67634
-  nirps_ha/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   nirps_ha/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
   nirps_ha/telluric/tellu_whitelist.txt: 4ba4debe3f1ad4c2ba24d48956cf7c99
@@ -3836,10 +3834,8 @@ data:
   nirps_he/reset/runs/trigger_night_calibrun.yaml: 797341d348ec9a3576685a5eb32b49be
   nirps_he/reset/runs/trigger_night_scirun.ini: 0473e26686e6f8671e7ab299121e5d63
   nirps_he/reset/runs/trigger_night_scirun.yaml: 73a7f1e116ade2236369af5af74249a5
-  nirps_he/reset/telludb/OTHER/sky_model_he.fits: ab11112b08f9d0ea5f1eb2736f09296d
+  nirps_he/reset/telludb/OTHER/sky_model_he.fits: 686b667286d421efc3a59ab2f372c063
   nirps_he/reset/telludb/OTHER/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
-  nirps_he/reset/telludb/sky_model_he.fits: 686b667286d421efc3a59ab2f372c063
-  nirps_he/reset/telludb/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   nirps_he/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
   nirps_he/telluric/tellu_whitelist.txt: 2740c9baf40f1a2d715e4a29df63c329
@@ -3957,10 +3953,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2026-10-02 01:45:49.753'
+  humantime: '2026-11-11 11:50:57.110'
   servers:
   - http://206.12.93.77/ari/data/apero/assets/
-  tarfile: 1790905549_752799_assets.tar.gz
-  unixtime: 1790905549.752799
+  tarfile: 1794397857_110257_assets.tar.gz
+  unixtime: 1794397857.110257
   vdate: '2026-05-06'
   version: 0.9.0.dev3+g85a57c200.d20260506

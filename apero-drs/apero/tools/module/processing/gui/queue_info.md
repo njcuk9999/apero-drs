@@ -22,3 +22,17 @@ split into:
   all APERO data (`apero_queue.py action` / `apero_queue.py reset`).
 - **Template**: edit and save the named `sbatch` templates (resources and
   activation lines) used by Batch and Chain (`apero_queue.py init`).
+
+## Server recovery
+
+**Refresh** cancels a pending status request and reads the queue again.
+Requests time out after 30 seconds; polling does not accumulate duplicate
+requests while the server is slow.
+
+**Restart server** replaces the dashboard worker on the same public port.
+Queue files are preserved. Active GUI actions may be interrupted, but
+separately running tasks and submitted Slurm jobs are not stopped. Check
+the Processes and Status tabs before starting more work after a restart.
+If the worker crashes, reloading the page displays the recovery control.
+The supervisor itself must still be running; if its process is stopped,
+start `apero_queue.py gui` again from the terminal.

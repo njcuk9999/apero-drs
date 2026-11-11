@@ -337,6 +337,30 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # set the source
         cprops.set_source('MP2P_TCORR', mainname)
         # ------------------------------------------------------------------
+        # Create 1d spectra (s1d) of the sky correction
+        # ------------------------------------------------------------------
+        # must multiple sky model by blaze (for proper weighting in s1d)
+        bskymodel = tpreprops['SKY_MODEL'] * nprops['BLAZE']
+        skycargs = [wprops['WAVEMAP'], bskymodel, nprops['BLAZE']]
+        skycwprops = extract.e2ds_to_s1d(params, recipe, *skycargs,
+                                         wgrid='wave', fiber=fiber,
+                                         s1dkind='recon')
+        skycvprops = extract.e2ds_to_s1d(params, recipe, *skycargs,
+                                         wgrid='velocity', fiber=fiber,
+                                         s1dkind='recon')
+        # ------------------------------------------------------------------
+        # Create 1d spectra (s1d) of the finite resolution correction
+        # ------------------------------------------------------------------
+        # must multiple finite res by blaze (for proper weighting in s1d)
+        bfiniteres = tpreprops['TELLU_FINITE_RES'] * nprops['BLAZE']
+        fresargs = [wprops['WAVEMAP'], bfiniteres, nprops['BLAZE']]
+        freswprops = extract.e2ds_to_s1d(params, recipe, *fresargs,
+                                         wgrid='wave', fiber=fiber,
+                                         s1dkind='recon')
+        fresvprops = extract.e2ds_to_s1d(params, recipe, *fresargs,
+                                         wgrid='velocity', fiber=fiber,
+                                         s1dkind='recon')
+        # ------------------------------------------------------------------
         # s1d plots
         # ------------------------------------------------------------------
         # plot the s1d plot
@@ -369,7 +393,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Save reconstructed absorption to file (E2DS + S1D)
         # ------------------------------------------------------------------
-        frargs = [infile, corrfile, fiber, cprops, rcwprops, rcvprops]
+        frargs = [infile, corrfile, fiber, cprops, rcwprops, rcvprops,
+                  skycwprops, skycvprops, freswprops, fresvprops]
         reconfile = telluric.fit_tellu_write_recon(params, recipe, *frargs)
 
         # ------------------------------------------------------------------

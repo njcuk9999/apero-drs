@@ -20,6 +20,9 @@ from flask import (flash, redirect, render_template,
 
 from pathlib import Path
 
+from aperocore.drs_lang import textentry
+from aperocore.drs_lang.tables import default_text
+from apero_ri.core import ari_lang_support
 from apero_ri.core.auth import get_effective_user
 from apero_ri.core.auth import load_users
 from apero_ri.core.permissions import resolve_user_permissions
@@ -29,6 +32,23 @@ from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
 
 
 __NAME__ = 'apero_ri.application.user_portal_view_helpers'
+
+
+def _download_award_labels() -> dict[str, str]:
+    """Return existing award labels in the current request's language.
+
+    :return: Localized download headings and medal names.
+    """
+    language = ari_lang_support.get_language()
+    labels = dict()
+    for key, english, french, spanish in default_text.AWARDS_UI_TEXT:
+        if key not in ('DOWNLOADS', 'BYTES', 'FILES',
+                       'GOLD', 'SILVER', 'BRONZE'):
+            continue
+        translations = dict(en=english, fr=french, es=spanish)
+        label = textentry('AWARDS_' + key, message=translations[language])
+        labels[key.lower()] = str(label)
+    return labels
 
 
 def _require_logged_in(
@@ -72,6 +92,8 @@ def _require_logged_in(
             app._build_sidebar_context(page_id, perms, user_info))
     except Exception:
         pass
+    if template == 'user_portal/users.html':
+        context['download_award_labels'] = _download_award_labels()
     return render_template(template, **context)
 
 
@@ -109,7 +131,12 @@ def user_portal_notifications_view(app: Any) -> Any:
 
 
 def user_portal_user_card_view(app: Any, username: str) -> Any:
-    """Render a dedicated user profile card page."""
+    """Render a dedicated user profile card page.
+
+    :param app: ARI application providing groups and sidebar configuration.
+    :param username: Target account whose public profile is requested.
+    :return: Rendered profile, or redirect for login or an unknown user.
+    """
     user_info = get_effective_user(session)
     if not user_info:
         flash('Login required.', 'warning')
@@ -180,18 +207,22 @@ def user_portal_user_card_view(app: Any, username: str) -> Any:
     }
 
     monitor_stats = None
+    download_stats = None
     try:
         target_perms = resolve_user_permissions(
             record.get('groups', []), app.ari_groups)
     except Exception:
         target_perms = set()
-    if _has_any_monitor_perm(target_perms):
-        try:
-            data_dir = Path(
-                app.args.data_dir or str(Path.home() / '.ari'))
-            instruments = perms_mod.load_parameters().get(
-                'instruments', {}).get('value', [])
-            all_awards = awards_core.compute_awards(data_dir, instruments)
+    try:
+        data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+        instruments = perms_mod.load_parameters().get(
+            'instruments', {}).get('value', [])
+        all_awards = awards_core.compute_awards(data_dir, instruments)
+        entry = all_awards.get(username)
+        if entry and (entry.get('download_bytes', 0) > 0
+                      or entry.get('download_files', 0) > 0):
+            download_stats = entry
+        if _has_any_monitor_perm(target_perms):
             monitor_stats = all_awards.get(username, {
                 'username': username,
                 'who': target_user['full_name'] or username,
@@ -202,8 +233,9 @@ def user_portal_user_card_view(app: Any, username: str) -> Any:
                 'issues_resolved': 0,
                 'issues_medal': None,
             })
-        except Exception:
-            monitor_stats = None
+    except Exception:
+        monitor_stats = None
+        download_stats = None
 
     context = {
         'page_id': 'home.user_portal.users',
@@ -216,6 +248,8 @@ def user_portal_user_card_view(app: Any, username: str) -> Any:
         'username': user_info.get('username'),
         'target_user': target_user,
         'monitor_stats': monitor_stats,
+        'download_stats': download_stats,
+        'download_award_labels': _download_award_labels(),
     }
     try:
         context.update(

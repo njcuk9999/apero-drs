@@ -407,7 +407,12 @@ def api_users_directory(app: Any) -> Any:
 
 
 def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
-    """Return the display fields for one user's award record."""
+    """Return the display fields for one user's award record.
+
+    :param awards: Computed award records keyed by username.
+    :param uname: Username whose public award fields are requested.
+    :return: Award totals and medals, with defaults for absent users.
+    """
     entry = awards.get(uname)
     if not entry:
         return {
@@ -417,6 +422,9 @@ def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
             'service_medal': None,
             'issues_resolved': 0,
             'issues_medal': None,
+            'download_bytes': 0,
+            'download_files': 0,
+            'download_medals': dict(bytes=None, files=None),
         }
     return {
         'total_hours': round(entry.get('total_hours', 0.0), 2),
@@ -425,4 +433,8 @@ def _user_award_summary(awards: Dict[str, Any], uname: str) -> Dict[str, Any]:
         'service_medal': entry.get('service_medal'),
         'issues_resolved': entry.get('issues_resolved', 0),
         'issues_medal': entry.get('issues_medal'),
+        'download_bytes': entry.get('download_bytes', 0),
+        'download_files': entry.get('download_files', 0),
+        'download_medals': entry.get('download_medals',
+                                     dict(bytes=None, files=None)),
     }

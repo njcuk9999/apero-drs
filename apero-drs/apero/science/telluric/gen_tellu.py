@@ -2898,8 +2898,8 @@ def load_tapas_spl(params: ParamDict, recipe: DrsRecipe,
                                  conv_key, n_entries='*',
                                  get_image=False, required=False,
                                  return_filename=True)
-    # construct path to tapas file
-    tapas_path = Path(params['PATH.TELLU']).joinpath(conv_key, 'OTHER')
+    # objectless telluric files resolve to the shared OTHER directory
+    tapas_path = Path(params['PATH.TELLU']).joinpath('OTHER')
     # -------------------------------------------------------------------------
     # counter to exist
     counter = 0
