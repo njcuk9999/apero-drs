@@ -74,6 +74,54 @@ def geoip_client(monkeypatch: pytest.MonkeyPatch,
     return client, state
 
 
+def test_proxy_settings_persist_and_validate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep proxy configuration separate from GeoLite health settings.
+
+    :param tmp_path: Isolated local data directory.
+    :param monkeypatch: Override the legacy environment setting.
+    :return: None.
+    """
+    geoip = helpers.setup_geoip
+    monkeypatch.setenv('ARI_PROXY_COUNT', '2')
+    assert geoip.proxy_count(tmp_path) == 2
+    geoip.set_health_check_enabled(tmp_path, False)
+    geoip.set_proxy_count(tmp_path, 1)
+    assert geoip.proxy_count(tmp_path) == 1
+    assert geoip.get_status(tmp_path)['health_check_enabled'] is False
+    for invalid in (-1, 11, True, '1'):
+        with pytest.raises(ValueError):
+            geoip.set_proxy_count(tmp_path, invalid)
+    assert geoip.proxy_count(tmp_path) == 1
+
+
+def test_proxy_settings_endpoint(geoip_client: tuple[Any, dict[str, Any]]) -> None:
+    """Require CSRF and reject invalid proxy counts before saving.
+
+    :param geoip_client: Isolated API client and access state.
+    :return: None.
+    """
+    client, state = geoip_client
+    url = '/api/admin/geoip/install'
+    body = dict(action='set_proxy_count', count=1)
+    assert client.post(url, json=body).status_code == 403
+    headers = {'X-CSRF-Token': state['csrf']}
+    assert client.post(url, json=body, headers=headers).status_code == 200
+    assert helpers.setup_geoip.proxy_count(state['data_dir']) == 1
+    body['count'] = 2
+    remote = dict(REMOTE_ADDR='192.0.2.1')
+    response = client.post(url, json=body, headers=headers,
+                           environ_overrides=remote)
+    assert response.status_code == 200
+    assert helpers.setup_geoip.proxy_count(state['data_dir']) == 2
+    body['count'] = -1
+    assert client.post(url, json=body, headers=headers).status_code == 400
+    assert helpers.setup_geoip.proxy_count(state['data_dir']) == 2
+    state['user'] = None
+    assert client.post(url, json=body, headers=headers).status_code == 401
+
+
 def test_admin_geoip_install_requires_admin_and_valid_csrf(
     geoip_client: tuple[Any, dict[str, Any]],
 ) -> None:
@@ -184,6 +232,48 @@ def test_dedicated_page_is_registered_and_has_account_instructions(
     expected = 'Sign in and accept the GeoLite End User License Agreement.'
     assert expected in source
     assert 'Open Manage License Keys' in source
+
+
+def test_geolocation_tabs_render(tmp_path: Path) -> None:
+    """Render the real template with separate configured and active counts.
+
+    :param tmp_path: Isolated ARI data root.
+    :return: None.
+    """
+    from flask import render_template
+    from jinja2 import ChoiceLoader, DictLoader
+    from aperocore.drs_lang import textentry
+
+    root = Path(__file__).resolve().parents[1] / 'apero_ri'
+    app = Flask(__name__, template_folder=str(root / 'templates'),
+                static_folder=str(root / 'static'))
+    shell = ('{% block extra_head %}{% endblock %}'
+             '{% block doc_content %}{% endblock %}'
+             '{% block extra_scripts %}{% endblock %}')
+    app.jinja_loader = ChoiceLoader([
+        DictLoader({'general/sidebar_base.html': shell}), app.jinja_loader])
+    app.jinja_env.globals['_'] = lambda value: value
+    app.jinja_env.filters['tl'] = lambda value: value
+    keys = ('SETUP', 'DATABASE', 'NETWORK', 'INTRO', 'STEPS', 'PRIVACY',
+            'COUNT', 'ACTIVE', 'SAVED', 'RESTART', 'DIRECT', 'ONE', 'MANY',
+            'WARNING', 'OTHER', 'SAVE', 'SAVED_MSG', 'ERROR')
+    labels = {key: str(textentry('GEOLOCATE_' + key)) for key in keys}
+    with app.test_request_context('/'):
+        html = render_template(
+            'admin/geoip_database.html', page_label='Geo locate users',
+            page_icon='fa-solid fa-earth-americas', geo_labels=labels,
+            geoip_status=helpers.setup_geoip.get_status(tmp_path),
+            geoip_health=helpers.setup_geoip.health_status(tmp_path),
+            geoip_proxy_count=1, geoip_active_proxy_count=0,
+            geoip_install_url='/api/admin/geoip/install',
+            geoip_csrf_token='test-token')
+    assert 'id="gd-tab-setup"' in html
+    assert 'id="gd-panel-database"' in html
+    assert 'id="gd-panel-network"' in html
+    assert 'Trusted forwarding proxies' in html
+    assert 'id="gd-proxy-saved">1' in html
+    assert 'Currently active' in html
+    assert 'GEOLOCATE_' not in html
 
 
 def test_admin_geoip_route_is_registered() -> None:

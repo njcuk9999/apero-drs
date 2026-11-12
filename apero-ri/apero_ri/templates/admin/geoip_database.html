@@ -4,7 +4,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/geoip_database.css') }}?v=20261111b">
+    href="{{ url_for('static', filename='css/geoip_database.css') }}?v=20261111c">
 {% endblock %}
 
 {% block doc_content %}
@@ -15,7 +15,7 @@
                 <i class="{{ page_icon }}" aria-hidden="true"></i>
                 {{ page_label | tl }}
             </h1>
-            <p>{{ _('Install or update the GeoLite2 City database from this running ARI site. This does not rerun setup.') }}</p>
+            <p>{{ geo_labels.INTRO }}</p>
         </div>
         <span id="gd-state"
               class="gd-state {{ 'gd-state--ready' if geoip_status.installed else 'gd-state--empty' }}">
@@ -25,6 +25,37 @@
         </span>
     </header>
 
+    <nav class="gd-tabs" role="tablist" aria-label="{{ page_label | tl }}">
+        <button type="button" role="tab" id="gd-tab-setup" aria-controls="gd-panel-setup" aria-selected="true">{{ geo_labels.SETUP }}</button>
+        <button type="button" role="tab" id="gd-tab-database" aria-controls="gd-panel-database" aria-selected="false" tabindex="-1">{{ geo_labels.DATABASE }}</button>
+        <button type="button" role="tab" id="gd-tab-network" aria-controls="gd-panel-network" aria-selected="false" tabindex="-1">{{ geo_labels.NETWORK }}</button>
+    </nav>
+    <div id="gd-panel-setup" role="tabpanel" aria-labelledby="gd-tab-setup">
+        <section class="gd-section">
+            <h2>{{ geo_labels.SETUP }}</h2>
+            <p>{{ geo_labels.STEPS }}</p>
+            <p>{{ geo_labels.PRIVACY }}</p>
+        </section>
+    </div>
+    <div id="gd-panel-network" role="tabpanel" aria-labelledby="gd-tab-network" hidden>
+        <section class="gd-section">
+            <h2>{{ geo_labels.NETWORK }}</h2>
+            <p class="gd-warning">{{ geo_labels.WARNING }}</p>
+            <p>{{ geo_labels.DIRECT }}</p>
+            <p>{{ geo_labels.ONE }}</p>
+            <p>{{ geo_labels.MANY }}</p>
+            <form id="gd-network-form" class="gd-form">
+                <label for="gd-proxy-count">{{ geo_labels.COUNT }}</label>
+                <input id="gd-proxy-count" type="number" min="0" max="10" step="1" value="{{ geoip_proxy_count }}" required>
+                <p>{{ geo_labels.ACTIVE }}: <strong>{{ geoip_active_proxy_count }}</strong> · {{ geo_labels.SAVED }}: <strong id="gd-proxy-saved">{{ geoip_proxy_count }}</strong></p>
+                <p>{{ geo_labels.RESTART }}</p>
+                <button class="ari-btn ari-btn--primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{ geo_labels.SAVE }}</button>
+                <p id="gd-network-status" role="status" aria-live="polite"></p>
+            </form>
+            <p>{{ geo_labels.OTHER }}</p>
+        </section>
+    </div>
+    <div id="gd-panel-database" role="tabpanel" aria-labelledby="gd-tab-database" hidden>
     <section class="gd-section" aria-labelledby="gd-database-heading">
         <h2 id="gd-database-heading">{{ _('Database status') }}</h2>
         <p id="gd-health-result"
@@ -164,6 +195,7 @@
             {{ _('MaxMind currently limits GeoLite database downloads to 30 per account per day. ARI allows at most 3 attempts per day and enforces a one-hour cooldown.') }}
         </p>
     </section>
+    </div>
 </main>
 {% endblock %}
 
@@ -177,6 +209,46 @@
     var button = document.getElementById('gd-download-button');
     var healthToggle = document.getElementById('gd-health-enabled');
     var healthStatus = document.getElementById('gd-health-status');
+    var tabs = Array.from(document.querySelectorAll('.gd-tabs [role="tab"]'));
+    function activate(tab) {
+        tabs.forEach(function (item) {
+            var selected = item === tab;
+            item.setAttribute('aria-selected', String(selected));
+            item.tabIndex = selected ? 0 : -1;
+            document.getElementById(item.getAttribute('aria-controls')).hidden = !selected;
+        });
+    }
+    tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () { activate(tab); });
+        tab.addEventListener('keydown', function (event) {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            var direction = event.key === 'ArrowRight' ? 1 : -1;
+            var next = tabs[(index + direction + tabs.length) % tabs.length];
+            activate(next);
+            next.focus();
+        });
+    });
+    document.getElementById('gd-network-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var networkForm = event.currentTarget;
+        var networkStatus = document.getElementById('gd-network-status');
+        var save = networkForm.querySelector('button');
+        save.disabled = true;
+        fetch(form.dataset.apiUrl, {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': form.dataset.csrfToken},
+            body: JSON.stringify({action: 'set_proxy_count', count: Number(document.getElementById('gd-proxy-count').value)})
+        }).then(function (response) {
+            if (!response.ok) throw new Error();
+            return response.json();
+        }).then(function (payload) {
+            document.getElementById('gd-proxy-saved').textContent = payload.count;
+            networkStatus.textContent = {{ geo_labels.SAVED_MSG | tojson }};
+        }).catch(function () {
+            networkStatus.textContent = {{ geo_labels.ERROR | tojson }};
+        }).finally(function () { save.disabled = false; });
+    });
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();

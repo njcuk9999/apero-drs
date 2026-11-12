@@ -269,7 +269,7 @@ def _build_first_time_guide_steps(
             'page_id': 'home.admin_portal.first_time_guide',
             'kind': 'geoip',
             'endpoint': 'home_admin_portal_geoip_database',
-            'title': 'GeoLite Location Database',
+            'title': 'Geo locate users',
             'purpose': (
                 'Optional: enable country and region summaries for '
                 'qualified user activity.'
@@ -292,8 +292,8 @@ def _build_first_time_guide_steps(
                 },
                 {
                     'text': (
-                        'Restart ARI after installation. Keep the database '
-                        'current under MaxMind terms.'
+                        'Keep the database current under MaxMind terms. '
+                        'Restart ARI after changing trusted proxy settings.'
                     ),
                 },
             ],
@@ -1636,6 +1636,7 @@ def make_page_view(
 
         if page_id == 'home.admin_portal.geoip_database' and user_info:
             from apero_ri.setup import geoip as setup_geoip
+            from aperocore.drs_lang import textentry
 
             local_data_dir = Path(app._resolve_local_data_dir())
             context['geoip_install_url'] = url_for(
@@ -1643,6 +1644,16 @@ def make_page_view(
             context['geoip_status'] = setup_geoip.get_status(local_data_dir)
             context['geoip_health'] = setup_geoip.health_status(
                 local_data_dir)
+            context['geoip_proxy_count'] = setup_geoip.proxy_count(
+                local_data_dir)
+            context['geoip_active_proxy_count'] = app.config.get(
+                'ARI_ACTIVE_PROXY_COUNT', 0)
+            geo_keys = ('SETUP', 'DATABASE', 'NETWORK', 'INTRO', 'STEPS',
+                        'PRIVACY', 'COUNT', 'ACTIVE', 'SAVED', 'RESTART',
+                        'DIRECT', 'ONE', 'MANY', 'WARNING', 'OTHER', 'SAVE',
+                        'SAVED_MSG', 'ERROR')
+            context['geo_labels'] = {
+                key: str(textentry('GEOLOCATE_' + key)) for key in geo_keys}
             context['geoip_csrf_token'] = session.setdefault(
                 'geoip_install_csrf', secrets.token_urlsafe(32))
 

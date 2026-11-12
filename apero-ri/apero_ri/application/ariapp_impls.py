@@ -1273,10 +1273,13 @@ def ariapp_configure_production_hardening(self: Any) -> None:
       ARI_MAX_CONTENT_MB  Maximum request body size in MB.  Default: 128.
     """
     # --- Reverse proxy support -------------------------------------------
-    try:
-        proxy_count = int(os.environ.get("ARI_PROXY_COUNT", "0") or "0")
-    except ValueError:
-        proxy_count = 0
+    from apero_ri.setup import geoip as setup_geoip
+    if hasattr(self, '_resolve_local_data_dir'):
+        proxy_root = Path(self._resolve_local_data_dir())
+    else:
+        proxy_root = Path(os.environ.get('ARI_DIR', str(Path.home() / '.ari')))
+    proxy_count = setup_geoip.proxy_count(proxy_root)
+    self.config['ARI_ACTIVE_PROXY_COUNT'] = proxy_count
     if proxy_count > 0:
         from werkzeug.middleware.proxy_fix import ProxyFix
         self.wsgi_app = ProxyFix(

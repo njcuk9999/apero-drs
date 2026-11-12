@@ -155,7 +155,7 @@ for that topology:
 | `ARI_GEOIP_DB` | Optional override for the GeoLite2 City `.mmdb` path installed by setup. Only country and region are retained; client addresses are used for lookup in memory. | ARI cache database |
 
 GeoIP2 is installed with ARI. To enable country and region summaries on any
-existing installation, open **Admin Portal → GeoLite Location Database** in
+existing installation, open **Admin Portal → Geo locate users** in
 the running ARI site; no setup rerun or server restart is needed. Create a free
 MaxMind GeoLite account, accept its End User License Agreement, then open
 **Manage License Keys** and create a license key. The page links to each step.
@@ -163,6 +163,17 @@ Enter the account ID and key in ARI; ARI downloads and validates the latest
 GeoLite2 City database. Credentials are used only for the download and are not
 saved. The database is stored in
 `<ARI data directory>/cache/geoip/GeoLite2-City.mmdb`.
+
+The **Server and network** tab saves the number of trusted forwarding proxies
+for the next ARI restart. Use zero for direct connections or ordinary router
+port forwarding, and typically one for a single Caddy, nginx, Apache, or NAS
+HTTP reverse proxy that supplies `X-Forwarded-For`. For chains, count the
+trusted proxies that correctly forward headers, not routers. A saved value
+overrides `ARI_PROXY_COUNT`; if no value has been saved, the environment
+variable continues to work. A private or loopback client address cannot be
+geolocated. If proxy trust is enabled, firewall the ARI port so untrusted
+clients cannot bypass the proxy and forge forwarded headers. HTTPS termination,
+`ARI_HTTPS` (secure cookies and HSTS), and `ARI_GEOIP_DB` are separate settings.
 
 MaxMind requires GeoLite databases to be kept current. Return to the GeoLite
 Location Database page to update the database. The database is not bundled

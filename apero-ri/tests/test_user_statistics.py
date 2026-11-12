@@ -128,6 +128,39 @@ def test_empty_read_only_and_utc(tmp_path: Path,
     assert path.stat().st_mode & 0o777 == 0o400
 
 
+@pytest.mark.parametrize('count, expected', [(0, '127.0.0.1'),
+                                             (1, '192.0.2.30')])
+def test_proxy_settings_apply_at_startup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    count: int, expected: str,
+) -> None:
+    """Trust forwarded client addresses only with a configured proxy.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Isolate environment and authentication.
+    :param count: Persisted trusted proxy count.
+    :param expected: Address the application should see.
+    :return: None.
+    """
+    from flask import Flask, request
+    from apero_ri.application import ariapp_impls
+    from apero_ri.setup import geoip
+
+    monkeypatch.delenv('ARI_PROXY_COUNT', raising=False)
+    geoip.set_proxy_count(tmp_path, count)
+    app = Flask(__name__)
+    app.secret_key = 'proxy-test-only'
+    app._resolve_local_data_dir = lambda: tmp_path
+    ariapp_impls.ariapp_configure_production_hardening(app)
+    app.add_url_rule('/address', 'address', lambda: request.remote_addr)
+    headers = {'X-Forwarded-For': '192.0.2.30'}
+    response = app.test_client().get('/address', headers=headers)
+    assert response.get_data(as_text=True) == expected
+    assert app.config['ARI_ACTIVE_PROXY_COUNT'] == count
+    geoip.set_proxy_count(tmp_path, 1 - count)
+    assert app.config['ARI_ACTIVE_PROXY_COUNT'] == count
+
+
 def test_app_records_only_successful_page_navigations(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

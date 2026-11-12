@@ -29193,6 +29193,87 @@ for awards_key, awards_eng, awards_fr, awards_es in AWARDS_UI_TEXT:
     item.comment = 'Used in: ARI shared awards leaderboard'
     langlist.add(item)
 
+GEOLOCATE_UI = [
+    ('SETUP', 'Setup', 'Configuration', 'Configuración'),
+    ('DATABASE', 'GeoLite database', 'Base GeoLite', 'Base GeoLite'),
+    ('NETWORK', 'Server and network', 'Serveur et réseau', 'Servidor y red'),
+    ('INTRO', 'Configure location statistics for user activity.',
+     "Configurer les statistiques de localisation des utilisateurs.",
+     'Configurar las estadísticas de ubicación de usuarios.'),
+    ('STEPS', 'Install GeoLite, configure trusted proxies, then visit two '
+     'different pages and check User Statistics.',
+     'Installez GeoLite, configurez les mandataires et visitez deux pages '
+     'avant de consulter les statistiques.',
+     'Instale GeoLite, configure los proxies y visite dos páginas antes '
+     'de consultar las estadísticas.'),
+    ('PRIVACY', 'Only country and region are stored; IP addresses are not '
+     'saved. Private, loopback and unresolved addresses remain Unknown.',
+     'Seuls le pays et la région sont stockés ; les adresses IP ne le sont '
+     'pas. Les adresses privées ou non résolues restent inconnues.',
+     'Solo se almacenan país y región, no direcciones IP. Las direcciones '
+     'privadas o no resueltas permanecen desconocidas.'),
+    ('COUNT', 'Trusted forwarding proxies', 'Mandataires de confiance',
+     'Proxies de confianza'),
+    ('ACTIVE', 'Currently active', 'Actuellement actif', 'Activo actualmente'),
+    ('SAVED', 'Configured for next restart', 'Prévu au redémarrage',
+     'Configurado para el próximo reinicio'),
+    ('RESTART', 'Restart ARI after saving. The saved value overrides '
+     'ARI_PROXY_COUNT; before a value is saved, the environment still applies.',
+     'Redémarrez ARI après l’enregistrement. La valeur enregistrée remplace '
+     'ARI_PROXY_COUNT ; sinon la variable reste utilisée.',
+     'Reinicie ARI tras guardar. El valor guardado sustituye '
+     'ARI_PROXY_COUNT; antes de guardarlo se usa la variable de entorno.'),
+    ('DIRECT', '0: direct access or router port forwarding without an HTTP '
+     'reverse proxy. Private and local addresses cannot be geolocated.',
+     '0 : accès direct ou redirection de port sans mandataire HTTP. Les '
+     'adresses locales et privées ne peuvent pas être localisées.',
+     '0: acceso directo o redirección de puertos sin proxy HTTP. Las '
+     'direcciones locales y privadas no se pueden localizar.'),
+    ('ONE', '1: one trusted HTTP reverse proxy, such as Caddy, nginx, Apache '
+     'or a NAS reverse proxy, forwarding X-Forwarded-For and HTTPS headers.',
+     '1 : un mandataire HTTP de confiance, tel que Caddy, nginx, Apache ou '
+     'un NAS, transmettant X-Forwarded-For et les en-têtes HTTPS.',
+     '1: un proxy HTTP de confianza, como Caddy, nginx, Apache o un NAS, '
+     'que reenvía X-Forwarded-For y las cabeceras HTTPS.'),
+    ('MANY', '2 or more: only when that many trusted proxies append correct '
+     'forwarded headers. Count the actual trusted chain, not router hops.',
+     '2 ou plus : uniquement si chaque mandataire de confiance transmet les '
+     'bons en-têtes. Ne comptez pas les routeurs.',
+     '2 o más: solo si los proxies de confianza reenvían las cabeceras '
+     'correctas. No cuente los routers.'),
+    ('WARNING', 'Security: restrict direct access to ARI’s port to trusted '
+     'proxies. Otherwise clients can forge forwarded addresses and headers.',
+     'Sécurité : limitez l’accès au port ARI aux mandataires de confiance. '
+     'Sinon les clients peuvent falsifier les en-têtes.',
+     'Seguridad: limite el acceso al puerto de ARI a proxies de confianza. '
+     'De lo contrario los clientes pueden falsificar las cabeceras.'),
+    ('OTHER', 'HTTPS must be configured on the server or proxy. ARI_HTTPS '
+     'enables secure cookies and HSTS; use it only when HTTPS is available '
+     'for all clients. ARI_GEOIP_DB can override the database path.',
+     'HTTPS doit être configuré sur le serveur ou le mandataire. ARI_HTTPS '
+     'active les cookies sécurisés et HSTS ; utilisez-le uniquement si tous '
+     'les clients ont HTTPS. ARI_GEOIP_DB modifie le chemin de la base.',
+     'Configure HTTPS en el servidor o proxy. ARI_HTTPS activa cookies '
+     'seguras y HSTS; úselo solo si todos usan HTTPS. ARI_GEOIP_DB permite '
+     'cambiar la ruta de la base.'),
+    ('SAVE', 'Save network settings', 'Enregistrer les paramètres réseau',
+     'Guardar configuración de red'),
+    ('SAVED_MSG', 'Saved. Restart ARI to apply the new proxy count.',
+     'Enregistré. Redémarrez ARI pour appliquer ce nombre.',
+     'Guardado. Reinicie ARI para aplicar el número de proxies.'),
+    ('ERROR', 'Unable to save network settings.',
+     'Impossible d’enregistrer les paramètres réseau.',
+     'No se pudo guardar la configuración de red.'),
+]
+for geo_key, geo_eng, geo_fr, geo_es in GEOLOCATE_UI:
+    item = langlist.create('GEOLOCATE_' + geo_key, kind='text')
+    item.value['ENG'] = geo_eng
+    item.value['FR'] = geo_fr
+    item.value['ES'] = geo_es
+    item.arguments = 'None'
+    item.comment = 'Used in: ARI geolocation configuration'
+    langlist.add(item)
+
 
 # =============================================================================
 # Start of code

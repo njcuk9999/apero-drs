@@ -43,6 +43,18 @@ def api_install(app: Any) -> Any:
         return jsonify(
             success=False, error='Invalid or expired form token.'), 403
 
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(success=False, error='JSON request required.'), 400
+
+    action = str(payload.get('action') or 'install').strip()
+    data_dir = Path(app._resolve_local_data_dir())
+    if action == 'set_proxy_count':
+        try:
+            setup_geoip.set_proxy_count(data_dir, payload.get('count'))
+        except ValueError:
+            return jsonify(success=False), 400
+        return jsonify(success=True, count=setup_geoip.proxy_count(data_dir))
     try:
         is_loopback = ipaddress.ip_address(
             request.remote_addr or '').is_loopback
@@ -52,13 +64,6 @@ def api_install(app: Any) -> Any:
         message = ari_lang_support.translate(
             'Submit GeoLite credentials over HTTPS or from localhost.')
         return jsonify(success=False, error=message), 400
-
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        return jsonify(success=False, error='JSON request required.'), 400
-
-    action = str(payload.get('action') or 'install').strip()
-    data_dir = Path(app._resolve_local_data_dir())
     if action == 'set_health_check':
         status = setup_geoip.set_health_check_enabled(
             data_dir, bool(payload.get('enabled')))

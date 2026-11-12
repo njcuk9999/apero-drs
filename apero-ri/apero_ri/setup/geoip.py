@@ -104,6 +104,40 @@ def set_health_check_enabled(data_dir: Path, enabled: bool) -> dict[str, Any]:
     return status
 
 
+def set_proxy_count(data_dir: Path, count: int) -> None:
+    """Persist the trusted proxy count for the next server startup.
+
+    :param data_dir: ARI local data directory.
+    :param count: Number of trusted forwarding proxies, from zero to ten.
+    :return: None.
+    :raises ValueError: The count is not an integer in the supported range.
+    """
+    if type(count) is not int or not 0 <= count <= 10:
+        raise ValueError('Invalid proxy count')
+    with _STATUS_LOCK:
+        status = _load_status(data_dir)
+        status['proxy_count'] = count
+        _save_status(data_dir, status)
+
+
+def proxy_count(data_dir: Path) -> int:
+    """Return the saved proxy count or the legacy environment default.
+
+    :param data_dir: ARI local data directory.
+    :return: Trusted proxy count; invalid settings default to zero.
+    """
+    status = _load_status(data_dir)
+    value = status.get('proxy_count')
+    if value is None:
+        try:
+            value = int(os.environ.get('ARI_PROXY_COUNT', '0'))
+        except ValueError:
+            return 0
+    if type(value) is not int or not 0 <= value <= 10:
+        return 0
+    return value
+
+
 def get_status(data_dir: Path) -> dict[str, Any]:
     """Return database preview, update time, quota counters and health state.
 

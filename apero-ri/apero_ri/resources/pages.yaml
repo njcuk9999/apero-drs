@@ -445,7 +445,7 @@ home.admin_portal.first_time_guide:
     show: True
 
 home.admin_portal.geoip_database:
-  label: GeoLite Location Database
+  label: Geo locate users
   parent: home.admin_portal
   view-permission: view.admin
   icon: fa-solid fa-earth-americas
