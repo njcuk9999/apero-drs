@@ -165,9 +165,9 @@ astrometric.set_kwarg(name='--aliases', dtype=str, default='None',
                       helpstr=textentry('ASTROMETRIC_ALIASES_HELP'))
 
 # -----------------------------------------------------------------------------
-# apero_changelog.py
+# apero_version.py
 # -----------------------------------------------------------------------------
-changelog.name = 'apero_changelog.py'
+changelog.name = 'apero_version.py'
 changelog.path = 'apero.tools.recipes.dev'
 changelog.shortname = 'CLOG'
 changelog.instrument = __INSTRUMENT__
@@ -612,6 +612,8 @@ queue_recipe.set_kwarg(name='--submit', dtype='options', default='None',
                        helpstr=textentry('QUEUE_RECIPE_SUBMIT_HELP'))
 queue_recipe.set_kwarg(name='--dry_run', dtype='switch',
                        helpstr=textentry('QUEUE_RECIPE_DRY_RUN_HELP'))
+queue_recipe.set_kwarg(name='--headless', dtype='switch',
+                       helpstr=textentry('QUEUE_RECIPE_HEADLESS_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py

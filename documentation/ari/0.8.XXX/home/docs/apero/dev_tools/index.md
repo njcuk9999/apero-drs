@@ -14,7 +14,7 @@ Tools used to maintain APERO itself. Most users will never need these.
 
 | Name | Description |
 | --- | --- |
-| [apero_changelog](/docs/apero/dev_tools/clog) | Produces a nicely formatted change log (using git). |
+| [apero_version](/docs/apero/dev_tools/clog) | Produces a nicely formatted change log (using git). |
 | [apero_database](/docs/apero/dev_tools/dbmgr) | APERO database manager functionality. |
 | [apero_dependencies](/docs/apero/dev_tools/depend) | Run a dependency check on the DRS (Will display all modules required and some stats). |
 | [apero_documentation](/docs/apero/dev_tools/doc) | Re-make the apero documentation. |

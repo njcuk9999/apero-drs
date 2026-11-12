@@ -21406,7 +21406,7 @@ item.value['ENG'] = 'Current tag: {0}'
 item.value['FR'] = 'Étiquette actuelle : {0}'
 item.value['ES'] = 'Etiqueta actual: {0}'
 item.arguments = '{0}=current_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21417,7 +21417,7 @@ item.value['ENG'] = 'Created tag: {0} with date {1}'
 item.value['FR'] = 'Étiquette créée : {0} avec la date {1}'
 item.value['ES'] = 'Etiqueta creada: {0} con fecha {1}'
 item.arguments = '{0}=tag, {1}=commit_date[:10]'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21428,7 +21428,7 @@ item.value['ENG'] = 'Found {0} commits'
 item.value['FR'] = '{0} commits trouvés'
 item.value['ES'] = 'Se encontraron {0} commits'
 item.arguments = '{0}=total_commits'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21439,7 +21439,7 @@ item.value['ENG'] = 'Creating {0} tags from {1}{2:03d} to {3}'
 item.value['FR'] = 'Création de {0} étiquettes de {1}{2:03d} à {3}'
 item.value['ES'] = 'Creando {0} etiquetas de {1}{2:03d} a {3}'
 item.arguments = '{0}=total_tags, {1}=prefix, {2}=start_sub+1, {3}=end_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21450,7 +21450,7 @@ item.value['ENG'] = 'Enter new tag information'
 item.value['FR'] = 'Saisissez les informations de la nouvelle étiquette'
 item.value['ES'] = 'Introduzca la información de la nueva etiqueta'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21463,7 +21463,7 @@ item.value['FR'] = ('\nSaisissez la nouvelle étiquette au format '
 item.value['ES'] = ('\nIntroduzca la nueva etiqueta en formato '
                     'mayor.menor.subversión')
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21474,7 +21474,7 @@ item.value['ENG'] = '  (e.g., 0.8.200 for next subversion after 0.8.199)'
 item.value['FR'] = '  (ex. 0.8.200 pour la sous-version suivant 0.8.199)'
 item.value['ES'] = '  (p. ej., 0.8.200 para la subversión siguiente a 0.8.199)'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21485,7 +21485,7 @@ item.value['ENG'] = '  (e.g., 0.9.001 for new minor version)'
 item.value['FR'] = '  (ex. 0.9.001 pour une nouvelle version mineure)'
 item.value['ES'] = '  (p. ej., 0.9.001 para una nueva versión menor)'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21496,7 +21496,7 @@ item.value['ENG'] = '  (e.g., 1.0.001 for new major version)'
 item.value['FR'] = '  (ex. 1.0.001 pour une nouvelle version majeure)'
 item.value['ES'] = '  (p. ej., 1.0.001 para una nueva versión mayor)'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21507,7 +21507,7 @@ item.value['ENG'] = 'Created tag {0} at commit {1} with date {2}'
 item.value['FR'] = 'Étiquette {0} créée au commit {1} avec la date {2}'
 item.value['ES'] = 'Etiqueta {0} creada en el commit {1} con fecha {2}'
 item.arguments = '{0}=tag_name, {1}=commit_hash[:8], {2}=commit_date[:10]'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21518,7 +21518,7 @@ item.value['ENG'] = 'No tag changes requested.'
 item.value['FR'] = "Aucune modification d'étiquette demandée."
 item.value['ES'] = 'No se solicitaron cambios de etiqueta.'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21531,7 +21531,7 @@ item.value['FR'] = ('Le journal des modifications sera généré avec les '
 item.value['ES'] = ('Se generará el registro de cambios con las etiquetas '
                     'existentes.')
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21542,7 +21542,7 @@ item.value['ENG'] = 'Pushing tags to remote...'
 item.value['FR'] = 'Envoi des étiquettes vers le dépôt distant...'
 item.value['ES'] = 'Enviando etiquetas al remoto...'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21553,7 +21553,7 @@ item.value['ENG'] = 'Successfully created and pushed tag(s) up to {0}'
 item.value['FR'] = "Étiquette(s) créée(s) et envoyée(s) avec succès jusqu'à {0}"
 item.value['ES'] = 'Etiqueta(s) creada(s) y enviada(s) con éxito hasta {0}'
 item.arguments = '{0}=new_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21566,7 +21566,7 @@ item.value['FR'] = ('Journal des modifications mis à jour avec succès (aucune 
 item.value['ES'] = ('Registro de cambios actualizado con éxito (sin etiquetas '
                     'nuevas)')
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21579,7 +21579,7 @@ item.value['FR'] = ("Erreur : l'étiquette doit avoir le format "
 item.value['ES'] = ('Error: la etiqueta debe tener el formato '
                     'mayor.menor.subversión')
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21590,7 +21590,7 @@ item.value['ENG'] = '\nThis is a subversion increment from {0} to {1}'
 item.value['FR'] = "\nIl s'agit d'un incrément de sous-version de {0} à {1}"
 item.value['ES'] = '\nEste es un incremento de subversión de {0} a {1}'
 item.arguments = '{0}=current_tag, {1}=new_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21603,7 +21603,7 @@ item.value['FR'] = ('Toutes les étiquettes de {0}.{1}.{2} à {3} seront '
 item.value['ES'] = 'Se completarán todas las etiquetas de {0}.{1}.{2} a {3}'
 item.arguments = ('{0}=curr_major, {1}=curr_minor, {2}=int(curr_sub)+1, '
                   '{3}=new_tag')
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21615,7 +21615,7 @@ item.value['FR'] = ("\nIl s'agit d'un changement de version majeure/mineure "
                     'vers {0}')
 item.value['ES'] = '\nEste es un cambio de versión mayor/menor a {0}'
 item.arguments = '{0}=new_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21626,7 +21626,7 @@ item.value['ENG'] = 'Will create only the tag {0}'
 item.value['FR'] = "Seule l'étiquette {0} sera créée"
 item.value['ES'] = 'Solo se creará la etiqueta {0}'
 item.arguments = '{0}=new_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21637,7 +21637,7 @@ item.value['ENG'] = 'Skipping {0} (already exists)'
 item.value['FR'] = '{0} ignoré (existe déjà)'
 item.value['ES'] = 'Omitiendo {0} (ya existe)'
 item.arguments = '{0}=tag_name'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21648,7 +21648,7 @@ item.value['ENG'] = 'Creating subversion tags up to {0}'
 item.value['FR'] = "Création des étiquettes de sous-version jusqu'à {0}"
 item.value['ES'] = 'Creando etiquetas de subversión hasta {0}'
 item.arguments = '{0}=new_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21659,7 +21659,7 @@ item.value['ENG'] = 'Creating new tag: {0}'
 item.value['FR'] = 'Création de la nouvelle étiquette : {0}'
 item.value['ES'] = 'Creando nueva etiqueta: {0}'
 item.arguments = '{0}=new_tag'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21670,7 +21670,7 @@ item.value['ENG'] = 'Changes cancelled, tags removed.'
 item.value['FR'] = 'Modifications annulées, étiquettes supprimées.'
 item.value['ES'] = 'Cambios cancelados, etiquetas eliminadas.'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21682,7 +21682,7 @@ item.value['FR'] = ("Erreur : les parties de l'étiquette doivent être des "
                     'entiers')
 item.value['ES'] = 'Error: las partes de la etiqueta deben ser enteros'
 item.arguments = 'None'
-item.comment = 'Used in: tools/recipes/dev/apero_changelog.py'
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================
@@ -21705,6 +21705,27 @@ item.value['FR'] = '\tAjout de {0} types de fichiers'
 item.value['ES'] = '\tAñadiendo {0} tipos de archivo'
 item.arguments = '{0}=len(table)'
 item.comment = 'Used in: tools/module/documentation/drs_documentation.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-501-00047
+# =============================================================================
+item = langlist.create('40-501-00047', kind='all-code')
+item.value['ENG'] = (
+    'Found {0} distinct commit days since {1}; suggested version: {2}'
+)
+item.value['FR'] = (
+    'Trouvé {0} jours de commit distincts depuis {1} ; '
+    'version suggérée : {2}'
+)
+item.value['ES'] = (
+    'Se encontraron {0} días distintos con commits desde {1}; '
+    'versión sugerida: {2}'
+)
+item.arguments = (
+    '{0}=commit_day_count, {1}=start_tag, {2}=suggested_tag'
+)
+item.comment = 'Used in: tools/recipes/dev/apero_version.py'
 langlist.add(item)
 
 # =============================================================================

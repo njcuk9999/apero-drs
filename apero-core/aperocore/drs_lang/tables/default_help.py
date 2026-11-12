@@ -3977,6 +3977,20 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
+# QUEUE_RECIPE_HEADLESS_HELP
+# =============================================================================
+item = langlist.create('QUEUE_RECIPE_HEADLESS_HELP', kind='HELP')
+item.value['ENG'] = ('Do not open the queue dashboard in a local browser '
+                     '(useful when running on a headless server)')
+item.value['FR'] = ('Ne pas ouvrir le tableau de bord de la file dans un '
+                    'navigateur local (utile sur un serveur sans écran)')
+item.value['ES'] = ('No abrir el panel de la cola en un navegador local '
+                    '(útil al ejecutarlo en un servidor sin pantalla)')
+item.arguments = 'None'
+item.comment = 'Used by apero_queue.py gui --headless.'
+langlist.add(item)
+
+# =============================================================================
 # QUEUE_RECIPE_HOST_HELP
 # =============================================================================
 item = langlist.create('QUEUE_RECIPE_HOST_HELP', kind='HELP')

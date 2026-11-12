@@ -1825,14 +1825,15 @@ def _make_handler(
 
 def queue_gui(params: ParamDict) -> None:
     """
-    Gui mode: start the queue dashboard web server and open it in a
-    browser
+    Gui mode: start the queue dashboard web server and optionally open it
+    in a browser.
 
     The dashboard shows the queue status (coloured by state, filterable,
     sortable, paginated) and has action buttons to run the next task(s),
     create/submit batch scripts, reset the queue and edit the batch
     template settings. Stop the server with Ctrl+C or the Shutdown
-    button in the dashboard.
+    button in the dashboard. The --headless option disables automatic
+    browser launching.
 
     The --host and --port arguments control where the server listens
     (default 127.0.0.1:8090 - localhost only for safety) and --rows sets
@@ -1913,7 +1914,8 @@ def queue_gui(params: ParamDict) -> None:
     WLOG(params, 'info', textentry('40-513-00028', args=margs))
     # try to open the dashboard in a browser (ignore failures - e.g. on
     #   a headless machine the user can open the url manually)
-    if supervised:
+    headless = params['INPUTS'].get('HEADLESS', False)
+    if supervised and not headless:
         try:
             import webbrowser
             webbrowser.open(url)

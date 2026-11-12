@@ -11,7 +11,7 @@ Created on 2019-07-26 at 09:40
 """
 import os
 import shutil
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import apero
 from aperocore import drs_lang
@@ -23,7 +23,7 @@ from apero.tools.module.documentation import drs_changelog
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_changelog.py'
+__NAME__ = 'apero_version.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = apero.__NAME__
 __version__ = apero.__version__
@@ -135,6 +135,95 @@ def ask_for_new_tag() -> Optional[Tuple[str, bool]]:
             return (new_tag, is_subversion)
 
     return None
+
+
+def suggest_version_from_dates(
+    current_tag: str, commit_dates: List[str]
+) -> str:
+    """Suggest one subversion increment per distinct commit date.
+
+    :param current_tag: Latest tag in the current major/minor series.
+    :param commit_dates: Commit dates since the current tag.
+    :return: Suggested semantic-version tag.
+    """
+    major, minor, subversion = (
+        int(part) for part in current_tag.split('.')
+    )
+    increments = max(len(set(commit_dates)), 1)
+    suggested_subversion = subversion + increments
+    return f'{major}.{minor}.{suggested_subversion:03d}'
+
+
+def suggest_next_version() -> Tuple[str, str, int]:
+    """Suggest the next version from distinct commit days since its tag.
+
+    :return: Suggested tag, starting tag, and distinct commit-day count.
+    """
+    import subprocess
+
+    try:
+        current_tag = subprocess.check_output(
+            ['git', 'describe', '--tags', '--abbrev=0'],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        current_tag = '0.0.0'
+
+    parts = current_tag.split('.')
+    if len(parts) != 3:
+        current_tag = '0.0.0'
+        parts = current_tag.split('.')
+
+    try:
+        major, minor = int(parts[0]), int(parts[1])
+        int(parts[2])
+    except ValueError:
+        current_tag = '0.0.0'
+        major, minor = 0, 0
+
+    version_prefix = f'{major}.{minor}.'
+    tags = subprocess.check_output(
+        ['git', 'tag', '-l', f'{version_prefix}*'],
+        text=True
+    ).splitlines()
+
+    tag_subversions = []
+    for tag in tags:
+        tag_parts = tag.split('.')
+        if len(tag_parts) != 3:
+            continue
+        try:
+            if (int(tag_parts[0]) == major and
+                    int(tag_parts[1]) == minor):
+                tag_subversions.append((int(tag_parts[2]), tag))
+        except ValueError:
+            continue
+
+    if tag_subversions:
+        start_subversion, start_tag = max(tag_subversions)
+        commit_range_start = start_tag
+    else:
+        start_subversion = 0
+        start_tag = f'{version_prefix}000'
+        commit_range_start = subprocess.check_output(
+            ['git', 'rev-list', '--max-parents=0', 'HEAD'],
+            text=True
+        ).strip()
+
+    commit_dates = subprocess.check_output(
+        ['git', 'log', '--format=%cs',
+         f'{commit_range_start}..HEAD'],
+        text=True
+    ).splitlines()
+    commit_day_count = len(set(commit_dates))
+    starting_version = (
+        f'{major}.{minor}.{start_subversion:03d}'
+    )
+    suggested_tag = suggest_version_from_dates(
+        starting_version, commit_dates
+    )
+    return suggested_tag, start_tag, commit_day_count
 
 
 def create_single_tag(tag: str) -> None:
@@ -340,7 +429,7 @@ def remove_backfilled_tags(end_tag: str) -> None:
 
 def main(**kwargs: Any) -> Any:
     """
-    Main function for apero_changelog.py
+    Main function for apero_version.py
 
     :param kwargs: any additional keywords
 
@@ -393,6 +482,9 @@ def __main__(recipe: Any, params: Any) -> Any:
     # read and ask for new tag
     # log: Enter new tag information
     WLOG(params, '', textentry('40-501-00023'))
+    suggested_tag, start_tag, commit_day_count = suggest_next_version()
+    margs = [commit_day_count, start_tag, suggested_tag]
+    WLOG(params, 'info', textentry('40-501-00047', args=margs))
     # set new version using new tag-based approach
     tag_info = ask_for_new_tag()
 

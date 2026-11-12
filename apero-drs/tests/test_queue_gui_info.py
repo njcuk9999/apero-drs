@@ -1,6 +1,88 @@
 """Tests for the queue GUI Info tab and its shared ARI docs include."""
+import webbrowser
+from typing import Any
+
+import pytest
+
 from apero.tools.module.documentation import ari_docs
 from apero.tools.module.processing import drs_queue_gui
+
+
+@pytest.mark.parametrize(('headless', 'open_count'), [
+    (False, 1),
+    (True, 0),
+])
+def test_queue_gui_headless_suppresses_browser(
+    monkeypatch: Any, headless: bool, open_count: int,
+) -> None:
+    """Keep the dashboard running without opening a browser when requested.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :param headless: Whether browser launching should be suppressed.
+    :param open_count: Expected number of browser launch calls.
+    :return: None.
+    """
+    served = []
+
+    class FakeServer:
+        """Minimal server stand-in for the dashboard lifecycle."""
+
+        def __init__(
+            self,
+            address: tuple[str, int],
+            command: list[str],
+        ) -> None:
+            self.server_address = address
+
+        def start_worker(self) -> None:
+            pass
+
+        def worker_request(self, path: str) -> dict[str, bool]:
+            return dict(busy=False)
+
+        def serve_forever(self) -> None:
+            served.append(True)
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            pass
+
+        def finish_worker(self) -> None:
+            pass
+
+    opened = []
+    params = dict(INPUTS=dict(
+        HOST='None',
+        PORT='None',
+        ROWS='None',
+        HEADLESS=headless,
+    ))
+    monkeypatch.delenv(
+        drs_queue_gui.drs_queue_server.WORKER_PORT_ENV,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        drs_queue_gui.drs_queue,
+        'setup_queue_directories',
+        lambda params: None,
+    )
+    monkeypatch.setattr(
+        drs_queue_gui.drs_queue_server,
+        'QueueServer',
+        FakeServer,
+    )
+    monkeypatch.setattr(
+        drs_queue_gui,
+        '_make_handler',
+        lambda params, state, rows: object,
+    )
+    monkeypatch.setattr(drs_queue_gui, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.setattr(webbrowser, 'open', lambda url: opened.append(url))
+
+    drs_queue_gui.queue_gui(params)
+
+    assert len(opened) == open_count
+    assert served == [True]
 
 
 def test_render_info_html_lists_every_control_tab():

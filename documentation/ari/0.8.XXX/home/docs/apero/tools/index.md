@@ -32,7 +32,7 @@ Every APERO tool, user-facing and developer-only, at a glance. Tools are run dir
 | [apero_visu](/docs/apero/user_tools/visu) | User tool | All | APERO visualizer. |
 | [apero_database](/docs/apero/user_tools/apero_database) | User tool | All | This script has no DrsRecipe metadata yet. |
 | [apero_database_kill](/docs/apero/user_tools/apero_database_kill) | User tool | All | Stops APERO database process entries that exceed the configured 60-minute timeout. |
-| [apero_changelog](/docs/apero/dev_tools/clog) | Developer tool | All | Produces a nicely formatted change log (using git). |
+| [apero_version](/docs/apero/dev_tools/clog) | Developer tool | All | Produces a nicely formatted change log (using git). |
 | [apero_dependencies](/docs/apero/dev_tools/depend) | Developer tool | All | Run a dependency check on the DRS (Will display all modules required and some stats). |
 | [apero_documentation](/docs/apero/dev_tools/doc) | Developer tool | All | Re-make the apero documentation. |
 | [apero_langdb](/docs/apero/dev_tools/lang) | Developer tool | All | Language database tools. |
