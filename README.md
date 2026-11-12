@@ -15,7 +15,7 @@ Please see the documentation:
 3) [Installation](#3-installation)
 4) [To Do and Known Issues](#4-todo-and-currently-known-issues)
 5) [Using APERO](#5-using-apero)
-6) [Developer mode](#6-developer-mode)
+6) [Developer mode](#6-dev-mode)
 
 ## APERO module code diagram
 
@@ -204,8 +204,8 @@ For dev mode (editable install of both apero-core, apero-drs and lbl please run 
 conda create --name apero-env-08 python=3.12
 conda activate apero-env-08
 
-git clone git@github.com:njcuk9999/apero-drs.git
-git clone git@github.com:njcuk9999/lbl.git
+git clone git@github.com:njcuk9999/apero-drs.git -b 0.8.running
+git clone git@github.com:njcuk9999/lbl.git -b developer
 
 pip install -U -e './apero-drs/apero-core' -e './lbl' -e './apero-drs/apero-drs[dev]'
 
@@ -220,8 +220,8 @@ cd apero-bin
 virtualenv  apero-env-08
 pip install --no-index --upgrade pip
 
-git clone git@github.com:njcuk9999/apero-drs.git
-git clone git@github.com:njcuk9999/lbl.git
+git clone git@github.com:njcuk9999/apero-drs.git -b 0.8.running
+git clone git@github.com:njcuk9999/lbl.git -b developer
 
 source apero-env-08/bin/activate
 pip install -U -e './apero-drs/apero-core' -e './lbl' -e './apero-drs/apero-drs[dev]'
