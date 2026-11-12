@@ -546,6 +546,21 @@ class ConstantsDict:
         else:
             self.storage[f'{group}.{name}'] = constants
 
+    def addc(self, name: str, *args: Any, const_class: type[Const],
+             **kwargs: Any) -> None:
+        """Construct and add a custom constant using the arguments of add.
+
+        :param name: name of the constant
+        :param const_class: Const subclass to construct
+        :param args: positional arguments accepted by Const
+        :param kwargs: keyword arguments accepted by Const
+        """
+        constant = const_class(name, *args, **kwargs)
+        if constant.group is None:
+            self.storage[name] = constant
+        else:
+            self.storage[f'{constant.group}.{name}'] = constant
+
     def get(self, key: str) -> Const:
         """Return the constant definition stored under ``key``."""
         return self.storage[key]
