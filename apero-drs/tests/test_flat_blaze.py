@@ -66,3 +66,28 @@ def test_compute_flat_response_uses_model_spectral_groups(
     assert np.allclose(mp.nanmedian(flat_response['AB'], axis=1),
                        [30.0, 32.0], atol=1e-5)
 
+
+def test_e2ds_correct_scales_standard_deviations(
+        spirou_params: ParamDict) -> None:
+    """Scale errors with fixed blaze magnitude, preserving invalid pixels.
+
+    :param spirou_params: Profile-free APERO test parameters.
+    :return: None.
+    """
+    flux = np.array([[10.0, -4.0, 0.0, 3.0, np.nan]])
+    error = np.array([[2.0, 3.0, 4.0, 5.0, 6.0]])
+    blaze = np.array([[0.5, -2.0, 0.0, np.nan, 1.0]])
+    eprops = ParamDict()
+    eprops['E2DSFF'] = flux
+    eprops['E2DSFF_ERROR'] = error
+    fbprops = ParamDict()
+    fbprops['BLAZE'] = blaze
+
+    result = flat_blaze.e2ds_correct(spirou_params, eprops, fbprops)
+
+    np.testing.assert_allclose(result['E2DSFF'],
+                               [[5.0, 8.0, 0.0, np.nan, np.nan]])
+    np.testing.assert_allclose(result['E2DSFF_ERROR'],
+                               [[1.0, 6.0, 0.0, np.nan, np.nan]])
+    np.testing.assert_array_equal(error, [[2.0, 3.0, 4.0, 5.0, 6.0]])
+    assert result.sources['E2DSFF_ERROR'] == result.sources['E2DSFF']

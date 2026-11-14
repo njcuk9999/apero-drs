@@ -4,9 +4,2235 @@ Changelog
 
 (unreleased)
 ------------
+- [APERO.LOC+EXTRACT] Align NIRPS localisation with SPIROU by fitting the
+  NaN-filled order profile rather than the calibrated image. Preserve
+  instrument-specific fiber geometry and calibration steps.
+- [APERO.EXTRACT] Fix NIRPS-HA short-dark exposure diagnostics to pass the
+  numeric threshold directly, matching SPIROU and NIRPS-HE.
+- Update readme dev mode section. [Neil Cook]
+- [APERO.CORE] feat(constants): add addc() to construct custom Const
+  subclasses. [Neil Cook]
+
+  - Add ConstantsDict.addc() method that builds a constant using
+    a given Const subclass `(const_class)` plus arbitrary
+    positional/keyword args, then stores it under the proper group
+    key, mirroring the behavior of add()
+  - Enables defining custom constant types (subclasses of Const)
+    without duplicating the group/key storage logic already used
+    by add()
+- [APERO.CORE] feat(constants): add addc() to construct custom Const
+  subclasses. [Neil Cook]
+
+  - Add ConstantsDict.addc() method that builds a constant using
+    a given Const subclass `(const_class)` plus arbitrary
+    positional/keyword args, then stores it under the proper group
+    key, mirroring the behavior of add()
+  - Enables defining custom constant types (subclasses of Const)
+    without duplicating the group/key storage logic already used
+    by add()
+
+
+0.8.327 (2026-11-12)
+--------------------
+- [APERO.RI+CORE] feat: add configurable trusted proxy count for ARI
+  GeoIP setup. [Neil Cook]
+
+  - `apero-core/default_text.py`: add `GEOLOCATE_UI` language entries (EN/FR/ES)
+    for the new "Setup/Server and network" admin configuration tab, covering
+    proxy count guidance, security warnings and HTTPS/env var notes.
+  - `apero_ri/setup/geoip` and `admin_geoip_api_helpers.py`: add a
+    `set_proxy_count` JSON action to the GeoIP admin API, allowing the
+    trusted forwarding proxy count to be saved for the next restart instead
+    of only being read from the `ARI_PROXY_COUNT` env var; move JSON payload
+    parsing ahead of the HTTPS/loopback guard so action dispatch works
+    before the credential-only checks run.
+  - `ariapp_impls.py`: resolve the active proxy count via
+    `setup_geoip.proxy_count()` (saved value overrides `ARI_PROXY_COUNT)` and
+    expose it as `ARI_ACTIVE_PROXY_COUNT` in app config, instead of parsing
+    the env var directly.
+  - `page_view_helpers.py` and README.md: rename the "GeoLite Location
+    Database" first-time-guide step to "Geo locate users", update its
+    guidance text, and document the new proxy-count setting, its security
+    implications, and interaction with `ARI_HTTPS/ARI_GEOIP_DB`.
+- [APERO.RI+CORE] feat: add admin reset for user statistics. [Neil Cook]
+
+  Add a CSRF-protected "Reset statistics" action to the ARI admin
+  user-statistics page so operators can clear recorded activity
+  history and awards without deleting the underlying database file.
+
+  - `apero-core/drs_lang`: add `USER_STATISTICS_RESET(_CONFIRM|_ERROR)`
+    text entries (EN/FR/ES) for the new UI strings.
+  - `apero-ri/core/user_statistics.py`: add `reset_activity()` to delete
+    all rows from `user_days` while keeping the sqlite store intact.
+  - apero-ri/application: wire a new POST route
+    /api/admin/user-statistics/reset, an app handler, and a
+    reset() helper that enforces impersonation lockout and validates
+    a per-session CSRF token via `hmac.compare_digest` before deleting.
+  - templates/static: add a "Reset" button, confirmation prompt, and
+    fetch call in `user_statistics.html/js/css`, passing the CSRF token
+    and reset endpoint through `window.USER_STATISTICS`; bump cache-bust
+    asset versions.
+  - tests: cover `reset_activity` clearing active/pending records
+    without recreating a missing store.
+- [APERO.RI] fix: resolve geoip database from configured ARI data dir.
+  [Neil Cook]
+
+  - `ariapp_impls.py`: pass the resolved local data dir (via
+    `self._resolve_local_data_dir())` into `location_for_address` instead of
+    reading `self.args.data_dir` directly, so the configured ARI data
+    directory is honored consistently.
+  - `user_statistics.py`: `location_for_address` now takes an explicit
+    `data_dir` argument and builds the GeoIP database path from it,
+    instead of calling `secret_store.get_ari_dir()` internally. This
+    decouples location resolution from global secret-store state and
+    lets callers control which data directory is used.
+  - `test_user_statistics.py`: update tests to match the new signature,
+    seed a real GeoLite2-City.mmdb under the resolved data dir, and stub
+    `_geoip_reader` instead of `location_for_address` to exercise the real
+    path-resolution logic end to end.
+
+
+0.8.326 (2026-11-11)
+--------------------
+- [APERO.RI] feat: add world map coordinates for all IANA time zones.
+  [Neil Cook]
+
+  - Add tzdb 2026c zone.tab (public domain) as a static data file in
+    `apero_ri/static/data/`, included via MANIFEST.in, to provide
+    representative lat/lon coordinates for every IANA time zone.
+  - Document the new data source and its licensing/usage caveats in
+    `apero_ri/static/data/README.md`.
+  - Extend `user_clocks_page.js` with loadZoneCoordinates() to fetch and
+    parse zone.tab, populating zoneMeta for zones not already covered
+    by the built-in metadata, and resolving zones via a new
+    zoneLocation() helper that falls back to the Intl canonical zone
+    name before pin/label placement and day/night shading.
+  - Wire the new data file URL into clocks.html via
+    `window.ARI_CLOCK_PAGE.zoneCoordinatesUrl` and bump the clocks page
+    JS cache-busting version to 20261111a.
+
+  This lets the clocks page place any configured time zone on the
+  world map and compute accurate sun-based day/night state, instead
+  of only the previously hardcoded subset of zones.
+- [APERO.RI] feat: show awards summary on user account page. [Neil Cook]
+
+  - Refactor `monitor_awards_view` in `monitor_view_helpers.py` to split out
+    reusable `awards_labels()` and `awards_payload()` helpers, decoupled
+    from the monitor/user portal access checks
+  - Wire account page `(page_view_helpers.py)` to build an awards payload
+    for authenticated users with view.user permission, falling back to
+    an `awards_error` flag and localized labels if the build fails
+  - Extend awards.js to support a new compact ".acc-stat" widget that
+    shows the current user's rank, value, and medal per metric, reusing
+    the existing leaderboard rendering logic
+  - Add SUMMARY, RANK, UNRANKED, and UNAVAILABLE strings to
+    `AWARDS_UI_TEXT` in `default_text.py` for the new account widgets
+  - Update account.html with an awards summary section/macro and link
+    new stylesheets; bump awards.js cache-busting version in
+    `monitor_portal/awards.html`
+- [APERO.RI] feat(admin): add GeoLite2 database status, health check,
+  and preview. [Neil Cook]
+
+  - Extend `admin_geoip_api_helpers.api_install` to support an
+    action field, adding a `set_health_check` action that
+    toggles GeoLite freshness checks and refreshes admin health
+    after install/toggle; install responses now include the
+    resolved database path and current status.
+  - Add GeoLite database health evaluation to
+    `admin_health_helpers.build_admin_card_health_uncached` and
+    `build_admin_health_rows`, reporting ok/warning/error states
+    based on install presence, update age, and the new enable
+    flag for `"home.admin_portal.geoip_database`".
+  - Introduce `apero_ri.setup.geoip` helpers `(get_status`,
+    `health_status`, `set_health_check_enabled`, `database_path)` used
+    by the API, health checks, and page view to replace the old
+    ad-hoc `"is_file()`" installed check with richer status/health
+    context in `page_view_helpers.make_page_view`.
+  - In `monitor_view_helpers.monitor_awards_view`, ensure the
+    current user always appears in the awards table and flag
+    their row with `is_self` for UI highlighting.
+  - Add French/Spanish translations in `ari_lang.yaml` for the new
+    GeoLite status, preview, and health-check UI strings.
+
+
+0.8.325 (2026-11-11)
+--------------------
+- [APERO.RI] fix(ari): harden GeoIP install endpoint and restyle setup
+  flow. [Neil Cook]
+
+  - Replace fragile Origin-header CSRF check in
+    `admin_geoip_api_helpers.api_install` with a per-session token
+    compared via `hmac.compare_digest`, since Origin header checks
+    are unreliable behind some proxies/clients
+  - Move the GeoLite install/update form out of the First Time
+    Guide into its own dedicated page `(home.admin_portal.geoip_database)`
+    registered in pages.yaml, with `page_view_helpers.make_page_view`
+    now generating the CSRF token, install URL, and install status
+    for that page instead of the first-time guide
+  - Update `first_time_guide.html` and first-time step metadata to
+    link to the new GeoLite Location Database page instead of
+    embedding the install form inline
+  - Add French/Spanish translations for the new GeoLite database
+    page copy in `ari_lang.yaml`
+  - Rewrite README.md instructions to describe the new Admin
+    Portal → GeoLite Location Database page and account/license
+    key setup flow
+
+  Motivation: consolidate GeoIP setup/update into a stable,
+  revisitable admin page with a more robust CSRF defense, rather
+  than a one-time first-time-guide form relying on Origin checks.
+- Feat[APERO.RI]: allow GeoLite install/update from running admin
+  portal. [Neil Cook]
+
+  - Add admin API endpoint `(api_admin_geoip_install)` and helper module
+    `admin_geoip_api_helpers` to install/update the GeoLite2 City database
+    without rerunning setup or restarting the server
+    (application.py, routes.py)
+  - Wire the First Time Guide "GeoLite Location Database" step to the
+    new endpoint and update its instructions/URL accordingly
+    `(page_view_helpers.py`, `templates/admin/first_time_guide.html)`
+  - Make the GeoIP reader cache key on file mtime `(_geoip_reader)` so an
+    updated MMDB is picked up without a process restart
+    `(core/user_statistics.py)`
+  - Update `setup_app.py` success message since restart is no longer
+    required after installing the database
+  - Refresh English/FR/ES translations in `ari_lang.yaml` and README.md
+    to document the new in-app install/update flow and remove the
+    outdated `"apero_ri_setup` --force" guidance
+
+  This removes the need to rerun setup or restart ARI just to install
+  or refresh the GeoLite2 City database, simplifying GeoIP maintenance
+  for operators.
+- [APERO.RI] feat: add GeoLite database step to first-time guide. [Neil
+  Cook]
+
+  - Add a new optional "GeoLite Location Database" step to the
+    admin first-time setup guide in `page_view_helpers.py`, with
+    sub-steps describing running `apero_ri_setup` --force, using
+    MaxMind credentials, and restarting ARI after install.
+  - Detect install status by checking for GeoLite2-City.mmdb under
+    the resolved data dir's cache/geoip folder, reporting
+    ok/pending status and a matching message.
+  - Allow guide steps to omit an endpoint (no setup page link) by
+    defaulting to step-provided endpoint before falling back to
+    `page_id_to_endpoint` lookup.
+  - Update `first_time_guide.html` to render steps without an
+    endpoint as plain text instead of a link, and apply the |tl
+    translation filter to titles, purposes, messages, and
+    sub-steps so new guide text is localized.
+  - Add FR/ES translations for the new GeoLite step strings and
+    the "no database installed" message in `ari_lang.yaml`.
+  - Add test coverage verifying the GeoLite step reports pending
+    status when the database is missing and complete/ok status
+    once GeoLite2-City.mmdb exists.
+
+
+0.8.324 (2026-11-11)
+--------------------
+- [APERO.RI] feat(setup): add in-app GeoLite2 City download during
+  setup. [Neil Cook]
+
+  - Replace manual pip install + env var workflow for GeoIP with an
+    in-app installer: the setup completion page now lets operators
+    submit a MaxMind account ID and license key to download and
+    validate the GeoLite2 City database directly `(setup_app.py`,
+    setup/geoip.py).
+  - Store the downloaded database under
+    <ARI data dir>/cache/geoip/GeoLite2-City.mmdb by default;
+    `ARI_GEOIP_DB` is now only an optional override rather than the
+    primary way to point at a database `(user_statistics.py)`.
+  - Harden the new install endpoint with CSRF token comparison via
+    `hmac.compare_digest`, localhost/HTTPS checks, and explicit terms
+    acceptance before any download is attempted.
+  - Add FR/ES translations for the new GeoLite setup UI strings
+    `(resources/ari_lang.yaml)` and wire `setup_app's` template context
+    through `ari_lang_support`.
+  - Update README to describe the new setup-driven install/update
+    flow, the default database location, and the --force update path
+    instead of the old pip install -e '.[geoip]' instructions.
+- [APERO.CORE+DRS]: add sortable/filterable queue stats table and fix
+  `S1D_V` column bug. [Neil Cook]
+
+  - `apero-core/drs_lang`: add new UI text keys `"ACTIVE_USERS`" and
+    `"ACTIVE_DAYS`" for the Awards view translations (en/fr/es)
+  - `apero-drs/instruments/nirps_ha+nirps_he` `file_definitions`: fix
+    `post_s_file` `RECON_flux/RECON_eflux` columns mistakenly labeled
+    `"S1D_W`" instead of `"S1D_V`", correcting output file naming
+  - `apero-drs/tools/.../queue_template.html`: rework the processing
+    queue stats table to support interactive sorting (click/keyboard
+    on headers, aria-sort indicators) and per-column text filtering
+    via a dedicated filter row
+    - add data-sort-value/data-filter-value attributes to timing and
+      top-task rows so numeric sorting/filtering works on formatted
+      durations
+    - preserve focus/selection of an active filter input across
+      re-renders triggered by renderStats()
+    - introduce prepareStatsTable()/statsTableStates to manage sort
+      and filter state per table instance
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- Feat[APERO.CORE+DRS]: add tellu s1d recon outputs, fix tapas path, UI
+  polish. [Neil Cook]
+
+  - `apero-core/drs_lang`: add `AWARDS_*` localized strings (EN/FR/ES)
+    for the shared ARI awards leaderboard UI (titles, columns,
+    pagination labels, medal tiers, error states).
+  - apero-drs `recipes/nirps_ha+he` `apero_fit_tellu`: generate s1d
+    (wave and velocity grid) spectra for both the sky correction
+    and finite-resolution correction, weighting by blaze before
+    conversion; pass the new s1d props through to
+    `fit_tellu_write_recon` so they are written to the recon output
+    file alongside the existing reconstructed absorption s1ds.
+  - `science/telluric/gen_tellu.py`: fix `load_tapas_spl` to resolve
+    objectless telluric files from the shared PATH.TELLU/OTHER
+    directory instead of a non-existent per-key OTHER subfolder.
+  - `tools/module/processing/drs_queue_server.py`: launch the
+    worker subprocess with `start_new_session=True` so it gets its
+    own process group, isolating it from the dashboard's signals.
+  - `tools/module/processing/gui/queue_template.html`: add a
+    viewport meta tag and responsive CSS (flex-wrap, media query
+    for <=900px) so the queue dashboard is usable on small
+    screens.
+- Feat[APERO.CORE+DRS]: add queue dashboard restart and fix telluric
+  OTHER lookups. [Neil Cook]
+
+  - Add `drs_queue_gui` restart-server flow: import `drs_queue_server`,
+    inject restart label/confirmation strings into dashboard HTML,
+    detect supervised vs worker-port mode via `WORKER_PORT_ENV` and
+    skip the stale watcher thread when running under a supervisor.
+  - Add new language entries 40-513-00044/45/46 (ENG/FR/ES) in
+    apero-core `default_text.py` for the dashboard unavailable message,
+    restart button label, and restart confirmation prompt.
+  - Fix `TelluricDatabase.get_tellu_entry` in `drs_database.py` to accept
+    tuple-based ttable input and correctly resolve OTHER object names
+    (both scalar and list cases) to the shared OTHER directory instead
+    of key/OTHER, matching the updated asset layout.
+  - Flatten telludb reset asset paths in checksums.yaml (drop the
+    duplicate top-level `sky_model/tapas` entries, keep only the OTHER/
+    variants) and bump the asset tarball/humantime/unixtime metadata.
+  - Temporarily seed the telluric database from reset.tellu.csv in
+    `manage_databases.py` until APERO recipes register sky-model
+    products directly; calibration DBs remain untouched.
+  - Drop the unused params argument from `wave_to_wave` calls in
+    `sky_corr.py` to match its updated signature.
+
+
+0.8.323 (2026-11-11)
+--------------------
+- `[APERO.apero_ri]` have the ability to move apero profiles from one
+  instrument to another. [Neil Cook]
+
+
+0.8.322 (2026-11-10)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO.ARI] feat: add legacy Google Sheets authentication and
+  regression tests. [Neil Cook]
+- [APERO.CORE+DRS] fix: correct wave solution cheby derivative scaling.
+  [Neil Cook]
+
+  - `wave.py` `(calc_wave_sol)`: fix chebder scaling by passing
+    scl=2/nbxpix so the wavelength derivative is correctly
+    mapped from the [0, nbxpix] domain to the Chebyshev [-1, 1]
+    domain, which was previously producing wrong `step_hc_wave`
+    values
+  - wave.py: re-enable the "Loop 2: Find offsets" block (peak
+    number discontinuity correction and bulk offset minimisation
+    of cavity length STDDEV) that had been commented out, and
+    comment out the older step-backward FP peak counting method
+    it replaces
+  - wave.py: temporarily hardcode the FP/HC cross-match offset
+    search to [0] instead of scanning the full
+    `[-max_fp_c_offset`, `max_fp_c_offset]` range
+  - `wave_core.py` `(table_adjust_fp_peak_number)`: increase the
+    robust polynomial fit degree from 3 to 5 when removing the
+    trend from FP peak count residuals
+  - `nirps_he/constants.py`: update `FIBER_OFFSET_MOD` and
+    `FIBER_SCALE_MOD` values for fiber B to match the new wave
+    solution calibration
+  - `apero_wave_ref_nirps_he.py`: remove leftover debug print
+    statement of the central wavelength map
+
+  These changes address an incorrect derivative scaling that
+  degraded the FP-to-HC wavelength cross-match and restore the
+  bulk-offset minimisation step needed for a stable cavity
+  length solution on `NIRPS_HE`.
+
+
+0.8.321 (2026-11-06)
+--------------------
+- [APERO.CORE+DRS] fix: improve FP peak-number correction and `wave_meas`
+  update [UNTESTED+UNFINISHED] [Neil Cook]
+
+  - `wave_core.table_adjust_fp_peak_number`: replace the polynomial-fit
+    residual metric with a median-step deviation metric `(res_count)`,
+    fitting and removing a degree-3 polynomial from the deviation
+    before picking the worst order to correct. Track dispersion
+    between iterations via `disp_before/disp_after` instead of
+    recomputing trial residuals against the old model, and drop the
+    now-unused `trial_residuals` bookkeeping.
+  - `wave.calc_wave_lines`: after updating `WAVE_REF` from corrected
+    `PEAK_NUMBER`, also recompute `WAVE_MEAS` per order using a spline of
+    `PIXEL_REF/WAVE_REF` evaluated at `PIXEL_MEAS`, so measured
+    wavelengths stay consistent with the corrected peak numbers.
+  - `wave.calc_wave_sol`: comment out the Loop 2 bulk/line offset
+    search (per-line discontinuity correction and global bulk-offset
+    RMS minimisation) pending rework, now superseded by the
+    `wave_core-based` correction above.
+  - `nirps_he/constants.py`: revert `REF_HC_BOXSIZE` from 39 back to 26
+    to match the corrected box size for 2x extraction sampling.
+- Enhance Apero Async Tasks and Monitoring Checks. [Neil Cook]
+
+  - Updated `apero_object_table.py`, `apero_observation_table.py`, and `apero_qc_stats.py` to include an `update_key` parameter in the `should_skip_profile_query` and `save_profile_db_table_updates` functions for better tracking of database updates.
+  - Added a new HTML banner in `object_page.html` to inform users about the status of object-product refreshes, including messages for 'partial', 'stale', and 'unknown' statuses.
+  - Introduced a comprehensive regression test suite in `test_apero_object_query_refresh.py` to ensure safe, incremental object refreshes, covering various scenarios including fingerprint changes, checkpoint independence, and error handling.
+  - Created a new test file `test_async_tasks_dashboard.py` to validate the functionality of async task scopes and named queues in the dashboard.
+  - Expanded documentation for monitoring checks related to the NIRPS instrument, detailing specific tests and their resolved values for various states including cryo, enclosure, and turbopump statuses.
+- [APERO.DRS+RI]: fix observation-table route and add wave debug print.
+  [Neil Cook]
+
+  - apero-ri: the "/observation-table" URL rule was wired to
+    `_ri_object_table_view` instead of the observation table view,
+    so visiting that page rendered the object table. Split the
+    handler into a dedicated `_ri_obs_table_view` (observation table)
+    and `_ri_object_table_view` (object table), each delegating to its
+    matching helper, and point the route at the correct method.
+  - apero-drs: add a temporary debug print of the central wavelength
+    column in the NIRPS HE wave reference recipe during cavity
+    length iteration, to aid ongoing wavelength solution debugging.
+
+  TODO: remove the debug print in `apero_wave_ref_nirps_he.py` once
+  debugging is complete.
+
+
+0.8.320 (2026-11-05)
+--------------------
+- [APERO.CORE+NIRPS] fix wave calibration params for 2x sampling and
+  queue messages. [Neil Cook]
+
+  - `apero-core/drs_lang`: add new language strings 40-513-00042 and
+    40-513-00043 for queue cleanup/process removal summaries used in
+    `drs_queue_gui.py`, `drs_queue.py` and `drs_reset.py`
+  - `apero-drs/core/drs_file.py`: rename DrsFitsFile.combine() parameter
+    infiles to `input_files` and build the combined input list with
+    np.append instead of list concatenation for clarity
+  - apero-drs/instruments/default/constants.py: add new user constant
+    `WAVE_ORD_BAD` to toggle the wave-lines "what went wrong" debug plot
+    for orders with fewer than 50% of expected lines found
+  - `apero-drs/instruments/nirps_ha/constants.py`: double several wave
+    calibration constants `(MAX_ORDER_BULKOFFSET`, `REF_EDGE_WMAX`,
+    `REF_HC_BOXSIZE`, `REF_HC_GUESS_EWID`, `HC_FITBOX_SIZE`, `FITBOX_EWMIN/MAX`,
+    `LARGE_JUMP)` to account for the new 2x extraction sampling, and
+    enable `WAVE_ORD_BAD` debugging for `NIRPS_HA`
+  - `apero-drs/instruments/nirps_ha/file_definitions.py`: register a new
+    static wavelength reference file `(STATIC_WAVE_REF)` via a new
+    `DRS_STATIC` file set and StaticFile output class
+  - `apero-drs/instruments/nirps_ha/keywords.py`: assign explicit FITS
+    header keys `(PPS_G`, `PPS_GBP`, `PPS_GRP`, `PPS_J`, ...) to the magnitude
+    source keywords that previously had none
+- [APERO.SPIROU+NIRPS] feat: support SIMBAD TAP mirror fallback. [Neil
+  Cook]
+
+  - Add `drs_simbad` helper module usage in `drs_astrometrics.py` and
+    `drs_astro_wrap.py` to select the first responding SIMBAD TAP
+    server from an ordered list (main then mirrors), checked once
+    per process instead of hardcoding a single endpoint
+  - Replace `SIMBAD_TAP` (single URL) with `SIMBAD_TAPS` list in
+    `drs_astrometrics.py`; update `_simbad_json` and `_resolve_from_name`
+    to accept either a single URL or a list of candidate URLs
+  - Add `AstrometricDatabase._read_list_param` helper to read the new
+    list-type param, falling back to defaults when missing/empty
+  - Rename constant `SIMBAD_TAPURL` -> `SIMBAD_TAPURLS` (dtype=list) in
+    `apero/instruments/default/constants.py` and set instrument-specific
+    mirror lists (CDS main + Harvard mirror) in `nirps_ha`, `nirps_he` and
+    spirou constants.py
+  - Use `ASTROM.SIMBAD_TAPURLS` in `drs_astro_wrap.identify_from_file` via
+    `drs_simbad.use_simbad_mirror` before querying astroquery's Simbad
+  - Update tests in `test_drs_astrometrics_tap_helpers.py` to cover the
+    new mirror-selection behaviour
+
+  BREAKING CHANGE: constant `SIMBAD_TAPURL` renamed to `SIMBAD_TAPURLS`
+  and changed from str to list; any custom config overriding
+  `SIMBAD_TAPURL` must be updated to `SIMBAD_TAPURLS` with a list value.
+- [APERO.CORE+DRS]: fix driver SQL params, `REF_FILETYPE` list, queue
+  qresult. [Neil Cook]
+
+  - `apero-core/drs_db.py`: pass `no_parameters` execution option to
+    `exec_driver_sql` count/fetchall/get-query calls so raw SQL
+    containing literal ':' or '%' characters is no longer mangled by
+    SQLAlchemy's parameter binding
+  - `apero-drs/core/drs_file.py`: drop ambiguous 'multiple' alias from the
+    math operator check (keep `'multiply'/'times'/'*')` to avoid
+    collision with other math keywords
+  - `instruments/default/constants.py` and `nirps_ha/nirps_he/spirou`
+    constants.py: change `REF_FILETYPE` from a single str to a list of
+    str (dtype=list, dtypei=str) and update instrument values to
+    `['FLAT_FLAT']` accordingly; fix typo in description
+    (filtetype -> filetype)
+  - `recipe_definitions.py`: add 'pending' as a valid --qresult option
+    for `queue_recipe`
+  - `apero_pp_ref_nirps_he.py`: fix undefined variable reference, use
+    emsg instead of msg when raising AperoCodedException
+  - `setup/core/drs_setup.py`: call `drs_processing.sync_external_raw`
+    during `run_setup` to populate the raw directory after clean
+    install; add type hints and docstrings to `end_all`, `create_paths`,
+    `create_yamls`, `create_user_configs`, `create_setup_files` and
+    `clean_install` for clarity
+  - `setup/core/setup_constants.py`: fix broken indentation on
+    `USE_EXTERNAL_RAW` helpstr assignment
+
+
+0.8.319 (2026-11-01)
+--------------------
+- [APERO.CORE] perf: optimize math/nan-filling hot paths. [Neil Cook]
+
+  Reduce redundant computation and avoid reprocessing already-clean
+  data in several numerically heavy helper functions, without changing
+  their outputs:
+
+  - math/fast.py: reuse the already-computed weight sum in
+    `odd_ratio_mean` instead of recomputing it for the bulk error.
+  - math/gauss.py: fix a copy-paste bug where the n==6 branch of
+    `gaussian_function_nn` was unreachable because it duplicated the
+    n==5 condition.
+  - `math/gen_math.py`: simplify the NaN check in `linear_minimization`,
+    vectorize `square_medbin's` binning loop with reshape/transpose
+    instead of nested Python loops, and cache repeated length/finite
+    computations in lowpassfilter.
+  - math/interpolate.py: cache repeated weight terms in
+    `sample_bilinear` and `irregular_savgol`, and avoid a redundant
+    bincount call in `convolve_irregular` when weighting is 'integral'.
+  - math/nan.py: in nanpad and `fill_nans`, only re-check/re-smooth the
+    subset of pixels that were actually modified or are still bad,
+    instead of rescanning the whole image each iteration/column.
+  - `science/calib/background_core.py`: adjust tiling in
+    `fit_lower_envelope_2d` for bottleneck's integer axis requirement.
+- [APERO.RI] fix: default clocks page to light theme styling. [Neil
+  Cook]
+
+  - Introduce CSS custom properties for the world clocks widget's
+    map, label, card, and badge colors so light mode is the base
+    palette instead of dark
+  - Move previous dark-only colors into a [data-theme="dark"]
+    override block for map spheres, grid, land, night overlay,
+    terminator, labels, leaders, cards, and badges
+  - Switch date input color-scheme to light by default, with a
+    dark override under [data-theme="dark"]
+  - Adjust asleep badge/cell muted color for light background
+    readability
+  - Bump cache-busting version suffix for
+    `user_clocks_page.css` in clocks.html template
+- [APERO.DRS+RI] feat: cap basket size, add world clock map, tidy types.
+  [Neil Cook]
+
+  - apero-ri `basket_funcs`: introduce `BASKET_FILE_LIMIT` (2000) and guard
+    `add_to_basket` with a lock so concurrent requests can't race past
+    the cap or corrupt the basket file
+  - apero-ri API helpers `(ariapp_impls`, `basket_api_helpers)`: include
+    `basket_limit` in JSON responses so the frontend can warn users
+  - apero-ri `file_browser.js`: show a "basket limit reached" toast once
+    the count hits the limit and simplify the skipped-entry message
+  - apero-ri `user_clocks_page.js`: rewrite the world clock widget with
+    an animated day/night map, per-timezone pins and labels, backed by
+    a new `user_clocks_page.css` stylesheet
+  - apero-ri tests: add `test_basket_funcs.py` covering limit enforcement
+    and duplicate handling in `add_to_basket`
+  - apero-drs: minor typing cleanup (Any/Union/Optional imports) in
+    `drs_db_old`, lsd, `template_tellu` and `database_update` modules
+- [APERO.DRS] refactor: strip redundant docstrings and type hints. [Neil
+  Cook]
+
+  - `drs_setup.py`: remove no-op -> None return annotations and
+    docstrings that only restated the function signature, with no
+    change in behavior (SetupArgument methods, `command_line_args`,
+    `ask_user`, `update_setup`, `create_paths`, `create_yamls`,
+    `create_user_configs`, `create_setup_files`, `create_install_script`,
+    `clean_install`, `run_setup`, `catch_sigint`, `display_title`, `end_all)`
+  - `drs_processing.py`: same cleanup for `Run.prerun_test`,
+    `generate_skip_table`, `skip_remove_non_required_args`,
+    `processing_email`, `write_to_file`, `reset_files`, `update_index_db`,
+    `get_raw_obs_dirs`, `process_verification`, and related helpers;
+    also fix `Run.__setstate__` docstring which described a param that
+    no longer exists
+  - AGENTS.md: drop the obsolete "Temporary files" / TMPDIR guidance
+    section since it no longer reflects current agent instructions
+
+
+0.8.318 (2026-10-30)
+--------------------
+- [APERO.CORE+DRS] docs: add type hints and docstrings to helper
+  functions. [Neil Cook]
+
+  - Annotate return type of placeholder function1() stubs across
+    apero-core package `__init__` modules `(drs_lang/tables`, io, science)
+    and the `pip_versions` resource module, plus apero-drs documentation
+    `__init__`, and add a short docstring explaining their purpose
+  - Add docstrings to internal wrapper/closure functions in
+    apero-drs `(dev/plotting._imshow`, `io/drs_fits.Header.get_key`,
+    `io/drs_lock.locker's` `locked_function)` to clarify their behavior
+  - Annotate `**kwargs` as `**kwargs`: Any in `NIRPS_HA` recipe main()
+    signatures (badpix, ccf, dark, `dark_ref`, extract, `fit_tellu`, flat,
+    `lbl_compile`, `lbl_compute`, `lbl_mask`, ...) for consistent typing
+    across recipe entry points
+
+  No behavioral changes; this is a type-hinting and documentation
+  cleanup pass to improve static analysis and readability.
+- [APERO.DRS] refactor: add missing type hints and docstrings. [Neil
+  Cook]
+
+  - Add explicit -> None / -> 'ClassName' return annotations to
+    constructors and copy/copyother methods across `drs_argument.py`,
+    `drs_file.py` (DrsNpyFile, DrsOutFile, DrsLBLFile) and dev/core.py
+  - Fix incorrect default value expressions (e.g. exptime=Union[...]
+    in `drs_image.convert_to_adu)` and give explicit types to loosely
+    typed parameters (name, inext, fmt, use, sname, etc.) in
+    `drs_image.py`, `berv.py` and `gen_calib.py`
+  - Add docstrings to previously undocumented functions
+    `(measure_effective_readout_noise`, `locked_bervcalc`, `add_berv_keys)`
+    to document parameters and return values
+  - Purely a typing/documentation cleanup pass with no behavioral
+    changes; improves static analysis and IDE support across the
+    core argument, file, image and calibration modules
+- Docs[APERO.DRS]: add type hints and docstrings across GUI/plot/util
+  modules. [Neil Cook]
+
+  - Add return/parameter type annotations to ArrowHandler in
+    `gen_plot.py` `(create_artists)` for clearer legend handler API
+  - Add typed signatures and parameter docstrings to DeleteTables
+    and Page1 in `manage_db_gui.py` for better IDE/static-analysis
+    support
+  - Add return type annotations and a missing docstring for the
+    internal `_flush` helper, GuiState, and request handler methods
+    `(_get/_post/_make_handler)` in `drs_queue_gui.py`
+  - Add type hints and docstrings to `RecipeLog.__repr__`,
+    `return_block`, `find_files`, and `get_cores` in `drs_utils.py`,
+    including a new docstring for `get_cores`
+
+  No functional behavior changes; this is purely type-hint and
+  documentation cleanup to improve static typing coverage and
+  code readability across these modules.
+
+
+0.8.317 (2026-10-29)
+--------------------
+- Docs[APERO.DRS]: add type hints and docstrings across GUI/plot/util
+  modules. [Neil Cook]
+
+  - Add return/parameter type annotations to ArrowHandler in
+    `gen_plot.py` `(create_artists)` for clearer legend handler API
+  - Add typed signatures and parameter docstrings to DeleteTables
+    and Page1 in `manage_db_gui.py` for better IDE/static-analysis
+    support
+  - Add return type annotations and a missing docstring for the
+    internal `_flush` helper, GuiState, and request handler methods
+    `(_get/_post/_make_handler)` in `drs_queue_gui.py`
+  - Add type hints and docstrings to `RecipeLog.__repr__`,
+    `return_block`, `find_files`, and `get_cores` in `drs_utils.py`,
+    including a new docstring for `get_cores`
+
+  No functional behavior changes; this is purely type-hint and
+  documentation cleanup to improve static typing coverage and
+  code readability across these modules.
+- [APERO.DRS] docs: add type hints and docstrings across spirou modules.
+  [Neil Cook]
+
+  - Annotate `**kwargs` with Any and add missing return type hints in
+    grouping.py, `plotting/plot_functions.py`, plotting/plotter.py,
+    `recipes/spirou/apero_loc_spirou.py` and `science/preprocessing/gen_pp.py`
+  - Flesh out sparse docstrings (params/return descriptions) for
+    `lbl_compute_group`, `plot_static_cav_check_plot`,
+    `plot_static_wave_check_plot`, `summary_latex`, `summary_html`,
+    `_get_names` and `apero_loc_spirou.__main__`
+  - No behavioral changes; improves static typing coverage and
+    readability for maintenance and IDE tooling
+- [APERO.CORE] docs: add type hints/docstrings and user-text guideline.
+  [Neil Cook]
+
+  - Document a new AGENTS.md policy requiring user-facing strings
+    (prompts, logs, warnings, errors, CLI help) in apero-drs/apero-ri to
+    use language-database entries via textentry() instead of inline
+    English, and to update existing entries rather than hard-coding
+    replacements.
+  - Add explicit type annotations (parameters and return types) and
+    clarify/expand docstrings across apero-core base modules:
+    base.py, `drs_base.py`, and `constant_functions.py`.
+  - No behavioral changes; purely typing and documentation improvements
+    to aid static analysis and code readability.
+
+
+0.8.316 (2026-10-29)
+--------------------
+- [APERO.CORE] docs: add type hints/docstrings and user-text guideline.
+  [Neil Cook]
+
+  - Document a new AGENTS.md policy requiring user-facing strings
+    (prompts, logs, warnings, errors, CLI help) in apero-drs/apero-ri to
+    use language-database entries via textentry() instead of inline
+    English, and to update existing entries rather than hard-coding
+    replacements.
+  - Add explicit type annotations (parameters and return types) and
+    clarify/expand docstrings across apero-core base modules:
+    base.py, `drs_base.py`, and `constant_functions.py`.
+  - No behavioral changes; purely typing and documentation improvements
+    to aid static analysis and code readability.
+- [APERO.RI] test: cover async task sync requiring local task config.
+  [Neil Cook]
+
+  - Seed `server_a/server_b` with matching async task rows in
+    `test_every_adapter_exports_and_round_trips` and assert they
+    round-trip via `auth.save_async_tasks/load_async_tasks`
+  - Add `test_async_settings_requires_local_task_configuration` to verify
+    `async_settings` sync rejects task keys not configured on the
+    receiving server, and succeeds once the task exists locally,
+    including subsequent updates syncing correctly
+- [APERO.CORE+RI+DRS]: add APERO queue dashboard proxy in ARI, document
+  error codes, and parse lang file safely. [Neil Cook]
+
+  - apero-core: parse language files with  instead of naive line
+    scanning in `drs_base.lang_db_proxy`, correctly handling multi-line
+    string values; add  helper with default-language
+    fallback. Annotate every AperoCodedException call site in
+    `constant_functions.py` with the corresponding error-text comment for
+    easier maintenance/debugging.
+  - apero-ri: introduce APERO Queue feature - new  core
+    module (YAML-backed queue definitions, SSH tunnel params, validation,
+    action hiding for monitors),  (admin
+    setup + monitor proxy API with permission checks and dashboard
+    health probing), and new templates (
+    tabbed iframe viewer,  definition
+    editor) so monitors can access  dashboards
+    through a proxied, access-controlled tunnel.
+  - apero-drs: add shared  doc describing the queue
+    dashboard's Control tab sections, consumed by 's
+    rendered Info tab and the ARI docs; add
+    covering info rendering, ANSI handling, cached status details, and
+    doc inclusion.
+
+
+0.8.315 (2026-10-29)
+--------------------
+- [APERO.CORE+RI+DRS]: add APERO queue dashboard proxy in ARI, document
+  error codes, and parse lang file safely. [Neil Cook]
+
+  - apero-core: parse language files with  instead of naive line
+    scanning in `drs_base.lang_db_proxy`, correctly handling multi-line
+    string values; add  helper with default-language
+    fallback. Annotate every AperoCodedException call site in
+    `constant_functions.py` with the corresponding error-text comment for
+    easier maintenance/debugging.
+  - apero-ri: introduce APERO Queue feature - new  core
+    module (YAML-backed queue definitions, SSH tunnel params, validation,
+    action hiding for monitors),  (admin
+    setup + monitor proxy API with permission checks and dashboard
+    health probing), and new templates (
+    tabbed iframe viewer,  definition
+    editor) so monitors can access  dashboards
+    through a proxied, access-controlled tunnel.
+  - apero-drs: add shared  doc describing the queue
+    dashboard's Control tab sections, consumed by 's
+    rendered Info tab and the ARI docs; add
+    covering info rendering, ANSI handling, cached status details, and
+    doc inclusion.
+- [APERO.CORE] add `apero_db_push` tool and retire RST description lookup.
+  [Neil Cook]
+
+  - Add new `apero_db_push` recipe/tool (apero.tools.recipes.bin) that
+    pushes pending database entries into the databases; `apero_processing`
+    in queue mode now appends one `db_push` run after every queue group so
+    later groups see prior outputs.
+  - Switch `apero_processing's` `--queue_mode` kwarg from an 'options' dtype
+    to a simple switch (with --queue alias) instead of True/False/1/0/None
+    choices.
+  - Add `apero_reset` `--only_queue` switch to reset only queue entries,
+    queue output and chain scripts while keeping batch templates.
+  - Remove the legacy `description_file` attribute from recipe/sequence
+    definitions (default and `nirps_ha` instruments, and related modules);
+    description lookup no longer depends on RST file metadata.
+  - Drop the one-off `--migrate_desc` kwarg from `apero_documentation` now
+    that the RST-to-Markdown migration path is retired.
+  - Document the new Markdown description workflow in
+    documentation/descriptions/README.md `(instrument/kind/source_name.md`
+    layout, YAML front matter, instrument-then-default fallback) and
+    remove the legacy RST resource/migration workflow.
+  - Add `tests/test_ari_description_lookup.py` covering description path
+    resolution, instrument-vs-default fallback, recipe page generation
+    without `description_file` metadata, and an AST guard preventing
+    `description_file/default_rfile` usage from reappearing.
+- Merge branch 'v0.8.running' into v0.8.live. [Neil Cook]
+- [APERO.RI] `feat(server_sync)`: support cancelling in-progress peer
+  syncs. [Neil Cook]
+
+  - Add `store.SyncCancelled/check_cancelled` and a cancel.json marker so
+    a running sync can be stopped safely at checkpoints (store.py)
+  - Add `request_stop()` to persist the cancellation, disable `auto_sync`
+    for the peer, and update the run status (store.py)
+  - Wire `check_cancelled()` calls into `engine.run_peer/_run_locked/`
+    `_execute` at safe points between scan, pull, push and merge steps,
+    and persist incremental `base_hashes` after each batch (engine.py)
+  - Treat a cancelled run as its own terminal status instead of "done",
+    and only stamp `last_sync_at` when the run actually succeeded
+    (engine.py)
+  - Propagate cancellation into PeerClient requests via an optional
+    `cancel_check` hook `(server_sync.py)`
+  - Add admin stop action and expose peer run status via the new
+    `store.run_status()/running_status()` helpers; guard run() against
+    starting over a running/cancelling peer using the sync lock
+    `(server_sync_api_helpers.py)`
+- [APERO.SPIROU] fix: resolve `RAW_/PP_` prefixed file types in precheck
+  date logic. [Neil Cook]
+
+  - Add `_resolve_date_logic_type_key()` helper in
+    `drs_precheck.py` (both apero/ and apero-drs/ copies) to match a
+    drsfile's name against a date-logic map even when the file name
+    carries a `RAW_` or `PP_` prefix not present in the map's keys.
+  - Update `calib_check()` to use the resolved key (instead of the
+    raw drsfile.name) when checking membership in `logic_map` and
+    when building the MJD range mask, so `RAW_/PP_` variants of a
+    calibration type are no longer silently skipped by the
+    date-range precheck.
+
+
+0.8.314 (2026-10-27)
+--------------------
+- [APERO.CORE+SOSSISSE] fix: cast rget() values instead of rejecting
+  type mismatches. [Neil Cook]
+
+  - ParamDict.rget / SubParamDict.rget now cast the stored value or
+    override to the parameter's declared dtype (int, float, bool, str,
+    list) instead of raising on any type mismatch. Booleans accept
+    0/1/True/False and the strings "true"/"false"/"0"/"1"; casting does
+    not mutate the stored parameter. None values and values that cannot
+    be cast still raise the coded exception 00-000-00015.
+  - Update `default_text.py` error 00-000-00015 to include the offending
+    value in the message text/arguments for easier debugging.
+  - Add extensive `test_param_rget.py` coverage: successful casts across
+    types/views, rejected casts (None, invalid strings, inf/nan, wrong
+    containers), and updated expected error text.
+  - sossisse/instruments/default.py: fix broken indentation left over
+    from previous rget() reformatting and correct a copy-pasted
+    `func_name` in `get_trace_pos()` (was referencing `get_wavegrid())`.
+- [APERO.CORE+POGOS+SOSSISSE] feat: add SubParamDict.rget and migrate
+  direct param lookups. [Neil Cook]
+
+  - Add rget() to SubParamDict in apero-core's `param_functions.py` so
+    prefixed parameter views can delegate typed, required/override-aware
+    reads to the parent ParamDict while preserving case-insensitive
+    lookups, usage tracking, and full-key error reporting.
+  - Extend `test_param_rget.py` with coverage for the new sub-view rget
+    behaviour: case handling, usage tracking, live parent reads,
+    missing-dtype handling, override semantics on locked dicts, missing
+    key handling, and type-error messaging with full key/function
+    context.
+  - Migrate pogos (general.py, io.py, plots.py, startup.py,
+    `eureka_wrap/general.py`, `jwst_wrap/general.py)` and sossisse
+    `(const_funcs.py`, io.py, `demos/demo_python.py`, general/general.py)
+    from direct params[key] lookups to params.rget(key, required=True)
+    so path/flag lookups are validated and raise clear typed errors
+    instead of silently returning unexpected types or None.
+  - Cache repeated parameter lookups (e.g. `GLOBAL.DATA_PATH`, `plot_path`,
+    sossiopath) into local variables to avoid redundant dict access and
+    keep call sites consistent with the new rget-based pattern.
+
+
+0.8.313 (2026-10-23)
+--------------------
+- [APERO.RI] `feat(server_sync)`: make manifest scans async to avoid proxy
+  timeouts. [Neil Cook]
+
+  Long-running manifest scans on large categories could exceed the
+  peer HTTP request timeout, causing failures through reverse
+  proxies. Convert manifest fetching to an async job model so the
+  client polls for completion instead of blocking a single request.
+
+  - Add `manifest_jobs` module usage and wire new `manifest_start/`
+    `manifest_status` actions into `peer_api_view`
+    `(server_sync_api_helpers.py)`, dispatching to the new job start/
+    read handlers instead of always calling `engine.handle_peer`.
+  - Rework PeerClient.manifest() `(ari_api/server_sync.py)` to start
+    a manifest job, poll its status every second up to a 30-minute
+    deadline, then fetch per-category results once the job finishes.
+  - Raise more descriptive PeerErrors on read timeouts and job
+    failures, including the peer URL and category being scanned, to
+    aid debugging of slow or misconfigured peers.
+- [APERO.RI] feat: add --kill option to free port before server start.
+  [Neil Cook]
+
+  - Add `free_port()/helper` functions in `apero_ri/setup/bootstrap.py`
+    that find processes bound to a TCP port (via psutil), terminate
+    (then kill) those owned by the current user, and wait until the
+    port is actually free again
+  - Wire a new --kill CLI flag into `ariapp_impls.py` so the server
+    documents that `apero_ri_run` handles port cleanup
+  - Update `apero_ri_run.py` to parse --port/--kill early and call
+    `free_port()` before resolving the data dir, aborting with a clear
+    error if the port cannot be freed
+
+  This lets users restart the RI server with --kill without manually
+  hunting down and killing a stale process still holding the port.
+- [APERO.RI] feat(server-sync): add server-to-server data
+  synchronisation. [Neil Cook]
+
+  - Add `apero_ri.core.server_sync` package (store, crypto, engine,
+    adapters) implementing signed/encrypted peer-to-peer sync of
+    users, `user_data`, `science_groups`, issues, profiles, astrometrics
+    and `db_definitions` between ARI servers, with journals, base
+    hashes, nonce-based replay protection and a sync lock.
+  - Add `apero_ri.ari_api.server_sync` PeerClient for calling the
+    /api/server-sync/peer/<action> protocol (hello, manifest, fetch,
+    apply) over HTTP with HMAC-signed, encrypted payloads.
+  - Add `apero_ri.application.server_sync_api_helpers` exposing the
+    admin Server Sync endpoints (identity, tokens, peers, run status)
+    gated by the `manage.admin.server_sync` permission.
+  - Add `admin_server_sync.css` styling the new admin Server Sync page
+    (tabs, cards, chips, conflict rows, dark theme, responsive layout).
+  - Add `tests/test_server_sync.py` covering crypto round-trips, mirror
+    sync of users across two simulated servers, and deletion/edit
+    propagation.
+
+  Implements mirror/copy sync modes with three-way conflict
+  resolution (local/remote/skip/allow) so multiple ARI deployments
+  can share user, issue and metadata records.
+
+
+0.8.312 (2026-10-23)
+--------------------
+- [APERO.DRS+CHECK] feat: add date-based filelogic and multi-DPRTYPE
+  calib checks. [Neil Cook]
+
+  - `drs_argument`: add filelogictag param to DrsArgument, allow new
+    'date' filelogic mode (validated alongside inclusive/exclusive),
+    and propagate filelogic/filelogictag metadata onto resolved
+    DrsFitsFile instances in `_CheckFiles.check_files`
+  - `drs_file`: give DrsInputFile default filelogic/filelogictag
+    attributes; in DrsFitsFile.combine, when filelogic='date', resolve
+    a per-tag MJD date map via new `_date_filelogic_setup` and filter
+    input files by DPRTYPE/MJDATE range via new `_date_filelogic_keep`,
+    raising a clear error if no files remain after filtering;
+    propagate filelogic/filelogictag onto the combined output file in
+    the module-level combine helper
+  - `default/nirps_ha` constants: add `FILES_DATES_HCFILES` (and
+    equivalent FILES.DATES.HCFILES CDict entry) defining MJD ranges
+    for `HCONE_HCONE/HCTWO_HCTWO` so HC wave files combine correctly
+    across the HC fiber swap date
+  - `recipe_definitions` `(nirps_ha)`: wire relevant wave recipe arguments
+    to use the new date-based filelogic/tag
+  - `apero_check` `calib_test`: generalize `must_have_dprtypes` into
+    OR-groups so either UN1 or UN2 wave DPRTYPE variants satisfy the
+    nightly calibration completeness check, with clearer pass/fail
+    logging per group
+
+  This enables correctly combining HC calibration files whose DPRTYPE
+  changed after a fiber hardware swap, and keeps the raw data QC check
+  in sync with the UN1/UN2 DPRTYPE naming change.
+- [APERO.RI] refactor: centralize ARI data dir via `secret_store`. [Neil
+  Cook]
+
+  - Replace hardcoded Path.home() / ".ari" lookups across
+    `red_common`, `async_tasks_api_helpers`, `object_groups_api_helpers`,
+    and `page_view_helpers` with `secret_store.get_ari_dir()`, so the
+    data directory is resolved consistently and can be configured
+    rather than always defaulting to the user's home folder.
+  - Rework `basket_funcs` to drop module-level `ARI_DIR/USERS_DIR/`
+    `DOWNLOADS_DIR` globals and the matching `set_ari_dir()` mutator
+    in favor of `users_dir()/downloads_dir()` helpers backed by
+    `secret_store.get_ari_dir()`; simplify `_share_tokens_path()`
+    legacy-path resolution accordingly.
+  - Update `notifications.py` to compute `notif_dir()/notif_db()`
+    from `secret_store.get_ari_dir()` instead of fixed module-level
+    constants, and update the docstring reference.
+  - Clarify `fail_report.set_ari_dir()` docstring as a fallback path
+    now that most lookups go through `secret_store`.
+  - Add a new server-sync API: register admin and peer endpoints
+    (/api/admin/server-sync/<action>, /api/server-sync/peer/<action>)
+    in `routes.py` and application.py, backed by a new
+    `server_sync_api_helpers` module, with rate limiting on the peer
+    endpoint.
+- APERO.WAVE] feat(wave): add FP peak-number correction and npeak-based
+  wave update. [Neil Cook]
+
+  - Add `update_wave_with_npeak()` in `wave_core.py` to iteratively
+    invert the cavity-length polynomial and refine the wavelength
+    solution from FP peak numbers, given cavity pedestal/poly and
+    instrument wavelength bounds.
+  - Add `table_adjust_fp_peak_number()` in `wave_core.py` to detect and
+    correct order-to-order integer offsets in measured FP peak
+    numbers via robust polynomial fitting of the mid-detector peak
+    count trend, returning the adjusted peaks plus a diagnostics
+    dict for plotting/inspection.
+  - Register new tunable constants in
+    apero/instruments/default/constants.py
+    `(FP_COUNT_CORR_NSIGCUT`, `FP_COUNT_CORR_FIT_DEG`, and related
+    max-tries setting) to expose the sigma cut, fit degree, and
+    iteration limit used by the new peak-number correction routine.
+
+  These additions support more robust FP-based wavelength
+  calibration by fixing mis-numbered FP peaks before they
+  propagate into the wavelength solution.
+- [APERO.RI] feat: cache advanced search properties and surface matched
+  values. [Neil Cook]
+
+  - Replace ad-hoc per-request property scanning in
+    `astrometrics_api_helpers.py` with the new `search_index` module;
+    `_advanced_property_catalog` now merges cached indexed properties
+    `(admin/search_index)` instead of rescanning object/header/spectrum
+    tables on every call, with background rebuilds when indexes are
+    missing or stale.
+  - Track and return `matched_values` for each search type (name, `run_id`,
+    coords, date, advanced) in `api_astrometrics_find_object`, and merge
+    matches across duplicate object names by switching `seen_names` from
+    a set to a dict keyed by lowercase name.
+  - Extend `api_astrometrics_columns` with a purpose=search mode that
+    checks `data_portal` view permission and skips loading astrometrics
+    assets entirely for pure search requests.
+  - Document the new result card format, multi-value matches, per-
+    profile object counts, and the 24h Search Indexing async task in
+    apero-ri/README.md.
+
+
+0.8.311 (2026-10-09)
+--------------------
+- [APERO.CORE] feat: add ParamDict.rget for type-checked param lookup.
+  [Neil Cook]
+
+  - Add ParamDict.rget() in `param_functions.py`, a getter that
+    returns a stored parameter or an explicit override while
+    validating the value against the instance's declared dtype,
+    with optional required/func-name context for error messages.
+  - Register new error code 00-000-00015 in `default_text.py` to
+    report when a parameter value does not match its declared
+    data type, pointing users to check input yaml files.
+
+
+0.8.310 (2026-10-07)
+--------------------
+- [APERO.CORE+DRS+RI] build: bump Pillow to 12.3.0 across packages.
+  [Neil Cook]
+
+  - Update Pillow version pin in apero-core `requirements_all_3_11.txt`
+  - Update Pillow version pin in apero-drs pyproject.toml and
+    requirements.txt
+  - Update Pillow version pin in apero-ri pyproject.toml
+  - Keeps dependency versions in sync across all three packages,
+    picking up upstream fixes/security updates from Pillow 12.3.0
+- [APERO.CORE,LBL] build: bump GitPython pin to 3.1.62. [Neil Cook]
+
+  - Unify GitPython version pin to 3.1.62 across apero-core,
+    apero-drs, apero-ri and lbl (pyproject.toml, requirements.txt
+    and `requirements_all_3_11/3_12.txt)`, replacing the previously
+    inconsistent 3.1.44/3.1.46 pins
+  - Add a search-examples block to the NIRPS HA/HE v7 and v8
+    instrument profile YAMLs (apero-ri) documenting sample query
+    syntax for name, coords, date, `run_id`, header, `target_info` and `spectrum_info` lookups
+- [APERO.RI] feat(search): add instrument search examples and RUN ID
+  prefix matching. [Neil Cook]
+
+  - Change RUN ID search from exact match to prefix match so queries
+    like "112." return all accessible RUN IDs starting with that
+    prefix `(search_helpers.py`, README.md)
+  - Add per-instrument search-examples blocks to the instrument YAML
+    configs `(nirps_ha/he` v7/v8, spirou v7/v8) describing sample
+    `name/coords/date/run_id/header/target/spectrum` queries
+  - Load those examples via `search_helpers.search_examples()` and expose
+    them to the search page context `(page_view_helpers.py)`
+  - Expose `find_object_instruments` from the astrometrics catalogue so
+    the Select property picker can filter by instrument
+    `(astrometrics_api_helpers.py)`
+  - Update search.js and search.html to show a contextual description
+    for the active search category and bump asset version query
+    strings for search.css/astrometrics.js cache busting
+  - Document the new RUN ID prefix behavior and Select property
+    picker workflow in README.md
+
+
+0.8.309 (2026-10-07)
+--------------------
+- [APERO.RI] feat: add instrument filters and dialog UI for find-object
+  search. [Neil Cook]
+
+  - `astrometrics_api_helpers.py`: track property availability per
+    instrument/source in `_advanced_property_catalog`, skip sources
+    with no accessible run IDs, filter `spectrum_info` rows by
+    `KW_RUN_ID`, and expose `instruments/source_instruments` in the
+    catalog response for instrument-aware filtering
+  - `astrometrics_api_helpers.py`: change run-id search in
+    `api_astrometrics_find_object` from exact match to prefix match
+    (case-insensitive) against accessible run ids, matching rows via
+    the resulting set
+  - astrometrics.js: introduce a dedicated property picker dialog
+    (open/close/search/instrument filter/retry controls) and an
+    advancedInstrument selector decoupled from the finder
+    instrument, plus clearer not-found messaging for run id searches
+  - search.css: add styles for the new .fo-property-dialog and
+    related elements, including responsive layout for small screens
+- [APERO.RI] feat(search): add unified Search page and RUN ID lookup.
+  [Neil Cook]
+
+  - Add top-level /search page (Object/Observation and Documentation/Site
+    tabs) registered in pages.yaml, wired into home/nav/sidebar, and
+    rendered via `page_view_helpers` with version context for docs search
+  - Add `search_helpers` module and /api/search/index endpoint, registered
+    in `application.py` and routes.py
+  - Extend `astrometrics_api_helpers.api_astrometrics_find_object` with a
+    new `run_id` `search_type` and instrument filter so RUN IDs can be
+    searched directly and scoped to accessible run IDs/profiles
+  - Update `admin_run_ids.js` to link RUN ID cells to the new /search
+    run-id tab instead of plain text
+  - Update astrometrics.js finder to scope tab/panel queries to the
+    object-finder root, support the new run-id tab, and read instrument
+    from the URL for cross-page navigation
+  - Redirect rejected-identifier links in `data_portal_api_helpers` from
+    /astrometrics advanced search to /search header-key tab
+  - Document the new Search page and its matching rules in README.md
+
+  Closes astrometrics/search unification work to consolidate object,
+  RUN ID, and documentation lookups under a single entry point.
+- [APERO.RI] feat(run-ids): add CSV import/export for RUN ID catalog.
+  [Neil Cook]
+
+  - Add /api/admin/run-ids/import and /api/admin/run-ids/export
+    routes and app handlers (application.py, routes.py) wired to new
+    `import_api/export_api` helpers in `run_ids_api_helpers.py`.
+  - Refactor `catalog_api` into a shared `_catalog_api` dispatcher
+    handling list/save/import/export operations with consistent
+    auth, instrument validation, and body parsing.
+  - Implement export as a downloadable UTF-8 BOM CSV (RUN ID, PI,
+    COMMENT) built from the saved catalog, deduplicating requested
+    RUN IDs and rejecting unknown ones.
+  - Implement import with a 5 MB payload guard, duplicate-policy
+    option, and post-import sync of science groups and admin health.
+  - Refactor `core/run_ids.py`: extract catalog read/write into a
+    reusable `_catalog_transaction` context manager and `_write_catalog`
+    helper that keep the JSON asset file and YAML admin mirror in
+    sync under the existing file lock, replacing the inline
+    load/mutate/write logic previously duplicated in `update_catalog`.
+- [APERO.RI] feat(run-ids): add CSV import/export for RUN ID catalog.
+  [Neil Cook]
+
+  - Add /api/admin/run-ids/import and /api/admin/run-ids/export
+    routes and app handlers (application.py, routes.py) wired to new
+    `import_api/export_api` helpers in `run_ids_api_helpers.py`.
+  - Refactor `catalog_api` into a shared `_catalog_api` dispatcher
+    handling list/save/import/export operations with consistent
+    auth, instrument validation, and body parsing.
+  - Implement export as a downloadable UTF-8 BOM CSV (RUN ID, PI,
+    COMMENT) built from the saved catalog, deduplicating requested
+    RUN IDs and rejecting unknown ones.
+  - Implement import with a 5 MB payload guard, duplicate-policy
+    option, and post-import sync of science groups and admin health.
+  - Refactor `core/run_ids.py`: extract catalog read/write into a
+    reusable `_catalog_transaction` context manager and `_write_catalog`
+    helper that keep the JSON asset file and YAML admin mirror in
+    sync under the existing file lock, replacing the inline
+    load/mutate/write logic previously duplicated in `update_catalog`.
+
+
+0.8.308 (2026-10-07)
+--------------------
+- [APERO.ARI]: add save-all and missing-PI filter to run ID admin. [Neil
+  Cook]
+
+  - `static/js/admin_run_ids.js`: add savingAll state and saveAll()
+    to batch-save all dirty rows via the new "Save All" button, with
+    per-row save/cancel controls disabled while a bulk save runs and
+    a summary notice listing any rows that failed to save
+  - `static/js/admin_run_ids.js`: add missingPI filter state wired to
+    a new "missing PI" checkbox, reset alongside other filters by the
+    existing clear-filters handler
+  - `static/css/admin_run_ids.css`: tighten table row/input/button
+    sizing (shorter inputs, smaller icon buttons, single-line comment
+    field) for a denser desktop layout, while restoring touch-friendly
+    44px targets in the mobile media query
+  - `templates/admin/run_ids.html`: bump CSS cache-busting version to
+    match the updated stylesheet
+- [APERO.ARI]: add save-all and missing-PI filter to run ID admin. [Neil
+  Cook]
+
+  - `static/js/admin_run_ids.js`: add savingAll state and saveAll()
+    to batch-save all dirty rows via the new "Save All" button, with
+    per-row save/cancel controls disabled while a bulk save runs and
+    a summary notice listing any rows that failed to save
+  - `static/js/admin_run_ids.js`: add missingPI filter state wired to
+    a new "missing PI" checkbox, reset alongside other filters by the
+    existing clear-filters handler
+  - `static/css/admin_run_ids.css`: tighten table row/input/button
+    sizing (shorter inputs, smaller icon buttons, single-line comment
+    field) for a denser desktop layout, while restoring touch-friendly
+    44px targets in the mobile media query
+  - `templates/admin/run_ids.html`: bump CSS cache-busting version to
+    match the updated stylesheet
+- [APERO.EXTRACTION+WAVE] Try fixes for bad wave sol after extraction
+  update. [Neil Cook]
+
+
+0.8.307 (2026-10-07)
+--------------------
+- Trigger clean re-pack. [Neil Cook]
+- [APERO.ARI+PLOT]: add `run_ids` catalog and forced plot mode. [Neil
+  Cook]
+
+  - spirou constants: switch wave reference fiber from 'AB' to 'A',
+    retune HC/FP line-fitting thresholds `(MAX_ORDER_BULKOFFSET`,
+    `REF_EDGE_WMAX`, `REF_HC_BOXSIZE)` and extend `FIBER_OFFSET_MOD` /
+    `FIBER_SCALE_MOD` to include the 'AB' fiber entry
+  - plotting/plotter.py: introduce `force_plot_active` state so a forced
+    plot call bypasses plot-switch/debug-graph skip logic and backend
+    selection, and always shows/closes debug plots immediately when
+    forced
+  - apero-ri: add a persistent `run_ids` catalog `(core/run_ids.py)` keyed
+    by instrument, seeded from science groups and PI names, replacing
+    the ad-hoc on-the-fly run id list; wire new admin API endpoints
+    (/api/admin/run-ids/list, /api/admin/run-ids/save), app handlers,
+    route registration, and admin portal page context/permissions for
+    managing run ids per instrument
+  - `sci_groups_api_helpers`: reuse the new `run_ids` catalog instead of
+    separately fetched PI names when building science group labels
+- [APERO.ARI+PLOT]: add `run_ids` catalog and forced plot mode. [Neil
+  Cook]
+
+  - spirou constants: switch wave reference fiber from 'AB' to 'A',
+    retune HC/FP line-fitting thresholds `(MAX_ORDER_BULKOFFSET`,
+    `REF_EDGE_WMAX`, `REF_HC_BOXSIZE)` and extend `FIBER_OFFSET_MOD` /
+    `FIBER_SCALE_MOD` to include the 'AB' fiber entry
+  - plotting/plotter.py: introduce `force_plot_active` state so a forced
+    plot call bypasses plot-switch/debug-graph skip logic and backend
+    selection, and always shows/closes debug plots immediately when
+    forced
+  - apero-ri: add a persistent `run_ids` catalog `(core/run_ids.py)` keyed
+    by instrument, seeded from science groups and PI names, replacing
+    the ad-hoc on-the-fly run id list; wire new admin API endpoints
+    (/api/admin/run-ids/list, /api/admin/run-ids/save), app handlers,
+    route registration, and admin portal page context/permissions for
+    managing run ids per instrument
+  - `sci_groups_api_helpers`: reuse the new `run_ids` catalog instead of
+    separately fetched PI names when building science group labels
+
+
+0.8.306 (2026-10-05)
+--------------------
+- [APERO.EXTRACTION] Fix bugs found after extraction update. [Neil Cook]
+- [APERO.DOCS] Update documentation. [Neil Cook]
+- [APERO.EXTRACTION+CORE]: enhance input normalization for observation
+  directories and blocks + fix a bug when trying to remove a block.
+  [Neil Cook]
+
+
+0.8.305 (2026-10-05)
+--------------------
+- [APERO.PROCESSING]: add chain mode for dependency-chained Slurm jobs
+  and dry run option + update `apero_queue` GUI. [Neil Cook]
+- [APERO.ARI+DOCS]: route home.docs page to dynamic doc view. [Neil
+  Cook]
+
+  - In `page_view_helpers.make_page_view`, special-case the
+    'home.docs' `page_id` to delegate directly to
+    `app._doc_dynamic_view('')` instead of going through the
+    standard permission-resolved user view flow
+  - Ensures the docs home page renders via the dynamic
+    documentation viewer regardless of user/session state
+- [APERO.DOCS]: replace card directory view with unavailable page. [Neil
+  Cook]
+
+  - Remove the card-grid directory listing (docs/index.html) and the
+    `cards/view_mode` toggle from `doc_dynamic_view` and
+    `_resolve_docs_level` in `doc_views_helpers.py`; missing refs or
+    denied permissions now render `docs/doc_unavailable.html` (403/404)
+    instead of flashing and redirecting to login
+  - Simplify `_resolve_docs_level` to return `(current_ver`, `sidebar_items`,
+    exists) since the parent-directory card fallback is no longer
+    needed, and update `doc_edit_view's` tuple unpacking accordingly
+  - In core/docs.py, `normalize_doc_ref` now strips trailing .md and
+    /index suffixes so links to raw markdown files or index pages
+    resolve to the same ref
+  - Add `_linkify_apero_commands` to auto-link known `apero_*` recipe/tool
+    names found in inline code or plain text to their generated doc
+    pages, while leaving fenced code blocks and existing markdown
+    links untouched; wired into `get_doc_content` body rendering
+
+
+0.8.304 (2026-10-02)
+--------------------
+- [APERO.DOCS] consolidate file-definition pages and add cross-links.
+  [Neil Cook]
+
+  - Merge per-category file-definition pages into a single consolidated
+    index.md per instrument, combining tables via astropy's vstack with
+    a new "Stage" column; `build_file_definition_pages` now returns a
+    bool instead of a list of written pages.
+  - Add a "related" parameter throughout `(build_catalog_index`,
+    `build_recipe_page`, `build_sequence_page`, `build_file_definition_pages`,
+    `build_index)` to populate "related topics" cross-links between
+    recipes, sequences, file definitions, algorithms, and the glossary.
+  - Add a `table_rows` option to `build_index/build_catalog_index` to
+    render a linked summary table (name + description) instead of a
+    plain card list, improving navigability of sequence/recipe indexes.
+  - Add `definition_summary()` helper to produce concise, instrument-
+    correct one-line descriptions for catalog rows, substituting
+    instrument names (e.g. SPIRou -> NIRPS) and filtering out
+    placeholder/undocumented text.
+  - Link recipe output sections to the instrument's file definitions
+    page for easier discovery of the full file catalogue.
+- [APERO.ARI+DOCUMENATION] Add client-side documentation search and
+  glossary support. [Neil Cook]
+- [APERO.ARI+ASSET]: add asset management features to ari to allow
+  upload/download via ARI API. [Neil Cook]
+
+
+0.8.303 (2026-10-02)
+--------------------
+- [APERO.CORE] expose plotting helpers and refresh asset checksums.
+  [Neil Cook]
+
+  - `apero/dev/__init__.py`: import the new plotting module and
+    re-export `import_plotting/pyplot` alongside existing
+    `get_base_params/get_uconfig_path` helpers, so dev scripts can
+    access plotting utilities without loading the full APERO package
+  - apero/data/checksums.yaml: update checksums for updated `NIRPS_HA/`
+    `NIRPS_HE` sky models and SPIRou sky PCs reference files, and bump
+    the asset tarball/time metadata to match the new data release
+- [apero-drs][apero-utils]: fix config typos and SNR at blaze center.
+  [Neil Cook]
+
+  - AGENTS.md: link to the developer-facing git commit guide and
+    note that the tag list must stay in sync with the doc copy
+  - `constants.py` (default, `nirps_ha`, `nirps_he`, spirou): clarify
+    `HALF_WINDOW` docstring, noting it is also used for SNR
+    calculation (half width from center for SNR=flux/error)
+  - `nirps_ha/nirps_he` config.py/constants.py: fix typos and bugs
+    introduced by copy-paste (undefined group var, duplicate
+    gruop/group kwargs, stray group=cgroup inside dict
+    value, missing group=cgroup on MODE), and rename
+    `FIBER_MAX_NUM_ORDERS/FIBER_SET_NUM_FIBERS` to `MAX_NUM_ORDERS/`
+    `SET_NUM_FIBERS`
+  - `nirps_ha/nirps_he` keywords.py: fix duplicate FITS keyword
+    name by renaming `KW_WNT_NITER21` to `KW_WNT_NITER2`
+  - `gen_ext.py`: replace per-order median SNR with a new
+    `calculate_snr()` helper that evaluates SNR at the center of
+    the blaze function using the blaze width (half window times
+    oversampling factor), giving a more representative estimate
+  - add `apero-utils/visu/obs_t_fits_comp.py`, a visualization
+    script to compare spectra and flux trends (vs seeing,
+    airmass, date) across observation epochs
+- [APERO.CORE] Add guidelines for git commit messages. [Neil Cook]
+
+
+0.8.302 (2026-09-29)
+--------------------
+- [APERO.EXTRACTION+CORE]: route nan-aware stats through math wrapper.
+  [Neil Cook]
+
+  - Replace direct `np.nan*` / np.median calls with the bottleneck-backed
+    aperocore.math (mp) wrappers across calib and extract core modules
+    `(background_core`, `flat_blaze_core`, `localisation_core`, `wave_core`,
+    `extract_core`, `extract_model_core)` for consistent speed/behavior.
+  - Silence numpy's RankWarning inside `fit_cheby` `(gen_math.py)` since
+    poorly-conditioned fits are expected and still usable; avoids
+    needing to suppress it at every call site.
+  - Document the math-wrapper convention and the "update every call
+    site when changing a signature" rule in AGENTS.md to prevent
+    silent breakage from unrefactored callers.
+  - Update `order_centers/order_widths/order_map` in the standalone
+    `background_removal2.py` script to take an explicit fiber argument
+    and read per-fiber LOC extensions `(LOC_CTR_TABLE_{fiber}`,
+    `LOC_WID_TABLE_{fiber}`, `LOC_CTR_{fiber})` matching the new combined
+    loco file format, add a profile switch for data paths, and gate
+    profile background correction behind a new
+    `CORRECT_PROFILE_BACKGROUND` flag; drop the now-unused
+    `read_profile()` helper.
+  - Regenerate `order_profile` debug plot outputs.
+- [APERO.STARTUP] Optimize module initialization by replacing heavy
+  imports with lazy imports in multiple files, significantly improving
+  startup performance. [Neil Cook]
+- [APERO.STARTUP] Optimize imports by converting heavy dependencies to
+  lazy imports in `drs_base_classes.py` and `drs_file.py`, improving module
+  initialization time. [Neil Cook]
+
+
+0.8.301 (2026-09-26)
+--------------------
+- [APERO.EXTRACT] Optimize background map creation and extraction
+  processes by implementing vectorized percentile filtering, enhancing
+  performance significantly, and updating constants for extraction
+  oversampling. [Neil Cook]
+- [APERO.EXTRACT] Enhance flat-response handling by registering files in
+  calibDB, adding force extraction option, and improving response
+  computation for grouped fibers. [Neil Cook]
+- [APERO.EXTRACT] Implement order profile handling in shape modules to
+  streamline extraction processes, including loading pre-computed
+  profiles and geometry from SHAPEL extensions, and updating file
+  writing to include order profile data. [Neil Cook]
+
+
+0.8.300 (2026-09-24)
+--------------------
+- [APERO.EXTRACT] Implement order profile handling in shape modules to
+  streamline extraction processes, including loading pre-computed
+  profiles and geometry from SHAPEL extensions, and updating file
+  writing to include order profile data. [Neil Cook]
+- [APERO.EXTRACT] Refactor array handling across multiple modules to use
+  np.array instead of np.asarray for consistency and clarity, continue
+  work on the scattered light/extraction upgrade (including calculating
+  the blaze in the flat code - which will now use the extract methods),
+  also rename `apero_data_checksum.py` to `apero_assets.py`. [Neil Cook]
+- [APERO.EXTRACT] Refactor array handling across multiple modules to use
+  np.array instead of np.asarray for consistency and clarity, continue
+  work on the scattered light/extraction upgrade (including calculating
+  the blaze in the flat code - which will now use the extract methods),
+  also rename `apero_data_checksum.py` to `apero_assets.py`. [Neil Cook]
+- [APERO.ASTROMETRICS] Refactor astrometrics module by renaming and
+  wrapping functions for improved structure and clarity. [Neil Cook]
+
+
+0.8.299 (2026-09-22)
+--------------------
+- [APERO.EXTRACTION] Enhance APERO extraction and localisation by adding
+  order nearest map functionality and updating spline order handling.
+  [Neil Cook]
+- [APERO.EXTRACT] Update extraction and localisation processes to
+  incorporate new model/background extraction products and improve fiber
+  handling. [Neil Cook]
+- [APERO.SHAPE] Refactor argument handling in shape transformation and
+  background correction functions for improved clarity and consistency.
+  [Neil Cook]
+
+
+0.8.298 (2026-09-16)
+--------------------
+- [APERO.PP+CAL+EXT+POL]factor wave and telluric core imports to improve
+  module structure and delegate numerical tasks to core functions. [Neil
+  Cook]
+- [APERO.LOCALISATION+BACKGROUND] Implement background correction using
+  2D lower envelope fit and add order position map functionality in
+  localisation. [Neil Cook]
+- [APEOR.LOCALISATION] Refactor runfile generation for NIRPS and SPIROU
+  instruments to include recipe parameter. [Neil Cook]
+
+  - Updated `get_runfiles` function in `runfiles_nirps_he.py` and `runfiles_spirou.py` to accept a recipe parameter.
+  - Modified the instantiation of RunIniFile to include the recipe argument for various run types.
+  - Added a new script `apero_update_run_config.py` to regenerate run-ini-files for all instruments.
+  - Introduced a new function `get_asset_directory` in `drs_assets.py` to retrieve the asset directory.
+  - Updated logging and user prompts in `drs_installation.py` for better clarity.
+  - Enhanced tests for path utilities and configuration helpers to ensure robustness.
+  - Removed outdated documentation for `apero_run_ini` and replaced it with `apero_update_run_config`.
+
+
+0.8.297 (2026-09-09)
+--------------------
+- [APERO.QUEUE] Enhance queue management and template handling in DRS
+  GUI. [Neil Cook]
+
+  - Added queue ID generation for better tracking of tasks.
+  - Introduced functions to list and manage batch templates, including saving and loading templates by name.
+  - Updated the GUI to support selecting and displaying batch templates.
+  - Implemented new queue actions for managing task states (retry, stop, clear).
+  - Enhanced command-line interface commands for running tasks and managing templates.
+  - Improved user experience with state filtering buttons in the task status view.
+  - Refactored existing functions for clarity and maintainability.
+- Merge branch 'v0.8.running' into v0.8-performance-update. [Neil Cook]
+- [APERO.DEV] Add developer functions for non-interactive APERO setup
+  and configuration management. [Neil Cook]
+- [APERO.QUEUE] Enhance queue template: add tabbed interface for control
+  and status, CLI command generation, and improved layout for better
+  usability. [Neil Cook]
+
+
+0.8.296 (2026-09-09)
+--------------------
+- [POGOS] Updated data loading logic to skip downloading demo data if no
+  URL is provided, increased trace width for masking, and updated
+  version and release date in configuration files. [Neil Cook]
+- Refactor user input handling and improve YAML file validation. [Neil
+  Cook]
+
+
+0.8.295 (2026-09-02)
+--------------------
+- Merge branch 'v0.8.running' into v0.8-performance-update. [Neil Cook]
+- [POGOS] Add YAML version validation and interactive fixing to
+  `pogos_config`. [Neil Cook]
+- [APERO.PREPROCESS] Implement queue mode for processing: add
+  functionality to manage jobs in a queue instead of direct processing,
+  including configuration options and email notifications. [Neil Cook]
+
+
+0.8.294 (2026-08-31)
+--------------------
+- [APERO.KEYWORDS] Update `KW_CDBWAVE` comment to include extraction time
+  detail. [Neil Cook]
+- [APERO.DATABASE] Enhance BERV and BJD handling: implement `_none_float`
+  function to manage None and invalid values with warnings. [Neil Cook]
+- [APERO.PREPROCESS] add keys to `DRS_MAG_{mag}_SOURCE` [bug fix] [Neil
+  Cook]
+
+
+0.8.293 (2026-08-27)
+--------------------
+- [APERO] np.product --> np.prod. [Neil Cook]
+- [APERO.PREPROCESS] Add photometric magnitude handling: introduce
+  magnitude definitions and sources in astrometrics and keywords modules
+  for enhanced object resolution. [Neil Cook]
+- [APERO.PROCESSING] Update hot star identification: include recipe
+  parameter in `id_hot_star` function for improved object classification.
+  [Neil Cook]
+
+
+0.8.292 (2026-08-27)
+--------------------
+- [APERO.PROCESSING] Improve input handling: fix core input type check,
+  enhance object name retrieval, and support multiple file path layouts
+  for telluric database files. [Neil Cook]
+- [APERO.PROCESSING] Enhance filter handling in `_get_filters`: improve
+  unset filter detection for telluric and science targets, ensuring
+  proper filtering logic and handling of empty values. [Neil Cook]
+- [APERO.DATABASE] Enhance AperoDatabase performance: implement caching
+  for table and unique constraints, optimize SQL execution by bypassing
+  SQLAlchemy overhead, and improve metadata cache management. [Neil
+  Cook]
+
+
+0.8.291 (2026-07-31)
+--------------------
+- [APERO.PROCESSING] Fix `get_cores` (bug) [Neil Cook]
+- [APERO.ASTROMETRICS + PROCESSING] Enhance astrometric checks: add
+  local resolution for object names, implement caching for local
+  astrometrics directory, and improve error handling for missing
+  targets, add support for constants in run.yaml. [Neil Cook]
+- [APERO.ARI2] Enhance documentation handling: improve image serving
+  validation, enforce safe filename usage, and prevent raw HTML
+  injection in markdown rendering. [Neil Cook]
+
+
+0.8.290 (2026-07-28)
+--------------------
+- [APERO.ARI2] Enhance ARI API client and task handling: support
+  `LOCAL_DATA_DIR` for configuration, improve error messages, and add
+  tests for local data directory usage. [Neil Cook]
+- [APERO.ARI2] Enhance first time guide and API config: resolve data
+  directory dynamically, update guide steps with links, and add API
+  config template. [Neil Cook]
+- [APERO.ARI2] Add tests for APERO checks setup status validation and
+  configuration requirements. [Neil Cook]
+- [APERO.ARI2] Add server-side APERO checks setup status and update API
+  documentation for ASTROM check configuration. [Neil Cook]
+
+
+0.8.289 (2026-07-28)
+--------------------
+- [APERO.ARI2] Refactor configuration handling to support dynamic ARI
+  data directory and update documentation for API token and server
+  configuration. [Neil Cook]
+- [APERO.ARI2] Refactor `_resolve_astrom` function to return detailed
+  resolution results and update related error handling in
+  `check_function`. [Neil Cook]
+- [APERO.ARI2] Refactor `check_function` to streamline failure grouping
+  and enhance test coverage for ASTROM report generation. [Neil Cook]
+
+
+0.8.288 (2026-07-27)
+--------------------
+- [APERO.ARI2] Refactor `failed_lines` initialization to improve clarity
+  in `check_function`. [Neil Cook]
+- [APERO.ARI2] Enhance logging and error reporting for backup and APERO
+  check tasks. [Neil Cook]
+
+  - Added detailed summary logging in `check_astrometrics.py` for better diagnostics.
+  - Improved `backup_backend.py` to provide clearer messages when cloud backup is disabled.
+  - Introduced a new function in `apero_check_task.py` for formatting verbose check logs.
+  - Added regression tests for verbose logging and backup connection status in respective test files.
+- [APERO.ARI2] Add server information page with context and template
+  integration. [Neil Cook]
+
+
+0.8.287 (2026-07-23)
+--------------------
+- [APERO.PROCESSING] Refactor core handling in `get_cores` function to
+  improve input validation and support string inputs for core settings.
+  [Neil Cook]
+- [APERO.ARI2] Add local assets validation and enhance first time guide
+  with sub-steps. [Neil Cook]
+- [APERO.ARI2] Enhance asset sync command to include input directory and
+  add fresh-install guard for QC stats output generation. [Neil Cook]
+
+
+0.8.286 (2026-07-21)
+--------------------
+- [APERO.ARI2] Refactor profile DB access health checks to simplify
+  column validation and enforce mandatory group access. [Neil Cook]
+- [APERO.ARI2] Add backward-compatible fallback for user table access
+  column rules. [Neil Cook]
+- [APERO.ARI2] Add handling for optional path disabling and update
+  payload for backend storage. [Neil Cook]
+
+
+0.8.285 (2026-07-20)
+--------------------
+- [APERO.ARI2] Add optional path handling in profile validation and
+  enable temporary mode in form reset. [Neil Cook]
+- [APERO.ARI2] Add support for saving temporary APERO profiles and
+  update related functionality. [Neil Cook]
+- [APERO.ARI2] Refactor optional path handling in API profile save
+  function. [Neil Cook]
+
+
+0.8.284 (2026-07-20)
+--------------------
+- Remove redundant check for disabled status in profile listing
+  function. [Neil Cook]
+- [APERO.ARI2] Add support for optional path fields with disable
+  functionality in APERO profiles. [Neil Cook]
+- [APERO.ARI2] Add command to find process using local port in tunnel
+  build command. [Neil Cook]
+
+
+0.8.283 (2026-07-20)
+--------------------
+- [APERO.ARI2] Enhance database connection validation with detailed TCP
+  and MySQL authentication error reporting. [Neil Cook]
+- [APERO.ARI2] Improve database connection validation to provide
+  detailed error reporting for MySQL queries. [Neil Cook]
+- [APERO.ARI2] Refactor database tunnel credentials to use test-specific
+  keys. [Neil Cook]
+
+
+0.8.282 (2026-07-20)
+--------------------
+- [APERO.ARI2] Enhance SSH tunnel interactive authentication for simple
+  mode. [Neil Cook]
+- [APERO.ARI2] Add simple mode option for SSH tunnel configuration.
+  [Neil Cook]
+- [APERO.ARI] Enhance SSH tunnel error handling to detect interactive
+  authentication requirements. [Neil Cook]
+
+
+0.8.281 (2026-07-16)
+--------------------
+- [APERO.ARI] Refactor database connection validation to improve error
+  handling and reporting. [Neil Cook]
+- [APERO] Improve database connection validation and enhance user
+  feedback on tunnel tests. [Neil Cook]
+- [APERO] Enhance DB SSH tunnel status reporting and add verbose log
+  overlay. [Neil Cook]
+
+
+0.8.280 (2026-07-16)
+--------------------
+- [APERO] Add guidance for database host input fields in setup form.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- Merge branch 'v0.8.live' into v0.8.running. [Neil Cook]
+- [APERO] Add first-time guide steps and related page in admin portal.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO.ARI] Refactor async task handling and fix legacy task naming.
+  [Neil Cook]
+
+  - Updated the `normalize_task_scope` function to standardize instrument names across async task APIs.
+  - Modified several API endpoints to utilize the new normalization function for instrument names.
+  - Enhanced the `load_async_tasks` function to consolidate global scope keys and prevent state fragmentation.
+  - Corrected the task registration for `LEGACY_REJECT_GSHEET` to use the proper naming convention.
+  - Introduced a new `legacy_reject_gsheet` module to maintain backward compatibility with existing imports.
+  - Removed the old `lecacy_reject_gsheet` module and replaced it with the correctly named `legacy_reject_gsheet`.
+  - Improved error handling and logging for async task operations.
+- Update checksums and metadata in checksums.yaml. [Neil Cook]
+
+
+0.8.279 (2026-07-16)
+--------------------
+- [APERO.PROCESSING] Refactor header-fix processing for backward
+  compatibility in multiprocessing. [Neil Cook]
+
+
+0.8.278 (2026-07-15)
+--------------------
+- [APERO] Refactor directory scanning and caching for improved
+  consistency and performance. [Neil Cook]
+- [APERO] Refactor directory scanning to prioritize verified and pending
+  subdirectories. [Neil Cook]
+- [APERO] Remove unused database names from `DATABASE_NAMES` list. [Neil
+  Cook]
+
+
+0.8.277 (2026-07-14)
+--------------------
+- [APERO] Replace CDict.add with CDict.set for consistent configuration
+  handling. [Neil Cook]
+- [APERO] Enhance database lock handling and improve plot options for
+  interactivity. [Neil Cook]
+- [APERO] Simplify directory creation using `exist_ok=True` for
+  os.makedirs. [Neil Cook]
+
+
+0.8.276 (2026-07-06)
+--------------------
+- Update checksums and metadata in checksums.yaml. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO] Refactor package imports to use apero as `apero_pkg` and update
+  project dependencies in pyproject.toml. [Neil Cook]
+- [APERO] Refactor package imports to use apero as `apero_pkg` and update
+  project dependencies in pyproject.toml. [Neil Cook]
+
+
+0.8.275 (2026-07-03)
+--------------------
+- [APERO.ARI] Add Python grammar and style conventions documentation;
+  update checksums and metadata. [Neil Cook]
+
+
+0.8.274 (2026-07-01)
+--------------------
+- [APERO] Add testing documentation and shared pytest setup for apero
+  modules. [Neil Cook]
+- Merge branch 'v0.8.running' into v0.8.live. [Neil Cook]
+- [APERO.ARI2] Implement caching for document retrieval to enhance
+  performance. [Neil Cook]
+
+
+0.8.273 (2026-06-30)
+--------------------
+- [APERI.RI] Implement sidebar context caching and enhance monitoring
+  card display with type counts. [Neil Cook]
+- [APERO.ARI2] Add log refresh pause functionality to monitoring portal.
+  [Neil Cook]
+- [APERO.ARI2] Enhance monitoring portal with log viewer and awards
+  page. [Neil Cook]
+
+  - Added a full-screen log viewer overlay to the checks queue page for better log management.
+  - Introduced a new awards page to display monitoring statistics and achievements.
+  - Updated the checks stats page to reflect the latest JavaScript version.
+  - Enhanced the issues page with additional filter options for better issue tracking.
+  - Improved the schedule page with accessible close buttons for overlay panels.
+  - Added monitoring statistics to user cards, showcasing individual contributions.
+  - Implemented group and instrument filters in the users page for improved user management.
+  - Updated dependencies in the project configuration for better performance.
+  - Expanded documentation to include a guide for becoming an APERO Monitor and critical checks.
+
+
+0.8.272 (2026-06-24)
+--------------------
+- [POGOS.EUREKA] Add helper function for YAML serialization and update
+  constant groups. [Neil Cook]
+
+  - Introduced `_yaml_value` function to convert Python lists/tuples to a YAML-friendly format.
+  - Updated constant groups in `eureka_constants.py` to include descriptions and ensure proper handling of inputdir and outputdir.
+  - Adjusted active and user flags for generated constants in `eureka_ecf.py`.
+- Merge remote-tracking branch 'origin/v0.8.running' into v0.8.running.
+  [Neil Cook]
+- [POGOS.EUREKA] Add new parameters for instrument selection and
+  extraction steps in POGOS setup. [Neil Cook]
+
+
+0.8.271 (2026-06-07)
+--------------------
+- [APERO.ARI2] - continued development. [Neil Cook]
+- [APERO.ARI2] - continued development. [Neil Cook]
+- [APERO.ARI2] feat: Add error handling template and enhance monitoring
+  portal. [Neil Cook]
+
+  - Created a new error handling template for displaying error messages.
+  - Added log verbosity selection to the check info and obsdir info pages.
+  - Improved task matching logic to handle case insensitivity for check keys.
+  - Updated task status messages for clarity.
+  - Introduced log verbosity options in the checks queue page.
+  - Enhanced processing logs with line-range picker for better navigation.
+  - Updated dependencies in pyproject.toml to include Flask-Limiter.
+  - Added pytest configuration and initial tests for authentication utilities.
+  - Documented new checks for monitoring, including APERO and ARI processing states, outlier CCF files, excess modal noise, low SNR in science spectra, and previous reduction checks.
+- [ARI2] Add fail report PDF generation and legacy known errors Google
+  Sheet sync task. [Neil Cook]
+
+  - Implemented `fail_report_pdf.py` for rendering fail reports as PDFs using ReportLab.
+  - Introduced `legacy_known_errors_gsheet.py` to synchronize known-errors between ARI and a Google Sheet, supporting bi-directional updates and conflict resolution.
+
+
+0.8.270 (2026-06-03)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- Update the README giving dev steps for Alliance. [Neil Cook]
+- Enhance dark theme support and mobile responsiveness across various
+  components. [Neil Cook]
+
+  - Added cross-cutting mobile fixes for specific page patterns in `mobile_overrides.css`.
+  - Improved dark theme styles for various elements in `monitor_issues.css`, `monitor_schedule.css`, style.css, `user_portal_messaging.css`, `user_portal_user_cards.css`, and admin templates.
+  - Implemented responsive grid adjustments for user portal user cards and admin pages.
+  - Enhanced visual feedback for buttons and status indicators in dark mode.
+  - Introduced filtering and view toggle functionality for tests in `apero_checks_check_info.html`.
+  - Updated styles for code blocks and callout boxes in `sshfs_management.html` and other templates to ensure consistency in dark mode.
+- [APERO.CHECKS] Add astrometric object name check and update
+  configuration files. [Neil Cook]
+
+
+0.8.269 (2026-06-02)
+--------------------
+- [APERO.CHECKS] Enhance YAML file resolution and add delete
+  functionality in profile views. [Neil Cook]
+- Add APERO Checks Stats page with histogram and summary statistics.
+  [Neil Cook]
+
+  - Implemented JavaScript functionality for fetching and displaying APERO checks statistics.
+  - Created a new HTML template for the APERO Checks Stats page, including tabs for observation directories and individual checks.
+  - Integrated Chart.js for visualizing histogram data.
+  - Added controls for binning data and toggling series visibility in the charts.
+  - Included loading indicators and error handling for data fetching.
+
+
+0.8.268 (2026-05-27)
+--------------------
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+
+
+0.8.267 (2026-05-27)
+--------------------
+- [APERO.DATABASE] Add an option to filter by block kind. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO.PROFILES] Implement profile disabling feature and UI
+  enhancements. [Neil Cook]
+
+
+0.8.266 (2026-05-26)
+--------------------
+- [APERO.CORE] remove duckdb dependency. [Neil Cook]
+- [APERO.DATABASE] Use `KW_DRS_QC` instead of `log.PASSED_ALL_QC`. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- `[APERO.PSEUDO_CONST]` Deal with is None --> in [None, np.nan] [Neil
+  Cook]
+- [APERO.CALIB] `BIN_IN_TIME` dtype should be bool. [Neil Cook]
+
+
+0.8.265 (2026-05-26)
+--------------------
+- [APERO.ARI2+CHECKS] Add engineering checks for Fabry-Perot, isolation
+  valve, and turbopump states. [Neil Cook]
+
+  - Implemented checks for Fabry-Perot interior RMS and setpoint RMS, including descriptions and contact lists.
+  - Added checks for isolation valve state, scrambling status, stretcher status, and turbopump state with detailed instructions and contact information.
+  - Updated documentation for various engineering checks to include descriptions, requirements, and what to do in case of failure.
+  - Removed outdated contact lists and replaced them with a standardized format across all checks.
+  - Ensured consistency in check logic and documentation formatting.
+
+
+0.8.264 (2026-05-25)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO.ARI2] Add Google OAuth integration for async tasks with
+  validation and UI updates. [Neil Cook]
+- Remove credentials and update error handling for missing secrets.
+  [Neil Cook]
+- Merge branch 'v0.8.running' into v0.8.live. [Neil Cook]
+
+
+0.8.263 (2026-05-25)
+--------------------
+- [APERO.ARI2[ Add bulk save functionality for science groups and update
+  related UI. [Neil Cook]
+- [APERO.ARI2] Update documentation for monitoring checks and
+  procedures. [Neil Cook]
+
+  - Added overviews and instructions for various engineering checks including scrambling state, stretcher state, turbopump state, vacuum gauge, and cryocooler warnings.
+  - Enhanced the "What to do" sections with re-run instructions and contact lists for support.
+  - Created new how-to documents for activating environments, adding reduction products, running APERO astrometrics, rejecting data, and removing processed data.
+  - Included detailed steps for checking ESO archives, finding logs, and identifying data types.
+  - Improved the observation timeline and observation schedule documentation.
+  - Added new images to support the documentation updates.
+- [APERO.RESET] move where we define COMMON ASSET DIRS to (global
+  constant) [Neil Cook]
+
+
+0.8.262 (2026-05-23)
+--------------------
+- [APERO.ARI2] Enhance monitoring documentation and UI. [Neil Cook]
+
+  - Added a "Dry run" checkbox to the async tasks admin interface, allowing users to run tasks in report-only mode without making changes.
+  - Updated various monitoring check documentation to include "Check logic" sections for clarity and consistency.
+  - Improved the structure of documentation for checks related to calibration, engineering states, and warnings, ensuring all checks have a uniform format with requirements, what to do, and contact sections.
+  - Ensured all checks now reference the appropriate blank check and calibration tests where applicable.
+- Add numpy import to engineering check scripts for numerical
+  operations. [Neil Cook]
+- Merge branch 'v0.8.running' into v0.8.live. [Neil Cook]
+- [POGOS.SOSSISSE] Update SOSSISSE input parameter structure to use
+  'GENERAL' instead of 'INPUTS' [Neil Cook]
+
+
+0.8.261 (2026-05-22)
+--------------------
+- Enhance custom columns functionality and UI improvements - Update
+  filtering logic to allow single character input - Add syntax
+  highlighting for Python expressions in custom columns - Adjust table
+  layout for better readability - Improve styling for miscellaneous
+  sections in admin interface. [Neil Cook]
+- Refactor APERO checks profile templates and documentation. [Neil Cook]
+
+  - Updated the management link in `apero_checks_profile.html` to point to the correct URL for APERO checks policies.
+  - Enhanced the layout and styling of the compact profile view in `apero_checks_profile_compact.html`, introducing new CSS styles for better visual organization.
+  - Added pagination controls and improved the filtering interface in the compact profile view.
+  - Introduced JavaScript for debounced form submission to enhance user experience.
+  - Updated various check documentation files to include a "Check logic" section, providing clarity on the logic used in each check.
+  - Ensured consistency across documentation by adding missing sections and improving descriptions for several checks.
+- Merge branch 'v0.8.running' into v0.8.live. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.running' into v0.8.running.
+  [Neil Cook]
+- [APERO.ALLIANCE] change numpy/pandas/scipy versions to match alliance.
+  [Neil Cook]
+- [APERO.ALLIANCE] change numpy/pandas/scipy versions to match alliance.
+  [Neil Cook]
+- [POGOS] Add CRDS setup check to initialization process. [Neil Cook]
+
+
+0.8.260 (2026-05-21)
+--------------------
+- `[APERO.ARI2+APERO_CHECKS]` Add APERO Checks observation directory info
+  and queue management pages. [Neil Cook]
+
+  - Created `apero_checks_obsdir_info.html` for detailed view of APERO checks in an observation directory.
+  - Updated `apero_checks_profile.html` to include new buttons for queue status and advanced options.
+  - Introduced `apero_checks_profile_compact.html` for a compact view of observation directories.
+  - Added `apero_checks_queue.html` for managing and tracking APERO check tasks.
+  - Enhanced JavaScript functionality for rerunning checks, managing overlays, and handling task actions.
+  - Updated CSS styles for better layout and visibility of new components.
+
+
+0.8.259 (2026-05-19)
+--------------------
+- [APERO.ARI2] Enhance documentation and UI for monitoring checks. [Neil
+  Cook]
+
+  - Added YAML front matter to check documentation files for better metadata handling.
+  - Introduced sidebar items for monitoring documentation in the portal index view.
+  - Improved sidebar navigation by resolving document levels and integrating a new tree structure.
+  - Updated CSS styles for the documentation tree to enhance visual hierarchy and interactivity.
+  - Refactored JavaScript for better handling of document tree toggling and state management.
+  - Added new checks with appropriate metadata for better organization and accessibility.
+  - Enhanced existing documentation with consistent metadata formatting.
+- `[APERO.ARI2+APERO_CHECKS]` Add saving overlay and update science group
+  template. [Neil Cook]
+
+  - Introduced a full-page saving overlay in the science groups admin template to enhance user experience during save operations.
+  - Updated styles for the overlay to ensure visibility and aesthetics.
+
+  Enhance monitoring portal with new features and documentation
+
+  - Updated CSS and JS file versions in the monitoring portal template for better performance.
+  - Added a button to toggle visibility of passed checks in the monitoring checks profile.
+  - Improved pagination controls for better navigation in the monitoring checks profile.
+  - Added new documentation for monitoring checks, including blank checks, calibration checks, and various engineering checks.
+  - Created how-to guides for checking ESO archives and understanding observation timelines.
+  - Established contact lists for reporting issues related to monitoring checks.
+
+
+0.8.258 (2026-05-15)
+--------------------
+- [APERO.ALLIANCE] change numpy/pandas/scipy versions to match alliance.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+
+
+0.8.257 (2026-05-15)
+--------------------
+- [APERO.ALLIANCE] change numpy/pandas/scipy versions to match alliance.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO.ALLIANCE] change numpy/pandas/scipy versions to match alliance.
+  [Neil Cook]
+
+
+0.8.256 (2026-05-14)
+--------------------
+- [APERO.ARI] Implement APERO checks management features and enhance
+  user permissions handling. [Neil Cook]
+
+
+0.8.255 (2026-05-13)
+--------------------
+- [APERO.ARI2] Enhance monitor portal and user portal functionality.
+  [Neil Cook]
+
+  - Updated `processing_logs_pid.html` and `processing_logs_profile.html` to include additional subtitles and a refresh button for improved user experience.
+  - Introduced new status.html and `status_detail.html` templates for displaying system status with detailed information and error handling.
+  - Modified `api_access.html` to link to the correct documentation page and improved data access request functionality in `data_access.html`, including a modal for requesting access.
+  - Added installation documentation for versions 0.7.296, 0.7.297, and 0.8.XXX, detailing setup instructions for general and developer use.
+  - Created an API user guide detailing installation, configuration, and usage of the `ari_api` Python client for accessing APERO data.
+  - Documented known errors in a new markdown file to assist users in troubleshooting common issues.
+- Add changes. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO] Update `pseudo_const` to be able to deal with NaN instead of
+  Null in certain keys DRSOBJN, DRSOUTID etc. [Neil Cook]
+- [APERO.ARI2] Add science fiber and types to `NIRPS_HE` configuration.
+  [Neil Cook]
+
+
+0.8.254 (2026-05-13)
+--------------------
+- [APERO.ARI2] Add processing logs and enhance monitor portal
+  functionality. [Neil Cook]
+
+  - Introduced a new "How to use the monitor portal" section in index.html for user guidance.
+  - Created new templates for processing logs: `processing_logs.html`, `processing_logs_pid.html`, and `processing_logs_profile.html`.
+  - Enhanced schedule.html with improved overlay functionality for bulk and individual entry management.
+  - Updated CSS and JS file versions for better performance and consistency.
+
+
+0.8.253 (2026-05-08)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.live' into v0.8.live. [Neil
+  Cook]
+- [APERO.ARI@] Add schedule page template for instrument monitoring.
+  [Neil Cook]
+
+  - Created a new HTML template for the monitoring schedule.
+  - Implemented sections for entries, calendar, stats, and graphs.
+  - Added interactive elements including filters, pagination, and overlays for task management.
+  - Integrated Plotly for graphical representations of data.
+  - Included necessary CSS and JavaScript files for styling and functionality.
+- [APERO.ARI] fixes when profile names are the name (or nan/null in
+  objnames) [Neil Cook]
+
+
+0.7.297 (2026-05-06)
+--------------------
+- Udpate readme. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-stable-test' into
+  v0.7.297-stable-test. [Neil Cook]
+- [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
+- [APERO.PP] Handle masked arrays in astropy table when retrieving last
+  entry. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-stable-test' into
+  v0.7.297-stable-test. [Neil Cook]
+- [NIRPS] Deal with a null in objname in nirps. [Neil Cook]
+- [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
+- [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
+- [NIRPS] Add `KW_ACQTIME` to nirps. [Neil Cook]
+- [APERO.setup] update check modules. [Neil Cook]
+- [APERO.ARI2] sync apero-ri with v0.8 for backwards compatibility.
+  [Neil Cook]
+- [APERO.ARI2] sync apero-ri with v0.8 for backwards compatibility.
+  [Neil Cook]
+- [APERO.request] Update installation instructions and add new
+  dependencies for developer setup. [Neil Cook]
+- [APERO.PROCESSING] Disable all debug files by default - but enable
+  them in `mini_run` files. [Neil Cook]
+- [APERO.VISU] Add timeout handling for process joins in `visu_info` to
+  prevent hanging. [Neil Cook]
+- [APERO.LBL] Fix bug with `find_teff` (must load astromdb) [Neil Cook]
+- [APERO.LBL] Fix bug with `find_teff` (must load astromdb) [Neil Cook]
+- [APERO.VISU] Add error handling for plot function execution in
+  `visu_info`. [Neil Cook]
+- [APERO.VISU] Add error handling for plot function execution in
+  `visu_info`. [Neil Cook]
+- [APERO.VISU] Add warnings handling for median calculations in
+  `visu_info_plots`. [Neil Cook]
+- [APERO.VISU] Enhance verbosity control for plot generation logging in
+  `visu_info` and `visu_info_plots`. [Neil Cook]
+- [APERO.VISU] Add `MP_MODE` configuration for visualization processing
+  and enhance plot generation logging. [Neil Cook]
+- [APERO.VISU] Add check for Telluric correction data presence in
+  `visu_info_plots.py`. [Neil Cook]
+- [lAPERO.LBL] Update object name resolution in teff retrieval process.
+  [Neil Cook]
+- [APERO.VISU] Add multiprocessing support for file identification and
+  plotting in `recipe_definitions.py` and `visu_info.py`. [Neil Cook]
+- [APERO.ARI2] copy v0.8 apero-ri so we can sync. [Neil Cook]
+- [VISU] Add handling for empty datasets in plotting functions to
+  prevent errors. [Neil Cook]
+- [APERO.PARAMS] Enhance text cleaning in `drs_text.py` to ignore non-
+  ASCII characters. [Neil Cook]
+- [APERO.database] Fix table read format in `drs_database.py` to use
+  'ascii.basic' [Neil Cook]
+- [APERO.database] increase chunksize when adding a pandas table. [Neil
+  Cook]
+- `[APERO.KW_DRS_QC]` fix that postprocess products don't have db
+  `KW_DRS_QC`. [Neil Cook]
+- [APERO.ARELDATE] Add support for lbl release date in constants and
+  update related functions for header management. [Neil Cook]
+- Add `ARELDATE_GSHEET_ACOL` to default constants and update related
+  functionality. [Neil Cook]
+- Fix variable name typo in `GET_AREL_DATE` function and update parameter
+  type hint. [Neil Cook]
+- [APERO.database] Introduce bulk update functionality for database
+  entries, optimizing performance by allowing batch updates and reducing
+  the number of SQL connections required. [Neil Cook]
+- `[APERO.release_date]` Implement `get_areldate` function to retrieve APERO
+  release date from Google Sheets or calculate based on raw data. Update
+  relevant files to include release date in output. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-live' into
+  v0.7.297-live. [Neil Cook]
+- `[APERO.recipe_definitions]` Allow run.ini `eng_seq` to run `EXT_HC2HC2` and
+  `PP_HC2HC2`. [Neil Cook]
+- [APERO.processing] Remove redundant index database update logic for
+  test runs in `drs_processing.py`. [Neil Cook]
+- [APERO.ARELDATE] Refactor release date constants: rename
+  `APERO_RELDATE_DELTA` to `AREL_RDELTA`, `AREL_ADELTA`, and `AREL_LDELTA` with
+  updated default values for raw, APERO, and LBL files. [Neil Cook]
+- [APERO.tellu+db] Merge duplicate log entries in `database_update.py` to
+  preserve QC information. And fix pclean file having no `QCC_ALL` value.
+  Add new release date constants. [Neil Cook]
+- `[APERO.file_defintiions]` `LBL_MASK` is not required. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.297-live' into
+  v0.7.297-live. [Neil Cook]
+- [APERO.py312] downgrade numba+numpy (to fix macs) [Neil Cook]
+- Update the apero version we are using in v0.7.297-live. [Neil Cook]
+- [APERO.SPIP] Add constants + files from Andres. [Neil Cook]
+- [APERO.SPIP] Add constants + files from Andres. [Neil Cook]
+- [APERO.SPIP] Add constants + files from Andres. [Neil Cook]
+- [APERO.ref] Add date filtering parameters `(start_date/end_date)` for
+  reference file retrieval in multiple modules. [Neil Cook]
+- [APERO.ref] Add date filtering parameters `(start_date/end_date)` for
+  reference file retrieval in multiple modules. [Neil Cook]
+- [APERO.database] Implement retry logic for transient MySQL "table does
+  not exist" errors. [Neil Cook]
+- [APERO] patch fit tellu bug + `drs_db` error reporting bug. [Neil Cook]
+- [APERO.SIP] Adding spip to v0.7. [Neil Cook]
+- [APERO.SIP] Adding spip to v0.7. [Neil Cook]
+- [APERO.p12] Ensure native-ordered copy of images for median filter in
+  badpix.py. [Neil Cook]
+- [APERO] Update `default_ref` for flipimage in `recipe_definitions.py`.
+  [Neil Cook]
+- [APERO] Fix dtype declaration for flipimage in `recipe_definitions.py`.
+  [Neil Cook]
+- [APERO] Update Python version to 3.12 and adjust related dependencies
+  [tested on mini data] [Neil Cook]
+- [APERO.ilocater] merge global changes from ilocater branch. [Neil
+  Cook]
+- [APERO.ilocater] merge global changes from ilocater branch. [Neil
+  Cook]
+- [APERO] Update Python version to 3.12 and adjust related dependencies
+  [tested on mini data] [Neil Cook]
+- [APERO.wave] Add `fwhm_fp_airy` function and update wave measurements in
+  `gen_vel.py`. [Neil Cook]
+- [APERO.wave] Add `fwhm_fp_airy` function and update wave measurements in
+  `gen_vel.py`. [Neil Cook]
+- [APERO] Update python to 3.11 - and corrections for updates. [Neil
+  Cook]
+- Update dependencies to support Python 3.11 and improve package
+  versions. [Neil Cook]
+- [APERO.get] Refactor `get_disk_entries` and related functions to use
+  pandas DataFrame instead of astropy Table for improved data handling
+  and filtering capabilities. [Neil Cook]
+- [APERO.get] [Neil Cook]
+
+  Add parallel processing capabilities for file copying and header extraction
+
+  - Implemented multiprocessing for file copying in `copy_files` function.
+  - Added new helper functions for parallel file operations using different modes.
+  - Introduced new parameters for core usage and multiprocessing mode in `recipe_definitions.py`.
+  - Enhanced `get_disk_entries` function to support header extraction from files on disk.
+- Add developer mode section to README.md with installation
+  instructions. [Neil Cook]
+- `[APERO.apero_go]` Add MySQL argument to `apero_go.py` and update
+  `recipe_definitions.py` with notes. [Neil Cook]
+- [APERO.processing] Add logging for non-string object names in
+  `get_non_telluric_stars` function. [Neil Cook]
+- [APERO.processing] Add logging for non-string object names in
+  `get_non_telluric_stars` function. [Neil Cook]
+- `[MANUAL_TRIGGER]` Add test mode functionality to visualization and
+  manual trigger scripts. [Neil Cook]
+- [ARI] Add `spirou_offline_alliance.yaml` configuration file with general
+  settings and header keys. [Neil Cook]
+- [APERO] remove lbl from the `requirements_developer.txt` - install with
+  pip install -U -e . instead (so its updatable) [Neil Cook]
+- `[APERO.apero_postprocess]` Update header to include `KW_OUTPUT` key with
+  DrsOutFile name. [Neil Cook]
+- `[APERO.apero_go` + `apero_processing]` Add MySQL option to display
+  connection parameters and update SQL criteria for telluric objects of
+  NIRPS. [Neil Cook]
+- `[APERO.apero_go]` Add --mysql option to display MySQL parameters and
+  connection details. [Neil Cook]
+- [APERO] Add mini data setup script and associated YAML configuration.
+  [Neil Cook]
+- [APERO] Add mini data setup script and associated YAML configuration.
+  [Neil Cook]
+- [APERO] Add mini data setup script and associated YAML configuration.
+  [Neil Cook]
+- [APERO] Add mini data setup script and associated YAML configuration.
+  [Neil Cook]
+- [APERO] Fix for bad getting of logs when writing to `param_table`
+  (didn't consider child logs) [Neil Cook]
+- [APEOR.VISU] Improve info plot file path handling to clarify infopath
+  usage and ensure directory retrieval. [Neil Cook]
+- [APERO] Fix filepath handling to ensure directory is used instead of
+  file. [Neil Cook]
+- [APERO] Update nirps lbl files to match spirou + change `MP_INDEX` -->
+  `MP_FINDEX`. [Neil Cook]
+- [APERO] Fix bug that ptable Booleans (that are strings) aren't pushed
+  to INTS for ingestion to the database. [Neil Cook]
+- [APERO] better spacing of constants + only log multiprocess mode if
+  cores > 1. [Neil Cook]
+- [APERO] Add multiprocessing support for database updates and enhance
+  core management. [Neil Cook]
+- [APERO] Add multiprocessing support for database updates and enhance
+  core management. [Neil Cook]
+- [APERO] Add multiprocessing support for database updates and enhance
+  core management. [Neil Cook]
+- [APERO] Fix that `lbl_ref` was copying its own files for calib files.
+  [Neil Cook]
+- [APERO] fix bug (didn't remove recipe inst from
+  `apero_preprocess_nirps_he.py`. [Neil Cook]
+- [APERO] Fix apero get bug by adding `block_kind` as argument. [Neil
+  Cook]
+- [APERO] Continue to work on visualization plots. [Neil Cook]
+- [APERO] Continue to work on visualization plots. [Neil Cook]
+- [APERO] Continue to work on visualization plots. [Neil Cook]
+- [APERO] Fix reset allowing ONLY "YES" and "NO" [Neil Cook]
+- [APERO CHECKS] Try fixing check. [Neil Cook]
+- [APERO] start work on visu plots for CADC pngs. [Neil Cook]
+- [APERO] start work on visu plots for CADC pngs. [Neil Cook]
+- [APERO] small logging change for the fix header multi-processing.
+  [Neil Cook]
+- [APERO] correct TLOG printing in multiprocessing mode. [Neil Cook]
+- [APERO] correct typo in defaults. [Neil Cook]
+- [APERO] correct typo in defaults. [Neil Cook]
+- [APERO] correct typo in defaults. [Neil Cook]
+- [APERO] deal with setup --skip better. [Neil Cook]
+- [APERO] Attempt to multiprocess some steps in `apero_processing` (i.e.
+  the "update raw files" step and the "update header fixes" step. [Neil
+  Cook]
+- [APERO] Change feature that `SKIP_APERO_LBL_XXX` = True  blocks new
+  observations being reduced. [Neil Cook]
+- [APERO] Change feature that `SKIP_APERO_LBL_XXX` = True  blocks new
+  observations being reduced. [Neil Cook]
+- [APERO] processing - deal with non-interactive mode and prompts for
+  input. [Neil Cook]
+- Update `update_v0.8.txt`. [Neil Cook]
+- Allow --skip=True and --skip. [Neil Cook]
+- [ARI] Fix problems with having alias to ssh (not user@host) [Neil
+  Cook]
+- [APERO-GET] modify to work with permission/group yamls [TESTED] + add
+  `out_prefix` and `out_suffix`. [Neil Cook]
+- [APERO ALLIANCE] Add alliance profiles [UNTESTED] [Neil Cook]
+- [NIRPS] Add WAVE,LFC,UN1 and WAVE,UN1,LFC to list of possible raw
+  files (and pp files) [Neil Cook]
+- [APERO-GET] modify to work with permission/group yamls [TESTED] + add
+  `out_prefix` and `out_suffix`. [Neil Cook]
+- [APERO-GET] modify to work with permission/group yamls [UNFINISHED,
+  UNTESTED] [Neil Cook]
+- Update changelog notes, version and date, remove use of `pkg_resources`.
+  [Neil Cook]
+
+
+0.8.252 (2026-05-06)
+--------------------
+- [APERO.VERSION] Update documentation version to 0.8.250 and enhance
+  README for developer mode. [Neil Cook]
 - [APERO.PP] Handle masked arrays in astropy table when retrieving last
   entry. [Neil Cook]
 - [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
+
+
+0.8.251 (2026-05-06)
+--------------------
 - [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
 
 
@@ -820,10 +3046,6 @@ Changelog
 - [APERO.wave+slinky] Add `drs_io` module to handle masked tables and
   update table reading across multiple scripts - issue currently with
   `WAVE_MEAS/WAVE_REF` being 10s m/s - should be sub m/s. [Neil Cook]
-
-
-0.8.199 (2026-02-06)
---------------------
 - [APERO.wave] Fix slinky correction source references in wave
   processing scripts. [Neil Cook]
 - [APERO.slinky+lbl] Update slinky correction source references and

@@ -1,11 +1,63 @@
 """Tests for the queue GUI Info tab and its shared ARI docs include."""
 import webbrowser
+import threading
 from typing import Any
 
 import pytest
 
 from apero.tools.module.documentation import ari_docs
 from apero.tools.module.processing import drs_queue_gui
+
+
+def test_reset_action_blocks_queue_actions() -> None:
+    """Keep the reset active until its worker and cleanup have finished.
+
+    :return: None.
+    """
+    state = drs_queue_gui.GuiState()
+    started = threading.Event()
+    release = threading.Event()
+
+    def reset_worker() -> None:
+        """Simulate a reset that remains active until released."""
+        started.set()
+        release.wait(timeout=5)
+
+    assert state.start_action('Reset', reset_worker, ())
+    try:
+        assert started.wait(timeout=5)
+        assert state.active_action == 'Reset'
+        result = drs_queue_gui.action_queue(
+            drs_queue_gui.ParamDict(), state, 'stop_all_running')
+        assert not result['success']
+        assert not state.cancel.is_set()
+    finally:
+        release.set()
+        assert state.worker is not None
+        state.worker.join(timeout=5)
+    assert not state.busy
+    assert state.active_action is None
+
+
+def test_queue_state_reset_releases_busy_on_error(monkeypatch: Any) -> None:
+    """A failed synchronous reset must not leave the dashboard blocked.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    state = drs_queue_gui.GuiState()
+
+    def failing_reset(*values: Any, **options: Any) -> int:
+        """Observe the active reset before simulating a cleanup error."""
+        assert state.busy
+        assert state.active_action == 'Reset'
+        raise RuntimeError('reset failed')
+
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'reset_queue', failing_reset)
+    with pytest.raises(RuntimeError, match='reset failed'):
+        drs_queue_gui.action_reset(drs_queue_gui.ParamDict(), state)
+    assert not state.busy
+    assert state.active_action is None
 
 
 @pytest.mark.parametrize(('headless', 'open_count'), [

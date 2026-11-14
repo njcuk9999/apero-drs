@@ -3,12 +3,15 @@
 """Tests for APERO model-background extraction wrappers."""
 
 import ast
+import importlib
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import pytest
 
 from aperocore.constants import param_functions
+from apero.dev import get_base_params
 from apero.science.extract import model_background
 from apero.science.extract import gen_ext
 from apero.instruments.select import INSTRUMENTS
@@ -20,6 +23,62 @@ ParamDict = param_functions.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
+@pytest.mark.parametrize('instrument', ['spirou', 'nirps_ha', 'nirps_he'])
+@pytest.mark.parametrize('dprtype', ['FLAT_DARK', 'DARK_FLAT'])
+def test_localisation_recipe_fits_order_profile(
+        monkeypatch: pytest.MonkeyPatch, instrument: str,
+        dprtype: str) -> None:
+    """Fit the prepared profile, not the image containing masked pixels.
+
+    :param monkeypatch: Fixture replacing calibration and output boundaries.
+    :param instrument: Instrument whose localisation recipe is exercised.
+    :param dprtype: Calibration type selecting science or reference fibers.
+    :return: None.
+    """
+    module_name = f'apero.recipes.{instrument}.apero_loc_{instrument}'
+    module = importlib.import_module(module_name)
+    params = get_base_params(instrument.upper())
+    infile = mock.Mock(basename='flat.fits')
+    infile.get_hkey.return_value = dprtype
+    params['INPUTS'] = dict(FILES=(None, [infile]))
+    params['DATA_DICT'] = dict()
+    params['IMAGE.COMBINE_INPUT'] = False
+    recipe = mock.Mock()
+    pconst = INSTRUMENTS[instrument.upper()](instrument.upper())
+    image = np.ones((8, 12))
+    image[3, 5] = np.nan
+    order_profile = np.ones_like(image)
+    monkeypatch.setattr(module.drs_file, 'check_input_qc',
+                        mock.Mock(return_value=[infile]))
+    monkeypatch.setattr(module.load_functions, 'load_pconfig',
+                        mock.Mock(return_value=pconst))
+    monkeypatch.setattr(module.drs_database, 'CalibrationDatabase',
+                        mock.Mock())
+    monkeypatch.setattr(module.drs_startup, 'file_processing_update',
+                        mock.Mock())
+    monkeypatch.setattr(module.gen_calib, 'calibrate_ppfile',
+                        mock.Mock(return_value=(dict(), image)))
+    profile_builder = mock.Mock(return_value=order_profile)
+    monkeypatch.setattr(module.localisation, 'calculate_order_profile',
+                        profile_builder)
+    fit = mock.Mock()
+    monkeypatch.setattr(module.localisation, 'calc_localisation', fit)
+    boundary = mock.Mock(side_effect=RuntimeError('merge boundary'))
+    monkeypatch.setattr(module.localisation, 'merge_coeffs', boundary)
+
+    with pytest.raises(RuntimeError, match='merge boundary'):
+        module.__main__(recipe, params)
+
+    profile_builder.assert_called_once_with(params, image)
+    group = pconst.FIBER_DPRTYPE(dprtype=dprtype)
+    fibers = pconst.FIBER_LOCALISATION(group)
+    assert fit.call_count == len(fibers)
+    for call, fiber in zip(fit.call_args_list, fibers):
+        assert call.args[2] is order_profile
+        assert call.args[3] == fiber
+    assert np.isnan(image[3, 5])
+
+
 @pytest.mark.parametrize('instrument', ['spirou', 'nirps_ha', 'nirps_he'])
 def test_flat_response_recipe_uses_extracted_file(instrument: str) -> None:
     """Keep flat-response recipe inputs aligned with file definitions.

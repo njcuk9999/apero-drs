@@ -39,6 +39,38 @@ def test_search_page(client: Any) -> None:
     assert b'astro-tab-resolve-target' in response.data
 
 
+def test_pins_navigation(client: Any, admin_user: tuple) -> None:
+    """Pins links to the existing protected page from Home and the sidebar.
+
+    :param client: Flask test client.
+    :param admin_user: Username and password for an authenticated user.
+    :return: None.
+    """
+    pins_url = '/user_portal/pinned_pages'
+    response = client.get(pins_url)
+    assert response.status_code == 302
+    assert '/login' in response.headers['Location']
+
+    with client.session_transaction() as session:
+        session['user'] = admin_user[0]
+
+    response = client.get('/')
+    assert response.status_code == 200
+    assert response.data.count(f'href="{pins_url}"'.encode()) >= 2
+    response = client.get('/search')
+    assert response.status_code == 200
+    assert f'href="{pins_url}"'.encode() in response.data
+    response = client.get(pins_url)
+    assert response.status_code == 200
+    assert b'id="pinned-pages-list"' in response.data
+    assert b'js/pinned_pages.js' in response.data
+
+    pages = permissions.load_pages()
+    items = permissions.get_pinned_sidebar_items({'view.home'}, pages)
+    page_ids = [item['id'] for item in items]
+    assert page_ids.index('home.pins') == page_ids.index('home.search') + 1
+
+
 def test_search_permissions(
     client: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

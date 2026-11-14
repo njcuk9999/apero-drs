@@ -202,7 +202,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         _fibers = pconst.FIBER_LOCALISATION(fiber)
         ldict = dict()
         for _fiber in _fibers:
-            lout = localisation.calc_localisation(params, recipe, image, _fiber)
+            lout = localisation.calc_localisation(params, recipe,
+                                                  order_profile, _fiber)
             ldict[_fiber] = lout
         # deal with merging coefficients and formatting for use as they
         #   were in older codes (may be redundant in future)

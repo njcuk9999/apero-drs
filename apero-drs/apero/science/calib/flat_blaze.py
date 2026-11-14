@@ -257,7 +257,10 @@ def e2ds_correct(params: ParamDict, eprops: ParamDict,
     e2ds_corr = e2ds * blaze
     # update the extracted properties dict with the corrected e2ds
     eprops['E2DSFF'] = e2ds_corr
-    eprops.set_sources(['E2DSFF'], func_name)
+    # Treat the blaze as fixed; standard deviations scale by its magnitude.
+    eprops['E2DSFF_ERROR'] = eprops['E2DSFF_ERROR'] * np.abs(blaze)
+    eprops['E2DSFF_ERROR'][~np.isfinite(e2ds_corr)] = np.nan
+    eprops.set_sources(['E2DSFF', 'E2DSFF_ERROR'], func_name)
     return eprops
 
 

@@ -342,11 +342,26 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
                              header: drs_file.Header,
                              props: ParamDict, spectrum: np.ndarray,
                              fiber: str,
+                             spectrum_error: np.ndarray,
                              database: Optional[drs_database.CalibrationDatabase]
                              = None
-                             ) -> Tuple[np.ndarray, ParamDict]:
-    """Apply thermal correction directly to a new extracted spectrum."""
+                             ) -> Tuple[np.ndarray, np.ndarray, ParamDict]:
+    """Apply a fixed thermal correction and carry extraction uncertainties.
+
+    :param params: APERO constants controlling thermal correction.
+    :param recipe: Calling recipe supplying plots and calibration context.
+    :param header: Input exposure header used for calibration lookup.
+    :param props: Calibration properties containing the exposure DPRTYPE.
+    :param spectrum: Extracted spectrum to correct.
+    :param fiber: Fiber identifier.
+    :param spectrum_error: Per-pixel standard deviations of ``spectrum``.
+    :param database: Optional calibration database to reuse.
+    :return: Corrected spectrum, standard deviations, and thermal properties.
+             Templates and fitted thermal scales are treated as fixed.
+    """
     func_name = __NAME__ + '.correct_spectrum_thermal()'
+    spectrum_error = np.array(spectrum_error, dtype=float)
+    spectrum_error[~np.isfinite(spectrum)] = np.nan
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     fibertype = pconst.FIBER_DATA_TYPE(props['DPRTYPE'], fiber)
     extract_type = params['INPUTS'].get('EXTRACT_TYPE', 'standard')
@@ -362,7 +377,7 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
         tprops['THERMAL_RATIO'] = np.nan
         tprops['THERMAL_RATIO_USED'] = 'None'
         tprops.set_all_sources(func_name)
-        return np.array(spectrum, dtype=float), tprops
+        return np.array(spectrum, dtype=float), spectrum_error, tprops
     margs = [fiber]
     # log: Applying thermal correction for fiber {0}
     WLOG(params, '', textentry('40-015-00020', args=margs))
@@ -409,7 +424,9 @@ def correct_spectrum_thermal(params: ParamDict, recipe: DrsRecipe,
     tprops['THERMAL_RATIO'] = ratios['ratio']
     tprops['THERMAL_RATIO_USED'] = ratios['ratio_used']
     tprops.set_all_sources(func_name)
-    return corrected, tprops
+    # Subtracting a fixed thermal model does not remove measurement noise.
+    spectrum_error[~np.isfinite(corrected)] = np.nan
+    return corrected, spectrum_error, tprops
 
 
 def tcorrect1(params: ParamDict, recipe: DrsRecipe,

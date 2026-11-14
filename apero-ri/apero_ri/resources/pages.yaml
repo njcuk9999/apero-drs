@@ -89,6 +89,18 @@ home.search:
     top-level: True
     show: True
 
+home.pins:
+  label: Pins
+  parent: home
+  view-permission: view.home
+  icon: fa-solid fa-thumbtack
+  quick-nav: False
+  external-url: /user_portal/pinned_pages
+  side-nav:
+    pinned: True
+    top-level: False
+    show: True
+
 home.user_portal:
   label: User Portal
   parent: home

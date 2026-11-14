@@ -161,8 +161,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # --------------------------------------------------------------------
         # Skip files that do not match the required DPRTYPE / OBJNAME filters
         # --------------------------------------------------------------------
-        skip, skip_conditions = gen_calib.check_files(
-            params, recipe.shortname, infile)
+        skip, skip_conditions = gen_calib.check_files(params, recipe.shortname,
+                                                      infile)
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
                 # warning: Skipping extraction DPRTYPE = {0} (Required = {1}) \n
@@ -269,16 +269,24 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                       eprops['E2DSFF']]
             fbkwargs = dict(database=calibdbm)
             fbprops = flat_blaze.get_blaze(*fbargs, **fbkwargs)
+
+            # ----------------------------------------------------------------
+            # Correct the e2ds with the blaze (to match original apero format)
+            # ----------------------------------------------------------------
+            eprops = flat_blaze.e2ds_correct(params, eprops, fbprops)
+
             # ----------------------------------------------------------------
             # Leak correction: remove reference-fiber contamination
             # ----------------------------------------------------------------
             lkargs = [params, recipe, eprops['E2DSFF'],
                       ref_e2ds, infile, fiber]
-            lkkwargs = dict(database=calibdbm)
+            lkkwargs = dict(spectrum_error=eprops['E2DSFF_ERROR'],
+                            database=calibdbm)
             lkout = leak.correct_spectra_leak(*lkargs, **lkkwargs)
-            corrected_spectrum, leakcorr, leak_props = lkout
+            corrected_spectrum, corrected_error, leakcorr, leak_props = lkout
             # store corrected spectrum and leak diagnostics in eprops
             eprops['E2DSFF'] = corrected_spectrum
+            eprops['E2DSFF_ERROR'] = corrected_error
             eprops['LEAKCORR'] = leakcorr
             for key, val in leak_props.items():
                 eprops[key] = val
@@ -287,10 +295,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             thargs = [params, recipe, mprops['HEADER'],
                       mprops['CALIB_PROPS'], eprops['E2DSFF'], fiber]
-            thkwargs = dict(database=calibdbm)
+            thkwargs = dict(spectrum_error=eprops['E2DSFF_ERROR'],
+                            database=calibdbm)
             thout = thermal.correct_spectrum_thermal(*thargs, **thkwargs)
-            thermal_spectrum, thermal_props = thout
+            thermal_spectrum, thermal_error, thermal_props = thout
             eprops['E2DSFF'] = thermal_spectrum
+            eprops['E2DSFF_ERROR'] = thermal_error
             for key, val in thermal_props.items():
                 eprops[key] = val
             # ----------------------------------------------------------------
