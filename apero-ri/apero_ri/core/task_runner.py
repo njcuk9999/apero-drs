@@ -715,260 +715,6 @@ def clear_recent_history() -> Dict[str, Any]:
 
 
 # =============================================================================
-# Sync-source override
-# =============================================================================
-def _run_sync_source_override(
-    instance: Any,
-    run_params: Dict[str, Any],
-    sync_source: str,
-    instrument: str,
-    log_path: Path,
-) -> None:
-    """Copy pre-built task output files from *sync_source* into LOCAL_DATA_DIR.
-
-    When a task's TASK_CONFIG contains ``sync_source`` (a directory path,
-    typically an SSHFS mount or an rsync'd mirror produced by
-    ``apero_sync.run()`` on the remote host), the server skips ``run_job``
-    entirely and instead copies the result JSON files from that path into
-    the local tasks directory.
-
-    The source layout is expected to mirror the standard output layout::
-
-        <sync_source>/tasks/<INSTRUMENT>/<profile>/…
-
-    Files are copied to::
-
-        <LOCAL_DATA_DIR>/tasks/<INSTRUMENT>/<profile>/…
-    """
-    import shutil
-
-    tlog = _make_task_logger(log_path)
-
-    source = Path(sync_source).expanduser().resolve()
-    if not source.is_dir():
-        raise FileNotFoundError(
-            f"sync_source directory does not exist: {source}"
-        )
-
-    local_data_dir = (
-        Path(run_params.get("LOCAL_DATA_DIR")
-             or str(secret_store.get_ari_dir()))
-        .expanduser()
-        .resolve()
-    )
-
-    synced: List[str] = []
-    skipped = 0
-    errors: List[str] = []
-
-    # Walk the source tasks directory tree and copy all files
-    source_tasks = source / "tasks"
-    if not source_tasks.is_dir():
-        # If the source is already the tasks/<instrument> level, handle that
-        source_tasks = source
-
-    tlog(f"sync_source: scanning {source_tasks}")
-
-    for src_file in source_tasks.rglob("*"):
-        if src_file.is_dir():
-            continue
-        try:
-            rel = src_file.relative_to(source_tasks)
-        except ValueError:
-            skipped += 1
-            continue
-
-        dst_file = local_data_dir / "tasks" / rel
-        try:
-            dst_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(str(src_file), str(dst_file))
-            synced.append(str(dst_file))
-        except Exception as exc:
-            errors.append(f"{rel}: {exc}")
-
-    tlog(
-        f"sync_source: copied {len(synced)} files, "
-        f"skipped {skipped}, errors {len(errors)}."
-    )
-
-    instance.output_files = synced
-    instance.info = (
-        f"## Sync Source Override\n\n"
-        f"- Source: `{source}`\n"
-        f"- Files copied: {len(synced)}\n"
-        f"- Errors: {len(errors)}\n"
-    )
-    if errors:
-        instance.info += "\n### Errors\n"
-        for err in errors[:20]:
-            instance.info += f"- {err}\n"
-
-    instance.last_run = datetime.now(timezone.utc).isoformat()
-    instance.progress = 1.0
-
-
-def _resolve_sync_profile_source_dir(
-    sync_source: str,
-    instrument: str,
-    profile_name: str,
-) -> Path:
-    """Resolve a precomputed source path for one APERO profile."""
-    source = Path(sync_source).expanduser().resolve()
-    if not source.is_dir():
-        raise FileNotFoundError(
-            f"sync_source directory does not exist: {source}"
-        )
-
-    candidates = [
-        source / "tasks" / instrument / profile_name,
-        source / instrument / profile_name,
-        source / profile_name,
-    ]
-    for candidate in candidates:
-        if candidate.is_dir():
-            return candidate
-
-    has_root_tree = (
-        (source / "tasks").exists()
-        or (source / instrument).exists()
-    )
-    if not has_root_tree:
-        return source
-
-    raise FileNotFoundError(
-        "Could not resolve sync_source for profile "
-        f"{profile_name}: {source}"
-    )
-
-
-def _copy_sync_profile_override(
-    run_params: Dict[str, Any],
-    sync_source: str,
-    instrument: str,
-    profile_name: str,
-    log_path: Path,
-) -> List[str]:
-    """Copy precomputed output files for one APERO profile."""
-    import shutil
-
-    tlog = _make_task_logger(log_path)
-    source_dir = _resolve_sync_profile_source_dir(
-        sync_source,
-        instrument,
-        profile_name,
-    )
-    local_data_dir = (
-        Path(run_params.get("LOCAL_DATA_DIR")
-             or str(secret_store.get_ari_dir()))
-        .expanduser()
-        .resolve()
-    )
-    dest_root = local_data_dir / "tasks" / instrument / profile_name
-    synced = []
-    stop_event = run_params.get("STOP_EVENT")
-
-    tlog(
-        "sync_source: profile "
-        f"{profile_name} from {source_dir} to {dest_root}"
-    )
-
-    source_files = []
-    for src_file in source_dir.rglob("*"):
-        if src_file.is_dir() or src_file.is_symlink():
-            continue
-        source_files.append(src_file)
-
-    total = len(source_files)
-    tlog(
-        "sync_source: profile "
-        f"{profile_name} discovered {total} file(s)"
-    )
-
-    for idx, src_file in enumerate(source_files, start=1):
-        if stop_event is not None and stop_event.is_set():
-            raise RuntimeError("Task cancelled while syncing pre-computed data")
-
-        rel = src_file.relative_to(source_dir)
-        dst_file = dest_root / rel
-        dst_file.parent.mkdir(parents=True, exist_ok=True)
-        # Always overwrite: a previously-synced destination can have the
-        # same size and mtime as the source even when the content has
-        # been regenerated (e.g. ftable JSON with the same row count
-        # but updated KW_OUTPUT values). Trusting size+mtime as a skip
-        # heuristic would leave stale rows on the local server forever
-        # once the first sync has run. fetch_precomputed must mean
-        # "the remote is authoritative — copy unconditionally".
-        shutil.copy2(str(src_file), str(dst_file))
-        synced.append(str(dst_file))
-
-        if idx % 250 == 0 or idx == total:
-            tlog(
-                "sync_source: profile "
-                f"{profile_name} progress {idx}/{total} "
-                f"(copied={len(synced)})"
-            )
-
-    tlog(
-        "sync_source: profile "
-        f"{profile_name} finished (copied={len(synced)})"
-    )
-    return synced
-
-
-def _split_sync_profile_modes(
-    run_params: Dict[str, Any],
-    task_cfg: Dict[str, Any],
-) -> Tuple[List[Tuple[str, str]], List[str]]:
-    """Split APERO profiles into sync and server-run groups."""
-    raw = task_cfg.get("sync_profiles", {})
-    if not isinstance(raw, dict):
-        return [], list(run_params.get("APERO_PROFILE_NAMES") or [])
-
-    sync_profiles = []
-    run_server_profiles = []
-    for profile_name in run_params.get("APERO_PROFILE_NAMES") or []:
-        entry = raw.get(profile_name, {})
-        if not isinstance(entry, dict):
-            run_server_profiles.append(profile_name)
-            continue
-        mode = str(entry.get("mode", "run_server") or "run_server")
-        mode = mode.strip().lower()
-        sync_source = str(entry.get("sync_source", "") or "").strip()
-        if mode == "fetch_precomputed" and sync_source:
-            sync_profiles.append((profile_name, sync_source))
-        else:
-            run_server_profiles.append(profile_name)
-    return sync_profiles, run_server_profiles
-
-
-def _append_sync_profile_info(
-    instance: Any,
-    sync_profiles: List[Tuple[str, str]],
-    synced_files: List[str],
-) -> None:
-    """Append a short sync summary to the task info markdown."""
-    if not sync_profiles:
-        return
-
-    lines = [
-        "## Pre-computed Profiles",
-        "",
-        f"- Profiles synced: {len(sync_profiles)}",
-        f"- Files copied: {len(synced_files)}",
-    ]
-    for profile_name, sync_source in sync_profiles:
-        lines.append(
-            f"- {profile_name}: `{sync_source}`"
-        )
-    block = "\n".join(lines)
-    info = str(getattr(instance, "info", "") or "").strip()
-    if info:
-        instance.info = info + "\n\n" + block
-    else:
-        instance.info = block
-
-
-# =============================================================================
 # Worker
 # =============================================================================
 def _execute_task(_inst: str, task_id: str) -> None:
@@ -996,114 +742,25 @@ def _execute_task(_inst: str, task_id: str) -> None:
         # Treat task output files as this-run artifacts.
         instance.output_files = []
 
-        # ── sync_source override ────────────────────────────────────
-        # When a task has sync_source configured, copy pre-built
-        # results from that path instead of running the task.
-        task_cfg = run_params.get("TASK_CONFIG", {})
-        sync_source = str(task_cfg.get("sync_source", "") or "").strip()
-        sync_profiles, run_server_profiles = _split_sync_profile_modes(
-            run_params,
-            task_cfg,
-        )
-        local_task_enabled = False
-        try:
-            from apero_ri import tasks as task_module
+        from apero_ri import tasks as task_module
+        from apero_ri.tasks import apero_sync
 
-            task_key = str(getattr(instance, "_task_key", "") or "").strip()
-            local_task_enabled = bool(
-                task_module.LOCAL_TASK.get(task_key, False)
-            )
-        except Exception:
-            local_task_enabled = False
-
-        if sync_profiles and local_task_enabled:
-            synced_files = []
-            for profile_name, profile_source in sync_profiles:
-                synced_files.extend(
-                    _copy_sync_profile_override(
-                        run_params,
-                        profile_source,
-                        _inst,
-                        profile_name,
-                        log_path,
-                    )
-                )
-
-            if run_server_profiles:
-                subset_params = dict(run_params)
-                profile_map = dict(
-                    run_params.get("APERO_PROFILES", {}) or {}
-                )
-                subset_params["APERO_PROFILE_NAMES"] = list(
-                    run_server_profiles
-                )
-                subset_params["APERO_PROFILES"] = dict(
-                    (profile_name, profile_map[profile_name])
-                    for profile_name in run_server_profiles
-                    if profile_name in profile_map
-                )
-                stdout_tee = _TaskLogTeeStream(
-                    log_path, sink=sys.stdout, stream_tag="stdout"
-                )
-                stderr_tee = _TaskLogTeeStream(
-                    log_path, sink=sys.stderr, stream_tag="stderr"
-                )
-                with contextlib.redirect_stdout(
-                    stdout_tee
-                ), contextlib.redirect_stderr(stderr_tee):
-                    instance.run_job(subset_params)
-                stdout_tee.flush()
-                stderr_tee.flush()
-
-            current_files = list(
-                getattr(instance, "output_files", []) or []
-            )
-            current_files.extend(synced_files)
-            instance.output_files = _dedupe_strings(current_files)
-            _append_sync_profile_info(
-                instance,
-                sync_profiles,
-                synced_files,
-            )
-        elif sync_source and local_task_enabled:
-            _run_sync_source_override(
-                instance,
-                run_params,
-                sync_source,
-                _inst,
-                log_path,
-            )
-        elif sync_source and not local_task_enabled:
-            _append_task_log_line(
-                log_path,
-                "sync_source ignored: task does not support "
-                "LOCAL_TASK override.",
-            )
-            stdout_tee = _TaskLogTeeStream(
-                log_path, sink=sys.stdout, stream_tag="stdout"
-            )
-            stderr_tee = _TaskLogTeeStream(
-                log_path, sink=sys.stderr, stream_tag="stderr"
-            )
-            with contextlib.redirect_stdout(
-                stdout_tee
-            ), contextlib.redirect_stderr(stderr_tee):
+        task_key = str(getattr(instance, '_task_key', '') or '').strip()
+        local_task_enabled = bool(task_module.LOCAL_TASK.get(task_key, False))
+        stdout_tee = _TaskLogTeeStream(
+            log_path, sink=sys.stdout, stream_tag='stdout')
+        stderr_tee = _TaskLogTeeStream(
+            log_path, sink=sys.stderr, stream_tag='stderr')
+        with contextlib.redirect_stdout(stdout_tee), (
+            contextlib.redirect_stderr(stderr_tee)
+        ):
+            if local_task_enabled:
+                run_args = [instance, task_key, run_params]
+                apero_sync.run_with_precomputed(*run_args)
+            else:
                 instance.run_job(run_params)
-            stdout_tee.flush()
-            stderr_tee.flush()
-        else:
-            stdout_tee = _TaskLogTeeStream(
-                log_path, sink=sys.stdout, stream_tag="stdout"
-            )
-            stderr_tee = _TaskLogTeeStream(
-                log_path, sink=sys.stderr, stream_tag="stderr"
-            )
-            with contextlib.redirect_stdout(
-                stdout_tee
-            ), contextlib.redirect_stderr(stderr_tee):
-                instance.run_job(run_params)
-            stdout_tee.flush()
-            stderr_tee.flush()
+        stdout_tee.flush()
+        stderr_tee.flush()
 
         stop_ev = _stop_events.get(task_id)
         if stop_ev is not None and stop_ev.is_set():
@@ -1477,8 +1134,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
             except OSError:
                 return
 
-        import uuid as uuid_module
-
+        from apero_ri.application import async_task_helpers
         from apero_ri import tasks as task_module
         from apero_ri.core.auth import (
             load_apero_profiles,
@@ -1496,198 +1152,20 @@ def _scheduler_poll(local_data_dir: str) -> None:
         if "__GLOBAL__" not in all_tasks:
             all_tasks["__GLOBAL__"] = []
             changed = True
+        for instrument in all_profiles:
+            if instrument not in all_tasks:
+                all_tasks[instrument] = []
+                changed = True
 
         for instrument, task_list in all_tasks.items():
             if not isinstance(task_list, list):
                 continue
 
-            stored_tasks = task_list
-            by_key = {}
-            for task_cfg in stored_tasks:
-                if not isinstance(task_cfg, dict):
-                    continue
-                key = str(task_cfg.get("task_key", "")).strip()
-                if key:
-                    by_key[key] = task_cfg
-
-            merged = []
-            task_keys = _task_keys_for_scope(task_module, instrument)
-            for idx, task_key in enumerate(task_keys, start=1):
-                task_cfg = dict(by_key.get(task_key, {}))
-                task_id = str(task_cfg.get("id", "")).strip()
-                if not task_id:
-                    task_id = str(
-                        uuid_module.uuid5(
-                            uuid_module.NAMESPACE_URL,
-                            f"ari-async-task:{instrument}:{task_key}",
-                        )
-                    )
-                    changed = True
-
-                default_freq = _normalize_task_frequency(
-                    task_module.FREQ.get(task_key, 24.0), 24.0
-                )
-                default_enabled = _normalize_task_enabled(
-                    task_module.ENABLED.get(task_key, False), False
-                )
-
-                merged_cfg = {
-                    "id": task_id,
-                    "task_key": task_key,
-                    "frequency": _normalize_task_frequency(
-                        task_cfg.get("frequency", default_freq), default_freq
-                    ),
-                    "active": _normalize_task_enabled(
-                        task_cfg.get("active", default_enabled), default_enabled
-                    ),
-                    "order": idx,
-                }
-
-                # Preserve multiprocessing settings so scheduler merges do not
-                # silently reset task parallelism back to defaults.
-                supports_mp = bool(
-                    task_module.MULTI_PROCESS.get(task_key, False)
-                )
-                keep_mp = supports_mp or any(
-                    key in task_cfg
-                    for key in ["ncores", "mp_backend", "mp_start_method"]
-                )
-                if keep_mp:
-                    try:
-                        ncores = int(task_cfg.get("ncores", 1) or 1)
-                    except (TypeError, ValueError):
-                        ncores = 1
-                    merged_cfg["ncores"] = max(1, ncores)
-
-                    backend = (
-                        str(task_cfg.get("mp_backend", "threads") or "threads")
-                        .strip()
-                        .lower()
-                    )
-                    if backend not in ["threads", "processes"]:
-                        backend = "threads"
-                    merged_cfg["mp_backend"] = backend
-
-                    start_method = (
-                        str(
-                            task_cfg.get("mp_start_method", "default")
-                            or "default"
-                        )
-                        .strip()
-                        .lower()
-                    )
-                    if start_method not in [
-                        "default",
-                        "spawn",
-                        "fork",
-                        "forkserver",
-                    ]:
-                        start_method = "default"
-                    merged_cfg["mp_start_method"] = start_method
-
-                if task_key == "ARI_LOCAL_DATA_BACKUP":
-                    try:
-                        daily_copies = int(task_cfg.get("daily_copies", 7) or 0)
-                    except (TypeError, ValueError):
-                        daily_copies = 7
-                    try:
-                        weekly_copies = int(
-                            task_cfg.get("weekly_copies", 4) or 0
-                        )
-                    except (TypeError, ValueError):
-                        weekly_copies = 4
-                    merged_cfg["daily_copies"] = max(0, daily_copies)
-                    merged_cfg["weekly_copies"] = max(0, weekly_copies)
-                    from apero_ri.tasks.apero_backup import (
-                        DEFAULT_BACKUP_MAX_SIZE_MB,
-                    )
-                    try:
-                        backup_max_mb = float(
-                            task_cfg.get(
-                                "backup_max_size_mb",
-                                DEFAULT_BACKUP_MAX_SIZE_MB,
-                            )
-                        )
-                    except (TypeError, ValueError):
-                        backup_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
-                    if backup_max_mb <= 0:
-                        backup_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
-                    merged_cfg["backup_max_size_mb"] = backup_max_mb
-                    # Pass through admin-customised exclude lists.
-                    for _key in ("exclude_dirs", "exclude_paths"):
-                        _val = task_cfg.get(_key)
-                        if isinstance(_val, list):
-                            cleaned = []
-                            for _item in _val:
-                                _s = str(_item or "").strip()
-                                if _s and _s not in cleaned:
-                                    cleaned.append(_s)
-                            if cleaned:
-                                merged_cfg[_key] = cleaned
-
-                if task_key == "APERO_SYNC_ASSETS":
-                    mode_val = str(
-                        task_cfg.get("mode") or "remote"
-                    ).strip().lower()
-                    # backwards compatibility with legacy mode names
-                    if mode_val in ("sync", "upload", "remote"):
-                        mode_val = "remote"
-                    elif mode_val == "local":
-                        mode_val = "local"
-                    else:
-                        mode_val = "remote"
-                    merged_cfg["mode"] = mode_val
-                    merged_cfg["force_download"] = bool(
-                        task_cfg.get("force_download", False)
-                    )
-                    _local_src = str(
-                        task_cfg.get("local_source_path") or ""
-                    ).strip()
-                    if _local_src:
-                        merged_cfg["local_source_path"] = _local_src
-                    _drs_uconfig = str(
-                        task_cfg.get("drs_uconfig") or ""
-                    ).strip()
-                    if _drs_uconfig:
-                        merged_cfg["drs_uconfig"] = _drs_uconfig
-
-                if task_key in [
-                    "LEGACY_ASTROM_GSHEET",
-                    "LEGACY_REJECT_GSHEET",
-                ]:
-                    for _key in [
-                        "DRY_RUN",
-                        "google_secret_name",
-                        "sheet_id",
-                        "sheet_name",
-                        "sheet_names",
-                        "resolve_tolerance_arcsec",
-                        "created_by",
-                    ]:
-                        if _key in task_cfg:
-                            merged_cfg[_key] = task_cfg.get(_key)
-
-                for field in [
-                    "last_run",
-                    "run_count",
-                    "output_files",
-                    "last_status",
-                    "sync_source",
-                    "sync_profiles",
-                    "filters",
-                ]:
-                    if field in task_cfg:
-                        merged_cfg[field] = task_cfg.get(field)
-
-                import_error = str(import_errors.get(task_key, "")).strip()
-                if import_error:
-                    merged_cfg["last_status"] = "failed"
-
-                merged.append(merged_cfg)
-
-            if merged != stored_tasks:
-                all_tasks[instrument] = merged
-                changed = True
+            merge_args = [instrument, all_tasks]
+            merged, catalog_changed = (
+                async_task_helpers.merge_async_task_catalog(*merge_args)
+            )
+            changed = changed or catalog_changed
 
             ordered_tasks = sorted(
                 merged, key=lambda task: task.get("order", 999)
@@ -1865,6 +1343,10 @@ def build_run_params(
     :returns: Runtime task parameters including normalized profiles.
     """
     profiles = all_profiles.get(instrument, {})
+    profile_name = (task_cfg or {}).get('apero_profile')
+    if profile_name:
+        profiles = dict((name, data) for name, data in profiles.items()
+                        if name == profile_name)
     mapped: Dict[str, dict] = {}
     db_keys = [
         "DATABASE_MODE",
@@ -2021,7 +1503,7 @@ def _resolve_queue_name(queue: str, task_key: str, instrument: str) -> str:
         ttype = str(_task_module.TYPE.get(task_key, "") or "").upper().strip()
     except Exception:
         ttype = ""
-    if ttype == "INSTRUMENT":
+    if ttype in ['INSTRUMENT', 'PROFILE']:
         inst = str(instrument or "unknown").strip().upper()
         return "instrument_%s" % inst
     # GLOBAL tasks (and anything unrecognised) go on the global queue.
@@ -2191,7 +1673,6 @@ def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
             )
             cooldown_until = now + timedelta(hours=freq)
             task_cfg["cooldown_until"] = cooldown_until.isoformat()
-            task_cfg["last_run"] = now.isoformat()
             task_cfg["last_status"] = "cancelled"
             updated += 1
 

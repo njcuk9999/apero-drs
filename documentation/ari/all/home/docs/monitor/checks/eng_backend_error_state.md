@@ -56,7 +56,7 @@ np.all(np.char.upper(np.char.strip(status_key)) != np.char.upper('blocked_value'
 | STATUS_KEY | status_key |
 | BLOCKED_VALUE | blocked_value |
 
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml, aprofile_instrument/nirps_xxs_08_jupiter.yaml
+### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
 
 Performs the following test
 
