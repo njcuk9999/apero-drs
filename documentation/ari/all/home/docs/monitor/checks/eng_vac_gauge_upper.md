@@ -55,7 +55,7 @@ np.nanmax(metric_key) < limit
 | LIMIT | limit |
 | METRIC | metric |
 
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
+### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml, aprofile_instrument/nirps_xxs_08_jupiter.yaml
 
 Performs the following test
 

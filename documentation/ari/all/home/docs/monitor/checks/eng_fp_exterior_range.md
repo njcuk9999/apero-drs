@@ -57,7 +57,7 @@ np.nanmin(metric_key) > lower_limit and np.nanmax(metric_key) < upper_limit
 | XMIN | xmin |
 | XMAX | xmax |
 
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
+### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml, aprofile_instrument/nirps_xxs_08_jupiter.yaml
 
 Performs the following test
 
