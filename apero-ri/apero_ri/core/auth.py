@@ -664,6 +664,17 @@ def save_apero_profiles(profiles: dict) -> None:
     # Invalidate in-process cache so the next read returns the new data.
     with _profiles_lock:
         _profiles_cache.clear()
+    from apero_ri.application import async_task_helpers
+
+    all_tasks = load_async_tasks()
+    changed = False
+    for instrument in profiles:
+        merge_args = [instrument, all_tasks]
+        _, catalog_changed = async_task_helpers.merge_async_task_catalog(
+            *merge_args)
+        changed = changed or catalog_changed
+    if changed:
+        save_async_tasks(all_tasks)
 
 
 def rename_instrument(old_name: str, new_name: str) -> Dict[str, Any]:

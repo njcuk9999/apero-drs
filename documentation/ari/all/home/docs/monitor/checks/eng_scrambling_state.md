@@ -54,21 +54,3 @@ np.all(status_key == status_value) on dprtypes ['dprtypes']
 | STATUS_KEY | status_key |
 | STATUS_VALUE | status_value |
 | DPRTYPES | dprtypes |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.all(HIERARCH ESO INS2 AOS SCRAMB ST == True) on dprtypes ['OBJECT,FP', 'OBJECT,SKY', 'TELLURIC,SKY']
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | scrambling_status_science |
-| ENABLED | True |
-| STATUS_KEY | HIERARCH ESO INS2 AOS SCRAMB ST |
-| STATUS_VALUE | True |
-| DPRTYPES | OBJECT,FP, OBJECT,SKY, TELLURIC,SKY |

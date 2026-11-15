@@ -53,20 +53,3 @@ np.all(np.char.upper(np.char.strip(status_key)) == np.char.upper('target'))
 | ENABLED | True |
 | STATUS_KEY | status_key |
 | TARGET | target |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.all(np.char.upper(np.char.strip(HIERARCH ESO INS OPTI10 STAT)) == np.char.upper('ON'))
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | stretcher_status_state |
-| ENABLED | True |
-| STATUS_KEY | HIERARCH ESO INS OPTI10 STAT |
-| TARGET | ON |

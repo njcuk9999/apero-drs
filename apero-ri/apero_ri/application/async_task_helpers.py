@@ -3,7 +3,40 @@
 from __future__ import annotations
 
 import uuid
+import json
 from typing import Any, Dict, List, Tuple
+
+
+def load_parallel_defaults() -> Dict[str, Any]:
+    """Return persisted parallel defaults, or the initial settings.
+
+    :returns: Core count, backend and process start method defaults.
+    """
+    from apero_ri.core import auth
+
+    defaults = dict(ncores=1, mp_backend='threads', mp_start_method='default')
+    path = auth.ASYNC_TASKS_FILE.with_name('parallel_defaults.json')
+    if path.is_file():
+        defaults.update(json.loads(path.read_text(encoding='utf-8')))
+    return defaults
+
+
+def save_parallel_defaults(defaults: Dict[str, Any]) -> None:
+    """Persist validated parallel defaults with an atomic replacement.
+
+    :param defaults: Core count, backend and process start method.
+    :returns: None.
+    """
+    from apero_ri.core import auth
+
+    path = auth.ASYNC_TASKS_FILE.with_name('parallel_defaults.json')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(str(uuid.uuid4()) + '.tmp')
+    try:
+        temporary.write_text(json.dumps(defaults), encoding='utf-8')
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def coerce_task_frequency(value: Any, default: float = 24.0) -> float:
@@ -62,31 +95,10 @@ def task_keys_for_scope(instrument: str) -> List[str]:
         ttype = (
             str(task_module.TYPE.get(task_key, "INSTRUMENT")).strip().upper()
         )
-        if ttype == want_type:
+        if ttype == want_type or (want_type == 'INSTRUMENT'
+                                  and ttype == 'PROFILE'):
             keys.append(task_key)
     return keys
-
-
-def normalize_sync_profiles(raw: Any) -> Dict[str, Dict[str, str]]:
-    """Normalize per-profile sync settings from task config."""
-    out: Dict[str, Dict[str, str]] = {}
-    if not isinstance(raw, dict):
-        return out
-
-    for profile_name, entry in raw.items():
-        pname = str(profile_name or "").strip()
-        if not pname or not isinstance(entry, dict):
-            continue
-
-        mode = str(entry.get("mode", "run_server") or "run_server")
-        mode = mode.strip().lower()
-        if mode not in ["run_server", "fetch_precomputed"]:
-            mode = "run_server"
-        sync_source = str(entry.get("sync_source", "") or "").strip()
-        if mode == "run_server" and not sync_source:
-            continue
-        out[pname] = dict(mode=mode, sync_source=sync_source)
-    return out
 
 
 def merge_async_task_catalog(
@@ -94,31 +106,43 @@ def merge_async_task_catalog(
 ) -> Tuple[List[Dict[str, Any]], bool]:
     """Merge persisted task overrides with task catalog defaults."""
     from apero_ri import tasks as task_module
+    from apero_ri.core import auth
 
     import_errors = getattr(task_module, "IMPORT_ERRORS", {}) or {}
+    parallel_defaults = load_parallel_defaults()
 
     stored_tasks = all_tasks.get(instrument, [])
     if not isinstance(stored_tasks, list):
         stored_tasks = []
 
-    by_key: Dict[str, Dict[str, Any]] = {}
+    by_key = dict()
     for task_cfg in stored_tasks:
         if not isinstance(task_cfg, dict):
             continue
         key = str(task_cfg.get('task_key', '')).strip()
         if key:
-            by_key[key] = task_cfg
+            by_key[(key, task_cfg.get('apero_profile', ''))] = task_cfg
 
     merged: List[Dict[str, Any]] = []
     keys = task_keys_for_scope(instrument)
-    for idx, task_key in enumerate(keys, start=1):
-        task_cfg = dict(by_key.get(task_key, {}))
+    profiles = auth.load_apero_profiles(enabled_only=True).get(instrument, {})
+    identities = []
+    for task_key in keys:
+        if task_module.TYPE.get(task_key) == 'PROFILE':
+            identities.extend((task_key, name) for name in profiles)
+        else:
+            identities.append((task_key, ''))
+    for idx, (task_key, profile_name) in enumerate(identities, start=1):
+        task_cfg = dict(by_key.get((task_key, profile_name), {}))
         task_id = str(task_cfg.get("id", "")).strip()
         if not task_id:
+            identity = f'ari-async-task:{instrument}:{task_key}'
+            if profile_name:
+                identity += f':{profile_name}'
             task_id = str(
                 uuid.uuid5(
                     uuid.NAMESPACE_URL,
-                    f"ari-async-task:{instrument}:{task_key}",
+                    identity,
                 )
             )
 
@@ -140,6 +164,8 @@ def merge_async_task_catalog(
             ),
             "order": idx,
         }
+        if profile_name:
+            merged_cfg['apero_profile'] = profile_name
 
         if task_key == "ARI_LOCAL_DATA_BACKUP":
             try:
@@ -237,6 +263,12 @@ def merge_async_task_catalog(
                     merged_cfg[_key] = task_cfg.get(_key)
 
         if bool(task_module.MULTI_PROCESS.get(task_key, False)):
+            override = coerce_task_enabled(
+                task_cfg.get('parallel_override'), False
+            )
+            merged_cfg['parallel_override'] = override
+            if not override:
+                task_cfg.update(parallel_defaults)
             try:
                 ncores = int(task_cfg.get("ncores", 1) or 1)
             except (TypeError, ValueError):
@@ -292,21 +324,6 @@ def merge_async_task_catalog(
                     else "default"
                 )
 
-        if bool(task_module.LOCAL_TASK.get(task_key, False)):
-            merged_cfg["sync_source"] = str(
-                task_cfg.get("sync_source", "") or ""
-            ).strip()
-            sync_profiles = normalize_sync_profiles(
-                task_cfg.get("sync_profiles", {})
-            )
-            if sync_profiles:
-                merged_cfg["sync_profiles"] = sync_profiles
-            else:
-                merged_cfg.pop("sync_profiles", None)
-        else:
-            merged_cfg.pop("sync_source", None)
-            merged_cfg.pop("sync_profiles", None)
-
         for field in [
             "last_run",
             "run_count",
@@ -314,6 +331,7 @@ def merge_async_task_catalog(
             "last_status",
             "cooldown_until",
             "filters",
+            "last_run_params",
         ]:
             if field in task_cfg:
                 merged_cfg[field] = task_cfg.get(field)

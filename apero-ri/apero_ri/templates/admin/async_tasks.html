@@ -8,6 +8,41 @@
 .at-instrument-picker {
     margin: 0.75rem 0 1rem 0;
 }
+.at-task-filters, .at-parallel-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+}
+.at-task-filters label, .at-parallel-controls label {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+    color: var(--ari-text);
+}
+.at-parallel-management {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--ari-border);
+    margin-bottom: 1rem;
+}
+.at-parallel-controls input { max-width: 8rem; }
+[data-theme="dark"] .at-task-filters label,
+[data-theme="dark"] .at-parallel-controls label {
+    color: var(--ari-text);
+}
+[data-theme="dark"] .at-parallel-management {
+    border-color: var(--ari-border);
+}
+@media (max-width: 768px) {
+    .at-task-filters, .at-parallel-controls { flex-direction: column; }
+    .at-task-filters label, .at-parallel-controls label { width: 100%; }
+    .at-task-filters select, .at-parallel-controls select,
+    .at-parallel-controls input, .at-parallel-controls button {
+        min-height: 44px;
+        width: 100%;
+        max-width: none;
+    }
+}
 .at-instrument-picker__cards {
     display: flex;
     flex-wrap: wrap;
@@ -305,16 +340,45 @@
 <div id="at-tabs" class="ari-sg-tabs"></div>
 
 <div id="at-instrument-picker" class="at-instrument-picker" style="display:none;">
-    <div class="ari-sg-section__header" style="padding:0 0 0.5rem 0;">
-        <h3><i class="fa-solid fa-satellite-dish"></i> Instruments</h3>
+    <div class="at-task-filters">
+        <label for="at-instrument-filter">{{ task_labels.INSTRUMENT }}
+            <select id="at-instrument-filter" class="ari-ap-input"></select>
+        </label>
+        <label for="at-profile-filter">{{ task_labels.PROFILE }}
+            <select id="at-profile-filter" class="ari-ap-input"></select>
+        </label>
     </div>
-    <div id="at-instrument-cards" class="at-instrument-picker__cards"></div>
 </div>
 
 <!-- ====================================================================== -->
 <!-- Instrument workspace                                                    -->
 <!-- ====================================================================== -->
 <div id="at-instrument-workspace" style="display:none;">
+
+    <details class="at-parallel-management">
+        <summary><i class="fa-solid fa-sliders"></i> {{ task_labels.DEFAULTS }}</summary>
+        <div class="at-parallel-controls">
+            <label for="at-default-ncores">{{ task_labels.NCORES }}
+                <input id="at-default-ncores" class="ari-ap-input" type="number" min="1" step="1" value="1">
+            </label>
+            <label for="at-default-backend">{{ task_labels.BACKEND }}
+                <select id="at-default-backend" class="ari-ap-input">
+                    <option value="threads">threads</option>
+                    <option value="processes">processes</option>
+                </select>
+            </label>
+            <label for="at-default-start">{{ task_labels.START }}
+                <select id="at-default-start" class="ari-ap-input">
+                    <option value="default">default</option>
+                    <option value="spawn">spawn</option>
+                    <option value="fork">fork</option>
+                    <option value="forkserver">forkserver</option>
+                </select>
+            </label>
+            <button id="at-set-defaults" class="ari-btn ari-btn--primary"><i class="fa-solid fa-floppy-disk"></i> {{ task_labels.SET_DEFAULTS }}</button>
+            <button id="at-update-all" class="ari-btn ari-btn--secondary"><i class="fa-solid fa-arrows-rotate"></i> {{ task_labels.UPDATE_ALL }}</button>
+        </div>
+    </details>
 
     <!-- Toolbar -->
     <div class="at-toolbar">
@@ -850,36 +914,8 @@
                         <div class="at-muted-hint">Required for remote mode. Must be the directory set by <code>apero_profile.sh</code>. The task will fail if this is not set or does not exist.</div>
                     </div>
                 </div>
-                <div id="edit-local-sync-fields" style="display:none;">
-                    <div class="ari-ap-form__field">
-                        <label>Per-profile sync mode</label>
-                        <div class="at-muted-hint">
-                            Choose Run on server or Fetch pre-computed for
-                            each APERO profile. For Fetch pre-computed,
-                            browse to the directory that contains that
-                            profile's pre-built task output. The selected
-                            directory can have a different name than the
-                            APERO profile.
-                        </div>
-                    </div>
-                    <div id="edit-sync-profiles-empty"
-                         class="at-muted-hint" style="display:none;">
-                        No APERO profiles are available for this instrument.
-                    </div>
-                    <div id="edit-sync-profiles-wrap" style="display:none;">
-                        <table class="at-sync-profiles__table">
-                            <thead>
-                                <tr>
-                                    <th>APERO profile</th>
-                                    <th>Mode</th>
-                                    <th>Pre-computed directory</th>
-                                </tr>
-                            </thead>
-                            <tbody id="edit-sync-profiles-body"></tbody>
-                        </table>
-                    </div>
-                </div>
                 <div id="edit-mp-fields" style="display:none;">
+                    <label><input id="edit-parallel-override" type="checkbox"> {{ task_labels.OVERRIDE }}</label>
                     <div class="ari-ap-form__field">
                         <label for="edit-ncores">NCORES</label>
                         <input type="number" id="edit-ncores" class="ari-ap-input"
@@ -1179,6 +1215,7 @@
 <script>
 window.ARI_ASYNC_TASKS = {
     instruments: {{ instruments | tojson }},
+    labels: {{ task_labels | tojson }},
     urls: {
         globalList: '{{ url_for("api_async_tasks_global_list") }}',
         list:     '{{ url_for("api_async_tasks_list") }}',
@@ -1202,5 +1239,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260610a') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20261115a') }}"></script>
 {% endblock %}

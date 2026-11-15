@@ -31,6 +31,40 @@ __release__ = base.__release__
 # Get the language list
 langlist = drs_lang_list.LanguageList(__NAME__)
 
+async_task_labels = dict(
+    TASKS=('Tasks', 'Tâches', 'Tareas'),
+    INSTRUMENT=('Instrument', 'Instrument', 'Instrumento'),
+    PROFILE=('APERO profile', 'Profil APERO', 'Perfil APERO'),
+    ALL=('All', 'Tous', 'Todos'),
+    GLOBAL=('Global', 'Global', 'Global'),
+    DEFAULTS=('Parallel defaults', 'Valeurs parallèles par défaut',
+              'Valores paralelos predeterminados'),
+    NCORES=('NCORES', 'NCORES', 'NCORES'),
+    BACKEND=('Parallel backend', 'Moteur parallèle', 'Motor paralelo'),
+    START=('Process start method', 'Démarrage des processus',
+           'Inicio de procesos'),
+    SET_DEFAULTS=('Set by default', 'Définir par défaut',
+                  'Establecer por defecto'),
+    UPDATE_ALL=('Update all tasks', 'Mettre à jour toutes les tâches',
+                'Actualizar todas las tareas'),
+    OVERRIDE=('Override parallel defaults', 'Remplacer les valeurs par défaut',
+              'Reemplazar valores predeterminados'),
+    INVALID=('Invalid parallel settings.', 'Paramètres parallèles invalides.',
+             'Configuración paralela no válida.'),
+    SAVED=('Parallel settings saved.', 'Paramètres parallèles enregistrés.',
+           'Configuración paralela guardada.'),
+    LAST_RUN=('Last run', 'Dernière exécution', 'Última ejecución'),
+    AUTOMATIC=('Pre-computed, otherwise server', 'Pré-calculé, sinon serveur',
+               'Precalculado, o servidor'),
+)
+for label, translations in async_task_labels.items():
+    item = langlist.create('ASYNC_TASKS_' + label, kind='text')
+    for language, translation in zip(('ENG', 'FR', 'ES'), translations):
+        item.value[language] = translation
+    item.arguments = 'None'
+    item.comment = 'ARI async task dashboard and parallel management'
+    langlist.add(item)
+
 item = langlist.create('USER_STATISTICS_RESET', kind='text')
 item.value['ENG'] = 'Reset statistics'
 item.value['FR'] = 'Réinitialiser les statistiques'

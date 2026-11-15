@@ -6,6 +6,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
+from aperocore.drs_lang import textentry
 from apero_ri.core import secret_store
 from apero_ri.core import task_runner
 from apero_ri.core.auth import (
@@ -37,97 +38,6 @@ def _instrument_profile_names(instrument: str) -> list[str]:
     if not isinstance(profiles, dict):
         return []
     return list(profiles.keys())
-
-
-def _validate_sync_profiles(
-    raw: Any, instrument: str) -> dict[str, dict[str, str]]:
-    """Validate and normalize per-profile sync settings from the client."""
-    if not isinstance(raw, dict):
-        raise ValueError("sync_profiles must be an object")
-
-    allowed = set(_instrument_profile_names(instrument))
-    cleaned = {}
-    for profile_name, entry in raw.items():
-        pname = str(profile_name or "").strip()
-        if not pname:
-            continue
-        if pname not in allowed:
-            raise ValueError(f"Unknown APERO profile: {pname}")
-        if not isinstance(entry, dict):
-            raise ValueError(
-                f"sync_profiles.{pname} must be an object"
-            )
-
-        mode = str(entry.get("mode", "run_server") or "run_server")
-        mode = mode.strip().lower()
-        if mode not in ["run_server", "fetch_precomputed"]:
-            raise ValueError(
-                f"Invalid sync mode for profile {pname}"
-            )
-        sync_source = str(entry.get("sync_source", "") or "").strip()
-        if mode == "fetch_precomputed" and not sync_source:
-            raise ValueError(
-                "Fetch pre-computed requires a directory for "
-                f"profile {pname}"
-            )
-        if mode == "run_server" and not sync_source:
-            continue
-        # Validate that the sync_source actually points at a profile
-        # directory containing an ``objects/`` subdir. Without this
-        # check the runtime resolver silently falls back to copying
-        # the whole tree at deep nested relative paths, leaving the
-        # local ftable JSONs stale forever (the file browser would
-        # then keep serving outdated rows).
-        if mode == "fetch_precomputed":
-            _validate_sync_source_path(pname, sync_source)
-        cleaned[pname] = dict(mode=mode, sync_source=sync_source)
-    return cleaned
-
-
-def _validate_sync_source_path(pname: str, sync_source: str) -> None:
-    """Ensure sync_source resolves to a dir that contains ``objects/``.
-
-    Mirrors the candidate resolution used at run time by
-    ``task_runner._resolve_sync_profile_source_dir`` but adds a hard
-    requirement: the resolved profile directory must contain an
-    ``objects/`` subdirectory. This refuses to save a misconfigured
-    path (the symptom is silent — sync runs, copies thousands of
-    files into the wrong nested destination, ftables never update).
-    """
-    # Expand and resolve user input
-    src = Path(sync_source).expanduser()
-    if not src.is_dir():
-        raise ValueError(
-            f"sync_source for profile {pname} is not an existing "
-            f"directory on the server: {sync_source}"
-        )
-    # Candidate profile directories under the source. If any of these
-    # contains ``objects/`` we accept it; otherwise we reject.
-    candidates = [src]
-    try:
-        for child in src.iterdir():
-            if child.is_dir():
-                candidates.append(child)
-                # one level deeper too (e.g. ``tasks/<instr>/<profile>``)
-                try:
-                    for grand in child.iterdir():
-                        if grand.is_dir():
-                            candidates.append(grand)
-                except OSError:
-                    continue
-    except OSError as exc:
-        raise ValueError(
-            f"sync_source for profile {pname} is not readable: {exc}"
-        )
-    for candidate in candidates:
-        if (candidate / "objects").is_dir():
-            return
-    raise ValueError(
-        f"sync_source for profile {pname} does not contain an "
-        "'objects/' subdirectory (looked in the path itself and "
-        "one or two levels below). Point it at the exact profile "
-        f"directory on the source server. Given: {sync_source}"
-    )
 
 
 LEGACY_GSHEET_TASK_KEYS = [
@@ -255,6 +165,9 @@ def api_async_tasks_save(app: Any) -> Any:
     if not data:
         return jsonify(success=False, error="Missing data"), 400
 
+    if data.get('action') in ['set_defaults', 'update_all']:
+        return _save_parallel_defaults(app, data, user_info, perms)
+
     instrument = async_task_helpers.normalize_task_scope(
         data.get('instrument', '')
     )
@@ -269,8 +182,6 @@ def api_async_tasks_save(app: Any) -> Any:
     has_ncores = "ncores" in data
     has_mp_backend = "mp_backend" in data
     has_mp_start_method = "mp_start_method" in data or "mp_start_methd" in data
-    has_sync_source = "sync_source" in data
-    has_sync_profiles = "sync_profiles" in data
     has_assets_mode = "assets_mode" in data
     has_dry_run = "dry_run" in data or "DRY_RUN" in data
     has_google_secret_name = "google_secret_name" in data
@@ -279,8 +190,6 @@ def api_async_tasks_save(app: Any) -> Any:
     ncores = None
     mp_backend = None
     mp_start_method = None
-    sync_source = None
-    sync_profiles = None
     assets_mode = None
     dry_run = False
     google_secret_name = None
@@ -345,18 +254,6 @@ def api_async_tasks_save(app: Any) -> Any:
         mp_start_method = str(mp_start_method_raw or "").strip().lower()
         if mp_start_method not in ["default", "spawn", "fork", "forkserver"]:
             return jsonify(success=False, error="Invalid mp_start_method"), 400
-
-    if has_sync_source:
-        sync_source = str(data.get("sync_source", "") or "").strip()
-
-    if has_sync_profiles:
-        try:
-            sync_profiles = _validate_sync_profiles(
-                data.get("sync_profiles", {}),
-                instrument,
-            )
-        except ValueError as exc:
-            return jsonify(success=False, error=str(exc)), 400
 
     if has_assets_mode:
         assets_mode_raw = (
@@ -623,30 +520,6 @@ def api_async_tasks_save(app: Any) -> Any:
                     t.pop("sheet_id", None)
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
-        supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
-        if sync_source is not None and sync_source and not supports_local_task:
-            return (
-                jsonify(
-                    success=False,
-                    error="sync_source is only supported for LOCAL_TASK tasks",
-                ),
-                400,
-            )
-        if (
-            sync_profiles is not None
-            and sync_profiles
-            and not supports_local_task
-        ):
-            return (
-                jsonify(
-                    success=False,
-                    error=(
-                        "sync_profiles is only supported for "
-                        "LOCAL_TASK tasks"
-                    ),
-                ),
-                400,
-            )
         preserve_mp = (
             supports_mp
             or any(
@@ -661,6 +534,11 @@ def api_async_tasks_save(app: Any) -> Any:
             or any(k in t for k in ["ncores", "mp_backend", "mp_start_method"])
         )
         if preserve_mp:
+            if 'parallel_override' in data:
+                t['parallel_override'] = _coerce_bool(
+                    data['parallel_override'])
+            elif has_ncores or has_mp_backend or has_mp_start_method:
+                t['parallel_override'] = True
             existing_ncores = t.get("ncores", 1)
             existing_backend = t.get("mp_backend", "threads")
             existing_start_method = t.get("mp_start_method", "default")
@@ -711,20 +589,6 @@ def api_async_tasks_save(app: Any) -> Any:
             t.pop("mp_backend", None)
             t.pop("mp_start_method", None)
 
-        if supports_local_task:
-            if sync_profiles is not None:
-                if sync_profiles:
-                    t["sync_profiles"] = sync_profiles
-                else:
-                    t.pop("sync_profiles", None)
-                t.pop("sync_source", None)
-            elif sync_source is not None:
-                t["sync_source"] = sync_source
-            else:
-                t.setdefault("sync_source", str(t.get("sync_source", "") or ""))
-        else:
-            t.pop("sync_source", None)
-            t.pop("sync_profiles", None)
         found = True
         break
 
@@ -735,6 +599,48 @@ def api_async_tasks_save(app: Any) -> Any:
     save_async_tasks(all_tasks)
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(success=True, id=task_id, warnings=warnings)
+
+
+def _save_parallel_defaults(app: Any, data: dict, user_info: Any,
+                            perms: Any) -> Any:
+    """Save defaults and optionally clear every task's parallel override.
+
+    :param app: Permission-checked application instance.
+    :param data: JSON request with settings and management action.
+    :param user_info: Authenticated administrator.
+    :param perms: Administrator permissions.
+    :returns: JSON response and optional validation status code.
+    """
+    from apero_ri import tasks
+
+    try:
+        ncores = int(data.get('ncores', 0))
+    except (TypeError, ValueError):
+        ncores = 0
+    backend = data.get('mp_backend')
+    method = data.get('mp_start_method')
+    valid = (ncores >= 1 and backend in ['threads', 'processes']
+             and method in ['default', 'spawn', 'fork', 'forkserver'])
+    if not valid:
+        return jsonify(success=False,
+                       error=str(textentry('ASYNC_TASKS_INVALID'))), 400
+    defaults = dict(ncores=ncores, mp_backend=backend, mp_start_method=method)
+    all_tasks = load_async_tasks()
+    scopes = list(dict.fromkeys(['__GLOBAL__', *all_tasks,
+                                *load_apero_profiles(enabled_only=True)]))
+    for scope in scopes:
+        rows, _ = app._merge_async_task_catalog(scope, all_tasks)
+        for row in rows:
+            if not tasks.MULTI_PROCESS.get(row['task_key'], False):
+                continue
+            if data['action'] == 'update_all':
+                row['parallel_override'] = False
+            if not row.get('parallel_override', False):
+                row.update(defaults)
+    async_task_helpers.save_parallel_defaults(defaults)
+    save_async_tasks(all_tasks)
+    app._refresh_admin_health_after_change(user_info, perms)
+    return jsonify(success=True, defaults=defaults)
 
 
 def api_async_tasks_list(app: Any) -> Any:
@@ -761,7 +667,7 @@ def api_async_tasks_list(app: Any) -> Any:
     import_errors = getattr(task_module, "IMPORT_ERRORS", {}) or {}
     for tc in inst_tasks:
         entry = dict(tc)
-        entry["active"] = _coerce_bool(entry.get("active", True))
+        entry['instrument'] = instrument
         entry["active"] = _coerce_bool(entry.get("active", True))
         tid = tc.get("id", "")
         rt = task_runner.get_task_status(tid) if tid else {"found": False}
@@ -948,6 +854,7 @@ def api_async_tasks_task_list(app: Any) -> Any:
     return jsonify(
         success=True,
         tasks=opts,
+        defaults=async_task_helpers.load_parallel_defaults(),
         multiprocessing={
             "max_cores": max_cores,
             "recommended_max_cores": max(max_cores - 1, 1),
@@ -1126,7 +1033,15 @@ def api_async_tasks_run_all(app: Any) -> Any:
         task_runner.stop_and_clear()
 
     all_tasks = load_async_tasks()
-    inst_tasks, _ = app._merge_async_task_catalog(instrument, all_tasks)
+    scopes = ([instrument] if instrument != '__ALL__'
+              else ['__GLOBAL__', *load_apero_profiles(enabled_only=True)])
+    inst_tasks = []
+    for scope in scopes:
+        rows, _ = app._merge_async_task_catalog(scope, all_tasks)
+        inst_tasks.extend(dict(row, instrument=scope) for row in rows)
+    requested_ids = data.get('ids')
+    if isinstance(requested_ids, list):
+        inst_tasks = [row for row in inst_tasks if row['id'] in requested_ids]
     inst_tasks = sorted(inst_tasks, key=lambda t: t.get("order", 999))
 
     from apero_ri import tasks as task_module
@@ -1165,7 +1080,7 @@ def api_async_tasks_run_all(app: Any) -> Any:
             run_task_cfg["force_run"] = True
 
         run_params = task_runner.build_run_params(
-            instrument, local_data_dir, all_profiles, run_task_cfg
+            task_cfg['instrument'], local_data_dir, all_profiles, run_task_cfg
         )
         try:
             instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
@@ -1185,10 +1100,9 @@ def api_async_tasks_run_all(app: Any) -> Any:
                 }
             )
             continue
-        task_runner.enqueue(instrument, tid, instance, run_params)
+        task_runner.enqueue(task_cfg['instrument'], tid, instance, run_params)
         added.append(tid)
 
-    all_tasks[instrument] = inst_tasks
     save_async_tasks(all_tasks)
 
     return jsonify(success=True, added=added, blocked=blocked)
