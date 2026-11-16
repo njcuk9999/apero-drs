@@ -101,6 +101,81 @@ def test_move_removes_source_and_preserves_settings(
     assert sum('default_v08' in items for items in stored.values()) == 1
 
 
+def test_v08_save_does_not_require_legacy_table_names(
+    profile_api: SimpleNamespace,
+) -> None:
+    """Accept v8 science presets without ASTROM and REJECT table names."""
+    preset_dir = profile_api.path.parent / 'resources' / 'aprofile_instruments'
+    (preset_dir / 'preset.yaml').write_text(
+        'general:\n  version: 0.8\n', encoding='utf-8'
+    )
+    profile_api.payload.pop('ASTROM_TABLENAME')
+    profile_api.payload.pop('REJECT_TABLENAME')
+
+    response = profile_api.client.post('/save', json=profile_api.payload)
+
+    assert response.status_code == 200
+    stored = yaml.safe_load(profile_api.path.read_text())
+    database = stored['NIRPS']['default_v08']['database']
+    assert 'ASTROM_TABLENAME' not in database
+    assert 'REJECT_TABLENAME' not in database
+
+
+def test_v08_table_test_skips_legacy_tables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test only the table names used by a v8 preset."""
+    preset_dir = tmp_path / 'resources' / 'aprofile_instruments'
+    preset_dir.mkdir(parents=True)
+    (preset_dir / 'preset.yaml').write_text(
+        'general:\n  version: 0.8\n', encoding='utf-8'
+    )
+    queried: list[str] = []
+
+    def database_query(db_params: dict, query: str) -> list[dict]:
+        queried.append(query)
+        return []
+
+    monkeypatch.setattr(helpers.apero_async, 'database_query', database_query)
+    service = SimpleNamespace()
+    service._require_apero_profile_perm = lambda: (dict(username='admin'), [])
+    service._resolve_db_payload_for_test = lambda data: dict(
+        ok=True, mode='mysql', host='localhost', port='3306',
+        username='user', password='', db_name='database',
+        use_ssh_tunnel=False, ssh_config_host='', ssh_local_port='',
+        ssh_remote_port='',
+    )
+    service._resolve_local_data_dir = lambda: tmp_path
+    app = Flask(__name__)
+    app.config['TESTING'] = True
+    app.add_url_rule(
+        '/test-tables',
+        view_func=lambda: helpers.api_apero_profiles_test_tables(
+            service, tmp_path
+        ),
+        methods=['POST'],
+    )
+    payload = dict(
+        DATABASE_USERNAME='user',
+        DATABASE_NAME='database',
+        APERO_INSTRUMENT_PROFILE='preset.yaml',
+        CALIB_TABLENAME='calib',
+        FINDEX_TABLENAME='findex',
+        LOG_TABLENAME='log',
+        TELLU_TABLENAME='tellu',
+    )
+
+    response = app.test_client().post('/test-tables', json=payload)
+
+    assert response.status_code == 200
+    result = response.get_json()
+    assert result is not None
+    assert result['valid'] is True
+    assert len(queried) == 6
+    assert all('astrom' not in query.lower() for query in queried)
+    assert all('reject' not in query.lower() for query in queried)
+
+
 @pytest.mark.parametrize(
     'failure,status',
     [('duplicate', 409), ('missing', 404), ('instrument', 400),

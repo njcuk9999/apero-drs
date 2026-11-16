@@ -2009,4 +2009,9 @@ sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, ref_seq, calib_seq,
 # -----------------------------------------------------------------------------
 # compile recipe list
 # -----------------------------------------------------------------------------
+# must include the ari_task recipe in the list of recipes so it can be
+# used in the sequences
+recipes.append(rd.ari_task)
+
+# compile the recipe dictionary after creating all of them (or appending)
 RECIPE_DICT = drs_recipe.compile_recipe_dict(recipes)

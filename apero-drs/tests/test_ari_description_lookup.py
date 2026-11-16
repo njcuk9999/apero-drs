@@ -127,6 +127,18 @@ def test_ari_task_is_last_in_processing_sequences(instrument: str) -> None:
     source = instruments / instrument / 'recipe_definitions.py'
     tree = ast.parse(source.read_text(encoding='utf-8'))
     sequence_names = {'full_seq', 'limited_seq', 'science_seq', 'quick_seq'}
+    registry_adds = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == 'append'
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == 'recipes'
+        and node.args
+        and isinstance(node.args[0], ast.Attribute)
+        and node.args[0].attr == 'ari_task'
+    ]
+    assert registry_adds, source
     starts = {}
     for node in tree.body:
         if not isinstance(node, ast.Assign):

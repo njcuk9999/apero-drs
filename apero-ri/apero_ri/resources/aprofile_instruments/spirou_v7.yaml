@@ -1,6 +1,9 @@
 # General instrument configuration.
 general:
 
+  # APERO science configuration version used for profile compatibility.
+  version: 0.7
+
   # Instrument code used by APERO/ARI.
   instrument: SPIROU
 

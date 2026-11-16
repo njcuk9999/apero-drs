@@ -2885,7 +2885,9 @@ class ARIApp(Flask):
 
     def _api_apero_profiles_test_tables(self) -> Any:
         """Test profile database access to its configured tables."""
-        return apero_profiles_api_helpers.api_apero_profiles_test_tables(self)
+        return apero_profiles_api_helpers.api_apero_profiles_test_tables(
+            self, PACKAGE_DIR
+        )
 
     # -----------------------------------------------------------------
     # Async tasks API
