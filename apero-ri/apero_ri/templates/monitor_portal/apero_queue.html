@@ -18,11 +18,17 @@
     .ari-aq-bar .ari-btn { min-height: 44px; }
     .ari-aq-reconnect .ari-btn { min-height: 44px; }
 }
-.ari-aq-item { display: flex; flex-direction: column; gap: 6px; }
+.ari-aq-item { position: relative; flex-wrap: wrap; }
+.ari-aq-link { display: flex; align-items: center; gap: 1.5rem;
+               color: inherit; text-decoration: none; }
+/* stretch the link over the whole card; buttons sit above it */
+.ari-aq-link::after { content: ''; position: absolute; inset: 0;
+                      border-radius: inherit; }
 .ari-aq-state { margin-right: 4px; }
 .ari-aq-state .ari-aq-ok { color: var(--ari-success); }
 .ari-aq-state .ari-aq-bad { color: var(--ari-danger); }
-.ari-aq-reconnect { display: flex; gap: 8px; align-items: center;
+.ari-aq-reconnect { position: relative; z-index: 1; margin-left: auto;
+                    display: flex; gap: 8px; align-items: center;
                     flex-wrap: wrap; font-size: 0.85em;
                     color: var(--ari-text-muted); }
 .ari-aq-reconnect[hidden] { display: none; }
@@ -59,9 +65,9 @@
 {% elif apero_queue_tabs %}
 <div class="ari-db-profiles">
     {% for tab in apero_queue_tabs %}
-    <div class="ari-aq-item" data-queue="{{ tab.name }}">
-    <a class="ari-db-card"
-       style="--card-bg:var(--ari-card-bg); --card-text:var(--ari-text); --card-border:var(--ari-border);"
+    <div class="ari-db-card ari-aq-item" data-queue="{{ tab.name }}"
+         style="--card-bg:var(--ari-card-bg); --card-text:var(--ari-text); --card-border:var(--ari-border);">
+    <a class="ari-aq-link"
        href="{{ url_for('home_monitor_portal_apero_queue', queue=tab.name) }}">
         <div class="ari-db-card__header">
             <span class="ari-aq-state" role="img"
