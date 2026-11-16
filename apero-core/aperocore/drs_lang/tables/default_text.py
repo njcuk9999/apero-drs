@@ -56,6 +56,9 @@ async_task_labels = dict(
     LAST_RUN=('Last run', 'Dernière exécution', 'Última ejecución'),
     AUTOMATIC=('Pre-computed, otherwise server', 'Pré-calculé, sinon serveur',
                'Precalculado, o servidor'),
+    TIMEOUT=('Task list request timed out.',
+             'Délai dépassé lors du chargement des tâches.',
+             'Se agotó el tiempo de espera al cargar las tareas.'),
 )
 for label, translations in async_task_labels.items():
     item = langlist.create('ASYNC_TASKS_' + label, kind='text')
@@ -64,6 +67,37 @@ for label, translations in async_task_labels.items():
     item.arguments = 'None'
     item.comment = 'ARI async task dashboard and parallel management'
     langlist.add(item)
+
+item = langlist.create('APERO_RI_TASK_DESCRIPTION', kind='text')
+item.value['ENG'] = (
+    'Run local APERO RI tasks for this profile after DRS processing.'
+)
+item.value['FR'] = (
+    'Exécuter les tâches APERO RI locales pour ce profil après le '
+    'traitement DRS.'
+)
+item.value['ES'] = (
+    'Ejecutar tareas APERO RI locales para este perfil tras el '
+    'procesamiento DRS.'
+)
+item.arguments = 'None'
+item.comment = 'APERO processing tool that updates local ARI products'
+langlist.add(item)
+
+item = langlist.create('APERO_RI_TASK_NO_PROFILE', kind='text')
+item.value['ENG'] = (
+    'Skipping APERO RI tasks; no ari-config YAML exists for profile {0}.'
+)
+item.value['FR'] = (
+    'Tâches APERO RI ignorées : aucun fichier ari-config YAML pour le '
+    'profil {0}.'
+)
+item.value['ES'] = (
+    'Se omiten tareas APERO RI; no existe YAML ari-config para el perfil {0}.'
+)
+item.arguments = '0: APERO profile name'
+item.comment = 'Logged when the final ARI processing tool has no profile YAML'
+langlist.add(item)
 
 item = langlist.create('USER_STATISTICS_RESET', kind='text')
 item.value['ENG'] = 'Reset statistics'

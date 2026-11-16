@@ -25,6 +25,7 @@
     var pollTimer = null;
     var POLL_FAST_MS = 1000;
     var POLL_SLOW_MS = 5000;
+    var TASK_LIST_TIMEOUT_MS = 20000;
     var OUTPUT_PREVIEW_PER_TYPE = 3;
     var pollIntervalMs = POLL_SLOW_MS;
     var viewVersion = 0;
@@ -573,6 +574,7 @@
         if (taskListController) taskListController.abort();
         taskListController = new AbortController();
         var controller = taskListController;
+        var timeoutId = null;
         taskListLoading = true;
         if (!allTasks.length) renderTaskLists();
         var response = Array.isArray(url)
@@ -587,11 +589,17 @@
                 }), queue: responses[0].queue};
             })
             : fetch(url, {signal: controller.signal}).then(function (r) { return r.json(); });
-        return response
+        var requestTimeout = new Promise(function (_resolve, reject) {
+            timeoutId = setTimeout(function () {
+                controller.abort();
+                reject(new Error(labels.TIMEOUT || ''));
+            }, TASK_LIST_TIMEOUT_MS);
+        });
+        return Promise.race([response, requestTimeout])
             .then(function (data) {
                 if (version !== taskRequestVersion || instrument !== currentInstrument) return;
                 if (!data.success) { showToast('Failed to load tasks: ' + data.error, 'error'); return; }
-                allTasks = data.tasks || [];
+                allTasks = Array.isArray(data.tasks) ? data.tasks : [];
                 currentProfileNames = Array.isArray(data.profile_names)
                     ? data.profile_names
                     : [];
@@ -609,9 +617,11 @@
             })
             .catch(function (error) {
                 if (error.name === 'AbortError' || version !== taskRequestVersion) return;
+                allTasks = [];
                 showToast('Failed to load tasks: ' + error.message, 'error');
             })
             .finally(function () {
+                if (timeoutId !== null) clearTimeout(timeoutId);
                 if (taskListController === controller) taskListController = null;
                 if (version !== taskRequestVersion) return;
                 taskListLoading = false;

@@ -9,6 +9,7 @@ Created on 2018-10-31 at 18:06
 """
 from aperocore import drs_lang
 from apero.constants import path_definitions
+from apero.instruments.default import grouping
 from apero.utils import drs_recipe
 from apero.base import base as apero_base
 
@@ -41,6 +42,7 @@ DrsRecipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
 ari = DrsRecipe(__INSTRUMENT__)
+ari_task = DrsRecipe(__INSTRUMENT__)
 astrometric = DrsRecipe(__INSTRUMENT__)
 changelog = DrsRecipe(__INSTRUMENT__)
 explorer = DrsRecipe(__INSTRUMENT__)
@@ -66,11 +68,24 @@ validate = DrsRecipe(__INSTRUMENT__)
 visulise = DrsRecipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [ari, astrometric, changelog, database_mgr, db_push, explorer,
+recipes = [ari, ari_task, astrometric, changelog, database_mgr, db_push,
+           explorer,
            get_files, go_recipe, langdb, listing,
            precheck, processing, queue_recipe, remake_doc, req_check,
            reject, remove, reset, run_ini,
            static, stats, trigger, validate, visulise]
+
+# -----------------------------------------------------------------------------
+# APERO RI task runner
+# -----------------------------------------------------------------------------
+ari_task.name = 'apero_ri_task.py'
+ari_task.path = 'apero.tools.recipes.bin'
+ari_task.shortname = 'ARITASK'
+ari_task.instrument = __INSTRUMENT__
+ari_task.description = textentry('APERO_RI_TASK_DESCRIPTION')
+ari_task.recipe_type = 'tool'
+ari_task.recipe_kind = 'processing'
+ari_task.group_func = grouping.no_group
 
 # =============================================================================
 # Recipe definitions

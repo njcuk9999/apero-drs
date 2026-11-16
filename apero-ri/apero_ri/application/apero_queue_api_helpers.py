@@ -18,8 +18,10 @@ from __future__ import annotations
 
 import html as html_mod
 import re
+import threading
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Response, jsonify, request, session
@@ -45,6 +47,8 @@ PROXY_TIMEOUT = 60
 PROBE_TIMEOUT = 2
 # never route localhost requests through http(s)_proxy environment settings
 _OPENER = urllib.request.build_opener(urllib.request.ProxyHandler(dict()))
+# one reconnect at a time per queue (many monitors may click at once)
+_RECONNECT_LOCKS: Dict[str, threading.Lock] = dict()
 
 
 # =============================================================================
@@ -353,6 +357,82 @@ def build_monitor_context(app: Any, user_info: Optional[dict],
         ))
     return dict(apero_queue_tabs=tabs,
                 apero_queue_can_setup=PERMISSION in set(perms or set()))
+
+
+def _monitor_state(app: Any, qdef: dict) -> Dict[str, Any]:
+    """Return the minimal health flags monitors are allowed to see."""
+    status = queue_status(app, qdef)
+    return dict(alive=bool(status.get('gui_alive')),
+                tunnel=bool(status.get('local_port_open')))
+
+
+def monitor_status(app: Any) -> Any:
+    """
+    Report whether each queue the user can open is reachable.
+
+    :param app: ARIApp
+
+    :return: Flask response, dict(success, queues=name -> flags)
+    """
+    user_info, perms = _user_perms(app)
+    if not user_info:
+        return _fail('Login required', 401)
+    queues = accessible_queues(app, user_info, perms)
+    if not queues:
+        return jsonify(success=True, queues=dict())
+    # each probe can take PROBE_TIMEOUT seconds, so check queues in parallel
+    workers = min(8, len(queues))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {name: pool.submit(_monitor_state, app, qdef)
+                   for name, qdef in queues.items()}
+        states = {name: future.result() for name, future in futures.items()}
+    return jsonify(success=True, queues=states)
+
+
+def monitor_reconnect(app: Any, name: str) -> Any:
+    """
+    Start/verify one queue tunnel for any user who can open the queue.
+
+    Only non-interactive SSH is attempted; tunnels needing password or
+    Duo prompts still need an admin (Interactive Auth on the setup page).
+
+    :param app: ARIApp
+    :param name: str, the queue definition name
+
+    :return: Flask response, dict(success, alive, message)
+    """
+    user_info, perms = _user_perms(app)
+    if not user_info:
+        return _fail('Login required', 401)
+    # json-only posts cannot be forged by cross-site html forms
+    if not request.is_json:
+        return _fail('JSON body required', 415)
+    qdef = accessible_queues(app, user_info, perms).get(name)
+    if qdef is None:
+        return _fail('Not found', 404)
+    lock = _RECONNECT_LOCKS.setdefault(name, threading.Lock())
+    if not lock.acquire(blocking=False):
+        return _fail('A reconnect is already in progress', 409)
+    try:
+        if _monitor_state(app, qdef)['alive']:
+            return jsonify(success=True, alive=True,
+                           message='Queue dashboard is already reachable.')
+        try:
+            apero_async._ensure_ssh_tunnel(_tunnel_params(app, qdef))
+        except Exception as exc:
+            msg = ('Could not start the tunnel ({0}). If it needs a '
+                   'password or Duo prompt, ask an admin to use '
+                   'Interactive Auth on the APERO Queue Setup page.')
+            return _fail(msg.format(exc), 502)
+        alive = _monitor_state(app, qdef)['alive']
+        if alive:
+            message = 'Tunnel active and the queue dashboard is answering.'
+        else:
+            message = ('Tunnel active but the queue dashboard is not '
+                       'answering - apero_queue.py gui may not be running.')
+        return jsonify(success=True, alive=alive, message=message)
+    finally:
+        lock.release()
 
 
 def _offline_page(qdef: dict, error: str) -> Response:

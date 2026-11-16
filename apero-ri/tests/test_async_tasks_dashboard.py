@@ -256,6 +256,8 @@ const vm = require('vm');
 const assert = require('assert');
 let pending = [];
 let scheduled = 0;
+let nextTimer = 0;
+const timers = new Map();
 const context = {
     window: {ARI_ASYNC_TASKS: {instruments: [], urls: {
         list: '/list', globalList: '/global'
@@ -263,22 +265,36 @@ const context = {
     document: {getElementById: () => null,
         readyState: 'loading', addEventListener: () => {}},
     AbortController, console,
-    setTimeout: () => {scheduled++; return scheduled;},
-    clearTimeout: () => {},
+    setTimeout: (callback, delay) => {
+        const id = ++nextTimer;
+        timers.set(id, {callback, delay});
+        scheduled++;
+        return id;
+    },
+    clearTimeout: id => {
+        if (timers.delete(id)) scheduled--;
+    },
+    timers,
     fetch: () => new Promise(resolve => pending.push(resolve))
 };
+context.window.timers = timers;
 vm.createContext(context);
 let source = fs.readFileSync(process.argv[1], 'utf8');
 source = source.replace(/\}\(\)\);\s*$/, `
 window.testDashboard = {
-    combinedQueue, loadTasks, loadGlobalTasks, pollStatus,
+    combinedQueue, loadTasks, loadGlobalTasks, loadTaskList, pollStatus,
     scope: value => {currentInstrument = value; viewVersion++;},
     tasks: () => allTasks,
     loading: () => taskListLoading,
+    timeout: () => {
+            const timer = [...window.timers.values()]
+                .find(x => x.delay === 20000);
+        if (timer) timer.callback();
+    },
     stubRender: () => {
         renderTaskLists = () => {};
         updateRunningBadge = () => {};
-        showToast = message => {throw new Error(message);};
+        showToast = () => {};
     }
 };
 }());`);
@@ -328,6 +344,12 @@ dashboard.stubRender();
     assert.equal(merged.additional_currents[0][1], 'two');
     assert.equal(merged.queue[0][1], 'pending');
     assert.equal(merged.queue_length, 1);
+    dashboard.scope('__ALL__');
+    const stuck = dashboard.loadTaskList('/hung');
+    dashboard.timeout();
+    await stuck;
+    assert.equal(dashboard.loading(), false);
+    assert.equal(scheduled, 0);
 })().catch(error => {console.error(error); process.exitCode = 1;});
 """
     subprocess.run(

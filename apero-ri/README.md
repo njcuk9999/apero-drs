@@ -71,14 +71,18 @@ generator explicitly distinguishes science recipes from tools. The standalone
 ARI CLI is not itself an APERO-registered tool, so it cannot be inserted by
 command name alone.
 
-The recommended integration is a thin APERO tool wrapper under
-`apero/tools/recipes/bin/`, registered for all supported instruments. It should
-build the one-profile ARI runtime payload from the active APERO parameters,
-invoke `apero_ri.tasks.apero_sync.run()`, and publish to the shared directory.
-Schedule that wrapper once in a final processing group, after preceding groups
-have completed, including in queue mode. Keep ARI imports inside the wrapper's
-execution function so normal APERO startup does not require the RI package.
-This wrapper and the final-group sequencing hook are not installed yet.
+The `ARITASK` tool is registered as `apero_ri_task.py` and is appended to the
+`full_seq`, `limited_seq`, `science_seq`, and `quick_seq` workflows for SPIROU,
+NIRPS-HA, and NIRPS-HE. It loads the active DRS profile's matching
+`PATH_OTHER/ari-config/<profile>.yaml` and runs registered profile-scoped local
+tasks. If that YAML is absent, it logs a warning and skips. The tool uses
+`PATH_OTHER/apero-ri` as its local task-data root and writes precomputed results
+to the shared profile directory.
+
+APERO processing executes `ARITASK` after the regular run batch, even when the
+regular batch uses multiple workers. Queue mode groups the final tool after the
+preceding recipe groups. The wrapper imports `apero_ri` only when it runs, so
+the normal APERO startup path does not require the RI package.
 
 The Queue tab combines all named queues, including instrument workers and
 APERO checks. The first running task has the progress summary; additional

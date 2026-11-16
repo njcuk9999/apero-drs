@@ -1544,6 +1544,7 @@ full_seq.add(apero_lbl_compile, name='LBLCOMPILE_SCI',
 full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
              recipe_kind='post-all',
              filters=dict(KW_DPRTYPE=files.science_dprtypes))
+full_seq.add(rd.ari_task)
 
 # -----------------------------------------------------------------------------
 # limited sequence (reference + nights)
@@ -1678,6 +1679,7 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
                 recipe_kind='post-science',
                 filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
+limited_seq.add(rd.ari_task)
 
 # -----------------------------------------------------------------------------
 # pp sequence (for trigger)
@@ -1903,6 +1905,7 @@ science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
                 recipe_kind='post-science',
                 filters=dict(KW_DPRTYPE=files.science_dprtypes,
                              KW_OBJNAME='SCIENCE_TARGETS'))
+science_seq.add(rd.ari_task)
 
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)
@@ -1915,6 +1918,7 @@ quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               arguments=dict(quicklook=True, fiber=ref_fiber),
               filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                            KW_DPRTYPE=files.science_dprtypes))
+quick_seq.add(rd.ari_task)
 
 # -----------------------------------------------------------------------------
 # blank sequence (for trigger)

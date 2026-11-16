@@ -99,6 +99,43 @@ def test_linear_failure_releases_unstarted_tasks(
     assert released == ['group/second']
 
 
+def test_ari_task_runs_after_regular_processing(monkeypatch: Any) -> None:
+    """The ARI task runs after the complete regular run list."""
+    runs = [
+        SimpleNamespace(shortname='EXT', priority=1, runstring='extract'),
+        SimpleNamespace(shortname='ARITASK', priority=2,
+                        runstring='apero_ri_tasks'),
+    ]
+    executed = []
+
+    def run_parallel(params: Any, shortname: str, runlist: list,
+                     **kwargs: Any) -> dict:
+        executed.extend(run.shortname for run in runlist)
+        return {run.priority: dict(ERROR=[], TIMING=0.0) for run in runlist}
+
+    monkeypatch.setattr(drs_processing.drs_utils, 'get_cores', lambda p: 2)
+    monkeypatch.setattr(drs_processing, '_multi_process_process', run_parallel)
+    monkeypatch.setattr(drs_processing, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.setattr(drs_processing.drs_lock, 'reset_lock_dir',
+                        lambda params: None)
+    params = drs_processing.ParamDict()
+    params['STOP_AT_EXCEPTION'] = False
+    params['TEST_RUN'] = False
+    params['TOOLS.REPROCESS.MP_TYPE'] = 'process'
+
+    outlist, has_errors, _duration = drs_processing.process_run_list(
+        params, 'PROCESSING', runs)
+
+    assert executed == ['EXT', 'ARITASK']
+    assert list(outlist) == [1, 2]
+    assert not has_errors
+    groups, names = drs_processing.group_tasks2(runs)
+    assert list(names.values()) == ['EXT', 'ARITASK']
+    ari_group = next(key for key, name in names.items()
+                     if name == 'ARITASK')
+    assert [run.shortname for run in groups[ari_group]] == ['ARITASK']
+
+
 def test_chain_chunk_stops_after_reference_failure(
     tmp_path: Any, monkeypatch: Any,
 ) -> None:

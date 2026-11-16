@@ -2481,6 +2481,19 @@ def register_data_portal_routes(app: Any) -> None:
         methods=['GET'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-queue/status',
+        'api_monitor_apero_queue_status',
+        app._api_monitor_apero_queue_status,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-queue/<name>/reconnect',
+        'api_monitor_apero_queue_reconnect',
+        app._limiter.limit('10 per minute')(
+            app._api_monitor_apero_queue_reconnect),
+        methods=['POST'],
+    )
+    app.add_url_rule(
         '/monitor_portal/apero_queue/<name>/proxy/<path:subpath>',
         'monitor_apero_queue_proxy',
         app._monitor_apero_queue_proxy,

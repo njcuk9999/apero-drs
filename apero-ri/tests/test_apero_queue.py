@@ -164,6 +164,34 @@ def test_proxy_forwards_and_blocks(app: Any, fake_gui: int,
     assert b'#btn-shutdown' not in client.get(base).data
 
 
+def test_monitor_status_and_reconnect(app: Any, fake_gui: int,
+                                     monkeypatch: pytest.MonkeyPatch
+                                     ) -> None:
+    """Profile viewers can check and restart (not edit) queue tunnels."""
+    _save_queue(fake_gui)
+    calls = []
+    monkeypatch.setattr(aq.apero_async, '_ensure_ssh_tunnel',
+                        lambda params: calls.append(params))
+    _as_user(monkeypatch, {'monitor.SPIROU'}, {('SPIROU', 'spirou_main')})
+    client = app.test_client()
+    status = client.get('/api/monitor/apero-queue/status').get_json()
+    assert status['queues']['q1']['alive'] is True
+    url = '/api/monitor/apero-queue/q1/reconnect'
+    alive = client.post(url, json=dict()).get_json()
+    assert alive['alive'] is True and calls == []
+    assert client.post(url, data='x').status_code == 415
+    # a dead dashboard triggers a non-interactive start/verify
+    _save_queue(1)
+    down = client.post(url, json=dict()).get_json()
+    assert down['success'] and down['alive'] is False and len(calls) == 1
+    assert client.get('/api/admin/apero-queue/list').status_code == 403
+    # users without access to the profile cannot see or reconnect it
+    _as_user(monkeypatch, {'monitor.SPIROU'}, {('SPIROU', 'other')})
+    status = client.get('/api/monitor/apero-queue/status').get_json()
+    assert status['queues'] == dict()
+    assert client.post(url, json=dict()).status_code == 404
+
+
 def test_admin_api_requires_permission(app: Any,
                                        monkeypatch: pytest.MonkeyPatch
                                        ) -> None:
