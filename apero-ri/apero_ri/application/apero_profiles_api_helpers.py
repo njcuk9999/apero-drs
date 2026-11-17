@@ -8,6 +8,8 @@ from typing import Any
 
 import yaml
 
+from aperocore.drs_lang import textentry
+from aperocore.drs_lang.tables import default_text
 from apero_ri.core import audit_log
 from apero_ri.core import ari_lang_support
 from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
@@ -15,6 +17,21 @@ from apero_ri.core.permissions import load_parameters
 from apero_ri.application import profile_utils
 from apero_ri.tasks import apero_async
 from flask import Response, jsonify, request, url_for
+
+
+def profile_editor_labels() -> dict[str, str]:
+    """Return profile editor labels in the current request's language.
+
+    Returns:
+        Language-database labels keyed by their editor control names.
+    """
+    language = ari_lang_support.get_language()
+    labels = dict()
+    for key, translations in default_text.PROFILE_EDITOR_UI_TEXT.items():
+        translated = dict(zip(('en', 'fr', 'es'), translations))[language]
+        labels[key] = str(textentry('PROFILE_EDITOR_' + key,
+                                   message=translated))
+    return labels
 
 
 def _to_bool(value: Any) -> bool:

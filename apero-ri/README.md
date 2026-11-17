@@ -32,6 +32,39 @@ Then you just need to forward the port you select, and it should work.
 
 The web-server will only work while `apero_ri_run` is running.
 
+## Object file browser
+
+The Data Portal object page offers spectrum presets for extracted 2D
+`[e.fits]` (`DRS_POST_E`), telluric-corrected 2D `[t.fits]` (`DRS_POST_T`),
+and telluric-corrected 1D `[s.fits]` (`DRS_POST_S`) products. These presets
+select processed output files that pass QC. **Templates** selects
+`TELLU_TEMP`, `TELLU_TEMP_S1DW`, and `TELLU_TEMP_S1DV` across file blocks.
+Column filters match without regard to case and preserve the entered text.
+Object-product refresh status belongs in the Admin Portal, not object pages.
+
+## Profile editor
+
+On **Admin Portal → APERO Profiles**, changing a draft profile name updates
+the default table suffix filters and clears selections that no longer match.
+Custom filters are preserved. **Refresh from profile name** reloads database
+tables and resets all table filters and selections to the current name.
+Run **Test Table Names** again after changing the selection.
+
+**Data Paths → Advanced** opens a replacement overlay, keeping these controls
+off the settings page. Enter **Replace / With**, then **Preview changes** to
+review before-and-after cards for each affected path. **Apply changes**
+confirms the preview; Cancel, Escape, or clicking outside discards it.
+Changing either input requires a new preview. Replacement is literal and an
+empty replacement removes the matching text. Other profile settings and
+disabled paths are untouched; save the profile to persist the edits and
+rerun **Test Paths**.
+
+**Create missing directories when testing** is off by default. When checked,
+**Test Paths** creates missing directories, including parents, on the ARI
+server (or its mounted storage), using the server process's permissions.
+Creation failures appear beside the path. The optional trigger-log file is
+only checked, never created.
+
 ## Async tasks
 
 The Admin Portal's Async Tasks page shows all tasks in Active and Inactive

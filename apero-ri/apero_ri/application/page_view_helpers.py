@@ -1367,6 +1367,11 @@ def make_page_view(
             )
 
         if page_id == "home.admin_portal.apero_profiles" and user_info:
+            from apero_ri.application import apero_profiles_api_helpers
+
+            context['profile_editor_labels'] = (
+                apero_profiles_api_helpers.profile_editor_labels()
+            )
             params = load_parameters()
             all_instr = params.get("instruments", {}).get("value", [])
             context["instruments"] = all_instr

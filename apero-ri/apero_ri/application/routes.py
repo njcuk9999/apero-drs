@@ -824,6 +824,7 @@ def register_static_routes(app: Any) -> None:
         "/api/admin/apero-profiles/validate-path",
         "api_apero_profiles_validate",
         app._api_apero_profiles_validate,
+        methods=["GET", "POST"],
     )
     app.add_url_rule(
         "/api/admin/apero-profiles/browse",

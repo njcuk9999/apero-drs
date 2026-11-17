@@ -5,6 +5,7 @@
     'use strict';
 
     var cfg = window.ARI_APERO_PROFILES;
+    var labels = cfg.labels;
 
     /* -- Field definitions ----------------------------------------------- */
     var PATH_FIELDS = [
@@ -85,6 +86,19 @@
     var tablesTestResult = document.getElementById('tables-test-result');
     var btnTestPaths = document.getElementById('btn-test-paths');
     var pathsTestResult = document.getElementById('paths-test-result');
+    var btnRefreshTables = document.getElementById('btn-refresh-tables');
+    var btnPathsAdvanced = document.getElementById('btn-paths-advanced');
+    var pathsAdvanced = document.getElementById('paths-advanced');
+    var pathsReplaceFrom = document.getElementById('paths-replace-from');
+    var pathsReplaceTo = document.getElementById('paths-replace-to');
+    var btnPathsReplace = document.getElementById('btn-paths-replace');
+    var btnPathsPreview = document.getElementById('btn-paths-preview');
+    var btnPathsReplaceCancel = document.getElementById('btn-paths-replace-cancel');
+    var pathsReplacePreview = document.getElementById('paths-replace-preview');
+    var pathsReplaceList = document.getElementById('paths-replace-list');
+    var pathsReplaceCount = document.getElementById('paths-replace-count');
+    var pathsReplaceStatus = document.getElementById('paths-replace-status');
+    var pathsCreateMissing = document.getElementById('paths-create-missing');
 
     var tablesSection = document.getElementById('tables-section');
     var scienceSection = document.getElementById('science-section');
@@ -187,6 +201,8 @@
     var sciParamsData = null;    // full YAML data for selected instrument profile
     var sciParamsExpanded = new Set();
     var busyOverlayCount = 0;
+    var pathReplacementPreview = [];
+    var pathReplaceBodyOverflow = '';
 
     /* -- Toast ----------------------------------------------------------- */
     function showToast(msg, type) {
@@ -305,9 +321,141 @@
         TABLE_FIELDS.forEach(function (field) {
             if (!tableFilterEdited[field.key]) {
                 tableSuffixInputs[field.id].value = profileName;
+                if (!tableMatchesFilters(field, tableInputs[field.id].value)) {
+                    tableInputs[field.id].value = '';
+                }
             }
         });
         setTableOptions(availableDbTables, true);
+        tablesTestPassed = false;
+        tablesTestResult.style.display = 'none';
+    }
+
+    function refreshTablesFromProfileName() {
+        markDirty();
+        tablesTestPassed = false;
+        tablesTestResult.style.display = 'none';
+        updateWorkflowState();
+        return withBusy(labels.REFRESH_TABLES, function () {
+            return loadAvailableTables();
+        }).then(function () {
+            TABLE_FIELDS.forEach(function (field) {
+                tableInputs[field.id].value = '';
+            });
+            setDefaultTableFilters(profileNameInput.value.trim());
+        }).catch(function (error) {
+            showFieldValidation(tablesTestResult, false, error.message);
+        }).finally(updateWorkflowState);
+    }
+
+    function resetPathTools() {
+        pathsCreateMissing.checked = false;
+        closePathReplacement(false);
+        pathsReplaceFrom.value = '';
+        pathsReplaceTo.value = '';
+    }
+
+    function invalidatePathReplacementPreview() {
+        pathReplacementPreview = [];
+        pathsReplacePreview.hidden = true;
+        pathsReplaceList.innerHTML = '';
+        pathsReplaceStatus.textContent = '';
+        btnPathsReplace.disabled = true;
+    }
+
+    function openPathReplacement() {
+        invalidatePathReplacementPreview();
+        pathReplaceBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        pathsAdvanced.style.display = 'flex';
+        btnPathsAdvanced.setAttribute('aria-expanded', 'true');
+        pathsReplaceFrom.focus();
+    }
+
+    function closePathReplacement(restoreFocus) {
+        var wasOpen = pathsAdvanced.style.display === 'flex';
+        pathsAdvanced.style.display = 'none';
+        btnPathsAdvanced.setAttribute('aria-expanded', 'false');
+        invalidatePathReplacementPreview();
+        if (wasOpen) {
+            document.body.style.overflow = pathReplaceBodyOverflow;
+            if (restoreFocus !== false) btnPathsAdvanced.focus();
+        }
+    }
+
+    function collectPathReplacements() {
+        var from = pathsReplaceFrom.value;
+        var changes = [];
+        if (!from) return changes;
+        PATH_FIELDS.forEach(function (field) {
+            var input = pathInputs[field.id];
+            if (input.disabled) return;
+            var replaced = input.value.split(from).join(pathsReplaceTo.value);
+            if (replaced !== input.value) {
+                changes.push({
+                    id: field.id, key: field.key,
+                    before: input.value, after: replaced,
+                });
+            }
+        });
+        return changes;
+    }
+
+    function previewDataPaths() {
+        invalidatePathReplacementPreview();
+        if (!pathsReplaceFrom.value) {
+            pathsReplaceStatus.textContent = labels.FIND_REQUIRED;
+            pathsReplaceFrom.focus();
+            return;
+        }
+        pathReplacementPreview = collectPathReplacements();
+        if (!pathReplacementPreview.length) {
+            pathsReplaceStatus.textContent = labels.NO_CHANGES;
+            return;
+        }
+        pathReplacementPreview.forEach(function (change) {
+            var card = document.createElement('article');
+            card.className = 'ari-ap-replace-card';
+            var heading = document.createElement('div');
+            heading.className = 'ari-ap-replace-key';
+            heading.textContent = change.key.replace('PATH_', 'PATH.');
+            card.appendChild(heading);
+            var comparison = document.createElement('div');
+            comparison.className = 'ari-ap-replace-comparison';
+            ['before', 'after'].forEach(function (side) {
+                var cell = document.createElement('div');
+                cell.className = 'ari-ap-replace-value ari-ap-replace-value--' + side;
+                var label = document.createElement('span');
+                label.textContent = labels[side.toUpperCase()];
+                var value = document.createElement('code');
+                value.textContent = change[side];
+                cell.appendChild(label);
+                cell.appendChild(value);
+                comparison.appendChild(cell);
+            });
+            card.appendChild(comparison);
+            pathsReplaceList.appendChild(card);
+        });
+        pathsReplaceCount.textContent = String(pathReplacementPreview.length);
+        pathsReplacePreview.hidden = false;
+        btnPathsReplace.disabled = false;
+    }
+
+    function replaceDataPaths() {
+        if (!pathReplacementPreview.length) return;
+        var current = collectPathReplacements();
+        if (JSON.stringify(current) !== JSON.stringify(pathReplacementPreview)) {
+            invalidatePathReplacementPreview();
+            pathsReplaceStatus.textContent = labels.PREVIEW_STALE;
+            return;
+        }
+        var changes = pathReplacementPreview.slice();
+        changes.forEach(function (change) {
+            var input = pathInputs[change.id];
+            input.value = change.after;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        closePathReplacement();
     }
 
     function updateTableFieldVisibility() {
@@ -402,7 +550,8 @@
             if (!currentValue && !tableFilterEdited[field.key]) {
                 if (filteredTables.length === 1) {
                     autoValue = filteredTables[0];
-                } else if (prefixMatches.length === 1) {
+                } else if (prefixMatches.length === 1
+                    && !tableSuffixInputs[field.id].value.trim()) {
                     autoValue = prefixMatches[0];
                 }
             }
@@ -952,6 +1101,7 @@
 
     /* -- Add / Edit form ------------------------------------------------- */
     function resetForm() {
+        resetPathTools();
         editingProfile = null;
         profileInstrumentField.style.display = 'none';
         profileInstrumentSelect.value = currentInstrument;
@@ -1003,6 +1153,7 @@
     }
 
     function enterEditMode(profile) {
+        resetPathTools();
         editingProfile = profile.name;
         profileInstrumentSelect.value = currentInstrument;
         profileInstrumentField.style.display = '';
@@ -1107,6 +1258,7 @@
     }
 
     function enterDuplicateMode(profile, newName) {
+        resetPathTools();
         editingProfile = null;
         profileInstrumentField.style.display = 'none';
         profileInstrumentSelect.value = currentInstrument;
@@ -1233,7 +1385,7 @@
         }, 400);
     }
 
-    function validatePathNow(fieldId, path) {
+    function validatePathNow(fieldId, path, createMissing) {
         var vdiv = document.getElementById(fieldId + '-validation');
         if (!vdiv) return Promise.resolve(false);
         if (isOptionalPathField(fieldId) && isOptionalPathDisabled(fieldId)) {
@@ -1248,8 +1400,19 @@
             setPathInputInvalid(fieldId, true);
             return Promise.resolve(false);
         }
-        return fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path)
-            + (isFile ? '&kind=file' : ''))
+        clearTimeout(_pathTimers[fieldId]);
+        var url = cfg.validateUrl + '?path=' + encodeURIComponent(path)
+            + (isFile ? '&kind=file' : '');
+        var options;
+        if (createMissing && !isFile) {
+            url = cfg.validateUrl;
+            options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: path, create: true }),
+            };
+        }
+        return fetch(url, options)
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var ok = !!(data.success && data.valid);
@@ -1276,6 +1439,19 @@
         var requiredCount = 0;
 
         PATH_FIELDS.forEach(function (f) {
+            if (!f.optional && !pathInputs[f.id].value.trim()) allFilled = false;
+        });
+        if (!allFilled) {
+            pathsTestPassed = false;
+            if (pathsTestResult) {
+                showFieldValidation(pathsTestResult, false,
+                    'All paths are required before running path test.');
+            }
+            updateWorkflowState();
+            return;
+        }
+
+        PATH_FIELDS.forEach(function (f) {
             var value = pathInputs[f.id].value.trim();
             if (f.optional && isOptionalPathDisabled(f.id)) {
                 var ovdiv = document.getElementById(f.id + '-validation');
@@ -1291,19 +1467,8 @@
                 return;
             }
             requiredCount += 1;
-            if (!value) allFilled = false;
-            checks.push(validatePathNow(f.id, value));
+            checks.push(validatePathNow(f.id, value, pathsCreateMissing.checked));
         });
-
-        if (!allFilled) {
-            pathsTestPassed = false;
-            if (pathsTestResult) {
-                showFieldValidation(pathsTestResult, false,
-                    'All paths are required before running path test.');
-            }
-            updateWorkflowState();
-            return;
-        }
 
         if (btnTestPaths) {
             btnTestPaths.disabled = true;
@@ -2696,6 +2861,7 @@
 
     PATH_FIELDS.forEach(function (f) {
         pathInputs[f.id].addEventListener('input', function () {
+            invalidatePathReplacementPreview();
             markDirty();
             pathsTestPassed = false;
             var vdiv = document.getElementById(f.id + '-validation');
@@ -2712,6 +2878,7 @@
         var toggle = pathDisableInputs[f.id];
         if (!toggle) return;
         toggle.addEventListener('change', function () {
+            invalidatePathReplacementPreview();
             markDirty();
             setOptionalPathDisabled(f.id, toggle.checked);
             pathsTestPassed = false;
@@ -2723,6 +2890,34 @@
     if (btnTestPaths) {
         btnTestPaths.addEventListener('click', testPaths);
     }
+    btnRefreshTables.addEventListener('click', refreshTablesFromProfileName);
+    btnPathsAdvanced.addEventListener('click', openPathReplacement);
+    btnPathsReplaceCancel.addEventListener('click', closePathReplacement);
+    btnPathsPreview.addEventListener('click', previewDataPaths);
+    btnPathsReplace.addEventListener('click', replaceDataPaths);
+    [pathsReplaceFrom, pathsReplaceTo].forEach(function (input) {
+        input.addEventListener('input', invalidatePathReplacementPreview);
+    });
+    pathsAdvanced.addEventListener('click', function (event) {
+        if (event.target === pathsAdvanced) closePathReplacement();
+    });
+    pathsAdvanced.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closePathReplacement();
+        } else if (event.key === 'Tab') {
+            var controls = pathsAdvanced.querySelectorAll('input, button:not(:disabled)');
+            var first = controls[0];
+            var last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+    });
 
     document.querySelectorAll('.btn-browse-path').forEach(function (btn) {
         btn.addEventListener('click', function () {

@@ -1036,13 +1036,18 @@ def apply_preset_filter(
     preset values:
       'ext2d'   – DRS_POST_E  block=out  QC=1
       'tcorr2d' – DRS_POST_T  block=out  QC=1
-      'tcorr1d' – DRS_POST_E  block=out  QC=1  (same as ext2d per user spec)
+      'tcorr1d' – DRS_POST_S  block=out  QC=1
+      'template' – TELLU_TEMP, TELLU_TEMP_S1DW, TELLU_TEMP_S1DV
       'polar'   – DRS_POST_P  block=out  QC=1
       'ccfrv'   – DRS_POST_V  block=out  QC=1
       'rdb'     – LBL_RDB%    block=lbl  (no QC filter)
       'lbl'     – any block=lbl product (no QC filter)
-            'none'    – no preset filter (return all accessible rows)
+      'none'    – no preset filter (return all accessible rows)
       'default' – block=out  QC=1
+
+    :param rows: Accessible file-table rows.
+    :param preset: Preset identifier listed above.
+    :return: Rows matching the selected preset.
     """
 
     def _qc(r: Dict[str, Any]) -> bool:
@@ -1081,8 +1086,14 @@ def apply_preset_filter(
             r
             for r in rows
             if r.get("BLOCK_KIND") == "out"
-            and r.get("KW_OUTPUT") == "DRS_POST_E"
+            and r.get("KW_OUTPUT") == "DRS_POST_S"
             and _qc(r)
+        ]
+    elif preset == 'template':
+        return [
+            r for r in rows
+            if r.get('KW_OUTPUT') in (
+                'TELLU_TEMP', 'TELLU_TEMP_S1DW', 'TELLU_TEMP_S1DV')
         ]
     elif preset == "polar":
         return [

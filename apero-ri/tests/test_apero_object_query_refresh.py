@@ -4,6 +4,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -181,10 +182,15 @@ def test_broken_mount_path_is_reported_instead_of_raising(
     assert missing == [("PATH_RED", "/mnt/nirps/red")]
 
 
-def test_object_page_warns_when_refresh_failed(
-    app, monkeypatch: pytest.MonkeyPatch,
+def test_object_page_hides_admin_refresh_status(
+    app: Any, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The portal warns users when it is serving potentially stale tables."""
+    """Keep refresh failures and legacy cache diagnostics off object pages.
+
+    :param app: Isolated ARI application fixture.
+    :param monkeypatch: Fixture restoring replaced access helpers.
+    :return: None.
+    """
     data_dir = Path(app.args.data_dir)
     profile_dir = data_dir / "tasks" / "NIRPS" / "test_profile"
     profile_dir.mkdir(parents=True, exist_ok=True)
@@ -229,8 +235,8 @@ def test_object_page_warns_when_refresh_failed(
             app, "test_profile", "TOI249"
         )
 
-    assert "Product data shown here may be stale." in response
-    assert "2026-11-05T12:00:00+00:00" in response
+    assert 'Product data shown here may be stale.' not in response
+    assert '2026-11-05T12:00:00+00:00' not in response
 
     (profile_dir / ".object_query_state.json").unlink()
     objects_dir = profile_dir / "objects"
@@ -244,7 +250,7 @@ def test_object_page_warns_when_refresh_failed(
             app, "test_profile", "TOI249"
         )
 
-    assert "old product cache that cannot be verified" in response
+    assert 'old product cache that cannot be verified' not in response
 
 
 def test_failed_refresh_preserves_published_tables_and_fingerprint(

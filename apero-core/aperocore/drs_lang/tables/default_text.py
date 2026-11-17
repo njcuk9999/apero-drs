@@ -31,6 +31,59 @@ __release__ = base.__release__
 # Get the language list
 langlist = drs_lang_list.LanguageList(__NAME__)
 
+PROFILE_EDITOR_UI_TEXT = dict(
+    ADVANCED=('Advanced', 'Avancé', 'Avanzado'),
+    REPLACE=('Replace', 'Remplacer', 'Reemplazar'),
+    WITH=('With', 'Par', 'Por'),
+    ACCEPT=('Apply changes', 'Appliquer les modifications', 'Aplicar cambios'),
+    CANCEL=('Cancel', 'Annuler', 'Cancelar'),
+    REPLACE_TITLE=('Replace data paths', 'Remplacer les chemins de données',
+                   'Reemplazar rutas de datos'),
+    PREVIEW=('Preview changes', 'Aperçu des modifications',
+             'Vista previa de los cambios'),
+    BEFORE=('Before', 'Avant', 'Antes'),
+    AFTER=('After', 'Après', 'Después'),
+    PATHS_TO_UPDATE=('Paths to update', 'Chemins à modifier',
+                     'Rutas que se actualizarán'),
+    NO_CHANGES=('No paths match this replacement.',
+                'Aucun chemin ne correspond à ce remplacement.',
+                'Ninguna ruta coincide con este reemplazo.'),
+    PREVIEW_STALE=('Paths changed. Preview again before applying.',
+                   'Les chemins ont changé. Actualisez l’aperçu.',
+                   'Las rutas cambiaron. Actualice la vista previa.'),
+    CONFIRM_HINT=('Review each change below, then apply to the form.',
+                  'Vérifiez chaque modification, puis appliquez au formulaire.',
+                  'Revise cada cambio y aplíquelo al formulario.'),
+    REPLACE_HINT=('Replace literal text in data paths only; save to persist.',
+                  'Remplacer le texte des chemins, puis enregistrer.',
+                  'Reemplazar texto solo en rutas; guardar para conservar.'),
+    FIND_REQUIRED=('Enter the text to replace.',
+                   'Saisissez le texte à remplacer.',
+                   'Introduzca el texto que desea reemplazar.'),
+    CREATE_DIRS=('Create missing directories when testing (including parents)',
+                 'Créer les dossiers manquants au test (y compris les parents)',
+                 'Crear directorios al probar (incluidos los padres)'),
+    CREATE_FAILED=('Could not create directory',
+                   'Impossible de créer le dossier',
+                   'No se pudo crear el directorio'),
+    DIR_ONLY=('Only directories can be created.',
+              'Seuls les dossiers peuvent être créés.',
+              'Solo se pueden crear directorios.'),
+    REFRESH_TABLES=('Refresh from profile name',
+                    'Actualiser depuis le nom du profil',
+                    'Actualizar desde el nombre del perfil'),
+    REFRESH_HINT=('Reset table filters and selections using the profile name.',
+                  'Réinitialiser les filtres et tables avec le nom du profil.',
+                  'Restablecer filtros y tablas con el nombre del perfil.'),
+)
+for label, translations in PROFILE_EDITOR_UI_TEXT.items():
+    item = langlist.create('PROFILE_EDITOR_' + label, kind='text')
+    for language, translation in zip(('ENG', 'FR', 'ES'), translations):
+        item.value[language] = translation
+    item.arguments = 'None'
+    item.comment = 'ARI APERO profile table refresh and data path editor'
+    langlist.add(item)
+
 async_task_labels = dict(
     TASKS=('Tasks', 'Tâches', 'Tareas'),
     INSTRUMENT=('Instrument', 'Instrument', 'Instrumento'),
@@ -29386,6 +29439,30 @@ for geo_key, geo_eng, geo_fr, geo_es in GEOLOCATE_UI:
     item.value['ES'] = geo_es
     item.arguments = 'None'
     item.comment = 'Used in: ARI geolocation configuration'
+    langlist.add(item)
+
+
+# =============================================================================
+# FILE_BROWSER_* - ARI object file-browser preset labels
+# =============================================================================
+FILE_BROWSER_UI_TEXT = [
+    ('EXT2D', 'Extracted 2D spectra [e.fits]',
+     'Spectres 2D extraits [e.fits]', 'Espectros 2D extraídos [e.fits]'),
+    ('TCORR2D', 'Telluric corrected 2D spectra [t.fits]',
+     'Spectres 2D corrigés des raies telluriques [t.fits]',
+     'Espectros 2D corregidos de absorción telúrica [t.fits]'),
+    ('TCORR1D', 'Telluric corrected 1D spectra [s.fits]',
+     'Spectres 1D corrigés des raies telluriques [s.fits]',
+     'Espectros 1D corregidos de absorción telúrica [s.fits]'),
+    ('TEMPLATE', 'Templates', 'Modèles', 'Plantillas'),
+]
+for browser_key, browser_eng, browser_fr, browser_es in FILE_BROWSER_UI_TEXT:
+    item = langlist.create('FILE_BROWSER_' + browser_key, kind='text')
+    item.value['ENG'] = browser_eng
+    item.value['FR'] = browser_fr
+    item.value['ES'] = browser_es
+    item.arguments = 'None'
+    item.comment = 'Used in: ARI data_portal/object_page.html file presets'
     langlist.add(item)
 
 

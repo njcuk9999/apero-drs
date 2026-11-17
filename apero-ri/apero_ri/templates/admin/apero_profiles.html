@@ -1,6 +1,116 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI – Manage APERO Profiles{% endblock %}
 
+{% block extra_head %}
+{{ super() }}
+<style>
+.ari-ap-editor-tool:hover,
+[data-theme="dark"] .ari-ap-editor-tool:hover {
+    background: var(--ari-surface-muted, var(--ari-bg));
+}
+.ari-ap-replace-modal {
+    width: min(920px, 96vw);
+    max-width: 920px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.ari-ap-replace-modal .ari-modal__header,
+[data-theme="dark"] .ari-ap-replace-modal .ari-modal__header {
+    color: var(--ari-text);
+    background: color-mix(in srgb, var(--ari-primary) 12%, var(--ari-card-bg));
+}
+.ari-ap-replace-modal .ari-modal__body {
+    min-height: 0;
+    overflow-y: auto;
+}
+.ari-ap-replace-modal .ari-modal__footer {
+    flex-wrap: wrap;
+}
+.ari-ap-replace-hint,
+[data-theme="dark"] .ari-ap-replace-hint {
+    color: var(--ari-text-muted);
+    margin: 0 0 1rem;
+}
+.ari-ap-replace-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    font-weight: 600;
+}
+.ari-ap-replace-count,
+[data-theme="dark"] .ari-ap-replace-count {
+    background: color-mix(in srgb, var(--ari-primary) 12%, var(--ari-card-bg));
+    color: var(--ari-text);
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+}
+.ari-ap-replace-card,
+[data-theme="dark"] .ari-ap-replace-card {
+    border: 1px solid var(--ari-border);
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 0.85rem;
+}
+.ari-ap-replace-key,
+[data-theme="dark"] .ari-ap-replace-key {
+    background: var(--ari-surface-muted, var(--ari-bg));
+    border-bottom: 1px solid var(--ari-border);
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.ari-ap-replace-comparison {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.8rem;
+    padding: 0.85rem;
+}
+.ari-ap-replace-value {
+    min-width: 0;
+    padding-left: 0.65rem;
+    border-left: 3px solid;
+}
+.ari-ap-replace-value--before,
+[data-theme="dark"] .ari-ap-replace-value--before {
+    border-color: var(--ari-danger);
+}
+.ari-ap-replace-value--after,
+[data-theme="dark"] .ari-ap-replace-value--after {
+    border-color: var(--ari-success);
+}
+.ari-ap-replace-value span {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+.ari-ap-replace-value code,
+[data-theme="dark"] .ari-ap-replace-value code {
+    display: block;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: none;
+    color: var(--ari-text);
+    padding: 0;
+}
+@media (max-width: 768px) {
+    .ari-ap-replace-comparison {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .ari-ap-replace-modal .ari-modal__footer .ari-btn {
+        flex: 1 1 100%;
+        min-height: 44px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
@@ -187,6 +297,13 @@
             <!-- Table names -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-table"></i> Table Names</h4>
             <div id="tables-section" class="ari-ap-step ari-ap-step--locked">
+                <div class="ari-ap-form__field">
+                    <button id="btn-refresh-tables" type="button"
+                            class="ari-btn ari-btn--secondary ari-btn--sm ari-ap-editor-tool"
+                            title="{{ profile_editor_labels.REFRESH_HINT }}">
+                        <i class="fa-solid fa-arrows-rotate"></i> {{ profile_editor_labels.REFRESH_TABLES }}
+                    </button>
+                </div>
                 {% for key, name, prefix in [
                     ('ASTROM_TABLENAME', 'astrom', 'astrom_'),
                     ('CALIB_TABLENAME', 'calib', 'calib_'),
@@ -226,6 +343,14 @@
             <!-- Data paths -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-folder-tree"></i> Data Paths</h4>
             <div id="paths-section" class="ari-ap-step ari-ap-step--locked">
+            <div class="ari-ap-form__field">
+                <button id="btn-paths-advanced" type="button"
+                        class="ari-btn ari-btn--secondary ari-btn--sm ari-ap-editor-tool"
+                        aria-expanded="false" aria-controls="paths-advanced"
+                        aria-haspopup="dialog">
+                    <i class="fa-solid fa-sliders"></i> {{ profile_editor_labels.ADVANCED }}
+                </button>
+            </div>
             <div class="ari-ap-form__field">
                 <div class="ari-ap-step-status" style="display:block; border-left:4px solid #1e6fbe; background:var(--ari-surface-muted, #f5f8fc); color:var(--ari-text, #1f2937);">
                     <i class="fa-solid fa-hard-drive"></i>
@@ -276,6 +401,10 @@
             </div>
             {% endfor %}
             <div class="ari-ap-form__field">
+                <label>
+                    <input id="paths-create-missing" type="checkbox">
+                    {{ profile_editor_labels.CREATE_DIRS }}
+                </label>
                 <button id="btn-test-paths" class="ari-btn ari-btn--secondary ari-btn--sm" disabled>
                     <i class="fa-solid fa-list-check"></i> Test Paths
                 </button>
@@ -316,6 +445,60 @@
 <div id="ap-empty" class="ari-sg-empty" style="display:none;">
     <i class="fa-solid fa-circle-info"></i>
     No instruments configured.
+</div>
+
+<!-- Data-path replacement preview and confirmation -->
+<div id="paths-advanced" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-ap-replace-modal" role="dialog" aria-modal="true"
+         aria-labelledby="paths-replace-title"
+         aria-describedby="paths-replace-hint">
+        <div class="ari-modal__header" id="paths-replace-title">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            {{ profile_editor_labels.REPLACE_TITLE }}
+        </div>
+        <div class="ari-modal__body">
+            <p id="paths-replace-hint" class="ari-ap-replace-hint">
+                {{ profile_editor_labels.REPLACE_HINT }}
+            </p>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="paths-replace-from">{{ profile_editor_labels.REPLACE }}</label>
+                    <input id="paths-replace-from" type="text"
+                           class="ari-ap-input" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="paths-replace-to">{{ profile_editor_labels.WITH }}</label>
+                    <input id="paths-replace-to" type="text"
+                           class="ari-ap-input" autocomplete="off">
+                </div>
+            </div>
+            <div id="paths-replace-status" role="status" aria-live="polite"></div>
+            <div id="paths-replace-preview" hidden>
+                <div class="ari-ap-replace-summary">
+                    {{ profile_editor_labels.PATHS_TO_UPDATE }}
+                    <span id="paths-replace-count" class="ari-ap-replace-count"></span>
+                </div>
+                <p class="ari-ap-replace-hint">{{ profile_editor_labels.CONFIRM_HINT }}</p>
+                <div id="paths-replace-list"></div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-paths-replace-cancel" type="button"
+                    class="ari-btn ari-btn--secondary ari-ap-editor-tool">
+                {{ profile_editor_labels.CANCEL }}
+            </button>
+            <button id="btn-paths-preview" type="button"
+                    class="ari-btn ari-btn--secondary ari-ap-editor-tool">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                {{ profile_editor_labels.PREVIEW }}
+            </button>
+            <button id="btn-paths-replace" type="button"
+                    class="ari-btn ari-btn--primary" disabled>
+                <i class="fa-solid fa-check"></i>
+                {{ profile_editor_labels.ACCEPT }}
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- File browser modal -->
@@ -415,6 +598,7 @@
 
 <script>
 window.ARI_APERO_PROFILES = {
+    labels: {{ profile_editor_labels|tojson }},
     listUrl: {{ url_for('api_apero_profiles_list')|tojson }},
     statusOverviewUrl: {{ url_for('api_apero_profiles_overview')|tojson }},
     saveUrl: {{ url_for('api_apero_profiles_save')|tojson }},
@@ -442,5 +626,5 @@ window.ARI_APERO_PROFILES = {
     sciProfileData: {{ sci_profiles|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}?v=20261116a"></script>
+<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}?v=20261117b"></script>
 {% endblock %}

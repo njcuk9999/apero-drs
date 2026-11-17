@@ -412,7 +412,10 @@ item.value['ENG'] = 'Currently allowed type:\n\tDRS_EOUT = EXT_E2DS_AB (HCONE_HC
 item.value['ES'] = ('Tipo permitido actualmente:\n\tDRS_EOUT = EXT_E2DS_AB '
                     '(HCONE_HCONE) o EXT_E2DS_A (HCONE_HCONE)\n\to EXT_E2DS_B '
                     '(HCONE_HCONE) o EXT_E2DS_C (HCONE_HCONE)')
-item.value['FR'] = 'Type actuellement autorisé: \ n \ tDRS_EOUT = EXT_E2DS_AB (HCONE_HCONE) ou EXT_E2DS_A (HCONE_HCONE) \ n \ tor EXT_E2DS_B (HCONE_HCONE) ou EXT_E2DS_C (HCONE_HCONE) '
+item.value['FR'] = ('Type actuellement autorisé :\n\t'
+                    'DRS_EOUT = EXT_E2DS_AB (HCONE_HCONE) ou '
+                    'EXT_E2DS_A (HCONE_HCONE)\n\t'
+                    'ou EXT_E2DS_B (HCONE_HCONE) ou EXT_E2DS_C (HCONE_HCONE)')
 item.arguments = 'None'
 item.comment = ''
 langlist.add(item)

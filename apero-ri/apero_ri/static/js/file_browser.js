@@ -84,23 +84,6 @@
         'BLOCK_KIND', 'OBS_DIR', 'KW_OUTPUT', 'KW_DPRTYPE',
     ];
 
-    var FB_PRESETS = [
-        { id: 'default',  label: 'All processed (out, QC\u22651)', preset: 'default' },
-        { id: 'none',     label: 'All files',                      preset: 'none'    },
-        { id: 'ext2d',    label: 'Extracted 2D spectra',          preset: 'ext2d'   },
-        { id: 'tcorr2d',  label: 'Telluric corrected 2D spectra', preset: 'tcorr2d' },
-        { id: 'tcorr1d',  label: 'Telluric corrected 1D spectra', preset: 'tcorr1d' },
-    ];
-    // Conditionally add polar preset if instrument has polarimetry
-    if (window.ARI_OBJECT_PAGE && window.ARI_OBJECT_PAGE.hasPolarimetry) {
-        FB_PRESETS.push({ id: 'polar', label: 'Polar spectra', preset: 'polar' });
-    }
-    // Always add these after polar (or instead of)
-    FB_PRESETS.push(
-        { id: 'ccfrv',    label: 'CCF RV',                        preset: 'ccfrv'   },
-        { id: 'rdb',      label: 'rdb',                           preset: 'rdb'     },
-        { id: 'lbl',      label: 'All LBL products',              preset: 'lbl'     }
-    );
     var fbActivePreset = 'none';
 
     /* -----------------------------------------------------------------------
@@ -326,7 +309,7 @@
         // column filters (only for flat mode)
         if (!fbGroupByCol) {
             Object.keys(fbColFilters).forEach(function (col) {
-                var q = fbColFilters[col];
+                var q = String(fbColFilters[col] || '').toLowerCase();
                 if (!q) return;
                 rows = rows.filter(function (r) {
                     var cellRaw = String(r[col] == null ? '' : r[col]);
@@ -496,9 +479,9 @@
                     sel.appendChild(optAll);
                     fbUniqueVals.forEach(function (v) {
                         var opt = document.createElement('option');
-                        opt.value = v.toLowerCase();
+                        opt.value = v;
                         opt.textContent = v === '' ? '(blank)' : v;
-                        if ((fbColFilters[col.key] || '') === v.toLowerCase()) opt.selected = true;
+                        if ((fbColFilters[col.key] || '') === v) opt.selected = true;
                         sel.appendChild(opt);
                     });
                     sel.addEventListener('change', function () {
@@ -517,7 +500,7 @@
                     (function (inputEl, colKey) {
                         var timer = null;
                         function doApply() {
-                            fbColFilters[colKey] = inputEl.value.trim().toLowerCase();
+                            fbColFilters[colKey] = inputEl.value.trim();
                             fbCurrentPage = 1;
                             fbApplyFilterSort();
                         }

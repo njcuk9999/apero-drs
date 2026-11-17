@@ -5451,18 +5451,36 @@ def ariapp_require_admin_user(self: Any) -> tuple[Any, Any]:
 
 
 def ariapp_api_apero_profiles_validate(self: Any) -> Any:
-    """Validate a path exists as a directory."""
+    """Validate a path, optionally creating a directory on explicit POST.
+
+    Args:
+        self: ARI application enforcing profile-management permissions.
+
+    Returns:
+        JSON path validation or an explicit input/creation error response.
+    """
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
 
-    path = request.args.get("path", "").strip()
+    data = request.get_json() if request.method == 'POST' else request.args
+    data = data or {}
+    path = str(data.get('path', '')).strip()
     if not path:
         return jsonify(success=False, error="No path"), 400
     if not os.path.isabs(path):
         return jsonify(success=False, error="Must be absolute"), 400
 
-    kind = "file" if request.args.get("kind", "") == "file" else "dir"
+    kind = 'file' if data.get('kind', '') == 'file' else 'dir'
+    if request.method == 'POST' and data.get('create') is True:
+        labels = apero_profiles_api_helpers.profile_editor_labels()
+        if kind == 'file':
+            return jsonify(success=False, error=labels['DIR_ONLY']), 400
+        try:
+            Path(path).mkdir(parents=True, exist_ok=True)
+        except (OSError, ValueError) as exc:
+            error = labels['CREATE_FAILED'] + ': ' + str(exc)
+            return jsonify(success=False, error=error), 400
     result = auth.validate_path_exists(path, kind=kind)
     return jsonify(success=True, **result)
 

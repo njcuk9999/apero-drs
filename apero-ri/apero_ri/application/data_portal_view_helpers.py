@@ -1,6 +1,5 @@
 """Data Portal view helper functions for ARIApp."""
 
-import json
 import time
 from pathlib import Path
 from typing import Any
@@ -16,6 +15,9 @@ from flask import (
     url_for,
 )
 
+from aperocore.drs_lang import textentry
+from aperocore.drs_lang.tables import default_text
+from apero_ri.core import ari_lang_support
 from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core.auth import get_effective_user
 from apero_ri.core.auth import get_accessible_profiles
@@ -31,6 +33,21 @@ from apero_ri.plots.plots_filename import (
     PLOTABLE_OUTPUT_TYPES,
     FRAME_OUTPUT_PREFIXES,
 )
+
+
+def _file_browser_labels() -> dict[str, str]:
+    """Return file-browser preset labels in the request's language.
+
+    :return: Localized labels keyed by file-browser preset identifier.
+    """
+    language = ari_lang_support.get_language()
+    labels = dict()
+    for key, english, french, spanish in default_text.FILE_BROWSER_UI_TEXT:
+        translations = dict(en=english, fr=french, es=spanish)
+        label = textentry('FILE_BROWSER_' + key,
+                          message=translations[language])
+        labels[key.lower()] = str(label)
+    return labels
 
 
 def ri_profile_view(app: Any, profile_id: str) -> str | Response:
@@ -203,56 +220,6 @@ def ri_object_page_view(
     )
 
     base_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
-    profile_dir = (
-        base_dir / 'tasks' / profile['instrument'] / profile_id
-    )
-    refresh_state_path = profile_dir / '.object_query_state.json'
-    object_query_status = {}
-    try:
-        loaded_state = json.loads(
-            refresh_state_path.read_text(encoding='utf-8')
-        )
-    except FileNotFoundError:
-        pass
-    except (OSError, json.JSONDecodeError) as exc:
-        app.logger.warning(
-            'Could not read object-query status for %s: %s',
-            profile_id,
-            exc,
-        )
-        object_query_status = {'status': 'unknown'}
-    else:
-        if isinstance(loaded_state, dict):
-            object_query_status = loaded_state
-        else:
-            object_query_status = {'status': 'unknown'}
-    if not object_query_status:
-        objects_dir = profile_dir / 'objects'
-        object_state_path = (
-            objects_dir / f'.state_{objname}.json'
-        )
-        try:
-            object_state = json.loads(
-                object_state_path.read_text(encoding='utf-8')
-            )
-        except FileNotFoundError:
-            object_state = None
-        except (OSError, json.JSONDecodeError) as exc:
-            app.logger.warning(
-                'Could not read object cache state for %s/%s: %s',
-                profile_id,
-                objname,
-                exc,
-            )
-            object_state = None
-            object_query_status = {'status': 'unknown'}
-        if object_state is not None and not isinstance(object_state, dict):
-            object_query_status = {'status': 'unknown'}
-        elif isinstance(object_state, dict) and (
-            object_state.get('schema_version') != 2
-            or not object_state.get('product_fingerprint')
-        ):
-            object_query_status = {'status': 'stale'}
 
     finder_cached = False
     try:
@@ -323,7 +290,7 @@ def ri_object_page_view(
         'plot_yaxis_zoom': plot_yaxis_zoom,
         'plotable_output_types': sorted(PLOTABLE_OUTPUT_TYPES),
         'frame_output_prefixes': list(FRAME_OUTPUT_PREFIXES),
-        'object_query_status': object_query_status,
+        'file_browser_labels': _file_browser_labels(),
     }
     return render_template('data_portal/object_page.html', **context)
 
