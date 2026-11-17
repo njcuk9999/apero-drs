@@ -11,6 +11,7 @@ Created on 2024-10-18 at 12:05
 """
 import argparse
 import os
+import shlex
 import sys
 import time
 from pathlib import Path
@@ -69,6 +70,9 @@ SETUP_FILES['setup.sh'] = 'apero_bash.sh'
 SETUP_FILES['setup.bat'] = 'apero_win.bat'
 # allowed methods to link external raw files into the raw directory
 EXTERNAL_RAW_TYPES = ['symlink', 'hardlink']
+# Choices not recoverable from the regular profile configuration.
+SETUP_STATE_KEYS = ('NAME', 'FORCE_DIR_CREATE', 'EDIT_DBTABLES', 'CLEAN_START',
+                    'CLEAN_PROMPT', 'DISABLE_DEMO_PROMPT')
 
 
 # =============================================================================
@@ -192,6 +196,7 @@ class SetupArgument:
         # set the parser action
         if self.dtype in [bool, 'bool']:
             kwargs['nargs'] = '?'
+            kwargs['const'] = True
             kwargs['type'] = drs_text.true_text
             return kwargs
         else:
@@ -214,27 +219,14 @@ class SetupArgument:
         return kwargs
 
     def print_arg(self, value: Any = None) -> Optional[str]:
+        """Format a shell-safe command-line option.
 
-        # if we don't have a value set then don't add this argument
+        :param value: Option value, or None to omit the option.
+        :return: Quoted option token, or None for an omitted value.
+        """
         if value is None:
             return None
-        # ---------------------------------------------------------------------
-        # deal with argname
-        if self.argname is not None:
-            argname = self.argname
-        else:
-            argname = self.name
-        # ---------------------------------------------------------------------
-        # deal with value
-        value = str(value)
-        # deal with white spaces
-        if ' ' in value:
-            value = f'"{value}"'
-        # ---------------------------------------------------------------------
-        # deal with command
-        command = f'--{argname}={value}'
-        # return command
-        return command
+        return shlex.quote(f'{self.argname}={value}')
 
 
 def catch_sigint(signal_received: Any, frame: Any):
@@ -300,6 +292,9 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
         if params.sources[arg.name] == 'command_line' and arg.sets is not None:
             # loop around sets
             for key in arg.sets:
+                # Explicit child options take priority over aggregate defaults.
+                if raw_params.get(key) is not None:
+                    continue
                 # get the value
                 value = arg.sets[key].format(**params)
                 # update value in params
@@ -308,7 +303,8 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                 used.append(key)
     # -------------------------------------------------------------------------
     # specific arguments
-    params = fix_config_path(params)
+    if not params['INSTALL_SH']:
+        params = fix_config_path(params)
     # return params
     return params
 
@@ -325,6 +321,10 @@ def ask_user(params: ParamDict, sargs: Dict[str, SetupArgument]) -> ParamDict:
         # ---------------------------------------------------------------------
         # if we don't need to ask for this argument then continue
         if not arg.ask:
+            continue
+        # A replay can specify every directory without an umbrella DATADIR.
+        if arg.sets and all(params.sources.get(key) == 'command_line'
+                            for key in arg.sets):
             continue
         # ---------------------------------------------------------------------
         # don't ask about the arg if depends is set and variable is not None
@@ -490,39 +490,53 @@ def ask_external_raw(params: ParamDict) -> ParamDict:
 
 def update_setup(setup_params: ParamDict,
                  sargs: Dict[str, SetupArgument]) -> ParamDict:
+    """Recover setup choices from the selected profile.
 
-    # if we have a environment variable we can get current parameters from
-    # the setup directory
-    cond1 = base.USER_ENV in os.environ
+    :param setup_params: Parsed setup arguments selecting the profile.
+    :param sargs: Setup argument definitions and configuration mappings.
+    :return: Setup parameters populated from the installed profile.
+    :raises AperoCodedException: If no profile can be selected.
+    """
+    # An explicit config path takes priority over an activated profile.
+    cond1 = bool(os.environ.get(base.USER_ENV))
     cond2 = setup_params['NAME'] is not None
     cond3 = setup_params['CONFIG_PATH'] is not None
     # ----------------------------------------------------------------------
     # Get the config path
     # ----------------------------------------------------------------------
-    if (not cond1) and not (cond2 and cond3):
-        # error: Cannot update setup without DRS_UCONFIG environment variable
-        #     set or --name and --config arguments set
+    if (not cond1) and not cond3:
         raise drs_log.AperoCodedException(None, '00-510-00003')
-    elif cond1:
+    elif not cond3:
         # get the config path
         config_path = os.environ[base.USER_ENV]
     else:
         # get the config path
         config_path = setup_params['CONFIG_PATH']
-        # lets set this in os.envinron
-        os.environ[base.USER_ENV] = config_path
+        if cond2:
+            config_path = Path(config_path)
+            if config_path.name != setup_params['NAME']:
+                config_path = config_path / setup_params['NAME']
+    config_path = Path(config_path).expanduser().resolve()
+    os.environ[base.USER_ENV] = str(config_path)
+    setup_params.set('CONFIG_PATH', config_path, source='profile')
     # ----------------------------------------------------------------------
     # Once DRS_UCONFIG is set we can load the parameters
     # ----------------------------------------------------------------------
     from apero.instruments import select
-    # get the current apero parameters
-    aparams = load_functions.load_config(select.INSTRUMENTS)
     # get the current install parameters
     iparams = base.load_yaml(os.path.join(config_path, 'install.yaml'))
+    # Avoid a cached configuration from another profile of the same instrument.
+    aparams = load_functions.load_config(select.INSTRUMENTS,
+                                        iparams['OBS.INSTRUMENT'], cache=False)
     # get the current database parameters
     dparams = base.load_yaml(os.path.join(config_path, 'database.yaml'))
     # access dparams using paths
     dparam2path = param_functions.base_class.Path2Dict(dparams)
+    setup_params.set('NAME', config_path.name, source='profile')
+    for key in SETUP_STATE_KEYS:
+        if key in iparams.get('SETUP_ARGUMENTS', {}):
+            setup_params.set(key, iparams['SETUP_ARGUMENTS'][key],
+                             source='apero.iparams')
     # ----------------------------------------------------------------------
     # Update the setup parameters
     for argname in sargs:
@@ -554,11 +568,15 @@ def update_setup(setup_params: ParamDict,
             # get value from a path
             value = dparam2path[database_name]
             setup_params.set(argname, value, source='apero.dparams')
-            margs = [database_name, value, argname.upper()]
+            display_value = '********' if argname == 'DATABASE_PASS' else value
+            margs = [database_name, display_value, argname.upper()]
             # log: {0}="{1}" from database params [{2}]
             WLOG(None, '', textentry('40-510-00037', args=margs),
                  colour='magenta')
     # -------------------------------------------------------------------------
+    setup_params.set('USE_EXTERNAL_RAW',
+                     setup_params['EXTERNAL_RAW'] not in [None, '', 'None'],
+                     source='profile')
     # return the updated setup parameters
     return setup_params
 
@@ -574,7 +592,7 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     - user_constants.yaml
     - setup.sh
     - setup.bat
-    - install.sh
+    - install_script.sh
     """
     # check that config path exists - we need this to continue
     if not os.path.exists(params['CONFIG_PATH']):
@@ -609,8 +627,8 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     WLOG(None, 'info', textentry('40-510-00030'))
     create_setup_files(params)
     # -------------------------------------------------------------------------
-    # create an install.sh to reproduce the installation
-    # log: Creating install.sh
+    # create an install_script.sh to reproduce the installation
+    # log: Creating install_script.sh
     WLOG(None, 'info', textentry('40-510-00031'))
     create_install_script(params, sargs)
     # ----------------------------------------------------------------------
@@ -811,6 +829,9 @@ def create_yamls(params: ParamDict) -> None:
     install_dict['OBS.INSTRUMENT'] = instrument
     install_dict['GLOBAL.LANGUAGE'] = params['GLOBAL.LANGUAGE']
     install_dict['USE_TQDM'] = True
+    install_dict['SETUP_ARGUMENTS'] = {
+        key: params[key] for key in SETUP_STATE_KEYS
+    }
     # -------------------------------------------------------------------------
     # add the language modules
     lang_modules = base.__YAML__['LANGUAGE_MODULES']
@@ -1020,57 +1041,38 @@ def create_setup_files(params: ParamDict) -> None:
             afile.write('{0}={1}\n'.format(key, value))
 
 
-def create_install_script(params: ParamDict, sargs: Dict[str, SetupArgument]):
+def create_install_script(params: ParamDict,
+                          sargs: Dict[str, SetupArgument]) -> None:
     """
-    Create the install.sh script to reproduce the installation
+    Create an executable install_script.sh in the profile config directory.
 
     :param params: ParamDict, the parameters to use
     :param sargs: dict, the setup arguments to use
 
-    :return: None, writes install.sh to file
+    :return: None, writes install_script.sh without modifying parameters.
+    :raises OSError: If the script cannot be written or made executable.
     """
-    # write command
-    command = f'python apero_setup.py          \\'
-    # -------------------------------------------------------------------------
-    # set always create to true (even if False)
-    params['FORCE_DIR_CREATE'] = True
-    # -------------------------------------------------------------------------
-    # remove profile name from config path (for arguments)
-    #   but keep config_path for saving file to
-    config_path = str(params['CONFIG_PATH'])
-    if str(config_path).endswith(params['NAME']):
-        config_path = str(config_path)[:-len(params['NAME'])]
-    params['CONFIG_PATH'] = config_path
-    # -------------------------------------------------------------------------
-    # add non null arguments
-    for it, sname in enumerate(sargs):
-        # get the argument
-        sarg = sargs[sname]
-        # only add arguments which are not still None
-        if params[sname] is not None:
-            # set up command prefix
-            prefix = '\n' + 10 * ' '
-            # -----------------------------------------------------------------
-            # set up command suffix (different for last argument)
-            if it != len(sargs) - 1:
-                suffix = ' ' * 4 + '\\'
-            else:
-                suffix = ''
-            # -----------------------------------------------------------------
-            # add command
-            command += prefix + sarg.print_arg(params[sname]) + suffix
-    # construct path
-    destination = os.path.join(config_path, 'install.sh')
-    # print writing
+    setup_script = __PATH__.joinpath('setup', 'bin', 'apero_setup.py')
+    command = [shlex.quote(sys.executable), shlex.quote(str(setup_script))]
+    # Mode switches must never turn a replay into an update or regeneration.
+    excluded = {'UPDATE', 'INSTALL_SH', 'DATADIR'}
+    for sname, sarg in sargs.items():
+        if sname.upper() in excluded:
+            continue
+        value = params[sname]
+        if sarg.dtype == 'path' and value is not None:
+            value = Path(value).expanduser().resolve()
+        option = sarg.print_arg(value)
+        if option is not None:
+            command.append(option)
+    destination = Path(params['CONFIG_PATH']).joinpath('install_script.sh')
     margs = [destination]
-    # log: Writing install.sh: {0}
     WLOG(None, '', textentry('40-510-00002', args=margs), wrap=False)
-    # write to file
-    with open(destination, 'w') as afile:
-        afile.write(command)
-    # ---------------------------------------------------------------------
-    # make the file executable
-    os.chmod(destination, 0o755)
+    # Restrict access before writing: database options can include credentials.
+    fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700)
+    with os.fdopen(fd, 'w') as afile:
+        os.fchmod(afile.fileno(), 0o700)
+        afile.write('#!/bin/sh\nexec ' + ' \\\n    '.join(command) + ' "$@"\n')
 
 
 def clean_install(params: ParamDict) -> None:

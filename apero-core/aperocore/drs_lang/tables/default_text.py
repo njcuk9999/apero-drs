@@ -24301,9 +24301,9 @@ langlist.add(item)
 # 40-510-00002
 # =============================================================================
 item = langlist.create('40-510-00002', kind='all-code')
-item.value['ENG'] = '\tWriting install.sh: {0}'
-item.value['FR'] = '\tÉcriture de install.sh : {0}'
-item.value['ES'] = '\tEscribiendo install.sh: {0}'
+item.value['ENG'] = '\tWriting install_script.sh: {0}'
+item.value['FR'] = '\tÉcriture de install_script.sh : {0}'
+item.value['ES'] = '\tEscribiendo install_script.sh: {0}'
 item.arguments = '{0}=destination'
 item.comment = 'Used in: setup/core/drs_setup.py'
 langlist.add(item)
@@ -24620,9 +24620,9 @@ langlist.add(item)
 # 40-510-00031
 # =============================================================================
 item = langlist.create('40-510-00031', kind='all-code')
-item.value['ENG'] = 'Creating install.sh'
-item.value['FR'] = 'Création de install.sh'
-item.value['ES'] = 'Creando install.sh'
+item.value['ENG'] = 'Creating install_script.sh'
+item.value['FR'] = 'Création de install_script.sh'
+item.value['ES'] = 'Creando install_script.sh'
 item.arguments = 'None'
 item.comment = 'Used in: setup/core/drs_setup.py'
 langlist.add(item)
@@ -24919,6 +24919,20 @@ item.value['FR'] = 'Liaison des fichiers raw externes'
 item.value['ES'] = 'Enlazando archivos raw externos'
 item.arguments = 'None'
 item.comment = 'Used in: tools/module/processing/drs_processing.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-510-00056
+# =============================================================================
+item = langlist.create('40-510-00056', kind='all-code')
+item.value['ENG'] = ('Generate install_script.sh for the current profile '
+                     'without running setup')
+item.value['FR'] = ('Générer install_script.sh pour le profil actuel '
+                    "sans exécuter l'installation")
+item.value['ES'] = ('Generar install_script.sh para el perfil actual '
+                    'sin ejecutar la instalación')
+item.arguments = 'None'
+item.comment = 'Used in: setup/core/setup_constants.py'
 langlist.add(item)
 
 # =============================================================================

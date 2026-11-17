@@ -41,6 +41,13 @@ def main() -> ParamDict:
     # get command line args
     params = drs_setup.command_line_args(sargs)
     # -------------------------------------------------------------------------
+    # Script-only mode must not install, reset, or offer demo data.
+    if params['INSTALL_SH']:
+        params = drs_setup.update_setup(params, sargs)
+        drs_setup.create_install_script(params, sargs)
+        drs_setup.end_all(None)
+        return params
+    # -------------------------------------------------------------------------
     # update setup
     if params['UPDATE']:
         params = drs_setup.update_setup(params, sargs)

@@ -47,6 +47,11 @@ SARGS['name'] = SetupArgument(name='name', argname='--name',
 SARGS['update'] = SetupArgument(name='update', argname='--update',
                                 default_value=False, dtype='bool', ask=False,
                                 helpstr='whether to update current profile')
+# Regenerate the replay script without running installation.
+SARGS['INSTALL_SH'] = SetupArgument(
+    name='INSTALL_SH', argname='--install_sh', default_value=False,
+    dtype='bool', ask=False,
+    helpstr=str(drs_setup.textentry('40-510-00056')))
 
 # which language to install apero in
 SARGS['language'] = SetupArgument(name='language', argname='--language',
@@ -264,28 +269,28 @@ SARGS['CALIB_DBTABLE'] = SetupArgument(name='CALIB_DBTABLE',
                                        default_value='calib',
                                        dtype='str', depends='EDIT_DBTABLES',
                                        helpstr='The calibration table name',
-                                       databasename='CALIB.PROFILE')
+                                       databasename='CALIB.TABLE')
 # telluric table name
 SARGS['TELLU_DBTABLE'] = SetupArgument(name='TELLU_DBTABLE',
                                        argname='--tellutable',
                                        default_value='tellu',
                                        dtype='str', depends='EDIT_DBTABLES',
                                        helpstr='The telluric table name',
-                                       databasename='TELLU.PROFILE')
+                                       databasename='TELLU.TABLE')
 # file index table name
 SARGS['FINDEX_DBTABLE'] = SetupArgument(name='FINDEX_DBTABLE',
                                         argname='--findextable',
                                         default_value='findex',
                                         dtype='str', depends='EDIT_DBTABLES',
                                         helpstr='The file index table name',
-                                        databasename='FINDEX.PROFILE')
+                                        databasename='FINDEX.TABLE')
 # the log table name
 SARGS['LOG_DBTABLE'] = SetupArgument(name='LOG_DBTABLE',
                                      argname='--logtable',
                                      default_value='log',
                                      dtype='str', depends='EDIT_DBTABLES',
                                      helpstr='The log table name',
-                                     databasename='LOG.PROFILE')
+                                     databasename='LOG.TABLE')
 # -----------------------------------------------------------------------------
 # Other settings
 # -----------------------------------------------------------------------------
