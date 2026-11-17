@@ -34,6 +34,7 @@ options. Run it from any working directory:
 
 The script uses the Python interpreter and setup location that generated it.
 Additional setup arguments can be appended to override recorded values.
+Missing config and data directories are created during setup.
 Re-running setup retains the recorded cleanup behavior, including its
 confirmation prompt. The file is owner-only because it can contain database
 credentials.

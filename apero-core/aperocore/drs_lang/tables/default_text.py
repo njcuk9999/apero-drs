@@ -13576,6 +13576,17 @@ item.comment = 'Used in: recipes/nirps_ha/apero_mk_skymodel_nirps_ha.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-000-00025
+# =============================================================================
+item = langlist.create('40-000-00025', kind='all-code')
+item.value['ENG'] = 'not installed'
+item.value['FR'] = 'non installé'
+item.value['ES'] = 'no instalado'
+item.arguments = 'None'
+item.comment = 'Used in: utils/drs_startup.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-001-00000
 # =============================================================================
 item = langlist.create('40-001-00000', kind='all-code')

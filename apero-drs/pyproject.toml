@@ -27,6 +27,7 @@ dependencies = [
     "numba==0.62.1",
     "numexpr==2.14.1",
     "numpy==2.3.3",
+    "packaging>=23",
     "pandas==3.0.0",
     "pandastable==0.14.0",
     "pandasql==0.7.3",

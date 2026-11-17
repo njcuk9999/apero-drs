@@ -15,6 +15,7 @@ from apero.dev import get_base_params
 from apero.setup.bin import apero_setup
 from apero.setup.core import drs_setup
 from apero.setup.core import setup_constants
+from apero.tools.recipes.bin import apero_reset
 
 
 def _setup_params(tmp_path: Path) -> drs_setup.ParamDict:
@@ -165,3 +166,75 @@ def test_install_sh_without_profile_fails(
     assert params['INSTALL_SH'] is True
     with pytest.raises(drs_setup.AperoCodedException):
         drs_setup.update_setup(params, setup_constants.SARGS)
+
+
+@pytest.mark.parametrize('config_is_parent', [False, True])
+def test_setup_creates_new_profile_and_data_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, config_is_parent: bool,
+) -> None:
+    """Create missing paths before writing any profile configuration."""
+    get_base_params('SPIROU')
+    root = tmp_path / 'new'
+    config = root / 'settings'
+    if not config_is_parent:
+        config = config / 'fresh_profile'
+    argv = ['apero_setup.py', '--name=fresh_profile', f'--config={config}',
+            '--instrument=SPIROU', '--use-external-raw=False']
+    for key, arg in setup_constants.SARGS.items():
+        if arg.depends == 'DATADIR':
+            argv.append(f'{arg.argname}={root / key}')
+    monkeypatch.setattr(sys, 'argv', argv)
+    monkeypatch.setattr(drs_setup, 'user_input',
+                        lambda *args, **kwargs: kwargs.get('default'))
+    params = drs_setup.command_line_args(setup_constants.SARGS)
+    params = drs_setup.ask_user(params, setup_constants.SARGS)
+
+    class StopBeforeWriting(Exception):
+        """Stop setup before profile files or external services are touched."""
+
+    def stop_after_paths(params: drs_setup.ParamDict) -> None:
+        """Check directory creation precedes YAML creation."""
+        assert Path(params['CONFIG_PATH']).is_dir()
+        raise StopBeforeWriting
+
+    monkeypatch.setattr(drs_setup, 'create_yamls', stop_after_paths)
+    with pytest.raises(StopBeforeWriting):
+        drs_setup.run_setup(params, setup_constants.SARGS)
+    assert Path(params['CONFIG_PATH']) == root / 'settings' / 'fresh_profile'
+    assert params['DATADIR'] is None
+    for key, arg in setup_constants.SARGS.items():
+        if arg.depends == 'DATADIR':
+            assert (root / key).is_dir()
+
+
+def test_setup_rejects_a_file_as_config_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Report a path creation error if the config location is a file."""
+    params = _setup_params(tmp_path)
+    config_file = tmp_path / 'config_file'
+    config_file.touch()
+    params['CONFIG_PATH'] = config_file
+    monkeypatch.setenv(drs_setup.base.USER_ENV, str(tmp_path))
+    with pytest.raises(drs_setup.AperoCodedException):
+        drs_setup.run_setup(params, setup_constants.SARGS)
+
+
+@pytest.mark.parametrize('prompt', [False, True])
+def test_cleanup_respects_confirmation_setting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prompt: bool,
+) -> None:
+    """Pass the inverse prompt setting to reset's nowarn option."""
+    params = _setup_params(tmp_path)
+    params['CLEAN_START'] = True
+    params['CLEAN_PROMPT'] = prompt
+    observed = {}
+
+    def fake_reset(**kwargs: Any) -> dict:
+        """Record reset options without deleting files or touching databases."""
+        observed.update(kwargs)
+        return dict(success=True)
+
+    monkeypatch.setattr(apero_reset, 'main', fake_reset)
+    drs_setup.clean_install(params)
+    assert observed['nowarn'] is not prompt

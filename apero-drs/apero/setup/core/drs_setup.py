@@ -594,23 +594,14 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     - setup.bat
     - install_script.sh
     """
-    # check that config path exists - we need this to continue
-    if not os.path.exists(params['CONFIG_PATH']):
-        eargs = [params['CONFIG_PATH']]
-        # error: Config path does not exist: {0}
-        raise drs_log.AperoCodedException(None, '00-510-00004', targs=eargs)
-    else:
-        os.environ[base.USER_ENV] = str(params['CONFIG_PATH'])
+    # Create the config directory before requiring it for YAML generation.
+    create_paths(params, sargs)
+    os.environ[base.USER_ENV] = str(params['CONFIG_PATH'])
     # -------------------------------------------------------------------------
     # fix constants to use their apero name if they have one
     for argname in sargs:
         if sargs[argname].apero_name is not None:
             params[sargs[argname].apero_name] = params[argname]
-    # -------------------------------------------------------------------------
-    # check profile name in .apero
-    # -------------------------------------------------------------------------
-    # create paths
-    create_paths(params, sargs)
     # -------------------------------------------------------------------------
     # create the database.yaml and install.yaml
     # log: Creating database.yaml and install.yaml
@@ -780,6 +771,8 @@ def create_paths(params: ParamDict,
         sarg = sargs[sname]
         # if we have a path try to create it if it doesn't exist
         if sarg.dtype == 'path':
+            if params[sname] is None and not sarg.required:
+                continue
             try:
                 # get the path
                 path = Path(params[sname])
@@ -790,9 +783,11 @@ def create_paths(params: ParamDict,
                     # log: Creating path {0}: {1}
                     WLOG(None, '', textentry('40-510-00023', args=margs))
                     # create path
-                    path.mkdir(parents=True)
+                    path.mkdir(parents=True, exist_ok=True)
                     # set created to True
                     created = True
+                if not path.is_dir():
+                    raise NotADirectoryError(str(path))
             except Exception as e:
                 # print error message
                 eargs = [params[sname], type(e), str(e)]
@@ -1090,10 +1085,10 @@ def clean_install(params: ParamDict) -> None:
     WLOG(None, 'info', textentry('40-510-00003'))
     # import apero_reset here
     from apero.tools.recipes.bin import apero_reset
-    # define clean warn
-    cleanwarn = params['CLEAN_PROMPT']
+    # Reset's nowarn flag has the opposite meaning to CLEAN_PROMPT.
+    nowarn = not params['CLEAN_PROMPT']
     # construct reset command
-    reset_args = apero_reset.main(quiet=True, nowarn=cleanwarn,
+    reset_args = apero_reset.main(quiet=True, nowarn=nowarn,
                                   database_timeout=0)
     # deal with a bad reset
     if not reset_args['success']:

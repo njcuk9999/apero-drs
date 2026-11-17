@@ -9,9 +9,8 @@ Created on 2019-01-19 at 13:37
 
 @author: cook
 """
-import importlib
+from importlib import metadata
 import os
-import re
 import sys
 import time
 import traceback
@@ -21,7 +20,7 @@ from signal import signal, SIGINT
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-
+from packaging.requirements import Requirement
 
 from apero.base import base as apero_base
 from apero.constants import run_params
@@ -93,9 +92,6 @@ PDB_RC_FILE = apero_base.PDB_RC_FILE
 CURRENT_PATH = ''
 
 RUN_KEYS = dict()
-# cache for package strings (don't read multiple times)
-PACKAGE_CACHE = dict()
-
 
 # =============================================================================
 # Define functions
@@ -2060,104 +2056,32 @@ def _display_run_time_arguments(
 
 
 def _display_python_modules() -> str:
-    """
-    Print the current versions of the python modules (for logging only)
-    (from requirements_current.txt)
+    """Report installed versions of applicable APERO dependencies.
 
-    :return: string, a string representation of the python modules
+    :return: A string containing dependency versions and requirements.
+    :raises metadata.PackageNotFoundError: If APERO metadata is unavailable.
     """
-    global PACKAGE_CACHE
-    # load user requirements
-    packages, versions, sources = [], [], []
-
-    with open(apero_base.REQUIREMENTS, 'r') as requirements_file:
-        for line in requirements_file:
-            if line.strip() and not line.strip().startswith('#'):
-                package, source, version = extract_package_info(line)
-                if package is not None:
-                    packages.append(package)
-                    versions.append(version)
-                    sources.append(source)
-    # storage
-    # text: Currently installed python modules:
+    requirements = metadata.requires(__PACKAGE__)
     storage = textentry('40-000-00017')
-    # loop around packages and get versions
-    for p_it, package in enumerate(packages):
-        # get package string from cache if available
-        if package in PACKAGE_CACHE:
-            storage += PACKAGE_CACHE[package]
+    for requirement_text in requirements or []:
+        requirement = Requirement(requirement_text)
+        # Extras are not necessarily installed; report base dependencies only.
+        if requirement.marker and not requirement.marker.evaluate():
             continue
-        # try to get module from sys.modules first
-        mod = sys.modules.get(package)
-        version = getattr(mod, '__version__', None) if mod is not None else None
-        # if the module is not already imported, prefer distribution metadata
-        #   over a fresh import: importlib.metadata.version() reads the
-        #   installed dist without executing any package init code, which
-        #   can otherwise cost hundreds of ms per requirement at recipe
-        #   cold-start (git, pandasql, pathos, PyQt6, ...). Fall back to a
-        #   real import only when metadata is missing, preserving the
-        #   previous __version__-based value.
-        if version is None:
-            try:
-                import importlib.metadata as _md
-                version = _md.version(package)
-            except Exception:
-                version = None
-        if version is None:
-            try:
-                with warnings.catch_warnings(record=True):
-                    mod = importlib.import_module(package)
-                version = getattr(mod, '__version__', None)
-            except Exception:
-                continue
-        if version is None:
-            continue
-        # get required version
-        rversion = versions[p_it]
-        roperator = sources[p_it]
-        # deal with requirements using the @ operator
-        if roperator == '@':
-            pargs = [package, version, versions[p_it]]
-            pstring = '\n\t{0}: {1} ({2})'.format(*pargs)
-        # otherwise deal with other operators
+        try:
+            version = metadata.version(requirement.name)
+        except metadata.PackageNotFoundError:
+            version = str(textentry('40-000-00025'))
+        if requirement.url:
+            detail = requirement.url
+        elif requirement.specifier:
+            detail = 'req' + str(requirement.specifier)
         else:
-            # add to string storage (for return)
-            pargs = [package, version, roperator, rversion]
-            pstring = '\n\t{0}: {1}  (req{2}{3})'.format(*pargs)
-        # add to cache and storage
-        PACKAGE_CACHE[package] = pstring
-        storage += pstring
-
-    # return string
+            detail = ''
+        storage += f'\n\t{requirement.name}: {version}'
+        if detail:
+            storage += f' ({detail})'
     return storage
-
-
-def extract_package_info(line: str
-                         ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
-    """Parse a dependency requirement into its package and version parts.
-
-    :param line: Requirement line, optionally including a version operator.
-    :return: Package name, operator, and version or source; missing parts are
-             None.
-    """
-    # match string like 'package @ URL'
-    match_string = r'^\s*([\w-]+)\s*@.*'
-    # Check if the line has the format 'package @ URL'
-    if re.match(match_string, line):
-        package_name = line.split('@')[0].strip()
-        source = line.split('@')[1].strip()
-        return package_name, '@', source
-
-    # match string like 'package == version_spec'
-    match_string = r'^([\w-]+)\s*(?:(==|>=|<=|>|<)\s*([\w\d.\-]+))?.*'
-    # Check if the line has the format 'package version_spec'
-    package_info = re.match(match_string, line)
-    if package_info:
-        package_name = package_info.group(1)
-        version_operator = package_info.group(2)
-        version = package_info.group(3)
-        return package_name, version_operator, version
-    return None, None, None
 
 
 # =============================================================================

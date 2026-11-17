@@ -48,10 +48,10 @@ SARGS['update'] = SetupArgument(name='update', argname='--update',
                                 default_value=False, dtype='bool', ask=False,
                                 helpstr='whether to update current profile')
 # Regenerate the replay script without running installation.
-SARGS['INSTALL_SH'] = SetupArgument(
-    name='INSTALL_SH', argname='--install_sh', default_value=False,
-    dtype='bool', ask=False,
-    helpstr=str(drs_setup.textentry('40-510-00056')))
+SARGS['INSTALL_SH'] = SetupArgument(name='INSTALL_SH', argname='--install_sh',
+                                    default_value=False, dtype='bool',
+                                    ask=False,
+                                    helpstr=str(drs_setup.textentry('40-510-00056')))
 
 # which language to install apero in
 SARGS['language'] = SetupArgument(name='language', argname='--language',

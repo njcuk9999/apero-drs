@@ -72,8 +72,6 @@ SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
 DEFAULT_PSEUDO_CONST_CLASS = 'DefaultPseudoConstants'
-# absolute paths (from relative paths to here)
-REQUIREMENTS = __PATH__.parent.joinpath('requirements.txt')
 # data checksum filename
 CHECKSUM_FILE = 'checksums.yaml'
 # yaml groups
