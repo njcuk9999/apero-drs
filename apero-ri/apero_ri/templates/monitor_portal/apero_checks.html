@@ -51,10 +51,14 @@
 </div>
 {% endif %}
 
-<div class="ari-db-profiles" id="checks-profiles">
+<section data-ari-view-section>
+{% include 'general/view_controls.html' %}
+<div class="ari-db-profiles ari-view-collection ari-view-collection--{{ page_view.view }}"
+     id="checks-profiles" data-ari-view-collection>
     {% for card in profile_cards %}
     <a href="{{ card.url }}" class="ari-db-card"
        data-instrument="{{ card.instrument }}"
+       data-sort-label="{{ card.profile_id }} {{ card.instrument }}"
        style="--card-bg: {{ card.color.bg }};
               --card-text: {{ card.color.text }};
               --card-border: {{ card.color.border }};">
@@ -63,6 +67,7 @@
             <span class="ari-db-card__sep">|</span>
             <span class="ari-db-card__name">{{ card.profile_id }}</span>
         </div>
+        </section>
         <div class="ari-db-card__meta">
             {% if card.apero_version %}
             <span><i class="fa-solid fa-code-branch"></i> {{ card.apero_version }}</span>

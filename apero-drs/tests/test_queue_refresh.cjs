@@ -36,6 +36,29 @@ function makeContext() {
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
+test('pending row runs the selected task once in linear mode', () => {
+    const calls = [];
+    const context = {
+        singleRunPrompt: 'Run this queue entry?',
+        confirm: () => true,
+        apiPost: (url, body) => calls.push({url, body}),
+    };
+    vm.createContext(context);
+    vm.runInContext(template.slice(template.indexOf('function handleRowAction('),
+        template.indexOf('function saveTemplate(')), context);
+    const select = {value: 'run_single'};
+    context.handleRowAction(select, 'group/task.yaml');
+    assert.equal(select.value, '');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, '/api/run');
+    assert.deepEqual(JSON.parse(JSON.stringify(calls[0].body)), {
+        qid: 'group/task.yaml', cores: 1, ntasks: 1, mpmode: 'linear',
+    });
+    context.confirm = () => false;
+    context.handleRowAction({value: 'run_single'}, 'group/other.yaml');
+    assert.equal(calls.length, 1);
+});
+
 test('all dashboard scripts parse', () => {
     const scripts = [...template.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)];
     assert.ok(scripts.length);

@@ -130,7 +130,7 @@ def _build_profile(params: ParamDict, instrument: str) -> Dict[str, Any]:
 
     paths = dict()
     for path in ('RAW', 'PP', 'RED', 'CALIB', 'OUT', 'TELLU', 'LOG', 'LBL',
-                 'OTHER'):
+                 'OTHER', 'ASSETS'):
         paths[f'PATH_{path}'] = str(params[f'PATH.{path}'])
     profile['paths'] = paths
 

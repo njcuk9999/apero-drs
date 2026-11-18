@@ -1017,7 +1017,11 @@ def render_note_html(content: str) -> str:
 # =============================================================================
 # User preferences (timezone, etc.)
 # =============================================================================
-_PREFS_DEFAULT: Dict = {"timezone": "UTC", "theme": "default"}
+_PREFS_DEFAULT: Dict = {
+    "timezone": "UTC",
+    "theme": "default",
+    "page_views": {},
+}
 
 
 def _prefs_path(username: str) -> Path:
@@ -1040,6 +1044,8 @@ def load_user_prefs(username: str) -> Dict:
         data = dict(_PREFS_DEFAULT)
     data.setdefault("timezone", "UTC")
     data.setdefault("theme", "default")
+    page_views = data.get("page_views")
+    data["page_views"] = page_views if isinstance(page_views, dict) else {}
     return data
 
 
@@ -1053,6 +1059,27 @@ def save_user_prefs(username: str, data: Dict) -> None:
     current = load_user_prefs(username)
     current.update(data)
     _save_yaml(_prefs_path(username), current)
+
+
+def get_page_view_prefs(
+    username: str, page_id: str, default_view: str = "cards",
+) -> Dict[str, str]:
+    """Return validated display preferences for one collection page.
+
+    :param username: User whose preferences should be loaded.
+    :param page_id: Stable page identifier used as the preference key.
+    :param default_view: Existing layout used when no valid value is saved.
+    :return: Dictionary containing a valid view and sort direction.
+    """
+    settings = {"view": default_view, "sort": "asc"}
+    stored = load_user_prefs(username).get("page_views", {}).get(page_id, {})
+    if not isinstance(stored, dict):
+        return settings
+    if stored.get("view") in ("cards", "list"):
+        settings["view"] = str(stored["view"])
+    if stored.get("sort") in ("asc", "desc"):
+        settings["sort"] = str(stored["sort"])
+    return settings
 
 
 def get_user_timezone(username: str) -> str:

@@ -72,11 +72,16 @@
 </div>
 {% endif %}
 
+<section data-ari-view-section>
+{% include 'general/view_controls.html' %}
 {# ────── Profile card grid ────── #}
-<div class="ari-db-profiles" id="db-profiles">
+<div class="ari-db-profiles ari-view-collection ari-view-collection--{{ page_view.view }}"
+     id="db-profiles" data-ari-view-collection>
     {% if profile_cards is defined %}
     {% for card in profile_cards %}
-    <a href="{{ card.url }}" class="ari-db-card" data-instrument="{{ card.instrument }}"
+    <a href="{{ card.url }}" class="ari-db-card"
+       data-instrument="{{ card.instrument }}"
+       data-sort-label="{{ card.profile_id }} {{ card.instrument }}"
        style="--card-bg: {{ card.color.bg }};
               --card-text: {{ card.color.text }};
               --card-border: {{ card.color.border }};">
@@ -100,12 +105,14 @@
     {# Gray cards for instruments with no profiles #}
     {% if no_profile_instruments is defined %}
     {% for inst in no_profile_instruments %}
-    <div class="ari-db-card ari-db-card--empty" data-instrument="{{ inst }}">
+    <div class="ari-db-card ari-db-card--empty" data-instrument="{{ inst }}"
+         data-sort-label="{{ inst }} No profiles available">
         <div class="ari-db-card__header">
             <span class="ari-db-card__instrument">{{ inst }}</span>
             <span class="ari-db-card__sep">|</span>
             <span class="ari-db-card__name">No profiles available</span>
         </div>
+        </section>
     </div>
     {% endfor %}
     {% endif %}

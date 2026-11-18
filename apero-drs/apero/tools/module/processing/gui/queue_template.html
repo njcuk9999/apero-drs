@@ -1273,6 +1273,8 @@ var activeStates = {pending: true, running: true,
 var tplFields = XX_TPLFIELDS_XX;
 // TOOLS.REPROCESS.MP_TYPE (or --mpmode) from the server
 var defaultMpmode = XX_MPMODE_XX;
+var singleRunLabel = XX_SINGLE_RUN_LABEL_XX;
+var singleRunPrompt = XX_SINGLE_RUN_PROMPT_XX;
 
 // relative urls keep the api working behind a path prefix (e.g. apero_ri)
 function apiUrl(url) {
@@ -1683,7 +1685,15 @@ function renderEntries(start, end) {
                     row.state + '</span>';
         var qid = row.group + '/' + row.run;
         var actions = '<td></td>';
-        if (row.state === 'running') {
+        if (row.state === 'pending') {
+            actions = '<td class="row-actions">' +
+                '<select onchange="handleRowAction(this, \'' +
+                qid + '\')">' +
+                '<option value="">Action...</option>' +
+                '<option value="run_single">' +
+                escapeHtml(singleRunLabel) + '</option>' +
+                '</select></td>';
+        } else if (row.state === 'running') {
             actions = '<td class="row-actions">' +
                 '<select onchange="handleRowAction(this, \'' +
                 qid + '\')">' +
@@ -3400,6 +3410,17 @@ function handleRowAction(selectEl, qid) {
     var choice = selectEl.value;
     selectEl.value = '';
     if (choice === '') { return; }
+    if (choice === 'run_single') {
+        if (!confirm(singleRunPrompt + '\n' + qid)) {
+            return;
+        }
+        apiPost('/api/run', {qid: qid, cores: 1, ntasks: 1,
+                            mpmode: 'linear'}, function (data) {
+            if (!data.started) { alert(data.message); }
+            refreshAll();
+        });
+        return;
+    }
     var parts = choice.split('|');
     var qaction = parts[0];
     var toState = parts[1];

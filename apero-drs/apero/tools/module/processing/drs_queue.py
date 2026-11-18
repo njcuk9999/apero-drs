@@ -1343,7 +1343,8 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
                     mpmode: str,
                     progress: Optional[Callable[[str], None]] = None,
                     cancel: Optional[threading.Event] = None,
-                    on_claim: Optional[Callable[[List[str]], None]] = None
+                    on_claim: Optional[Callable[[List[str]], None]] = None,
+                    qid: Optional[str] = None
                     ) -> Dict[str, Any]:
     """
     Run one queue claim/execute cycle
@@ -1358,6 +1359,7 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
                    started
     :param on_claim: callable or None, receives the queue ids claimed in
                      this cycle (e.g. the process registry)
+    :param qid: Pending queue ID to run instead of selecting the next task.
 
     :return: dictionary, summary for this cycle
     """
@@ -1393,6 +1395,16 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
             return summary
         # get the next unfinished group
         group, pending_runs, running_runs = get_next_group(params)
+        if qid is not None:
+            entries = list_queue_entries(params, states=[QUEUE_PENDING_DIR])
+            selected = next((entry for entry in entries if
+                             entry['group'] + '/' + entry['run'] == qid), None)
+            if selected is None:
+                summary['message'] = textentry('40-513-00048', args=[qid])
+                _progress(progress, summary['message'])
+                return summary
+            group = selected['group']
+            pending_runs, running_runs = [selected['run']], []
         # deal with an empty queue
         if group is None:
             summary['message'] = 'Nothing to run (queue is empty)'
@@ -1523,7 +1535,8 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
               ntasks: Optional[Any] = None,
               progress: Optional[Callable[[str], None]] = None,
               cancel: Optional[threading.Event] = None,
-              owner: str = 'cli') -> Dict[str, Any]:
+              owner: str = 'cli',
+              qid: Optional[str] = None) -> Dict[str, Any]:
     """
     Run queue task(s), optionally across multiple claim/execute cycles,
     recording the run in the process registry (see _queue_run_cycles)
@@ -1538,6 +1551,7 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     :param cancel: threading.Event or None, when set no further tasks or
                    cycles are started (e.g. the gui "stop all running")
     :param owner: str, 'gui' when started by the dashboard, else 'cli'
+    :param qid: Pending queue ID to run instead of selecting the next task.
 
     :return: dictionary, combined summary of the queue run
     """
@@ -1549,6 +1563,8 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
                                                                 mpmode)
     if ntasks is not None:
         label += ' --ntasks {0}'.format(ntasks)
+    if qid is not None:
+        label += ' [qid={0}]'.format(qid)
     proc_dir = get_proc_dir(params)
     # Register this runner before it can claim work; always close the record.
     rkwargs = dict(pid=os.getpid(), owner=owner, cmd=label)
@@ -1562,7 +1578,7 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
     returncode = 1
     try:
         qargs = [params, cores, mpmode, ntasks, progress, cancel, _on_claim]
-        summary = _queue_run_cycles(*qargs)
+        summary = _queue_run_cycles(*qargs, qid=qid)
         returncode = 0
     finally:
         stopped = summary.get('n_stopped', 0) > 0
@@ -1575,7 +1591,8 @@ def _queue_run_cycles(params: ParamDict, cores: int, mpmode: str,
                       ntasks: Optional[Any] = None,
                       progress: Optional[Callable[[str], None]] = None,
                       cancel: Optional[threading.Event] = None,
-                      on_claim: Optional[Callable[[List[str]], None]] = None
+                      on_claim: Optional[Callable[[List[str]], None]] = None,
+                      qid: Optional[str] = None
                       ) -> Dict[str, Any]:
     """
     Run queue task(s), optionally across multiple claim/execute cycles
@@ -1596,11 +1613,14 @@ def _queue_run_cycles(params: ParamDict, cores: int, mpmode: str,
                    cycles are started (e.g. the gui "stop all running")
     :param on_claim: callable or None, receives the queue ids claimed in
                      each cycle
+    :param qid: Pending queue ID to run once instead of selecting next tasks.
 
     :return: dictionary, combined summary of the queue run
     """
     # parse the requested total task limit
-    if ntasks is None:
+    if qid is not None:
+        limit = 1
+    elif ntasks is None:
         limit = get_queue_task_limit(params, cores)
     else:
         limit = _parse_task_limit(ntasks, cores)
@@ -1629,7 +1649,7 @@ def _queue_run_cycles(params: ParamDict, cores: int, mpmode: str,
         # run one claim/execute cycle
         cycle = _queue_run_once(params, get_queue_path(params), cycle_cores,
                                 mpmode, progress=progress, cancel=cancel,
-                                on_claim=on_claim)
+                                on_claim=on_claim, qid=qid)
         # keep the first touched group for reporting
         if summary['group'] is None and cycle['group'] is not None:
             summary['group'] = cycle['group']

@@ -38,6 +38,7 @@ USE_SUBPROCESS = False
 # Whether this task can be run in multi-process mode
 # (if False, will always run in main process)
 MULTI_PROCESS = False
+LOCAL_TASK = True
 # Available APERO profile filters.
 FILTERS = ["APERO_PROFILE_INCLUDE", "APERO_PROFILE_EXCLUDE"]
 
@@ -154,18 +155,22 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                 or aparams.get("general", {}).get("INSTRUMENT")
                 or "unknown"
             )
+            data_root = params.get('LOCAL_DATA_DIR', secret_store.get_ari_dir())
+            filename = (Path(data_root) / 'tasks' / instrument / apero_profile
+                        / 'obs_table.json')
             db_updates = {}
-            try:
-                should_skip, db_updates, skip_reason = (
-                    apero_async.should_skip_profile_query(
-                        aparams,
-                        force_run=force_run,
-                        update_key="database-update-observation-table",
+            should_skip = False
+            if not params.get('LOCAL_RUN'):
+                try:
+                    should_skip, db_updates, skip_reason = (
+                        apero_async.should_skip_profile_query(
+                            aparams,
+                            force_run=force_run or not filename.is_file(),
+                            update_key="database-update-observation-table",
+                        )
                     )
-                )
-            except Exception as exc:
-                should_skip = False
-                skip_reason = f"Database update-time check unavailable: {exc}"
+                except Exception:
+                    should_skip = False
             if should_skip:
                 tlog(f"Profile {apero_profile}: skipped. {skip_reason}")
                 self.info += (
@@ -211,25 +216,13 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                 metadata["QUERY_TIME"] = time.time() - start
                 metadata["APERO_PROFILE"] = apero_profile
                 metadata["COLUMN_META"] = meta_columns()
-                # construct filename
-                instrument = aparams.get("general", {}).get(
-                    "INSTRUMENT", "unknown")
-                local_dir = (
-                    Path(params.get("LOCAL_DATA_DIR",
-                                    str(secret_store.get_ari_dir())))
-                    / "tasks"
-                    / instrument
-                    / apero_profile
-                )
-                basename = "obs_table.json"
-                filename = local_dir / basename
                 # save results to JSON file for use in the UI
                 apero_async.save_results(filename, results, metadata)
                 tlog(
                     f"Profile {apero_profile}: saved observation table "
                     f"to {filename}."
                 )
-                if db_updates:
+                if db_updates and not params.get('LOCAL_RUN'):
                     try:
                         tlog(
                             f"Profile {apero_profile}: persisting DB "
@@ -361,14 +354,7 @@ def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     :returns: Flattened table names and science selection settings.
     :raises ValueError: If a required table or science setting is missing.
     """
-    required_params = [
-        "ASTROM_TABLENAME",
-        "CALIB_TABLENAME",
-        "FINDEX_TABLENAME",
-        "LOG_TABLENAME",
-        "TELLU_TABLENAME",
-        "REJECT_TABLENAME",
-    ]
+    required_params = ['FINDEX_TABLENAME']
     # Check and cut down parameters needed for query
     rparams = dict()
     # Prefer nested database config and flatten required keys for SQL
@@ -376,6 +362,8 @@ def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     db_cfg = aparams.get("database", {})
     if not isinstance(db_cfg, dict):
         db_cfg = {}
+    rparams['ASTROM_TABLENAME'] = db_cfg.get('ASTROM_TABLENAME',
+                                            aparams.get('ASTROM_TABLENAME'))
     # loop around parameters
     for param in required_params:
         value = db_cfg.get(param, aparams.get(param))
@@ -446,7 +434,10 @@ def construct_query(rparams: Dict[str, Any]) -> str:
     :param rparams: Table names and aggregate expressions for the query.
     :returns: Formatted SQL statement.
     """
-    # construct the SQL query
+    astrom_join = ''
+    if rparams.get('ASTROM_TABLENAME'):
+        astrom_join = ('JOIN {ASTROM_TABLENAME} astrom '
+                       'ON findex.KW_OBJNAME = astrom.OBJNAME')
     query = """
     SELECT
         findex.OBS_DIR AS NIGHT,
@@ -468,13 +459,13 @@ def construct_query(rparams: Dict[str, Any]) -> str:
         GROUP BY OBS_DIR, KW_OBJNAME
         HAVING raw_files > 0
     ) AS findex
-    JOIN {ASTROM_TABLENAME} astrom
-        ON findex.KW_OBJNAME = astrom.OBJNAME
+    {ASTROM_JOIN}
     ORDER BY findex.OBS_DIR DESC;
     """
     # ---------------------------------------------------------------------
     # format the query with rparams
-    rquery = query.format(**rparams)
+    query_params = dict(rparams, ASTROM_JOIN=astrom_join.format(**rparams))
+    rquery = query.format(**query_params)
     return rquery
 
 

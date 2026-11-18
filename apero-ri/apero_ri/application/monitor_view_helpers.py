@@ -36,6 +36,7 @@ from apero_ri.core import apero_checks as checks_core
 from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import permissions as perms_mod
 from apero_ri.core import awards as awards_core
+from apero_ri.core import user_data as ud
 from apero_ri.application import instrument_color_helpers
 
 
@@ -1114,6 +1115,13 @@ def monitor_processing_logs_view(app: Any) -> _ViewResult:
     )
 
     page_id = 'home.monitor_portal.proc_logs'
+    page_view = ud.get_page_view_prefs(
+        user_info["username"], page_id, "list"
+    ) if user_info else {"view": "list", "sort": "asc"}
+    cards.sort(
+        key=lambda card: str(card.get("profile_id", "") or "").casefold(),
+        reverse=page_view["sort"] == "desc",
+    )
     context = {
         'page_id': page_id,
         'page_label': 'Processing Logs',
@@ -1123,6 +1131,7 @@ def monitor_processing_logs_view(app: Any) -> _ViewResult:
         'sidebar_icon': 'fa-solid fa-chart-line',
         'sidebar_url': '/monitor_portal',
         'profile_cards': cards,
+        'page_view': page_view,
         'shown_instruments': shown,
         'instrument_colors': colors,
         'can_manage_apero_profiles': _can_manage_apero_profiles(perms),
@@ -1297,6 +1306,13 @@ def monitor_apero_checks_view(app: Any) -> _ViewResult:
     cards, shown, colors = _checks_profile_cards(app, user_info, perms)
     page_id = 'home.monitor_portal.apero_checks'
     sidebar_page_id = 'home.monitor_portal.apero_checks'
+    page_view = ud.get_page_view_prefs(
+        user_info["username"], page_id, "list"
+    ) if user_info else {"view": "list", "sort": "asc"}
+    cards.sort(
+        key=lambda card: str(card.get("profile_id", "") or "").casefold(),
+        reverse=page_view["sort"] == "desc",
+    )
     context = {
         'page_id': page_id,
         'page_label': 'APERO Checks',
@@ -1306,6 +1322,7 @@ def monitor_apero_checks_view(app: Any) -> _ViewResult:
         'sidebar_icon': 'fa-solid fa-chart-line',
         'sidebar_url': '/monitor_portal',
         'profile_cards': cards,
+        'page_view': page_view,
         'shown_instruments': shown,
         'instrument_colors': colors,
         'can_manage_apero_profiles': _can_manage_apero_profiles(perms),

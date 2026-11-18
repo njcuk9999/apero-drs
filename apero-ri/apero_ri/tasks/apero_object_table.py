@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from apero_ri.core import secret_store
+from apero_ri.core import yaml_obj_props
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -38,8 +39,19 @@ USE_SUBPROCESS = False
 # Whether this task can be run in multi-process mode
 # (if False, will always run in main process)
 MULTI_PROCESS = False
+LOCAL_TASK = True
 # Available APERO profile filters.
 FILTERS = ["APERO_PROFILE_INCLUDE", "APERO_PROFILE_EXCLUDE"]
+
+ASTROM_COLUMNS = {
+    'ALIASES': 'ALIASES', 'RA_DEG': 'RA [Deg]', 'RA_SOURCE': 'RA source',
+    'DEC_DEG': 'Dec [Deg]', 'DEC_SOURCE': 'Dec source', 'TEFF': 'Teff [K]',
+    'TEFF_SOURCE': 'Teff source', 'SP_TYPE': 'SpT', 'SP_SOURCE': 'SpT source',
+    'PMRA': 'PMRA [mas/yr]', 'PMRA_SOURCE': 'PMRA source',
+    'PMDE': 'PMDE [mas/yr]', 'PMDE_SOURCE': 'PMDE source',
+    'PLX': 'Plx [mas]', 'PLX_SOURCE': 'Plx source', 'RV': 'RV [km/s]',
+    'RV_SOURCE': 'RV source', 'EPOCH': 'EPOCH [JD]',
+}
 
 
 # =============================================================================
@@ -151,30 +163,32 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
                 or aparams.get("general", {}).get("INSTRUMENT")
                 or "unknown"
             )
-            db_updates = {}
+            data_root = params.get('LOCAL_DATA_DIR', secret_store.get_ari_dir())
+            filename = (Path(data_root) / 'tasks' / instrument / apero_profile
+                        / 'object_table.json')
             try:
-                should_skip, db_updates, skip_reason = (
-                    apero_async.should_skip_profile_query(
-                        aparams,
-                        force_run=force_run,
-                        update_key="database-update-object-table",
-                    )
-                )
-            except Exception as exc:
+                db_updates = {}
                 should_skip = False
-                skip_reason = f"Database update-time check unavailable: {exc}"
-            if should_skip:
-                tlog(f"Profile {apero_profile}: skipped. {skip_reason}")
-                self.info += (
-                    f"\n## Object Table for APERO Profile: {apero_profile}\n\n"
-                    f"- Skipped query run. {skip_reason}\n"
-                )
-                continue
-
-            try:
-                # check that all required parameters are present
                 rparams = check_required(aparams)
-                # -------------------------------------------------------------
+                legacy_astrom = bool(rparams['ASTROM_TABLENAME'])
+                if legacy_astrom and not params.get('LOCAL_RUN'):
+                    try:
+                        should_skip, db_updates, skip_reason = (
+                            apero_async.should_skip_profile_query(
+                                aparams,
+                                force_run=force_run or not filename.is_file(),
+                                update_key='database-update-object-table',
+                            )
+                        )
+                    except Exception:
+                        should_skip = False
+                if should_skip:
+                    tlog(f"Profile {apero_profile}: skipped. {skip_reason}")
+                    self.info += (
+                        f"\n## Object Table for APERO Profile: {apero_profile}"
+                        f"\n\n- Skipped query run. {skip_reason}\n"
+                    )
+                    continue
                 # specific sub-commands to add to rparams (shorthand)
                 # -------------------------------------------------------------
                 rparams = sub_commands(rparams)
@@ -189,6 +203,10 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
                     "for object table..."
                 )
                 results = apero_async.database_query(db_params, rquery)
+                if not legacy_astrom:
+                    local_root = params.get('LOCAL_DATA_DIR')
+                    astrom_args = [results, aparams, local_root]
+                    _add_yaml_astrometry(*astrom_args)
                 tlog(
                     f"Profile {apero_profile}: query complete with "
                     f"{len(results)} rows in {time.time() - start:.2f}s."
@@ -207,18 +225,6 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
                 metadata["QUERY_TIME"] = time.time() - start
                 metadata["APERO_PROFILE"] = apero_profile
                 metadata["COLUMN_META"] = meta_columns()
-                # construct filename
-                instrument = aparams.get("general", {}).get(
-                    "INSTRUMENT", "unknown")
-                local_dir = (
-                    Path(params.get("LOCAL_DATA_DIR",
-                                    str(secret_store.get_ari_dir())))
-                    / "tasks"
-                    / instrument
-                    / apero_profile
-                )
-                basename = "object_table.json"
-                filename = local_dir / basename
                 # save results to JSON file for use in the UI
                 apero_async.save_results(filename, results, metadata)
                 tlog(
@@ -351,14 +357,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
 # =============================================================================
 def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     """Validate required profile settings and flatten query parameters."""
-    required_params = [
-        "ASTROM_TABLENAME",
-        "CALIB_TABLENAME",
-        "FINDEX_TABLENAME",
-        "LOG_TABLENAME",
-        "TELLU_TABLENAME",
-        "REJECT_TABLENAME",
-    ]
+    required_params = ['FINDEX_TABLENAME']
     # Check and cut down parameters needed for query
     rparams = dict()
     # Prefer nested database config and flatten required keys for SQL
@@ -366,6 +365,8 @@ def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     db_cfg = aparams.get("database", {})
     if not isinstance(db_cfg, dict):
         db_cfg = {}
+    rparams['ASTROM_TABLENAME'] = db_cfg.get('ASTROM_TABLENAME',
+                                            aparams.get('ASTROM_TABLENAME'))
     # loop around parameters
     for param in required_params:
         value = db_cfg.get(param, aparams.get(param))
@@ -416,28 +417,19 @@ def sub_commands(rparams: Dict[str, Any]) -> Dict[str, Any]:
 
 def construct_query(rparams: Dict[str, Any]) -> str:
     """Format the object-table SQL template with prepared parameters."""
-    # Simple, lean query for object table
+    astrom_columns = ''
+    astrom_join = ''
+    if rparams.get('ASTROM_TABLENAME'):
+        astrom_columns = '\n        '.join(
+            f'astrom.{key} AS `{label}`,'
+            for key, label in ASTROM_COLUMNS.items()
+        )
+        astrom_join = ('JOIN {ASTROM_TABLENAME} astrom '
+                       'ON findex.KW_OBJNAME = astrom.OBJNAME')
     query = """
     SELECT
         findex.KW_OBJNAME AS OBJNAME,
-        astrom.ALIASES AS ALIASES,
-        astrom.RA_DEG AS `RA [Deg]`,
-        astrom.RA_SOURCE AS `RA source`,
-        astrom.DEC_DEG AS `Dec [Deg]`,
-        astrom.DEC_SOURCE AS `Dec source`,
-        astrom.TEFF AS `Teff [K]`,
-        astrom.TEFF_SOURCE AS `Teff source`,
-        astrom.SP_TYPE AS SpT,
-        astrom.SP_SOURCE AS `SpT source`,
-        astrom.PMRA AS `PMRA [mas/yr]`,
-        astrom.PMRA_SOURCE AS `PMRA source`,
-        astrom.PMDE AS `PMDE [mas/yr]`,
-        astrom.PMDE_SOURCE AS `PMDE source`,
-        astrom.PLX AS `Plx [mas]`,
-        astrom.PLX_SOURCE AS `Plx source`,
-        astrom.RV AS `RV [km/s]`,
-        astrom.RV_SOURCE AS `RV source`,
-        astrom.EPOCH AS `EPOCH [JD]`,
+        {ASTROM_COLUMNS}
         findex.DPRTYPE AS DPRTYPE,
         findex.RUN_ID AS RUN_ID,
         findex.PI_NAMES AS PI_NAMES,
@@ -455,10 +447,41 @@ def construct_query(rparams: Dict[str, Any]) -> str:
         WHERE fdb.BLOCK_KIND IN ('raw', 'tmp', 'red', 'out', 'lbl')
         GROUP BY fdb.KW_OBJNAME
     ) AS findex
-    JOIN {ASTROM_TABLENAME} astrom
-        ON findex.KW_OBJNAME = astrom.OBJNAME;
+    {ASTROM_JOIN};
     """
-    return query.format(**rparams)
+    query_params = dict(rparams, ASTROM_COLUMNS=astrom_columns,
+                        ASTROM_JOIN=astrom_join.format(**rparams))
+    return query.format(**query_params)
+
+
+def _add_yaml_astrometry(rows: List[Dict[str, Any]], profile: Dict[str, Any],
+                         local_root: Optional[str]) -> None:
+    """Populate table astrometry columns from the APERO 0.8 YAML catalogue.
+
+    :param rows: File-index rows to enrich in place.
+    :param profile: Profile containing the optional APERO assets path.
+    :param local_root: RI data root, used for the server's synced assets.
+    :return: None.
+    """
+    assets = profile.get('paths', {}).get('PATH_ASSETS')
+    if not assets:
+        root = Path(local_root or secret_store.get_ari_dir())
+        assets = root / 'apero-assets'
+    entries = dict()
+    if rows and (Path(assets) / 'astrometrics').is_dir():
+        from apero.core import drs_astrometrics
+
+        params = drs_astrometrics.ParamDict()
+        params['PATH.ASSETS'] = assets
+        catalogue = drs_astrometrics.AstrometricDatabase(params)
+        columns = ','.join(ASTROM_COLUMNS)
+        for entry in catalogue.get_entries(columns=columns):
+            entries[entry[drs_astrometrics.APERO_NAME_KEY]] = entry
+    for row in rows:
+        values = entries.get(row.get('OBJNAME'), {})
+        for key, label in ASTROM_COLUMNS.items():
+            row[label] = values.get(key)
+        row['ALIASES'] = '|'.join(yaml_obj_props.aliases_from_yaml(values))
 
 
 def meta_columns() -> Dict[str, Dict[str, Any]]:

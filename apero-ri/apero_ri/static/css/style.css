@@ -2483,6 +2483,102 @@ body.ari-up-wide-page .ari-doc-main {
     gap: 1rem;
 }
 
+.ari-view-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: 0 0 1rem;
+}
+
+.ari-view-controls__group {
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.ari-view-controls__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--ari-text-muted);
+}
+
+.ari-view-controls__sort select {
+    min-height: 2rem;
+    border: 1px solid var(--ari-border);
+    border-radius: var(--ari-border-radius);
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    padding: 0.25rem 0.5rem;
+}
+
+.ari-view-controls__status {
+    min-width: 3.5rem;
+    color: var(--ari-text-muted);
+    font-size: 0.8rem;
+}
+
+.ari-view-collection--cards.ari-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.ari-view-collection--list.ari-cards {
+    display: flex;
+    flex-direction: column;
+}
+
+.ari-view-collection--list.ari-cards > .ari-card {
+    min-height: 3.5rem;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    text-align: left;
+}
+
+.ari-view-collection--list.ari-cards .ari-card__icon {
+    margin: 0;
+}
+
+.ari-view-collection--cards.ari-db-profiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.ari-view-collection--cards.ari-db-profiles > .ari-db-card {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.ari-view-collection--cards.ari-db-profiles .ari-db-card__header {
+    flex-wrap: wrap;
+    white-space: normal;
+}
+
+.ari-view-collection--list.ari-rp-sections {
+    display: flex;
+    flex-direction: column;
+}
+
+.ari-view-collection--cards.ari-rp-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.ari-view-collection--list.ari-rp-sections > .ari-rp-section-card {
+    min-height: 4rem;
+}
+
+.ari-view-collection--cards.ari-rp-sections > .ari-rp-section-card {
+    align-items: flex-start;
+    flex-direction: column;
+    min-height: 11rem;
+}
+
 .ari-card {
     background: var(--ari-card-bg);
     border: 1px solid var(--ari-border);
@@ -5163,6 +5259,19 @@ select.ari-ap-input {
     .ari-cards {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 0.75rem;
+    }
+
+    .ari-view-controls {
+        justify-content: flex-start;
+    }
+
+    .ari-view-controls .ari-btn,
+    .ari-view-controls__sort select {
+        min-height: 44px;
+    }
+
+    .ari-view-collection--cards.ari-db-profiles {
+        grid-template-columns: 1fr;
     }
 
     .ari-card {

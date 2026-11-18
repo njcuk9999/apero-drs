@@ -1,0 +1,43 @@
+{% if page_view is defined %}
+<div class="ari-view-controls" data-ari-view-controls
+     data-page-id="{{ page_id }}"
+     data-save-url="{{ url_for('api_user_prefs_save') }}"
+     data-view="{{ page_view.view }}"
+     data-sort="{{ page_view.sort }}"
+     data-saving="{{ _('Saving…') }}"
+     data-saved="{{ _('Saved') }}"
+     data-save-failed="{{ _('Not saved') }}">
+    <div class="ari-view-controls__group" role="group"
+         aria-label="{{ _('Display mode') }}">
+        <button type="button"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                data-ari-view="cards"
+                aria-pressed="{{ 'true' if page_view.view == 'cards' else 'false' }}">
+            <i class="fa-solid fa-grip"></i> {{ _('Cards') }}
+        </button>
+        <button type="button"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                data-ari-view="list"
+                aria-pressed="{{ 'true' if page_view.view == 'list' else 'false' }}">
+            <i class="fa-solid fa-list"></i> {{ _('List') }}
+        </button>
+    </div>
+    <label class="ari-view-controls__sort">
+        <i class="fa-solid fa-arrow-down-a-z"></i>
+        <span>{{ _('Sort') }}</span>
+        <select data-ari-sort aria-label="{{ _('Alphabetical sorting') }}">
+            <option value="asc"
+                    {% if page_view.sort == 'asc' %}selected{% endif %}>
+                {{ _('A–Z') }}
+            </option>
+            <option value="desc"
+                    {% if page_view.sort == 'desc' %}selected{% endif %}>
+                {{ _('Z–A') }}
+            </option>
+        </select>
+    </label>
+    <span class="ari-view-controls__status" role="status"
+          aria-live="polite"></span>
+</div>
+<script src="{{ url_for('static', filename='js/page_view_preferences.js', v='20261118a') }}" defer></script>
+{% endif %}

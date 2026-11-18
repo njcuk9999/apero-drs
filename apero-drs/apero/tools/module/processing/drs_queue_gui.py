@@ -878,6 +878,10 @@ def render_dashboard(params: ParamDict,
     html = html.replace('XX_RESTART_LABEL_XX', textentry('40-513-00045'))
     html = html.replace('XX_RESTART_PROMPT_XX',
                         json.dumps(textentry('40-513-00046')))
+    html = html.replace('XX_SINGLE_RUN_LABEL_XX',
+                        json.dumps(textentry('40-513-00049')))
+    html = html.replace('XX_SINGLE_RUN_PROMPT_XX',
+                        json.dumps(textentry('40-513-00050')))
     # return the rendered html
     return html
 
@@ -888,7 +892,8 @@ def render_dashboard(params: ParamDict,
 def action_run(params: ParamDict, state: GuiState,
                cores: Optional[Any] = None,
                mpmode: Optional[str] = None,
-               ntasks: Optional[Any] = None) -> Dict[str, Any]:
+               ntasks: Optional[Any] = None,
+               qid: Optional[str] = None) -> Dict[str, Any]:
     """
     Start a queue run action in the background (run the next task(s) in
     the queue - see drs_queue.queue_run)
@@ -899,6 +904,7 @@ def action_run(params: ParamDict, state: GuiState,
     :param mpmode: str or None, the multiprocessing mode
     :param ntasks: int/str or None, total number of tasks to run in this
                    action (or "all")
+    :param qid: Pending queue ID to run with one core and linear execution.
 
     :return: dictionary with keys 'started' (bool) and 'message' (str)
     """
@@ -916,6 +922,8 @@ def action_run(params: ParamDict, state: GuiState,
     ntasks = str(ntasks).strip()
     if len(ntasks) == 0:
         ntasks = None
+    if qid is not None:
+        cores, mpmode, ntasks = 1, 'linear', '1'
 
     # define the run action (executed in the worker thread)
     def _do_run() -> None:
@@ -926,7 +934,8 @@ def action_run(params: ParamDict, state: GuiState,
                                       mpmode=mpmode,
                                       ntasks=ntasks,
                                       progress=state.add_message,
-                                      cancel=state.cancel, owner='gui')
+                                      cancel=state.cancel, owner='gui',
+                                      qid=qid)
         state.add_message('Run: {0}'.format(summary['message']))
     # start the action in the background (if not busy)
     started = state.start_action('Run', _do_run, tuple())
@@ -1751,7 +1760,8 @@ def _make_handler(
                 response = action_run(params, state,
                                       cores=form.get('cores'),
                                       mpmode=form.get('mpmode'),
-                                      ntasks=form.get('ntasks'))
+                                      ntasks=form.get('ntasks'),
+                                      qid=form.get('qid'))
                 self._send(json.dumps(response))
             # create (and optionally submit) batch scripts
             elif route == '/api/batch':

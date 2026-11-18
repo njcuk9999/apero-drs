@@ -6176,7 +6176,7 @@ def ariapp_api_apero_profiles_overview(self: Any) -> Any:
 
 
 def ariapp_api_user_prefs_save(self: Any) -> Any:
-    """Save theme and timezone preferences for the signed-in user."""
+    """Save validated user preferences for the signed-in user."""
     user_info = self._require_user()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
@@ -6190,6 +6190,23 @@ def ariapp_api_user_prefs_save(self: Any) -> Any:
             _theme if _theme in ("default", "light", "dark")
             else "default"
         )
+    if "page_view" in body:
+        page_view = body["page_view"]
+        if isinstance(page_view, dict):
+            page_id = str(page_view.get("page_id", "") or "").strip()
+            view = str(page_view.get("view", "") or "").strip()
+            sort = str(page_view.get("sort", "") or "").strip()
+            valid_page_id = bool(
+                re.fullmatch(r"[-A-Za-z0-9_.{}]{1,200}", page_id)
+            )
+            valid_sort = sort in ("asc", "desc")
+            if valid_page_id and view in ("cards", "list") and valid_sort:
+                page_views = ud.load_user_prefs(
+                    user_info["username"]
+                ).get("page_views", {})
+                page_views = dict(page_views)
+                page_views[page_id] = {"view": view, "sort": sort}
+                updates["page_views"] = page_views
     if updates:
         ud.save_user_prefs(user_info["username"], updates)
     prefs = ud.load_user_prefs(user_info["username"])

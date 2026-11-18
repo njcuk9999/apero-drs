@@ -75,6 +75,26 @@ _POLICY_BUILD_STATUS: dict = {
 }
 
 
+def _page_view_settings(
+    user_info: dict[str, Any] | None,
+    page_id: str,
+    default_view: str,
+) -> dict[str, str]:
+    """Return validated collection display settings for one page.
+
+    :param user_info: Effective user, when authenticated.
+    :param page_id: Stable page identifier used as the preference key.
+    :param default_view: Existing layout used before a preference exists.
+    :return: Validated ``view`` and ``sort`` values.
+    """
+    settings = {"view": default_view, "sort": "asc"}
+    if not user_info:
+        return settings
+    return ud.get_page_view_prefs(
+        user_info["username"], page_id, default_view
+    )
+
+
 def _build_apero_checks_setup_status(
     data_dir: Any = None) -> dict[str, Any]:
     """Return completion state for the server-side APERO checks setup."""
@@ -1762,6 +1782,46 @@ def make_page_view(
             context.update(
                 app._build_admin_vault_context(perms)
             )
+
+        collection_pages = {
+            "home.data_portal",
+            "home.monitor_portal.apero_queue",
+        }
+        if context.get("cards") and (is_parent or page_id == "home.docs"):
+            default_view = "cards"
+            page_view = _page_view_settings(
+                user_info, page_id, default_view
+            )
+            reverse = page_view["sort"] == "desc"
+            context["cards"] = sorted(
+                context["cards"],
+                key=lambda card: str(card.get("label", "") or "").casefold(),
+                reverse=reverse,
+            )
+            context["page_view"] = page_view
+        elif page_id in collection_pages:
+            default_view = "list"
+            page_view = _page_view_settings(
+                user_info, page_id, default_view
+            )
+            reverse = page_view["sort"] == "desc"
+            if page_id == "home.data_portal":
+                profile_cards = list(context.get("profile_cards", []))
+                profile_cards.sort(
+                    key=lambda card: str(
+                        card.get("profile_id", "") or ""
+                    ).casefold(),
+                    reverse=reverse,
+                )
+                context["profile_cards"] = profile_cards
+            else:
+                queue_tabs = list(context.get("apero_queue_tabs", []))
+                queue_tabs.sort(
+                    key=lambda tab: str(tab.get("label", "") or "").casefold(),
+                    reverse=reverse,
+                )
+                context["apero_queue_tabs"] = queue_tabs
+            context["page_view"] = page_view
 
         if page_id == "home.admin_portal.server_information":
             context.update(

@@ -17,6 +17,99 @@ from apero.tools.module.setup import drs_reset
 from apero import dev
 
 
+@pytest.mark.parametrize('blocked', [False, True])
+@pytest.mark.parametrize('selected', [
+    'later', 'earlier', 'missing', '../outside.yaml',
+])
+def test_selected_pending_task_runs_once(
+    tmp_path: Path, monkeypatch: Any, selected: str, blocked: bool,
+) -> None:
+    """Run only the selected pending task through the registered runner.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :param selected: Requested pending queue ID.
+    :param blocked: Whether a protected failure must prevent execution.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    queue_path = tmp_path / 'queue'
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(queue_path))
+    monkeypatch.setattr(drs_queue, 'WLOG', lambda *args, **kwargs: None)
+    drs_queue.setup_queue_directories(params)
+    run = drs_queue.QUEUE_RUN_FORMAT.format(0)
+    pending = ['APERO-QUEUE-GROUP-{0}/{1}'.format(group, run)
+               for group in ['earlier', 'later']]
+    if selected in ['earlier', 'later', 'missing']:
+        selected = 'APERO-QUEUE-GROUP-{0}/{1}'.format(selected, run)
+    for qid in pending:
+        destination = queue_path / 'pending' / qid
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        drs_queue.base.write_yaml(
+            dict(state='pending', runstring='recipe'), str(destination))
+    if blocked:
+        failed = queue_path / 'failed' / 'APERO-QUEUE-GROUP-blocked'
+        failed.mkdir(parents=True)
+        drs_queue.base.write_yaml(
+            dict(state='failed', is_reference=True, runstring='recipe'),
+            str(failed / run))
+    executed = []
+
+    def execute(params: Any, tasks: list, cores: int,
+                mpmode: str, **kwargs: Any) -> dict:
+        """Record the claimed work without launching real recipes."""
+        assert cores == 1 and mpmode == 'linear'
+        executed.extend(task['group'] + '/' + task['run_file']
+                        for task in tasks)
+        return {task['run_file']: True for task in tasks}
+
+    monkeypatch.setattr(drs_queue, '_execute_tasks', execute)
+    result = drs_queue.queue_run(
+        params, cores=1, mpmode='linear', ntasks=1, qid=selected)
+    expected = [selected] if selected in pending and not blocked else []
+    assert executed == expected
+    assert result['n_run'] == len(executed)
+    for qid in pending:
+        state = 'complete' if qid in executed else 'pending'
+        assert (queue_path / state / qid).exists()
+    if executed:
+        again = drs_queue.queue_run(
+            params, cores=1, mpmode='linear', ntasks=1, qid=selected)
+        assert again['n_run'] == 0
+        assert executed == [selected]
+
+
+def test_gui_selected_run_forces_single_process(monkeypatch: Any) -> None:
+    """Selected-row requests enforce single-process settings on the server.
+
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    state = gui.GuiState()
+    calls = []
+
+    def run(params: Any, **kwargs: Any) -> dict:
+        """Capture the runner inputs without executing any queue tasks."""
+        calls.append(kwargs)
+        return dict(message='finished')
+
+    monkeypatch.setattr(drs_queue, 'queue_run', run)
+    result = gui.action_run(params, state, cores=8, ntasks='all',
+                            mpmode='process', qid='group/task.yaml')
+    assert result['started']
+    assert state.worker is not None
+    state.worker.join(timeout=5)
+    assert len(calls) == 1
+    assert calls[0]['cores'] == 1
+    assert calls[0]['ntasks'] == '1'
+    assert calls[0]['mpmode'] == 'linear'
+    assert calls[0]['qid'] == 'group/task.yaml'
+    assert calls[0]['owner'] == 'gui'
+
+
 def test_process_gui_preserves_retained_tasks(
     tmp_path: Path, monkeypatch: Any,
 ) -> None:

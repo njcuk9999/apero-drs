@@ -28,6 +28,7 @@ from apero_ri.core.object_funcs import (load_object_htable_rows,
                                         load_object_table_row)
 from apero_ri.application import instrument_color_helpers
 from apero_ri.core import object_groups as og
+from apero_ri.core import user_data as ud
 from apero_ri.plots.plot_manager import OBJ_PLOTS, DEBUG_PLOTS
 from apero_ri.plots.plots_filename import (
     PLOTABLE_OUTPUT_TYPES,
@@ -131,9 +132,14 @@ def ri_profile_view(app: Any, profile_id: str) -> str | Response:
         }
         section_cards.append(card)
 
+    page_view = (
+        ud.get_page_view_prefs(user_info["username"], page_id)
+        if user_info
+        else {"view": "cards", "sort": "asc"}
+    )
     section_cards.sort(
-        key=lambda card: (card.get('key') in ('fav_objects',
-                                              'favourites_objects'), )
+        key=lambda card: str(card.get("label", "") or "").casefold(),
+        reverse=page_view["sort"] == "desc",
     )
 
     context = {
@@ -144,6 +150,7 @@ def ri_profile_view(app: Any, profile_id: str) -> str | Response:
         'profile': profile,
         'profile_color': color,
         'section_cards': section_cards,
+        'page_view': page_view,
         'health_url': '/api/ri/profile-health',
         'sidebar_root': 'home.data_portal',
         'sidebar_label': 'Data Portal',

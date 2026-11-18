@@ -3,6 +3,7 @@
 """Regression tests for the APERO-side ARITASK profile selection."""
 
 from copy import deepcopy
+import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
@@ -105,3 +106,75 @@ def test_explicit_yaml_bypasses_default_profile(
     assert profile['general']['SCIENCE_FIBER'] == 'CUSTOM'
     assert profile_path.read_text(encoding='utf-8') == contents
     builder.assert_not_called()
+
+
+def test_portal_tables_publish_and_restore(
+    spirou_params: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Publish both portal tables and restore them without a server query.
+
+    :param spirou_params: APERO developer profile parameters.
+    :param tmp_path: Isolated APERO and RI data roots.
+    :param monkeypatch: Test patch fixture.
+    :return: None.
+    """
+    tasks = pytest.importorskip('apero_ri.tasks')
+    sync = pytest.importorskip('apero_ri.tasks.apero_sync')
+    async_tasks = pytest.importorskip('apero_ri.tasks.apero_async')
+    file_names = dict(APERO_OBJECT_TABLE='object_table.json',
+                      APERO_OBS_TABLE='obs_table.json')
+    local_profiles = [key for key in sync.local_task_keys()
+                      if tasks.TYPE[key] == 'PROFILE']
+    assert set(local_profiles) == set(file_names) | {
+        'APERO_CHECK_TASK', 'APERO_OBJECT_QUERY', 'APERO_QC_STATS',
+    }
+    monkeypatch.setattr(sync, 'local_task_keys', lambda: list(file_names))
+    params = dict(spirou_params, INPUTS={})
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    params['PATH.ASSETS'] = str(tmp_path / 'assets')
+    monkeypatch.setenv(params['DRS.USERENV'], str(tmp_path / 'mini'))
+    astrom = tmp_path / 'assets' / 'astrometrics' / 'verified'
+    astrom.mkdir(parents=True)
+    entry = 'APERO_NAME: TARGET\nALIASES: [Alias]\nRA: {value: 12.5}\n'
+    (astrom / 'TARGET.yaml').write_text(entry, encoding='utf-8')
+    settings = dict(TYPE='mysql+pymysql', HOST='localhost', USER='test',
+                    PASSWD='', DATABASE='mini')
+    for kind in ('CALIB', 'FINDEX', 'LOG', 'TELLU'):
+        settings[kind] = dict(NAME='mini', TABLE=f'{kind}_TABLE')
+    monkeypatch.setattr(apero_ri_task.base, 'DPARAMS', settings)
+    query = Mock(side_effect=lambda *_: [dict(OBJNAME='TARGET')])
+    monkeypatch.setattr(async_tasks, 'database_query', query)
+
+    result = apero_ri_task.__main__(None, params)
+
+    assert set(result['task_results']) == set(file_names)
+    assert query.call_count == 2
+    assert all('JOIN' not in call.args[1] for call in query.call_args_list)
+    profile = apero_ri_task._build_profile(params, 'SPIROU')
+    server_params = dict(LOCAL_DATA_DIR=str(tmp_path / 'server'),
+                         INSTRUMENT='SPIROU', APERO_PROFILES={'mini': profile})
+    for key, filename in file_names.items():
+        task = tasks.TASK_LIST[key]()
+        sync.run_with_precomputed(task, key, server_params)
+        path = tmp_path / 'server' / 'tasks' / 'SPIROU' / 'mini' / filename
+        assert task.output_files == [str(path)]
+        if key == 'APERO_OBJECT_TABLE':
+            text = path.read_text(encoding='utf-8')
+            data = json.loads(text)
+            assert data['rows'][0]['RA [Deg]'] == 12.5
+            assert data['rows'][0]['ALIASES'] == 'Alias'
+    assert query.call_count == 2
+
+    shared = sync.precomputed_directory(profile, 'SPIROU', 'mini')
+    assert shared is not None
+    (shared / '.APERO_OBS_TABLE.json').unlink()
+    obs_path = path.parent / 'obs_table.json'
+    obs_path.unlink()
+    skip_check = Mock(return_value=(False, {}, 'Missing table'))
+    monkeypatch.setattr(async_tasks, 'should_skip_profile_query', skip_check)
+    server_params['APERO_PROFILE_NAMES'] = ['mini']
+    task = tasks.TASK_LIST['APERO_OBS_TABLE']()
+    sync.run_with_precomputed(task, 'APERO_OBS_TABLE', server_params)
+    assert skip_check.call_args.kwargs['force_run'] is True
+    assert task.output_files == [str(obs_path)]
+    assert query.call_count == 3

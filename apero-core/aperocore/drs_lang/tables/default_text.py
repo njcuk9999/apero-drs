@@ -25970,6 +25970,42 @@ item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00048
+# =============================================================================
+item = langlist.create('40-513-00048', kind='all-code')
+item.value['ENG'] = 'Queue entry {0} is not pending; nothing was run.'
+item.value['FR'] = 'Entree de file {0} non en attente ; rien execute.'
+item.value['ES'] = 'Entrada de cola {0} no pendiente; no se ejecuto nada.'
+item.arguments = '{0}=queue ID'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00049
+# =============================================================================
+item = langlist.create('40-513-00049', kind='all-code')
+item.value['ENG'] = 'Run single process'
+item.value['FR'] = 'Executer un seul processus'
+item.value['ES'] = 'Ejecutar un solo proceso'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00050
+# =============================================================================
+item = langlist.create('40-513-00050', kind='all-code')
+item.value['ENG'] = ('Run this queue entry with 1 core, 1 task and '
+                     'linear execution?')
+item.value['FR'] = ('Executer cette entree avec 1 coeur, 1 tache et '
+                    'une execution lineaire ?')
+item.value['ES'] = ('Ejecutar esta entrada con 1 nucleo, 1 tarea y '
+                    'ejecucion lineal?')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')

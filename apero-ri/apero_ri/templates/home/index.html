@@ -106,9 +106,13 @@
 
 {% if cards or not is_monitor %}
 <h3 class="ari-home-section-heading"><i class="fa-solid fa-compass"></i> {{ _('Site Content') }}</h3>
-<div class="ari-cards">
+<section data-ari-view-section>
+{% include 'general/view_controls.html' %}
+<div class="ari-cards ari-view-collection ari-view-collection--{{ page_view.view if page_view is defined else 'cards' }}"
+     data-ari-view-collection>
     {% for card in cards %}
-    <a href="{{ card.url }}" class="ari-card">
+    <a href="{{ card.url }}" class="ari-card"
+       data-sort-label="{{ card.label | tl }}">
         <div class="ari-card__icon">
             <i class="{{ card.icon }}"></i>
         </div>
@@ -120,7 +124,8 @@
         {% endif %}
     </a>
     {% if card.id == 'home.github' and not is_monitor %}
-    <a href="/monitor_portal/become_monitor" class="ari-card">
+    <a href="/monitor_portal/become_monitor" class="ari-card"
+       data-sort-label="{{ _('Become a Monitor') }}">
         <div class="ari-card__icon">
             <i class="fa-solid fa-user-plus"></i>
         </div>
@@ -129,7 +134,8 @@
     {% endif %}
     {% endfor %}
     {% if not is_monitor and not (cards|selectattr('id', 'equalto', 'home.github')|list) %}
-    <a href="/monitor_portal/become_monitor" class="ari-card">
+    <a href="/monitor_portal/become_monitor" class="ari-card"
+       data-sort-label="{{ _('Become a Monitor') }}">
         <div class="ari-card__icon">
             <i class="fa-solid fa-user-plus"></i>
         </div>
@@ -137,6 +143,7 @@
     </a>
     {% endif %}
 </div>
+</section>
 {% else %}
 <p style="color: var(--ari-text-muted);">{{ _('No sections available with your current permissions.') }}</p>
 {% endif %}

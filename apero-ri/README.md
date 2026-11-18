@@ -42,6 +42,13 @@ select processed output files that pass QC. **Templates** selects
 Column filters match without regard to case and preserve the entered text.
 Object-product refresh status belongs in the Admin Portal, not object pages.
 
+## Portal collections
+
+Portal landing pages and APERO profile collections can switch between card and
+list layouts. Both layouts support alphabetical A–Z or Z–A ordering. ARI stores
+the selected layout and sort direction per user and page in the existing
+preferences file, alongside theme and timezone settings.
+
 ## Profile editor
 
 On **Admin Portal → APERO Profiles**, changing a draft profile name updates
@@ -121,6 +128,13 @@ regular batch uses multiple workers. Queue mode groups the final tool after the
 preceding recipe groups. Install `apero-ri` in the reduction environment to
 enable local task execution; otherwise the automatic step logs a warning and
 skips. The RI web server does not need to be running.
+
+`ARITASK` precomputes the object table, observation table, per-object queries,
+QC statistics, and APERO checks for that profile. The matching RI scheduled
+tasks restore these outputs from shared storage or compute them on the server
+if no valid precomputed output is available. To pick up new tables immediately
+instead of waiting for the schedule, run their tasks in **Admin Portal → Async
+Tasks** for the matching profile.
 
 The Queue tab combines all named queues, including instrument workers and
 APERO checks. The first running task has the progress summary; additional

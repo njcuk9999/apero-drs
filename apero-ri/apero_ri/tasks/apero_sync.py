@@ -309,6 +309,7 @@ def run(task_key: str,
     # Shallow-copy params so we can inject keys without mutating the
     # caller's dict.
     params = dict(params)
+    params['LOCAL_RUN'] = True
     # Inject the logger so the task's run_job can call
     # params['TASK_LOGGER'](msg) without needing the web-server logging
     # infrastructure.

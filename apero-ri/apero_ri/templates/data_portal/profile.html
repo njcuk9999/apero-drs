@@ -85,12 +85,16 @@
     </div>
 </details>
 {# ── Section cards ───────────────────────────────────────────── #}
-<div class="ari-rp-sections">
+<section data-ari-view-section>
+{% include 'general/view_controls.html' %}
+<div class="ari-rp-sections ari-view-collection ari-view-collection--{{ page_view.view }}"
+     data-ari-view-collection>
 {% for card in section_cards %}
     {% if card.url is defined and card.url %}
     <a href="{{ card.url }}"
        class="ari-rp-section-card ari-rp-section-card--active"
-       data-key="{{ card.key }}">
+       data-key="{{ card.key }}"
+       data-sort-label="{{ card.label | tl }}">
         <div class="ari-rp-section-card__icon">
             <i class="{{ card.icon }}"></i>
         </div>
@@ -104,10 +108,12 @@
     </a>
     {% else %}
     <div class="ari-rp-section-card ari-rp-section-card--disabled"
-         data-key="{{ card.key }}">
+         data-key="{{ card.key }}"
+         data-sort-label="{{ card.label | tl }}">
         <div class="ari-rp-section-card__icon">
             <i class="{{ card.icon }}"></i>
         </div>
+        </section>
         <div class="ari-rp-section-card__body">
             <h3>{{ card.label | tl }}</h3>
             <p>{{ card.description }}</p>

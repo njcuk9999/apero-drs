@@ -63,9 +63,13 @@
 <iframe id="aqFrame" class="ari-aq-frame" title="{{ selected.label }}"
         src="{{ selected.proxy_url }}"></iframe>
 {% elif apero_queue_tabs %}
-<div class="ari-db-profiles">
+<section data-ari-view-section>
+{% include 'general/view_controls.html' %}
+<div class="ari-db-profiles ari-view-collection ari-view-collection--{{ page_view.view }}"
+     data-ari-view-collection>
     {% for tab in apero_queue_tabs %}
     <div class="ari-db-card ari-aq-item" data-queue="{{ tab.name }}"
+         data-sort-label="{{ tab.label }} {{ tab.instrument }}"
          style="--card-bg:var(--ari-card-bg); --card-text:var(--ari-text); --card-border:var(--ari-border);">
     <a class="ari-aq-link"
        href="{{ url_for('home_monitor_portal_apero_queue', queue=tab.name) }}">
@@ -92,6 +96,7 @@
     </div>
     {% endfor %}
 </div>
+</section>
 {% else %}
 <div class="ari-aq-empty">
     <i class="fa-solid fa-circle-info"></i>
