@@ -64,7 +64,7 @@ import json
 import hashlib
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -184,6 +184,10 @@ def restore_precomputed(task_key: str, params: Dict[str, Any]) -> List[str]:
         manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
         if manifest.get('task_key') != task_key:
             return []
+        # Ignore manifests whose publisher has stopped: restoring them
+        #   would freeze results forever, as a restore never republishes.
+        if _manifest_is_stale(manifest, params):
+            return []
         files = manifest.get('files')
         if not isinstance(files, list) or not files:
             return []
@@ -214,10 +218,43 @@ def restore_precomputed(task_key: str, params: Dict[str, Any]) -> List[str]:
     restored = []
     for destination, source in sources:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if source.resolve() != destination.resolve():
+        # Keep local files newer than the published copy (e.g. a manual
+        #   re-run): copy2 kept the source mtime when it was published.
+        newer_local = (destination.is_file() and destination.stat().st_mtime
+                       > source.stat().st_mtime)
+        if source.resolve() != destination.resolve() and not newer_local:
             shutil.copy2(source, destination)
         restored.append(str(destination))
     return restored
+
+
+def _manifest_is_stale(manifest: Dict[str, Any],
+                       params: Dict[str, Any]) -> bool:
+    """Return True when a published manifest is too old to reuse.
+
+    A manifest older than twice the task frequency means its publisher has
+    stopped running; the server must compute (and republish) instead.
+
+    :param manifest: Parsed precomputed manifest.
+    :param params: Runtime parameters (``TASK_CONFIG.frequency`` in hours).
+    :returns: True when the manifest must be ignored.
+    """
+    try:
+        generated = datetime.fromisoformat(str(manifest['generated_at']))
+    except (KeyError, TypeError, ValueError):
+        return True
+    if generated.tzinfo is None:
+        generated = generated.replace(tzinfo=timezone.utc)
+    task_config = params.get('TASK_CONFIG', {}) or {}
+    try:
+        frequency = float(task_config.get('frequency', 0) or 0)
+    except (TypeError, ValueError):
+        frequency = 0.0
+    # Fall back to one day when no positive frequency is configured.
+    if frequency <= 0:
+        frequency = 24.0
+    max_age = timedelta(hours=2.0 * frequency)
+    return datetime.now(timezone.utc) - generated > max_age
 
 
 def run_with_precomputed(instance: Any, task_key: str,

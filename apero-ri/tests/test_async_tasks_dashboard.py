@@ -359,3 +359,58 @@ dashboard.stubRender();
         text=True,
         timeout=15,
     )
+
+
+def _publish_checks_yaml(tmp_path, monkeypatch, text: str) -> tuple:
+    """Publish one check YAML and point restores at a receiving root."""
+    from apero_ri.apero_monitoring import core as checks_core
+    from apero_ri.tasks import apero_sync
+
+    original = tmp_path / 'source_checks'
+    receiving = tmp_path / 'server_checks'
+    original.mkdir()
+    receiving.mkdir()
+    profile = dict(paths=dict(PATH_OTHER=str(tmp_path / 'other')))
+    params = dict(LOCAL_DATA_DIR=str(tmp_path / 'local'), INSTRUMENT='SPIROU',
+                  APERO_PROFILES=dict(first=profile),
+                  TASK_CONFIG=dict(frequency=1.0))
+    output = original / '2026-11-15.yaml'
+    output.write_text(text, encoding='utf-8')
+    monkeypatch.setattr(checks_core, 'resolve_output_root',
+                        lambda *args: original)
+    apero_sync.publish_precomputed('APERO_CHECK_TASK', params, [str(output)])
+    monkeypatch.setattr(checks_core, 'resolve_output_root',
+                        lambda *args: receiving)
+    return params, receiving / output.name
+
+
+def test_precomputed_restore_keeps_newer_local_file(tmp_path,
+                                                    monkeypatch) -> None:
+    """A restore never overwrites a newer local result (manual re-run)."""
+    import os
+    from apero_ri.tasks import apero_sync
+
+    params, local = _publish_checks_yaml(tmp_path, monkeypatch, 'old')
+    local.write_text('new manual run', encoding='utf-8')
+    stat = local.stat()
+    os.utime(local, (stat.st_atime, stat.st_mtime + 60))
+    files = apero_sync.restore_precomputed('APERO_CHECK_TASK', params)
+    assert files == [str(local)]
+    assert local.read_text(encoding='utf-8') == 'new manual run'
+
+
+def test_precomputed_restore_ignores_stale_manifest(tmp_path,
+                                                    monkeypatch) -> None:
+    """A manifest older than twice the task frequency is not reused."""
+    import json
+    from apero_ri.tasks import apero_sync
+
+    params, local = _publish_checks_yaml(tmp_path, monkeypatch, 'old')
+    shared = apero_sync.precomputed_directory(
+        params['APERO_PROFILES']['first'], 'SPIROU', 'first')
+    manifest_path = shared / '.APERO_CHECK_TASK.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    manifest['generated_at'] = '2026-11-15T18:24:52+00:00'
+    manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+    assert apero_sync.restore_precomputed('APERO_CHECK_TASK', params) == []
+    assert not local.exists()
