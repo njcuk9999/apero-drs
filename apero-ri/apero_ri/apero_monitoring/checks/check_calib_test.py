@@ -23,7 +23,8 @@ CHECK.dependencies = ['BLANK', 'HAS_OBSDIR']
 
 CHECK.description = """
 This test checks for at least one file from each required calibration
-DPR type in the observation directory.
+DPR type in the observation directory. Some requirements accept
+alternatives (e.g. either the UN1 or the UN2 wave DPR type).
 """
 
 CHECK.what_to_do = f"""
@@ -125,18 +126,39 @@ def check_function(instrument: str, obs_dir: str,
             continue
         counts[dpr_type] = int(counts.get(dpr_type, 0)) + 1
 
-    # Build pass or fail lines for each required DPR type.
+    # Build pass or fail lines for each required DPR type group. Each entry
+    #   is either a single DPR type or a list of DPR types where any one
+    #   is accepted (e.g. [WAVE,UN1,FP, WAVE,UN2,FP]).
     passed_lines = []
     failed_lines = []
-    for dpr_type in required:
-        count = int(counts.get(str(dpr_type), 0))
-        if count > 0:
-            passed_lines.append(
-                f'\t{dpr_type} present ({count} file(s))'
-            )
+    for entry in required:
+        # Normalise every entry to a list of acceptable DPR types.
+        if isinstance(entry, (list, tuple)):
+            dpr_group = [str(dpr_type) for dpr_type in entry]
         else:
+            dpr_group = [str(entry)]
+        # Human-readable label for this group in the report.
+        group_label = ' OR '.join(dpr_group)
+        # Accept the first DPR type in the group that has any files.
+        matched = None
+        for dpr_type in dpr_group:
+            if int(counts.get(dpr_type, 0)) > 0:
+                matched = dpr_type
+                break
+        # Report the missing group when no alternative was found.
+        if matched is None:
             failed_lines.append(
-                f'\tNo {dpr_type} files found in {obs_dir}'
+                f'\tNo {group_label} files found in {obs_dir}'
+            )
+            continue
+        # Report the matched DPR type (and the group when it had options).
+        count = int(counts[matched])
+        if len(dpr_group) == 1:
+            passed_lines.append(f'\t{matched} present ({count} file(s))')
+        else:
+            passed_lines.append(
+                f'\t{matched} present ({count} file(s)) '
+                f'[from {group_label}]'
             )
     # Return the standard report payload for this check.
     return raw_common.build_report(obs_dir, passed_lines, failed_lines)

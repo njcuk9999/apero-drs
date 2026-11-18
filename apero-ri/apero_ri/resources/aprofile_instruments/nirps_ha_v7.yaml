@@ -420,15 +420,20 @@ apero-checks:
     # Enable or disable this check.
     enabled: true
 
-    # Required DPRTYPE entries for this check.
+    # Required DPRTYPE entries for this check. A nested list is an OR
+    #   group: any one of its DPRTYPEs satisfies the requirement (e.g.
+    #   either the UN1 or the UN2 wave DPRTYPE is accepted).
     required_dprtypes:
     - DARK
     - WAVE,FP,FP
-    - WAVE,UN1,FP
-    - WAVE,FP,UN1
+    - - WAVE,UN1,FP
+      - WAVE,UN2,FP
+    - - WAVE,FP,UN1
+      - WAVE,FP,UN2
     - FLAT,DARK,LAMP
     - FLAT,LAMP,DARK
-    - WAVE,UN1,UN1
+    - - WAVE,UN1,UN1
+      - WAVE,UN2,UN2
 
   # Calibration OB-name check settings.
   calib_ob_test:
@@ -467,8 +472,11 @@ apero-checks:
       FP:
       - WAVE,FP,FP
       - WAVE,UN1,UN1
+      - WAVE,UN2,UN2
       - WAVE,FP,UN1
+      - WAVE,FP,UN2
       - WAVE,UN1,FP
+      - WAVE,UN2,FP
       - CONTAM,DARK,FP
       FLAT:
       - FLAT,LAMP,DARK
@@ -528,11 +536,26 @@ apero-checks:
         p99_min: 5
         p99_max: 100
         sat_frac_max: 0.0025
+      # TODO: check UN2 limits (currently copied from UN1)
+      WAVE,UN2,UN2:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0025
       WAVE,FP,UN1:
         p99_min: 5
         p99_max: 100
         sat_frac_max: 0.0012
+      # TODO: check UN2 limits (currently copied from UN1)
+      WAVE,FP,UN2:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0012
       WAVE,UN1,FP:
+        p99_min: 4
+        p99_max: 100
+        sat_frac_max: 0.0023
+      # TODO: check UN2 limits (currently copied from UN1)
+      WAVE,UN2,FP:
         p99_min: 4
         p99_max: 100
         sat_frac_max: 0.0023

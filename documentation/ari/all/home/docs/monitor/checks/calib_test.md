@@ -8,7 +8,8 @@ card_icon: fa-solid fa-gear
 ## Overview
 
 This test checks for at least one file from each required calibration
-DPR type in the observation directory.
+DPR type in the observation directory. Some requirements accept
+alternatives (e.g. either the UN1 or the UN2 wave DPR type).
 
 ## Requirements
 
@@ -76,4 +77,5 @@ If calibrations exist on the archive but not on local disks, contact
 ## Check logic
 
 This test checks for at least one file from each required calibration
-DPR type in the observation directory.
+DPR type in the observation directory. Some requirements accept
+alternatives (e.g. either the UN1 or the UN2 wave DPR type).
