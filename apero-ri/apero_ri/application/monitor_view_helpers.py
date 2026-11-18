@@ -855,6 +855,13 @@ def monitor_portal_index_view(app: Any) -> _ViewResult:
         'url': '/monitor_portal/become_monitor',
         'has_children': False,
     })
+    page_view = ud.get_page_view_prefs(
+        user_info["username"], page_id
+    ) if user_info else {"view": "cards", "sort": "asc"}
+    cards.sort(
+        key=lambda card: str(card.get("label", "") or "").casefold(),
+        reverse=page_view["sort"] == "desc",
+    )
     # Build sidebar context
     sidebar_ctx = {}
     try:
@@ -868,6 +875,7 @@ def monitor_portal_index_view(app: Any) -> _ViewResult:
         'page_label': 'Monitor Portal',
         'page_icon': 'fa-solid fa-chart-line',
         'cards': cards,
+        'page_view': page_view,
     }
     context.update(sidebar_ctx)
 

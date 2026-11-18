@@ -68,7 +68,6 @@
                 {{ card.profile_id }}
             </span>
         </div>
-        </section>
         <div class="ari-db-card__meta">
             {% if card.apero_version %}
             <span>
@@ -87,6 +86,7 @@
     {% endfor %}
     {% endif %}
 </div>
+</section>
 
 {% if not profile_cards or profile_cards|length == 0 %}
 <p style="color: var(--ari-text-muted);">

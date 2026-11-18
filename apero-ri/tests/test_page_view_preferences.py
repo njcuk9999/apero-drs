@@ -11,6 +11,7 @@ import pytest
 import yaml
 
 from apero_ri.application import ariapp_impls
+from apero_ri.application import monitor_view_helpers
 from apero_ri.application import page_view_helpers
 from apero_ri.core import user_data as ud
 
@@ -104,3 +105,67 @@ def test_page_view_javascript() -> None:
         pytest.skip("Node.js is required for the collection view test")
     script = Path(__file__).with_suffix(".cjs")
     subprocess.run([node, str(script)], check=True)
+
+
+@pytest.mark.parametrize("template", [
+    "monitor_portal/apero_checks.html",
+    "monitor_portal/processing_logs.html",
+    "monitor_portal/apero_queue.html",
+])
+def test_monitor_collections_wrap_one_section(template: str) -> None:
+    """Keep every monitor collection inside one balanced section wrapper.
+
+    :param template: Monitor template using the shared view controls.
+    :return: None.
+    """
+    path = Path(__file__).resolve().parents[1] / "apero_ri/templates" / template
+    source = path.read_text(encoding="utf-8")
+
+    assert source.count("<section data-ari-view-section>") == 1
+    assert source.count("</section>") == 1
+
+
+def test_monitor_portal_supplies_view_preferences(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Add controls and sorting to the custom-rendered monitor index.
+
+    :param monkeypatch: Fixture replacing request and application services.
+    :return: None.
+    """
+    captured = {}
+    app = type("App", (), {
+        "ari_groups": {},
+        "_build_sidebar_context": lambda self, *args: {},
+    })()
+    monkeypatch.setattr(
+        monitor_view_helpers, "get_effective_user",
+        lambda session: {"username": "alice", "groups": ["monitor"]},
+    )
+    monkeypatch.setattr(
+        monitor_view_helpers, "resolve_user_permissions",
+        lambda groups, config: {"view.monitor_portal"},
+    )
+    monkeypatch.setattr(
+        monitor_view_helpers.perms_mod, "load_pages", lambda: {}
+    )
+    monkeypatch.setattr(
+        monitor_view_helpers.perms_mod, "get_visible_cards",
+        lambda *args, **kwargs: [
+            {"id": "z", "label": "Zulu", "icon": "", "url": "/z"},
+            {"id": "a", "label": "alpha", "icon": "", "url": "/a"},
+        ],
+    )
+    monkeypatch.setattr(
+        monitor_view_helpers.ud, "get_page_view_prefs",
+        lambda username, page_id: {"view": "list", "sort": "desc"},
+    )
+    monkeypatch.setattr(
+        monitor_view_helpers, "render_template",
+        lambda template, **context: captured.update(context) or "rendered",
+    )
+
+    assert monitor_view_helpers.monitor_portal_index_view(app) == "rendered"
+    assert captured["page_view"] == {"view": "list", "sort": "desc"}
+    assert [card["label"] for card in captured["cards"]] == [
+        "Zulu", "Become a Monitor", "alpha"]

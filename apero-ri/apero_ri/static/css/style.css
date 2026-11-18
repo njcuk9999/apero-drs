@@ -2488,12 +2488,13 @@ body.ari-up-wide-page .ari-doc-main {
     align-items: center;
     justify-content: flex-end;
     gap: 0.75rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin: 0 0 1rem;
 }
 
 .ari-view-controls__group {
     display: inline-flex;
+    flex-wrap: nowrap;
     gap: 0.35rem;
 }
 
@@ -2514,9 +2515,11 @@ body.ari-up-wide-page .ari-doc-main {
 }
 
 .ari-view-controls__status {
-    min-width: 3.5rem;
+    overflow: hidden;
+    white-space: nowrap;
     color: var(--ari-text-muted);
     font-size: 0.8rem;
+    text-overflow: ellipsis;
 }
 
 .ari-view-collection--cards.ari-cards {
@@ -2530,16 +2533,25 @@ body.ari-up-wide-page .ari-doc-main {
 }
 
 .ari-view-collection--list.ari-cards > .ari-card {
-    min-height: 3.5rem;
+    min-height: 2.5rem;
     flex-direction: row;
     justify-content: flex-start;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    padding: 0.4rem 0.75rem;
     text-align: left;
 }
 
 .ari-view-collection--list.ari-cards .ari-card__icon {
     margin: 0;
+}
+
+.ari-view-collection--list.ari-db-profiles {
+    gap: 0.4rem;
+}
+
+.ari-view-collection--list.ari-db-profiles > .ari-db-card {
+    min-height: 2.75rem;
+    padding: 0.45rem 0.8rem;
 }
 
 .ari-view-collection--cards.ari-db-profiles {
@@ -2559,6 +2571,22 @@ body.ari-up-wide-page .ari-doc-main {
     white-space: normal;
 }
 
+.ari-view-collection--cards.ari-db-profiles .ari-aq-link {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.55rem;
+    width: 100%;
+}
+
+.ari-view-collection--cards.ari-db-profiles .ari-aq-item {
+    align-items: stretch;
+}
+
+.ari-view-collection--cards.ari-db-profiles .ari-aq-reconnect {
+    margin-left: 0;
+    width: 100%;
+}
+
 .ari-view-collection--list.ari-rp-sections {
     display: flex;
     flex-direction: column;
@@ -2570,7 +2598,8 @@ body.ari-up-wide-page .ari-doc-main {
 }
 
 .ari-view-collection--list.ari-rp-sections > .ari-rp-section-card {
-    min-height: 4rem;
+    min-height: 3rem;
+    padding: 0.55rem 0.75rem;
 }
 
 .ari-view-collection--cards.ari-rp-sections > .ari-rp-section-card {
@@ -5263,6 +5292,7 @@ select.ari-ap-input {
 
     .ari-view-controls {
         justify-content: flex-start;
+        max-width: 100%;
     }
 
     .ari-view-controls .ari-btn,

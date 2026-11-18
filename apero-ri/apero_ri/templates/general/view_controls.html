@@ -22,22 +22,15 @@
             <i class="fa-solid fa-list"></i> {{ _('List') }}
         </button>
     </div>
-    <label class="ari-view-controls__sort">
-        <i class="fa-solid fa-arrow-down-a-z"></i>
-        <span>{{ _('Sort') }}</span>
-        <select data-ari-sort aria-label="{{ _('Alphabetical sorting') }}">
-            <option value="asc"
-                    {% if page_view.sort == 'asc' %}selected{% endif %}>
-                {{ _('A–Z') }}
-            </option>
-            <option value="desc"
-                    {% if page_view.sort == 'desc' %}selected{% endif %}>
-                {{ _('Z–A') }}
-            </option>
-        </select>
-    </label>
+    <button type="button"
+            class="ari-btn ari-btn--sm ari-btn--secondary ari-view-controls__sort"
+            data-ari-sort
+            aria-label="{{ _('Reverse alphabetical sorting') }}"
+            title="{{ _('Sort Z–A') if page_view.sort == 'asc' else _('Sort A–Z') }}">
+        <i class="fa-solid {{ 'fa-arrow-down-a-z' if page_view.sort == 'asc' else 'fa-arrow-up-z-a' }}"></i>
+    </button>
     <span class="ari-view-controls__status" role="status"
           aria-live="polite"></span>
 </div>
-<script src="{{ url_for('static', filename='js/page_view_preferences.js', v='20261118a') }}" defer></script>
+<script src="{{ url_for('static', filename='js/page_view_preferences.js', v='20261118b') }}" defer></script>
 {% endif %}

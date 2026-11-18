@@ -67,7 +67,6 @@
             <span class="ari-db-card__sep">|</span>
             <span class="ari-db-card__name">{{ card.profile_id }}</span>
         </div>
-        </section>
         <div class="ari-db-card__meta">
             {% if card.apero_version %}
             <span><i class="fa-solid fa-code-branch"></i> {{ card.apero_version }}</span>
@@ -79,6 +78,7 @@
     </a>
     {% endfor %}
 </div>
+</section>
 
 {% if not profile_cards or profile_cards|length == 0 %}
 <p style="color: var(--ari-text-muted);">

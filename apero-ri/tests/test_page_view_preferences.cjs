@@ -26,7 +26,7 @@ const buttons = ['cards', 'list'].map(view => ({
     addEventListener(name, callback) { handlers[view + name] = callback; }
 }));
 const sort = {
-    value: 'asc',
+    innerHTML: '',
     addEventListener(name, callback) { handlers.sort = callback; }
 };
 const control = {
@@ -62,7 +62,6 @@ assert.deepEqual(collection.children.map(item => item.textContent),
 assert.equal(collection.classList['ari-view-collection--list'], true);
 handlers.cardsclick();
 assert.equal(control.dataset.view, 'cards');
-sort.value = 'desc';
 handlers.sort();
 assert.equal(control.dataset.sort, 'desc');
 assert.deepEqual(collection.children.map(item => item.textContent),

@@ -71,8 +71,12 @@
             );
             var sort = control.querySelector('[data-ari-sort]');
             if (sort) {
-                sort.addEventListener('change', function () {
-                    control.dataset.sort = sort.value;
+                sort.addEventListener('click', function () {
+                    control.dataset.sort = control.dataset.sort === 'asc'
+                        ? 'desc' : 'asc';
+                    sort.innerHTML = control.dataset.sort === 'asc'
+                        ? '<i class="fa-solid fa-arrow-down-a-z"></i>'
+                        : '<i class="fa-solid fa-arrow-up-z-a"></i>';
                     apply(control, collection);
                     saveSettings(control);
                 });
