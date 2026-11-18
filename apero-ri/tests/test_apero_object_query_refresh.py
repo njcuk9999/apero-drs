@@ -115,7 +115,9 @@ def test_save_refresh_checkpoint_uses_task_key(monkeypatch) -> None:
         },
     }
     saved = {}
-    monkeypatch.setattr(auth, "load_apero_profiles", lambda: profiles)
+    monkeypatch.setattr(
+        auth, "load_apero_profiles", lambda **_kwargs: profiles
+    )
     monkeypatch.setattr(
         auth, "save_apero_profiles", lambda value: saved.update(value)
     )

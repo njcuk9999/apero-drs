@@ -946,7 +946,12 @@ def save_profile_db_table_updates(
     """Persist task-specific and legacy cache fingerprints in profile data."""
     from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 
-    profiles = load_apero_profiles()
+    # Load the raw (non-hydrated) profiles: saving hydrated data would copy
+    #   the current instrument preset (e.g. apero-checks) into every saved
+    #   profile, freezing it so later preset updates are ignored. Keep
+    #   temporary drafts so this save does not silently delete them.
+    load_kwargs = dict(hydrate=False, include_temporary=True)
+    profiles = load_apero_profiles(**load_kwargs)
     if not isinstance(profiles, dict):
         profiles = {}
 
