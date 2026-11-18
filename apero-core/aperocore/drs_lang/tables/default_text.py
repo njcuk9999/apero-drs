@@ -29601,6 +29601,33 @@ for dbg_key, dbg_args, dbg_eng, dbg_fr, dbg_es in APERO_CHECK_DEBUG_TEXT:
 
 
 # =============================================================================
+# ASTROM_UNRESOLVED_* - ARI astrometrics "Unresolved objects" tab
+# =============================================================================
+ASTROM_UNRESOLVED_TEXT = [
+    ('LOGIN_REQUIRED',
+     'Log in to see unresolved astrometric objects',
+     'Connectez-vous pour voir les objets astrométriques non résolus',
+     'Inicie sesión para ver los objetos astrométricos no resueltos'),
+    ('NO_PERMISSION',
+     'Unresolved astrometric objects require monitor, developer, '
+     'moderator or admin access',
+     'Les objets astrométriques non résolus nécessitent un accès '
+     'moniteur, développeur, modérateur ou administrateur',
+     'Los objetos astrométricos no resueltos requieren acceso de '
+     'monitor, desarrollador, moderador o administrador'),
+]
+for unres_key, unres_eng, unres_fr, unres_es in ASTROM_UNRESOLVED_TEXT:
+    item = langlist.create('ASTROM_UNRESOLVED_' + unres_key, kind='text')
+    item.value['ENG'] = unres_eng
+    item.value['FR'] = unres_fr
+    item.value['ES'] = unres_es
+    item.arguments = 'None'
+    item.comment = ('Used in: ARI astrometrics_unresolved_helpers '
+                    'api_astrometrics_unresolved')
+    langlist.add(item)
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here

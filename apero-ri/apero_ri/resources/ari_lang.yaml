@@ -1080,3 +1080,9 @@ User information unavailable.:
 "No unresolved objects for your instruments.":
   FR: Aucun objet non résolu pour vos instruments.
   ES: No hay objetos sin resolver para sus instrumentos.
+"Loading unresolved objects...":
+  FR: Chargement des objets non résolus...
+  ES: Cargando objetos no resueltos...
+"Could not load unresolved objects.":
+  FR: Impossible de charger les objets non résolus.
+  ES: No se pudieron cargar los objetos no resueltos.

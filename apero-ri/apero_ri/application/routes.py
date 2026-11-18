@@ -1147,6 +1147,12 @@ def register_data_portal_routes(app: Any) -> None:
         app._api_astrometrics_resolve_by_filter,
     )
     app.add_url_rule(
+        "/api/astrometrics/unresolved",
+        "api_astrometrics_unresolved",
+        app._api_astrometrics_unresolved,
+        methods=["GET"],
+    )
+    app.add_url_rule(
         "/api/astrometrics/columns",
         "api_astrometrics_columns",
         app._api_astrometrics_columns,

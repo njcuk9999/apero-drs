@@ -1694,14 +1694,6 @@ def make_page_view(
             context['geoip_csrf_token'] = session.setdefault(
                 'geoip_install_csrf', secrets.token_urlsafe(32))
 
-        if page_id == "home.astrometrics.unresolved" and user_info:
-            # Unresolved ASTROM names for the user's accessible profiles
-            #   (view permission already checked above).
-            from apero_ri.application import (
-                astrometrics_unresolved_helpers as auh,
-            )
-            context["unresolved"] = auh.collect_unresolved(app, user_info)
-
         if page_id == "home.astrometrics":
             try:
                 from pathlib import Path as _Path
@@ -1733,6 +1725,11 @@ def make_page_view(
                 )
             except Exception:  # noqa: BLE001
                 context["astrometrics_can_manage_rejects"] = False
+            # gate the "Unresolved objects" tab (monitor and up)
+            context["astrometrics_can_view_unresolved"] = bool(
+                user_info and has_view_permission(
+                    "view.astrometrics.unresolved", perms)
+            )
             # gate the "History" tab on the dedicated history perm
             context["astrometrics_can_view_history"] = (
                 "manage.astrometrics.history" in (perms or set())

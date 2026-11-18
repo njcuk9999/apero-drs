@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Astrometrics "Unresolved objects" page and sidebar ordering."""
+"""Astrometrics "Unresolved objects" tab, its API and sidebar order."""
 import sys
 from pathlib import Path
 
@@ -73,39 +73,60 @@ def client(monkeypatch, tmp_path: Path):
         auh.checks_index, 'get_check_results',
         lambda pid, key, state: ([dict(obsdir=OBSDIR)]
                                  if state == 'failed' else []))
-    user = dict(username='mon', groups=['monitor.NIRPS'])
-    monkeypatch.setattr(pvh, 'get_effective_user', lambda session: user)
-    return app.test_client()
+    _set_user(monkeypatch, app, dict(username='mon',
+                                     groups=['monitor.NIRPS']))
+    client = app.test_client()
+    client.ari_app = app
+    return client
 
 
-def test_unresolved_page_lists_names(client) -> None:
-    """Unresolved names are listed with a resolve link; resolved dropped."""
-    response = client.get('/astrometrics/unresolved')
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'TOI260' in html
-    assert 'NIRPS_HE' in html
-    assert 'rt_name=TOI260&amp;rt_run=1' in html
-    # ALREADY_DONE resolves in the astrometric database now.
-    assert 'ALREADY_DONE' not in html
-    assert '1 resolved since the check ran' in html
-
-
-def test_unresolved_page_needs_permission(client, monkeypatch) -> None:
-    """Users without view.astrometrics.unresolved are redirected."""
+def _set_user(monkeypatch, app, user: dict) -> None:
+    """Make both page views and API calls see ``user``."""
     from apero_ri.application import page_view_helpers as pvh
 
-    user = dict(username='gen', groups=['general.NIRPS'])
     monkeypatch.setattr(pvh, 'get_effective_user', lambda session: user)
-    response = client.get('/astrometrics/unresolved')
-    assert response.status_code == 302
+    monkeypatch.setattr(app, '_get_api_user', lambda: user)
 
 
-def test_astrometrics_page_still_renders(client) -> None:
-    """The astrometrics landing page renders after gaining a child."""
-    response = client.get('/astrometrics')
+def test_unresolved_api_lists_names(client) -> None:
+    """The API lists unresolved names; names resolved since are dropped."""
+    response = client.get('/api/astrometrics/unresolved')
     assert response.status_code == 200
-    assert 'rt-name-query' in response.get_data(as_text=True)
+    data = response.get_json()
+    names = [row['name'] for row in data['rows']]
+    assert names == ['TOI260']
+    assert data['rows'][0]['instruments'] == ['NIRPS_HE']
+    assert data['rows'][0]['night_links'][0]['obsdir'] == OBSDIR
+    # ALREADY_DONE resolves in the astrometric database now.
+    assert data['n_resolved_since'] == 1
+
+
+def test_unresolved_api_needs_permission(client, monkeypatch) -> None:
+    """Users without view.astrometrics.unresolved get a 403."""
+    user = dict(username='gen', groups=['general.NIRPS'])
+    _set_user(monkeypatch, client.ari_app, user)
+    response = client.get('/api/astrometrics/unresolved')
+    assert response.status_code == 403
+    assert response.get_json()['success'] is False
+
+
+def test_astrometrics_page_shows_tab_for_monitors(client,
+                                                  monkeypatch) -> None:
+    """The tab (and its script) only render for permitted users."""
+    html = client.get('/astrometrics').get_data(as_text=True)
+    assert 'data-htab="unresolved"' in html
+    assert 'id="astro-tab-unresolved"' in html
+    assert 'js/astrometrics_unresolved.js' in html
+    user = dict(username='gen', groups=['general.NIRPS'])
+    _set_user(monkeypatch, client.ari_app, user)
+    html = client.get('/astrometrics').get_data(as_text=True)
+    assert 'data-htab="unresolved"' not in html
+    assert 'rt-name-query' in html
+
+
+def test_unresolved_is_not_a_separate_page(client) -> None:
+    """The old /astrometrics/unresolved page no longer exists."""
+    assert client.get('/astrometrics/unresolved').status_code == 404
 
 
 def test_sidebar_children_follow_card_sort() -> None:

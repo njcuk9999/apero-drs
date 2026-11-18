@@ -11,6 +11,52 @@
 <link rel="stylesheet"
       href="{{ url_for('static', filename='css/ari_data_table.css', v='20260424e') }}">
 <style>
+/* Unresolved objects tab */
+.aun-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 0.85rem;
+}
+.aun-toolbar input[type="search"] {
+    flex: 1 1 16rem;
+    min-width: 0;
+}
+.aun-note {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+}
+.aun-notice {
+    margin: 0 0 0.85rem;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--ari-border);
+    border-left: 4px solid var(--ari-warning);
+    border-radius: 0.5rem;
+    background: var(--ari-surface-muted);
+    color: var(--ari-text);
+}
+.aun-name {
+    font-weight: 600;
+    word-break: break-word;
+}
+.aun-sub {
+    color: var(--ari-text-muted);
+    font-size: 0.82rem;
+    word-break: break-all;
+}
+.aun-empty {
+    padding: 1.2rem 0.5rem;
+    color: var(--ari-text-muted);
+    text-align: center;
+}
+@media (max-width: 768px) {
+    .aun-toolbar .ari-btn,
+    .aun-resolve-btn {
+        min-height: 44px;
+    }
+}
+
 .rt-verify-banner {
     display: flex;
     align-items: center;
@@ -683,6 +729,16 @@
             <span>Rejected object names</span>
         </button>
         {% endif %}
+        {% if astrometrics_can_view_unresolved %}
+        <button class="ari-htab"
+                type="button" role="tab"
+                aria-selected="false"
+                data-htab="unresolved"
+                aria-controls="astro-tab-unresolved">
+            <i class="fa-solid fa-circle-question"></i>
+            <span>{{ _('Unresolved objects') }}</span>
+        </button>
+        {% endif %}
         {% if astrometrics_can_view_history %}
         <button class="ari-htab"
                 type="button" role="tab"
@@ -1338,6 +1394,67 @@
             </div>
         </section>
 
+        {% if astrometrics_can_view_unresolved %}
+        {# ---------------------------------------------------------- #}
+        {# Tab: Unresolved objects (monitor / developer / moderator /  #}
+        {# admin) - filled from /api/astrometrics/unresolved when the  #}
+        {# tab is first opened                                         #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-unresolved"
+                 class="ari-htab-panel"
+                 role="tabpanel" aria-labelledby="unresolved" hidden
+                 data-aun-url="{{ url_for('api_astrometrics_unresolved') }}"
+                 data-aun-loading="{{ _('Loading unresolved objects...') }}"
+                 data-aun-empty="{{ _('No unresolved objects for your instruments.') }}"
+                 data-aun-error="{{ _('Could not load unresolved objects.') }}"
+                 data-aun-count="{{ _('{n} unresolved object(s)') }}"
+                 data-aun-resolved-since="{{ _('{n} resolved since the check ran') }}"
+                 data-aun-stale="{{ _('{n} night(s) have an ASTROM failure recorded before object names were stored. Re-run the ASTROM check for those nights to list their objects here.') }}"
+                 data-aun-more="{{ _('(+{n} more)') }}"
+                 data-aun-resolve="{{ _('Resolve') }}">
+            <div class="ari-card">
+                <div class="ari-card__header">
+                    <h2 class="ari-card__title">
+                        <i class="fa-solid fa-circle-question"></i>
+                        {{ _('Unresolved objects') }}
+                    </h2>
+                    <span id="aun-count" class="ari-dt__count"></span>
+                </div>
+                <div class="ari-card__body">
+                    <p class="ari-section-intro">
+                        {{ _('Object names in raw files that the ASTROM check could not resolve in the astrometric database, for the instruments you have access to.') }}
+                    </p>
+                    <div id="aun-notice" class="aun-notice" hidden></div>
+                    <div class="aun-toolbar">
+                        <input id="aun-filter" type="search"
+                               placeholder="{{ _('Filter by name, instrument or night...') }}">
+                        <span id="aun-summary" class="aun-note"></span>
+                        <button id="aun-refresh" type="button"
+                                class="ari-btn ari-btn--sm ari-btn--secondary">
+                            <i class="fa-solid fa-rotate"></i>
+                            {{ _('Refresh') }}
+                        </button>
+                    </div>
+                    <div class="ot-table-wrap">
+                        <table class="ot-table" id="aun-table">
+                            <thead>
+                                <tr class="ot-header-row">
+                                    <th>{{ _('Object name') }}</th>
+                                    <th>{{ _('Instrument') }}</th>
+                                    <th>{{ _('Nights') }}</th>
+                                    <th>{{ _('Files') }}</th>
+                                    <th>{{ _('Resolver message') }}</th>
+                                    <th>{{ _('Action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aun-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         {% if astrometrics_can_view_history %}
         {# ---------------------------------------------------------- #}
         {# Tab 5: History (admin / moderator / developer)             #}
@@ -1512,6 +1629,9 @@
 <script src="{{ url_for('static', filename='js/ari_data_table.js', v='20260424c') }}"></script>
 <script src="{{ url_for('static', filename='js/astrometrics_lock.js', v='20260430a') }}"></script>
 <script src="{{ url_for('static', filename='js/astrometrics.js', v='20261118a') }}"></script>
+{% if astrometrics_can_view_unresolved %}
+<script src="{{ url_for('static', filename='js/astrometrics_unresolved.js', v='20261118a') }}"></script>
+{% endif %}
 {% if astrometrics_can_view_history %}
 <script src="{{ url_for('static', filename='js/astrometrics_history.js', v='20260501b') }}"></script>
 {% endif %}

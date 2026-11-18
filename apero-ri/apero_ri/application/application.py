@@ -1313,6 +1313,13 @@ class ARIApp(Flask):
             self
         )
 
+    def _api_astrometrics_unresolved(self) -> Any:
+        """Return unresolved ASTROM object names for the user."""
+        from apero_ri.application import (
+            astrometrics_unresolved_helpers as auh,
+        )
+        return auh.api_astrometrics_unresolved(self)
+
     def _api_astrometrics_columns(self) -> Any:
         """List columns available in the astrometrics catalogue."""
         return astrometrics_api_helpers.api_astrometrics_columns(self)

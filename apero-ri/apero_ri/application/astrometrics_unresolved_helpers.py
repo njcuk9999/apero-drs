@@ -5,7 +5,8 @@ APERO RI: unresolved astrometric objects.
 
 Collects the raw-header object names the ASTROM check could not resolve,
 across every APERO profile the user can access (so only the user's
-instruments are shown), for the astrometrics "Unresolved objects" page.
+instruments are shown), for the "Unresolved objects" tab of the
+astrometrics page (loaded through ``api_astrometrics_unresolved``).
 
 The ASTROM check stores the unresolved names as structured ``details`` in
 its failure entry; the per-profile checks index tells us which nights have
@@ -17,13 +18,14 @@ Created on 2026-11-18
 """
 from pathlib import Path
 from typing import Any, Dict, List
-from urllib.parse import urlencode
+from flask import jsonify, url_for
 
-from flask import url_for
-
+from aperocore.drs_lang import textentry
 from apero_ri.core import apero_checks as checks_core
 from apero_ri.core import checks_index
 from apero_ri.core.auth import get_accessible_profiles
+from apero_ri.core.permissions import has_view_permission
+from apero_ri.core.permissions import resolve_user_permissions
 
 # =============================================================================
 # Define variables
@@ -34,6 +36,8 @@ ASTROM_CHECK_KEY = 'ASTROM'
 NOT_PASSED_STATES = ('failed', 'monitored', 'overridden', 'mixed')
 # Nights listed inline per object before summarising.
 MAX_NIGHTS_SHOWN = 5
+# Permission needed to see unresolved objects (monitor and up).
+VIEW_PERMISSION = 'view.astrometrics.unresolved'
 
 
 # =============================================================================
@@ -107,14 +111,22 @@ def collect_unresolved(app: Any, user_info: Dict[str, Any]) -> Dict[str, Any]:
                 nights_without_details=nights_without_details)
 
 
-def resolve_url(name: str) -> str:
-    """Return the astrometrics resolver URL that looks up one name.
+def api_astrometrics_unresolved(app: Any) -> Any:
+    """Return unresolved objects for the astrometrics page tab.
 
-    :param name: Raw object name.
-    :return: URL opening the resolver with the name filled in and run.
+    :param app: The ARI application.
+    :return: JSON response with the rows, or a 401/403 error.
     """
-    query = urlencode(dict(rt_name=name, rt_run='1'))
-    return url_for('home_astrometrics') + '?' + query
+    user_info = app._get_api_user()
+    if not user_info:
+        message = str(textentry('ASTROM_UNRESOLVED_LOGIN_REQUIRED'))
+        return jsonify(success=False, error=message), 401
+    perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
+    if not has_view_permission(VIEW_PERMISSION, perms):
+        message = str(textentry('ASTROM_UNRESOLVED_NO_PERMISSION'))
+        return jsonify(success=False, error=message), 403
+    payload = collect_unresolved(app, user_info)
+    return jsonify(success=True, **payload)
 
 
 # =============================================================================
@@ -191,7 +203,6 @@ def _finalise_row(row: Dict[str, Any]) -> Dict[str, Any]:
         n_files=row['n_files'],
         files=row['files'],
         resolver=row['resolver'],
-        resolve_url=resolve_url(row['name']),
     )
 
 
