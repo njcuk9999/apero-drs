@@ -1,0 +1,163 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ _('Unresolved objects') }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-astro-unresolved-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+.aun-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 0.85rem;
+}
+.aun-toolbar input[type="search"] {
+    flex: 1 1 16rem;
+    min-width: 0;
+}
+.aun-note {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+}
+.aun-notice {
+    margin: 0 0 0.85rem;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--ari-border);
+    border-left: 4px solid var(--ari-warning);
+    border-radius: 0.5rem;
+    background: var(--ari-surface-muted);
+    color: var(--ari-text);
+}
+.aun-name {
+    font-weight: 600;
+    word-break: break-word;
+}
+.aun-files {
+    color: var(--ari-text-muted);
+    font-size: 0.82rem;
+    word-break: break-all;
+}
+.aun-empty {
+    padding: 1.2rem 0.5rem;
+    color: var(--ari-text-muted);
+    text-align: center;
+}
+@media (max-width: 768px) {
+    .aun-toolbar .ari-btn,
+    .aun-resolve-btn {
+        min-height: 44px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+{% set data = unresolved or {} %}
+{% set rows = data.get('rows', []) %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-circle-question"></i>
+        {{ _('Unresolved objects') }}
+    </h1>
+    <p class="ari-page-subtitle">
+        {{ _('Object names in raw files that the ASTROM check could not resolve in the astrometric database, for the instruments you have access to.') }}
+    </p>
+</div>
+
+{% if data.get('nights_without_details') %}
+<div class="aun-notice">
+    {{ _('{n} night(s) have an ASTROM failure recorded before object names were stored. Re-run the ASTROM check for those nights to list their objects here.', n=data['nights_without_details']|length) }}
+</div>
+{% endif %}
+
+<div class="aun-toolbar">
+    <input id="aun-filter" type="search"
+           placeholder="{{ _('Filter by name, instrument or night...') }}">
+    <span class="aun-note">
+        {{ _('{n} unresolved object(s)', n=rows|length) }}
+        {% if data.get('n_resolved_since') %}
+        · {{ _('{n} resolved since the check ran', n=data['n_resolved_since']) }}
+        {% endif %}
+    </span>
+    <a class="ari-btn ari-btn--sm ari-btn--secondary"
+       href="{{ request.path }}">
+        <i class="fa-solid fa-rotate"></i> {{ _('Refresh') }}
+    </a>
+</div>
+
+<div class="ot-table-wrap">
+    <table class="ot-table" id="aun-table">
+        <thead>
+            <tr class="ot-header-row">
+                <th>{{ _('Object name') }}</th>
+                <th>{{ _('Instrument') }}</th>
+                <th>{{ _('Nights') }}</th>
+                <th>{{ _('Files') }}</th>
+                <th>{{ _('Resolver message') }}</th>
+                <th>{{ _('Action') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            <tr data-aun-search="{{ (row.name ~ ' ' ~ row.instruments|join(' ') ~ ' ' ~ row.profiles|join(' ') ~ ' ' ~ row.night_links|map(attribute='obsdir')|join(' '))|lower }}">
+                <td>
+                    <div class="aun-name">{{ row.name }}</div>
+                    {% if row.header_keys %}
+                    <div class="aun-files">{{ row.header_keys|join(', ') }}</div>
+                    {% endif %}
+                </td>
+                <td>{{ row.instruments|join(', ') }}</td>
+                <td>
+                    {% for night in row.night_links %}
+                    <a href="{{ night.url }}"
+                       title="{{ night.profile_id }}">{{ night.obsdir }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                    {% if row.n_nights > row.night_links|length %}
+                    <span class="aun-note">
+                        {{ _('(+{n} more)', n=row.n_nights - row.night_links|length) }}
+                    </span>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ row.n_files }}
+                    {% if row.files %}
+                    <div class="aun-files">{{ row.files|join(', ') }}</div>
+                    {% endif %}
+                </td>
+                <td class="aun-files">{{ row.resolver }}</td>
+                <td>
+                    <a class="ari-btn ari-btn--sm ari-btn--primary aun-resolve-btn"
+                       href="{{ row.resolve_url }}">
+                        <i class="fa-solid fa-magnifying-glass-location"></i>
+                        {{ _('Resolve') }}
+                    </a>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="aun-empty">
+                {{ _('No unresolved objects for your instruments.') }}
+            </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    // Client-side filter over the rendered rows.
+    var input = document.getElementById('aun-filter');
+    if (!input) return;
+    input.addEventListener('input', function () {
+        var query = input.value.trim().toLowerCase();
+        document.querySelectorAll('#aun-table tbody tr[data-aun-search]')
+            .forEach(function (row) {
+                var text = row.getAttribute('data-aun-search') || '';
+                row.hidden = query !== '' && text.indexOf(query) < 0;
+            });
+    });
+})();
+</script>
+{% endblock %}

@@ -57,8 +57,31 @@ def test_simbad_json_returns_none_on_invalid_json(monkeypatch) -> None:
     monkeypatch.setattr(astro, '_tap_get', _fake_tap_get)
     # skip the network up-check of the SIMBAD servers
     monkeypatch.setattr(astro.drs_simbad, 'select_simbad_url',
-                        lambda urls: urls[0])
+                        lambda urls, timeout=None: urls[0])
     assert astro._simbad_json('SELECT 1') is None
+
+
+def test_simbad_json_falls_back_to_next_mirror(monkeypatch) -> None:
+    """A failed query on the selected server is retried on a mirror."""
+    calls = []
+
+    def _fake_tap_get(endpoint, *args, **kwargs):  # noqa: ANN002, ANN003
+        calls.append(endpoint)
+        # the main server is down, the mirror answers
+        if 'main' in endpoint:
+            return None
+        return b'{"data": [["TOI-260"]]}'
+
+    monkeypatch.setattr(astro, '_tap_get', _fake_tap_get)
+    monkeypatch.setattr(astro.drs_simbad, '_SELECTED_URL', dict())
+    monkeypatch.setattr(astro.drs_simbad, 'select_simbad_url',
+                        lambda urls, timeout=None: urls[0])
+    urls = ['https://main/simbad/sim-tap', 'https://mirror/simbad/sim-tap']
+    data = astro._simbad_json('SELECT 1', url=urls)
+    assert data == {'data': [['TOI-260']]}
+    assert len(calls) == 2 and 'mirror' in calls[1]
+    # the mirror that answered is remembered for the next query
+    assert astro.drs_simbad._SELECTED_URL[tuple(urls)] == urls[1]
 
 
 def test_vizier_json_uses_uppercase_param_route(monkeypatch) -> None:

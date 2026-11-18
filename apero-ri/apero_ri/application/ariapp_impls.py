@@ -2873,8 +2873,16 @@ def ariapp_build_sidebar_context(
         return payload
 
     root_def = self.ari_pages[nav_root]
+    def _sort_direction(parent_id: str) -> str:
+        """Return the user's card sort direction for one parent page."""
+        if not username:
+            return 'asc'
+        return ud.get_page_view_prefs(username, parent_id)['sort']
+
+    # Sort each sidebar level like the cards on its parent page.
+    sidebar_args = [nav_root, perms, self.ari_pages, page_id]
     section_tree = permissions_mod.get_sidebar_tree(
-        nav_root, perms, self.ari_pages, page_id
+        *sidebar_args, sort_direction=_sort_direction
     )
     pinned_tree = permissions_mod.get_pinned_sidebar_items(
         perms,
@@ -6207,6 +6215,9 @@ def ariapp_api_user_prefs_save(self: Any) -> Any:
                 page_views = dict(page_views)
                 page_views[page_id] = {"view": view, "sort": sort}
                 updates["page_views"] = page_views
+                # The sidebar follows the card sort: drop cached copies.
+                with _SIDEBAR_CTX_CACHE_LOCK:
+                    _SIDEBAR_CTX_CACHE.clear()
     if updates:
         ud.save_user_prefs(user_info["username"], updates)
     prefs = ud.load_user_prefs(user_info["username"])

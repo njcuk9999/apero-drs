@@ -158,13 +158,18 @@ def test_astrom_check_reports_preflight_and_failure_reason(
         lambda name: (None, 'resolver backend down'),
     )
 
-    passed, report = check_astrometrics.check_function(
+    outs = check_astrometrics.check_function(
         'SPIROU',
         'obsdir',
         aparams,
         {},
     )
+    passed, report, details = outs
 
     assert passed is False
     assert 'resolver_preflight=' in report
     assert 'resolver backend down' in report
+    # Unresolved names are also returned as structured details.
+    unresolved = details['unresolved']
+    assert unresolved[0]['name'] == 'M31'
+    assert unresolved[0]['resolver'] == 'resolver backend down'

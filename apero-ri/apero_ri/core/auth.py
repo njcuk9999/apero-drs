@@ -451,6 +451,38 @@ def save_admin_health_config(config: dict) -> None:
         yaml.dump(payload, f, default_flow_style=False)
 
 
+def _write_yaml_atomic(path: Path, data: Any) -> None:
+    """Write YAML so readers never see an empty or partial file.
+
+    Writing in place (``open(path, 'w')``) truncates the file first, so a
+    concurrent reader can load an empty file; callers then rebuild their
+    defaults and save them, silently losing settings (e.g. async tasks
+    reverting to disabled). Write a temporary file in the same directory
+    and atomically replace the target instead, keeping its permissions.
+
+    :param path: Target YAML file.
+    :param data: Data to dump.
+    :return: None.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(
+        f'.{path.name}.{os.getpid()}.{threading.get_ident()}.tmp'
+    )
+    try:
+        with open(tmp_path, 'w') as handle:
+            yaml.dump(data, handle, default_flow_style=False)
+            handle.flush()
+            os.fsync(handle.fileno())
+        # Keep the original permissions (some files hold credentials).
+        if path.exists():
+            os.chmod(tmp_path, path.stat().st_mode & 0o777)
+        os.replace(tmp_path, path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
+
+
 def load_async_tasks() -> dict:
     """Load async task configurations from async_tasks.yaml.
 
@@ -508,8 +540,7 @@ def save_async_tasks(tasks: dict) -> None:
     """Save async task configurations to async_tasks.yaml."""
     ensure_ari_directory()
     ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(ASYNC_TASKS_FILE, "w") as f:
-        yaml.dump(tasks, f, default_flow_style=False)
+    _write_yaml_atomic(ASYNC_TASKS_FILE, tasks)
 
 
 # =============================================================================
@@ -659,8 +690,7 @@ def load_apero_profiles(
 def save_apero_profiles(profiles: dict) -> None:
     """Save APERO profiles to apero_profiles.yaml."""
     ensure_ari_directory()
-    with open(APERO_PROFILES_FILE, "w") as f:
-        yaml.dump(profiles, f, default_flow_style=False)
+    _write_yaml_atomic(APERO_PROFILES_FILE, profiles)
     # Invalidate in-process cache so the next read returns the new data.
     with _profiles_lock:
         _profiles_cache.clear()
@@ -1006,8 +1036,7 @@ def load_db_access() -> dict:
 def save_db_access(data: dict) -> None:
     """Save DB access configuration to db_access.yaml."""
     ensure_ari_directory()
-    with open(DB_ACCESS_FILE, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
+    _write_yaml_atomic(DB_ACCESS_FILE, data)
 
 
 def load_db_tunnels() -> dict:
@@ -1047,15 +1076,8 @@ def save_db_tunnels(data: dict) -> None:
     local_databases = payload.get("local_databases", {})
     if not isinstance(local_databases, dict):
         local_databases = {}
-    with open(DB_TUNNELS_FILE, "w") as f:
-        yaml.dump(
-            {
-                "tunnels": tunnels,
-                "local_databases": local_databases,
-            },
-            f,
-            default_flow_style=False,
-        )
+    tunnel_data = {"tunnels": tunnels, "local_databases": local_databases}
+    _write_yaml_atomic(DB_TUNNELS_FILE, tunnel_data)
 
 
 def validate_path_exists(path_str: str, kind: str = "dir") -> dict:
@@ -1304,8 +1326,7 @@ def save_science_groups(instrument: str, groups: Dict[str, dict]) -> None:
     """Save science groups for an instrument."""
     ensure_ari_directory()
     path = _sci_groups_file(instrument)
-    with open(path, "w") as f:
-        yaml.dump(groups, f, default_flow_style=False)
+    _write_yaml_atomic(path, groups)
 
 
 def get_users_for_instrument(instrument: str) -> List[str]:

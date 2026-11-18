@@ -1476,6 +1476,22 @@
     if (btnCoords) {
         btnCoords.addEventListener('click', _resolveByCoords);
     }
+
+    // Deep link (e.g. from "Unresolved objects"): ?rt_name=NAME&rt_run=1
+    //   opens the resolve-by-name tab with the name filled in and,
+    //   with rt_run=1, runs the lookup straight away.
+    (function applyResolveQueryParams() {
+        var params = new URLSearchParams(window.location.search || '');
+        var requested = (params.get('rt_name') || '').trim();
+        if (!requested || !nameInput) return;
+        ['resolve-target', 'rt-tab-name'].forEach(function (id) {
+            var tabButton = document.getElementById(id);
+            if (tabButton) tabButton.click();
+        });
+        nameInput.value = requested;
+        nameInput.scrollIntoView({ block: 'center' });
+        if (params.get('rt_run') === '1') _resolveByName();
+    })();
     var btnFilter = document.getElementById('rt-resolve-filter');
     if (btnFilter) {
         btnFilter.addEventListener('click', _resolveByFilter);

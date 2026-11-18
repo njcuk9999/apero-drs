@@ -319,6 +319,50 @@ def _resolve_online_entry(name: str) -> Optional[Dict[str, Any]]:
     return _resolve_online_using_drs(name)
 
 
+def _sheet_row_to_entry(sheet_row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Build an ARI astrometric entry from a legacy sheet row's own values.
+
+    Used when online resolution fails (e.g. SIMBAD unreachable): the legacy
+    v0.7 pipeline used the sheet values directly, so importing them keeps
+    ARI checks in step with the legacy ones. Requires valid RA and Dec.
+
+    :param sheet_row: One legacy sheet row (legacy column names).
+    :return: Entry dict, or None when the row has no usable coordinates.
+    """
+    from apero.core import drs_astrometrics as dra
+
+    ra_deg = _as_float(sheet_row.get('RA_DEG'))
+    dec_deg = _as_float(sheet_row.get('DEC_DEG'))
+    if ra_deg is None or dec_deg is None:
+        return None
+    entry: Dict[str, Any] = dict()
+    dra._full_resolve_schema(entry)
+    # Copy every value/source pair the sheet holds.
+    blocks = [('RA', 'RA_DEG', 'RA_SOURCE'), ('DEC', 'DEC_DEG', 'DEC_SOURCE'),
+              ('PMRA', 'PMRA', 'PMRA_SOURCE'), ('PMDE', 'PMDE', 'PMDE_SOURCE'),
+              ('PLX', 'PLX', 'PLX_SOURCE'), ('RV', 'RV', 'RV_SOURCE'),
+              ('TEFF', 'TEFF', 'TEFF_SOURCE')]
+    for block, value_col, source_col in blocks:
+        value = _as_float(sheet_row.get(value_col))
+        if value is None:
+            continue
+        source = str(sheet_row.get(source_col) or '').strip()
+        entry[block]['value'] = value
+        entry[block]['source'] = source or 'legacy-sheet'
+    spt = str(sheet_row.get('SP_TYPE') or '').strip()
+    if spt:
+        entry['SPT']['value'] = spt
+        entry['SPT']['source'] = (str(sheet_row.get('SP_SOURCE') or '')
+                                  .strip() or 'legacy-sheet')
+    epoch = _as_float(sheet_row.get('EPOCH'))
+    entry['EPOCH'] = epoch
+    entry['APERO_NAME'] = str(sheet_row.get('OBJNAME') or '').strip()
+    entry['ORIGINAL_NAME'] = str(sheet_row.get('ORIGINAL_NAME') or '').strip()
+    entry['ALIASES'] = _split_aliases(sheet_row.get('ALIASES'))
+    entry['NOTES'] = str(sheet_row.get('NOTES') or '').strip() or None
+    return entry
+
+
 def _add_sheet_object_to_ari(
     astrom_root: Path,
     sheet_row: Dict[str, Any],
@@ -347,14 +391,23 @@ def _add_sheet_object_to_ari(
             resolved_name = candidate
             break
 
+    # When no name resolves online, fall back to the sheet's own values
+    #   (as the legacy pipeline did) so the target is not left unresolved.
+    from_sheet = False
     if not isinstance(resolved_entry, dict) or len(resolved_entry) == 0:
-        return dict(status='unresolved', name=objname)
+        resolved_entry = _sheet_row_to_entry(sheet_row)
+        if resolved_entry is None:
+            return dict(status='unresolved', name=objname)
+        from_sheet = True
+        resolved_name = objname or original_name
 
     sheet_ra = _as_float(sheet_row.get('RA_DEG'))
     sheet_dec = _as_float(sheet_row.get('DEC_DEG'))
     resolved_ra = _as_float(_nested_value(resolved_entry, 'RA'))
     resolved_dec = _as_float(_nested_value(resolved_entry, 'DEC'))
-    if None not in (sheet_ra, sheet_dec, resolved_ra, resolved_dec):
+    # The coordinate check only makes sense against an online resolution.
+    if not from_sheet and None not in (sheet_ra, sheet_dec, resolved_ra,
+                                       resolved_dec):
         sep_arcsec = dra._sep_arcsec(sheet_ra,
                                      sheet_dec,
                                      resolved_ra,
@@ -397,6 +450,9 @@ def _add_sheet_object_to_ari(
         'Imported from legacy astrometric Google Sheet by '
         'LEGACY_ASTROM_GSHEET task.'
     )
+    if from_sheet:
+        legacy_note += (' Online resolution failed: values copied from '
+                        'the sheet, confirm against SIMBAD/Gaia.')
     if notes:
         resolved_entry['NOTES'] = f'{notes} {legacy_note}'
     else:
@@ -424,8 +480,15 @@ def _add_sheet_object_to_ari(
         'Imported from legacy astrometric Google Sheet. Confirm object '
         'identity and astrometric fields on the resolver page.'
     )
+    if from_sheet:
+        issue_reason = (
+            'Imported from legacy astrometric Google Sheet using the sheet '
+            'values because online resolution failed. Confirm object '
+            'identity and astrometric fields on the resolver page.'
+        )
     if dry_run:
-        return dict(status='would_add_to_ari', name=target_name)
+        return dict(status='would_add_to_ari', name=target_name,
+                    from_sheet=from_sheet)
 
     try:
         issues_core.create_issue(
@@ -451,7 +514,8 @@ def _add_sheet_object_to_ari(
             task_logger('Issue creation failed for {0}: {1}'.format(
                 target_name, exc))
 
-    return dict(status='added_to_ari', name=target_name)
+    return dict(status='added_to_ari', name=target_name,
+                from_sheet=from_sheet)
 
 
 # =============================================================================
@@ -653,6 +717,8 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
         would_add_to_ari: List[str] = []
         unresolved: List[str] = []
         mismatched: List[str] = []
+        # Imports that used the sheet values (online resolution failed).
+        from_sheet_values: List[str] = []
         scan_mark = [0]
         sheet_total = len(sheet_df)
         tlog('Phase 3/3: scanning sheet rows for missing ARI targets.')
@@ -683,6 +749,8 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
             )
             status = result.get('status', '')
             name = str(result.get('name') or row_dict.get('OBJNAME') or '')
+            if result.get('from_sheet'):
+                from_sheet_values.append(name)
             if status == 'added_to_ari':
                 added_to_ari.append(name)
             elif status == 'would_add_to_ari':
@@ -757,6 +825,8 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
                 len(would_add_to_ari)
             ),
             '- Unresolved sheet entries: {0}'.format(len(unresolved)),
+            '- Imported from sheet values (online resolve failed): {0}'
+            .format(len(from_sheet_values)),
             '- Coordinate mismatches: {0}'.format(len(mismatched)),
             '- LP_416M570 detected as pending add: {0}'.format(
                 'yes' if lp_needs_sync else 'no'
@@ -799,12 +869,13 @@ class LegacyAstromGSheetTask(apero_async.AperoAsyncTask):
         tlog(
             'LEGACY_ASTROM_GSHEET completed. '
             'sheet_add={0}, ari_add={1}, ari_would_add={2}, '
-            'unresolved={3}, mismatch={4}'.format(
+            'unresolved={3}, mismatch={4}, from_sheet_values={5}'.format(
                 len(added_to_sheet),
                 len(added_to_ari),
                 len(would_add_to_ari),
                 len(unresolved),
                 len(mismatched),
+                len(from_sheet_values),
             )
         )
 

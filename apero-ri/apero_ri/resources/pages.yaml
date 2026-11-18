@@ -78,6 +78,18 @@ home.astrometrics:
     top-level: True
     show: True
 
+# Raw-data object names the ASTROM check could not resolve (monitor and up)
+home.astrometrics.unresolved:
+  label: Unresolved objects
+  parent: home.astrometrics
+  view-permission: view.astrometrics.unresolved
+  icon: fa-solid fa-circle-question
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.search:
   label: Search
   parent: home

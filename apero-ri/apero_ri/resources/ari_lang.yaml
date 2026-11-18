@@ -1020,3 +1020,63 @@ User information unavailable.:
 "updated":
   FR: mis à jour
   ES: actualizado
+"multiple":
+  FR: multiples
+  ES: múltiples
+"all nights":
+  FR: toutes les nuits
+  ES: todas las noches
+"all checks":
+  FR: toutes les vérifications
+  ES: todas las comprobaciones
+"Nights in this run":
+  FR: Nuits de cette exécution
+  ES: Noches de esta ejecución
+"Checks in this run":
+  FR: Vérifications de cette exécution
+  ES: Comprobaciones de esta ejecución
+"Unresolved objects":
+  FR: Objets non résolus
+  ES: Objetos no resueltos
+"Object names in raw files that the ASTROM check could not resolve in the astrometric database, for the instruments you have access to.":
+  FR: "Noms d'objets des fichiers bruts que la vérification ASTROM n'a pas pu résoudre dans la base astrométrique, pour les instruments auxquels vous avez accès."
+  ES: "Nombres de objetos en archivos brutos que la comprobación ASTROM no pudo resolver en la base astrométrica, para los instrumentos a los que tiene acceso."
+"{n} night(s) have an ASTROM failure recorded before object names were stored. Re-run the ASTROM check for those nights to list their objects here.":
+  FR: "{n} nuit(s) ont un échec ASTROM enregistré avant que les noms d'objets ne soient stockés. Relancez la vérification ASTROM pour ces nuits afin d'afficher leurs objets ici."
+  ES: "{n} noche(s) tienen un fallo ASTROM registrado antes de que se guardaran los nombres de objetos. Vuelva a ejecutar la comprobación ASTROM en esas noches para ver sus objetos aquí."
+"Filter by name, instrument or night...":
+  FR: Filtrer par nom, instrument ou nuit...
+  ES: Filtrar por nombre, instrumento o noche...
+"{n} unresolved object(s)":
+  FR: "{n} objet(s) non résolu(s)"
+  ES: "{n} objeto(s) no resuelto(s)"
+"{n} resolved since the check ran":
+  FR: "{n} résolu(s) depuis la vérification"
+  ES: "{n} resuelto(s) desde la comprobación"
+"Refresh":
+  FR: Actualiser
+  ES: Actualizar
+"Object name":
+  FR: Nom de l'objet
+  ES: Nombre del objeto
+"Nights":
+  FR: Nuits
+  ES: Noches
+"Files":
+  FR: Fichiers
+  ES: Archivos
+"Resolver message":
+  FR: Message du résolveur
+  ES: Mensaje del resolutor
+"Action":
+  FR: Action
+  ES: Acción
+"(+{n} more)":
+  FR: "(+{n} de plus)"
+  ES: "(+{n} más)"
+"Resolve":
+  FR: Résoudre
+  ES: Resolver
+"No unresolved objects for your instruments.":
+  FR: Aucun objet non résolu pour vos instruments.
+  ES: No hay objetos sin resolver para sus instrumentos.

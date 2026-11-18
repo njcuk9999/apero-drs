@@ -13,7 +13,7 @@ Created on 2024-01-01
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
 import yaml
 from apero_ri.base import base
@@ -598,6 +598,7 @@ def get_sidebar_tree(
     user_permissions: Set[str],
     pages: Dict[str, dict],
     active_page_id: str,
+    sort_direction: Optional[Callable[[str], str]] = None,
 ) -> List[dict]:
     """
     Build a flat sidebar tree for all descendants of *root_id*.
@@ -608,6 +609,10 @@ def get_sidebar_tree(
     :param user_permissions: set of str, resolved user permissions
     :param pages: dict, all page definitions from pages.yaml
     :param active_page_id: str, the currently active page ID
+    :param sort_direction: optional callable returning 'asc' or 'desc' for
+                           a parent page ID; children are then sorted by
+                           label like the cards on that parent's page.
+                           When None, pages.yaml order is kept.
 
     :return: list of node dicts with keys id, label, icon, url,
              depth, active, expanded, has_children
@@ -623,6 +628,15 @@ def get_sidebar_tree(
         :return: None. Adds visible child entries to ``result``.
         """
         children = get_children(parent_id, pages)
+        # Match the card order of the parent page (label, asc/desc).
+        if sort_direction is not None:
+            children = sorted(
+                children,
+                key=lambda cid: str(
+                    pages[cid].get("label", "") or ""
+                ).casefold(),
+                reverse=sort_direction(parent_id) == "desc",
+            )
         for child_id in children:
             child_def = pages[child_id]
             if not is_side_nav_shown(child_def):

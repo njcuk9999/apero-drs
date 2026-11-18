@@ -309,8 +309,14 @@ def append_profile_check_history(
     obsdir: str = "",
     check_key: str = "",
     task_mode: str = "",
+    obsdirs: Optional[List[str]] = None,
+    check_keys: Optional[List[str]] = None,
 ) -> None:
-    """Append one entry to the per-profile APERO-check history file."""
+    """Append one entry to the per-profile APERO-check history file.
+
+    ``obsdir``/``check_key`` hold the first night/check; ``obsdirs`` and
+    ``check_keys`` hold every night/check of a batch run.
+    """
     try:
         path = _profile_history_file_path(profile_id)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -324,6 +330,8 @@ def append_profile_check_history(
             "obsdir": str(obsdir or ""),
             "check_key": str(check_key or ""),
             "task_mode": str(task_mode or ""),
+            "obsdirs": [str(item) for item in (obsdirs or [])],
+            "check_keys": [str(item) for item in (check_keys or [])],
         }
         if duration_seconds is not None:
             payload["duration_seconds"] = round(float(duration_seconds), 3)
@@ -360,6 +368,9 @@ def get_profile_check_history(profile_id: str,
                     "check_key": str(row.get("check_key", "")),
                     "task_mode": str(row.get("task_mode", "")),
                     "duration_seconds": row.get("duration_seconds"),
+                    # Every night/check of batch runs.
+                    "obsdirs": list(row.get("obsdirs") or []),
+                    "check_keys": list(row.get("check_keys") or []),
                 })
             except Exception:
                 continue
@@ -821,27 +832,23 @@ def _execute_task(_inst: str, task_id: str) -> None:
                     filters.get("APERO_PROFILE_INCLUDE", "") or ""
                 ).strip()
                 if profile_id:
-                    # Decode obsdir/check from task_id slug
-                    # Format: manual_apero_check__{profile}__{obsdir}__
-                    # {mode}__{check}__uuid
-                    parts = task_id.split("__")
-                    # parts[0]='manual_apero_check', parts[1]=profile_slug,
-                    # parts[2]=obsdir, parts[3]=mode, parts[4]=check,
-                    # parts[5]=uuid
-                    obs_dir = ""
-                    check_key = ""
-                    task_mode = ""
-                    if len(parts) >= 4:
-                        obs_dir = parts[2].replace("_", "-")
-                    if len(parts) >= 5:
-                        task_mode = parts[3]
-                    if len(parts) >= 6:
-                        check_key_raw = parts[4]
-                        check_key = (
-                            ""
-                            if check_key_raw.lower() == "all"
-                            else check_key_raw.upper()
-                        )
+                    # Record every requested night and check from the
+                    #   task config (batch runs hold many of each).
+                    obs_dirs = [str(item).strip() for item in
+                                task_cfg.get("obs_dirs", []) or []
+                                if str(item or "").strip()]
+                    check_keys = [str(item).strip().upper() for item in
+                                  task_cfg.get("checks", []) or []
+                                  if str(item or "").strip()]
+                    obs_dir = obs_dirs[0] if obs_dirs else ""
+                    check_key = check_keys[0] if check_keys else ""
+                    # No obsdirs means every night (full-profile rerun).
+                    if not obs_dirs:
+                        task_mode = "full_profile"
+                    elif check_keys:
+                        task_mode = "check"
+                    else:
+                        task_mode = "night"
                     append_profile_check_history(
                         profile_id=profile_id,
                         task_id=task_id,
@@ -853,6 +860,8 @@ def _execute_task(_inst: str, task_id: str) -> None:
                         obsdir=obs_dir,
                         check_key=check_key,
                         task_mode=task_mode,
+                        obsdirs=obs_dirs,
+                        check_keys=check_keys,
                     )
             except Exception:
                 pass

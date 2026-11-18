@@ -231,12 +231,68 @@
     background: #0d2818;
     color: #3fb950;
 }
+/* "multiple (N)" button for runs with many nights/checks. */
+.acq-multi-btn {
+    background: none;
+    border: 1px dashed var(--ari-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    color: var(--ari-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.acq-multi-btn:hover { background: var(--ari-surface-muted); }
+
+/* Night/check list overlay. */
+.acq-list-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.acq-list-overlay[hidden] { display: none; }
+.acq-list-panel {
+    position: relative;
+    z-index: 1;
+    width: min(36rem, 96vw);
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 0.9rem 1rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--ari-border);
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+}
+.acq-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+.acq-list-head h3 { margin: 0; font-size: 1.05rem; }
+.acq-list-items {
+    margin: 0;
+    padding-left: 1.2rem;
+    columns: 3 9rem;
+    word-break: break-word;
+}
+@media (max-width: 768px) {
+    .acq-multi-btn { min-height: 44px; }
+    .acq-list-head .acq-log-btn { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 600px) {
+    .acq-list-items { columns: 1; }
+}
+
 [data-theme="dark"] .acq-table th {
     background: var(--ari-surface-muted, #1c2128);
     color: var(--ari-text-muted);
 }
 </style>
-<script src="{{ url_for('static', filename='js/apero_checks_queue.js') }}?v=20260610a"
+<script src="{{ url_for('static', filename='js/apero_checks_queue.js') }}?v=20261118a"
         defer></script>
 {% endblock %}
 
@@ -405,8 +461,30 @@
     </div>
 </div>
 
+<div id="acq-list-overlay" class="acq-list-overlay" hidden>
+    <div class="acq-log-backdrop" data-acq-list-close></div>
+    <div class="acq-list-panel" role="dialog" aria-modal="true"
+         aria-labelledby="acq-list-title">
+        <div class="acq-list-head">
+            <h3 id="acq-list-title"></h3>
+            <button type="button" class="acq-log-btn" data-acq-list-close
+                    aria-label="{{ _('Close') }}">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <ul id="acq-list-items" class="acq-list-items"></ul>
+    </div>
+</div>
+
 <script>
 window.ARI_APERO_CHECKS_QUEUE = {
+    text: {
+        multiple: {{ _('multiple')|string|tojson }},
+        allNights: {{ _('all nights')|string|tojson }},
+        allChecks: {{ _('all checks')|string|tojson }},
+        nightsTitle: {{ _('Nights in this run')|string|tojson }},
+        checksTitle: {{ _('Checks in this run')|string|tojson }}
+    },
     profileId: {{ profile_id|tojson }},
     statusUrl: {{ url_for('api_apero_checks_queue_status', profile_id=profile_id)|tojson }},
     cancelUrl: {{ url_for('api_apero_checks_queue_cancel_task', profile_id=profile_id)|tojson }},

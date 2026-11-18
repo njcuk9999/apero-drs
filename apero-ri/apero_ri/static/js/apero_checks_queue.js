@@ -92,21 +92,102 @@
             + encodeURIComponent(key);
     }
 
+    // Lists with fewer than this many items are shown inline.
+    var MAX_INLINE_ITEMS = 5;
+    // Translated labels passed from the template.
+    var text = cfg.text || {};
+
+    // Return the full list for one row field (falls back to the single
+    // value recorded by older history entries).
+    function rowList(row, listKey, singleKey) {
+        var list = row[listKey];
+        if (Array.isArray(list) && list.length) {
+            return list.map(function (item) { return String(item); });
+        }
+        var single = String(row[singleKey] || '').trim();
+        return single ? [single] : [];
+    }
+
+    function noteHtml(label) {
+        return '<span class="acq-note">' + esc(label) + '</span>';
+    }
+
+    function obsdirLinkHtml(obsdir) {
+        var href = obsdirHref(obsdir);
+        if (!href) return esc(obsdir);
+        return '<a href="' + href + '">' + esc(obsdir) + '</a>';
+    }
+
+    // Link a check to its page when the run covers exactly one night.
+    function checkLinkHtml(night, checkKey) {
+        var href = night ? checkHref(night, checkKey) : '';
+        if (!href) return '<code>' + esc(checkKey) + '</code>';
+        return '<a href="' + href + '">' + esc(checkKey) + '</a>';
+    }
+
+    // Button that opens the full list of a long night/check selection.
+    function multipleButton(kind, items, night) {
+        return '<button type="button" class="acq-multi-btn"'
+            + ' data-acq-list-kind="' + esc(kind) + '"'
+            + ' data-acq-list-night="' + esc(night || '') + '"'
+            + ' data-acq-list="' + esc(JSON.stringify(items)) + '">'
+            + esc(text.multiple || 'multiple') + ' (' + items.length + ')'
+            + '</button>';
+    }
+
     function linkedObsdir(row) {
-        var value = String(row.obsdir || '').trim();
-        var href = obsdirHref(value);
-        if (!value || !href) return esc(value);
-        return '<a href="' + href + '">' + esc(value) + '</a>';
+        var nights = rowList(row, 'obsdirs', 'obsdir');
+        if (!nights.length) return noteHtml(text.allNights || 'all nights');
+        if (nights.length >= MAX_INLINE_ITEMS) {
+            return multipleButton('obsdirs', nights, '');
+        }
+        return nights.map(obsdirLinkHtml).join(', ');
     }
 
     function linkedCheck(row) {
-        var raw = String(row.check_key || '').trim();
-        var label = raw || 'all checks';
-        var href = checkHref(row.obsdir || '', raw);
-        if (!href) {
-            return raw ? esc(raw) : '<span class="acq-note">all checks</span>';
+        var checks = rowList(row, 'check_keys', 'check_key');
+        var nights = rowList(row, 'obsdirs', 'obsdir');
+        // Check links need a single night to point at.
+        var night = nights.length === 1 ? nights[0] : '';
+        if (!checks.length) {
+            var allLabel = text.allChecks || 'all checks';
+            var href = night ? obsdirHref(night) : '';
+            if (!href) return noteHtml(allLabel);
+            return '<a href="' + href + '">' + esc(allLabel) + '</a>';
         }
-        return '<a href="' + href + '">' + esc(label) + '</a>';
+        if (checks.length >= MAX_INLINE_ITEMS) {
+            return multipleButton('checks', checks, night);
+        }
+        return checks.map(function (key) {
+            return checkLinkHtml(night, key);
+        }).join(', ');
+    }
+
+    // Show every night or check of one run in the list overlay.
+    function openListOverlay(kind, items, night) {
+        var overlay = document.getElementById('acq-list-overlay');
+        var title = document.getElementById('acq-list-title');
+        var list = document.getElementById('acq-list-items');
+        if (!overlay || !list) return;
+        var isNights = kind === 'obsdirs';
+        if (title) {
+            title.textContent = (isNights
+                ? (text.nightsTitle || 'Nights in this run')
+                : (text.checksTitle || 'Checks in this run'))
+                + ' (' + items.length + ')';
+        }
+        list.innerHTML = items.map(function (item) {
+            var cell = isNights
+                ? obsdirLinkHtml(item)
+                : checkLinkHtml(night, item);
+            return '<li>' + cell + '</li>';
+        }).join('');
+        overlay.hidden = false;
+    }
+
+    function closeListOverlay() {
+        var overlay = document.getElementById('acq-list-overlay');
+        if (overlay) overlay.hidden = true;
     }
 
     function fmtDuration(seconds) {
@@ -463,6 +544,27 @@
     /* Event delegation                                                     */
     /* ------------------------------------------------------------------ */
     function onTableClick(event) {
+        // "multiple" button: show the full night/check list.
+        var listBtn = event.target.closest('[data-acq-list]');
+        if (listBtn) {
+            var items = [];
+            try {
+                items = JSON.parse(listBtn.getAttribute('data-acq-list'));
+            } catch (err) {
+                items = [];
+            }
+            openListOverlay(
+                String(listBtn.getAttribute('data-acq-list-kind') || ''),
+                Array.isArray(items) ? items : [],
+                String(listBtn.getAttribute('data-acq-list-night') || '')
+            );
+            return;
+        }
+        // Close the list overlay.
+        if (event.target.closest('[data-acq-list-close]')) {
+            closeListOverlay();
+            return;
+        }
         // Cancel button.
         var cancelBtn = event.target.closest('[data-acq-cancel]');
         if (cancelBtn) {
@@ -520,6 +622,9 @@
         }
 
         document.addEventListener('click', onTableClick);
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeListOverlay();
+        });
     }
 
     function startPolling() {

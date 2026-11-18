@@ -4,7 +4,7 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 import os
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
@@ -153,7 +153,7 @@ def _local_data_dirs() -> list:
 # Define check function
 # =============================================================================
 def check_function(instrument: str, obs_dir: str,
-                   aparams: dict, dbparams: dict) -> Tuple[bool, str]:
+                   aparams: dict, dbparams: dict) -> Tuple[Any, ...]:
     """Check that every science-file object name resolves in the astrometric database.
 
     Files are first filtered to science frames.  When ``sci_suffix`` is set
@@ -170,7 +170,8 @@ def check_function(instrument: str, obs_dir: str,
     :param obs_dir: Obsdir identifier currently being validated.
     :param aparams: Hydrated APERO profile parameters.
     :param dbparams: Database parameters (unused by this check body).
-    :return: Tuple of pass flag and formatted report text.
+    :return: Tuple of pass flag and formatted report text, plus a
+             ``details`` dict (``unresolved`` list) when names failed.
     """
     _ = instrument, dbparams
 
@@ -380,7 +381,24 @@ def check_function(instrument: str, obs_dir: str,
     if not passed_lines and not failed_lines:
         return True, f'No science files with object names found in {obs_dir}; nothing to check.'
 
-    return raw_common.build_report(obs_dir, passed_lines, failed_lines)
+    passed, report = raw_common.build_report(obs_dir, passed_lines,
+                                             failed_lines)
+    # Structured list of unresolved names for the astrometrics
+    #   "Unresolved objects" page (stored as ``details`` in the YAML).
+    unresolved = []
+    for obj_key, obj_name in fail_order:
+        fnames = fail_groups[(obj_key, obj_name)]
+        details = [detail for _, detail in fnames if detail]
+        unresolved.append(dict(
+            name=str(obj_name),
+            header_key=str(obj_key),
+            n_files=len(fnames),
+            files=[Path(str(fname)).name for fname, _ in fnames[:5]],
+            resolver=str(details[0]) if details else '',
+        ))
+    if not unresolved:
+        return passed, report
+    return passed, report, dict(unresolved=unresolved)
 
 
 # =============================================================================

@@ -545,8 +545,8 @@ def _simbad_json(adql: str, timeout: int = 30,
     :param timeout: int, request timeout in seconds
     :param url: optional TAP base/sync URL or ordered list of URLs
                 (main then mirrors); defaults to :data:`SIMBAD_TAPS`.
-                With a list, the first responding server is used
-                (checked once per process).
+                With a list, the selected server is tried first and
+                the others are used as fallbacks.
     :return: parsed JSON dict, or ``None`` on failure
     """
     import json
@@ -557,12 +557,19 @@ def _simbad_json(adql: str, timeout: int = 30,
         urls = SIMBAD_TAPS
     else:
         urls = list(url) or SIMBAD_TAPS
-    # pick the first responding server and resolve its sync endpoint
-    selected = drs_simbad.select_simbad_url(urls)
-    endpoint = _to_sync_url(selected, SIMBAD_TAPS[0])
-    # fetch raw bytes
-    raw = _tap_get(endpoint, adql, fmt='json', timeout=timeout)
+    # try the selected server first, then fall back to the other mirrors
+    #   so one server going down mid-run does not break the query
+    raw = None
+    for candidate in drs_simbad.ordered_simbad_urls(urls):
+        endpoint = _to_sync_url(candidate, SIMBAD_TAPS[0])
+        raw = _tap_get(endpoint, adql, fmt='json', timeout=timeout)
+        if raw is not None:
+            # remember the server that answered for the next query
+            drs_simbad.remember_simbad_url(urls, candidate)
+            break
     if raw is None:
+        # every server failed: re-check them all on the next query
+        drs_simbad.forget_simbad_url(urls)
         return None
     # parse JSON
     try:

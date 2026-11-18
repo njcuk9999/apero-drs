@@ -185,6 +185,9 @@ monitor.SPIROU:
   permissions:
       - monitor.SPIROU
       - view.monitor_portal.SPIROU
+      # astrometrics: list raw object names the ASTROM check could not
+      #   resolve (profiles still filtered by the user's instruments)
+      - view.astrometrics.unresolved
       # astrometric catalogue: upload brand-new yaml entries
       - upload.astrometrics
       # astrometric catalogue: edit / rename existing yaml entries
@@ -197,6 +200,7 @@ monitor.NIRPS:
   permissions:
       - monitor.NIRPS
       - view.monitor_portal.NIRPS
+      - view.astrometrics.unresolved
       - upload.astrometrics
       - manage.astrometrics
   groups:

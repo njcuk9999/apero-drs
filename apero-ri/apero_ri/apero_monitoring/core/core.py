@@ -69,6 +69,9 @@ class AperoCheck:
         self.contact_list = dict()
         # optional declarative helper for simple checks
         self.simple_check = None
+        # optional structured results (e.g. unresolved object names) set
+        #   when a check function returns (passed, message, details)
+        self.details = dict()
         # function to run for this check
         # must return a tuple of (passed: bool, message: str)
         self.func = no_function
@@ -91,6 +94,7 @@ class AperoCheck:
         self.message = ''
         self.wrong_instrument = False
         self.passed = False
+        self.details = dict()
         # ---------------------------------------------------------------------
         # deal with check not in instrument
         if instrument not in self.instruments:
@@ -119,13 +123,20 @@ class AperoCheck:
         if self.func is not None:
             debug_log.log('calling check function',
                           getattr(self.func, '__qualname__', self.func))
-            self.passed, self.message = self.func(
+            outs = self.func(
                 instrument=instrument,
                 obs_dir=obs_dir,
                 aparams=aparams,
                 dbparams=dbparams,
             )
+            # Check functions return (passed, message[, details]).
+            self.passed, self.message = outs[0], outs[1]
+            if len(outs) > 2 and isinstance(outs[2], dict):
+                self.details = dict(outs[2])
             debug_log.log('check function returned passed', self.passed)
+            if self.details:
+                debug_log.log('check function returned details',
+                              self.details)
         else:
             self.message = "No function defined for this check"
     
@@ -143,6 +154,9 @@ class AperoCheck:
         # Only persist messages when they are non-empty.
         if str(self.message or '').strip():
             entry['message'] = str(self.message)
+        # Persist structured results when the check provided any.
+        if self.details:
+            entry['details'] = copy.deepcopy(self.details)
         # Route the entry to the correct YAML section.
         bucket = 'passes' if self.passed else 'failures'
         # Return the bucket, key, and payload for the writer.

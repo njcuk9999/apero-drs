@@ -357,6 +357,8 @@
         instruments.forEach(function (instrument) {
             instrumentFilter.add(new Option(instrument, instrument));
         });
+        // Show global tasks by default ("All" stays available).
+        instrumentFilter.value = GLOBAL_SCOPE;
         function changed() {
             updateProfileFilter();
             if (!filteredTasks().some(function (task) { return task.id === selectedTaskId; })) {

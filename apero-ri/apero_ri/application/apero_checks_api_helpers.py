@@ -338,12 +338,18 @@ def _manual_task_meta_from_task_cfg(
     if not isinstance(filters, dict):
         filters = {}
 
-    obsdir = ''
-    if isinstance(obs_dirs, list) and obs_dirs:
-        obsdir = str(obs_dirs[0] or '')
-    check_key = ''
-    if isinstance(checks, list) and checks:
-        check_key = str(checks[0] or '').upper()  # normalise to uppercase
+    # Keep every requested night and check (batch runs hold many).
+    obsdir_list = []
+    if isinstance(obs_dirs, list):
+        obsdir_list = [str(item).strip() for item in obs_dirs
+                       if str(item or '').strip()]
+    check_list = []
+    if isinstance(checks, list):
+        # Normalise check keys to uppercase (matches URLs and templates).
+        check_list = [str(item).strip().upper() for item in checks
+                      if str(item or '').strip()]
+    obsdir = obsdir_list[0] if obsdir_list else ''
+    check_key = check_list[0] if check_list else ''
     profile_id = ''
     include = filters.get('APERO_PROFILE_INCLUDE')
     if isinstance(include, list) and include:
@@ -353,11 +359,17 @@ def _manual_task_meta_from_task_cfg(
 
     mode = 'single_check' if check_key else 'full_obsdir'
     label = 'Individual test re-run' if check_key else 'Full obsdir re-run'
+    # No obsdirs means every night of the profile is re-run.
+    if not obsdir_list:
+        mode = 'full_profile'
+        label = 'Full profile re-run'
     return {
         'mode': mode,
         'label': label,
         'obsdir': obsdir,
         'check_key': check_key,
+        'obsdirs': obsdir_list,
+        'check_keys': check_list,
         'profile_id': profile_id,
     }
 
@@ -483,6 +495,8 @@ def _queue_status_payload(
                 'task_label': task_meta.get('label'),
                 'obsdir': task_meta.get('obsdir'),
                 'check_key': task_meta.get('check_key'),
+                'obsdirs': task_meta.get('obsdirs'),
+                'check_keys': task_meta.get('check_keys'),
             })
 
     # Gather queued tasks from BOTH queues.
@@ -519,6 +533,8 @@ def _queue_status_payload(
             'task_label': task_meta.get('label'),
             'obsdir': task_meta.get('obsdir'),
             'check_key': task_meta.get('check_key'),
+            'obsdirs': task_meta.get('obsdirs'),
+            'check_keys': task_meta.get('check_keys'),
         })
 
     # Use per-profile persistent history (separate from the global async file).
@@ -536,6 +552,8 @@ def _queue_status_payload(
             label = stored_check
         elif stored_mode == 'night':
             label = 'Full night'
+        elif stored_mode == 'full_profile':
+            label = 'All nights'
         else:
             label = stored_mode or 'run'
         history.append({
@@ -550,6 +568,9 @@ def _queue_status_payload(
             'task_label': label,
             'obsdir': stored_obsdir,
             'check_key': stored_check,
+            # Full lists recorded for batch runs.
+            'obsdirs': list(row.get('obsdirs') or []),
+            'check_keys': list(row.get('check_keys') or []),
         })
 
     return {

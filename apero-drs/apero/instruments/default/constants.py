@@ -109,14 +109,16 @@ cgroup = 'ASTROM'
 CDict.add_group(cgroup, description='ASTROMETRIC DATABASE SETTINGS')
 
 # Define the SIMBAD TAP URLs for astrometric resolution: main server first,
-#   then mirrors. The first responding server is used (checked once per
-#   process)
+#   then mirrors. The first responding server is remembered for the
+#   session (a restart tries the main server again) and failed queries fall
+#   back to the next server
 CDict.add('SIMBAD_TAPURLS', value=None, dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define the SIMBAD TAP URLs for astrometric '
                       'resolution: main server first, then mirrors. The '
-                      'first responding server is used (checked once per '
-                      'process). Used by core.drs_astrometrics and the '
+                      'first responding server is remembered for the '
+                      'session (a restart tries the main server again) and '
+                      'failed queries fall back to the next server. Used by core.drs_astrometrics and the '
                       'astroquery SIMBAD calls in apero_astrometrics')
 
 # Define the Gaia TAP URL for astrometric resolution

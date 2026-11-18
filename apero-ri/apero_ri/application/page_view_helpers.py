@@ -1694,6 +1694,14 @@ def make_page_view(
             context['geoip_csrf_token'] = session.setdefault(
                 'geoip_install_csrf', secrets.token_urlsafe(32))
 
+        if page_id == "home.astrometrics.unresolved" and user_info:
+            # Unresolved ASTROM names for the user's accessible profiles
+            #   (view permission already checked above).
+            from apero_ri.application import (
+                astrometrics_unresolved_helpers as auh,
+            )
+            context["unresolved"] = auh.collect_unresolved(app, user_info)
+
         if page_id == "home.astrometrics":
             try:
                 from pathlib import Path as _Path

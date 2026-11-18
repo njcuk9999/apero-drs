@@ -3,10 +3,14 @@
 """
 SIMBAD server selection with mirror fallback
 
-Checks (once per process) which SIMBAD TAP server in an ordered list is
-responding and returns it, so callers can fall back to a mirror (e.g.
-Harvard) when the main CDS server is down. Also points astroquery's
-SIMBAD client at the selected server.
+Checks which SIMBAD TAP server in an ordered list is responding and
+returns it, so callers can fall back to a mirror (CfA Harvard, IDIA) when
+the main CDS server is down. The choice is remembered in memory for the
+rest of the session (process) only, so every server restart tries CDS
+first again. ``ordered_simbad_urls`` gives a per-query fallback order:
+when the remembered server fails, the next one that answers is
+remembered instead. Also points astroquery's SIMBAD client at the
+selected server.
 
 Created on 2026-11-03
 
@@ -32,16 +36,19 @@ __version__ = base.__version__
 __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
-# default SIMBAD TAP servers: main server first, then mirrors
+# default SIMBAD TAP servers: main server (CDS) first, then the official
+#   mirrors at CfA Harvard and IDIA (South Africa)
 SIMBAD_TAP_URLS = ['https://simbad.cds.unistra.fr/simbad/sim-tap',
-                   'https://simbad.harvard.edu/simbad/sim-tap']
+                   'https://simbad.cfa.harvard.edu/simbad/sim-tap',
+                   'https://simbad.idia.ac.za/simbad/sim-tap']
 # tiny query used to test whether a SIMBAD TAP server responds
 TEST_ADQL = 'SELECT TOP 1 oid FROM basic'
 # default timeout (seconds) for the up-check of each server
 CHECK_TIMEOUT = 10.0
 # user-agent for the up-check request
 USER_AGENT = 'apero-simbad-check/1.0'
-# {tuple of candidate urls -> selected url} (one check per process)
+# {tuple of candidate urls -> selected url}; in memory only, so it lasts
+#   for this session (process) and a restart tries the main server again
 _SELECTED_URL: Dict[Tuple[str, ...], str] = dict()
 
 
@@ -81,9 +88,10 @@ def select_simbad_url(urls: Optional[Sequence[str]] = None,
     """
     Return the first responding SIMBAD TAP url from ``urls``.
 
-    The check is done only once per process for a given list of urls;
-    later calls return the cached choice. If no server responds the
-    first url is returned (so callers fail as they did before).
+    The servers are checked in order (main server first) the first time
+    a list of urls is used in this session; the choice is then remembered
+    for the rest of the session (process). If no server responds the first
+    url is returned (so callers fail as they did before).
 
     :param urls: ordered list of TAP urls (main first, then mirrors);
                  defaults to :data:`SIMBAD_TAP_URLS`
@@ -99,7 +107,7 @@ def select_simbad_url(urls: Optional[Sequence[str]] = None,
     key = tuple(str(url).strip() for url in urls)
     if len(key) == 0:
         raise ValueError('No SIMBAD urls given')
-    # only check once per process
+    # reuse the choice made earlier in this session
     if key in _SELECTED_URL:
         return _SELECTED_URL[key]
     # default to the main server if nothing responds
@@ -113,6 +121,53 @@ def select_simbad_url(urls: Optional[Sequence[str]] = None,
     # cache and return
     _SELECTED_URL[key] = selected
     return selected
+
+
+def remember_simbad_url(urls: Sequence[str], url: str) -> None:
+    """
+    Record that ``url`` just answered a query for this list of urls.
+
+    :param urls: ordered list of TAP urls (as passed to select_simbad_url)
+    :param url: str, the url that worked
+
+    :return: None
+    """
+    key = tuple(str(item).strip() for item in urls)
+    _SELECTED_URL[key] = str(url).strip()
+
+
+def forget_simbad_url(urls: Sequence[str]) -> None:
+    """
+    Drop the cached choice so the next call re-checks every server.
+
+    Call this when a query on the selected server failed.
+
+    :param urls: ordered list of TAP urls (as passed to select_simbad_url)
+
+    :return: None
+    """
+    key = tuple(str(item).strip() for item in urls)
+    _SELECTED_URL.pop(key, None)
+
+
+def ordered_simbad_urls(urls: Optional[Sequence[str]] = None,
+                        timeout: float = CHECK_TIMEOUT) -> List[str]:
+    """
+    Return all urls with the currently selected server first.
+
+    Callers try each in turn, so a query that fails on the selected
+    server falls back to the remaining mirrors.
+
+    :param urls: ordered list of TAP urls; defaults to SIMBAD_TAP_URLS
+    :param timeout: float, up-check timeout per server in seconds
+
+    :return: list of str, selected url followed by the others in order
+    """
+    if urls is None:
+        urls = SIMBAD_TAP_URLS
+    key = [str(url).strip() for url in urls]
+    selected = select_simbad_url(key, timeout)
+    return [selected] + [url for url in key if url != selected]
 
 
 def simbad_server(url: str) -> str:

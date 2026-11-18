@@ -63,3 +63,53 @@ def test_simbad_server_extracts_host() -> None:
     assert drs_simbad.simbad_server(url) == 'simbad.harvard.edu'
     assert drs_simbad.simbad_server('simbad.harvard.edu') == (
         'simbad.harvard.edu')
+
+
+def test_choice_lasts_for_the_session(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """The choice is kept for the session; a new session retries main."""
+    state = dict(main_up=False)
+
+    def _fake_is_up(url: str, timeout: float) -> bool:
+        return 'main' not in url or state['main_up']
+
+    monkeypatch.setattr(drs_simbad, 'simbad_tap_is_up', _fake_is_up)
+    urls = ['https://main/sim-tap', 'https://mirror/sim-tap']
+    assert drs_simbad.select_simbad_url(urls) == urls[1]
+    # main comes back: this session keeps the mirror
+    state['main_up'] = True
+    assert drs_simbad.select_simbad_url(urls) == urls[1]
+    # a restart (fresh in-memory cache) tries the main server first
+    monkeypatch.setattr(drs_simbad, '_SELECTED_URL', dict())
+    assert drs_simbad.select_simbad_url(urls) == urls[0]
+
+
+def test_forget_forces_recheck(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Forgetting the choice re-checks every server on the next call."""
+    state = dict(main_up=True)
+    monkeypatch.setattr(
+        drs_simbad, 'simbad_tap_is_up',
+        lambda url, timeout: 'main' not in url or state['main_up'])
+    urls = ['https://main/sim-tap', 'https://mirror/sim-tap']
+    assert drs_simbad.select_simbad_url(urls) == urls[0]
+    state['main_up'] = False
+    drs_simbad.forget_simbad_url(urls)
+    assert drs_simbad.select_simbad_url(urls) == urls[1]
+
+
+def test_ordered_urls_put_selected_first(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fallback order starts with the selected server."""
+    monkeypatch.setattr(drs_simbad, 'simbad_tap_is_up',
+                        lambda url, timeout: 'b' in url)
+    urls = ['https://a/sim-tap', 'https://b/sim-tap', 'https://c/sim-tap']
+    assert drs_simbad.ordered_simbad_urls(urls) == [urls[1], urls[0],
+                                                    urls[2]]
+
+
+def test_default_urls_include_mirrors() -> None:
+    """The default list has the CDS server plus CfA and IDIA mirrors."""
+    hosts = [drs_simbad.simbad_server(url)
+             for url in drs_simbad.SIMBAD_TAP_URLS]
+    assert hosts == ['simbad.cds.unistra.fr', 'simbad.cfa.harvard.edu',
+                     'simbad.idia.ac.za']
