@@ -3,6 +3,7 @@
 """Tests for the per-check APERO-check debug log."""
 import copy
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -233,3 +234,50 @@ def test_debug_overlay_renders() -> None:
     assert 'js/apero_checks_debug_log.js' in html
     assert json.dumps('CALIB_TEST') in html
     assert '"ac-check-view-debug"' in html
+
+
+def _stale_profile() -> dict:
+    """Saved profile that froze an old calib_test into apero-checks."""
+    stale = dict(enabled=True, required_dprtypes=list(OLD_REQUIRED))
+    return {'APERO_INSTRUMENT_PROFILE': PRESET_NAME,
+            'apero-checks': {'calib_test': stale}}
+
+
+def test_auth_hydration_uses_preset_apero_checks() -> None:
+    """Hydrated profiles take apero-checks from the preset, not the save."""
+    from apero_ri.core import auth
+
+    preset = yaml.safe_load(PRESET_FILE.read_text(encoding='utf-8'))
+    hydrated = auth._hydrate_profile_data(_stale_profile(), 'NIRPS_HE')
+    assert hydrated['apero-checks'] == preset['apero-checks']
+
+
+def test_task_runner_hydration_uses_preset_apero_checks() -> None:
+    """Task parameters take apero-checks from the preset, not the save."""
+    from apero_ri.core import task_runner
+
+    preset = yaml.safe_load(PRESET_FILE.read_text(encoding='utf-8'))
+    profiles = dict(NIRPS_HE=dict(rali=_stale_profile()))
+    params = task_runner.build_run_params('NIRPS_HE', '/tmp/ari-test',
+                                          profiles)
+    used = params['APERO_PROFILES']['rali']['apero-checks']
+    assert used == preset['apero-checks']
+
+
+def test_task_runner_preset_cache_follows_mtime(monkeypatch,
+                                                tmp_path: Path) -> None:
+    """An edited preset file is re-read without a server restart."""
+    from apero_ri.core import task_runner
+
+    resources = tmp_path / 'apero_ri' / 'resources' / 'aprofile_instruments'
+    resources.mkdir(parents=True)
+    preset = resources / 'demo.yaml'
+    preset.write_text('value: 1\n', encoding='utf-8')
+    fake_file = tmp_path / 'apero_ri' / 'core' / 'task_runner.py'
+    monkeypatch.setattr(task_runner, '__file__', str(fake_file))
+    assert task_runner._load_aprofile_preset('demo.yaml') == dict(value=1)
+    preset.write_text('value: 2\n', encoding='utf-8')
+    # Force a distinct mtime even on coarse-resolution filesystems.
+    stat = preset.stat()
+    os.utime(preset, (stat.st_atime, stat.st_mtime + 5))
+    assert task_runner._load_aprofile_preset('demo.yaml') == dict(value=2)

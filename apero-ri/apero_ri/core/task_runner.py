@@ -93,7 +93,7 @@ _history_relpath = _async_tasks_rel_dir / "async_history.txt"
 _task_logs_rel_dir = _async_tasks_rel_dir / "task_logs"
 _task_info_rel_dir = _async_tasks_rel_dir / "task_info"
 _task_errors_rel_dir = _async_tasks_rel_dir / "task_errors"
-_aprofile_preset_cache: Dict[str, dict] = {}
+_aprofile_preset_cache: Dict[Any, dict] = {}
 _task_log_paths: Dict[str, str] = {}
 _task_instruments: Dict[str, str] = {}
 _stop_events: Dict[str, threading.Event] = {}
@@ -217,8 +217,6 @@ def _load_aprofile_preset(profile_file: str) -> dict:
     """
     if not profile_file:
         return {}
-    if profile_file in _aprofile_preset_cache:
-        return dict(_aprofile_preset_cache[profile_file])
     resources_dir = (
         Path(__file__).resolve().parents[1]
         / "resources"
@@ -226,8 +224,12 @@ def _load_aprofile_preset(profile_file: str) -> dict:
     )
     path = resources_dir / profile_file
     if not path.is_file():
-        _aprofile_preset_cache[profile_file] = {}
         return {}
+    # Key the cache on the file mtime so edited presets are re-read
+    #   without restarting the server.
+    cache_key = (profile_file, path.stat().st_mtime)
+    if cache_key in _aprofile_preset_cache:
+        return dict(_aprofile_preset_cache[cache_key])
     try:
         with path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
@@ -235,7 +237,7 @@ def _load_aprofile_preset(profile_file: str) -> dict:
             data = {}
     except Exception:
         data = {}
-    _aprofile_preset_cache[profile_file] = data
+    _aprofile_preset_cache[cache_key] = data
     return dict(data)
 
 
@@ -1402,6 +1404,10 @@ def build_run_params(
         preset_data = _load_aprofile_preset(preset_name)
         if isinstance(preset_data, dict) and preset_data:
             _merge_missing(p, preset_data)
+            # apero-checks always come from the preset: a copy stored in
+            #   the saved profile would otherwise hide preset updates.
+            if isinstance(preset_data.get("apero-checks"), dict):
+                p["apero-checks"] = deepcopy(preset_data["apero-checks"])
             # Keep a full copy for debugging/future task use.
             p["APERO_INSTRUMENT_PROFILE_DATA"] = deepcopy(preset_data)
 

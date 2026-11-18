@@ -928,6 +928,12 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
     _merge_missing_profile(out, preset)
     out["APERO_INSTRUMENT_PROFILE_DATA"] = deepcopy(preset)
 
+    # apero-checks: always from instrument resource profile. Saved
+    #   profiles must not carry their own copy (older ARI versions froze
+    #   the whole preset into apero_profiles.yaml, hiding preset updates).
+    if isinstance(preset.get("apero-checks"), dict):
+        out["apero-checks"] = deepcopy(preset.get("apero-checks", {}))
+
     # sci-headers: always from instrument resource profile
     if isinstance(preset.get("sci-headers"), dict):
         out["sci-headers"] = deepcopy(preset.get("sci-headers", {}))
