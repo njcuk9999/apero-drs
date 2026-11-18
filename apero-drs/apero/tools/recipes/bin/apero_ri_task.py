@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Run APERO RI profile tasks as a final APERO processing tool."""
 
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -49,7 +50,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     :param params: Active APERO profile parameters.
     :return: Local execution state used by the APERO recipe wrapper.
     """
-    profile_name = str(params['NAME'] or '').strip()
+    # the APERO profile name is the DRS_UCONFIG directory name
+    uconfig = os.environ.get(params['DRS.USERENV'], '')
+    profile_name = Path(uconfig.rstrip(os.sep)).name.strip()
     profile_path = (Path(params['PATH.OTHER']) / 'ari-config'
                     / f'{profile_name}.yaml')
 
