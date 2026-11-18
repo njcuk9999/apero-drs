@@ -1,0 +1,529 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Plot Cache{% endblock %}
+
+{% block doc_content %}
+<style>
+.ac-card {
+    background: #fff;
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.6rem;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+}
+.ac-card h2 {
+    font-size: 1rem;
+    margin: 0 0 0.8rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ac-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+.ac-toggle-row label { font-weight: 600; }
+.ac-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.ac-switch input { opacity: 0; width: 0; height: 0; }
+.ac-switch .ac-slider {
+    position: absolute; inset: 0;
+    background: #ccc; border-radius: 24px;
+    cursor: pointer; transition: .3s;
+}
+.ac-switch .ac-slider::before {
+    content: "";
+    position: absolute; left: 3px; top: 3px;
+    width: 18px; height: 18px;
+    background: #fff; border-radius: 50%;
+    transition: .3s;
+}
+.ac-switch input:checked + .ac-slider { background: #0b66c3; }
+.ac-switch input:checked + .ac-slider::before { transform: translateX(20px); }
+.ac-loc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+.ac-loc-row input[type="text"] {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 0.35rem;
+    font-size: 0.88rem;
+    font-family: monospace;
+}
+.ac-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+.ac-stat-box {
+    background: var(--op-bg, #f4f7fb);
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.45rem;
+    padding: 0.7rem 0.9rem;
+    text-align: center;
+}
+.ac-stat-box .ac-stat-val {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--op-primary, #0b66c3);
+}
+.ac-stat-box .ac-stat-lbl {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--op-muted, #5f6b78);
+    margin-top: 0.15rem;
+}
+.ac-profile-card {
+    background: var(--op-bg, #f4f7fb);
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.5rem;
+    padding: 1rem 1.1rem;
+    margin-top: 0.7rem;
+}
+.ac-profile-card h3 {
+    font-size: 0.92rem;
+    margin: 0 0 0.6rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ac-section-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.ac-section-table th,
+.ac-section-table td {
+    text-align: left;
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid #e8eaed;
+}
+.ac-section-table th { font-weight: 600; color: var(--op-muted, #5f6b78); }
+.ac-section-table td:nth-child(2),
+.ac-section-table td:nth-child(3) { text-align: right; }
+.ac-section-table th:nth-child(2),
+.ac-section-table th:nth-child(3) { text-align: right; }
+.ac-btn-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+    flex-wrap: wrap;
+}
+.ac-profile-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 0.8rem;
+}
+.ac-profile-tab {
+    border: 1px solid var(--card-border, #d6d9de);
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.ac-profile-tab--active {
+    background: #eaf2fc;
+    border-color: #7ca7dd;
+    color: #0b4f9a;
+    font-weight: 600;
+}
+.ac-profile-card--hidden {
+    display: none;
+}
+.ac-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #333;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.4rem;
+    font-size: 0.88rem;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.ac-toast.ac-show { opacity: 1; pointer-events: auto; }
+[data-theme="dark"] .ac-card {
+    background: #161b22;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ac-slider {
+    background: #30363d !important;
+}
+[data-theme="dark"] .ac-slider::before {
+    background: #8b949e !important;
+}
+[data-theme="dark"] .ac-switch input:checked + .ac-slider {
+    background: #1f6feb !important;
+}
+[data-theme="dark"] .ac-switch input:checked + .ac-slider::before {
+    background: #fff !important;
+}
+[data-theme="dark"] .ac-loc-row input[type="text"] {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+[data-theme="dark"] .ac-stat-box {
+    background: #1c2128;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ac-profile-card {
+    background: #1c2128;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ac-profile-tab {
+    background: #161b22;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+[data-theme="dark"] .ac-profile-tab--active {
+    background: #1a2d4a;
+    border-color: #388bfd;
+    color: #79b8ff;
+}
+[data-theme="dark"] .ac-section-table th,
+[data-theme="dark"] .ac-section-table td {
+    border-bottom-color: #21262d;
+}
+[data-theme="dark"] .ac-toast {
+    background: #21262d;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+}
+</style>
+
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-bolt"></i> Plot Cache</h1>
+</div>
+
+{% if not can_manage %}
+<div class="ari-ae-readonly-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    You have view-only access to cache settings.
+</div>
+{% endif %}
+
+<!-- Settings card -->
+<div class="ac-card">
+    <h2><i class="fa-solid fa-sliders"></i> Settings</h2>
+    <div class="ac-toggle-row">
+        <label for="acEnabled">Enable caching</label>
+        <label class="ac-switch">
+            <input type="checkbox" id="acEnabled"
+                   {{ 'checked' if cache_cfg.enabled else '' }}
+                   {{ 'disabled' if not can_manage else '' }}>
+            <span class="ac-slider"></span>
+        </label>
+        <span id="acStatusBadge" class="ari-ae-status-badge"
+              style="font-size:0.82rem;padding:0.2rem 0.6rem;border-radius:1rem;
+                     background:{{ '#e3f2e8' if cache_cfg.enabled else '#fce4e4' }};
+                     color:{{ '#1a7c3d' if cache_cfg.enabled else '#c0392b' }};">
+            {{ 'Enabled' if cache_cfg.enabled else 'Disabled' }}
+        </span>
+    </div>
+    <div class="ac-loc-row">
+        <label for="acDir" style="font-weight:600;white-space:nowrap;">Cache directory</label>
+        <input type="text" id="acDir" value="{{ cache_cfg.cache_dir or '' }}"
+               placeholder="{{ cache_inventory.cache_dir }}"
+               {{ 'readonly' if not can_manage else '' }}>
+    </div>
+    {% if can_manage %}
+    <div class="ac-btn-row">
+        <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="acSaveSettings()">
+            <i class="fa-solid fa-floppy-disk"></i> Save settings
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Overview card -->
+<div class="ac-card">
+    <h2><i class="fa-solid fa-chart-pie"></i> Overview</h2>
+    <div class="ac-summary-grid">
+        <div class="ac-stat-box">
+            <span class="ac-stat-val" id="acTotalFiles">{{ cache_inventory.total_files }}</span>
+            <span class="ac-stat-lbl">Cached files</span>
+        </div>
+        <div class="ac-stat-box">
+            <span class="ac-stat-val" id="acTotalSize">{{ cache_inventory.total_size }}</span>
+            <span class="ac-stat-lbl">Total size</span>
+        </div>
+        <div class="ac-stat-box">
+            <span class="ac-stat-val" id="acProfiles">{{ cache_inventory.profiles | length }}</span>
+            <span class="ac-stat-lbl">Profiles cached</span>
+        </div>
+    </div>
+    {% if can_manage %}
+    <div class="ac-btn-row" style="margin-top:1rem;">
+        <button class="ari-btn ari-btn--danger ari-btn--sm" onclick="acPurgeAll()">
+            <i class="fa-solid fa-trash-can"></i> Purge all cache
+        </button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="acRefresh()">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Per-profile breakdown -->
+<div class="ac-card">
+    <h2><i class="fa-solid fa-layer-group"></i> Per-profile breakdown</h2>
+    {% if cache_inventory.profiles %}
+    <div id="acProfileTabs" class="ac-profile-tabs" role="tablist" aria-label="Cache profiles">
+        <button type="button" class="ac-profile-tab ac-profile-tab--active"
+                data-profile-tab="all" onclick="acSelectProfileTab('all')">
+            All profiles
+        </button>
+        {% for prof in cache_inventory.profiles %}
+        <button type="button" class="ac-profile-tab"
+                data-profile-tab="{{ prof.instrument }}__{{ prof.profile_id }}"
+                onclick="acSelectProfileTab('{{ prof.instrument }}__{{ prof.profile_id }}')">
+            {{ prof.instrument }} / {{ prof.profile_id }}
+        </button>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div id="acProfileList">
+    {% if cache_inventory.profiles %}
+    {% for prof in cache_inventory.profiles %}
+    <div class="ac-profile-card" data-profile-card="{{ prof.instrument }}__{{ prof.profile_id }}">
+        <h3>
+            <i class="fa-solid fa-server"></i>
+            {{ prof.instrument }} / {{ prof.profile_id }}
+            <span style="margin-left:auto;font-weight:400;font-size:0.82rem;color:var(--op-muted);">
+                {{ prof.total_size }} &middot; {{ prof.total_files }} files
+            </span>
+        </h3>
+        {% if prof.last_cached %}
+        <div style="font-size:0.8rem;color:var(--op-muted);margin-bottom:0.5rem;">
+            Last cached: {{ prof.last_cached }}
+        </div>
+        {% endif %}
+        <table class="ac-section-table">
+            <thead>
+                <tr><th>Section</th><th>Files</th><th>Size</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for sec in cache_sections %}
+                {% set s = prof.sections.get(sec, {}) %}
+                <tr>
+                    <td>{{ sec | replace('_', ' ') | title }}</td>
+                    <td>{{ s.get('files', 0) }}</td>
+                    <td>{{ s.get('size', '0 B') }}</td>
+                    <td style="text-align:center;">
+                        {% if can_manage and s.get('files', 0) > 0 %}
+                        <button class="ari-btn ari-btn--sm" style="padding:0.15rem 0.4rem;font-size:0.78rem;color:#c0392b;background:none;border:none;cursor:pointer;"
+                                title="Purge {{ sec | replace('_', ' ') }} for this profile"
+                                onclick="acPurgeSection('{{ prof.instrument }}', '{{ prof.profile_id }}', '{{ sec }}')">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if prof.timing_stats %}
+        <div style="margin-top:0.8rem;">
+            <div style="font-size:0.82rem;font-weight:600;color:var(--op-muted,#5f6b78);margin-bottom:0.35rem;">
+                Mean plot timing (from cached object plot payloads)
+            </div>
+            <table class="ac-section-table">
+                <thead>
+                    <tr><th>Plot</th><th>Count</th><th>Min (ms)</th><th>Mean (ms)</th><th>Max (ms)</th></tr>
+                </thead>
+                <tbody>
+                {% for t in prof.timing_stats %}
+                    <tr>
+                        <td>{{ t.plot }}</td>
+                        <td style="text-align:right;">{{ t.count }}</td>
+                        <td style="text-align:right;">{{ t.min_ms }}</td>
+                        <td style="text-align:right;">{{ t.mean_ms }}</td>
+                        <td style="text-align:right;">{{ t.max_ms }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="margin-top:0.8rem;font-size:0.82rem;color:var(--op-muted,#5f6b78);">
+            No timing samples yet for this profile.
+        </div>
+        {% endif %}
+        {% if can_manage %}
+        <div class="ac-btn-row">
+            <button class="ari-btn ari-btn--danger ari-btn--sm"
+                    onclick="acPurgeProfile('{{ prof.instrument }}', '{{ prof.profile_id }}')">
+                <i class="fa-solid fa-trash-can"></i> Purge this profile
+            </button>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                    title="Zero timing statistics without deleting cached data"
+                    onclick="acResetTimings('{{ prof.instrument }}', '{{ prof.profile_id }}')">
+                <i class="fa-solid fa-clock-rotate-left"></i> Reset timings
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="color:var(--op-muted);font-size:0.9rem;padding:1rem 0;">
+        No cached data yet.
+    </div>
+    {% endif %}
+    </div>
+</div>
+
+</div><!-- ari-up-shell -->
+
+<div class="ac-toast" id="acToast"></div>
+
+<script>
+var CAN_MANAGE = {{ can_manage | tojson }};
+
+function acToast(msg, ms) {
+    var el = document.getElementById('acToast');
+    el.textContent = msg;
+    el.classList.add('ac-show');
+    clearTimeout(el._tid);
+    el._tid = setTimeout(function(){ el.classList.remove('ac-show'); }, ms || 3000);
+}
+
+function acSaveSettings() {
+    if (!CAN_MANAGE) return;
+    var enabled = document.getElementById('acEnabled').checked;
+    var cacheDir = document.getElementById('acDir').value.trim();
+    fetch('{{ url_for("api_admin_cache_save") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: enabled, cache_dir: cacheDir})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            acToast('Settings saved');
+            var badge = document.getElementById('acStatusBadge');
+            badge.textContent = enabled ? 'Enabled' : 'Disabled';
+            badge.style.background = enabled ? '#e3f2e8' : '#fce4e4';
+            badge.style.color = enabled ? '#1a7c3d' : '#c0392b';
+        } else {
+            acToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(e){ acToast('Network error'); });
+}
+
+function acPurgeAll() {
+    if (!CAN_MANAGE) return;
+    if (!confirm('Purge the entire plot cache? This cannot be undone.')) return;
+    fetch('{{ url_for("api_admin_cache_purge") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({scope: 'all'})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            acToast('Purged ' + d.removed + ' files');
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            acToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(e){ acToast('Network error'); });
+}
+
+function acPurgeProfile(instrument, profileId) {
+    if (!CAN_MANAGE) return;
+    if (!confirm('Purge cache for ' + instrument + '/' + profileId + '?')) return;
+    fetch('{{ url_for("api_admin_cache_purge") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({scope: 'profile', instrument: instrument, profile_id: profileId})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            acToast('Purged ' + d.removed + ' files');
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            acToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(e){ acToast('Network error'); });
+}
+
+function acPurgeSection(instrument, profileId, section) {
+    if (!CAN_MANAGE) return;
+    var label = section.replace(/_/g, ' ');
+    if (!confirm('Purge ' + label + ' cache for ' + instrument + '/' + profileId + '?')) return;
+    fetch('{{ url_for("api_admin_cache_purge") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({scope: 'section', instrument: instrument, profile_id: profileId, section: section})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            acToast('Purged ' + d.removed + ' ' + label + ' files');
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            acToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(e){ acToast('Network error'); });
+}
+
+function acRefresh() {
+    location.reload();
+}
+
+function acSelectProfileTab(profileKey) {
+    var key = String(profileKey || 'all');
+    document.querySelectorAll('[data-profile-tab]').forEach(function (btn) {
+        btn.classList.toggle('ac-profile-tab--active', btn.getAttribute('data-profile-tab') === key);
+    });
+    document.querySelectorAll('[data-profile-card]').forEach(function (card) {
+        var show = (key === 'all') || (card.getAttribute('data-profile-card') === key);
+        card.classList.toggle('ac-profile-card--hidden', !show);
+    });
+}
+
+function acResetTimings(instrument, profileId) {
+    if (!CAN_MANAGE) return;
+    if (!confirm('Reset timing statistics for ' + instrument + '/' + profileId + '?\nCached plot data will NOT be deleted.')) return;
+    fetch('{{ url_for("api_admin_cache_reset_timings") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({instrument: instrument, profile_id: profileId})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            acToast('Timing statistics reset');
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            acToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(e){ acToast('Network error'); });
+}
+</script>
+
+{% endblock %}

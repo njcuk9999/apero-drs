@@ -1,0 +1,100 @@
+{% extends "docs/doc_base.html" %}
+{% block title %}APERO RI – {{ page_label | tl }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" id="hljs-theme-light"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" id="hljs-theme-dark"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer"
+      disabled />
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script>
+(function () {
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark') {
+        document.getElementById('hljs-theme-light').disabled = true;
+        document.getElementById('hljs-theme-dark').disabled = false;
+    }
+})();
+</script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label | tl }}</h1>
+    {% if doc_last_modified %}
+    <p class="ari-page-subtitle" style="font-size:0.82rem;">
+        Last modified: {{ doc_last_modified }}
+    </p>
+    {% endif %}
+    {% if related_topics %}
+    <div class="ari-related-topics">
+        <span class="ari-related-topics__label">Related:</span>
+        {% for topic in related_topics %}
+        <a class="ari-related-topics__pill"
+           href="{{ topic.url }}{{ doc_query_suffix|default('') }}">
+            {{ topic.label }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Rendered documentation content -->
+<article class="ari-doc-content">
+    {{ doc_html|safe }}
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+document.querySelectorAll('.ari-doc-content pre code').forEach(function(el) {
+    if (!el.textContent) {
+        return;
+    }
+    try {
+        hljs.highlightElement(el);
+    } catch (err) {
+        console.warn('Unable to highlight code block', err);
+    }
+});
+</script>
+
+<!-- Mermaid flow diagrams (emitted as <div class="mermaid"> by docs.py) -->
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs';
+// Match the diagram theme to the active ARI colour scheme.
+var docTheme = document.documentElement.getAttribute('data-theme');
+mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: 'strict',
+    theme: (docTheme === 'dark') ? 'dark' : 'default'
+});
+</script>
+
+<!-- KaTeX maths rendering for algorithm pages -->
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"
+        onload="renderMathInElement(document.querySelector('.ari-doc-content'), {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea',
+                          'pre', 'code', 'option'],
+            ignoredClasses: ['mermaid'],
+            throwOnError: false
+        });"></script>
+{% endblock %}

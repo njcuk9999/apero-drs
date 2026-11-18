@@ -1,0 +1,24 @@
+id: 1057dfc7-6824-435e-b8e4-56b475c388ba
+slug: e-00-001-00054-no-good-calibrations-list-of-files-with-metric
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_wave
+action: Check
+type: Expected
+error_code: 00-001-00054
+github_issue: '713.0'
+generic_error: 'E[00-001-00054]: No good calibrations: {list of files with metric}'
+comments: This is likely due to something physical that happened during taking the
+  calibrations. We have seem this when an earthquake occured. One option is to reject
+  some of the calibrations that were bad or all all calibrations to the reject list
+  and this calibration step will be skipped for this night.
+full_example_error: "E[00-001-00054]: No good calibrations:\n\n    2456221a_pp.fits\
+  \ (FP_FP) METRIC=0.9863984046491702\n    2456222a_pp.fits (FP_FP) METRIC=0.9863323433468489\n\
+  \    2456223a_pp.fits (FP_FP) METRIC=0.9863273066701727\n    2456224a_pp.fits (FP_FP)\
+  \ METRIC=0.9863111006275848\n    2456225a_pp.fits (FP_FP) METRIC=0.9863028552009329\n\
+  \    2456405a_pp.fits (FP_FP) METRIC=0.9862583847183283\n    2456406a_pp.fits (FP_FP)\
+  \ METRIC=0.9860802532539256\n    2456407a_pp.fits (FP_FP) METRIC=0.9859028355570758\n\
+  \    2456408a_pp.fits (FP_FP) METRIC=0.9858136208247197\n    2456409a_pp.fits (FP_FP)\
+  \ METRIC=0.9857542515267715"
+updated_at: '2026-05-13 15:54:29'

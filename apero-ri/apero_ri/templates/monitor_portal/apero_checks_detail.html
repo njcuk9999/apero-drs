@@ -1,0 +1,101 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – APERO Checks – {{ profile_id }} / {{ obsdir }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260513a">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-square-check"></i>
+        <a href="{{ url_for('monitor_apero_checks_view') }}"
+           class="ot-breadcrumb-link">APERO Checks</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        <a href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        {{ obsdir }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Detail view for one APERO check YAML file.
+        Use the profile view for filters, pagination, and bulk issue creation.
+    </p>
+</div>
+
+<div class="ac-card ac-card--{{ 'ok' if not failure_cards else 'failed' }}">
+    <div class="ac-card__head">
+        <div class="ac-card__title-group">
+            <span class="ac-card__status">
+                {% if not failure_cards %}
+                <i class="fa-solid fa-circle-check"></i>
+                {% else %}
+                <i class="fa-solid fa-circle-xmark"></i>
+                {% endif %}
+            </span>
+            <div>
+                <div class="ac-card__title">{{ obsdir }}</div>
+                <div class="ac-card__meta">
+                    <span>{{ profile_id }}</span>
+                    <span>{{ checks_file }}</span>
+                </div>
+            </div>
+        </div>
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+           href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="ac-card__failures">
+        {% for failure in failure_cards %}
+        <div class="ac-failure" style="cursor:default;">
+            <span class="ac-failure__name">{{ failure.name }}</span>
+            <span class="ac-failure__type">{{ failure.type }}</span>
+            <span class="ac-failure__msg">{{ failure.message }}</span>
+            <span class="ac-failure__state">
+                {% if failure.is_overridden %}
+                <i class="fa-solid fa-check"></i> override
+                {% elif failure.is_monitored %}
+                <i class="fa-solid fa-bell"></i> monitored
+                {% else %}
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                {% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if check_history %}
+<div class="ac-card" style="margin-top:0.9rem;">
+    <div class="ac-card__title">History</div>
+    <div class="ac-table-wrap" style="max-height: 30rem; margin-top:0.6rem;">
+        <table class="ac-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Source</th>
+                    <th>Comment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in check_history %}
+                <tr>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.user }}</td>
+                    <td>{{ row.source }}</td>
+                    <td>{{ row.comment }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,321 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - {{ page_label | tl }}{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/geoip_database.css') }}?v=20261111c">
+{% endblock %}
+
+{% block doc_content %}
+<main class="gd-page">
+    <header class="gd-heading">
+        <div>
+            <h1>
+                <i class="{{ page_icon }}" aria-hidden="true"></i>
+                {{ page_label | tl }}
+            </h1>
+            <p>{{ geo_labels.INTRO }}</p>
+        </div>
+        <span id="gd-state"
+              class="gd-state {{ 'gd-state--ready' if geoip_status.installed else 'gd-state--empty' }}">
+            <i class="fa-solid {{ 'fa-circle-check' if geoip_status.installed else 'fa-circle-minus' }}"
+               aria-hidden="true"></i>
+            {{ _('Installed') if geoip_status.installed else _('Not installed') }}
+        </span>
+    </header>
+
+    <nav class="gd-tabs" role="tablist" aria-label="{{ page_label | tl }}">
+        <button type="button" role="tab" id="gd-tab-setup" aria-controls="gd-panel-setup" aria-selected="true">{{ geo_labels.SETUP }}</button>
+        <button type="button" role="tab" id="gd-tab-database" aria-controls="gd-panel-database" aria-selected="false" tabindex="-1">{{ geo_labels.DATABASE }}</button>
+        <button type="button" role="tab" id="gd-tab-network" aria-controls="gd-panel-network" aria-selected="false" tabindex="-1">{{ geo_labels.NETWORK }}</button>
+    </nav>
+    <div id="gd-panel-setup" role="tabpanel" aria-labelledby="gd-tab-setup">
+        <section class="gd-section">
+            <h2>{{ geo_labels.SETUP }}</h2>
+            <p>{{ geo_labels.STEPS }}</p>
+            <p>{{ geo_labels.PRIVACY }}</p>
+        </section>
+    </div>
+    <div id="gd-panel-network" role="tabpanel" aria-labelledby="gd-tab-network" hidden>
+        <section class="gd-section">
+            <h2>{{ geo_labels.NETWORK }}</h2>
+            <p class="gd-warning">{{ geo_labels.WARNING }}</p>
+            <p>{{ geo_labels.DIRECT }}</p>
+            <p>{{ geo_labels.ONE }}</p>
+            <p>{{ geo_labels.MANY }}</p>
+            <form id="gd-network-form" class="gd-form">
+                <label for="gd-proxy-count">{{ geo_labels.COUNT }}</label>
+                <input id="gd-proxy-count" type="number" min="0" max="10" step="1" value="{{ geoip_proxy_count }}" required>
+                <p>{{ geo_labels.ACTIVE }}: <strong>{{ geoip_active_proxy_count }}</strong> · {{ geo_labels.SAVED }}: <strong id="gd-proxy-saved">{{ geoip_proxy_count }}</strong></p>
+                <p>{{ geo_labels.RESTART }}</p>
+                <button class="ari-btn ari-btn--primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{ geo_labels.SAVE }}</button>
+                <p id="gd-network-status" role="status" aria-live="polite"></p>
+            </form>
+            <p>{{ geo_labels.OTHER }}</p>
+        </section>
+    </div>
+    <div id="gd-panel-database" role="tabpanel" aria-labelledby="gd-tab-database" hidden>
+    <section class="gd-section" aria-labelledby="gd-database-heading">
+        <h2 id="gd-database-heading">{{ _('Database status') }}</h2>
+        <p id="gd-health-result"
+           class="gd-health{% if geoip_health.status == 'warning' %} gd-health--warning{% endif %}"
+           role="status">{{ geoip_health.message | tl }}</p>
+        <dl class="gd-facts">
+            <div class="gd-fact gd-fact--path">
+                <dt>{{ _('Database location') }}</dt>
+                <dd><code id="gd-path">{{ geoip_status.database_path }}</code></dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Last successful update') }}</dt>
+                <dd id="gd-last-success">
+                    {{ geoip_status.last_success_at or _('Never') }}
+                </dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Last download attempt') }}</dt>
+                <dd id="gd-last-attempt">
+                    {{ geoip_status.last_attempt_at or _('Never') }}
+                </dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Requests today') }}</dt>
+                <dd id="gd-requests-today">
+                    {{ geoip_status.requests_today }} / 3
+                </dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Total download requests') }}</dt>
+                <dd id="gd-requests-total">{{ geoip_status.total_requests }}</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="gd-section" aria-labelledby="gd-preview-heading">
+        <h2 id="gd-preview-heading">{{ _('Database preview') }}</h2>
+        {% if geoip_status.preview %}
+        <dl class="gd-facts gd-facts--preview">
+            <div class="gd-fact">
+                <dt>{{ _('Edition') }}</dt>
+                <dd>{{ geoip_status.preview.database_type }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Build date') }}</dt>
+                <dd>{{ geoip_status.preview.build_date }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('IP version') }}</dt>
+                <dd>{{ geoip_status.preview.ip_version }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Database nodes') }}</dt>
+                <dd>{{ '{:,}'.format(geoip_status.preview.node_count) }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Record size') }}</dt>
+                <dd>{{ geoip_status.preview.record_size }}</dd>
+            </div>
+            <div class="gd-fact">
+                <dt>{{ _('Languages') }}</dt>
+                <dd>{{ geoip_status.preview.languages | join(', ') }}</dd>
+            </div>
+        </dl>
+        {% else %}
+        <p class="gd-muted">
+            {{ _('Install the database to preview its build metadata.') }}
+        </p>
+        {% endif %}
+    </section>
+
+    <section class="gd-section" aria-labelledby="gd-health-heading">
+        <h2 id="gd-health-heading">{{ _('Update health check') }}</h2>
+        <p>
+            {{ _('ARI suggests updating if the installed database is more than 30 days old. This check is local only and never contacts MaxMind.') }}
+        </p>
+        <label class="gd-toggle">
+            <input id="gd-health-enabled" type="checkbox"
+                   {% if geoip_status.health_check_enabled %}checked{% endif %}>
+            <span>{{ _('Enable the GeoLite freshness check in Admin Health') }}</span>
+        </label>
+        <p id="gd-health-status" class="gd-muted" role="status"
+           aria-live="polite"></p>
+    </section>
+
+    <section class="gd-section" aria-labelledby="gd-download-heading">
+        <h2 id="gd-download-heading">{{ _('Install or update') }}</h2>
+        <ol class="gd-instructions">
+            <li>
+                <a href="https://www.maxmind.com/en/geolite-free-ip-geolocation-data"
+                   target="_blank" rel="noopener noreferrer">
+                    {{ _('Create a free MaxMind GeoLite account') }}
+                </a>
+            </li>
+            <li>
+                {{ _('Sign in and accept the GeoLite End User License Agreement.') }}
+            </li>
+            <li>
+                <a href="https://www.maxmind.com/en/accounts/current/license-key"
+                   target="_blank" rel="noopener noreferrer">
+                    {{ _('Open Manage License Keys') }}
+                </a>
+            </li>
+            <li>
+                {{ _('Create a license key and enter it below with your account ID.') }}
+            </li>
+        </ol>
+        <p class="gd-muted">
+            {{ _('The account ID and license key are used only for the download. ARI does not save them.') }}
+        </p>
+        <form id="geoip-install-form" class="gd-form"
+              data-api-url="{{ geoip_install_url }}"
+              data-csrf-token="{{ geoip_csrf_token }}">
+            <label>
+                {{ _('MaxMind account ID') }}
+                <input name="account_id" autocomplete="off" required>
+            </label>
+            <label>
+                {{ _('MaxMind license key') }}
+                <input name="license_key" type="password"
+                       autocomplete="new-password" required>
+            </label>
+            <label class="gd-terms">
+                <input name="accept_terms" type="checkbox" required>
+                {{ _('I have permission to download GeoLite and agree to its terms.') }}
+            </label>
+            <button id="gd-download-button"
+                    class="ari-btn ari-btn--primary" type="submit">
+                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                {{ _('Update') if geoip_status.installed else _('Download') }}
+                {{ _('GeoLite database') }}
+            </button>
+            <p id="gd-download-status" role="status" aria-live="polite"
+               hidden></p>
+        </form>
+        <p class="gd-note">
+            {{ _('MaxMind currently limits GeoLite database downloads to 30 per account per day. ARI allows at most 3 attempts per day and enforces a one-hour cooldown.') }}
+        </p>
+    </section>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+(function () {
+    'use strict';
+    var form = document.getElementById('geoip-install-form');
+    var status = document.getElementById('gd-download-status');
+    var button = document.getElementById('gd-download-button');
+    var healthToggle = document.getElementById('gd-health-enabled');
+    var healthStatus = document.getElementById('gd-health-status');
+    var tabs = Array.from(document.querySelectorAll('.gd-tabs [role="tab"]'));
+    function activate(tab) {
+        tabs.forEach(function (item) {
+            var selected = item === tab;
+            item.setAttribute('aria-selected', String(selected));
+            item.tabIndex = selected ? 0 : -1;
+            document.getElementById(item.getAttribute('aria-controls')).hidden = !selected;
+        });
+    }
+    tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () { activate(tab); });
+        tab.addEventListener('keydown', function (event) {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            var direction = event.key === 'ArrowRight' ? 1 : -1;
+            var next = tabs[(index + direction + tabs.length) % tabs.length];
+            activate(next);
+            next.focus();
+        });
+    });
+    document.getElementById('gd-network-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var networkForm = event.currentTarget;
+        var networkStatus = document.getElementById('gd-network-status');
+        var save = networkForm.querySelector('button');
+        save.disabled = true;
+        fetch(form.dataset.apiUrl, {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', 'X-CSRF-Token': form.dataset.csrfToken},
+            body: JSON.stringify({action: 'set_proxy_count', count: Number(document.getElementById('gd-proxy-count').value)})
+        }).then(function (response) {
+            if (!response.ok) throw new Error();
+            return response.json();
+        }).then(function (payload) {
+            document.getElementById('gd-proxy-saved').textContent = payload.count;
+            networkStatus.textContent = {{ geo_labels.SAVED_MSG | tojson }};
+        }).catch(function () {
+            networkStatus.textContent = {{ geo_labels.ERROR | tojson }};
+        }).finally(function () { save.disabled = false; });
+    });
+
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data = new FormData(form);
+        status.hidden = false;
+        status.textContent = {{ _('Downloading and validating GeoLite2 City...') | tojson }};
+        button.disabled = true;
+        fetch(form.dataset.apiUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': form.dataset.csrfToken
+            },
+            body: JSON.stringify({
+                account_id: data.get('account_id'),
+                license_key: data.get('license_key'),
+                accept_terms: data.get('accept_terms') === 'on'
+            })
+        }).then(function (response) {
+            return response.json().then(function (payload) {
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.error ||
+                        {{ _('GeoLite update failed.') | tojson }});
+                }
+                return payload;
+            });
+        }).then(function (payload) {
+            status.textContent = payload.message;
+            window.setTimeout(function () { window.location.reload(); }, 1800);
+        }).catch(function (error) {
+            status.textContent = error.message;
+            button.disabled = false;
+        });
+    });
+
+    healthToggle.addEventListener('change', function () {
+        healthToggle.disabled = true;
+        fetch(form.dataset.apiUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': form.dataset.csrfToken
+            },
+            body: JSON.stringify({
+                action: 'set_health_check',
+                enabled: healthToggle.checked
+            })
+        }).then(function (response) {
+            return response.json().then(function (payload) {
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.error ||
+                        {{ _('Unable to save health setting.') | tojson }});
+                }
+                return payload;
+            });
+        }).then(function () {
+            healthStatus.textContent = {{ _('Health-check setting saved.') | tojson }};
+            window.setTimeout(function () { window.location.reload(); }, 500);
+        }).catch(function (error) {
+            healthToggle.checked = !healthToggle.checked;
+            healthStatus.textContent = error.message;
+        }).finally(function () {
+            healthToggle.disabled = false;
+        });
+    });
+}());
+</script>
+{% endblock %}

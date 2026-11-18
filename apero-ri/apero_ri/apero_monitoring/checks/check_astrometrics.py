@@ -1,0 +1,406 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Raw APERO check that every raw-file object name resolves in the astrometric database."""
+
+from functools import lru_cache
+from pathlib import Path
+from typing import Optional, Tuple
+import os
+
+import apero_ri.apero_monitoring.core.raw_common as raw_common
+from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
+
+
+# =============================================================================
+# Define variables
+# =============================================================================
+CHECK_NAME = 'ASTROM'
+CHECK_HUMAN_NAME = 'Astrometric Object Name Check'
+CHECK_TYPE = 'raw'
+INSTRUMENTS = ['SPIROU', 'NIRPS_HE', 'NIRPS_HA']
+
+CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
+CHECK.dependencies = ['BLANK', 'HAS_OBSDIR']
+
+CHECK.description = """
+This test checks that every raw FITS file whose header contains an object
+name can be resolved in the APERO astrometric database (by exact name,
+registered alias, or cleaned name variant).  Files that carry no object
+name in any of the configured header keys are skipped.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with --test=ASTROM.
+
+For each failing file, the object name listed in the report was not found
+in the astrometric database.
+
+Go to the ARI astrometrics resolve page, search for the name, and either:
+  - Add a new entry for the target if it is genuinely absent.
+  - Add the raw header name as an alias to an existing entry.
+
+Contact <CONTACT:C1> if you need help determining the correct target, or
+<CONTACT:C2> if you need help adding the entry to the database.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.NJC, starred=True)
+clist1.add(contacts.EA)
+clist1.add(contacts.LM)
+
+clist2 = contacts.AperoCheckContactList()
+clist2.add(contacts.NJC, starred=True)
+
+CHECK.contact_list['C1'] = clist1
+CHECK.contact_list['C2'] = clist2
+
+
+# =============================================================================
+# Internal helpers
+# =============================================================================
+def _resolve_astrom(name: str) -> Tuple[Optional[str], Optional[str]]:
+    """Resolve *name* in the astrometric database.
+
+    Returns a tuple of ``(apero_name, detail)``.  ``apero_name`` is the
+    resolved APERO name on success, ``detail`` holds a short explanation when
+    resolution fails so the report can distinguish missing targets from API or
+    configuration problems. The resolver checks local astrometric YAMLs first
+    for speed and falls back to the API resolver when local assets are not
+    available.
+    """
+    local_name, local_detail, local_available = _resolve_astrom_local(name)
+    if local_name is not None:
+        return local_name, None
+    if local_available:
+        return None, local_detail
+
+    # Local assets are unavailable; use API resolution as a fallback.
+    try:
+        from apero_ri.ari_api import astrometrics as _astro_api
+        result = _astro_api.resolve_by_name(name)
+        if result.get('success', False):
+            apero_name = str(result.get('apero_name', '') or '').strip() or name
+            return apero_name, None
+        detail = str(result.get('error', '') or '').strip()
+        if not detail:
+            detail = 'resolver returned success=False'
+        return None, detail
+    except Exception as exc:
+        detail = f'{type(exc).__name__}: {exc}'
+        return None, detail
+
+
+def _resolve_astrom_local(name: str
+                          ) -> Tuple[Optional[str], Optional[str], bool]:
+    """Resolve one object name against local astrometric YAML files.
+
+    Returns ``(apero_name, detail, local_available)``.
+    """
+    astrom_root = _local_astrom_root()
+    if astrom_root is None:
+        detail = 'local astrometrics directory not found'
+        return None, detail, False
+
+    try:
+        from apero.core import drs_astrometrics as _dra
+        entry = _dra.find_by_name(str(astrom_root), name)
+    except Exception as exc:
+        detail = f'local resolver failed: {type(exc).__name__}: {exc}'
+        return None, detail, True
+
+    if not isinstance(entry, dict):
+        return None, 'name not found in local astrometrics', True
+
+    apero_name = str(entry.get('APERO_NAME', '') or '').strip()
+    if apero_name == '':
+        apero_name = name
+    return apero_name, None, True
+
+
+@lru_cache(maxsize=1)
+def _local_astrom_root() -> Optional[Path]:
+    """Return the first available local astrometrics directory."""
+    for base_dir in _local_data_dirs():
+        astrom_root = base_dir / 'apero-assets' / 'astrometrics'
+        if astrom_root.exists() and astrom_root.is_dir():
+            return astrom_root
+    return None
+
+
+def _local_data_dirs() -> list:
+    """Return candidate local data directories for assets lookups."""
+    dirs = []
+    for env_key in ['ARI_DIR', 'LOCAL_DATA_DIR']:
+        value = str(os.environ.get(env_key, '') or '').strip()
+        if value != '':
+            dirs.append(Path(value).expanduser())
+    dirs.append(Path.home() / '.ari')
+
+    unique = []
+    seen = set()
+    for path in dirs:
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(path)
+    return unique
+
+
+# =============================================================================
+# Define check function
+# =============================================================================
+def check_function(instrument: str, obs_dir: str,
+                   aparams: dict, dbparams: dict) -> Tuple[bool, str]:
+    """Check that every science-file object name resolves in the astrometric database.
+
+    Files are first filtered to science frames.  When ``sci_suffix`` is set
+    (e.g. ``o.fits`` for SPIRou), only files whose name ends with that suffix
+    pass the filter — no header read is needed for the filter step.  When
+    ``sci_suffix`` is empty, the ``dprtypes`` allowlist is used instead (DPRTYPE
+    header key read required).  Non-matching files are counted and skipped.
+    The object name is then read from the first non-empty key in
+    ``obj_name_keys``; files with no matching header key are counted and skipped.
+    Files whose name cannot be resolved in the astrometric database are reported
+    as failures.
+
+    :param instrument: APERO instrument name (unused by this check body).
+    :param obs_dir: Obsdir identifier currently being validated.
+    :param aparams: Hydrated APERO profile parameters.
+    :param dbparams: Database parameters (unused by this check body).
+    :return: Tuple of pass flag and formatted report text.
+    """
+    _ = instrument, dbparams
+
+    if not raw_common.is_check_enabled(aparams, 'astrom_test', default=True):
+        return True, 'Skipped astrom_test: disabled.'
+
+    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
+    if not obs_path.exists():
+        return False, f'Observation directory {obs_dir} does not exist.'
+    if not files:
+        return False, f'No FITS files found in {obs_path}'
+
+    # Load the ordered list of header keys to try for the object name.
+    obj_name_keys = raw_common.get_check_value(
+        aparams, 'astrom_test', ['obj_name_keys'], [])
+    obj_name_keys = list(obj_name_keys) if isinstance(obj_name_keys, list) else []
+    if not obj_name_keys:
+        return True, 'No obj_name_keys configured for astrom_test; check skipped.'
+
+    # Load the science filter config: suffix takes priority over DPRTYPE list.
+    sci_suffix = str(raw_common.get_check_value(
+        aparams, 'astrom_test', ['sci_suffix'], '') or '').strip()
+    sci_dprtypes = raw_common.get_check_value(
+        aparams, 'astrom_test', ['dprtypes'], [])
+    sci_dprtypes = set(sci_dprtypes) if isinstance(sci_dprtypes, list) else set()
+    dpr_key = raw_common.get_header_key(aparams, 'dpr_type')
+
+    # resolved_counts: (obj_key, header_name, apero_name) -> file count
+    resolved_counts: dict = {}
+    resolved_order = []
+    # failed_entries: list of (obj_key, obj_name, filename, detail) for
+    # failed files
+    failed_entries: list = []
+    n_nonsci = 0
+    n_no_objname = 0
+    resolver_error_details = []
+    resolver_preflight = 'skipped'
+    resolver_preflight_detail = None
+
+    # Per-run resolve cache: maps obj_name -> (apero_name, detail).
+    # This ensures each unique object name is queried at most once per obsdir,
+    # preventing the same name from appearing in both passed and failed if an
+    # API call succeeds on one attempt but not another (transient errors).
+    _resolve_cache: dict = {}
+    _retry_attempted = set()
+
+    for filename in files:
+        # Science filter: suffix check takes priority over DPRTYPE header.
+        if sci_suffix:
+            if not filename.name.endswith(sci_suffix):
+                n_nonsci += 1
+                continue
+        elif sci_dprtypes and dpr_key:
+            header = raw_common.read_primary_header(filename)
+            dpr_type = str(header.get(dpr_key, '') or '').strip()
+            if dpr_type not in sci_dprtypes:
+                n_nonsci += 1
+                continue
+
+        header = raw_common.read_primary_header(filename)
+
+        # Try each key in order; record the key used and the value found.
+        obj_key = ''
+        obj_name = ''
+        for key in obj_name_keys:
+            val = str(header.get(key, '') or '').strip()
+            if val:
+                obj_key = key
+                obj_name = val
+                break
+
+        # Files with no object name header key are skipped but counted.
+        if not obj_name:
+            n_no_objname += 1
+            continue
+
+        # Use the per-run cache so each unique name is only resolved once.
+        # A successful result overrides a previous failure (retry semantics):
+        # once we know the name resolves, all files with that name pass.
+        if obj_name not in _resolve_cache:
+            if resolver_preflight == 'skipped':
+                apero_name, detail = _resolve_astrom(obj_name)
+                if apero_name is not None:
+                    resolver_preflight = 'ok'
+                else:
+                    resolver_preflight = 'failed'
+                    resolver_preflight_detail = detail
+                _resolve_cache[obj_name] = (apero_name, detail)
+            else:
+                _resolve_cache[obj_name] = _resolve_astrom(obj_name)
+        else:
+            cached_name, cached_detail = _resolve_cache[obj_name]
+            if (
+                cached_name is None
+                and cached_detail is not None
+                and obj_name not in _retry_attempted
+            ):
+                # Previous attempt failed — retry once in case of transient
+                # error.
+                retry_name, retry_detail = _resolve_astrom(obj_name)
+                if retry_name is not None:
+                    _resolve_cache[obj_name] = (retry_name, None)
+                else:
+                    _resolve_cache[obj_name] = (
+                        None,
+                        retry_detail or cached_detail,
+                    )
+                _retry_attempted.add(obj_name)
+
+        apero_name, detail = _resolve_cache[obj_name]
+        if apero_name is not None:
+            entry = (obj_key, obj_name, apero_name)
+            if entry not in resolved_counts:
+                resolved_counts[entry] = 0
+                resolved_order.append(entry)
+            resolved_counts[entry] += 1
+        else:
+            failed_entries.append((obj_key, obj_name, filename.name, detail))
+            if detail:
+                resolver_error_details.append(detail)
+
+    fail_groups: dict = {}
+    fail_order = []
+
+    # Collect filenames per (obj_key, obj_name) pair while preserving order.
+    for obj_key, obj_name, fname, detail in failed_entries:
+        key = (obj_key, obj_name)
+        if key not in fail_groups:
+            fail_groups[key] = []
+            fail_order.append(key)
+        fail_groups[key].append((fname, detail))
+
+    obj_name_keys_text = ', '.join(obj_name_keys) if obj_name_keys else '(none)'
+    sci_dprtypes_text = (
+        ', '.join(sorted(sci_dprtypes)) if sci_dprtypes else '(none)'
+    )
+    if len(resolver_error_details) > 0:
+        resolver_error_details = list(dict.fromkeys(resolver_error_details))
+    summary_lines = [
+        (
+            f'\tSummary: files_scanned={len(files)} '
+            f'non_science={n_nonsci} no_object_name={n_no_objname} '
+            f'resolved={len(resolved_counts)} '
+            f'failed={len(fail_order)}'
+        ),
+        (
+            f'\tobj_name_keys={obj_name_keys_text}'
+        ),
+        (
+            f'\tsci_suffix={sci_suffix if sci_suffix else "(none)"} '
+            f'dprtypes={sci_dprtypes_text}'
+        ),
+        (
+            f'\tdpr_key={dpr_key if dpr_key else "(none)"}'
+        ),
+    ]
+
+    if resolver_preflight == 'skipped':
+        summary_lines.append('\tresolver_preflight=skipped')
+    elif resolver_preflight == 'failed':
+        summary_lines.append(
+            f'\tresolver_preflight=failed; reason={resolver_preflight_detail}'
+        )
+    else:
+        summary_lines.append('\tresolver_preflight=ok')
+
+    if resolver_error_details:
+        summary_lines.append(
+            f'\tresolver_health=failed; sample={resolver_error_details[0]}'
+        )
+    else:
+        summary_lines.append('\tresolver_health=ok')
+
+    # Build passed lines: one per unique resolved object with file count.
+    passed_lines = list(summary_lines)
+    for entry in resolved_order:
+        obj_key, obj_name, apero_name = entry
+        n = resolved_counts[entry]
+        passed_lines.append(
+            f'\t{obj_key}: {obj_name}  (APERO: {apero_name})    [N={n}]'
+        )
+
+    # Build failed lines: group by (obj_key, obj_name), list files with count.
+    failed_lines = []
+    for obj_key, obj_name in fail_order:
+        fnames = fail_groups[(obj_key, obj_name)]
+        n = len(fnames)
+        failed_lines.append(
+            f'\t{obj_key}: {obj_name}    [N={n}]'
+        )
+        for fname, detail in fnames[:3]:
+            failed_lines.append(f'\t\t(filename: {fname})')
+            if detail:
+                failed_lines.append(f'\t\t(resolver: {detail})')
+
+    # Append skipped-file summary to passed lines for visibility.
+    if n_nonsci > 0:
+        passed_lines.append(
+            f'\t({n_nonsci} non-science file(s) skipped by DPRTYPE/suffix filter)'
+        )
+    if n_no_objname > 0:
+        passed_lines.append(
+            f'\t({n_no_objname} file(s) skipped: no object name in header)'
+        )
+
+    # An obsdir with only skipped files is treated as a pass with explanation.
+    if not passed_lines and not failed_lines:
+        return True, f'No science files with object names found in {obs_dir}; nothing to check.'
+
+    return raw_common.build_report(obs_dir, passed_lines, failed_lines)
+
+
+# =============================================================================
+# Must put the function to run for this check
+# =============================================================================
+CHECK.func = check_function
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    _instrument = 'NIRPS_HA'
+    _obs_dir = '2021-01-01'
+    _aparams = raw_common.load_example_aparams(_instrument)
+    _dbparams = dict()
+    CHECK(_instrument, _obs_dir, _aparams, _dbparams, check_dict={})
+    print(CHECK.report())
+
+
+# =============================================================================
+# End of code
+# =============================================================================

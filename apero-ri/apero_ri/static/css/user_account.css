@@ -1,0 +1,85 @@
+.ari-login-box.acc-details {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.acc-details h2 {
+    text-align: left;
+    font-size: 1.15rem;
+}
+
+.acc-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1.5rem;
+}
+
+.acc-fields .ari-form-group { min-width: 0; }
+.acc-fields input, .acc-fields select { width: 100%; box-sizing: border-box; }
+.acc-fields button { max-width: 100%; }
+.acc-passwords { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.acc-awards { margin: 0 0 2rem; }
+.acc-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-bottom: .85rem;
+}
+.acc-section-heading h2 { margin: 0; font-size: 1.15rem; }
+.acc-section-heading h2 i,
+[data-theme="dark"] .acc-section-heading h2 i { color: var(--ari-accent-dark); }
+.acc-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: .75rem;
+}
+.acc-stat,
+[data-theme="dark"] .acc-stat {
+    min-width: 0;
+    padding: 1rem;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-top: 3px solid var(--ari-primary);
+    border-radius: 6px;
+}
+.acc-stat:nth-child(3n + 2),
+[data-theme="dark"] .acc-stat:nth-child(3n + 2) { border-top-color: var(--ari-accent); }
+.acc-stat:nth-child(3n),
+[data-theme="dark"] .acc-stat:nth-child(3n) { border-top-color: var(--ari-success); }
+.acc-stat-heading,
+[data-theme="dark"] .acc-stat-heading {
+    color: var(--ari-text-muted);
+    font-size: .85rem;
+    overflow-wrap: anywhere;
+}
+.acc-stat-heading i { margin-right: .25rem; }
+.acc-stat-value {
+    margin: .4rem 0 .15rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+.acc-stat-value .upu-medal, .acc-stat-secondary .upu-medal {
+    margin-left: .35rem;
+    font-size: .9rem;
+}
+.acc-stat-rank,
+.acc-stat-secondary,
+[data-theme="dark"] .acc-stat-rank,
+[data-theme="dark"] .acc-stat-secondary {
+    color: var(--ari-text-muted);
+    font-size: .85rem;
+}
+.acc-stat-secondary { margin-top: .35rem; }
+
+@media (max-width: 768px) {
+    .acc-stats, .acc-fields, .acc-passwords { grid-template-columns: 1fr; }
+    .ari-login-box.acc-details { padding: 1rem; }
+    .acc-details button, .acc-details input, .acc-details select,
+    .acc-section-heading a { min-height: 44px; }
+}
