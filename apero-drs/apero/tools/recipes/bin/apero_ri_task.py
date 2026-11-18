@@ -17,7 +17,7 @@ from apero.utils.drs_recipe import DrsRecipe
 # =============================================================================
 __NAME__ = 'apero_ri_task.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_pkg.__PACKAGE__
+__PACKAGE__ = apero_pkg.__NAME__
 __version__ = apero_pkg.__version__
 __authors__ = apero_pkg.__authors__
 __date__ = apero_pkg.__date__
