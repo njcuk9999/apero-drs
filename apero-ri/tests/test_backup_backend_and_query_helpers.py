@@ -140,7 +140,10 @@ def test_parse_text_presets_parses_delimited_blocks() -> None:
 def test_build_safe_select_query_rejects_bad_identifier() -> None:
     """Safe query builder should reject invalid table identifiers."""
     table_access = {
-        'FINDEX': {'columns': ['KW_RUN_ID', 'NAME'], 'table_name': 'findex'}
+        'FINDEX': {
+            'columns': ['KW_RUN_ID', 'KW_OBJNAME', 'NAME'],
+            'table_name': 'findex',
+        }
     }
     query_spec = {
         'tables': [{'label': 'FINDEX', 'columns': ['NAME']}],
@@ -158,6 +161,8 @@ def test_build_safe_select_query_rejects_bad_identifier() -> None:
         table_access, query_spec, run_ids=['r1']
     )
     assert 'SELECT' in sql
+    assert 'EXISTS' in sql
+    assert 'KW_OBJNAME' in sql
     assert '_run_ids' in params
     assert labels
 

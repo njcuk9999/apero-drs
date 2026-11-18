@@ -431,6 +431,7 @@ def api_file_browser(app: Any) -> Response | tuple[Response, int]:
     accessible_rows = bk.filter_accessible_rows(
         all_rows,
         accessible_run_ids,
+        object_name=objname,
     )
 
     filtered = bk.apply_preset_filter(accessible_rows, preset)

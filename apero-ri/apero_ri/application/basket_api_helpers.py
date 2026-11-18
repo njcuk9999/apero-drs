@@ -205,7 +205,9 @@ def api_basket_add_from_ftable(app: Any) -> Any:
     rows, _, _ = bk.load_ftable_rows(
         base_dir, instrument, profile_id, objname, fkind
     )
-    rows = bk.filter_accessible_rows(rows, accessible_run_ids)
+    rows = bk.filter_accessible_rows(
+        rows, accessible_run_ids, object_name=objname
+    )
     if obs_dir:
         rows = [r for r in rows if str(r.get("OBS_DIR", "") or "") == obs_dir]
 
@@ -218,7 +220,7 @@ def api_basket_add_from_ftable(app: Any) -> Any:
             "obs_dir": r.get("OBS_DIR", ""),
             "filename": r.get("FILENAME", ""),
             "kw_output": r.get("KW_OUTPUT", ""),
-            "kw_run_id": r.get("KW_RUN_ID", ""),
+            "kw_run_id": r.get("ACCESS_RUN_ID", r.get("KW_RUN_ID", "")),
             "kw_dprtype": r.get("KW_DPRTYPE", ""),
             "kw_fiber": r.get("KW_FIBER", ""),
             "kw_pi_name": r.get("KW_PI_NAME", ""),

@@ -9,7 +9,7 @@ from apero_ri.application import query_helpers
 
 TABLE_ACCESS = {
     'FINDEX': {
-        'columns': ['KW_RUN_ID', 'NAME', 'OBS_DIR'],
+        'columns': ['KW_RUN_ID', 'KW_OBJNAME', 'NAME', 'OBS_DIR'],
         'table_name': 'findex_table',
     },
     'OTHER': {
@@ -27,6 +27,8 @@ def test_build_safe_count_query_basic() -> None:
     )
     assert 'SELECT COUNT(*) AS cnt' in sql
     assert 'KW_RUN_ID' in sql
+    assert 'EXISTS' in sql
+    assert 'KW_OBJNAME' in sql
     assert params['_run_ids'] == ['r1', 'r2']
 
 

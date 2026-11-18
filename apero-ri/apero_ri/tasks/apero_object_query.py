@@ -1437,6 +1437,7 @@ def _file_col_query(
         fdb.OBS_DIR AS OBS_DIR,
         fdb.FILENAME AS FILENAME,
         fdb.KW_IDENTIFIER AS IDENTIFIER,
+        fdb.KW_OBJNAME AS KW_OBJNAME,
         fdb.KW_DPRTYPE AS KW_DPRTYPE,
         fdb.KW_OUTPUT AS KW_OUTPUT,
         fdb.KW_FIBER AS KW_FIBER,

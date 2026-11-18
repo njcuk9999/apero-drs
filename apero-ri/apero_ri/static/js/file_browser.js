@@ -120,7 +120,8 @@
             + '&block_kind=' + encodeURIComponent(r.BLOCK_KIND || '')
             + '&obs_dir=' + encodeURIComponent(r.OBS_DIR || '')
             + '&filename=' + encodeURIComponent(r.FILENAME || '')
-            + '&kw_run_id=' + encodeURIComponent(r.KW_RUN_ID || '');
+            + '&kw_run_id='
+            + encodeURIComponent(r.ACCESS_RUN_ID || r.KW_RUN_ID || '');
     }
 
     function getFileHeaderDownloadUrl(r, outFmt) {
@@ -131,7 +132,8 @@
             + '&block_kind=' + encodeURIComponent(r.BLOCK_KIND || '')
             + '&obs_dir=' + encodeURIComponent(r.OBS_DIR || '')
             + '&filename=' + encodeURIComponent(r.FILENAME || '')
-            + '&kw_run_id=' + encodeURIComponent(r.KW_RUN_ID || '')
+            + '&kw_run_id='
+            + encodeURIComponent(r.ACCESS_RUN_ID || r.KW_RUN_ID || '')
             + '&format=' + encodeURIComponent(outFmt || 'csv');
     }
 
@@ -686,7 +688,7 @@
                 obs_dir:     r.OBS_DIR     || '',
                 filename:    r.FILENAME    || '',
                 kw_output:   r.KW_OUTPUT   || '',
-                kw_run_id:   r.KW_RUN_ID   || '',
+                kw_run_id:   r.ACCESS_RUN_ID || r.KW_RUN_ID || '',
                 kw_dprtype:  r.KW_DPRTYPE  || '',
                 kw_fiber:    r.KW_FIBER    || '',
                 kw_pi_name:  r.KW_PI_NAME  || '',
@@ -1177,7 +1179,8 @@
             + '&filename='   + encodeURIComponent(r.FILENAME   || '')
             + '&kw_output='  + encodeURIComponent(r.KW_OUTPUT  || '')
             + '&kw_fiber='   + encodeURIComponent(r.KW_FIBER   || 'AB')
-            + '&kw_run_id='  + encodeURIComponent(r.KW_RUN_ID  || '');
+            + '&kw_run_id='
+            + encodeURIComponent(r.ACCESS_RUN_ID || r.KW_RUN_ID || '');
 
         fetch(url)
             .then(function (resp) { return resp.json(); })

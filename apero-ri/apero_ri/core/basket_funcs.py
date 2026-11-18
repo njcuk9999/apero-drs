@@ -901,14 +901,51 @@ def load_ftable_rows(
 
 
 def filter_accessible_rows(
-    rows: List[Dict[str, Any]], accessible_run_ids: Set[str]
+    rows: List[Dict[str, Any]],
+    accessible_run_ids: Set[str],
+    object_name: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Return only rows whose KW_RUN_ID is in accessible_run_ids."""
-    return [
-        r
-        for r in rows
-        if str(r.get("KW_RUN_ID", "") or "").strip() in accessible_run_ids
-    ]
+    """Return direct and authorized combined-product rows.
+
+    A row without a RUN ID is a combined product. It is accessible when the
+    user can access any directly attributed row for the same object.
+
+    :param rows: Object-scoped file-index rows to authorize.
+    :param accessible_run_ids: RUN IDs the current user may access.
+    :param object_name: Object scope for caches predating KW_OBJNAME fields.
+    :return: Authorized rows with an internal access RUN ID annotation.
+    """
+    object_run_ids: Dict[str, Set[str]] = {}
+    for row in rows:
+        run_id = str(row.get('KW_RUN_ID', '') or '').strip()
+        if run_id not in accessible_run_ids:
+            continue
+        row_object = str(row.get('KW_OBJNAME', '') or '').strip()
+        if not row_object and object_name:
+            row_object = str(object_name).strip()
+        if row_object:
+            object_run_ids.setdefault(row_object, set()).add(run_id)
+
+    accessible_rows = []
+    for row in rows:
+        run_id = str(row.get('KW_RUN_ID', '') or '').strip()
+        row_object = str(row.get('KW_OBJNAME', '') or '').strip()
+        if not row_object and object_name:
+            row_object = str(object_name).strip()
+
+        access_run_id = run_id
+        if access_run_id and access_run_id not in accessible_run_ids:
+            continue
+        if not access_run_id:
+            candidates = object_run_ids.get(row_object, set())
+            access_run_id = min(candidates) if candidates else ''
+        if not access_run_id:
+            continue
+
+        authorized = dict(row)
+        authorized['ACCESS_RUN_ID'] = access_run_id
+        accessible_rows.append(authorized)
+    return accessible_rows
 
 
 def backfill_lbl_run_ids(

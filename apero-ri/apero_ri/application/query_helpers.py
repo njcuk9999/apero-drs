@@ -9,6 +9,25 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple
 import yaml
 
 
+def _findex_access_clause(table_name: str, alias: str = '_t_FINDEX') -> str:
+    """Build object-aware FINDEX visibility filtering.
+
+    :param table_name: Physical FINDEX table name.
+    :param alias: Alias used by the outer FINDEX query.
+    :return: SQL condition admitting direct and combined-product rows.
+    """
+    direct = f"`{alias}`.`KW_RUN_ID` IN :_run_ids"
+    combined = (
+        f"`{alias}`.`KW_RUN_ID` IS NULL "
+        f"AND `{alias}`.`KW_OBJNAME` IS NOT NULL "
+        f"AND `{alias}`.`KW_OBJNAME` <> '' "
+        f"AND EXISTS (SELECT 1 FROM `{table_name}` AS `_access_FINDEX` "
+        f"WHERE `_access_FINDEX`.`KW_OBJNAME` = `{alias}`.`KW_OBJNAME` "
+        f"AND `_access_FINDEX`.`KW_RUN_ID` IN :_run_ids)"
+    )
+    return f'({direct} OR ({combined}))'
+
+
 def build_safe_select_query(
     table_access: Dict[str, Dict[str, Any]],
     query_spec: Dict[str, Any],
@@ -132,7 +151,9 @@ def build_safe_select_query(
         if not run_ids_sorted:
             return "SELECT 1 WHERE 1=0", {}, []
         params["_run_ids"] = run_ids_sorted
-        where_parts.append("`_t_FINDEX`.`KW_RUN_ID` IN :_run_ids")
+        where_parts.append(
+            _findex_access_clause(table_names["FINDEX"])
+        )
 
     for fspec in filters_spec:
         tlabel = str(fspec.get("table_label", "")).strip().upper()
@@ -291,7 +312,9 @@ def build_safe_count_query(
         if not run_ids_sorted:
             return "SELECT 0 AS cnt", {}
         params["_run_ids"] = run_ids_sorted
-        where_parts.append("`_t_FINDEX`.`KW_RUN_ID` IN :_run_ids")
+        where_parts.append(
+            _findex_access_clause(table_names["FINDEX"])
+        )
 
     for fspec in filters_spec:
         tlabel = str(fspec.get("table_label", "")).strip().upper()
