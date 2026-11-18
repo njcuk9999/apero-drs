@@ -29556,6 +29556,51 @@ for browser_key, browser_eng, browser_fr, browser_es in FILE_BROWSER_UI_TEXT:
 
 
 # =============================================================================
+# APERO_CHECK_DEBUG_* - ARI APERO-check debug log viewer
+# =============================================================================
+APERO_CHECK_DEBUG_TEXT = [
+    ('ADVANCED_REQUIRED', 'None',
+     'APERO-check debug logs require moderator, developer or admin access',
+     'Les journaux de débogage des vérifications APERO nécessitent un accès '
+     'modérateur, développeur ou administrateur',
+     'Los registros de depuración de las comprobaciones APERO requieren '
+     'acceso de moderador, desarrollador o administrador'),
+    ('MISSING_ARGS', 'None',
+     'Missing profile_id or obsdir',
+     'profile_id ou obsdir manquant',
+     'Falta profile_id u obsdir'),
+    ('PROFILE_DENIED', 'None',
+     'Profile not found or access denied',
+     'Profil introuvable ou accès refusé',
+     'Perfil no encontrado o acceso denegado'),
+    ('BAD_OBSDIR', '0: observation directory name',
+     'Invalid observation directory name: {0}',
+     "Nom de répertoire d'observation invalide : {0}",
+     'Nombre de directorio de observación no válido: {0}'),
+    ('NOT_FOUND', '0: observation directory name',
+     'No debug log has been recorded for {0} yet. Re-run the checks for '
+     'this night to create one.',
+     "Aucun journal de débogage n'a encore été enregistré pour {0}. "
+     'Relancez les vérifications de cette nuit pour en créer un.',
+     'Todavía no se ha registrado ningún registro de depuración para {0}. '
+     'Vuelva a ejecutar las comprobaciones de esta noche para crearlo.'),
+    ('READ_FAILED', '0: read error',
+     'Could not read the debug log file: {0}',
+     'Impossible de lire le fichier journal de débogage : {0}',
+     'No se pudo leer el archivo de registro de depuración: {0}'),
+]
+for dbg_key, dbg_args, dbg_eng, dbg_fr, dbg_es in APERO_CHECK_DEBUG_TEXT:
+    item = langlist.create('APERO_CHECK_DEBUG_' + dbg_key, kind='text')
+    item.value['ENG'] = dbg_eng
+    item.value['FR'] = dbg_fr
+    item.value['ES'] = dbg_es
+    item.arguments = dbg_args
+    item.comment = ('Used in: ARI apero_checks_api_helpers '
+                    'api_apero_checks_view_debug')
+    langlist.add(item)
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here

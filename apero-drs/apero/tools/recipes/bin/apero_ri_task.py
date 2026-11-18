@@ -123,6 +123,8 @@ def _build_profile(params: ParamDict, instrument: str) -> Dict[str, Any]:
     preset_dir = config_dir / 'aprofile_instruments'
     preset_path = preset_dir / f'{instrument.lower()}_v8.yaml'
     profile = yaml.safe_load(preset_path.read_text(encoding='utf-8'))
+    # Record the preset so ARI debug logs can compare config against it.
+    profile['APERO_INSTRUMENT_PROFILE'] = preset_path.name
     general = profile['general']
     general['INSTRUMENT'] = instrument
     general['SCIENCE_FIBER'] = general['science_fiber']

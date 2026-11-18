@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 
 from apero_ri.core import secret_store
 from apero_ri.application import profile_utils
+from apero_ri.apero_monitoring.core import debug_log
 from apero_ri.apero_monitoring.core import raw_common
 
 # Column order of the manual-trigger CSV log (written without a header row).
@@ -48,16 +49,19 @@ def _resolve_path(aparams: dict, keys: Tuple[str, ...]) -> Optional[Path]:
     return None
 
 
+@debug_log.traced
 def get_red_dir(aparams: dict) -> Optional[Path]:
     """Resolve the reduced (DRS_DATA_RED) directory from a profile."""
     return _resolve_path(aparams, ('PATH.RED', 'PATH_RED', 'red'))
 
 
+@debug_log.traced
 def get_pp_dir(aparams: dict) -> Optional[Path]:
     """Resolve the preprocessed (DRS_DATA_WORKING) directory from a profile."""
     return _resolve_path(aparams, ('PATH.PP', 'PATH_PP', 'pp', 'tmp'))
 
 
+@debug_log.traced
 def get_trigger_log(aparams: dict) -> Optional[Path]:
     """Resolve the manual-trigger log file (PATH.TRIGGER_LOG)."""
     return _resolve_path(
@@ -81,6 +85,7 @@ def _list_obsdir_pattern(base_dir: Optional[Path],
     return obs_path, sorted(obs_path.glob(pattern))
 
 
+@debug_log.traced
 def list_red_files(aparams: dict,
                    obs_dir: str,
                    pattern: str = '*.fits') -> Tuple[Path, List[Path]]:
@@ -88,6 +93,7 @@ def list_red_files(aparams: dict,
     return _list_obsdir_pattern(get_red_dir(aparams), obs_dir, pattern)
 
 
+@debug_log.traced
 def list_pp_files(aparams: dict,
                   obs_dir: str,
                   pattern: str = '*.fits') -> Tuple[Path, List[Path]]:
@@ -95,6 +101,7 @@ def list_pp_files(aparams: dict,
     return _list_obsdir_pattern(get_pp_dir(aparams), obs_dir, pattern)
 
 
+@debug_log.traced
 def list_raw_files(aparams: dict,
                    obs_dir: str,
                    pattern: str = '*.fits') -> Tuple[Path, List[Path]]:
@@ -105,6 +112,7 @@ def list_raw_files(aparams: dict,
 # =============================================================================
 # Manual-trigger log
 # =============================================================================
+@debug_log.traced
 def check_manual_trigger_status(aparams: dict,
                                 obs_dir: str,
                                 status: str) -> Tuple[bool, str]:
@@ -163,6 +171,7 @@ def _ari_data_dir() -> Path:
     return secret_store.get_ari_dir()
 
 
+@debug_log.traced
 def get_reject_identifiers(aparams: dict, instrument: str) -> set:
     """Return the set of rejected file identifiers for one instrument.
 

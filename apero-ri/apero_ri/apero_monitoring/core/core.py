@@ -20,6 +20,7 @@ import numpy as np
 import yaml
 
 from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import debug_log
 
 # =============================================================================
 # Define variables
@@ -95,26 +96,36 @@ class AperoCheck:
         if instrument not in self.instruments:
             self.wrong_instrument = True
             self.message = f"Check not valid for instrument {instrument}"
+            debug_log.log('SKIP: instrument not in check instruments',
+                          [instrument, list(self.instruments)])
             return
         # ---------------------------------------------------------------------
         # deal with dependencies
         # if a dependency is False (or not present) we fail this check
         if len(self.dependencies) > 0:
             for dep in self.dependencies:
+                # Record each dependency decision for the debug log.
+                debug_log.log(f'dependency {dep} state',
+                              check_dict.get(dep, '<not run>'))
                 if dep not in check_dict or not check_dict[dep]:
                     self.message = (
                         f'Check failed due to failed dependency: {dep}'
                     )
+                    debug_log.log(f'FAIL: dependency {dep} did not pass; '
+                                  'check function not called')
                     return
         # ---------------------------------------------------------------------
         # run the check function
         if self.func is not None:
+            debug_log.log('calling check function',
+                          getattr(self.func, '__qualname__', self.func))
             self.passed, self.message = self.func(
                 instrument=instrument,
                 obs_dir=obs_dir,
                 aparams=aparams,
                 dbparams=dbparams,
             )
+            debug_log.log('check function returned passed', self.passed)
         else:
             self.message = "No function defined for this check"
     
@@ -565,15 +576,19 @@ class SimpleCheck:
             dict(),
         )
         if not isinstance(cfg, dict) or len(cfg) == 0:
+            debug_log.log('SimpleCheck: no config found for test',
+                          [self.config_section, 'tests', self.test_key])
             return True, f'Skipped {self.test_key}: not configured.'
         logic_values = self._display_cfg()
         runtime_logic = self._runtime_logic_values(cfg, aparams)
         logic_values.update(runtime_logic)
+        debug_log.log('SimpleCheck: resolved logic values', logic_values)
         self.check.description = self.get_logic_markdown(logic_values)
         if not raw_common.to_bool(cfg.get('enabled', True), default=True):
             return True, f'Skipped {self.test_key}: disabled.'
 
         runtime = self._build_runtime(cfg, aparams)
+        debug_log.log('SimpleCheck: runtime', runtime)
         error = str(runtime.get('error', '') or '').strip()
         if error != '':
             return False, error
@@ -587,15 +602,20 @@ class SimpleCheck:
 
         table, masks = raw_common.load_header_table(files, runtime['defs'])
         use = self._build_use_mask(table, masks, runtime)
+        debug_log.log('SimpleCheck: rows used', [int(np.sum(use)), len(use)])
         if np.sum(use) == 0:
             return True, f'Skipped {self.test_key}: no valid rows.'
 
         variables = self._build_variables(table, use, runtime)
+        debug_log.log('SimpleCheck: variables passed to logic', variables)
         ok, reason, pass_message, fail_mask = self._evaluate(
             table,
             use,
             variables,
         )
+        debug_log.log('SimpleCheck: logic result',
+                      dict(ok=ok, reason=reason, pass_message=pass_message,
+                           n_rows_in_fail_mask=int(np.sum(fail_mask))))
         if ok:
             return True, pass_message
 

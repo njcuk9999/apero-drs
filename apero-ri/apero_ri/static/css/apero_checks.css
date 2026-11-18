@@ -1089,3 +1089,47 @@ a.ac-card:hover {
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     transform: translateY(-1px);
 }
+
+/* -------------------------------------------------------------------------
+   APERO-check debug log viewer (obsdir and check pages)
+   ------------------------------------------------------------------------- */
+.ac-debug-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: center;
+}
+
+.ac-debug-tools input[type="search"] {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+
+.ac-debug-log__meta {
+    margin: 0.5rem 1rem 0;
+    color: var(--ari-text-muted);
+    word-break: break-all;
+}
+
+/* Keep indentation of the call tree; scroll long lines horizontally. */
+.ac-debug-log__content {
+    margin: 1rem;
+    max-height: 62vh;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    white-space: pre;
+    overflow: auto;
+    color: var(--ari-text);
+}
+
+@media (max-width: 768px) {
+    .ac-debug-log__content {
+        margin: 0.5rem;
+        max-height: 70vh;
+        font-size: 0.72rem;
+    }
+
+    .ac-debug-tools .ari-btn {
+        min-height: 44px;
+    }
+}

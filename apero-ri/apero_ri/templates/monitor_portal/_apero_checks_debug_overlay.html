@@ -1,0 +1,75 @@
+{#
+    APERO-check debug-log overlay, shared by the obsdir page (all checks for
+    one night) and the check page (one check only).
+
+    Expects in the including context:
+        api_view_debug_url - url of api_apero_checks_view_debug
+        debug_button_id    - id of the button that opens the overlay
+        debug_title        - overlay heading
+        debug_payload      - request body (profile_id, obsdir[, check_key])
+        debug_filename     - filename used by the Download button
+    Only include for users allowed to see debug logs (can_advanced_checks);
+    the API enforces the same permission.
+#}
+<div id="ac-debug-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="debug"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header">
+            <h3>{{ debug_title }}</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="debug"
+                    aria-label="{{ _('Close') }}">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-overlay__tools ac-debug-tools">
+            <input id="ac-debug-search" type="search"
+                   placeholder="{{ _('Search debug log...') }}">
+            <span id="ac-debug-match-count" class="ac-note"></span>
+            <button id="ac-debug-reload"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button">
+                <i class="fa-solid fa-rotate"></i> {{ _('Reload') }}
+            </button>
+            <button id="ac-debug-copy"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button">
+                <i class="fa-solid fa-copy"></i> {{ _('Copy') }}
+            </button>
+            <button id="ac-debug-download"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button">
+                <i class="fa-solid fa-download"></i> {{ _('Download') }}
+            </button>
+        </div>
+        <p id="ac-debug-meta" class="ac-note ac-debug-log__meta"></p>
+        <pre id="ac-debug-content"
+             class="ac-failure-detail__message ac-debug-log__content"></pre>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/apero_checks_debug_log.js') }}?v=20261118a"></script>
+<script>
+window.AperoChecksDebugLog.init({
+    ids: {
+        button: {{ debug_button_id|tojson }},
+        overlay: 'ac-debug-overlay',
+        content: 'ac-debug-content',
+        meta: 'ac-debug-meta',
+        search: 'ac-debug-search',
+        count: 'ac-debug-match-count',
+        copy: 'ac-debug-copy',
+        download: 'ac-debug-download',
+        reload: 'ac-debug-reload'
+    },
+    url: {{ api_view_debug_url|tojson }},
+    payload: {{ debug_payload|tojson }},
+    filename: {{ debug_filename|tojson }},
+    text: {
+        loading: {{ _('Loading debug log...')|string|tojson }},
+        error: {{ _('Could not load the debug log.')|string|tojson }},
+        matches: {{ _('matches')|string|tojson }},
+        noMatch: {{ _('No match')|string|tojson }},
+        updated: {{ _('updated')|string|tojson }}
+    }
+});
+</script>

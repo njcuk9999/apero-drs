@@ -2010,6 +2010,13 @@ class ARIApp(Flask):
         )
         return ach.api_apero_checks_view_yaml(self)
 
+    def _api_apero_checks_view_debug(self) -> Any:
+        """Return the APERO-check debug log for one night or check."""
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_view_debug(self)
+
     def _api_apero_checks_validate_obsdir(self) -> Any:
         """Validate an observation directory for APERO checks."""
         from apero_ri.application import (

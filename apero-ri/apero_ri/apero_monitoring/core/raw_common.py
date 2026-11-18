@@ -13,6 +13,7 @@ import yaml
 from astropy.io import fits
 
 from apero_ri.application import profile_utils
+from apero_ri.apero_monitoring.core import debug_log
 
 # Store an in-process FITS-header cache for the active obsdir worker.
 _ACTIVE_OBSDIR = ''
@@ -71,6 +72,7 @@ def get_raw_config(aparams: dict) -> dict:
     return dict(cfg) if isinstance(cfg, dict) else dict()
 
 
+@debug_log.traced
 def get_common_value(aparams: dict,
                      keys: List[str],
                      default: Any = None) -> Any:
@@ -90,6 +92,7 @@ def get_common_value(aparams: dict,
     return default if current is None else current
 
 
+@debug_log.traced
 def get_check_value(aparams: dict,
                     check_name: str,
                     keys: List[str],
@@ -125,6 +128,7 @@ def to_bool(value: Any, default: bool = False) -> bool:
     return bool(default)
 
 
+@debug_log.traced
 def is_check_enabled(aparams: dict,
                      check_name: str,
                      default: bool = True) -> bool:
@@ -136,6 +140,7 @@ def is_check_enabled(aparams: dict,
     return to_bool(enabled, default=default)
 
 
+@debug_log.traced
 def get_raw_value(aparams: dict,
                   keys: List[str],
                   default: Any = None) -> Any:
@@ -148,6 +153,7 @@ def get_raw_value(aparams: dict,
     return default if current is None else current
 
 
+@debug_log.traced
 def get_raw_dir(aparams: dict) -> Optional[Path]:
     """Resolve the raw directory from a hydrated APERO profile."""
     for key in ('PATH.RAW', 'PATH_RAW', 'raw'):
@@ -157,6 +163,7 @@ def get_raw_dir(aparams: dict) -> Optional[Path]:
     return None
 
 
+@debug_log.traced
 def get_critical_check_dir(aparams: dict) -> Optional[Path]:
     """Resolve the critical-check directory (PATH.CRITICAL_CHECK).
 
@@ -170,6 +177,7 @@ def get_critical_check_dir(aparams: dict) -> Optional[Path]:
     return None
 
 
+@debug_log.traced
 def get_header_key(aparams: dict, logical_name: str) -> str:
     """Resolve one raw-header key name from apero-checks.common.
 
@@ -183,6 +191,7 @@ def get_header_key(aparams: dict, logical_name: str) -> str:
     return str(keys.get(logical_name, '') or '').strip()
 
 
+@debug_log.traced
 def list_obsdir_files(aparams: dict, obs_dir: str) -> Tuple[Path, List[Path]]:
     """Return the obsdir path and every FITS file under it."""
     global _FILE_LIST_CACHE
@@ -193,6 +202,7 @@ def list_obsdir_files(aparams: dict, obs_dir: str) -> Tuple[Path, List[Path]]:
         cache_files = _FILE_LIST_CACHE.get('files')
         if (cache_obs == obs_name and isinstance(cache_path, Path)
                 and isinstance(cache_files, list)):
+            debug_log.log('list_obsdir_files: using obsdir file-list cache')
             return cache_path, list(cache_files)
 
     raw_dir = get_raw_dir(aparams)
@@ -222,7 +232,10 @@ def read_primary_header(filename: Path) -> Any:
     """
     global _HEADER_CACHE
     cache_key = str(Path(filename).resolve())
+    # Count header reads for the debug log (cheap no-op when inactive).
+    debug_log.count('fits_header_reads')
     if _ACTIVE_OBSDIR != '' and cache_key in _HEADER_CACHE:
+        debug_log.count('fits_header_cache_hits')
         return _HEADER_CACHE[cache_key].copy()
     header = fits.getheader(filename, ext=0).copy()
     if _ACTIVE_OBSDIR != '':
@@ -251,6 +264,7 @@ def convert_value(raw_value: Any, dtype: str) -> Any:
     return str(raw_value)
 
 
+@debug_log.traced
 def load_header_table(files: List[Path],
                       header_defs: Dict[str, dict]) -> Tuple[dict, dict]:
     """Build aligned vectors of selected header values for many files.
@@ -299,6 +313,7 @@ def load_header_table(files: List[Path],
     return table, masks
 
 
+@debug_log.traced
 def files_from_mask(table: dict, mask: Any) -> List[Path]:
     """Return file paths whose boolean mask entry is True.
 
@@ -320,6 +335,7 @@ def files_from_mask(table: dict, mask: Any) -> List[Path]:
     return out
 
 
+@debug_log.traced
 def format_failed_file_message(test_key: str,
                                reason: str,
                                obs_path: Path,
@@ -381,6 +397,7 @@ def format_failed_file_message(test_key: str,
     return '\n'.join(lines)
 
 
+@debug_log.traced
 def build_report(obs_dir: str,
                  passed_lines: List[str],
                  failed_lines: List[str]) -> Tuple[bool, str]:

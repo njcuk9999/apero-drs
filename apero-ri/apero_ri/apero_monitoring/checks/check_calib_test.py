@@ -7,6 +7,7 @@ from typing import Tuple
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck
 from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import debug_log
 from apero_ri.apero_monitoring.core import links
 
 
@@ -112,7 +113,10 @@ def check_function(instrument: str, obs_dir: str,
                                           'calib_test',
                                           ['required_dprtypes'],
                                           [])
+    # Record the raw config value and its type before normalising it.
+    debug_log.log('required_dprtypes raw type', type(required).__name__)
     required = list(required) if isinstance(required, list) else []
+    debug_log.log('required_dprtypes after normalising', required)
     # Skip the check when no calibration DPR configuration exists.
     if dpr_key == '' or len(required) == 0:
         return True, 'No calibration DPR types configured for this check.'
@@ -125,6 +129,9 @@ def check_function(instrument: str, obs_dir: str,
         if dpr_type == '':
             continue
         counts[dpr_type] = int(counts.get(dpr_type, 0)) + 1
+    # Record every DPR type found so missing calibrations can be traced.
+    debug_log.log(f'DPR type counts from {len(files)} file(s) '
+                  f'(header key {dpr_key!r})', counts)
 
     # Build pass or fail lines for each required DPR type group. Each entry
     #   is either a single DPR type or a list of DPR types where any one
@@ -137,6 +144,8 @@ def check_function(instrument: str, obs_dir: str,
             dpr_group = [str(dpr_type) for dpr_type in entry]
         else:
             dpr_group = [str(entry)]
+        debug_log.log(f'requirement entry {entry!r} '
+                      f'({type(entry).__name__}) -> group', dpr_group)
         # Human-readable label for this group in the report.
         group_label = ' OR '.join(dpr_group)
         # Accept the first DPR type in the group that has any files.
@@ -145,6 +154,7 @@ def check_function(instrument: str, obs_dir: str,
             if int(counts.get(dpr_type, 0)) > 0:
                 matched = dpr_type
                 break
+        debug_log.log(f'  group {group_label!r} matched', matched)
         # Report the missing group when no alternative was found.
         if matched is None:
             failed_lines.append(

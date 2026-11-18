@@ -1807,6 +1807,12 @@ def register_data_portal_routes(app: Any) -> None:
         methods=['POST'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-checks/view-debug',
+        'api_apero_checks_view_debug',
+        app._api_apero_checks_view_debug,
+        methods=['POST'],
+    )
+    app.add_url_rule(
         '/api/monitor/apero-checks/validate-obsdir',
         'api_apero_checks_validate_obsdir',
         app._api_apero_checks_validate_obsdir,

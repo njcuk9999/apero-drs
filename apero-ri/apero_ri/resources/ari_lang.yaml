@@ -981,3 +981,42 @@ User not found.:
 User information unavailable.:
   ES: Información del usuario no disponible.
   FR: Informations utilisateur indisponibles.
+"Debug log":
+  FR: Journal de débogage
+  ES: Registro de depuración
+"Verbose debug log of every check run for this night":
+  FR: Journal de débogage détaillé de toutes les vérifications de cette nuit
+  ES: Registro de depuración detallado de todas las comprobaciones de esta noche
+"Verbose debug log of the last run of this check":
+  FR: Journal de débogage détaillé de la dernière exécution de cette vérification
+  ES: Registro de depuración detallado de la última ejecución de esta comprobación
+"Debug log: all checks for this night":
+  FR: "Journal de débogage : toutes les vérifications de cette nuit"
+  ES: "Registro de depuración: todas las comprobaciones de esta noche"
+"Debug log: this check only":
+  FR: "Journal de débogage : cette vérification uniquement"
+  ES: "Registro de depuración: solo esta comprobación"
+"Search debug log...":
+  FR: Rechercher dans le journal de débogage...
+  ES: Buscar en el registro de depuración...
+"Reload":
+  FR: Recharger
+  ES: Recargar
+"Copy":
+  FR: Copier
+  ES: Copiar
+"Loading debug log...":
+  FR: Chargement du journal de débogage...
+  ES: Cargando el registro de depuración...
+"Could not load the debug log.":
+  FR: Impossible de charger le journal de débogage.
+  ES: No se pudo cargar el registro de depuración.
+"matches":
+  FR: correspondances
+  ES: coincidencias
+"No match":
+  FR: Aucune correspondance
+  ES: Sin coincidencias
+"updated":
+  FR: mis à jour
+  ES: actualizado

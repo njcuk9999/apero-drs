@@ -15,6 +15,8 @@ from typing import Any
 
 from flask import Response, jsonify, request
 
+from aperocore.drs_lang import textentry
+
 # ── Per-call results cache for check_results endpoint ────────────────────────
 _RESULTS_CACHE: dict = {}
 _RESULTS_LOCK = threading.Lock()
@@ -22,6 +24,10 @@ _RESULTS_TTL_S = 120  # 2 minutes
 
 from apero_ri.application.issues_api_helpers import _data_dir
 from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
+from apero_ri.application.monitor_view_helpers import (
+    _can_see_apero_checks_advanced,
+)
+from apero_ri.apero_monitoring.core import debug_log
 from apero_ri.application.monitor_view_helpers import (
     _get_apero_check_page_payload,
     _normalize_apero_checks_args,
@@ -53,13 +59,14 @@ def _api_user(app: Any) -> tuple[Any, Any]:
     return user_info, perms
 
 
-def _resolve_checks_path(
-    app: Any,
-    profile_id: str,
-    obsdir: str,
-    check_path: str = '',
-) -> Path:
-    """Resolve the obsdir YAML path for one profile."""
+def _resolve_checks_root(app: Any, profile_id: str) -> Path:
+    """Resolve the APERO-checks output root for one accessible profile.
+
+    :param app: The ARI application.
+    :param profile_id: APERO profile identifier.
+    :return: Checks root directory.
+    :raises FileNotFoundError: When the profile is not accessible.
+    """
     profile = None
     user_info = app._get_api_user()
     for item in get_accessible_profiles(user_info, app.ari_groups):
@@ -69,11 +76,21 @@ def _resolve_checks_path(
     if profile is None:
         raise FileNotFoundError('Profile not found or access denied')
     cfg = checks_core.load_config(app._resolve_local_data_dir())
-    root = checks_core.resolve_checks_root(
+    return checks_core.resolve_checks_root(
         app._resolve_local_data_dir(),
         profile_data=profile['data'],
         configured_root=cfg.get('checks_root', ''),
     )
+
+
+def _resolve_checks_path(
+    app: Any,
+    profile_id: str,
+    obsdir: str,
+    check_path: str = '',
+) -> Path:
+    """Resolve the obsdir YAML path for one profile."""
+    root = _resolve_checks_root(app, profile_id)
 
     raw_check_path = str(check_path or '').strip()
     if raw_check_path:
@@ -1013,6 +1030,65 @@ def api_apero_checks_view_yaml(app: Any) -> _ApiResponse:
         last_run=last_run,
         content=text,
         truncated=was_truncated,
+    )
+
+
+def api_apero_checks_view_debug(app: Any) -> _ApiResponse:
+    """Return the APERO-check debug log for one night (or one check).
+
+    The request body holds ``profile_id`` and ``obsdir`` and an optional
+    ``check_key``. Without a check key every recorded check for the night
+    is returned; with one only that check's section is returned. Debug logs
+    show server paths and configuration, so they need advanced access.
+
+    :param app: The ARI application.
+    :return: JSON response with the rendered log text.
+    """
+    # Debug logs need the same access as the advanced check options.
+    user_info, perms = _api_user(app)
+    groups = user_info.get('groups', []) if user_info else []
+    if not _can_see_apero_checks_advanced(perms, groups):
+        message = str(textentry('APERO_CHECK_DEBUG_ADVANCED_REQUIRED'))
+        return jsonify(success=False, error=message), 403
+    # Read and validate the request.
+    body = request.get_json(silent=True) or {}
+    profile_id = str(body.get('profile_id') or '').strip()
+    obsdir = str(body.get('obsdir') or '').strip()
+    check_key = str(body.get('check_key') or '').strip()
+    if not profile_id or not obsdir:
+        message = str(textentry('APERO_CHECK_DEBUG_MISSING_ARGS'))
+        return jsonify(success=False, error=message), 400
+    # Reject path separators so the obsdir cannot escape the debug folder.
+    if Path(obsdir).name != obsdir or obsdir in ('.', '..'):
+        message = str(textentry('APERO_CHECK_DEBUG_BAD_OBSDIR',
+                                args=[obsdir]))
+        return jsonify(success=False, error=message), 400
+    try:
+        root = _resolve_checks_root(app, profile_id)
+    except FileNotFoundError:
+        message = str(textentry('APERO_CHECK_DEBUG_PROFILE_DENIED'))
+        return jsonify(success=False, error=message), 404
+    # Load the per-obsdir debug file written by the check task.
+    path = debug_log.debug_filename(root, obsdir)
+    if not path.is_file():
+        message = str(textentry('APERO_CHECK_DEBUG_NOT_FOUND',
+                                args=[obsdir]))
+        return jsonify(success=False, error=message, missing=True), 404
+    data = debug_log.load_obsdir_debug(path)
+    if not data:
+        message = str(textentry('APERO_CHECK_DEBUG_READ_FAILED',
+                                args=[str(path)]))
+        return jsonify(success=False, error=message), 500
+    # Render either the whole night or one check's section.
+    content = debug_log.format_obsdir_debug(data, check_key=check_key)
+    return jsonify(
+        success=True,
+        path=str(path),
+        obsdir=obsdir,
+        check_key=check_key,
+        updated=str(data.get('updated', '')),
+        checks=list(dict(data.get('checks', {}) or {})),
+        content=content,
     )
 
 

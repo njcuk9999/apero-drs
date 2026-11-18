@@ -2197,6 +2197,7 @@ def monitor_apero_checks_obsdir_view(
         'api_rerun_night_url': url_for('api_apero_checks_rerun_night'),
         'api_issue_url': url_for('api_apero_checks_create_issue'),
         'api_view_yaml_url': url_for('api_apero_checks_view_yaml'),
+        'api_view_debug_url': url_for('api_apero_checks_view_debug'),
     }
     try:
         context.update(
@@ -2323,6 +2324,12 @@ def monitor_apero_checks_check_view(
         'api_update_url': url_for('api_apero_checks_update_failure'),
         'api_rerun_check_url': url_for('api_apero_checks_rerun_single_check'),
         'api_view_yaml_url': url_for('api_apero_checks_view_yaml'),
+        'api_view_debug_url': url_for('api_apero_checks_view_debug'),
+        # Debug logs expose server paths/config: advanced users only.
+        'can_advanced_checks': _can_see_apero_checks_advanced(
+            perms,
+            user_info.get('groups', []) if user_info else [],
+        ),
     }
     context.update(
         {

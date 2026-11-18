@@ -10,6 +10,7 @@ import copy
 import multiprocessing as mp
 import os
 import time
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
@@ -22,6 +23,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from apero_ri.apero_monitoring import CHECKS
 from apero_ri.apero_monitoring import core as checks_core
 from apero_ri.apero_monitoring import raw_common
+from apero_ri.apero_monitoring.core import debug_log
 from apero_ri.application import profile_utils
 from apero_ri.core import apero_checks as checks_config
 from apero_ri.tasks import apero_async
@@ -463,6 +465,12 @@ def _run_profile(task: AperoCheckTask,
                 f'{obs_dir} | {check_key} | {check_result["report"]}'
             )
         if ctx['create_output']:
+            _write_debug_logs(root_dir, obs_dir, profile_name,
+                              obsdir_result, ctx)
+        # Free the debug text: results are kept for the whole run and the
+        #   logs can be large on long scheduled runs.
+        for check_result in obsdir_result.get('results', []):
+            check_result.pop('debug', None)
             try:
                 filename = checks_core.write_obsdir_yaml(
                     root_dir,
@@ -521,6 +529,10 @@ def _run_profile(task: AperoCheckTask,
                 profile_id=profile_name,
             )
             task.output_files.append(str(filename))
+            # Publish the debug log with the YAML so synced copies have it.
+            debug_file = debug_log.debug_filename(root_dir, obs_dir)
+            if debug_file.is_file():
+                task.output_files.append(str(debug_file))
             ctx['tlog'](
                 f'Profile {profile_name}: finalized YAML {filename}'
             )
@@ -553,6 +565,55 @@ def _run_profile(task: AperoCheckTask,
         obsdirs=[row['obs_dir'] for row in selected_rows],
         reports=report_lines,
     )
+
+
+def _safe_debug(func: Callable, *fargs: Any) -> None:
+    """Call one debug-log helper, recording (not raising) any error.
+
+    :param func: Debug-log helper to call.
+    :param fargs: Positional arguments for the helper.
+    :return: None. Debug failures must never affect the check result.
+    """
+    try:
+        func(*fargs)
+    except Exception:
+        debug_log.log(f'debug helper {func.__name__} failed',
+                      traceback.format_exc())
+
+
+def _write_debug_logs(root_dir: Path, obs_dir: str, profile_name: str,
+                      obsdir_result: dict, ctx: dict) -> None:
+    """Store the per-check debug logs of one obsdir result.
+
+    :param root_dir: APERO checks output root.
+    :param obs_dir: Observation directory name.
+    :param profile_name: APERO profile name.
+    :param obsdir_result: Result returned by the obsdir worker.
+    :param ctx: Run context (for the task logger).
+    :return: None. Failures are logged and never stop the task.
+    """
+    # Collect the debug entry of every check run for this obsdir.
+    check_logs = dict()
+    for check_result in obsdir_result.get('results', []):
+        entry = check_result.get('debug')
+        if isinstance(entry, dict):
+            check_logs[str(check_result.get('check_key', ''))] = entry
+    if not check_logs:
+        return
+    try:
+        dargs = [root_dir, obs_dir, profile_name, check_logs]
+        filename = debug_log.write_obsdir_debug(*dargs)
+        ctx['tlog'](
+            f'Profile {profile_name}: wrote debug log {filename} '
+            f'(night={obs_dir}).',
+            min_verbose=2,
+        )
+    except Exception as exc:
+        ctx['tlog'](
+            f'Profile {profile_name}: failed writing debug log for '
+            f'{obs_dir}: {exc}',
+            min_verbose=1,
+        )
 
 
 def _query_raw_obs_dirs(aparams: dict,
@@ -1239,20 +1300,37 @@ def _run_single_obsdir_check(check_key: str,
     check_dict['obsdir'] = row.get('obs_dir', '')
     check_dict['obsdir_first_file'] = row.get('first_file', '')
     check_dict['obsdir_last_file'] = row.get('last_file', '')
+    obs_dir = str(row.get('obs_dir', '') or '')
+    # Record everything this check does for the per-check debug log.
+    token = debug_log.start(check_key, obs_dir)
+    run_at = datetime.now(timezone.utc).isoformat(timespec='seconds')
     start = time.perf_counter()
     try:
-        # Run the check with the requested signature.
-        check_obj(
-            instrument,
-            str(row.get('obs_dir', '') or ''),
-            aparams,
-            dbparams,
-            check_dict,
-        )
-    except Exception as exc:
-        # Convert crashes into failing checks with an explicit message.
-        check_obj.passed = False
-        check_obj.message = f'Check crashed: {exc}'
+        # Record the environment and every input before running.
+        ctx_args = [CHECKS[check_key], check_key, instrument, aparams,
+                    dbparams, row, check_dict]
+        _safe_debug(debug_log.log_check_context, *ctx_args)
+        debug_log.section('Check execution')
+        try:
+            # Run the check with the requested signature.
+            check_obj(
+                instrument,
+                obs_dir,
+                aparams,
+                dbparams,
+                check_dict,
+            )
+        except Exception as exc:
+            # Convert crashes into failing checks with an explicit message.
+            check_obj.passed = False
+            check_obj.message = f'Check crashed: {exc}'
+            debug_log.log('CHECK CRASHED', traceback.format_exc())
+        duration_s = time.perf_counter() - start
+        # Explain where the configuration the check used came from.
+        _safe_debug(debug_log.log_config_drift, aparams)
+        _safe_debug(debug_log.log_result, check_obj, duration_s)
+    finally:
+        recorder = debug_log.stop(token)
     # Build the result mapping consumed by the parent process.
     result = dict()
     result['obs_dir'] = str(row.get('obs_dir', '') or '')
@@ -1261,6 +1339,11 @@ def _run_single_obsdir_check(check_key: str,
     result['entry'] = check_obj.create_yaml_entry()
     result['report'] = str(check_obj.report())
     result['duration_s'] = time.perf_counter() - start
+    # Attach the debug log so the parent can store it next to the YAML.
+    result['debug'] = dict(text=recorder.text() if recorder else '',
+                           passed=bool(check_obj.passed),
+                           run_at=run_at,
+                           duration_s=float(result['duration_s']))
     return result
 
 

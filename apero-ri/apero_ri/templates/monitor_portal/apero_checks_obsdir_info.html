@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260602a">
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20261118a">
 <style>
 .ac-title-banner {
     display: inline-flex;
@@ -293,6 +293,15 @@
         <i class="fa-solid fa-eye"></i>
         View YAML
     </button>
+    {% if can_advanced_checks %}
+    <button id="ac-obsdir-view-debug"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button"
+            title="{{ _('Verbose debug log of every check run for this night') }}">
+        <i class="fa-solid fa-bug"></i>
+        {{ _('Debug log') }}
+    </button>
+    {% endif %}
     <button id="ac-obsdir-flag-btn"
             class="ari-btn ari-btn--sm ac-btn--orange-bg"
             type="button">
@@ -575,6 +584,15 @@
              style="margin: 1rem; max-height: 62vh;"></pre>
     </div>
 </div>
+
+{% if can_advanced_checks %}
+{% with debug_button_id='ac-obsdir-view-debug',
+        debug_title=_('Debug log: all checks for this night'),
+        debug_payload={'profile_id': profile_id, 'obsdir': obsdir},
+        debug_filename='apero_check_debug_' ~ profile_id ~ '_' ~ obsdir ~ '.txt' %}
+{% include 'monitor_portal/_apero_checks_debug_overlay.html' %}
+{% endwith %}
+{% endif %}
 
     </div>
 
