@@ -106,16 +106,21 @@ command name alone.
 
 The `ARITASK` tool is registered as `apero_ri_task.py` and is appended to the
 `full_seq`, `limited_seq`, `science_seq`, and `quick_seq` workflows for SPIROU,
-NIRPS-HA, and NIRPS-HE. It loads the active DRS profile's matching
-`PATH_OTHER/ari-config/<profile>.yaml` and runs registered profile-scoped local
-tasks. If that YAML is absent, it logs a warning and skips. The tool uses
+NIRPS-HA, and NIRPS-HE. It builds the task profile in memory from the active
+APERO paths and database settings and the bundled instrument preset. It does
+not read or write a generated YAML or require a profile on the ARI server.
+To use a custom profile, pass `--profile=/path/to/profile.yaml` to APERO's
+`apero_ri_task.py`. The YAML must contain a single ARI profile mapping;
+its filename stem identifies the profile for outputs. This override replaces
+the generated profile and is never rewritten. The tool uses
 `PATH_OTHER/apero-ri` as its local task-data root and writes precomputed results
 to the shared profile directory.
 
 APERO processing executes `ARITASK` after the regular run batch, even when the
 regular batch uses multiple workers. Queue mode groups the final tool after the
-preceding recipe groups. The wrapper imports `apero_ri` only when it runs, so
-the normal APERO startup path does not require the RI package.
+preceding recipe groups. Install `apero-ri` in the reduction environment to
+enable local task execution; otherwise the automatic step logs a warning and
+skips. The RI web server does not need to be running.
 
 The Queue tab combines all named queues, including instrument workers and
 APERO checks. The first running task has the progress summary; additional

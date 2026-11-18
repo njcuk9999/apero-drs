@@ -137,19 +137,34 @@ item.arguments = 'None'
 item.comment = 'APERO processing tool that updates local ARI products'
 langlist.add(item)
 
-item = langlist.create('APERO_RI_TASK_NO_PROFILE', kind='text')
+item = langlist.create('APERO_RI_TASK_PROFILE_HELP', kind='text')
 item.value['ENG'] = (
-    'Skipping APERO RI tasks; no ari-config YAML exists for profile {0}.'
+    'Optional ARI profile YAML. Defaults to the active APERO settings.'
 )
 item.value['FR'] = (
-    'Tâches APERO RI ignorées : aucun fichier ari-config YAML pour le '
-    'profil {0}.'
+    'Profil ARI YAML facultatif. Par défaut : paramètres APERO actifs.'
 )
 item.value['ES'] = (
-    'Se omiten tareas APERO RI; no existe YAML ari-config para el perfil {0}.'
+    'Perfil ARI YAML opcional. Por defecto: ajustes activos de APERO.'
 )
-item.arguments = '0: APERO profile name'
-item.comment = 'Logged when the final ARI processing tool has no profile YAML'
+item.arguments = 'None'
+item.comment = 'Help for the explicit ARITASK profile override'
+langlist.add(item)
+
+item = langlist.create('APERO_RI_TASK_NO_PROFILE', kind='text')
+item.value['ENG'] = 'Skipping APERO RI tasks; no active APERO profile.'
+item.value['FR'] = 'Tâches APERO RI ignorées : aucun profil APERO actif.'
+item.value['ES'] = 'Se omiten tareas APERO RI; no hay perfil APERO activo.'
+item.arguments = 'None'
+item.comment = 'Logged when ARITASK cannot identify the active APERO profile'
+langlist.add(item)
+
+item = langlist.create('APERO_RI_TASK_NOT_INSTALLED', kind='text')
+item.value['ENG'] = 'Cannot run APERO RI tasks: apero-ri is not installed.'
+item.value['FR'] = 'Impossible de lancer les tâches APERO RI : apero-ri absent.'
+item.value['ES'] = 'No se pueden ejecutar tareas APERO RI: falta apero-ri.'
+item.arguments = 'None'
+item.comment = 'Logged when the APERO environment has no RI package'
 langlist.add(item)
 
 item = langlist.create('APERO_QUEUE_STARTUP_LOAD_FAILED', kind='text')

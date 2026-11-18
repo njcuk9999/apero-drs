@@ -613,15 +613,8 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         - DATABASE_USER: str, the database user, e.g. root
         - DATABASE_PASSWORD: str, the database password, e.g. password
         - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric
-          data
-        - CALIB_TABLENAME: str, the name of the table containing calibration
-          data
         - FINDEX_TABLENAME: str, the name of the table containing file index
           data
-        - LOG_TABLENAME: str, the name of the table containing log data
-        - TELLU_TABLENAME: str, the name of the table containing telluric data
-        - REJECT_TABLENAME: str, the name of the table containing rejected data
         - SCIENCE_FIBER: str, the name of the science fiber, e.g. 'A' or 'B'
         - SCIENCE_TYPES: list of str, the list of DPRTYPEs to include in
                             the object table, e.g. 'POLAR_FP', 'OBJ_SKY' etc
@@ -1624,14 +1617,7 @@ def _check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     Raises:
         ValueError: If a required profile parameter is absent.
     """
-    required_params = [
-        "ASTROM_TABLENAME",
-        "CALIB_TABLENAME",
-        "FINDEX_TABLENAME",
-        "LOG_TABLENAME",
-        "TELLU_TABLENAME",
-        "REJECT_TABLENAME",
-    ]
+    required_params = ['FINDEX_TABLENAME']
     # Check and cut down parameters needed for query
     rparams = dict()
     # Prefer nested database config and flatten required keys for SQL

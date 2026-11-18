@@ -86,6 +86,8 @@ ari_task.description = textentry('APERO_RI_TASK_DESCRIPTION')
 ari_task.recipe_type = 'tool'
 ari_task.recipe_kind = 'processing'
 ari_task.group_func = grouping.no_group
+ari_task.set_kwarg(name='--profile', dtype=str, default='',
+                   helpstr=textentry('APERO_RI_TASK_PROFILE_HELP'))
 
 # =============================================================================
 # Recipe definitions
