@@ -25941,6 +25941,20 @@ item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00047
+# =============================================================================
+item = langlist.create('40-513-00047', kind='all-code')
+item.value['ENG'] = ('Queue: Private dashboard worker listening at {0} '
+                     '(internal only; use the public dashboard URL)')
+item.value['FR'] = ('File : processus prive du tableau en ecoute sur {0} '
+                    '(interne uniquement ; utilisez URL publique du tableau)')
+item.value['ES'] = ('Cola: proceso privado del panel escuchando en {0} '
+                    '(solo interno; use la URL publica del panel)')
+item.arguments = '{0}=private worker URL'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')

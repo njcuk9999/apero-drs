@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 
+from apero import dev
 from apero.tools.module.documentation import ari_docs
 from apero.tools.module.processing import drs_queue_gui
 
@@ -60,21 +61,27 @@ def test_queue_state_reset_releases_busy_on_error(monkeypatch: Any) -> None:
     assert state.active_action is None
 
 
-@pytest.mark.parametrize(('headless', 'open_count'), [
-    (False, 1),
-    (True, 0),
+@pytest.mark.parametrize(('headless', 'worker_port', 'open_count'), [
+    (False, None, 1),
+    (True, None, 0),
+    (False, '63307', 0),
+    (True, '63307', 0),
 ])
 def test_queue_gui_headless_suppresses_browser(
-    monkeypatch: Any, headless: bool, open_count: int,
+    monkeypatch: Any, headless: bool, worker_port: str | None,
+    open_count: int,
 ) -> None:
     """Keep the dashboard running without opening a browser when requested.
 
     :param monkeypatch: Pytest monkeypatch fixture.
     :param headless: Whether browser launching should be suppressed.
+    :param worker_port: Private worker port, or None for the public server.
     :param open_count: Expected number of browser launch calls.
     :return: None.
     """
+    dev.get_base_params('SPIROU')
     served = []
+    messages = []
 
     class FakeServer:
         """Minimal server stand-in for the dashboard lifecycle."""
@@ -82,7 +89,7 @@ def test_queue_gui_headless_suppresses_browser(
         def __init__(
             self,
             address: tuple[str, int],
-            command: list[str],
+            command: Any,
         ) -> None:
             self.server_address = address
 
@@ -113,6 +120,11 @@ def test_queue_gui_headless_suppresses_browser(
         drs_queue_gui.drs_queue_server.WORKER_PORT_ENV,
         raising=False,
     )
+    if worker_port is not None:
+        monkeypatch.setenv(
+            drs_queue_gui.drs_queue_server.WORKER_PORT_ENV, worker_port)
+    monkeypatch.setattr(drs_queue_gui, 'ThreadingHTTPServer', FakeServer)
+    monkeypatch.setattr(drs_queue_gui, '_stale_watcher', lambda *args: None)
     monkeypatch.setattr(
         drs_queue_gui.drs_queue,
         'setup_queue_directories',
@@ -128,13 +140,19 @@ def test_queue_gui_headless_suppresses_browser(
         '_make_handler',
         lambda params, state, rows: object,
     )
-    monkeypatch.setattr(drs_queue_gui, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        drs_queue_gui, 'WLOG',
+        lambda params, level, message: messages.append(message))
     monkeypatch.setattr(webbrowser, 'open', lambda url: opened.append(url))
 
     drs_queue_gui.queue_gui(params)
 
     assert len(opened) == open_count
     assert served == [True]
+    message_key = '40-513-00028' if worker_port is None else '40-513-00047'
+    port = drs_queue_gui.GUI_DEFAULT_PORT if worker_port is None else worker_port
+    url = 'http://127.0.0.1:{0}/'.format(port)
+    assert messages[0] == drs_queue_gui.textentry(message_key, args=[url])
 
 
 def test_render_info_html_lists_every_control_tab():

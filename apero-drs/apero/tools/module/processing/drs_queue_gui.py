@@ -1918,8 +1918,8 @@ def queue_gui(params: ParamDict) -> None:
     # log where the dashboard is
     url = 'http://{0}:{1}/'.format(host, port)
     margs = [url]
-    # log: Queue: Dashboard running at {0} (Ctrl+C to stop)
-    WLOG(params, 'info', textentry('40-513-00028', args=margs))
+    message_key = '40-513-00028' if supervised else '40-513-00047'
+    WLOG(params, 'info', textentry(message_key, args=margs))
     # try to open the dashboard in a browser (ignore failures - e.g. on
     #   a headless machine the user can open the url manually)
     headless = params['INPUTS'].get('HEADLESS', False)
