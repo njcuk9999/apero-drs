@@ -190,6 +190,7 @@ def ask(question: str, dtype: Union[str, type, None] = None,
                 continue
         # deal with paths
         elif dtype == 'path':
+            uinput = uinput.strip()
             # --------------------------------------------------------------
             # check whether default wanted and user types 'None' or blank ('')
             if uinput in ['None', ''] and default is not None:
