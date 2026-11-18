@@ -1965,6 +1965,15 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             ordfp_wave_ref = fpl_wave_ref[good_fp]
             # mask the hclines
             ordhc_pix_meas = hcl_pix_meas[good_hc]
+
+            # skip orders with too few fp lines for a fit
+            if np.sum(good_fp) <= min_fp_lines:
+                # log skipping orders: Skipped Order {0} (too few {1} lines)
+                margs = [order_num, 'FP', np.sum(good_fp), min_fp_lines]
+                # warning: Skipped Order {0} (too few {1} lines: {2} < {3})
+                WLOG(params, 'warning', textentry('40-017-00065', args=margs),
+                     sublevel=2)
+                continue
             # get wave fit
             wave_fit, _ = mp.robust_chebyfit(ordfp_pix_meas, ordfp_wave_ref,
                                              wavesol_fit_degree, nsig_cut,

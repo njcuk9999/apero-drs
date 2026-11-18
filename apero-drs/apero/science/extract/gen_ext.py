@@ -611,7 +611,8 @@ def write_extraction_files(
     :param props: General calibration properties.
     :param lprops: Localization and order-profile properties.
     :param wprops: Wavelength solution properties.
-    :param eprops: Extraction products and quality metrics.
+    :param eprops: Extraction products and quality metrics, including
+                   E2DSFF and its per-pixel standard deviations E2DSFF_ERROR.
     :param bprops: Barycentric correction properties.
     :param swprops: Optional wavelength-grid S1D properties.
     :param svprops: Optional velocity-grid S1D properties.
@@ -786,7 +787,9 @@ def write_extraction_files(
     # log: Saving E2DSFF file: {0}
     WLOG(params, '', textentry('40-016-00006', args=wargs))
     # define multi lists
-    data_list, name_list = [order_table], ['ORDER_TABLE']
+    # write_multi prepends .data; do not duplicate the E2DSFF flux array.
+    data_list = [eprops['E2DSFF_ERROR'], order_table]
+    name_list = ['E2DSFF_ERROR', 'ORDER_TABLE']
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]
@@ -893,7 +896,8 @@ def write_extraction_files_ql(
     :param fiber: Fiber identifier associated with these products.
     :param props: General calibration properties.
     :param lprops: Localization and order-profile properties.
-    :param eprops: Extraction products and quality metrics.
+    :param eprops: Extraction products and quality metrics, including
+                   E2DSFF and its per-pixel standard deviations E2DSFF_ERROR.
     :param sprops: Shape calibration properties.
     :param fbprops: Flat and blaze calibration properties.
     :param qc_params: Quality-control names, values, logic, and flags.
@@ -998,7 +1002,8 @@ def write_extraction_files_ql(
     # log: Saving E2DSFF file: {0}
     WLOG(params, '', textentry('40-016-00006', args=wargs))
     # define multi lists
-    data_list, name_list = [], []
+    data_list = [eprops['E2DSFF_ERROR']]
+    name_list = ['E2DSFF_ERROR']
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=e2dsfffile)]

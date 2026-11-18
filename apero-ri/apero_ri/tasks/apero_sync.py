@@ -60,6 +60,10 @@ heavy DB+FITS queries over SSHFS.
 """
 import sys
 import time
+import json
+import hashlib
+import shutil
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
@@ -77,6 +81,169 @@ __NAME__ = 'apero_ri.tasks.apero_sync'
 # =============================================================================
 # Public API
 # =============================================================================
+def precomputed_directory(profile: Dict[str, Any], instrument: str,
+                          profile_name: str) -> Optional[Path]:
+    """Resolve the standard shared output directory for one profile.
+
+    :param profile: Hydrated APERO profile configuration.
+    :param instrument: Instrument storage key.
+    :param profile_name: APERO profile storage key.
+    :returns: PATH_OTHER/apero-ri/tasks/instrument/profile, or None.
+    """
+    other = profile.get('paths', {}).get('PATH_OTHER')
+    other = other or profile.get('PATH_OTHER')
+    if not other:
+        return None
+    return (Path(other).expanduser() / 'apero-ri' / 'tasks'
+            / instrument / profile_name)
+
+
+def publish_precomputed(task_key: str, params: Dict[str, Any],
+                        output_files: List[str]) -> None:
+    """Publish this task's files and a completion manifest per profile.
+
+    :param task_key: Registered task identifier.
+    :param params: Runtime parameters with local root and profile configs.
+    :param output_files: Files produced by a successful, uncancelled run.
+    :returns: None. The manifest is replaced after all files are copied.
+    """
+    instrument = params['INSTRUMENT']
+    local_root = Path(params['LOCAL_DATA_DIR']).expanduser().resolve()
+    for name, profile in params.get('APERO_PROFILES', {}).items():
+        shared = precomputed_directory(profile, instrument, name)
+        if shared is None:
+            continue
+        profile_root = local_root / 'tasks' / instrument / name
+        roots = dict(profile=profile_root)
+        if task_key == 'APERO_CHECK_TASK':
+            from apero_ri.apero_monitoring import core as checks_core
+
+            roots['checks'] = checks_core.resolve_output_root(
+                str(local_root), profile).resolve()
+        files = []
+        for filename in output_files:
+            source = Path(filename).expanduser().resolve()
+            matches = [(key, root) for key, root in roots.items()
+                       if source.is_relative_to(root)]
+            if not source.is_file() or not matches:
+                continue
+            root_key, root = matches[0]
+            relative = source.relative_to(root)
+            stored = relative if root_key == 'profile' else (
+                Path('_checks') / relative)
+            destination = shared / stored
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if source != destination.resolve():
+                temporary = destination.with_name(str(uuid.uuid4()) + '.tmp')
+                try:
+                    shutil.copy2(source, temporary)
+                    temporary.replace(destination)
+                finally:
+                    temporary.unlink(missing_ok=True)
+            files.append(dict(path=str(stored), root=root_key,
+                              relative=str(relative),
+                              sha256=hashlib.sha256(source.read_bytes())
+                              .hexdigest()))
+        if not files:
+            continue
+        manifest = dict(task_key=task_key, files=files,
+                        generated_at=datetime.now(timezone.utc).isoformat())
+        path = shared / ('.' + task_key + '.json')
+        temporary = path.with_name(str(uuid.uuid4()) + '.tmp')
+        try:
+            temporary.write_text(json.dumps(manifest), encoding='utf-8')
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+def restore_precomputed(task_key: str, params: Dict[str, Any]) -> List[str]:
+    """Restore a complete task manifest for a single profile if available.
+
+    :param task_key: Registered task identifier.
+    :param params: Runtime parameters for exactly one assigned profile.
+    :returns: Restored local file paths, or an empty list for server fallback.
+    """
+    profiles = params.get('APERO_PROFILES', {})
+    if len(profiles) != 1:
+        return []
+    name, profile = next(iter(profiles.items()))
+    instrument = params['INSTRUMENT']
+    shared = precomputed_directory(profile, instrument, name)
+    if shared is None:
+        return []
+    manifest_path = shared / ('.' + task_key + '.json')
+    local_root = Path(params['LOCAL_DATA_DIR']).expanduser().resolve()
+    roots = dict(profile=local_root / 'tasks' / instrument / name)
+    if task_key == 'APERO_CHECK_TASK':
+        from apero_ri.apero_monitoring import core as checks_core
+
+        roots['checks'] = checks_core.resolve_output_root(
+            str(local_root), profile).resolve()
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        if manifest.get('task_key') != task_key:
+            return []
+        files = manifest.get('files')
+        if not isinstance(files, list) or not files:
+            return []
+        sources = []
+        for entry in files:
+            relative = Path(entry['path'])
+            target = Path(entry['relative'])
+            root_key = entry['root']
+            unsafe = (relative.is_absolute() or '..' in relative.parts
+                      or target.is_absolute() or '..' in target.parts
+                      or root_key not in roots)
+            if unsafe:
+                return []
+            source = shared / relative
+            if not source.is_file() or source.is_symlink():
+                return []
+            if not source.resolve().is_relative_to(shared.resolve()):
+                return []
+            digest = hashlib.sha256(source.read_bytes()).hexdigest()
+            if digest != entry['sha256']:
+                return []
+            destination = roots[root_key] / target
+            if not destination.resolve().is_relative_to(roots[root_key]):
+                return []
+            sources.append((destination, source))
+    except (OSError, ValueError, TypeError, AttributeError, KeyError):
+        return []
+    restored = []
+    for destination, source in sources:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if source.resolve() != destination.resolve():
+            shutil.copy2(source, destination)
+        restored.append(str(destination))
+    return restored
+
+
+def run_with_precomputed(instance: Any, task_key: str,
+                         params: Dict[str, Any]) -> None:
+    """Use shared results first, otherwise compute and publish them.
+
+    :param instance: Local-capable task instance receiving runtime results.
+    :param task_key: Registered task identifier.
+    :param params: Runtime task parameters for one profile.
+    :returns: None. Updates the task's output files and info.
+    """
+    from aperocore.drs_lang import textentry
+
+    filters = params.get('TASK_CONFIG', {}).get('filters', {})
+    filtered = any(str(value or '').strip() for value in filters.values())
+    files = [] if filtered else restore_precomputed(task_key, params)
+    if files:
+        instance.output_files = files
+        instance.info = str(textentry('ASYNC_TASKS_AUTOMATIC'))
+        return
+    instance.run_job(params)
+    stop_event = params.get('STOP_EVENT')
+    if not filtered and (stop_event is None or not stop_event.is_set()):
+        publish_precomputed(task_key, params, instance.output_files)
+
+
 def run(task_key: str,
         params: Dict[str, Any],
         verbose: bool = True,
@@ -199,6 +366,9 @@ def run(task_key: str,
         # run_job is the main entry point defined by each AperoAsyncTask
         # sub-class.  It reads from params and writes results to disk.
         instance.run_job(params)
+        filters = params.get('TASK_CONFIG', {}).get('filters', {})
+        if not any(str(value or '').strip() for value in filters.values()):
+            publish_precomputed(task_key, params, instance.output_files)
     except Exception as exc:
         # If run_job raises, capture the error but do not re-raise so we
         # can still return a summary dict to the caller.

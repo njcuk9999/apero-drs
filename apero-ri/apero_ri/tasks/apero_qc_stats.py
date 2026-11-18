@@ -41,7 +41,7 @@ DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
-TASK_TYPE = "INSTRUMENT"
+TASK_TYPE = 'PROFILE'
 # Whether this task has a sub-process (for sub-processing loading bar in UI)
 USE_SUBPROCESS = True
 # Whether this task can be run in multi-process mode

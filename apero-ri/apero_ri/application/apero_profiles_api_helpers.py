@@ -6,6 +6,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from apero_ri.core import audit_log
 from apero_ri.core import ari_lang_support
 from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
@@ -27,6 +29,35 @@ def _profile_disabled(cfg: dict[str, Any]) -> bool:
     """Return True if a profile is disabled."""
     raw = cfg.get('disabled', cfg.get('DISABLED', False))
     return _to_bool(raw)
+
+
+def _science_preset_is_v08(package_dir: Path, preset_name: str) -> bool:
+    """Return whether a science preset declares version 0.8 or newer.
+
+    Args:
+        package_dir: Root of the installed ``apero_ri`` package.
+        preset_name: Science preset filename selected by the profile.
+
+    Returns:
+        True when the preset's ``general.version`` is at least 0.8.
+    """
+    if not preset_name or Path(preset_name).name != preset_name:
+        return False
+    preset_path = (
+        package_dir / 'resources' / 'aprofile_instruments' / preset_name
+    )
+    try:
+        preset = yaml.safe_load(preset_path.read_text(encoding='utf-8')) or {}
+    except (OSError, yaml.YAMLError):
+        return False
+    general = preset.get('general', {})
+    version = general.get('version', 0) if isinstance(general, dict) else 0
+    try:
+        parts = [int(part) for part in str(version).split('.')]
+    except ValueError:
+        return False
+    parts.extend([0] * max(0, 2 - len(parts)))
+    return tuple(parts[:2]) >= (0, 8)
 
 
 def _optional_path_is_enabled(cfg: dict[str, Any], key: str) -> bool:
@@ -679,12 +710,13 @@ def api_apero_profiles_list(
 
 
 def api_apero_profiles_test_tables(
-    app: Any,
+    app: Any, package_dir: Path,
 ) -> Response | tuple[Response, int]:
     """Validate configured tables and list fiber and DPRTYPE values.
 
     Args:
         app: The ARI application providing authorization and DB helpers.
+        package_dir: Root of the installed ``apero_ri`` package.
 
     Returns:
         JSON validation result with available values or an HTTP error.
@@ -698,13 +730,17 @@ def api_apero_profiles_test_tables(
         return jsonify(success=False, error="Missing data"), 400
 
     table_keys = [
-        "ASTROM_TABLENAME",
         "CALIB_TABLENAME",
         "FINDEX_TABLENAME",
         "LOG_TABLENAME",
         "TELLU_TABLENAME",
-        "REJECT_TABLENAME",
     ]
+    preset_name = str(data.get('APERO_INSTRUMENT_PROFILE', '')).strip()
+    if not _science_preset_is_v08(package_dir, preset_name):
+        table_keys.extend([
+            'ASTROM_TABLENAME',
+            'REJECT_TABLENAME',
+        ])
 
     resolved = app._resolve_db_payload_for_test(data)
     if not resolved.get("ok") and resolved.get("requires_tunnel_admin"):
@@ -952,16 +988,25 @@ def api_apero_profiles_save(
         )
 
     _META_KEYS = ["apero_version", "reduction_server"]
+    _apero_instrument_profile = str(
+        data.get("APERO_INSTRUMENT_PROFILE", "") or ""
+    ).strip()
+    science_v08 = _science_preset_is_v08(
+        package_dir, _apero_instrument_profile
+    )
     _DB_REQUIRED_KEYS = [
         "DATABASE_USERNAME",
         "DATABASE_NAME",
-        "ASTROM_TABLENAME",
         "CALIB_TABLENAME",
         "FINDEX_TABLENAME",
         "LOG_TABLENAME",
         "TELLU_TABLENAME",
-        "REJECT_TABLENAME",
     ]
+    if not science_v08:
+        _DB_REQUIRED_KEYS.extend([
+            'ASTROM_TABLENAME',
+            'REJECT_TABLENAME',
+        ])
     _DB_OPTIONAL_KEYS = [
         "DATABASE_PASSWORD",
         "DATABASE_SOURCE",
@@ -969,9 +1014,6 @@ def api_apero_profiles_save(
         "DATABASE_TUNNEL_NAME",
     ]
     _OPTIONAL_BOOL_KEYS = ["temporary", "disabled"]
-    _apero_instrument_profile = str(
-        data.get("APERO_INSTRUMENT_PROFILE", "") or ""
-    ).strip()
     _PATH_KEYS = [
         "PATH_RAW",
         "PATH_PP",
@@ -1160,6 +1202,9 @@ def api_apero_profiles_save(
     profile_data.update(values)
     database = dict(profile_data.get('database', {}))
     database.update(db_values)
+    if science_v08:
+        database.pop('ASTROM_TABLENAME', None)
+        database.pop('REJECT_TABLENAME', None)
     profile_data['database'] = database
     paths = dict(profile_data.get('paths', {}))
     paths.update(path_values)

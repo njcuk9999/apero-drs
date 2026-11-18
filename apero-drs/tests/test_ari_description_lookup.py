@@ -120,6 +120,55 @@ def test_recipe_definitions_do_not_use_rst_metadata(instrument: str) -> None:
                 assert node.func.id != 'default_rfile', source
 
 
+@pytest.mark.parametrize('instrument', ['spirou', 'nirps_ha', 'nirps_he'])
+def test_ari_task_is_last_in_processing_sequences(instrument: str) -> None:
+    """The local ARI task follows all recipes in science workflows."""
+    instruments = Path(__file__).resolve().parents[1] / 'apero' / 'instruments'
+    source = instruments / instrument / 'recipe_definitions.py'
+    tree = ast.parse(source.read_text(encoding='utf-8'))
+    sequence_names = {'full_seq', 'limited_seq', 'science_seq', 'quick_seq'}
+    registry_adds = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == 'append'
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == 'recipes'
+        and node.args
+        and isinstance(node.args[0], ast.Attribute)
+        and node.args[0].attr == 'ari_task'
+    ]
+    assert registry_adds, source
+    starts = {}
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not isinstance(node.value, ast.Call):
+            continue
+        func = node.value.func
+        if not isinstance(func, ast.Attribute) or func.attr != 'DrsRunSequence':
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id in sequence_names:
+                starts[target.id] = node.lineno
+
+    for sequence_name in sequence_names:
+        assert sequence_name in starts, source
+        later = [line for line in starts.values()
+             if line > starts[sequence_name]]
+        end = min(later) if later else float('inf')
+        adds = [node for node in ast.walk(tree)
+                if isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == 'add'
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == sequence_name
+                and starts[sequence_name] < node.lineno < end]
+        last_add = max(adds, key=lambda node: node.lineno)
+        assert isinstance(last_add.args[0], ast.Attribute), source
+        assert last_add.args[0].attr == 'ari_task', source
+
+
 def test_legacy_sequence_summary_needs_no_rst_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     spirou_params: Any,

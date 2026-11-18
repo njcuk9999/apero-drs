@@ -29,12 +29,18 @@
     ];
 
     var TABLE_FIELDS = [
-        { key: 'ASTROM_TABLENAME',  id: 'profile-tbl-astrom' },
-        { key: 'CALIB_TABLENAME',   id: 'profile-tbl-calib' },
-        { key: 'FINDEX_TABLENAME',  id: 'profile-tbl-findex' },
-        { key: 'LOG_TABLENAME',     id: 'profile-tbl-log' },
-        { key: 'TELLU_TABLENAME',   id: 'profile-tbl-tellu' },
-        { key: 'REJECT_TABLENAME',  id: 'profile-tbl-reject' },
+        { key: 'ASTROM_TABLENAME', id: 'profile-tbl-astrom',
+            prefix: 'astrom_', row: 'profile-table-row-astrom' },
+        { key: 'CALIB_TABLENAME', id: 'profile-tbl-calib',
+            prefix: 'calib_', row: 'profile-table-row-calib' },
+        { key: 'FINDEX_TABLENAME', id: 'profile-tbl-findex',
+            prefix: 'findex_', row: 'profile-table-row-findex' },
+        { key: 'LOG_TABLENAME', id: 'profile-tbl-log',
+            prefix: 'log_', row: 'profile-table-row-log' },
+        { key: 'TELLU_TABLENAME', id: 'profile-tbl-tellu',
+            prefix: 'tellu_', row: 'profile-table-row-tellu' },
+        { key: 'REJECT_TABLENAME', id: 'profile-tbl-reject',
+            prefix: 'reject_', row: 'profile-table-row-reject' },
     ];
 
     var aprofileSelect      = document.getElementById('profile-instrument-profile');
@@ -137,8 +143,19 @@
 
     // Build lookup for table name input elements
     var tableInputs = {};
+    var tablePrefixInputs = {};
+    var tableSuffixInputs = {};
+    var tableFilterEdited = {};
     TABLE_FIELDS.forEach(function (f) {
         tableInputs[f.id] = document.getElementById(f.id);
+        var slug = f.id.replace('profile-tbl-', '');
+        tablePrefixInputs[f.id] = document.getElementById(
+            'profile-tbl-prefix-' + slug
+        );
+        tableSuffixInputs[f.id] = document.getElementById(
+            'profile-tbl-suffix-' + slug
+        );
+        tableFilterEdited[f.key] = false;
     });
 
     /* -- State ----------------------------------------------------------- */
@@ -233,6 +250,7 @@
         if (!input || !toggle) return;
         toggle.checked = !!disabled;
         input.disabled = !!disabled;
+        setPathInputInvalid(fieldId, false);
         if (disabled) {
             input.value = '';
             var vdiv = document.getElementById(fieldId + '-validation');
@@ -243,6 +261,69 @@
     function isOptionalPathDisabled(fieldId) {
         var toggle = pathDisableInputs[fieldId];
         return !!(toggle && toggle.checked);
+    }
+
+    function selectedSciProfileData() {
+        var key = aprofileSelect ? aprofileSelect.value : '';
+        return (cfg.sciProfileData || {})[key] || {};
+    }
+
+    function scienceVersionAtLeast08() {
+        var profile = selectedSciProfileData();
+        var general = profile.params && profile.params.general;
+        var version = general ? String(general.version || '') : '';
+        var parts = version.split('.').map(function (part) {
+            var match = part.match(/^\d+/);
+            return match ? parseInt(match[0], 10) : 0;
+        });
+        var major = parts[0] || 0;
+        var minor = parts[1] || 0;
+        return major > 0 || (major === 0 && minor >= 8);
+    }
+
+    function tableFieldRequired(field) {
+        return !(scienceVersionAtLeast08()
+            && (field.key === 'ASTROM_TABLENAME'
+                || field.key === 'REJECT_TABLENAME'));
+    }
+
+    function activeTableFields() {
+        return TABLE_FIELDS.filter(tableFieldRequired);
+    }
+
+    function setDefaultTableFilters(profileName) {
+        TABLE_FIELDS.forEach(function (field) {
+            tablePrefixInputs[field.id].value = field.prefix;
+            tableSuffixInputs[field.id].value = profileName || '';
+            tableFilterEdited[field.key] = false;
+        });
+        setTableOptions(availableDbTables, true);
+    }
+
+    function updateDefaultTableSuffixes() {
+        var profileName = profileNameInput.value.trim();
+        TABLE_FIELDS.forEach(function (field) {
+            if (!tableFilterEdited[field.key]) {
+                tableSuffixInputs[field.id].value = profileName;
+            }
+        });
+        setTableOptions(availableDbTables, true);
+    }
+
+    function updateTableFieldVisibility() {
+        TABLE_FIELDS.forEach(function (field) {
+            var row = document.getElementById(field.row);
+            if (row) row.style.display = tableFieldRequired(field) ? '' : 'none';
+        });
+    }
+
+    function tableMatchesFilters(field, tableName) {
+        var name = String(tableName || '').toLowerCase();
+        var prefix = String(tablePrefixInputs[field.id].value || '')
+            .trim().toLowerCase();
+        var suffix = String(tableSuffixInputs[field.id].value || '')
+            .trim().toLowerCase();
+        return name.indexOf(prefix) === 0 && (!suffix || name.endsWith(suffix));
     }
 
     function setTemporaryMode(enabled) {
@@ -309,10 +390,26 @@
         TABLE_FIELDS.forEach(function (field) {
             var select = tableInputs[field.id];
             var currentValue = select.value;
+            var prefixMatches = availableDbTables.filter(function (name) {
+                var prefix = String(tablePrefixInputs[field.id].value || '')
+                    .trim().toLowerCase();
+                return String(name).toLowerCase().indexOf(prefix) === 0;
+            });
+            var filteredTables = prefixMatches.filter(function (name) {
+                return tableMatchesFilters(field, name);
+            });
+            var autoValue = '';
+            if (!currentValue && !tableFilterEdited[field.key]) {
+                if (filteredTables.length === 1) {
+                    autoValue = filteredTables[0];
+                } else if (prefixMatches.length === 1) {
+                    autoValue = prefixMatches[0];
+                }
+            }
             var seen = {};
             select.innerHTML = '<option value="">Select table...</option>';
 
-            availableDbTables.forEach(function (tableName) {
+            filteredTables.forEach(function (tableName) {
                 if (seen[tableName]) return;
                 seen[tableName] = true;
                 var option = document.createElement('option');
@@ -327,7 +424,13 @@
                 currentOption.textContent = currentValue + ' (current)';
                 select.appendChild(currentOption);
             }
-            select.value = currentValue || '';
+            if (preserveCurrent && autoValue && !seen[autoValue]) {
+                var autoOption = document.createElement('option');
+                autoOption.value = autoValue;
+                autoOption.textContent = autoValue;
+                select.appendChild(autoOption);
+            }
+            select.value = currentValue || autoValue || '';
         });
     }
 
@@ -868,9 +971,11 @@
         if (profileDbSource) profileDbSource.value = 'local';
         if (profileDbDefinitionName) profileDbDefinitionName.value = '';
         DB_TEXT_FIELDS.forEach(function (f) { dbInputs[f.id].value = ''; });
+        setDefaultTableFilters('');
         clearTableOptions(false);
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = '';
+            setPathInputInvalid(f.id, false);
             if (pathDisableInputs[f.id]) {
                 pathDisableInputs[f.id].checked = false;
                 pathInputs[f.id].disabled = false;
@@ -906,6 +1011,7 @@
         profileNameInput.disabled = true;
         profileVersionInput.value = profile.apero_version || '';
         profileServerInput.value = profile.reduction_server || '';
+        setDefaultTableFilters(profile.name);
         if (profileDbSource) {
             profileDbSource.value = profile.DATABASE_SOURCE || 'local';
         }
@@ -936,6 +1042,7 @@
         pathsTestPassed = true;
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
+            setPathInputInvalid(f.id, false);
             if (f.optional) {
                 setOptionalPathDisabled(f.id, profile[f.key] === null || profile[f.key] === undefined || String(profile[f.key]).trim() === '');
             }
@@ -1012,6 +1119,7 @@
         profileNameInput.disabled = false;
         profileVersionInput.value = profile.apero_version || '';
         profileServerInput.value = profile.reduction_server || '';
+        setDefaultTableFilters(newName);
 
         if (profileDbSource) {
             profileDbSource.value = profile.DATABASE_SOURCE || 'local';
@@ -1034,6 +1142,7 @@
 
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
+            setPathInputInvalid(f.id, false);
             if (f.optional) {
                 setOptionalPathDisabled(f.id, profile[f.key] === null || profile[f.key] === undefined || String(profile[f.key]).trim() === '');
             }
@@ -1078,14 +1187,24 @@
 
     /* -- Path validation (directory exists) ------------------------------ */
     var _pathTimers = {};
+    function setPathInputInvalid(fieldId, invalid) {
+        var input = pathInputs[fieldId];
+        if (input) input.classList.toggle('ari-ap-input--invalid', !!invalid);
+    }
+
     function validatePathField(fieldId, path) {
         var vdiv = document.getElementById(fieldId + '-validation');
         if (!vdiv) return;
         if (isOptionalPathField(fieldId) && isOptionalPathDisabled(fieldId)) {
             vdiv.style.display = 'none';
+            setPathInputInvalid(fieldId, false);
             return;
         }
-        if (!path) { vdiv.style.display = 'none'; return; }
+        if (!path) {
+            vdiv.style.display = 'none';
+            setPathInputInvalid(fieldId, false);
+            return;
+        }
         var isFile = BROWSE_FILE_FIELDS.indexOf(fieldId) !== -1;
         var label = isFile ? 'File' : 'Directory';
         clearTimeout(_pathTimers[fieldId]);
@@ -1096,16 +1215,20 @@
                 .then(function (data) {
                     if (!data.success) {
                         showFieldValidation(vdiv, false, data.error || 'Invalid path');
+                        setPathInputInvalid(fieldId, true);
                         return;
                     }
                     if (data.valid) {
                         showFieldValidation(vdiv, true, label + ' exists');
+                        setPathInputInvalid(fieldId, false);
                     } else {
                         showFieldValidation(vdiv, false, label + ' does not exist');
+                        setPathInputInvalid(fieldId, true);
                     }
                 })
                 .catch(function () {
                     showFieldValidation(vdiv, false, 'Could not validate');
+                    setPathInputInvalid(fieldId, true);
                 });
         }, 400);
     }
@@ -1115,12 +1238,14 @@
         if (!vdiv) return Promise.resolve(false);
         if (isOptionalPathField(fieldId) && isOptionalPathDisabled(fieldId)) {
             showFieldValidation(vdiv, true, 'Disabled');
+            setPathInputInvalid(fieldId, false);
             return Promise.resolve(true);
         }
         var isFile = BROWSE_FILE_FIELDS.indexOf(fieldId) !== -1;
         var label = isFile ? 'File' : 'Directory';
         if (!path) {
             showFieldValidation(vdiv, false, 'Path is required');
+            setPathInputInvalid(fieldId, true);
             return Promise.resolve(false);
         }
         return fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path)
@@ -1130,14 +1255,17 @@
                 var ok = !!(data.success && data.valid);
                 if (ok) {
                     showFieldValidation(vdiv, true, label + ' exists');
+                    setPathInputInvalid(fieldId, false);
                 } else {
                     showFieldValidation(vdiv, false,
                         (data && data.error) ? data.error : label + ' does not exist');
+                    setPathInputInvalid(fieldId, true);
                 }
                 return ok;
             })
             .catch(function () {
                 showFieldValidation(vdiv, false, 'Could not validate');
+                setPathInputInvalid(fieldId, true);
                 return false;
             });
     }
@@ -1213,8 +1341,10 @@
     }
 
     function showFieldValidation(el, valid, message) {
-        el.style.display = 'block';
+        var pathValidation = el.classList.contains('ari-ap-path-validation');
+        el.style.display = pathValidation ? 'inline-flex' : 'block';
         el.className = 'ari-ap-validation' +
+            (pathValidation ? ' ari-ap-path-validation' : '') +
             (valid ? ' ari-ap-validation--valid' : ' ari-ap-validation--invalid');
         var icon = valid ? 'fa-circle-check' : 'fa-circle-xmark';
         el.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(message);
@@ -1294,8 +1424,9 @@
     }
 
     function isTableFieldsComplete() {
-        for (var i = 0; i < TABLE_FIELDS.length; i++) {
-            if (!tableInputs[TABLE_FIELDS[i].id].value.trim()) return false;
+        var fields = activeTableFields();
+        for (var i = 0; i < fields.length; i++) {
+            if (!tableInputs[fields[i].id].value.trim()) return false;
         }
         return true;
     }
@@ -1368,6 +1499,7 @@
             if (sciParamsPanel) sciParamsPanel.style.display = 'none';
             sciParamsData = null;
             sciParamsExpanded = new Set();
+            updateTableFieldVisibility();
             return;
         }
         // Prepare params data (hide panel on profile switch)
@@ -1376,6 +1508,7 @@
         if (sciParamsPanel) sciParamsPanel.style.display = 'none';
         if (btnShowSciParams) btnShowSciParams.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Show Parameters';
         if (sciParamsBtnRow) sciParamsBtnRow.style.display = sciParamsData ? '' : 'none';
+        updateTableFieldVisibility();
     }
 
     /* -- Instrument profile params navigator ----------------------------- */
@@ -1876,9 +2009,11 @@
         }
 
         var payload = buildDbPayload();
-        TABLE_FIELDS.forEach(function (f) {
+        activeTableFields().forEach(function (f) {
             payload[f.key] = tableInputs[f.id].value.trim();
         });
+        payload.APERO_INSTRUMENT_PROFILE = aprofileSelect
+            ? aprofileSelect.value.trim() : '';
 
         btnTestTables.disabled = true;
         btnTestTables.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
@@ -1939,7 +2074,7 @@
         });
         // PASSWORD: don't trim (may have intentional spaces)
         payload.DATABASE_PASSWORD = dbInputs['profile-db-pass'].value;
-        TABLE_FIELDS.forEach(function (f) {
+        activeTableFields().forEach(function (f) {
             payload[f.key] = tableInputs[f.id].value.trim();
         });
         // Science fields come from the selected instrument profile file
@@ -2008,9 +2143,10 @@
             showToast('At least one group must be selected', 'error');
             return null;
         }
-        for (var j = 0; j < TABLE_FIELDS.length; j++) {
-            if (!payload[TABLE_FIELDS[j].key]) {
-                showToast(TABLE_FIELDS[j].key + ' is required', 'error');
+        var requiredTables = activeTableFields();
+        for (var j = 0; j < requiredTables.length; j++) {
+            if (!payload[requiredTables[j].key]) {
+                showToast(requiredTables[j].key + ' is required', 'error');
                 return null;
             }
         }
@@ -2477,6 +2613,7 @@
     [profileNameInput, profileVersionInput, profileServerInput].forEach(function (el) {
         el.addEventListener('input', function () {
             markDirty();
+            if (el === profileNameInput) updateDefaultTableSuffixes();
             updateWorkflowState();
         });
     });
@@ -2496,6 +2633,22 @@
             tablesTestResult.style.display = 'none';
             updateWorkflowState();
         });
+        [tablePrefixInputs[f.id], tableSuffixInputs[f.id]].forEach(
+            function (input) {
+                input.addEventListener('input', function () {
+                    tableFilterEdited[f.key] = true;
+                    var current = tableInputs[f.id].value;
+                    if (current && !tableMatchesFilters(f, current)) {
+                        tableInputs[f.id].value = '';
+                    }
+                    setTableOptions(availableDbTables, true);
+                    markDirty();
+                    tablesTestPassed = false;
+                    tablesTestResult.style.display = 'none';
+                    updateWorkflowState();
+                });
+            }
+        );
     });
     if (profileDbSource) {
         profileDbSource.addEventListener('change', function () {
@@ -2520,6 +2673,8 @@
     if (aprofileSelect) {
         aprofileSelect.addEventListener('change', function () {
             markDirty();
+            tablesTestPassed = false;
+            tablesTestResult.style.display = 'none';
             updateSciPreview();
             updateWorkflowState();
         });
@@ -2545,6 +2700,7 @@
             pathsTestPassed = false;
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
+            setPathInputInvalid(f.id, false);
             if (pathsTestResult) pathsTestResult.style.display = 'none';
             updateWorkflowState();
         });

@@ -55,21 +55,3 @@ np.nanstd(metric_key) < limit
 | METRIC_KEY | metric_key |
 | LIMIT | limit |
 | METRIC | metric |
-
-### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
-
-Performs the following test
-
-```python
-np.nanstd(HIERARCH ESO INS TEMP14 VAL) < 0.01
-```
-
-#### Resolved values
-
-| Key | Value |
-| --- | --- |
-| TEST_KEY | fp_interior_rms |
-| ENABLED | True |
-| METRIC_KEY | HIERARCH ESO INS TEMP14 VAL |
-| LIMIT | 0.01 |
-| METRIC | metric |

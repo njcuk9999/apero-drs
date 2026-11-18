@@ -34,6 +34,14 @@ body { font-family: sans-serif; margin: 0; background: #f1f4f8;
 #tabbar button:hover { background: #324b6d; }
 #tabbar button.active { background: #3c88ea; color: #fff;
                         border-color: #3c88ea; }
+#tabbar button:disabled { opacity: 0.45; cursor: not-allowed; }
+.reset-block-notice { margin-bottom: 12px; padding: 10px 12px;
+    border: 1px solid #d59a21; border-radius: 6px; background: #fff4d6;
+    color: #4a3500; }
+.reset-block-notice button { margin-left: 8px; }
+.tabpage.reset-blocked { opacity: 0.45; filter: grayscale(0.7); }
+html[data-theme="dark"] .reset-block-notice { background: #2d2410;
+    color: #f0d998; border-color: #a9791f; }
 #global-actions { display: flex; align-items: center; gap: 8px; }
 #global-actions button { white-space: nowrap; }
 #btn-shutdown { display: inline-flex; gap: 8px; flex-wrap: wrap; }
@@ -703,6 +711,13 @@ html[data-theme="dark"] button.info-btn { background: #1f6feb; color: #fff;
 
 <div class="main-wrap">
 
+<div id="reset-block-notice" class="reset-block-notice" role="status"
+     aria-live="polite" hidden>
+    A reset is running. Generate, Run and Actions are unavailable until it
+    finishes.
+    <button type="button" onclick="setTab('processes')">View Processes</button>
+</div>
+
 <div id="tab-run" class="tabpage">
 <div class="tabdesc">
 Queue execution and batch templates.
@@ -1320,7 +1335,25 @@ function escapeHtml(value) {
                         .replace(/>/g, '&gt;');
 }
 
+var resetBlocksTabs = false;
+
+function setResetBlocked(blocked) {
+    resetBlocksTabs = blocked;
+    document.getElementById('reset-block-notice').hidden = !blocked;
+    ['generate', 'run', 'actions'].forEach(function (name) {
+        var button = document.getElementById('tab-btn-' + name);
+        var panel = document.getElementById('tab-' + name);
+        button.disabled = blocked;
+        button.title = blocked ? 'Unavailable while a reset is running' : '';
+        panel.inert = blocked;
+        panel.classList.toggle('reset-blocked', blocked);
+    });
+}
+
 function setTab(tabName) {
+    if (resetBlocksTabs && ['generate', 'run', 'actions'].indexOf(tabName) >= 0) {
+        return;
+    }
     ['info', 'generate', 'run', 'actions', 'processes', 'status', 'stats']
     .forEach(function (name) {
         var active = (name === tabName);
@@ -2034,6 +2067,7 @@ function refreshState() {
     apiGet('/api/state', function (data) {
         var busy = document.getElementById('busy');
         busy.style.display = data.busy ? 'inline' : 'none';
+        setResetBlocked(data.active_action === 'Reset');
         // a generate/reset changed files on disk: reload everything
         if (lastDataVersion !== null &&
                 data.data_version !== lastDataVersion) {
@@ -3293,7 +3327,8 @@ function doResetData() {
                         'tasks first).\n\nType RESET to continue:');
     if (answer !== 'RESET') { return; }
     apiPost('/api/reset_data', {part: part}, function (data) {
-        if (!data.started) { alert(data.message); }
+        if (!data.started) { alert(data.message); return; }
+        setResetBlocked(true);
         jobShown = true;
         refreshState();
     });

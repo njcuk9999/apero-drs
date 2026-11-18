@@ -48,7 +48,7 @@ DEFAULT_FREQUENCY = 1.0
 DEFAULT_ENABLED = True
 
 # This task runs per instrument profile.
-TASK_TYPE = 'INSTRUMENT'
+TASK_TYPE = 'PROFILE'
 
 # The UI should expose subprocess progress for this task.
 USE_SUBPROCESS = True

@@ -231,6 +231,7 @@ class GuiState:
         """Initialize shared action, message, and cancellation state."""
         # whether an action is currently running
         self.busy = False
+        self.active_action: Optional[str] = None
         # the activity log messages (most recent last)
         self.messages: List[str] = []
         self.activity_messages: Dict[str, List[str]] = dict(
@@ -284,6 +285,7 @@ class GuiState:
                 return False
             # mark as busy
             self.busy = True
+            self.active_action = name
             self.cancel.clear()
 
         # define the worker wrapper (clears busy when done)
@@ -305,6 +307,7 @@ class GuiState:
             finally:
                 with self._lock:
                     self.busy = False
+                    self.active_action = None
         # start the worker thread
         self.worker = threading.Thread(target=_worker, daemon=True)
         self.worker.start()
@@ -1065,30 +1068,33 @@ def action_reset(params: ParamDict, state: GuiState,
 
     :return: dictionary with keys 'removed' (int) and 'message' (str)
     """
-    # refuse to reset while an action is running
-    if state.busy:
-        return dict(removed=0,
-                    message='busy - action already running')
-    # work out the states to reset
-    if qstate in drs_queue.QUEUE_SUB_DIRS:
-        states = [qstate]
-    else:
-        states = list(drs_queue.QUEUE_SUB_DIRS)
-    # do the reset (non-interactive core)
-    n_removed = drs_queue.reset_queue(params, states, dry_run=dry_run)
-    if not dry_run:
-        state.data_version += 1
-        with _DETAIL_LOCK:
-            _DETAIL_CACHE.clear()
-    # log the reset in the activity log
-    if dry_run:
-        message = 'Reset dry-run: would remove {0} entries from {1}'
-    else:
-        message = 'Reset: removed {0} entries from {1}'
-    message = message.format(n_removed, ', '.join(states))
-    state.add_message(message, 'actions')
-    # construct the response
-    return dict(removed=n_removed, message=message)
+    with state._lock:
+        if state.busy:
+            return dict(removed=0,
+                        message='busy - action already running')
+        state.busy = True
+        state.active_action = 'Reset'
+    try:
+        if qstate in drs_queue.QUEUE_SUB_DIRS:
+            states = [qstate]
+        else:
+            states = list(drs_queue.QUEUE_SUB_DIRS)
+        n_removed = drs_queue.reset_queue(params, states, dry_run=dry_run)
+        if not dry_run:
+            state.data_version += 1
+            with _DETAIL_LOCK:
+                _DETAIL_CACHE.clear()
+        if dry_run:
+            message = 'Reset dry-run: would remove {0} entries from {1}'
+        else:
+            message = 'Reset: removed {0} entries from {1}'
+        message = message.format(n_removed, ', '.join(states))
+        state.add_message(message, 'actions')
+        return dict(removed=n_removed, message=message)
+    finally:
+        with state._lock:
+            state.busy = False
+            state.active_action = None
 
 
 def action_queue(params: ParamDict, state: GuiState,
@@ -1113,7 +1119,8 @@ def action_queue(params: ParamDict, state: GuiState,
     stop_actions = ['stop_all_running', 'stop_to_pending',
                     'stop_to_complete', 'stop_to_failed',
                     'fail_stale_running']
-    if state.busy and qaction not in stop_actions:
+    if state.busy and (state.active_action == 'Reset'
+                       or qaction not in stop_actions):
         return dict(success=False, moved=0, stopped=0, failed=0,
                     message='busy - action already running')
     # stop the active queue run first so it cannot claim new tasks
@@ -1697,6 +1704,7 @@ def _make_handler(
                 data = dict(busy=state.busy, messages=state.messages,
                             activity_messages=state.activity_messages,
                             data_version=state.data_version,
+                            active_action=state.active_action,
                             job_running=bool(job.get('running')),
                             job_kind=job.get('kind'))
                 self._send(json.dumps(data))
@@ -1825,14 +1833,15 @@ def _make_handler(
 
 def queue_gui(params: ParamDict) -> None:
     """
-    Gui mode: start the queue dashboard web server and open it in a
-    browser
+    Gui mode: start the queue dashboard web server and optionally open it
+    in a browser.
 
     The dashboard shows the queue status (coloured by state, filterable,
     sortable, paginated) and has action buttons to run the next task(s),
     create/submit batch scripts, reset the queue and edit the batch
     template settings. Stop the server with Ctrl+C or the Shutdown
-    button in the dashboard.
+    button in the dashboard. The --headless option disables automatic
+    browser launching.
 
     The --host and --port arguments control where the server listens
     (default 127.0.0.1:8090 - localhost only for safety) and --rows sets
@@ -1913,7 +1922,8 @@ def queue_gui(params: ParamDict) -> None:
     WLOG(params, 'info', textentry('40-513-00028', args=margs))
     # try to open the dashboard in a browser (ignore failures - e.g. on
     #   a headless machine the user can open the url manually)
-    if supervised:
+    headless = params['INPUTS'].get('HEADLESS', False)
+    if supervised and not headless:
         try:
             import webbrowser
             webbrowser.open(url)

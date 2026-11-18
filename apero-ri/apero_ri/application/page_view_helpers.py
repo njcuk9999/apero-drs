@@ -1613,6 +1613,18 @@ def make_page_view(
         if page_id == "home.admin_portal.email":
             context.update(app._build_admin_email_context(perms))
 
+        if page_id == 'home.admin_portal.async_tasks':
+            from aperocore.drs_lang import textentry
+
+            task_labels = ('TASKS', 'INSTRUMENT', 'PROFILE', 'ALL', 'GLOBAL',
+                           'DEFAULTS', 'NCORES', 'BACKEND', 'START',
+                           'SET_DEFAULTS', 'UPDATE_ALL', 'OVERRIDE',
+                           'INVALID', 'SAVED', 'LAST_RUN', 'AUTOMATIC',
+                           'TIMEOUT')
+            context['task_labels'] = dict(
+                (key, str(textentry('ASYNC_TASKS_' + key)))
+                for key in task_labels)
+
         if page_id == "home.admin_portal.backup_settings":
             context.update(app._build_admin_backup_context(perms))
 

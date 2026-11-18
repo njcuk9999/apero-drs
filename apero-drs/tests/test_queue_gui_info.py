@@ -1,6 +1,140 @@
 """Tests for the queue GUI Info tab and its shared ARI docs include."""
+import webbrowser
+import threading
+from typing import Any
+
+import pytest
+
 from apero.tools.module.documentation import ari_docs
 from apero.tools.module.processing import drs_queue_gui
+
+
+def test_reset_action_blocks_queue_actions() -> None:
+    """Keep the reset active until its worker and cleanup have finished.
+
+    :return: None.
+    """
+    state = drs_queue_gui.GuiState()
+    started = threading.Event()
+    release = threading.Event()
+
+    def reset_worker() -> None:
+        """Simulate a reset that remains active until released."""
+        started.set()
+        release.wait(timeout=5)
+
+    assert state.start_action('Reset', reset_worker, ())
+    try:
+        assert started.wait(timeout=5)
+        assert state.active_action == 'Reset'
+        result = drs_queue_gui.action_queue(
+            drs_queue_gui.ParamDict(), state, 'stop_all_running')
+        assert not result['success']
+        assert not state.cancel.is_set()
+    finally:
+        release.set()
+        assert state.worker is not None
+        state.worker.join(timeout=5)
+    assert not state.busy
+    assert state.active_action is None
+
+
+def test_queue_state_reset_releases_busy_on_error(monkeypatch: Any) -> None:
+    """A failed synchronous reset must not leave the dashboard blocked.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    state = drs_queue_gui.GuiState()
+
+    def failing_reset(*values: Any, **options: Any) -> int:
+        """Observe the active reset before simulating a cleanup error."""
+        assert state.busy
+        assert state.active_action == 'Reset'
+        raise RuntimeError('reset failed')
+
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'reset_queue', failing_reset)
+    with pytest.raises(RuntimeError, match='reset failed'):
+        drs_queue_gui.action_reset(drs_queue_gui.ParamDict(), state)
+    assert not state.busy
+    assert state.active_action is None
+
+
+@pytest.mark.parametrize(('headless', 'open_count'), [
+    (False, 1),
+    (True, 0),
+])
+def test_queue_gui_headless_suppresses_browser(
+    monkeypatch: Any, headless: bool, open_count: int,
+) -> None:
+    """Keep the dashboard running without opening a browser when requested.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :param headless: Whether browser launching should be suppressed.
+    :param open_count: Expected number of browser launch calls.
+    :return: None.
+    """
+    served = []
+
+    class FakeServer:
+        """Minimal server stand-in for the dashboard lifecycle."""
+
+        def __init__(
+            self,
+            address: tuple[str, int],
+            command: list[str],
+        ) -> None:
+            self.server_address = address
+
+        def start_worker(self) -> None:
+            pass
+
+        def worker_request(self, path: str) -> dict[str, bool]:
+            return dict(busy=False)
+
+        def serve_forever(self) -> None:
+            served.append(True)
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            pass
+
+        def finish_worker(self) -> None:
+            pass
+
+    opened = []
+    params = dict(INPUTS=dict(
+        HOST='None',
+        PORT='None',
+        ROWS='None',
+        HEADLESS=headless,
+    ))
+    monkeypatch.delenv(
+        drs_queue_gui.drs_queue_server.WORKER_PORT_ENV,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        drs_queue_gui.drs_queue,
+        'setup_queue_directories',
+        lambda params: None,
+    )
+    monkeypatch.setattr(
+        drs_queue_gui.drs_queue_server,
+        'QueueServer',
+        FakeServer,
+    )
+    monkeypatch.setattr(
+        drs_queue_gui,
+        '_make_handler',
+        lambda params, state, rows: object,
+    )
+    monkeypatch.setattr(drs_queue_gui, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.setattr(webbrowser, 'open', lambda url: opened.append(url))
+
+    drs_queue_gui.queue_gui(params)
+
+    assert len(opened) == open_count
+    assert served == [True]
 
 
 def test_render_info_html_lists_every_control_tab():

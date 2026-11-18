@@ -435,8 +435,10 @@ def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
                          spectrum: np.ndarray,
                          reference: Optional[np.ndarray],
                          infile: DrsFitsFile, fiber: str,
+                         spectrum_error: np.ndarray,
                          database: Optional[CalibrationDatabase] = None
-                         ) -> Tuple[np.ndarray, np.ndarray, ParamDict]:
+                         ) -> Tuple[np.ndarray, np.ndarray, np.ndarray,
+                                    ParamDict]:
     """
     Correct a new model-extracted spectrum for reference-fiber leakage.
 
@@ -446,12 +448,17 @@ def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
     :param reference: numpy array (2D) or None, reference fiber spectrum
     :param infile: DrsFitsFile, source exposure for headers and DPRTYPE
     :param fiber: str, science or reference fiber name
+    :param spectrum_error: Per-pixel standard deviations of ``spectrum``.
+                           Fitted leak corrections are treated as fixed.
     :param database: CalibrationDatabase or None, calibration database
 
-    :return: tuple, corrected spectrum, leak correction array, properties
+    :return: Corrected spectrum, standard deviations, leak diagnostics,
+             and correction properties.
     """
     func_name = __NAME__ + '.correct_spectra_leak()'
     spectrum = np.array(spectrum, dtype=float)
+    spectrum_error = np.array(spectrum_error, dtype=float)
+    spectrum_error[~np.isfinite(spectrum)] = np.nan
     no_correction = np.full_like(spectrum, np.nan)
     props = ParamDict()
     props['LEAK_CORRECTED'] = False
@@ -482,7 +489,7 @@ def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
                 and fiber in sci_fibers and reference is not None
                 and allowed)
     if not eligible:
-        return spectrum, no_correction, props
+        return spectrum, spectrum_error, no_correction, props
     # Delegate the physical correction and calibration lookup to the existing
     # low-level implementation, which already owns leak-reference semantics.
     corrected, leakcorr, leak_props = correct_ext_dark_fp(
@@ -492,7 +499,9 @@ def correct_spectra_leak(params: ParamDict, recipe: DrsRecipe,
         props[key] = leak_props[key]
     props['LEAK_CORRECTED'] = True
     props.set_all_sources(func_name)
-    return corrected, leakcorr, props
+    # Subtracting a fixed leak model has unit derivative with respect to flux.
+    spectrum_error[~np.isfinite(corrected)] = np.nan
+    return corrected, spectrum_error, leakcorr, props
 
 
 def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
@@ -594,10 +603,23 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
     for order_num in range(nbo):
         # get order values for reference
         global_ref_ord = rleakref[order_num]
+        # ---------------------------------------------------------------------
+        # deal with full order nan values
+        if np.all(np.isnan(refimage[order_num])):
+            # set the ratio method
+            method.append('all nan')
+            # save ratios to storage
+            ref_ratio_arr[order_num] = np.nan
+            dot_ratio_arr[order_num] = np.nan
+            approx_ratio_arr[order_num] = np.nan
+            # continue to next order
+            continue
+        # ---------------------------------------------------------------------
         # remove the pedestal from the FP to avoid an offset from
         #     thermal background
         background = mp.nanpercentile(refimage[order_num], bckgrd_percentile)
         refimage[order_num] = refimage[order_num] - background
+        # ---------------------------------------------------------------------
         # only perform the measurement of the amplitude of the leakage signal
         #  on the lower and upper percentiles. This allows for a small number
         #  of hot/dark pixels along the order. Without this, we end up with
@@ -611,6 +633,18 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
             mask &= refimage[order_num] < high
             mask &= global_ref_ord > lowm
             mask &= global_ref_ord < highm
+        # ---------------------------------------------------------------------
+        # deal with mask being all False (no pixels in the mask)
+        if not np.any(mask):
+            # set the ratio method
+            method.append('no mask')
+            # save ratios to storage
+            ref_ratio_arr[order_num] = np.nan
+            dot_ratio_arr[order_num] = np.nan
+            approx_ratio_arr[order_num] = np.nan
+            # continue to next order
+            continue
+        # ---------------------------------------------------------------------
         # approximate ratio, we know that frames were normalized with their
         #  "norm_percentile" percentile prior to median combining
         amplitude = mp.nanpercentile(refimage[order_num], norm_percentile)
@@ -652,7 +686,10 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
     # loop around orders
     for order_num in range(nbo):
         # scale the leakage for that order to the observed amplitude
-        scale = leakref[order_num] / ref_ratio_arr[order_num]
+        if np.isnan(ref_ratio_arr[order_num]):
+            scale = 0.0
+        else:
+            scale = leakref[order_num] / ref_ratio_arr[order_num]
         # apply leakage scaling
         sciimage[order_num] = sciimage[order_num] - scale
         # calculate the ratio of the leakage

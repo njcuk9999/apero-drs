@@ -1521,6 +1521,18 @@ def process_run_list(params: ParamDict, shortname: str, runlist: List[Run],
                      group: Optional[str] = None
                      ) -> Tuple[OrderedDict, bool, float]:
     """Execute runs and return ordered results, error status, and duration."""
+    final_runs = [run for run in runlist if run.shortname == 'ARITASK']
+    if final_runs and len(final_runs) < len(runlist):
+        regular_runs = [run for run in runlist
+                        if run.shortname != 'ARITASK']
+        regular_out = process_run_list(
+            params, shortname, regular_runs, group)
+        final_out = process_run_list(params, shortname, final_runs, group)
+        outlist = OrderedDict(regular_out[0])
+        outlist.update(final_out[0])
+        return (outlist, regular_out[1] or final_out[1],
+                regular_out[2] + final_out[2])
+
     # start a timer
     process_start = time.time()
     # get number of cores

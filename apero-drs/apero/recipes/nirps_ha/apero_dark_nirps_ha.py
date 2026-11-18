@@ -163,11 +163,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Quality control: make sure the exposure time is longer than
         #                  qc_dark_time
         if exptime < params['CAL.DARK.QC_DARK_TIME']:
-            # TODO: Add to language database
             eargs = [params['CAL.DARK.QC_DARK_TIME']]
-            lang_args = [eargs]
             # error: Dark exposure time too short (< {0:.1f} s)
-            raise AperoCodedException(params, '09-011-00006', targs=lang_args)
+            raise AperoCodedException(params, '09-011-00006', targs=eargs)
         # ------------------------------------------------------------------
         # Resize and rotate image
         # ------------------------------------------------------------------

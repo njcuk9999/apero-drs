@@ -946,6 +946,7 @@ out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
                                        '(quick output)')
 ext1 = AperoImageModel('QL_E2DS_FF')
 out_ql_e2dsff.hdulist['QL_E2DS_FF'] = ext1
+out_ql_e2dsff.hdulist['E2DSFF_ERROR'] = AperoImageModel('E2DSFF_ERROR')
 # E2DS extraction now uses the flat-corrected product definition.
 out_ql_e2ds = out_ql_e2dsff
 
@@ -972,6 +973,7 @@ ext2.add_column('snr', description='Signal-to-noise ratio of order')
 ext2.add_column('ncosmic', description='Number of cosmic rays in order')
 ext2.add_column('fluxval', description='Total flux in order')
 out_ext_e2dsff.hdulist['EXT_E2DS_FF'] = ext1
+out_ext_e2dsff.hdulist['E2DSFF_ERROR'] = AperoImageModel('E2DSFF_ERROR')
 out_ext_e2dsff.hdulist['ORDER_TABLE'] = ext2
 # Compatibility alias: extraction has one E2DSFF product only.
 out_ext_e2ds = out_ext_e2dsff

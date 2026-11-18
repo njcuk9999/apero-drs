@@ -105,3 +105,38 @@ test('manual refresh updates the active Processes and Stats views', () => {
             ? 'refreshProcesses' : 'refreshStats'));
     }
 });
+
+test('reset disables affected tabs and keeps Processes accessible', () => {
+    const ids = ['info', 'generate', 'run', 'actions', 'processes',
+        'status', 'stats'];
+    const elements = {'reset-block-notice': {hidden: true}};
+    for (const id of ids) {
+        elements['tab-btn-' + id] = {disabled: false, title: '',
+            classList: {toggle() {}}};
+        elements['tab-' + id] = {inert: false,
+            classList: {toggle() {}}};
+    }
+    let processRefreshes = 0;
+    const context = {
+        document: {getElementById: id => elements[id]},
+        refreshProcesses: () => { processRefreshes++; },
+        refreshStats() {}, render() {},
+    };
+    vm.createContext(context);
+    vm.runInContext(template.slice(template.indexOf('var resetBlocksTabs ='),
+        template.indexOf('function setControlTab(')), context);
+    context.setResetBlocked(true);
+    assert.equal(elements['reset-block-notice'].hidden, false);
+    for (const id of ['generate', 'run', 'actions']) {
+        assert.equal(elements['tab-btn-' + id].disabled, true);
+        assert.equal(elements['tab-' + id].inert, true);
+    }
+    context.setTab('processes');
+    assert.equal(processRefreshes, 1);
+    context.setResetBlocked(false);
+    assert.equal(elements['reset-block-notice'].hidden, true);
+    for (const id of ['generate', 'run', 'actions']) {
+        assert.equal(elements['tab-btn-' + id].disabled, false);
+        assert.equal(elements['tab-' + id].inert, false);
+    }
+});

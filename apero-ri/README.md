@@ -34,9 +34,55 @@ The web-server will only work while `apero_ri_run` is running.
 
 ## Async tasks
 
-The Admin Portal's Async Tasks page lists tasks for the selected instrument
-or global scope. Switching scopes clears the previous selection and ignores
-responses from the old scope.
+The Admin Portal's Async Tasks page shows all tasks in Active and Inactive
+panels, with instrument and APERO-profile filters. Cards show the latest run
+time. Profile-scoped tasks have independent identities, schedules, runtime
+history, and activation settings. Saving a new enabled profile creates its
+task entries; disabled and temporary profiles are not scheduled. Global and
+instrument-scoped tasks remain shared at their respective scopes.
+
+**Parallel defaults** controls NCORES, parallel backend, and process start
+method across profiles. **Set by default** updates inheriting tasks and future
+tasks while preserving explicit per-task overrides. **Update all tasks** also
+clears those overrides. Enable **Override parallel defaults** in an individual
+task's edit dialog to give that task its own settings.
+
+Local-capable tasks look for completed precomputed output at
+`PATH_OTHER/apero-ri/tasks/<instrument>/<APERO profile>/`. Each task has a
+completion manifest containing its output paths and SHA-256 checksums. Missing,
+incomplete, or modified results fall back to server computation. Successful
+server and `apero_ri_task` runs publish their results to this same directory.
+There is no per-profile sync mode or manually selected source path. The data
+host and ARI server must expose the same profile's `PATH_OTHER` tree and use
+matching instrument and profile names. Publishing requires write access.
+Without `PATH_OTHER`, tasks run on the server without shared publication.
+Filtered runs compute their selected subset without replacing shared results.
+APERO checks manifests map outputs to the receiving profile's checks root.
+
+`apero_ri_task` still accepts the runtime JSON payload through `--params-json`;
+its `APERO_PROFILES` entries must include `paths.PATH_OTHER` to publish shared
+outputs. Standalone runs compute fresh data rather than restoring old results.
+
+### Processing sequence integration
+
+APERO sequences can contain registered tools as well as science recipes.
+`DrsRunSequence.add()` accepts their `DrsRecipe` definitions; the processing
+generator explicitly distinguishes science recipes from tools. The standalone
+ARI CLI is not itself an APERO-registered tool, so it cannot be inserted by
+command name alone.
+
+The `ARITASK` tool is registered as `apero_ri_task.py` and is appended to the
+`full_seq`, `limited_seq`, `science_seq`, and `quick_seq` workflows for SPIROU,
+NIRPS-HA, and NIRPS-HE. It loads the active DRS profile's matching
+`PATH_OTHER/ari-config/<profile>.yaml` and runs registered profile-scoped local
+tasks. If that YAML is absent, it logs a warning and skips. The tool uses
+`PATH_OTHER/apero-ri` as its local task-data root and writes precomputed results
+to the shared profile directory.
+
+APERO processing executes `ARITASK` after the regular run batch, even when the
+regular batch uses multiple workers. Queue mode groups the final tool after the
+preceding recipe groups. The wrapper imports `apero_ri` only when it runs, so
+the normal APERO startup path does not require the RI package.
 
 The Queue tab combines all named queues, including instrument workers and
 APERO checks. The first running task has the progress summary; additional

@@ -498,6 +498,14 @@ class ARIApp(Flask):
         """Proxy a monitor request to an APERO queue service endpoint."""
         return apero_queue_api_helpers.proxy_view(self, name, subpath)
 
+    def _api_monitor_apero_queue_status(self) -> Any:
+        """Report reachability of the queues the user can open."""
+        return apero_queue_api_helpers.monitor_status(self)
+
+    def _api_monitor_apero_queue_reconnect(self, name: str) -> Any:
+        """Start/verify one queue tunnel for a user who can open it."""
+        return apero_queue_api_helpers.monitor_reconnect(self, name)
+
     @staticmethod
     def _normalize_db_source(value: str) -> str:
         """Normalize database source mode for profile UI/runtime."""
@@ -2877,7 +2885,9 @@ class ARIApp(Flask):
 
     def _api_apero_profiles_test_tables(self) -> Any:
         """Test profile database access to its configured tables."""
-        return apero_profiles_api_helpers.api_apero_profiles_test_tables(self)
+        return apero_profiles_api_helpers.api_apero_profiles_test_tables(
+            self, PACKAGE_DIR
+        )
 
     # -----------------------------------------------------------------
     # Async tasks API

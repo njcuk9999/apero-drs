@@ -3,7 +3,7 @@
 
 
 ################################################################################
-apero_changelog
+apero_version
 ################################################################################
 
 
@@ -54,7 +54,7 @@ No schematic set
 
 .. code-block:: 
 
-    apero_changelog.py {preview} {options}
+    apero_version.py {preview} {options}
 
 
 .. code-block:: 

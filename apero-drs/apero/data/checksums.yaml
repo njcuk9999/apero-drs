@@ -3705,10 +3705,10 @@ data:
   nirps_ha/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   nirps_ha/calib/cavity_length_ll_fit.dat: e6a0e55ca9a6d6a6a456be5cae8a1d7d
   nirps_ha/calib/cavity_length_m_fit.dat: 246f81d50d22ae8410d6a52869c0b103
-  nirps_ha/calib/static_nirps_ha_wave_ref_A.fits: 3e0dce488f3b4351e7777b571ce666c5
-  nirps_ha/calib/static_nirps_ha_wave_ref_B.fits: 3e0dce488f3b4351e7777b571ce666c5
-  nirps_ha/calib/static_wave_ref_A.fits: 3e0dce488f3b4351e7777b571ce666c5
-  nirps_ha/calib/static_wave_ref_B.fits: 3e0dce488f3b4351e7777b571ce666c5
+  nirps_ha/calib/static_nirps_ha_wave_ref_A.fits: c282f4238d7b7117d3111bc6785c2d3b
+  nirps_ha/calib/static_nirps_ha_wave_ref_B.fits: c282f4238d7b7117d3111bc6785c2d3b
+  nirps_ha/calib/static_wave_ref_A.fits: c282f4238d7b7117d3111bc6785c2d3b
+  nirps_ha/calib/static_wave_ref_B.fits: c282f4238d7b7117d3111bc6785c2d3b
   nirps_ha/ccf_masks/GJ1_neg.fits: 70b027ec1c3ef90ed998377c01f52863
   nirps_ha/ccf_masks/GJ9425_neg.fits: 077fdd883b1383dc706c2b5482620d27
   nirps_ha/ccf_masks/GL514_neg.fits: 045b14d7cbe4f04b2225fa57ea48c38b
@@ -3762,7 +3762,7 @@ data:
   nirps_ha/reset/runs/trigger_night_calibrun.yaml: b12eaccbd7f94d6f0f9500ad239e7da0
   nirps_ha/reset/runs/trigger_night_scirun.ini: 0473e26686e6f8671e7ab299121e5d63
   nirps_ha/reset/runs/trigger_night_scirun.yaml: 47b567b8d06b32b3069677f812609925
-  nirps_ha/reset/telludb/OTHER/sky_model_ha.fits: a85c80a85d032ccff1312afedab67634
+  nirps_ha/reset/telludb/OTHER/sky_model_ha.fits: 3ced68262a7f5c21817f8c8db2780e80
   nirps_ha/reset/telludb/OTHER/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_ha/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   nirps_ha/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
@@ -3778,10 +3778,10 @@ data:
   nirps_he/calib/catalogue_UNe_update230322.csv: 6fca7ca4b83561d290c587bf52ac2e13
   nirps_he/calib/cavity_length_ll_fit.dat: e6a0e55ca9a6d6a6a456be5cae8a1d7d
   nirps_he/calib/cavity_length_m_fit.dat: 246f81d50d22ae8410d6a52869c0b103
-  nirps_he/calib/static_nirps_he_wave_ref_A.fits: 06ab04ff27f5a409032edced2d3baccf
-  nirps_he/calib/static_nirps_he_wave_ref_B.fits: 06ab04ff27f5a409032edced2d3baccf
-  nirps_he/calib/static_wave_ref_A.fits: 06ab04ff27f5a409032edced2d3baccf
-  nirps_he/calib/static_wave_ref_B.fits: 06ab04ff27f5a409032edced2d3baccf
+  nirps_he/calib/static_nirps_he_wave_ref_A.fits: fce13f9fbd3af343372a4f2e75dc0faa
+  nirps_he/calib/static_nirps_he_wave_ref_B.fits: fce13f9fbd3af343372a4f2e75dc0faa
+  nirps_he/calib/static_wave_ref_A.fits: fce13f9fbd3af343372a4f2e75dc0faa
+  nirps_he/calib/static_wave_ref_B.fits: fce13f9fbd3af343372a4f2e75dc0faa
   nirps_he/ccf_masks/GJ1_neg.fits: 70b027ec1c3ef90ed998377c01f52863
   nirps_he/ccf_masks/GJ9425_neg.fits: 077fdd883b1383dc706c2b5482620d27
   nirps_he/ccf_masks/GL514_neg.fits: 045b14d7cbe4f04b2225fa57ea48c38b
@@ -3834,7 +3834,7 @@ data:
   nirps_he/reset/runs/trigger_night_calibrun.yaml: 797341d348ec9a3576685a5eb32b49be
   nirps_he/reset/runs/trigger_night_scirun.ini: 0473e26686e6f8671e7ab299121e5d63
   nirps_he/reset/runs/trigger_night_scirun.yaml: 73a7f1e116ade2236369af5af74249a5
-  nirps_he/reset/telludb/OTHER/sky_model_he.fits: 686b667286d421efc3a59ab2f372c063
+  nirps_he/reset/telludb/OTHER/sky_model_he.fits: ab11112b08f9d0ea5f1eb2736f09296d
   nirps_he/reset/telludb/OTHER/tapas_all_sp.fits.gz: 06f8b2cc920f9c954dba574071891500
   nirps_he/telluric/tapas_all_sp.fits.gz: 128ecb9b9cb2180c5d452d1370269e3d
   nirps_he/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
@@ -3953,10 +3953,10 @@ data:
   spirou/telluric/trans_h2o_abso_ccf.mas: 3467d02a8ea1ea056980bcbd1e86d30b
   spirou/telluric/trans_others_abso_ccf.mas: ed6f602b746534c5018bde1b952631ff
 setup:
-  humantime: '2026-11-11 11:50:57.110'
+  humantime: '2026-11-12 20:30:05.246'
   servers:
   - http://206.12.93.77/ari/data/apero/assets/
-  tarfile: 1794397857_110257_assets.tar.gz
-  unixtime: 1794397857.110257
-  vdate: '2026-05-06'
-  version: 0.9.0.dev3+g85a57c200.d20260506
+  tarfile: 1794515405_245764_assets.tar.gz
+  unixtime: 1794515405.245764
+  vdate: '2026-11-12'
+  version: 0.8.251.dev239+g93614238a.d20261112

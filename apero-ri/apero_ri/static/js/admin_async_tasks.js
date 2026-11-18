@@ -8,6 +8,8 @@
     var instruments = cfg.instruments || [];
     var urls = cfg.urls;
     var GLOBAL_SCOPE = '__GLOBAL__';
+    var ALL_SCOPE = '__ALL__';
+    var labels = cfg.labels || {};
 
     /* -----------------------------------------------------------------------
        State
@@ -23,6 +25,7 @@
     var pollTimer = null;
     var POLL_FAST_MS = 1000;
     var POLL_SLOW_MS = 5000;
+    var TASK_LIST_TIMEOUT_MS = 20000;
     var OUTPUT_PREVIEW_PER_TYPE = 3;
     var pollIntervalMs = POLL_SLOW_MS;
     var viewVersion = 0;
@@ -37,6 +40,12 @@
     var tabsEl          = document.getElementById('at-tabs');
     var instrumentPicker = document.getElementById('at-instrument-picker');
     var instrumentCards = document.getElementById('at-instrument-cards');
+    var instrumentFilter = document.getElementById('at-instrument-filter');
+    var profileFilter = document.getElementById('at-profile-filter');
+    var parallelOverride = document.getElementById('edit-parallel-override');
+    var defaultNcores = document.getElementById('at-default-ncores');
+    var defaultBackend = document.getElementById('at-default-backend');
+    var defaultStart = document.getElementById('at-default-start');
     var instrWs         = document.getElementById('at-instrument-workspace');
     var queueWs         = document.getElementById('at-queue-workspace');
     var noInstrEl       = document.getElementById('at-no-instruments');
@@ -311,6 +320,99 @@
 
     var toast = document.getElementById('at-toast');
 
+    function taskScope(taskId) {
+        var task = allTasks.find(function (row) { return row.id === taskId; });
+        return task && task.instrument || currentInstrument;
+    }
+
+    function filteredTasks() {
+        var instrument = instrumentFilter && instrumentFilter.value || '';
+        var profile = profileFilter && profileFilter.value || '';
+        return allTasks.filter(function (task) {
+            return (!instrument || task.instrument === instrument)
+                && (!profile || JSON.stringify([task.instrument, task.apero_profile]) === profile);
+        });
+    }
+
+    function updateProfileFilter() {
+        if (!profileFilter) return;
+        var selected = profileFilter.value;
+        var instrument = instrumentFilter.value;
+        profileFilter.replaceChildren(new Option(labels.ALL, ''));
+        var seen = new Set();
+        allTasks.forEach(function (task) {
+            if (!task.apero_profile || instrument && task.instrument !== instrument) return;
+            var value = JSON.stringify([task.instrument, task.apero_profile]);
+            if (seen.has(value)) return;
+            seen.add(value);
+            profileFilter.add(new Option(task.instrument + ' / ' + task.apero_profile, value));
+        });
+        if (seen.has(selected)) profileFilter.value = selected;
+    }
+
+    function bindTaskFilters() {
+        if (!instrumentFilter || !profileFilter) return;
+        instrumentFilter.add(new Option(labels.ALL, ''));
+        instrumentFilter.add(new Option(labels.GLOBAL, GLOBAL_SCOPE));
+        instruments.forEach(function (instrument) {
+            instrumentFilter.add(new Option(instrument, instrument));
+        });
+        function changed() {
+            updateProfileFilter();
+            if (!filteredTasks().some(function (task) { return task.id === selectedTaskId; })) {
+                selectedTaskId = null;
+                showDetail(null);
+            }
+            renderTaskLists();
+        }
+        instrumentFilter.addEventListener('change', changed);
+        profileFilter.addEventListener('change', changed);
+    }
+
+    function updateParallelOverride() {
+        if (!parallelOverride) return;
+        [editNcores, editMpBackend, editMpStartMethod].forEach(function (input) {
+            if (input) input.disabled = !parallelOverride.checked;
+        });
+    }
+
+    function bindParallelDefaults() {
+        if (!defaultNcores) return;
+        if (parallelOverride) parallelOverride.addEventListener('change', updateParallelOverride);
+        fetch(urls.taskList).then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data.success) return;
+                var defaults = data.defaults || {};
+                defaultNcores.value = defaults.ncores || 1;
+                defaultBackend.value = defaults.mp_backend || 'threads';
+                defaultStart.value = defaults.mp_start_method || 'default';
+            }).catch(function (error) { showToast(error.message, 'error'); });
+        ['at-set-defaults', 'at-update-all'].forEach(function (id) {
+            var button = document.getElementById(id);
+            if (!button) return;
+            button.addEventListener('click', function () {
+                var buttons = ['at-set-defaults', 'at-update-all'].map(function (name) {
+                    return document.getElementById(name);
+                });
+                buttons.forEach(function (item) { item.disabled = true; });
+                fetch(urls.save, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: id === 'at-update-all' ? 'update_all' : 'set_defaults',
+                        ncores: Number(defaultNcores.value),
+                        mp_backend: defaultBackend.value,
+                        mp_start_method: defaultStart.value,
+                    }),
+                }).then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        showToast(data.success ? labels.SAVED : data.error, data.success ? 'success' : 'error');
+                        if (data.success) refreshCurrentTasks();
+                    }).catch(function (error) { showToast(error.message, 'error'); })
+                    .finally(function () { buttons.forEach(function (item) { item.disabled = false; }); });
+            });
+        });
+    }
+
     /* -----------------------------------------------------------------------
        Initialisation
     ----------------------------------------------------------------------- */
@@ -321,6 +423,8 @@
         }
         renderTabs();
         renderInstrumentCards();
+        bindTaskFilters();
+        bindParallelDefaults();
         loadTaskClasses();
         bindEditModal();
         bindDeleteModal();
@@ -333,11 +437,7 @@
         bindSectionToggles();
         bindOauthHelpModal();
 
-        if (instruments.length === 0) {
-            noInstrEl.style.display = '';
-        } else {
-            selectTab('instruments');
-        }
+        selectTab('instruments');
     }
 
     /* -----------------------------------------------------------------------
@@ -347,8 +447,7 @@
         if (!tabsEl) return;
         tabsEl.innerHTML = '';
         [
-            { value: 'global', label: '<i class="fa-solid fa-globe"></i> Global' },
-            { value: 'instruments', label: '<i class="fa-solid fa-satellite-dish"></i> Instruments' },
+            { value: 'instruments', label: '<i class="fa-solid fa-list-check"></i> ' + esc(labels.TASKS) },
             { value: 'queue', label: '<i class="fa-solid fa-layer-group"></i> Queue' },
         ].forEach(function (tabDef) {
             var btn = document.createElement('button');
@@ -428,9 +527,7 @@
         }
 
         if (instrumentPicker) instrumentPicker.style.display = '';
-        if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) {
-            currentInstrument = instruments[0] || null;
-        }
+        currentInstrument = ALL_SCOPE;
         highlightInstrumentCard();
         if (btnRunAll) {
             btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All';
@@ -459,6 +556,11 @@
 
     function loadTasks() {
         if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) return;
+        if (currentInstrument === ALL_SCOPE) {
+            return loadTaskList([urls.globalList].concat(instruments.map(function (instrument) {
+                return urls.list + '?instrument=' + encodeURIComponent(instrument);
+            })));
+        }
         return loadTaskList(urls.list + '?instrument=' + encodeURIComponent(currentInstrument));
     }
 
@@ -472,17 +574,36 @@
         if (taskListController) taskListController.abort();
         taskListController = new AbortController();
         var controller = taskListController;
+        var timeoutId = null;
         taskListLoading = true;
         if (!allTasks.length) renderTaskLists();
-        return fetch(url, {signal: controller.signal})
-            .then(function (r) { return r.json(); })
+        var response = Array.isArray(url)
+            ? Promise.all(url.map(function (endpoint) {
+                return fetch(endpoint, {signal: controller.signal})
+                    .then(function (r) { return r.json(); });
+            })).then(function (responses) {
+                var failed = responses.find(function (data) { return !data.success; });
+                if (failed) return failed;
+                return {success: true, tasks: responses.flatMap(function (data) {
+                    return data.tasks || [];
+                }), queue: responses[0].queue};
+            })
+            : fetch(url, {signal: controller.signal}).then(function (r) { return r.json(); });
+        var requestTimeout = new Promise(function (_resolve, reject) {
+            timeoutId = setTimeout(function () {
+                controller.abort();
+                reject(new Error(labels.TIMEOUT || ''));
+            }, TASK_LIST_TIMEOUT_MS);
+        });
+        return Promise.race([response, requestTimeout])
             .then(function (data) {
                 if (version !== taskRequestVersion || instrument !== currentInstrument) return;
                 if (!data.success) { showToast('Failed to load tasks: ' + data.error, 'error'); return; }
-                allTasks = data.tasks || [];
+                allTasks = Array.isArray(data.tasks) ? data.tasks : [];
                 currentProfileNames = Array.isArray(data.profile_names)
                     ? data.profile_names
                     : [];
+                updateProfileFilter();
                 renderTaskLists();
                 updateRunningBadge(data.queue);
                 if (selectedTaskId) {
@@ -496,13 +617,15 @@
             })
             .catch(function (error) {
                 if (error.name === 'AbortError' || version !== taskRequestVersion) return;
+                allTasks = [];
                 showToast('Failed to load tasks: ' + error.message, 'error');
             })
             .finally(function () {
+                if (timeoutId !== null) clearTimeout(timeoutId);
                 if (taskListController === controller) taskListController = null;
                 if (version !== taskRequestVersion) return;
                 taskListLoading = false;
-                if (!allTasks.length) renderTaskLists();
+                renderTaskLists();
             });
     }
 
@@ -516,9 +639,10 @@
 
     function renderTaskLists() {
         if (!activeList || !inactiveList || !activeCount || !inactiveCount) return;
-        var active   = allTasks.filter(function (t) { return t.active !== false; });
-        var inactive = allTasks.filter(function (t) { return t.active === false; });
-        var draggable = (currentInstrument !== GLOBAL_SCOPE);
+        var visible = filteredTasks();
+        var active = visible.filter(function (t) { return t.active !== false; });
+        var inactive = visible.filter(function (t) { return t.active === false; });
+        var draggable = currentInstrument !== GLOBAL_SCOPE && currentInstrument !== ALL_SCOPE;
 
         activeCount.textContent   = taskListLoading && !allTasks.length ? '…' : active.length;
         inactiveCount.textContent = taskListLoading && !allTasks.length ? '…' : inactive.length;
@@ -543,7 +667,7 @@
 
     function buildTaskCard(task, draggable) {
         var rt = task.runtime || {};
-        var status = rt.found ? rt.status : 'not_started';
+        var status = rt.status || task.last_status || 'not_started';
         var isRunning = (status === 'in_progress');
         var isQueued  = rt.is_queued;
         var hasError = (status === 'failed') || !!String(rt.error || '').trim();
@@ -578,15 +702,20 @@
             tags += '<span class="at-tag at-tag--error">ERROR</span>';
         }
 
-        var instLabel = (currentInstrument && currentInstrument !== GLOBAL_SCOPE)
-            ? '<span class="at-task-card__inst">' + esc(currentInstrument) + ':</span> '
-            : '';
+        var scope = task.instrument || currentInstrument;
+        var scopeLabel = scope === GLOBAL_SCOPE ? labels.GLOBAL : scope;
+        if (task.apero_profile) scopeLabel += ' / ' + task.apero_profile;
+        var instLabel = '<span class="at-task-card__inst">' + esc(scopeLabel) + ':</span> ';
+        var lastRun = rt.last_run || task.last_run || 'Never';
+        var lastDate = new Date(lastRun);
+        if (!isNaN(lastDate.getTime())) lastRun = lastDate.toLocaleString();
 
         card.innerHTML =
             grip + statusDot +
             '<div class="at-task-card__body">' +
                 '<span class="at-task-card__name">' + instLabel + esc(task.name || task.task_key) + '</span>' +
                 '<span class="at-task-card__freq">' + (task.frequency ? esc(task.frequency) + ' hrs' : '') + '</span>' +
+                '<span class="at-task-card__freq">' + esc(labels.LAST_RUN) + ': ' + esc(lastRun) + '</span>' +
                 tags +
             '</div>' +
             progressHtml;
@@ -722,27 +851,7 @@
                 || ('sync_source' in task)
                 || ('sync_profiles' in task);
             if (supportsLocalTask) {
-                var syncProfiles = getTaskSyncProfiles(task);
-                var fetchNames = Object.keys(syncProfiles);
-                var legacySync = String(task.sync_source || '').trim();
-                if (fetchNames.length) {
-                    var totalProfiles = currentProfileNames.length
-                        || fetchNames.length;
-                    var runCount = Math.max(
-                        totalProfiles - fetchNames.length,
-                        0
-                    );
-                    detSyncMode.textContent = fetchNames.length
-                        + ' profile(s) fetch pre-computed'
-                        + (runCount
-                            ? '; ' + runCount + ' run on server'
-                            : '');
-                } else if (legacySync) {
-                    detSyncMode.textContent = 'Legacy sync source: '
-                        + legacySync;
-                } else {
-                    detSyncMode.textContent = 'All profiles run on server';
-                }
+                detSyncMode.textContent = labels.AUTOMATIC;
                 detSyncModeRow.style.display = '';
             } else {
                 detSyncMode.textContent = '';
@@ -1467,7 +1576,7 @@
             fetch(urls.toggle, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ instrument: currentInstrument, id: selectedTaskId }),
+                body: JSON.stringify({ instrument: taskScope(selectedTaskId), id: selectedTaskId }),
             }).then(function (r) { return r.json(); }).then(function (d) {
                 if (d.success) { refreshCurrentTasks(); } else { showToast('Toggle failed: ' + d.error, 'error'); }
             });
@@ -1506,7 +1615,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                instrument: currentInstrument,
+                instrument: taskScope(selectedTaskId),
                 id: selectedTaskId,
                 local_data_dir: localDir,
                 force_run: !!forceRun,
@@ -1617,7 +1726,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    instrument: currentInstrument,
+                    instrument: taskScope(selectedTaskId),
                     id: selectedTaskId,
                 }),
             }).then(function (r) { return r.json(); }).then(function (d) {
@@ -1684,6 +1793,7 @@
                 action: action,
                 force_run: !!forceRun,
                 local_data_dir: localDir,
+                ids: filteredTasks().map(function (task) { return task.id; }),
             }),
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d.success) {
@@ -1853,7 +1963,8 @@
         editNcores.value = task.ncores || 1;
         editMpBackend.value = task.mp_backend || 'threads';
         editMpStartMethod.value = task.mp_start_method || 'default';
-        renderSyncProfiles(task);
+        if (parallelOverride) parallelOverride.checked = !!task.parallel_override;
+        updateParallelOverride();
         editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task.active !== false;
         selectEditTab('run');
@@ -1936,39 +2047,6 @@
         });
     }
 
-    function getTaskSyncProfiles(task) {
-        var out = {};
-        if (task && task.sync_profiles
-                && typeof task.sync_profiles === 'object') {
-            Object.keys(task.sync_profiles).forEach(function (profileName) {
-                var entry = task.sync_profiles[profileName];
-                if (!entry || typeof entry !== 'object') return;
-                var mode = String(entry.mode || 'run_server').trim();
-                var syncSource = String(
-                    entry.sync_source || ''
-                ).trim();
-                if (mode === 'fetch_precomputed' && syncSource) {
-                    out[profileName] = {
-                        mode: 'fetch_precomputed',
-                        sync_source: syncSource,
-                    };
-                }
-            });
-        }
-        if (Object.keys(out).length === 0) {
-            var legacySync = String(task && task.sync_source || '').trim();
-            if (legacySync) {
-                currentProfileNames.forEach(function (profileName) {
-                    out[profileName] = {
-                        mode: 'fetch_precomputed',
-                        sync_source: legacySync,
-                    };
-                });
-            }
-        }
-        return out;
-    }
-
     function updateSyncProfileRow(row) {
         if (!row) return;
         var modeEl = row.querySelector('select[data-role="mode"]');
@@ -1988,108 +2066,6 @@
                 ? ('Selected task directory: ' + baseName)
                 : '';
         }
-    }
-
-    function renderSyncProfiles(task) {
-        if (!editSyncProfilesBody || !editSyncProfilesWrap
-                || !editSyncProfilesEmpty) {
-            return;
-        }
-        var syncProfiles = getTaskSyncProfiles(task || {});
-        editSyncProfilesBody.innerHTML = '';
-        if (!currentProfileNames.length) {
-            editSyncProfilesWrap.style.display = 'none';
-            editSyncProfilesEmpty.style.display = '';
-            return;
-        }
-
-        editSyncProfilesWrap.style.display = '';
-        editSyncProfilesEmpty.style.display = 'none';
-        currentProfileNames.forEach(function (profileName) {
-            var entry = syncProfiles[profileName] || {};
-            var mode = entry.sync_source
-                ? 'fetch_precomputed'
-                : 'run_server';
-            var syncSource = String(entry.sync_source || '');
-            var row = document.createElement('tr');
-            row.dataset.profile = profileName;
-            row.innerHTML = ''
-                + '<td><strong>' + esc(profileName) + '</strong></td>'
-                + '<td>'
-                + '<select class="ari-ap-input" data-role="mode">'
-                + '<option value="run_server">Run on server</option>'
-                + '<option value="fetch_precomputed">'
-                + 'Fetch pre-computed</option>'
-                + '</select></td>'
-                + '<td>'
-                + '<div class="at-sync-profiles__path-wrap">'
-                + '<input type="text" class="ari-ap-input"'
-                + ' data-role="path"'
-                + ' placeholder="/path/to/precomputed/profile"'
-                + ' value="' + esc(syncSource) + '">'
-                + '<button type="button"'
-                + ' class="ari-btn ari-btn--secondary"'
-                + ' data-role="browse">'
-                + '<i class="fa-solid fa-folder-open"></i> Browse'
-                + '</button></div>'
-                + '<div class="at-sync-profiles__alias"'
-                + ' data-role="alias"></div></td>';
-            editSyncProfilesBody.appendChild(row);
-
-            var modeEl = row.querySelector('select[data-role="mode"]');
-            var pathEl = row.querySelector('input[data-role="path"]');
-            var browseBtn = row.querySelector('button[data-role="browse"]');
-            modeEl.value = mode;
-            modeEl.addEventListener('change', function () {
-                updateSyncProfileRow(row);
-                onTaskKeyChange();
-            });
-            pathEl.addEventListener('input', function () {
-                updateSyncProfileRow(row);
-            });
-            browseBtn.addEventListener('click', function () {
-                openSyncBrowseModal(pathEl);
-            });
-            updateSyncProfileRow(row);
-        });
-    }
-
-    function collectSyncProfiles(validate) {
-        var out = {};
-        var anyRunOnServer = !currentProfileNames.length;
-        var anyFetch = false;
-        var rows = editSyncProfilesBody
-            ? editSyncProfilesBody.querySelectorAll('tr[data-profile]')
-            : [];
-        rows.forEach(function (row) {
-            var profileName = row.dataset.profile || '';
-            var modeEl = row.querySelector('select[data-role="mode"]');
-            var pathEl = row.querySelector('input[data-role="path"]');
-            var mode = modeEl ? String(modeEl.value || '').trim() : '';
-            var syncSource = pathEl ? String(pathEl.value || '').trim() : '';
-            if (mode === 'fetch_precomputed') {
-                anyFetch = true;
-                if (validate && !syncSource) {
-                    throw new Error(
-                        'Pre-computed directory is required for '
-                        + profileName + '.'
-                    );
-                }
-                if (syncSource) {
-                    out[profileName] = {
-                        mode: 'fetch_precomputed',
-                        sync_source: syncSource,
-                    };
-                }
-            } else {
-                anyRunOnServer = true;
-            }
-        });
-        return {
-            profiles: out,
-            anyRunOnServer: anyRunOnServer,
-            anyFetch: anyFetch,
-        };
     }
 
     function openSyncBrowseModal(targetInput) {
@@ -2390,12 +2366,6 @@
             || ('ncores' in currentTask)
             || ('mp_backend' in currentTask)
             || ('mp_start_method' in currentTask);
-        var supportsLocalTask = !!(cls && cls.local_task)
-            || !!currentTask.local_task
-            || ('sync_source' in currentTask)
-            || ('sync_profiles' in currentTask)
-            || key === 'APERO_OBJECT_QUERY';
-        var syncState = collectSyncProfiles(false);
         if (cls) {
             editTaskInfoRow.style.display = '';
             editTaskName.textContent = cls.name;
@@ -2420,15 +2390,9 @@
         if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
         if (isAssets) updateAssetsLocalSrcVisibility();
 
-        if (editLocalSyncFields) {
-            editLocalSyncFields.style.display = supportsLocalTask ? '' : 'none';
-        }
+        editMpFields.style.display = supportsMp ? '' : 'none';
 
-        editMpFields.style.display = (supportsMp && syncState.anyRunOnServer)
-            ? ''
-            : 'none';
-
-        if (supportsMp && syncState.anyRunOnServer) {
+        if (supportsMp) {
             renderNcoresWarning();
         }
         editRunCountRow.style.display = editingTaskId ? '' : 'none';
@@ -2498,12 +2462,6 @@
             || ('ncores' in currentTask)
             || ('mp_backend' in currentTask)
             || ('mp_start_method' in currentTask);
-        var supportsLocalTask = !!cls.local_task
-            || !!currentTask.local_task
-            || ('sync_source' in currentTask)
-            || ('sync_profiles' in currentTask)
-            || taskKey === 'APERO_OBJECT_QUERY';
-        var syncState;
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
@@ -2514,16 +2472,10 @@
         var ncores = parseInt(editNcores.value, 10) || 1;
         var mpBackend = (editMpBackend.value || 'threads').trim();
         var mpStartMethod = (editMpStartMethod.value || 'default').trim();
-        try {
-            syncState = collectSyncProfiles(true);
-        } catch (err) {
-            showToast(err.message, 'error');
-            return;
-        }
         if (!taskKey) { showToast('Missing task key.', 'error'); return; }
         if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
         if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
-        if (supportsMp && syncState.anyRunOnServer && ncores <= 0) {
+        if (supportsMp && ncores <= 0) {
             showToast('NCORES must be >= 1.', 'error');
             return;
         }
@@ -2538,7 +2490,7 @@
             }
         }
         var payload = {
-            instrument: currentInstrument,
+            instrument: taskScope(editingTaskId),
             task_key: taskKey,
             frequency: frequency,
             daily_copies: dailyCopies,
@@ -2611,13 +2563,11 @@
             if (!inputEl) return;
             payload.filters[keyName] = String(inputEl.value || '').trim();
         });
-        if (supportsMp && syncState.anyRunOnServer) {
+        if (supportsMp) {
+            payload.parallel_override = !!(parallelOverride && parallelOverride.checked);
             payload.ncores = ncores;
             payload.mp_backend = mpBackend;
             payload.mp_start_method = mpStartMethod;
-        }
-        if (supportsLocalTask) {
-            payload.sync_profiles = syncState.profiles;
         }
         payload.id = editingTaskId;
 
@@ -2825,7 +2775,7 @@
             fetch(urls.delete, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ instrument: currentInstrument, id: pendingDeleteId }),
+                body: JSON.stringify({ instrument: taskScope(pendingDeleteId), id: pendingDeleteId }),
             }).then(function (r) { return r.json(); }).then(function (d) {
                 deleteModal.style.display = 'none';
                 if (d.success) {

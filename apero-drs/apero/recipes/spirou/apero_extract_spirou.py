@@ -168,14 +168,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 # warning: Skipping extraction DPRTYPE = {0} (Required = {1}) \n
                 #     File = {2}
                 WLOG(params, 'warning',
-                     textentry('10-016-00012', args=skip_conditions[1]),
-                     sublevel=2)
+                     textentry('10-016-00012',
+                               args=skip_conditions[1]), sublevel=2)
             if 'OBJNAME' in skip_conditions[0]:
                 # warning: Skipping extraction OBJNAME = {0} (Required = {1}) \n
                 #     File = {2}
                 WLOG(params, 'warning',
-                     textentry('10-016-00013', args=skip_conditions[2]),
-                     sublevel=2)
+                     textentry('10-016-00013',
+                               args=skip_conditions[2]), sublevel=2)
             log1.write_logfile()
             continue
         extract_type = params['INPUTS']['EXTRACT_TYPE']
@@ -280,11 +280,13 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             lkargs = [params, recipe, eprops['E2DSFF'],
                       ref_e2ds, infile, fiber]
-            lkkwargs = dict(database=calibdbm)
+            lkkwargs = dict(spectrum_error=eprops['E2DSFF_ERROR'],
+                            database=calibdbm)
             lkout = leak.correct_spectra_leak(*lkargs, **lkkwargs)
-            corrected_spectrum, leakcorr, leak_props = lkout
+            corrected_spectrum, corrected_error, leakcorr, leak_props = lkout
             # store corrected spectrum and leak diagnostics in eprops
             eprops['E2DSFF'] = corrected_spectrum
+            eprops['E2DSFF_ERROR'] = corrected_error
             eprops['LEAKCORR'] = leakcorr
             for key, val in leak_props.items():
                 eprops[key] = val
@@ -293,10 +295,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # ----------------------------------------------------------------
             thargs = [params, recipe, mprops['HEADER'],
                       mprops['CALIB_PROPS'], eprops['E2DSFF'], fiber]
-            thkwargs = dict(database=calibdbm)
+            thkwargs = dict(spectrum_error=eprops['E2DSFF_ERROR'],
+                            database=calibdbm)
             thout = thermal.correct_spectrum_thermal(*thargs, **thkwargs)
-            thermal_spectrum, thermal_props = thout
+            thermal_spectrum, thermal_error, thermal_props = thout
             eprops['E2DSFF'] = thermal_spectrum
+            eprops['E2DSFF_ERROR'] = thermal_error
             for key, val in thermal_props.items():
                 eprops[key] = val
             # ----------------------------------------------------------------

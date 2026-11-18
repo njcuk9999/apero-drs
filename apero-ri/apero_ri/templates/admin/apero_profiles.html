@@ -161,62 +161,6 @@
             </div>
             </div>
 
-            <!-- Table names -->
-            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-table"></i> Table Names</h4>
-            <div id="tables-section" class="ari-ap-step ari-ap-step--locked">
-            <div class="ari-ap-form__row">
-                <div class="ari-ap-form__field">
-                    <label for="profile-tbl-astrom">ASTROM_TABLENAME <span class="ari-required">*</span></label>
-                    <select id="profile-tbl-astrom" class="ari-ap-input">
-                        <option value="">Select table...</option>
-                    </select>
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="profile-tbl-calib">CALIB_TABLENAME <span class="ari-required">*</span></label>
-                    <select id="profile-tbl-calib" class="ari-ap-input">
-                        <option value="">Select table...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="ari-ap-form__row">
-                <div class="ari-ap-form__field">
-                    <label for="profile-tbl-findex">FINDEX_TABLENAME <span class="ari-required">*</span></label>
-                    <select id="profile-tbl-findex" class="ari-ap-input">
-                        <option value="">Select table...</option>
-                    </select>
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="profile-tbl-log">LOG_TABLENAME <span class="ari-required">*</span></label>
-                    <select id="profile-tbl-log" class="ari-ap-input">
-                        <option value="">Select table...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="ari-ap-form__row">
-                <div class="ari-ap-form__field">
-                    <label for="profile-tbl-tellu">TELLU_TABLENAME <span class="ari-required">*</span></label>
-                    <select id="profile-tbl-tellu" class="ari-ap-input">
-                        <option value="">Select table...</option>
-                    </select>
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="profile-tbl-reject">REJECT_TABLENAME <span class="ari-required">*</span></label>
-                    <select id="profile-tbl-reject" class="ari-ap-input">
-                        <option value="">Select table...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="ari-ap-form__field">
-                <button id="btn-test-tables" class="ari-btn ari-btn--secondary ari-btn--sm" disabled>
-                    <i class="fa-solid fa-vial-circle-check"></i> Test Table Names
-                </button>
-                <div id="tables-test-result" class="ari-ap-validation" style="display:none;"></div>
-            </div>
-            <div class="ari-ap-step-status" id="tables-step-status">
-                <i class="fa-solid fa-lock"></i> Complete and test database settings first.
-            </div>
-            </div>
-
             <!-- Science settings -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-flask-vial"></i> Science Settings</h4>
             <div id="science-section" class="ari-ap-step">
@@ -238,6 +182,45 @@
                 <div id="sci-params-explorer" class="at-px-explorer"></div>
             </div>
             <div class="ari-ap-step-status" id="science-step-status"></div>
+            </div>
+
+            <!-- Table names -->
+            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-table"></i> Table Names</h4>
+            <div id="tables-section" class="ari-ap-step ari-ap-step--locked">
+                {% for key, name, prefix in [
+                    ('ASTROM_TABLENAME', 'astrom', 'astrom_'),
+                    ('CALIB_TABLENAME', 'calib', 'calib_'),
+                    ('FINDEX_TABLENAME', 'findex', 'findex_'),
+                    ('LOG_TABLENAME', 'log', 'log_'),
+                    ('TELLU_TABLENAME', 'tellu', 'tellu_'),
+                    ('REJECT_TABLENAME', 'reject', 'reject_'),
+                ] %}
+                <div class="ari-ap-table-row" id="profile-table-row-{{ name }}">
+                    <label for="profile-tbl-{{ name }}">
+                        {{ key }} <span class="ari-required">*</span>
+                    </label>
+                    <select id="profile-tbl-{{ name }}" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
+                    <label for="profile-tbl-prefix-{{ name }}">Prefix</label>
+                    <input type="text" id="profile-tbl-prefix-{{ name }}"
+                           class="ari-ap-input" value="{{ prefix }}"
+                           aria-label="{{ key }} prefix filter">
+                    <label for="profile-tbl-suffix-{{ name }}">Suffix</label>
+                    <input type="text" id="profile-tbl-suffix-{{ name }}"
+                           class="ari-ap-input"
+                           aria-label="{{ key }} suffix filter">
+                </div>
+                {% endfor %}
+                <div class="ari-ap-form__field">
+                    <button id="btn-test-tables" class="ari-btn ari-btn--secondary ari-btn--sm" disabled>
+                        <i class="fa-solid fa-vial-circle-check"></i> Test Table Names
+                    </button>
+                    <div id="tables-test-result" class="ari-ap-validation" style="display:none;"></div>
+                </div>
+                <div class="ari-ap-step-status" id="tables-step-status">
+                    <i class="fa-solid fa-lock"></i> Complete and test database settings first.
+                </div>
             </div>
 
             <!-- Data paths -->
@@ -267,6 +250,9 @@
             {% for field_id, label, hint, extra_note, optional in path_fields %}
             <div class="ari-ap-form__field">
                 <label for="{{ field_id }}">{{ label }}
+                    <span id="{{ field_id }}-validation"
+                          class="ari-ap-validation ari-ap-path-validation"
+                          style="display:none;"></span>
                     {% if optional %}<span class="ari-ap-form__hint">(optional)</span>{% else %}<span class="ari-required">*</span>{% endif %}
                     <span class="ari-ap-form__hint">{{ hint }}</span>
                     {% if extra_note %}
@@ -287,7 +273,6 @@
                     Disabled (store as <code>None</code> and skip checks)
                 </label>
                 {% endif %}
-                <div id="{{ field_id }}-validation" class="ari-ap-validation" style="display:none;"></div>
             </div>
             {% endfor %}
             <div class="ari-ap-form__field">
@@ -457,5 +442,5 @@ window.ARI_APERO_PROFILES = {
     sciProfileData: {{ sci_profiles|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}?v=20261110a"></script>
+<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}?v=20261116a"></script>
 {% endblock %}
