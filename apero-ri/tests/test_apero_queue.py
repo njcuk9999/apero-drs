@@ -8,11 +8,14 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Iterator
+from unittest.mock import Mock
 
 import pytest
+from flask import Flask
 
 from apero import dev
 from apero_ri.application import apero_queue_api_helpers as aq
+from apero_ri.application import ariapp_impls
 from apero_ri.core import apero_queues
 from apero_ri.core import auth
 
@@ -138,6 +141,59 @@ def test_monitor_access_follows_profile(app: Any,
     _as_user(monkeypatch, {aq.PERMISSION}, set())
     user, perms = aq._user_perms(app)
     assert list(aq.accessible_queues(app, user, perms)) == ['q1']
+
+
+def test_server_start_reconnects_enabled_queue_tunnels(
+    app: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Restore missing tunnels without blocking serving on SSH.
+
+    :param app: Isolated ARI app.
+    :param monkeypatch: Fixture for replacing the server and SSH calls.
+    :return: None.
+    """
+    queues = dict()
+    for index, name in enumerate(('active', 'disabled', 'fails', 'restored')):
+        raw = dict(ssh_config_host=name, local_port=str(18090 + index),
+                   enabled=name != 'disabled')
+        queues[name] = apero_queues.normalize_queue(raw)
+    apero_queues.save_queues(queues)
+    serving = threading.Event()
+    finished = threading.Event()
+    attempted = []
+
+    def status(params: dict) -> dict:
+        """Report whether the mock tunnel in params is listening."""
+        name = params['DATABASE_SSH_CONFIG_HOST']
+        return dict(local_port_open=name == 'active')
+
+    def ensure(params: dict) -> None:
+        """Simulate one failed and one successful SSH connection."""
+        name = params['DATABASE_SSH_CONFIG_HOST']
+        attempted.append(name)
+        if name == 'fails':
+            raise RuntimeError('SSH test failure')
+        if name == 'restored' and serving.wait(timeout=3):
+            finished.set()
+
+    def serve(_app: Flask, **kwargs: Any) -> None:
+        """Enter the server while SSH is still in progress."""
+        serving.set()
+        assert finished.wait(timeout=3)
+
+    monkeypatch.setattr(aq.apero_async, 'get_db_tunnel_status', status)
+    monkeypatch.setattr(aq.apero_async, '_ensure_ssh_tunnel', ensure)
+    monkeypatch.setattr(ariapp_impls, '_start_issue_monitor', lambda app: None)
+    monkeypatch.setattr(app, 'shutdown', lambda: None)
+    warning = Mock()
+    monkeypatch.setattr(app.logger, 'warning', warning)
+    monkeypatch.setattr(Flask, 'run', serve)
+    app.run(host='127.0.0.1', port=0, debug=False)
+
+    assert attempted == ['fails', 'restored']
+    warning.assert_called_once()
+    assert 'SSH test failure' in warning.call_args.args[0]
 
 
 def test_proxy_forwards_and_blocks(app: Any, fake_gui: int,

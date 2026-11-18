@@ -24,8 +24,10 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
 
+import yaml
 from flask import Response, jsonify, request, session
 
+from aperocore.drs_lang import textentry
 from apero_ri.application import monitor_view_helpers as mvh
 from apero_ri.core import apero_queues
 from apero_ri.core import auth
@@ -47,7 +49,7 @@ PROXY_TIMEOUT = 60
 PROBE_TIMEOUT = 2
 # never route localhost requests through http(s)_proxy environment settings
 _OPENER = urllib.request.build_opener(urllib.request.ProxyHandler(dict()))
-# one reconnect at a time per queue (many monitors may click at once)
+# one reconnect at a time per queue across startup and monitor requests
 _RECONNECT_LOCKS: Dict[str, threading.Lock] = dict()
 
 
@@ -153,6 +155,38 @@ def queue_status(app: Any, qdef: dict) -> Dict[str, Any]:
     status['gui_alive'] = bool(status.get('local_port_open')) and _probe_gui(
         qdef['local_port'])
     return status
+
+
+def restore_tunnels(app: Any) -> None:
+    """Attempt to restore enabled queue tunnels once at server startup.
+
+    :param app: ARIApp supplying the data directory and logger.
+    :return: None.
+    """
+    try:
+        queues = apero_queues.load_queues()
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        message = textentry('APERO_QUEUE_STARTUP_LOAD_FAILED', args=[str(exc)])
+        app.logger.warning(str(message))
+        return
+
+    for name, qdef in queues.items():
+        if not qdef['enabled']:
+            continue
+        lock = _RECONNECT_LOCKS.setdefault(name, threading.Lock())
+        if not lock.acquire(blocking=False):
+            continue
+        try:
+            params = _tunnel_params(app, qdef)
+            status = apero_async.get_db_tunnel_status(params)
+            if not status['local_port_open']:
+                apero_async._ensure_ssh_tunnel(params)
+        except (OSError, RuntimeError, ValueError) as exc:
+            message = textentry('APERO_QUEUE_STARTUP_TUNNEL_FAILED',
+                                args=[name, str(exc)])
+            app.logger.warning(str(message))
+        finally:
+            lock.release()
 
 
 def _profile_options() -> List[Dict[str, str]]:

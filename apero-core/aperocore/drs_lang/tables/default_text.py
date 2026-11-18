@@ -152,6 +152,30 @@ item.arguments = '0: APERO profile name'
 item.comment = 'Logged when the final ARI processing tool has no profile YAML'
 langlist.add(item)
 
+item = langlist.create('APERO_QUEUE_STARTUP_LOAD_FAILED', kind='text')
+item.value['ENG'] = 'Could not load APERO queue definitions at startup: {0}'
+item.value['FR'] = (
+    'Impossible de charger les définitions des files APERO au démarrage : {0}'
+)
+item.value['ES'] = (
+    'No se pudieron cargar las definiciones de colas APERO al iniciar: {0}'
+)
+item.arguments = '0: configuration error'
+item.comment = 'Logged when ARI cannot load queue definitions at startup'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_STARTUP_TUNNEL_FAILED', kind='text')
+item.value['ENG'] = 'Could not restore the APERO queue tunnel for {0}: {1}'
+item.value['FR'] = (
+    'Impossible de rétablir le tunnel de la file APERO pour {0} : {1}'
+)
+item.value['ES'] = (
+    'No se pudo restablecer el túnel de la cola APERO para {0}: {1}'
+)
+item.arguments = '0: queue name; 1: tunnel error'
+item.comment = 'Logged when ARI cannot restore an enabled queue tunnel'
+langlist.add(item)
+
 item = langlist.create('USER_STATISTICS_RESET', kind='text')
 item.value['ENG'] = 'Reset statistics'
 item.value['FR'] = 'Réinitialiser les statistiques'

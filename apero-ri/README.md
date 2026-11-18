@@ -222,6 +222,13 @@ For real multi-user deployments, run with the production WSGI server
 apero_ri_run --port=1234 --production --threads=16
 ```
 
+At server startup, ARI makes one background attempt to reconnect missing
+SSH tunnels for enabled queues in **Admin Portal → APERO Queue Setup**.
+Disabled queues and tunnels already listening are left alone. Tunnels that
+require a password or Duo still need **Interactive Auth**, and the remote
+`apero_queue.py gui` dashboard must already be running. Failed attempts
+are logged without delaying server startup.
+
 Recommended setup is a reverse proxy (nginx/Apache) terminating HTTPS in
 front of the app. The following environment variables configure the app
 for that topology:

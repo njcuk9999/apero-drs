@@ -31,6 +31,7 @@ from apero_ri.application import (
     admin_sshfs_api_helpers,
     admin_user_api_helpers,
     apero_profiles_api_helpers,
+    apero_queue_api_helpers,
     async_task_helpers,
     async_tasks_api_helpers,
     basket_api_helpers,
@@ -88,6 +89,7 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.serving import is_running_from_reloader
 from werkzeug.utils import secure_filename
 
 permissions_mod = perms
@@ -448,6 +450,12 @@ def ariapp_run(
     kwargs.setdefault("use_reloader", False)
 
     _start_issue_monitor(self)
+
+    if not kwargs['use_reloader'] or is_running_from_reloader():
+        worker_kwargs = dict(target=apero_queue_api_helpers.restore_tunnels,
+                             args=(self,), daemon=True,
+                             name='ari-queue-tunnel-restore')
+        threading.Thread(**worker_kwargs).start()
 
     # Production mode: serve with waitress (multi-threaded, no dev-server
     # warnings, robust connection handling) instead of the Flask dev server.
