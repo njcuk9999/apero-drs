@@ -35,6 +35,8 @@ TUNNEL_STATE_SUBDIR = 'queue_tunnels'
 NAME_PATTERN = re.compile(r'^[A-Za-z0-9_\-]+$')
 # valid ssh modes (see database setup)
 SSH_MODES = ('apero', 'simple')
+# valid SSH network modes
+NETWORK_MODES = ('standard', 'alliance')
 # queue gui POST routes (api/<action>) that can be restricted for monitors
 #   value = (label, css selectors hidden in the embedded dashboard)
 QUEUE_ACTIONS: Dict[str, tuple] = dict(
@@ -124,6 +126,21 @@ def normalize_queue(raw: Dict[str, Any]) -> Dict[str, Any]:
     blocked = sorted({str(item) for item in blocked
                       if str(item) in QUEUE_ACTIONS})
     ssh_mode = _str('ssh_mode', 'apero')
+    network_mode = _str('network_mode', 'standard')
+    pre_commands = raw.get('pre_gui_commands', [])
+    if isinstance(pre_commands, str):
+        pre_commands = pre_commands.splitlines()
+    if not isinstance(pre_commands, list):
+        pre_commands = []
+    pre_gui_commands = [
+        str(command).strip()
+        for command in pre_commands
+        if str(command).strip()
+    ]
+    if network_mode not in NETWORK_MODES:
+        network_mode = 'standard'
+    if network_mode == 'alliance':
+        ssh_mode = 'simple'
     return dict(
         label=_str('label'),
         ssh_config_host=_str('ssh_config_host'),
@@ -131,6 +148,8 @@ def normalize_queue(raw: Dict[str, Any]) -> Dict[str, Any]:
         remote_port=_str('remote_port', DEFAULT_REMOTE_PORT),
         local_port=_str('local_port'),
         ssh_mode=ssh_mode if ssh_mode in SSH_MODES else 'apero',
+        network_mode=network_mode,
+        pre_gui_commands=pre_gui_commands,
         instrument=_str('instrument').upper(),
         profile_id=_str('profile_id'),
         enabled=bool(raw.get('enabled', True)),
@@ -184,7 +203,10 @@ def tunnel_params(qdef: Dict[str, Any], local_data_dir: str) -> dict:
         'DATABASE_SSH_CONFIG_HOST': qdef['ssh_config_host'],
         'DATABASE_SSH_LOCAL_PORT': qdef['local_port'],
         'DATABASE_SSH_REMOTE_PORT': qdef['remote_port'],
-        'DATABASE_SSH_SIMPLE_MODE': qdef['ssh_mode'] == 'simple',
+        'DATABASE_SSH_SIMPLE_MODE': (
+            qdef['ssh_mode'] == 'simple'
+            or qdef['network_mode'] == 'alliance'
+        ),
         'DATABASE_SSH_ALLOW_MULTIPLE': True,
         'TUNNEL_STATE_SUBDIR': TUNNEL_STATE_SUBDIR,
         'LOCAL_DATA_DIR': str(local_data_dir),

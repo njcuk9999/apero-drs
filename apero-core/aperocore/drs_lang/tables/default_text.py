@@ -191,6 +191,84 @@ item.arguments = '0: queue name; 1: tunnel error'
 item.comment = 'Logged when ARI cannot restore an enabled queue tunnel'
 langlist.add(item)
 
+item = langlist.create('APERO_QUEUE_GUI_HTTP_ERROR', kind='text')
+item.value['ENG'] = 'Dashboard returned HTTP {0}.'
+item.value['FR'] = 'Le tableau de bord a renvoyé HTTP {0}.'
+item.value['ES'] = 'El panel devolvió HTTP {0}.'
+item.arguments = '0: HTTP status code'
+item.comment = 'ARI APERO queue dashboard health probe error'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_PROBE_ERROR', kind='text')
+item.value['ENG'] = 'Dashboard probe failed: {0}'
+item.value['FR'] = 'La vérification du tableau de bord a échoué : {0}'
+item.value['ES'] = 'La comprobación del panel falló: {0}'
+item.arguments = '0: probe error'
+item.comment = 'ARI APERO queue dashboard health probe failure'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_TUNNEL_REQUIRED', kind='text')
+item.value['ENG'] = (
+    'The SSH tunnel is not active. Use Start / Verify Tunnel first.'
+)
+item.value['FR'] = (
+    "Le tunnel SSH n'est pas actif. Utilisez Démarrer / Vérifier le tunnel "
+    "d'abord."
+)
+item.value['ES'] = (
+    'El túnel SSH no está activo. Primero use Iniciar / Verificar túnel.'
+)
+item.arguments = 'None'
+item.comment = 'ARI error before retrying an unreachable queue dashboard'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_ALREADY_ALIVE', kind='text')
+item.value['ENG'] = 'Queue dashboard is already answering.'
+item.value['FR'] = 'Le tableau de bord de la file répond déjà.'
+item.value['ES'] = 'El panel de la cola ya responde.'
+item.arguments = 'None'
+item.comment = 'ARI result when a queue dashboard retry is unnecessary'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_SUPERVISOR_ERROR', kind='text')
+item.value['ENG'] = 'Could not reach queue supervisor: {0}'
+item.value['FR'] = 'Impossible de joindre le superviseur de la file : {0}'
+item.value['ES'] = 'No se pudo contactar con el supervisor de la cola: {0}'
+item.arguments = '0: supervisor connection error'
+item.comment = 'ARI error when the queue supervisor retry request fails'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_RESTART_REJECTED', kind='text')
+item.value['ENG'] = (
+    'Queue supervisor rejected the restart (HTTP {0}): {1}'
+)
+item.value['FR'] = (
+    'Le superviseur de la file a refusé le redémarrage (HTTP {0}) : {1}'
+)
+item.value['ES'] = (
+    'El supervisor de la cola rechazó el reinicio (HTTP {0}): {1}'
+)
+item.arguments = '0: HTTP status; 1: response detail'
+item.comment = 'ARI error when the queue supervisor refuses a restart'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_RESTART_REQUESTED', kind='text')
+item.value['ENG'] = (
+    'Dashboard worker restart requested. The page will refresh health '
+    'status automatically.'
+)
+item.value['FR'] = (
+    'Redémarrage du processus du tableau de bord demandé. La page '
+    'actualisera automatiquement son état.'
+)
+item.value['ES'] = (
+    'Se solicitó reiniciar el proceso del panel. La página actualizará '
+    'automáticamente su estado.'
+)
+item.arguments = 'None'
+item.comment = 'ARI success after requesting a queue dashboard restart'
+langlist.add(item)
+
 item = langlist.create('USER_STATISTICS_RESET', kind='text')
 item.value['ENG'] = 'Reset statistics'
 item.value['FR'] = 'Réinitialiser les statistiques'

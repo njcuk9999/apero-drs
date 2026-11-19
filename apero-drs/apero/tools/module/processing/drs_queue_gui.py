@@ -1696,6 +1696,12 @@ def _make_handler(
             elif route == '/api/processes':
                 self._send(json.dumps(get_process_data(params),
                                       default=str))
+            # current user's live Slurm jobs (only available on Slurm hosts)
+            elif route == '/api/slurm':
+                self._send(json.dumps(
+                    drs_queue_procs.slurm_job_details(),
+                    default=str,
+                ))
             # the (incremental) log of one registered process
             elif route == '/api/process_log':
                 query = parse_qs(parsed.query)

@@ -51,6 +51,7 @@ MAX_QIDS = 5000
 SQUEUE_CACHE_SECONDS = 5.0
 _SQUEUE_CACHE: Dict[str, Any] = dict(time=0.0, key=None, value=None)
 _USER_JOBS_CACHE: Dict[str, Any] = dict(time=0.0, value=set())
+_SLURM_DETAILS_CACHE: Dict[str, Any] = dict(time=0.0, value=None)
 
 
 # =============================================================================
@@ -372,6 +373,75 @@ def user_slurm_jobs() -> Optional[set]:
     jobs = {line.split('_')[0] for line in output.stdout.split()}
     _USER_JOBS_CACHE.update(time=now, value=set(jobs))
     return jobs
+
+
+def slurm_job_details() -> Dict[str, Any]:
+    """Return useful live Slurm details for the current user's jobs.
+
+    :return: Mapping with availability, user, jobs, and optional error.
+    """
+    if shutil.which('squeue') is None:
+        return dict(available=False, user=getpass.getuser(), jobs=[],
+                    error='squeue is not available')
+    now = time.time()
+    if now - _SLURM_DETAILS_CACHE['time'] < SQUEUE_CACHE_SECONDS:
+        cached = _SLURM_DETAILS_CACHE.get('value')
+        if isinstance(cached, dict):
+            return cached
+    fields = [
+        ('job_id', '%i'),
+        ('name', '%j'),
+        ('state', '%T'),
+        ('partition', '%P'),
+        ('reason', '%r'),
+        ('elapsed', '%M'),
+        ('time_limit', '%l'),
+        ('time_left', '%L'),
+        ('nodes', '%D'),
+        ('cpus', '%C'),
+        ('memory', '%m'),
+        ('submit_time', '%V'),
+        ('start_time', '%S'),
+        ('node_list', '%R'),
+        ('dependency', '%E'),
+    ]
+    command = [
+        'squeue',
+        '-h',
+        '-u',
+        getpass.getuser(),
+        '-o',
+        '|'.join(field[1] for field in fields),
+    ]
+    try:
+        output = subprocess.run(command, capture_output=True, text=True,
+                                timeout=15)
+    except (OSError, subprocess.SubprocessError) as error:
+        result = dict(available=False, user=getpass.getuser(), jobs=[],
+                      error=str(error))
+        return result
+    if output.returncode != 0:
+        result = dict(
+            available=False,
+            user=getpass.getuser(),
+            jobs=[],
+            error=(output.stderr or 'squeue failed').strip(),
+        )
+        return result
+    jobs = []
+    keys = [field[0] for field in fields]
+    for line in output.stdout.splitlines():
+        values = line.strip().split('|', len(keys) - 1)
+        if len(values) != len(keys):
+            continue
+        job = dict(zip(keys, values))
+        job['base_job_id'] = job['job_id'].split('_')[0]
+        jobs.append(job)
+    jobs.sort(key=lambda item: item['job_id'])
+    result = dict(available=True, user=getpass.getuser(), jobs=jobs,
+                  error='')
+    _SLURM_DETAILS_CACHE.update(time=now, value=result)
+    return result
 
 
 def pid_alive(pid: Any) -> bool:

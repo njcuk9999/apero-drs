@@ -533,6 +533,27 @@ html[data-theme="dark"] .chart-empty { border-color: #30363d; }
 .proc-bar { display: flex; align-items: center; gap: 8px;
             flex-wrap: wrap; margin-bottom: 12px; }
 .proc-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.slurm-dialog { display:none; position:fixed; inset:0; z-index:8000;
+                background:rgba(0,0,0,.58); align-items:center;
+                justify-content:center; padding:16px; box-sizing:border-box; }
+.slurm-panel { width:min(1200px,96vw); max-height:90vh; overflow:hidden;
+               background:#fff; color:#253045; border:1px solid #c9d4e3;
+               border-radius:10px; box-shadow:0 16px 48px rgba(0,0,0,.35);
+               display:flex; flex-direction:column; }
+.slurm-head { display:flex; justify-content:space-between; align-items:center;
+              gap:12px; padding:12px 14px; border-bottom:1px solid #dbe3ef; }
+.slurm-head h2 { margin:0; font-size:18px; }
+.slurm-summary { padding:8px 14px; font-size:12px; color:#6b7a90;
+                 border-bottom:1px solid #dbe3ef; }
+.slurm-table-wrap { overflow:auto; }
+.slurm-table { min-width:1100px; margin:0; }
+.slurm-table th { cursor:default; }
+.slurm-table td { white-space:nowrap; }
+html[data-theme="dark"] .slurm-panel { background:#161b22; color:#e6edf3;
+    border-color:#30363d; }
+html[data-theme="dark"] .slurm-head,
+html[data-theme="dark"] .slurm-summary { border-color:#30363d; }
+html[data-theme="dark"] .slurm-summary { color:#8b949e; }
 #proc-table td { vertical-align: middle; }
 #proc-table th { cursor: default; }
 #pbody tr { cursor: pointer; }
@@ -1094,6 +1115,8 @@ running.
 <span class="proc-actions">
 <button class="danger" onclick="procStopSelected()">
     &#9632; Stop selected</button>
+<button id="proc-slurm-open" style="display:none"
+        onclick="procOpenScheduler()">Slurm jobs</button>
 <button onclick="procAction('remove', procSelected())">
     Remove selected from list</button>
 <button onclick="procAction('clear_finished', [])">Clear finished</button>
@@ -1114,6 +1137,29 @@ running.
 </thead>
 <tbody id="pbody"></tbody>
 </table>
+</div>
+
+<div id="slurm-dialog" class="slurm-dialog"
+     onclick="if (event.target === this) procCloseScheduler();">
+<div class="slurm-panel" role="dialog" aria-modal="true"
+     aria-labelledby="slurm-title">
+<div class="slurm-head">
+<h2 id="slurm-title">Slurm jobs</h2>
+<button onclick="procCloseScheduler()">Close</button>
+</div>
+<div id="slurm-summary" class="slurm-summary"></div>
+<div class="slurm-table-wrap">
+<table class="slurm-table">
+<thead><tr>
+<th>Job</th><th>Name</th><th>State</th><th>Partition</th>
+<th>Reason</th><th>Elapsed</th><th>Limit</th><th>Left</th>
+<th>Nodes</th><th>CPUs</th><th>Memory</th><th>Node list</th>
+<th>Dependency</th><th>Submitted</th>
+</tr></thead>
+<tbody id="slurm-body"></tbody>
+</table>
+</div>
+</div>
 </div>
 </div>
 
@@ -2220,6 +2266,7 @@ function showActionResult(data) {
 var procData = [];
 var procLoading = false;
 var procChecked = {};
+var slurmAvailable = false;
 var PROC_ACTIVE = {running: true, pending: true, unknown: true};
 
 function refreshProcesses() {
@@ -2229,6 +2276,9 @@ function refreshProcesses() {
         procLoading = false;
         if (!data || !data.processes) { return; }
         procData = data.processes;
+        slurmAvailable = !!data.slurm;
+        document.getElementById('proc-slurm-open').style.display =
+            slurmAvailable ? '' : 'none';
         document.getElementById('proc-note').textContent = data.slurm ? '' :
             'squeue is not available on ' + data.host +
             ' - Slurm job status is unknown';
@@ -2272,6 +2322,60 @@ function procOpenTasks(proc) {
     });
 }
 
+function procSlurmBase(jobId) {
+    return String(jobId || '').split('_')[0];
+}
+
+function procCloseScheduler() {
+    document.getElementById('slurm-dialog').style.display = 'none';
+}
+
+function procOpenScheduler(proc) {
+    if (!slurmAvailable) { return; }
+    var dialog = document.getElementById('slurm-dialog');
+    var body = document.getElementById('slurm-body');
+    var summary = document.getElementById('slurm-summary');
+    dialog.style.display = 'flex';
+    body.innerHTML = '<tr><td colspan="14">Loading Slurm jobs...</td></tr>';
+    summary.textContent = proc ?
+        'Showing jobs registered to ' + proc.label :
+        'Showing every live job for the current user';
+    apiFetch('/api/slurm').then(function (data) {
+        if (!data || !data.available) {
+            body.innerHTML = '<tr><td colspan="14">Slurm data is unavailable'
+                + (data && data.error ? ': ' + escapeHtml(data.error) : '')
+                + '</td></tr>';
+            return;
+        }
+        var wanted = proc ? (proc.slurm_jobs || []).map(procSlurmBase) : null;
+        var jobs = (data.jobs || []).filter(function (job) {
+            return !wanted || wanted.indexOf(procSlurmBase(job.job_id)) >= 0;
+        });
+        summary.textContent = data.user + ': ' + jobs.length +
+            ' visible job' + (jobs.length === 1 ? '' : 's') +
+            (proc ? ' for ' + proc.label : '');
+        if (!jobs.length) {
+            body.innerHTML = '<tr><td colspan="14">No matching live jobs'
+                + '</td></tr>';
+            return;
+        }
+        body.innerHTML = jobs.map(function (job) {
+            var cells = [
+                job.job_id, job.name, job.state, job.partition, job.reason,
+                job.elapsed, job.time_limit, job.time_left, job.nodes,
+                job.cpus, job.memory, job.node_list, job.dependency,
+                job.submit_time
+            ];
+            return '<tr>' + cells.map(function (value) {
+                return '<td>' + escapeHtml(value || '') + '</td>';
+            }).join('') + '</tr>';
+        }).join('');
+    }).catch(function (err) {
+        body.innerHTML = '<tr><td colspan="14">Failed to read Slurm jobs: ' +
+            escapeHtml(err.message || err) + '</td></tr>';
+    });
+}
+
 function procOpenDefault(proc) {
     if (proc.running_qids.length > 0) { procOpenTasks(proc); return; }
     if (proc.logs.length > 0) { procOpenLog(proc, 0); return; }
@@ -2299,11 +2403,24 @@ function renderProcesses() {
     rows.forEach(function (proc) {
         var active = !!PROC_ACTIVE[proc.status];
         var jobs = proc.slurm_jobs || [];
-        var where = jobs.length > 0 ? 'Slurm ' + jobs.join(', ') :
-            (proc.pid !== null ? 'PID ' + proc.pid + ' ' : '') + '@' +
-            proc.host + (proc.owner === 'gui' ? ' (GUI)' : '');
-        var tasks = proc.n_qids > 0 ?
-            proc.running_qids.length + ' running / ' + proc.n_qids : '';
+        var where = jobs.length > 0 ?
+            '<button data-slurm="1">Slurm jobs (' + jobs.length +
+            ')</button>' :
+            escapeHtml((proc.pid !== null ? 'PID ' + proc.pid + ' ' : '') +
+                       '@' + proc.host +
+                       (proc.owner === 'gui' ? ' (GUI)' : ''));
+        var tasks = '';
+        if (proc.running_qids.length > 0) {
+            tasks += '<button data-tasks="1">' +
+                     proc.running_qids.length + ' running</button>';
+        }
+        if (proc.n_qids > 0) {
+            tasks += (tasks ? ' / ' : '') + proc.n_qids + ' total';
+        }
+        if (jobs.length > 0) {
+            tasks += (tasks ? ' ' : '') +
+                     '<button data-slurm="1">Scheduler</button>';
+        }
         var logs = proc.logs.map(function (name, it) {
             return '<button data-log="' + it + '" title="' +
                    escapeHtml(name) + '">' +
@@ -2324,7 +2441,7 @@ function renderProcesses() {
             '<td class="proc-label"></td>' +
             '<td>' + escapeHtml(proc.started || '') + '</td>' +
             '<td>' + escapeHtml(proc.finished || '') + '</td>' +
-            '<td>' + escapeHtml(where) + '</td>' +
+            '<td>' + where + '</td>' +
             '<td>' + tasks + '</td>' +
             '<td class="proc-logs">' + logs + '</td>' +
             '<td>' + (active ? '<button class="danger proc-stop">Stop' +
@@ -2342,6 +2459,8 @@ function renderProcesses() {
                 procOpenLog(proc, parseInt(target.dataset.log, 10));
             } else if (target.dataset.tasks) {
                 procOpenTasks(proc);
+            } else if (target.dataset.slurm) {
+                procOpenScheduler(proc);
             } else if (target.classList.contains('proc-stop')) {
                 procStop([proc.id]);
             } else if (window.getSelection().toString() === '') {
@@ -4322,6 +4441,12 @@ document.getElementById('lv-search').addEventListener('keydown',
                                                   lvSearchChanged);
 });
 document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' &&
+            document.getElementById('slurm-dialog').style.display !==
+            'none') {
+        procCloseScheduler();
+        return;
+    }
     if (!lvOpen) { return; }
     var search = document.getElementById('lv-search');
     if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'f') {

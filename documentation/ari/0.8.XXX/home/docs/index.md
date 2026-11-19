@@ -10,6 +10,7 @@ related:
   - monitor
   - known_errors
   - glossary
+  - ari_guide
 ---
 
 # APERO documentation
@@ -22,6 +23,7 @@ version selector to choose documentation that matches your code release.
 | Section | Use it to |
 | --- | --- |
 | [APERO guide](apero/) | Understand how reductions are run, compare recipes across instruments, and look up sequences, tools, and file definitions. |
+| [APERO RI guide](ari_guide/) | Learn APERO RI portals, access workflows, storage connections, database tunnels, and queue administration. |
 | [Installation](install) | Set up APERO for routine use or development. |
 | [ARI API](api) | Access reduction data programmatically from Python. |
 | [Developer documentation](developer/) | Learn APERO architecture and make changes to recipes, constants, keywords, plots, and other code. |
