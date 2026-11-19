@@ -14106,3 +14106,26 @@ button.ari-rp-section-card:hover {
     outline: 2px solid var(--ari-primary);
     outline-offset: 2px;
 }
+
+.ari-doc-step-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-left: 0.3rem;
+    color: var(--ari-info);
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+.ari-doc-step-help:hover,
+.ari-doc-step-help:focus-visible {
+    color: var(--ari-primary-dark);
+}
+
+.ari-doc-step-help:focus-visible {
+    outline: 2px solid var(--ari-primary);
+    outline-offset: 2px;
+    border-radius: 50%;
+}

@@ -543,6 +543,47 @@ generate the ~/.ssh/config block.</pre>
 </div>
 
 <script>
+window.ARI_DOC_STEP_HELP = {
+    url: {{ url_for(
+        'doc_dynamic_view',
+        page_ref='ari_guide/admin_portal/sshfs'
+    )|tojson }},
+    groups: [
+        {
+            selector: '#smPanelPreSetup .sm-standard-pre-setup li',
+            anchor: 'why-the-pre-setup-steps-matter'
+        },
+        {
+            selector: '#smPanelPreSetup .sm-alliance-pre-setup li',
+            anchor: 'alliance-duo-mode'
+        },
+        {
+            selector: '#smPanelSetup label.ari-ae-label',
+            anchor: 'what-ari-manages'
+        },
+        {
+            selector: '#smPanelKeys label.ari-ae-label',
+            anchor: 'why-the-pre-setup-steps-matter'
+        },
+        {
+            selector: '#smPanelStatus .ari-ae-section-title',
+            anchor: 'mount-status-interpretation'
+        },
+        {
+            selector: '#smPanelSetup .ari-ae-section-title, ' +
+                      '#smPanelKeys .ari-ae-section-title',
+            anchor: 'what-ari-manages'
+        }
+    ],
+    fieldAnchors: {
+        smSshConfigHost: 'ssh-config-host-mode',
+        smRemoteHost: 'direct-host-mode',
+        smRemoteUser: 'direct-host-mode',
+        smRemotePath: 'what-ari-manages',
+        smLocalMount: 'why-the-pre-setup-steps-matter',
+        smSshKey: 'why-the-pre-setup-steps-matter'
+    }
+};
 const SM_CAN_MANAGE = {{ can_manage | tojson }};
 let smLastTestKey = '';
 let smLastTestOk = false;

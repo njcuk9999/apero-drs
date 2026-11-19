@@ -165,6 +165,100 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     overlayObserver.observe(document.body, {childList: true, subtree: true});
 
+    function docAnchorText(documentPage, anchor) {
+        var heading = documentPage.getElementById(anchor);
+        if (!heading) {
+            return '';
+        }
+        var texts = [];
+        var node = heading.nextElementSibling;
+        while (node && !/^H[1-6]$/.test(node.tagName) && texts.length < 3) {
+            if (/^(P|LI)$/.test(node.tagName)) {
+                var value = node.textContent.replace(/\s+/g, ' ').trim();
+                if (value) {
+                    texts.push(value);
+                }
+            } else {
+                var child = node.querySelector('p, li');
+                if (child) {
+                    var childValue = child.textContent
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    if (childValue) {
+                        texts.push(childValue);
+                    }
+                }
+            }
+            node = node.nextElementSibling;
+        }
+        return texts.join(' ').slice(0, 500);
+    }
+
+    function initDocumentationHelp(config) {
+        if (!config || !config.url) {
+            return;
+        }
+        var pagePromise = fetch(config.url, {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+            return response.text();
+        }).then(function (html) {
+            return new DOMParser().parseFromString(html, 'text/html');
+        });
+        var groups = config.groups || [{
+            selector: 'label.ari-ae-label',
+            anchor: config.defaultAnchor || ''
+        }];
+        groups.forEach(function (group) {
+            var selector = group.selector;
+            var defaultAnchor = group.anchor || config.defaultAnchor || '';
+            document.querySelectorAll(selector).forEach(function (step) {
+                if (step.querySelector('.ari-doc-step-help')) {
+                    return;
+                }
+                var target = step.getAttribute('for') || step.id || '';
+                var anchor = defaultAnchor;
+                if (config.fieldAnchors &&
+                        config.fieldAnchors[target]) {
+                    anchor = config.fieldAnchors[target];
+                }
+                if (config.elementAnchors &&
+                        config.elementAnchors[step.id]) {
+                    anchor = config.elementAnchors[step.id];
+                }
+                if (!anchor) {
+                    return;
+                }
+                var link = document.createElement('a');
+                link.className = 'ari-doc-step-help';
+                link.href = config.url + '#' + anchor;
+                link.title = 'Open the APERO RI guide for this step';
+                link.setAttribute('aria-label',
+                                  'Open documentation for this step');
+                link.innerHTML =
+                    '<i class="fa-solid fa-circle-info" ' +
+                    'aria-hidden="true"></i>';
+                link.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                });
+                step.appendChild(link);
+                pagePromise.then(function (page) {
+                    var tooltip = docAnchorText(page, anchor);
+                    if (tooltip) {
+                        link.title = tooltip;
+                    }
+                }).catch(function () {
+                    /* The direct documentation link remains usable. */
+                });
+            });
+        });
+    }
+
+    initDocumentationHelp(window.ARI_DOC_STEP_HELP);
+
     document.addEventListener('keydown', function (event) {
         if (event.key !== 'Escape') {
             return;

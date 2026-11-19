@@ -255,6 +255,37 @@
 </div>
 
 <script>
+window.ARI_DOC_STEP_HELP = {
+    url: {{ url_for(
+        'doc_dynamic_view',
+        page_ref='ari_guide/admin_portal/queue_setup'
+    )|tojson }},
+    groups: [
+        {
+            selector: '#aqsPreGuiCommandsField label, ' +
+                      '.aqs-grid label.ari-ae-label, ' +
+                      '.ari-ae-field > label.ari-ae-label',
+            anchor: 'what-it-does'
+        },
+        {
+            selector: '.ari-page-header h1, ' +
+                      '.ari-ae-section-title',
+            anchor: 'what-it-does'
+        }
+    ],
+    fieldAnchors: {
+        aqsName: 'what-it-does',
+        aqsLabel: 'what-it-does',
+        aqsProfile: 'what-it-does',
+        aqsSshHost: 'why-the-queue-needs-a-special-connection',
+        aqsRemoteHost: 'why-the-queue-needs-a-special-connection',
+        aqsRemotePort: 'standard-ssh-mode',
+        aqsLocalPort: 'standard-ssh-mode',
+        aqsSshMode: 'tunnel-modes',
+        aqsNotes: 'what-it-does',
+        aqsPreGuiCommands: 'pre-gui-commands'
+    }
+};
 const AQS_API = {{ url_for('api_apero_queue_admin', action='ACTION')|tojson }};
 const AQS_RETRY_LABEL = {{ _('Retry Dashboard')|tojson }};
 const AQS_RETRY_BUSY = {{
