@@ -82,8 +82,22 @@ uses the existing Duo-authenticated ControlMaster as the node-selection point.
    apero_queue.py gui --headless --port 8090
    ```
 
-5. All later `ssh a_fir` commands multiplex through the same master and
+5. Open a **new local terminal on the ARI host** for checks and for the
+   forwarding command. Do not type them into the terminal where the queue GUI
+   is running; that process owns the remote interactive shell.
+
+6. All later `ssh a_fir` commands multiplex through the same master and
    therefore reach the same login node until that master is replaced.
+
+Copy Command labels each block by terminal:
+
+- Terminal 1 initializes the Alliance master.
+- Terminal 2 opens the remote shell, runs the optional preparation commands,
+  and starts the queue.
+- Terminal 3 remains local and checks the remote node and HTTP endpoint.
+- Terminal 4 remains local and starts either a foreground or background
+  tunnel. Choose one, not both.
+- Final HTTP verification is run from any local ARI-host terminal.
 
 Do not start the queue from a separate `ssh fir.alliancecan.ca` session.
 That may land on another login node and create the symptom “tunnel active,

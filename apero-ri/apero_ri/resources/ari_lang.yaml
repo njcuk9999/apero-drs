@@ -540,6 +540,21 @@ Requesting queue dashboard worker restart...:
 Retry Dashboard:
   ES: Reintentar panel
   FR: Réessayer le tableau de bord
+SSHFS guide:
+  ES: Guía de SSHFS
+  FR: Guide SSHFS
+Database setup guide:
+  ES: Guía de configuración de base de datos
+  FR: Guide de configuration de la base de données
+APERO Queue setup guide:
+  ES: Guía de configuración de la cola APERO
+  FR: Guide de configuration de la file APERO
+Admin Portal guide:
+  ES: Guía del portal de administración
+  FR: Guide du portail d'administration
+Close overlay:
+  ES: Cerrar ventana
+  FR: Fermer la fenêtre
 SSH network mode:
   ES: Modo de red SSH
   FR: Mode réseau SSH

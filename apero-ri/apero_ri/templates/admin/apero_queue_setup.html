@@ -539,20 +539,30 @@ function aqsShowCommand(index) {
     const fwd = def.local_port + ':' + def.remote_host + ':' + def.remote_port;
     const alliance = def.network_mode === 'alliance';
     const lines = alliance ? [
-        '# Alliance / Duo: establish or verify the authenticated master:',
+        '############################################################################',
+        '# TERMINAL 1 - LOCAL ARI HOST',
+        '# Establish or verify the Duo-authenticated ControlMaster.',
+        '############################################################################',
         'ssh -O check ' + def.ssh_config_host
             + ' || ssh -fN ' + def.ssh_config_host,
         '',
-        '# Open a shell through the authenticated master:',
+        '############################################################################',
+        '# TERMINAL 2 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# This terminal becomes the remote shell and must stay open while',
+        '# apero_queue.py is running.',
+        '############################################################################',
         'ssh ' + def.ssh_config_host,
         '',
-        '# On that shell, verify the login node and prepare APERO:',
+        '# Now run these commands in Terminal 2, on the remote login node:',
         'hostname',
     ] : [
-        '# Open the SSH host that will run the queue:',
+        '############################################################################',
+        '# TERMINAL 1 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# This terminal becomes the remote shell and must stay open.',
+        '############################################################################',
         'ssh ' + def.ssh_config_host,
         '',
-        '# On that shell:',
+        '# Now run these commands in Terminal 1, on the remote host:',
         'hostname',
     ];
     (alliance ? (def.pre_gui_commands || []) : []).forEach((command) => {
@@ -562,6 +572,10 @@ function aqsShowCommand(index) {
         '',
         'apero_queue.py gui --headless --port ' + def.remote_port,
         '',
+        '############################################################################',
+        '# TERMINAL 3 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# Do not enter these commands in the terminal running the GUI.',
+        '############################################################################',
         '# Confirm the SSH connection uses the queue login node:',
         'ssh ' + def.ssh_config_host + ' hostname',
         '',
@@ -570,13 +584,17 @@ function aqsShowCommand(index) {
             + " 'curl -s http://127.0.0.1:"
             + def.remote_port + "/api/state'",
         '',
-        '# Tunnel (foreground):',
+        '############################################################################',
+        '# TERMINAL 4 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# Choose ONE tunnel command. It runs locally, not on the cluster.',
+        '############################################################################',
+        '# Foreground tunnel (keep this terminal open):',
         'ssh -N -L ' + fwd + ' ' + def.ssh_config_host,
         '',
-        '# Tunnel (background):',
+        '# OR background tunnel (returns to this local terminal):',
         'ssh -f -N -o ExitOnForwardFailure=yes -L ' + fwd + ' ' + def.ssh_config_host,
         '',
-        '# Verify the dashboard answers locally:',
+        '# Verify from any local terminal on the ARI host:',
         'curl -s http://127.0.0.1:' + def.local_port + '/api/state'
     );
     document.getElementById('aqsCmdText').value = lines.join('\n');
