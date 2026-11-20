@@ -3817,7 +3817,8 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
         else:
             # add the runstring itself (output also teed to the task log)
             log_path = get_task_log_path(queue_path, group, run_file)
-            command = _with_drs_group(str(run_dict['runstring']),
+            task_command = _build_task_command(run_dict)
+            command = _with_drs_group(task_command,
                                       run_dict.get('drs_group'))
             command = _monitored_command(command, queue_path, qid,
                                          str(run_dict['shortname']),

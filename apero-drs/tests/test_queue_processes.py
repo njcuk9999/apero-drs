@@ -486,6 +486,54 @@ def test_slurm_job_details_unavailable(monkeypatch: Any) -> None:
     assert 'not available' in result['error']
 
 
+def test_batch_script_wraps_recipe_with_executor(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Batch jobs should run recipe runstrings through apero_execute.py."""
+    queue_path = tmp_path / 'queue'
+    group = 'APERO-QUEUE-GROUP-00000000001-0000-PP'
+    run_file = 'APERO-QUEUE-RUN-00000004.yaml'
+    group_path = queue_path / drs_queue.QUEUE_RUNNING_DIR / group
+    group_path.mkdir(parents=True)
+    (group_path / run_file).write_text(
+        'shortname: PP\n'
+        'recipe: apero_preprocess_spirou.py\n'
+        'runstring: apero_preprocess_spirou.py NIGHT\n'
+    )
+    scripts = tmp_path / 'scripts'
+    scripts.mkdir()
+    out_dirs = dict(
+        scripts=str(scripts),
+        logs=str(tmp_path / 'logs'),
+        errors=str(tmp_path / 'errors'),
+    )
+    template = dict(
+        time='01:00:00',
+        nodes=1,
+        cpus_per_task=2,
+        mem='1G',
+        account='',
+        job_name='apero',
+        mail_user='',
+        mail_type='',
+        activation=[],
+    )
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(queue_path))
+    script_path = drs_queue._write_batch_script(
+        drs_queue.ParamDict(),
+        template,
+        group,
+        [run_file],
+        1,
+        out_dirs,
+    )
+    script = Path(script_path).read_text()
+    assert 'apero_execute.py apero_preprocess_spirou.py NIGHT' in script
+    unwrapped = '\napero_preprocess_spirou.py NIGHT'
+    assert unwrapped not in script
+
+
 def _running_entry(queue_path, run, lines, age):
     """Write one running queue yaml, aged by `age` seconds."""
     group = 'APERO-QUEUE-GROUP-00000000001-0001-PP'
