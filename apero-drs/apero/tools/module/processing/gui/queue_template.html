@@ -554,6 +554,9 @@ html[data-theme="dark"] .slurm-panel { background:#161b22; color:#e6edf3;
 html[data-theme="dark"] .slurm-head,
 html[data-theme="dark"] .slurm-summary { border-color:#30363d; }
 html[data-theme="dark"] .slurm-summary { color:#8b949e; }
+.runtime-panel { width:min(760px,96vw); }
+.runtime-content { overflow:auto; padding:14px; }
+.runtime-content pre { white-space:pre-wrap; overflow-wrap:anywhere; }
 #proc-table td { vertical-align: middle; }
 #proc-table th { cursor: default; }
 #pbody tr { cursor: pointer; }
@@ -721,11 +724,29 @@ html[data-theme="dark"] button.info-btn { background: #1f6feb; color: #fff;
     <button onclick="refreshAll()">&#8635; Refresh</button>
     <button id="lv-reopen" onclick="lvShow()">Logs (0)</button>
     <span id="btn-shutdown">
+    <button onclick="showRuntimeInfo()">Info</button>
     <button id="btn-restart" onclick="restartServer()">XX_RESTART_LABEL_XX</button>
     <button class="danger" onclick="shutdownServer()">Shutdown GUI</button>
     </span>
     <span id="busy">&#9203; action running...</span>
     <span id="status-error"></span>
+</div>
+</div>
+</div>
+
+<div id="runtime-dialog" class="slurm-dialog">
+<div class="slurm-panel runtime-panel" role="dialog" aria-modal="true"
+     aria-labelledby="runtime-title">
+<div class="slurm-head">
+<h2 id="runtime-title">Queue runtime information</h2>
+<button type="button" aria-label="Close" onclick="closeRuntimeInfo()">
+    &#10005;
+</button>
+</div>
+<div class="runtime-content">
+<p>Snapshot at dashboard worker startup. Git describes the checkout on disk;
+running jobs and previously loaded code may use a different version.</p>
+<pre id="runtime-details" aria-live="polite"></pre>
 </div>
 </div>
 </div>
@@ -912,8 +933,13 @@ Build dependency-chained Slurm arrays so queue groups run strictly in order.
 <div id="chain-template-preview" class="template-preview">
 <pre>Loading template preview...</pre>
 </div>
-<label>Runs per array task (blank = auto chunking)</label>
-<input id="chain-per" type="number" min="1">
+<label for="chain-per">XX_CHAIN_PER_LABEL_XX</label>
+<input id="chain-per" type="number" min="1"
+       aria-describedby="chain-per-help">
+<div id="chain-per-help" class="muted">
+<p>XX_CHAIN_PER_HELP_XX</p>
+<p>XX_CHAIN_PER_EXAMPLE_XX</p>
+</div>
 <label><input id="chain-submit" type="checkbox"
  style="width:auto"> Submit via sbatch</label>
 <label><input id="chain-dry" type="checkbox"
@@ -1321,6 +1347,7 @@ var tplFields = XX_TPLFIELDS_XX;
 var defaultMpmode = XX_MPMODE_XX;
 var singleRunLabel = XX_SINGLE_RUN_LABEL_XX;
 var singleRunPrompt = XX_SINGLE_RUN_PROMPT_XX;
+var runtimeError = XX_RUNTIME_ERROR_XX;
 
 // relative urls keep the api working behind a path prefix (e.g. apero_ri)
 function apiUrl(url) {
@@ -1375,6 +1402,45 @@ function apiPost(url, data, callback) {
         body: JSON.stringify(data)
     }).then(callback)
       .catch(function (err) { console.log(err); });
+}
+
+function showRuntimeInfo() {
+    var dialog = document.getElementById('runtime-dialog');
+    var details = document.getElementById('runtime-details');
+    dialog.style.display = 'flex';
+    details.textContent = '...';
+    apiFetch('/api/runtime_info').then(function (info) {
+        var git = info.git || {};
+        var fields = [
+            ['APERO version', info.version],
+            ['Worker started (UTC)', info.started],
+            ['User', info.user],
+            ['Machine', info.hostname],
+            ['Worker PID', info.pid],
+            ['Python version', info.python],
+            ['Python executable', info.python_executable],
+            ['Queue module', info.queue_source],
+            ['DRS_UCONFIG', info.config],
+            ['Git branch at startup', git.branch],
+            ['Git commit at startup', git.commit],
+            ['Commit date', git.commit_date],
+            ['Queue sources modified at startup',
+             git.queue_sources_modified === undefined ? null :
+                 (git.queue_sources_modified ? 'yes' : 'no')]
+        ];
+        details.textContent = fields.map(function (field) {
+            return field[0] + ': ' +
+                (field[1] === null || field[1] === undefined ?
+                    '—' : field[1]);
+        }).join('\n');
+        if (git.error) { details.textContent += '\nGit: ' + git.error; }
+    }).catch(function (error) {
+        details.textContent = runtimeError + ': ' + error.message;
+    });
+}
+
+function closeRuntimeInfo() {
+    document.getElementById('runtime-dialog').style.display = 'none';
 }
 
 function escapeHtml(value) {
@@ -4441,6 +4507,12 @@ document.getElementById('lv-search').addEventListener('keydown',
                                                   lvSearchChanged);
 });
 document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' &&
+            document.getElementById('runtime-dialog').style.display ===
+            'flex') {
+        closeRuntimeInfo();
+        return;
+    }
     if (ev.key === 'Escape' &&
             document.getElementById('slurm-dialog').style.display !==
             'none') {

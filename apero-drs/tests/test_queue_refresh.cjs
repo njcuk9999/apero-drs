@@ -65,6 +65,38 @@ test('all dashboard scripts parse', () => {
     for (const script of scripts) { new vm.Script(script[1]); }
 });
 
+test('runtime info displays the worker snapshot and closes', async () => {
+    const dialog = {style: {display: 'none'}};
+    const details = {textContent: ''};
+    const context = {
+        document: {getElementById: id => id === 'runtime-dialog'
+            ? dialog : details},
+        runtimeError: 'Could not load information',
+        apiFetch: async url => {
+            assert.equal(url, '/api/runtime_info');
+            return {version: '<v1>', hostname: 'login3', pid: 123,
+                git: {commit: 'abc', commit_date: '2026-11-20',
+                    queue_sources_modified: true}};
+        },
+    };
+    vm.createContext(context);
+    vm.runInContext(template.slice(template.indexOf('function showRuntimeInfo('),
+        template.indexOf('function escapeHtml(')), context);
+    context.showRuntimeInfo();
+    await settle();
+    assert.equal(dialog.style.display, 'flex');
+    assert.match(details.textContent, /APERO version: <v1>/);
+    assert.match(details.textContent, /Machine: login3/);
+    assert.match(details.textContent, /Git commit at startup: abc/);
+    assert.match(details.textContent, /sources modified at startup: yes/);
+    context.closeRuntimeInfo();
+    assert.equal(dialog.style.display, 'none');
+    context.apiFetch = () => Promise.reject(new Error('offline'));
+    context.showRuntimeInfo();
+    await settle();
+    assert.equal(details.textContent, 'Could not load information: offline');
+});
+
 test('manual refresh replaces a hung request without a stale loading reset',
     async () => {
         const {context, timers} = makeContext();

@@ -26084,6 +26084,78 @@ item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00051
+# =============================================================================
+item = langlist.create('40-513-00051', kind='all-code')
+item.value['ENG'] = 'Could not load queue runtime information'
+item.value['FR'] = 'Impossible de charger les informations de la file'
+item.value['ES'] = 'No se pudo cargar la informacion de la cola'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00052
+# =============================================================================
+item = langlist.create('40-513-00052', kind='all-code')
+item.value['ENG'] = 'Queue runs per Slurm array task (blank = automatic)'
+item.value['FR'] = ('Executions de file par tache Slurm '
+                    '(vide = automatique)')
+item.value['ES'] = ('Ejecuciones de cola por tarea Slurm '
+                    '(vacio = automatico)')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00053
+# =============================================================================
+item = langlist.create('40-513-00053', kind='all-code')
+item.value['ENG'] = (
+    'Each array task runs up to this many queue runs one after another. '
+    'Different array tasks can run at the same time, up to the batch '
+    'template CPUs per task value; Slurm may start fewer. Leave blank '
+    'to choose the size separately for each group: divide its pending '
+    'runs by that limit and round up.')
+item.value['FR'] = (
+    'Chaque tache Slurm execute au plus ce nombre de traitements de file '
+    'les uns apres les autres. Plusieurs taches peuvent tourner en '
+    'parallele, jusqu a la valeur CPU par tache du modele ; Slurm peut '
+    'en demarrer moins. Laissez vide pour calculer la taille pour chaque '
+    'groupe : divisez ses traitements en attente par cette limite et '
+    'arrondissez au nombre entier superieur.')
+item.value['ES'] = (
+    'Cada tarea Slurm ejecuta como maximo esta cantidad de procesos '
+    'de la cola, uno despues de otro. Varias tareas pueden ejecutarse '
+    'a la vez, hasta el valor de CPU por tarea de la plantilla; Slurm '
+    'puede iniciar menos. Deje el campo vacio para calcular el tamano '
+    'por grupo: divida los procesos pendientes entre ese limite y '
+    'redondee al entero superior.')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00054
+# =============================================================================
+item = langlist.create('40-513-00054', kind='all-code')
+item.value['ENG'] = (
+    'Example: 24 runs and a limit of 8 give 8 array tasks of 3 runs '
+    'each automatically. Entering 1 instead creates 24 array tasks, '
+    'with at most 8 running at once.')
+item.value['FR'] = (
+    'Exemple : 24 traitements et une limite de 8 donnent '
+    'automatiquement 8 taches de 3 traitements. En saisissant 1, '
+    '24 taches sont creees, dont 8 au maximum en parallele.')
+item.value['ES'] = (
+    'Ejemplo: 24 procesos y un limite de 8 producen automaticamente '
+    '8 tareas de 3 procesos. Si introduce 1, se crean 24 tareas, '
+    'con un maximo de 8 ejecutandose a la vez.')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')

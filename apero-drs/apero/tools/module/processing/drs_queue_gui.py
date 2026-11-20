@@ -25,6 +25,8 @@ Created on 2026-08-31
 
 @author: cook
 """
+import datetime
+import getpass
 import html as html_mod
 import importlib.util
 import json
@@ -882,6 +884,14 @@ def render_dashboard(params: ParamDict,
                         json.dumps(textentry('40-513-00049')))
     html = html.replace('XX_SINGLE_RUN_PROMPT_XX',
                         json.dumps(textentry('40-513-00050')))
+    html = html.replace('XX_RUNTIME_ERROR_XX',
+                        json.dumps(textentry('40-513-00051')))
+    html = html.replace('XX_CHAIN_PER_LABEL_XX',
+                        html_mod.escape(textentry('40-513-00052')))
+    html = html.replace('XX_CHAIN_PER_HELP_XX',
+                        html_mod.escape(textentry('40-513-00053')))
+    html = html.replace('XX_CHAIN_PER_EXAMPLE_XX',
+                        html_mod.escape(textentry('40-513-00054')))
     # return the rendered html
     return html
 
@@ -1579,6 +1589,58 @@ def _stale_watcher(params: ParamDict, state: GuiState) -> None:
         time.sleep(GUI_STALE_INTERVAL)
 
 
+def get_runtime_info() -> Dict[str, Any]:
+    """Capture dashboard worker and checkout information at startup.
+
+    The Git details describe the files on disk at capture time, not
+    necessarily code loaded by previously started processes.
+
+    :return: JSON-serializable worker and checkout information.
+    """
+    queue_source = os.path.realpath(drs_queue.__file__)
+    gui_source = os.path.realpath(__file__)
+    info: Dict[str, Any] = dict()
+    info['version'] = __version__
+    info['user'] = getpass.getuser()
+    info['hostname'] = socket.gethostname()
+    info['pid'] = os.getpid()
+    info['started'] = datetime.datetime.now(
+        datetime.timezone.utc).isoformat()
+    info['python'] = sys.version.split()[0]
+    info['python_executable'] = sys.executable
+    info['queue_source'] = queue_source
+    info['config'] = os.environ.get('DRS_UCONFIG')
+    info['git'] = dict()
+
+    # Refuse to identify a surrounding checkout unless it tracks this module.
+    git_dir = os.path.dirname(queue_source)
+    prefix = ['git', '-C', git_dir]
+    try:
+        subprocess.run(prefix + ['ls-files', '--error-unmatch', '--',
+                                 queue_source],
+                       check=True, capture_output=True, text=True, timeout=5)
+        commit = subprocess.run(
+            prefix + ['show', '-s', '--format=%H%n%cI', 'HEAD'],
+            check=True, capture_output=True, text=True, timeout=5)
+        branch = subprocess.run(
+            prefix + ['rev-parse', '--abbrev-ref', 'HEAD'],
+            check=True, capture_output=True, text=True, timeout=5)
+        status = subprocess.run(
+            prefix + ['status', '--porcelain', '--untracked-files=no',
+                      '--', queue_source, gui_source],
+            check=True, capture_output=True, text=True, timeout=5)
+        commit_hash, commit_date = commit.stdout.strip().split('\n', 1)
+        info['git'] = dict(commit=commit_hash, commit_date=commit_date,
+                           branch=branch.stdout.strip(),
+                           queue_sources_modified=bool(status.stdout.strip()))
+    except (OSError, subprocess.SubprocessError, ValueError) as error:
+        detail = getattr(error, 'stderr', None)
+        if isinstance(detail, bytes):
+            detail = detail.decode('utf-8', errors='replace')
+        info['git'] = dict(error=(detail or str(error)).strip())
+    return info
+
+
 def _make_handler(
     params: ParamDict, state: GuiState, rows: int
     ) -> Type[BaseHTTPRequestHandler]:
@@ -1594,6 +1656,8 @@ def _make_handler(
 
     :return: Generated request handler class for the queue GUI server.
     """
+    runtime_info = get_runtime_info()
+
     class QueueGuiHandler(BaseHTTPRequestHandler):
         """Request handler for the queue gui server"""
 
@@ -1723,6 +1787,8 @@ def _make_handler(
                             job_running=bool(job.get('running')),
                             job_kind=job.get('kind'))
                 self._send(json.dumps(data))
+            elif route == '/api/runtime_info':
+                self._send(json.dumps(runtime_info))
             # the current/last generate or reset command output
             elif route == '/api/job':
                 query = parse_qs(parsed.query)
