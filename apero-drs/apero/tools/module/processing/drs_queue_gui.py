@@ -86,6 +86,17 @@ GUI_JOB_TAIL = 400
 ANSI_ESCAPE = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
 # define the default port for the gui server
 GUI_DEFAULT_PORT = 8090
+# Slurm job log names: %A_%a_%x (chain arrays) or %j_%x (batch)
+JOB_LOG_NAME = re.compile(r'^(\d+)(?:_(\d+))?_(.*)$')
+# leading apero log time stamp (first/last give a job's start/end)
+JOB_LOG_TIME = re.compile(r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)')
+# result line printed by "apero_queue.py system" in batch/chain scripts
+JOB_LOG_RESULT = re.compile(r'^QUEUE: (\S+/\S+) --> (\w+)')
+# lines in a Slurm .err file worth flagging (time limit, oom, crashes)
+JOB_ERR_PROBLEM = re.compile(r'error|traceback|killed|cancelled|denied',
+                             re.IGNORECASE)
+# parsed job log summaries keyed by (path, parser) -> ((size, mtime), value)
+JOB_LOG_CACHE: Dict[Any, Any] = dict()
 # define the number of ports to try if the default port is taken
 GUI_PORT_ATTEMPTS = 50
 # define the default number of rows per page in the status table
@@ -96,8 +107,6 @@ GUI_DEFAULT_ROWS = 100
 GUI_DETAIL_LIMIT = 10000
 # define the maximum number of activity log messages kept in memory
 GUI_MAX_MESSAGES = 200
-# seconds between checks for stale running entries
-GUI_STALE_INTERVAL = 30
 # define the maximum number of task log bytes sent in one response (the
 #    first request for a large log only gets the tail)
 GUI_LOG_MAX_BYTES = 5 * 1024 * 1024
@@ -722,6 +731,165 @@ def get_process_log(params: ParamDict, proc_id: str, index: int = 0,
         out['path'] = '(no log file yet)'
         return out
     return _read_log(out, paths[index], offset, growing)
+
+
+def _parse_job_out(path: str) -> Dict[str, Any]:
+    """
+    Summarise one Slurm batch/chain .out file: first/last log time and
+    the queue tasks it ran (from the "Running:" and "QUEUE: qid --> x"
+    lines written by the generated scripts)
+
+    :param path: str, the .out file path
+
+    :return: dict(start, end, tasks=list of dicts, open=bool)
+    """
+    start, end = None, None
+    tasks: List[Dict[str, Any]] = []
+    current: Optional[Dict[str, Any]] = None
+    with open(path, 'r', errors='replace') as logfile:
+        for line in logfile:
+            stamp = JOB_LOG_TIME.match(line)
+            if stamp is not None:
+                start = start or stamp.group(1)
+                end = stamp.group(1)
+            if line.startswith('Running: '):
+                shortname = line[len('Running: '):].split(' [')[0].strip()
+                current = dict(qid='', shortname=shortname,
+                               signature=False)
+                continue
+            if current is not None and drs_queue.QUEUE_FAIL_SIGNATURE in line:
+                current['signature'] = True
+            result = JOB_LOG_RESULT.match(line)
+            if result is None:
+                continue
+            qid, reported = result.group(1), result.group(2)
+            # pending = released unstarted task after a protected failure
+            if current is None:
+                tasks.append(dict(qid=qid, shortname='', result=reported,
+                                  reported=reported))
+                continue
+            # the recipe may fail while its wrapper still exits with 0
+            failed = reported != 'success' or current['signature']
+            tasks.append(dict(qid=qid, shortname=current['shortname'],
+                              result='failed' if failed else 'success',
+                              reported=reported))
+            current = None
+    if current is not None:
+        tasks.append(dict(qid='', shortname=current['shortname'],
+                          result='unfinished', reported=''))
+    return dict(start=start, end=end, tasks=tasks,
+                open=current is not None)
+
+
+def _parse_job_err(path: str) -> Optional[str]:
+    """
+    Find the first line of a Slurm .err file that looks like a problem
+
+    :param path: str, the .err file path
+
+    :return: str or None, the first problem line (truncated)
+    """
+    with open(path, 'r', errors='replace') as logfile:
+        for line in logfile:
+            if JOB_ERR_PROBLEM.search(line):
+                return line.strip()[:200]
+    return None
+
+
+def _cached_job_file(path: str, parser: Callable[[str], Any]) -> Any:
+    """Parse a job log file once per (size, mtime) - logs can be large."""
+    try:
+        stat = os.stat(path)
+    except OSError:
+        return None
+    key = (path, parser.__name__)
+    stamp = (stat.st_size, stat.st_mtime)
+    cached = JOB_LOG_CACHE.get(key)
+    if cached is not None and cached[0] == stamp:
+        return cached[1]
+    value = parser(path)
+    JOB_LOG_CACHE[key] = (stamp, value)
+    return value
+
+
+def _job_seconds(start: Optional[str], end: Optional[str]) -> Optional[float]:
+    """Seconds between two job log time stamps (None if unknown)."""
+    if start is None or end is None:
+        return None
+    fmt = '%Y-%m-%d %H:%M:%S'
+    delta = (datetime.datetime.strptime(end, fmt)
+             - datetime.datetime.strptime(start, fmt))
+    return delta.total_seconds()
+
+
+def get_process_jobs(params: ParamDict, proc_id: str) -> Dict[str, Any]:
+    """
+    Get one row per Slurm job (array task) of a batch/chain process with
+    its .out/.err files, start/end time, status and the queue tasks it ran
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param proc_id: str, the process id
+
+    :return: dict(jobs=list of dicts, kind, label, error)
+    """
+    record = drs_queue_procs.load(drs_queue.get_proc_dir(params), proc_id)
+    if record is None:
+        return dict(jobs=[], error='unknown process')
+    slurm = drs_queue_procs.slurm_states(record.get('slurm_jobs') or [])
+    active = drs_queue_procs.proc_status(record, slurm) in ['running',
+                                                            'pending',
+                                                            'unknown']
+    # the out/err of one job share the file stem (%A_%a_%x or %j_%x)
+    jobs: Dict[str, Dict[str, Any]] = dict()
+    for index, path in enumerate(drs_queue_procs.log_files(record)):
+        stem, ext = os.path.splitext(os.path.basename(path))
+        if ext not in ['.out', '.err']:
+            continue
+        parts = JOB_LOG_NAME.match(stem)
+        job_id, array, name = parts.groups('') if parts else ('', '', stem)
+        job = jobs.setdefault(stem, dict(
+            key=stem, job=job_id, array=array, name=name, out=None,
+            err=None, out_size=0, err_size=0, start=None, end=None,
+            duration=None, tasks=[], err_problem=None))
+        job[ext[1:]] = index
+        job[ext[1:] + '_size'] = os.path.getsize(path)
+        if ext == '.err':
+            job['err_problem'] = _cached_job_file(path, _parse_job_err)
+            continue
+        summary = _cached_job_file(path, _parse_job_out)
+        if summary is None:
+            continue
+        job['start'], job['end'] = summary['start'], summary['end']
+        job['tasks'] = summary['tasks']
+        job['open'] = summary['open']
+    rows = []
+    for job in jobs.values():
+        results = [task['result'] for task in job['tasks']]
+        job['n_ok'] = results.count('success')
+        job['n_failed'] = results.count('failed')
+        job['n_pending'] = results.count('pending')
+        # failed in the log but moved to complete by an old wrapper
+        job['n_misreported'] = sum(
+            1 for task in job['tasks']
+            if task['result'] == 'failed' and task['reported'] == 'success')
+        job['duration'] = _job_seconds(job['start'], job['end'])
+        if job.get('open') and active:
+            job['status'] = 'running'
+        elif job['n_failed'] > 0 or 'unfinished' in results:
+            job['status'] = 'failed'
+        elif job['err_problem'] is not None:
+            job['status'] = 'failed'
+        elif job['n_ok'] > 0:
+            job['status'] = 'complete'
+        else:
+            job['status'] = 'pending' if active else 'unknown'
+        job.pop('open', None)
+        rows.append(job)
+    # job id then array index (numeric) = submission/run order
+    rows.sort(key=lambda row: (int(row['job'] or 0),
+                               int(row['array'] or 0), row['key']))
+    return dict(jobs=rows, kind=record.get('kind'),
+                label=record.get('label'), error=None)
 
 
 def action_process(params: ParamDict, state: GuiState, op: str,
@@ -1564,31 +1732,6 @@ def action_reset_data(params: ParamDict, state: GuiState,
 # =============================================================================
 # Define server functions
 # =============================================================================
-def _stale_watcher(params: ParamDict, state: GuiState) -> None:
-    """
-    Background loop: fail running entries nothing is running any more
-    (see drs_queue.find_stale_running)
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param state: GuiState, the shared gui state (activity log)
-
-    :return: None (runs until the gui exits)
-    """
-    while True:
-        try:
-            result = drs_queue.fail_stale_running(params)
-            if result['moved'] > 0:
-                lines = ['{0}: {1}'.format(item['qid'], item['reason'])
-                         for item in result['stale']]
-                state.add_message('{0}\n{1}'.format(result['message'],
-                                                    '\n'.join(lines)))
-                state.data_version += 1
-        except Exception as stale_error:
-            state.add_message('Stale running check failed: {0}'.format(
-                stale_error))
-        time.sleep(GUI_STALE_INTERVAL)
-
-
 def get_runtime_info() -> Dict[str, Any]:
     """Capture dashboard worker and checkout information at startup.
 
@@ -1777,6 +1920,11 @@ def _make_handler(
                     index, offset = 0, -1
                 data = get_process_log(params, proc_id, index, offset)
                 self._send(json.dumps(data))
+            # one row per Slurm job of a batch/chain process
+            elif route == '/api/process_jobs':
+                query = parse_qs(parsed.query)
+                proc_id = query.get('id', [''])[0]
+                self._send(json.dumps(get_process_jobs(params, proc_id)))
             # the gui state (busy flag + activity log)
             elif route == '/api/state':
                 job = state.job or dict()
@@ -1966,10 +2114,6 @@ def queue_gui(params: ParamDict) -> None:
     # create the shared gui state
     state = GuiState()
     state.add_message('Queue GUI started')
-    # periodically fail running entries nothing is running any more
-    if not supervised:
-        threading.Thread(target=_stale_watcher, args=(params, state),
-                         daemon=True).start()
     # create the request handler class
     handler = _make_handler(params, state, rows)
     # -------------------------------------------------------------------------

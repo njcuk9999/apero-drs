@@ -234,7 +234,6 @@ def test_queue_gui_headless_suppresses_browser(
         monkeypatch.setenv(
             drs_queue_gui.drs_queue_server.WORKER_PORT_ENV, worker_port)
     monkeypatch.setattr(drs_queue_gui, 'ThreadingHTTPServer', FakeServer)
-    monkeypatch.setattr(drs_queue_gui, '_stale_watcher', lambda *args: None)
     monkeypatch.setattr(
         drs_queue_gui.drs_queue,
         'setup_queue_directories',
@@ -263,6 +262,67 @@ def test_queue_gui_headless_suppresses_browser(
     port = drs_queue_gui.GUI_DEFAULT_PORT if worker_port is None else worker_port
     url = 'http://127.0.0.1:{0}/'.format(port)
     assert messages[0] == drs_queue_gui.textentry(message_key, args=[url])
+
+
+def test_gui_start_does_not_change_stale_queue_entries(
+    tmp_path: Any, monkeypatch: Any,
+) -> None:
+    """Opening the dashboard does not automatically fail stale entries.
+
+    :param tmp_path: Temporary queue directory.
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['INPUTS'] = dict(HOST='None', PORT='None', ROWS='None',
+                            HEADLESS=True)
+    entry = tmp_path / 'running' / 'group' / 'run.yaml'
+    entry.parent.mkdir(parents=True)
+    entry.write_text('state: running\n')
+    calls = []
+
+    class FakeThread:
+        """Run any background target immediately for this test."""
+
+        def __init__(self, target: Any, args: Any, daemon: bool) -> None:
+            self.target = target
+            self.args = args
+
+        def start(self) -> None:
+            try:
+                self.target(*self.args)
+            except KeyboardInterrupt:
+                pass
+
+    class FakeServer:
+        """Stop the private dashboard immediately after startup."""
+
+        def __init__(self, address: Any, handler: Any) -> None:
+            self.server_address = address
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            pass
+
+    def fail_stale(*args: Any) -> None:
+        """Detect a stale-task mutation attempt without moving files."""
+        calls.append(True)
+        raise KeyboardInterrupt
+
+    monkeypatch.setenv(drs_queue_gui.drs_queue_server.WORKER_PORT_ENV, '12345')
+    monkeypatch.setattr(drs_queue_gui.threading, 'Thread', FakeThread)
+    monkeypatch.setattr(drs_queue_gui, 'ThreadingHTTPServer', FakeServer)
+    monkeypatch.setattr(drs_queue_gui, '_make_handler', lambda *args: object)
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'setup_queue_directories',
+                        lambda params: None)
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'fail_stale_running',
+                        fail_stale)
+    monkeypatch.setattr(drs_queue_gui, 'WLOG', lambda *args: None)
+    drs_queue_gui.queue_gui(params)
+    assert not calls
+    assert entry.exists()
 
 
 def test_render_info_html_lists_every_control_tab():

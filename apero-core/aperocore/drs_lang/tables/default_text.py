@@ -323,16 +323,16 @@ langlist.add(item)
 # 00-000-00001
 # =============================================================================
 item = langlist.create('00-000-00001', kind='error-code')
-item.value['ENG'] = 'Cannot find module \'{0}\' \n\t Problem with recipe defintion \n\tRecipe name must match recipe python file name and be in PYTHONPATH'
+item.value['ENG'] = 'Cannot find module \'{0}\' \n\t Problem with recipe defintion \n\tRecipe name must match recipe python file name and be in PYTHONPATH\n\tImport error: {1}'
 item.value['FR'] = ("Impossible de trouver le module '{0}' \n\t Problème de "
                     'définition de recette \n\tLe nom de la recette doit '
                     'correspondre au nom du fichier python et être dans '
-                    'PYTHONPATH')
+                    'PYTHONPATH\n\tErreur d\'import : {1}')
 item.value['ES'] = ("No se encuentra el módulo '{0}' \n\t Problema con la "
                     'definición de la receta \n\tEl nombre de la receta debe '
                     'coincidir con el nombre del archivo python y estar en '
-                    'PYTHONPATH')
-item.arguments = 'None'
+                    'PYTHONPATH\n\tError de importación: {1}')
+item.arguments = '{0}=recipe name, {1}=underlying import error'
 item.comment = 'Means that recipe was not found in PYTHONPATH (either PYTHONPATH is wrong or recipe is not in PYTHONPATH)'
 langlist.add(item)
 

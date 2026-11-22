@@ -560,6 +560,21 @@ html[data-theme="dark"] .slurm-summary { color:#8b949e; }
 #proc-table td { vertical-align: middle; }
 #proc-table th { cursor: default; }
 #pbody tr { cursor: pointer; }
+#pbody td { white-space: nowrap; }
+#pbody .proc-label { max-width: 34vw; overflow: hidden;
+                     text-overflow: ellipsis; }
+/* below #logviewer so logs opened from the job table appear on top */
+#joblog-dialog { z-index: 900; }
+.jl-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.jl-table td button { padding: 2px 8px; font-size: 12px; }
+.jl-table button.jl-err-bad { border-color: #d33c3c; color: #d33c3c; }
+.jl-detail td { white-space: normal; }
+.jl-task { display: inline-block; margin: 2px 6px 2px 0; padding: 1px 6px;
+           border-radius: 4px; cursor: pointer; font-family: monospace;
+           font-size: 12px; color: #fff; }
+.jl-task.s-success { background: #2e9e4f; }
+.jl-task.s-failed, .jl-task.s-unfinished { background: #d33c3c; }
+.jl-task.s-pending { background: #e6a817; }
 #pbody tr:hover { outline: 2px solid #3c88ea; outline-offset: -2px; }
 #pbody tr.done td { opacity: 0.75; }
 .proc-label { font-family: monospace; font-size: 12px; }
@@ -1016,8 +1031,8 @@ them back to pending.</div></td>
 <tr>
 <td><div class="act-name">Fail stale running</div>
 <div class="act-desc">Mark running tasks that nothing is running any more
-(dead process, or no process for 5 minutes) as failed. Also done
-automatically every 30 s and before every run/batch/chain.</div></td>
+(dead process, or no process for 5 minutes) as failed. Also done before
+every run/batch/chain.</div></td>
 <td class="muted">&ndash;</td>
 <td><div class="cli-chip"><code id="cli-act-stale"></code>
 <button class="chip-copy" title="Copy"
@@ -1183,6 +1198,34 @@ running.
 <th>Dependency</th><th>Submitted</th>
 </tr></thead>
 <tbody id="slurm-body"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div id="joblog-dialog" class="slurm-dialog"
+     onclick="if (event.target === this) jlClose();">
+<div class="slurm-panel" role="dialog" aria-modal="true"
+     aria-labelledby="joblog-title">
+<div class="slurm-head">
+<h2 id="joblog-title">Job logs</h2>
+<span class="jl-tools">
+<input id="jl-filter" type="search" oninput="jlRender()"
+       placeholder="Filter (job, recipe, task id)">
+<label class="inline"><input id="jl-problems" type="checkbox"
+       onchange="jlRender()"> Problems only</label>
+<button onclick="jlLoad()">Refresh</button>
+<button onclick="jlClose()">Close</button>
+</span>
+</div>
+<div id="jl-summary" class="slurm-summary"></div>
+<div class="slurm-table-wrap">
+<table class="slurm-table jl-table">
+<thead><tr>
+<th>Job</th><th>Array</th><th>Name</th><th>Status</th><th>Start</th>
+<th>End</th><th>Duration</th><th>Tasks</th><th>Logs</th>
+</tr></thead>
+<tbody id="jl-body"></tbody>
 </table>
 </div>
 </div>
@@ -2444,6 +2487,7 @@ function procOpenScheduler(proc) {
 
 function procOpenDefault(proc) {
     if (proc.running_qids.length > 0) { procOpenTasks(proc); return; }
+    if (procIsJobLogs(proc)) { jlOpen(proc); return; }
     if (proc.logs.length > 0) { procOpenLog(proc, 0); return; }
     alert('No log for this process yet' +
           (proc.kind === 'run' ? ' (it is not running any task)' : ''));
@@ -2470,8 +2514,7 @@ function renderProcesses() {
         var active = !!PROC_ACTIVE[proc.status];
         var jobs = proc.slurm_jobs || [];
         var where = jobs.length > 0 ?
-            '<button data-slurm="1">Slurm jobs (' + jobs.length +
-            ')</button>' :
+            '<button data-slurm="1">slurm (' + jobs.length + ')</button>' :
             escapeHtml((proc.pid !== null ? 'PID ' + proc.pid + ' ' : '') +
                        '@' + proc.host +
                        (proc.owner === 'gui' ? ' (GUI)' : ''));
@@ -2481,17 +2524,21 @@ function renderProcesses() {
                      proc.running_qids.length + ' running</button>';
         }
         if (proc.n_qids > 0) {
-            tasks += (tasks ? ' / ' : '') + proc.n_qids + ' total';
+            tasks += tasks ? ' / ' + proc.n_qids :
+                     proc.n_qids + ' tasks';
         }
-        if (jobs.length > 0) {
-            tasks += (tasks ? ' ' : '') +
-                     '<button data-slurm="1">Scheduler</button>';
+        var logs = '';
+        if (procIsJobLogs(proc)) {
+            logs = '<button data-joblog="1">' +
+                   (proc.kind === 'chain' ? 'Chain' : 'Batch') +
+                   ' logs (' + procJobCount(proc) + ')</button>';
+        } else {
+            logs = proc.logs.map(function (name, it) {
+                return '<button data-log="' + it + '" title="' +
+                       escapeHtml(name) + '">' +
+                       escapeHtml(procLogLabel(name)) + '</button>';
+            }).join('');
         }
-        var logs = proc.logs.map(function (name, it) {
-            return '<button data-log="' + it + '" title="' +
-                   escapeHtml(name) + '">' +
-                   escapeHtml(procLogLabel(name)) + '</button>';
-        }).join('');
         if (proc.running_qids.length > 0) {
             logs += '<button data-tasks="1">Task logs (' +
                     proc.running_qids.length + ')</button>';
@@ -2504,7 +2551,7 @@ function renderProcesses() {
             '<td><span class="badge s-' + proc.status + '">' +
             proc.status + '</span></td>' +
             '<td>' + escapeHtml(proc.kind) + '</td>' +
-            '<td class="proc-label"></td>' +
+            '<td><div class="proc-label"></div></td>' +
             '<td>' + escapeHtml(proc.started || '') + '</td>' +
             '<td>' + escapeHtml(proc.finished || '') + '</td>' +
             '<td>' + where + '</td>' +
@@ -2523,6 +2570,8 @@ function renderProcesses() {
             }
             if (target.dataset.log !== undefined) {
                 procOpenLog(proc, parseInt(target.dataset.log, 10));
+            } else if (target.dataset.joblog) {
+                jlOpen(proc);
             } else if (target.dataset.tasks) {
                 procOpenTasks(proc);
             } else if (target.dataset.slurm) {
@@ -2541,6 +2590,190 @@ function procSelected() {
     return procData.filter(function (proc) {
         return procChecked[proc.id];
     }).map(function (proc) { return proc.id; });
+}
+
+// ---------------------------------------------------------------------
+// Batch/chain job log table (one row per Slurm job / array task)
+// ---------------------------------------------------------------------
+var jlProc = null;
+var jlJobs = [];
+var jlExpanded = {};
+
+function procIsJobLogs(proc) {
+    return (proc.kind === 'chain' || proc.kind === 'batch') &&
+           proc.logs.length > 0;
+}
+
+function procJobCount(proc) {
+    var stems = {};
+    proc.logs.forEach(function (name) {
+        stems[name.replace(/\.(out|err)$/, '')] = true;
+    });
+    return Object.keys(stems).length;
+}
+
+function jlOpen(proc) {
+    jlProc = proc;
+    jlJobs = [];
+    jlExpanded = {};
+    document.getElementById('joblog-title').textContent =
+        (proc.kind === 'chain' ? 'Chain' : 'Batch') + ' logs';
+    document.getElementById('joblog-dialog').style.display = 'flex';
+    jlLoad();
+}
+
+function jlClose() {
+    document.getElementById('joblog-dialog').style.display = 'none';
+    jlProc = null;
+}
+
+function jlLoad() {
+    if (!jlProc) { return; }
+    var body = document.getElementById('jl-body');
+    var summary = document.getElementById('jl-summary');
+    summary.textContent = 'Reading job logs of ' + jlProc.label + '...';
+    apiFetch('/api/process_jobs?id=' + encodeURIComponent(jlProc.id))
+        .then(function (data) {
+            if (data.error) {
+                summary.textContent = data.error;
+                body.innerHTML = '';
+                return;
+            }
+            jlJobs = data.jobs || [];
+            jlRender();
+        }).catch(function (err) {
+            summary.textContent = 'Failed to read job logs: ' +
+                                  (err.message || err);
+        });
+}
+
+function jlDuration(seconds) {
+    if (seconds === null || seconds === undefined) { return ''; }
+    var s = Math.round(seconds);
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    return (h ? h + 'h ' : '') + (h || m ? m + 'm ' : '') + (s % 60) + 's';
+}
+
+function jlSize(bytes) {
+    if (bytes >= 1048576) { return (bytes / 1048576).toFixed(1) + ' MB'; }
+    if (bytes >= 1024) { return Math.round(bytes / 1024) + ' kB'; }
+    return bytes + ' B';
+}
+
+function jlMatches(job, text) {
+    if (!text) { return true; }
+    var hay = [job.job, job.array, job.name, job.status,
+               job.err_problem || ''];
+    job.tasks.forEach(function (task) {
+        hay.push(task.qid, task.shortname);
+    });
+    return hay.join(' ').toLowerCase().indexOf(text) >= 0;
+}
+
+function jlRender() {
+    var body = document.getElementById('jl-body');
+    var text = document.getElementById('jl-filter').value.trim()
+        .toLowerCase();
+    var problems = document.getElementById('jl-problems').checked;
+    var counts = {complete: 0, failed: 0, running: 0, pending: 0,
+                  unknown: 0};
+    var nOk = 0, nFailed = 0, nWrong = 0;
+    jlJobs.forEach(function (job) {
+        counts[job.status] = (counts[job.status] || 0) + 1;
+        nOk += job.n_ok;
+        nFailed += job.n_failed;
+        nWrong += job.n_misreported;
+    });
+    var summary = jlJobs.length + ' job(s): ' + counts.complete +
+        ' complete, ' + counts.failed + ' failed, ' + counts.running +
+        ' running, ' + (counts.pending + counts.unknown) + ' other | ' +
+        'tasks: ' + nOk + ' ok, ' + nFailed + ' failed';
+    if (nWrong > 0) {
+        summary += ' (' + nWrong + ' failed but marked complete in the ' +
+                   'queue - reset them to pending)';
+    }
+    document.getElementById('jl-summary').textContent = summary;
+    var rows = jlJobs.filter(function (job) {
+        if (problems && job.status !== 'failed') { return false; }
+        return jlMatches(job, text);
+    });
+    if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="9">No matching jobs</td></tr>';
+        return;
+    }
+    body.innerHTML = '';
+    rows.forEach(function (job) {
+        var tr = document.createElement('tr');
+        tr.className = job.status;
+        var taskText = job.n_ok + ' ok' +
+            (job.n_failed ? ' / ' + job.n_failed + ' failed' : '') +
+            (job.n_pending ? ' / ' + job.n_pending + ' released' : '');
+        var logs = '';
+        if (job.out !== null) {
+            logs += '<button data-file="' + job.out + '">out (' +
+                    jlSize(job.out_size) + ')</button> ';
+        }
+        if (job.err !== null) {
+            logs += '<button data-file="' + job.err + '"' +
+                    (job.err_problem ? ' class="jl-err-bad" title="' +
+                     escapeHtml(job.err_problem) + '"' : '') +
+                    '>err (' + jlSize(job.err_size) + ')</button>';
+        }
+        tr.innerHTML =
+            '<td>' + escapeHtml(job.job) + '</td>' +
+            '<td>' + escapeHtml(job.array) + '</td>' +
+            '<td>' + escapeHtml(job.name) + '</td>' +
+            '<td><span class="badge s-' + escapeHtml(job.status) + '">' +
+            escapeHtml(job.status) + '</span></td>' +
+            '<td>' + escapeHtml(job.start || '') + '</td>' +
+            '<td>' + escapeHtml(job.end || '') + '</td>' +
+            '<td>' + jlDuration(job.duration) + '</td>' +
+            '<td>' + (job.tasks.length ? '<button data-expand="1">' +
+                      taskText + '</button>' : '') + '</td>' +
+            '<td>' + logs + '</td>';
+        tr.addEventListener('click', function (ev) {
+            var target = ev.target;
+            if (target.dataset.file !== undefined) {
+                procOpenLog(jlProc, parseInt(target.dataset.file, 10));
+            } else if (target.dataset.expand) {
+                jlExpanded[job.key] = !jlExpanded[job.key];
+                jlRender();
+            }
+        });
+        body.appendChild(tr);
+        if (jlExpanded[job.key]) {
+            body.appendChild(jlDetailRow(job));
+        }
+    });
+}
+
+function jlDetailRow(job) {
+    var tr = document.createElement('tr');
+    tr.className = 'jl-detail';
+    var td = document.createElement('td');
+    td.colSpan = 9;
+    job.tasks.forEach(function (task) {
+        var span = document.createElement('span');
+        span.className = 'jl-task s-' + task.result;
+        span.textContent = (task.shortname ? task.shortname + ' ' : '') +
+                           (task.qid || '(not finished)');
+        span.title = 'result: ' + task.result +
+            (task.reported && task.reported !== task.result ?
+             ' (queue was told: ' + task.reported + ')' : '');
+        if (task.qid) {
+            span.addEventListener('click', function () {
+                var row = allData.filter(function (item) {
+                    return item.qid === task.qid;
+                })[0] || {state: task.result === 'success' ?
+                          'complete' : 'failed'};
+                openLog(task.qid, row, true);
+            });
+        }
+        td.appendChild(span);
+    });
+    tr.appendChild(td);
+    return tr;
 }
 
 function procSelectAll(box) {
@@ -4513,9 +4746,15 @@ document.addEventListener('keydown', function (ev) {
         closeRuntimeInfo();
         return;
     }
+    if (ev.key === 'Escape' && !lvOpen &&
+            document.getElementById('joblog-dialog').style.display ===
+            'flex') {
+        jlClose();
+        return;
+    }
     if (ev.key === 'Escape' &&
-            document.getElementById('slurm-dialog').style.display !==
-            'none') {
+            document.getElementById('slurm-dialog').style.display ===
+            'flex') {
         procCloseScheduler();
         return;
     }

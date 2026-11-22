@@ -110,6 +110,54 @@ def test_gui_selected_run_forces_single_process(monkeypatch: Any) -> None:
     assert calls[0]['owner'] == 'gui'
 
 
+def test_process_jobs_summarise_chain_logs(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Chain job logs pair out/err files and expose per-task results.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path / 'queue'))
+    monkeypatch.setattr(procs, 'slurm_states', lambda jobs: dict())
+    logs, errors = tmp_path / 'logs', tmp_path / 'errors'
+    logs.mkdir()
+    errors.mkdir()
+    ok_lines = ['Running: DARK', '2026-11-20 13:00:00.1|  |x| start',
+                '2026-11-20 13:02:30.5|**|| done',
+                'QUEUE: G1/R1.yaml --> success']
+    bad_lines = ['Running: FTFIT1', '2026-11-20 14:00:00.0|  |x| start',
+                 'W: Recipe x has NOT been successfully completed',
+                 '2026-11-20 14:00:10.0|**|| wrapper ok',
+                 'QUEUE: G2/R2.yaml --> success', 'Running: FTFIT1']
+    (logs / '100_2_chain.out').write_text('\n'.join(bad_lines) + '\n')
+    (logs / '100_1_chain.out').write_text('\n'.join(ok_lines) + '\n')
+    (errors / '100_1_chain.err').write_text('')
+    (errors / '100_2_chain.err').write_text(
+        'slurmstepd: error: *** JOB 100 CANCELLED DUE TO TIME LIMIT\n')
+    proc_dir = drs_queue.get_proc_dir(params)
+    globs = [str(logs / '100_*.out'), str(errors / '100_*.err')]
+    proc_id = procs.register(proc_dir, 'chain', 'chain', log_globs=globs,
+                             slurm_jobs=['100'])
+    procs.finish(proc_dir, proc_id, 0)
+    data = gui.get_process_jobs(params, proc_id)
+    first, second = data['jobs']
+    assert (first['job'], first['array']) == ('100', '1')
+    assert first['status'] == 'complete'
+    assert first['duration'] == 150
+    assert first['out'] is not None and first['err'] is not None
+    assert second['status'] == 'failed'
+    assert second['n_misreported'] == 1
+    assert [task['result'] for task in second['tasks']] == [
+        'failed', 'unfinished']
+    assert 'TIME LIMIT' in second['err_problem']
+    assert gui.get_process_jobs(params, 'missing')['error']
+
+
 def test_process_gui_preserves_retained_tasks(
     tmp_path: Path, monkeypatch: Any,
 ) -> None:

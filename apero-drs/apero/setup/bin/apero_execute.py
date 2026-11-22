@@ -10,6 +10,7 @@ Created on 2024-10-28 11:32
 @author: cook
 """
 
+import sys
 from typing import Any, Dict
 
 from apero.base import base as apero_base
@@ -58,17 +59,21 @@ def main(**kwargs: Any) -> Dict[str, Any]:
     rparams = drs_execute.command_line_args()
     # get recipe mod
     aparams = load_functions.load_config(INSTRUMENTS)
+    success = True
     # deal with just listing parameters
     if rparams['LIST']:
         drs_execute.list_recipes(aparams, rparams)
     else:
         # run the recipe
-        drs_execute.run_recipe(aparams, rparams)
+        rout = drs_execute.run_recipe(aparams, rparams)
+        # recipes catch their own errors, so failure is only in the output
+        if isinstance(rout, dict):
+            success = bool(rout.get('success', True))
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
     # end splash
-    drs_startup.end_all(aparams, success=True, recipename=__NAME__)
+    drs_startup.end_all(aparams, success=success, recipename=__NAME__)
     # end here
     return locals()
 
@@ -78,7 +83,8 @@ def run() -> None:
 
     :return: None.
     """
-    _ = main()
+    llmain = main()
+    sys.exit(0 if llmain['success'] else 1)
 
 
 # =============================================================================
@@ -87,8 +93,8 @@ def run() -> None:
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    # run main function
-    _ = main()
+    # run main function (exit code tells queues/Slurm if the recipe failed)
+    run()
 
 # =============================================================================
 # End of code

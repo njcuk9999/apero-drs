@@ -50,7 +50,9 @@ by an accessible Git checkout.
 
 **Refresh** cancels a pending status request and reads the queue again.
 Requests time out after 30 seconds; polling does not accumulate duplicate
-requests while the server is slow.
+requests while the server is slow. Polling does not move queue entries.
+The **Fail stale running** action can explicitly mark abandoned work as
+failed; the queue also checks for stale work before run, batch and chain.
 
 **Restart server** replaces the dashboard worker on the same public port.
 Queue files are preserved. Active GUI actions may be interrupted, but

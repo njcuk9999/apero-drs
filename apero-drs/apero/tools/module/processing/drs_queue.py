@@ -617,6 +617,11 @@ def _shell_logged_command(command: str, log_path: str) -> List[str]:
     lines.append('{{ {0} ; }} 2>&1 | tee "{1}"'.format(command, log_path))
     # PIPESTATUS keeps the command exit code (not the tee exit code)
     lines.append('task_status=${PIPESTATUS[0]}')
+    # same failure rule as local runs (see _run_task)
+    fail_check = ('if [ $task_status -eq 0 ] && grep -qF {0} "{1}"; then '
+                  'task_status=1; fi')
+    lines.append(fail_check.format(shlex.quote(QUEUE_FAIL_SIGNATURE),
+                                   log_path))
     return lines
 
 
