@@ -1,0 +1,14 @@
+id: 83419913-ff16-4718-8b71-b0c722f06f53
+slug: keyboardinterupt-some-text
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: ALL
+action: Ignore
+type: Expected
+error_code: None
+github_issue: ''
+generic_error: 'KeyboardInterupt: {some text}'
+comments: Someone did a Ctrl+C
+full_example_error: 'KeyboardInterupt:'
+updated_at: '2026-05-13 15:54:29'

@@ -1,0 +1,318 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Status - {{ status_title }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-status-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+.ari-status-page .ari-page-subtitle {
+    max-width: 68rem;
+}
+.status-hero {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0.9rem 0 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #0f172a 0%, #111827 48%, #1e293b 100%);
+    color: #e5eefb;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.18);
+}
+.status-hero__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.status-hero__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.status-hero__summary {
+    color: #cbd5e1;
+    max-width: 72rem;
+}
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.status-grid {
+    display: grid;
+    gap: 1rem;
+}
+.status-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 1rem;
+    background: var(--ari-card-bg);
+    overflow: hidden;
+}
+.status-card__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 1rem 1rem 0.85rem;
+    border-bottom: 1px solid var(--ari-border);
+}
+.status-card__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+.status-card__meta {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+}
+.status-table-wrap {
+    overflow: auto;
+}
+.status-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.status-table th,
+.status-table td {
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid var(--ari-border);
+    vertical-align: top;
+    text-align: left;
+}
+.status-table th {
+    position: sticky;
+    top: 0;
+    background: var(--ari-card-bg);
+    z-index: 1;
+}
+.status-table td:nth-child(1) {
+    font-weight: 600;
+}
+.status-table td:nth-child(n + 2) {
+    color: var(--ari-text-muted);
+}
+.status-empty {
+    padding: 1rem;
+    color: var(--ari-text-muted);
+}
+.status-events {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.95rem 1rem 1rem;
+}
+.status-event {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.8rem 0.85rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.75rem;
+    background: var(--ari-surface-muted, #f8fafc);
+}
+.status-event__title {
+    font-weight: 600;
+}
+.status-event__title a {
+    color: var(--ari-text);
+    text-decoration: none;
+}
+.status-event__title a:hover {
+    text-decoration: underline;
+}
+.status-event__meta {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+}
+.status-note {
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+}
+.status-error {
+    margin: 0 0 1rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.75rem;
+    border: 1px solid #f59e0b;
+    background: #fff7ed;
+    color: #9a3412;
+}
+.status-nav-back {
+    margin-bottom: 0.75rem;
+}
+.status-nav-back a {
+    text-decoration: none;
+    color: var(--ari-text-muted);
+}
+.status-nav-back a:hover {
+    text-decoration: underline;
+}
+.status-icon--ok {
+    color: #15803d;
+}
+.status-icon--warning {
+    color: #b45309;
+}
+.status-icon--critical {
+    color: #b91c1c;
+}
+@media (max-width: 820px) {
+    .status-hero__top,
+    .status-card__head {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="status-nav-back">
+    <a href="{{ status_back_url }}">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to status cards
+    </a>
+</div>
+
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-signal"></i> {{ status_title }}</h1>
+    <p class="ari-page-subtitle">
+        Live external status for this source.
+    </p>
+</div>
+
+{% if status_error %}
+<div class="status-error">
+    <strong>Could not refresh this live status page.</strong>
+    <div>{{ status_error }}</div>
+</div>
+{% endif %}
+
+<div class="status-grid">
+    <section class="status-card">
+        <div class="status-hero">
+            <div class="status-hero__top">
+                <div>
+                    <div class="status-hero__title">{{ status_section.title }}</div>
+                    <div class="status-note">
+                        Source: <a href="{{ status_section.url }}" target="_blank"
+                                  rel="noopener">{{ status_section.url }}</a>
+                    </div>
+                </div>
+                <div class="status-pill">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ status_section.overall_status }}
+                </div>
+            </div>
+            {% if status_section.summary %}
+            <div class="status-hero__summary">{{ status_section.summary }}</div>
+            {% endif %}
+        </div>
+
+        {% if status_has_table %}
+        <div class="status-card__head">
+            <div>
+                <div class="status-card__title">Service status table</div>
+                <div class="status-card__meta">
+                    Fetched {{ status_section.fetched_at }}
+                </div>
+            </div>
+            <div class="status-note">
+                Data is scraped live on page load.
+            </div>
+        </div>
+
+        <div class="status-table-wrap">
+            {% if status_section.service_table.rows %}
+            <table class="status-table">
+                <thead>
+                    <tr>
+                        {% for header in status_section.service_table.headers %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in status_section.service_table.rows %}
+                    <tr>
+                        {% for header in status_section.service_table.headers %}
+                        {% set raw_val = row.get(header, '') %}
+                        {% set val = raw_val|string|trim|lower %}
+                        <td>
+                            {% if val == 'check' %}
+                            <i class="fa-solid fa-check status-icon--ok"
+                               title="check"></i>
+                            {% elif val == 'warning_amber' %}
+                            <i class="fa-solid fa-triangle-exclamation
+                                      status-icon--warning"
+                               title="warning_amber"></i>
+                            {% elif val == 'power_off' %}
+                            <i class="fa-solid fa-triangle-exclamation
+                                      status-icon--critical"
+                               title="power_off"></i>
+                            {% else %}
+                            {{ raw_val }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="status-empty">No status table could be parsed.</div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="status-card__head">
+            <div>
+                <div class="status-card__title">Most recent entry</div>
+                <div class="status-card__meta">
+                    Fetched {{ status_section.fetched_at }}
+                </div>
+            </div>
+        </div>
+        <div class="status-events">
+            {% if status_section.most_recent_entry %}
+            <div class="status-event">
+                <div class="status-event__title">
+                    {{ status_section.most_recent_entry }}
+                </div>
+            </div>
+            {% else %}
+            <div class="status-empty">
+                No recent-entry text could be parsed.
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="status-card__head">
+            <div>
+                <div class="status-card__title">Incident links</div>
+                <div class="status-card__meta">
+                    Incident links reported by the source page.
+                </div>
+            </div>
+        </div>
+        <div class="status-events">
+            {% if status_section.scheduled_events %}
+            {% for event in status_section.scheduled_events %}
+            <div class="status-event">
+                <div class="status-event__title">
+                    <a href="{{ event.url }}" target="_blank" rel="noopener">
+                        {{ event.text }}
+                    </a>
+                </div>
+                <div class="status-event__meta">{{ event.url }}</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="status-empty">No incident links were found.</div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

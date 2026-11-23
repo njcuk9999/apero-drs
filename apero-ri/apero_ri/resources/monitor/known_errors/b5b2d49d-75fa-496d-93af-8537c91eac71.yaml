@@ -1,0 +1,42 @@
+id: b5b2d49d-75fa-496d-93af-8537c91eac71
+slug: no-error-found-in-log
+date_reported: '2024-04-05'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: ALL
+action: Check
+type: Expected
+error_code: None
+github_issue: ''
+generic_error: No error found in log
+comments: 'If ARI is run while some recipe is running then ENDED=False - this error
+  will disappear when ARI is run after recipe is finished.
+
+
+  This is hard to know whether this is an error or something has just not finished
+  (but if it is still running then ENDED=True will come later)
+
+
+  One way to check if this recipe was part of the the manual trigger is to check the  "--crunfile"
+  argument.
+
+
+  If you are running nirps_he_online or nirps_ha_online it should be --crunfile="online_run.ini"
+
+
+  Similarly if you are running an offline run it should be --crunfile="offline_run.ini"
+  or "offline_catchup_run.ini"
+
+
+  Any other run.ini file can probably be ignored for now and checked later, if this
+  recipe is still ENDED=False 1 day later please report to us specifying which run.ini
+  file was used and say something failed - in this case there should be an error but
+  if not report - maybe APERO got stuck!
+
+
+  You could also check the running processes on the machine (htop or top) to see if
+  an "apero_processing" or "manual_trigger" is running - this will only work if you
+  are on the same machine but if something is running on the machine you are on it
+  may be a good indication to wait and check again later.'
+full_example_error: No error found in log (Error messages will be clear)
+updated_at: '2026-05-13 15:54:29'

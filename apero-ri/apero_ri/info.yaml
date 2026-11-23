@@ -1,0 +1,17 @@
+# Define release type
+DRS.RELEASE: beta
+# Define authors
+DRS.AUTHORS:
+    - N. Cook
+    - E. Artigau
+    - F. Bouchy
+    - M. Hobson
+    - C. Moutou
+    - I. Boisse
+    - E. Martioli
+# -----------------------------------------------------------------------------
+# Basic choices on options
+# -----------------------------------------------------------------------------
+# databases backends
+DB_MODES:
+    - 'mysql+pymysql'

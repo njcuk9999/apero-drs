@@ -1,0 +1,20 @@
+id: 453e06f4-857c-47f9-b8b2-04d908e9d4a9
+slug: class-apero-core-core-drs-exceptions-logexit-no-teff-found-for-objname
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_lbl_mask
+action: Check
+type: Expected
+error_code: LBL
+github_issue: ''
+generic_error: 'class apero.core.core.drs_exceptions.LogExit : No Teff found for {OBJNAME}'
+comments: The best solution this is to check the astrometric database and add a Teff
+  for this object. If it is in the astrometric database and does not have a temperature
+  report this and ask that someone edit the database. If the object is not in the
+  astrometric database you can use apero_astrometrics.py to add it (see the wiki for
+  how to use this). After this you might need to re-run apero_processing with a custom
+  run file. If unsure, contact Neil and check the PPT instructions for that.
+full_example_error: 'class apero.core.core.drs_exceptions.LogExit : No Teff found
+  for CDM38_3220B'
+updated_at: '2026-05-13 15:54:29'

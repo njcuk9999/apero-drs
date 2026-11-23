@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APERO RI – Shared Download</title>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f5f6fa; margin: 0; padding: 2rem 1rem; }
+        .sl-card { max-width: 640px; margin: 2rem auto; background: #fff;
+                   border: 1px solid #d8dcee; border-radius: 10px;
+                   box-shadow: 0 2px 12px rgba(63,81,181,.08); padding: 2rem 2.5rem; }
+        .sl-header { display: flex; align-items: center; gap: 0.7rem;
+                     font-size: 1.4rem; font-weight: 700; color: #3f51b5; margin-bottom: 0.5rem; }
+        .sl-expiry { font-size: 0.85rem; color: #c0392b; margin-bottom: 1.5rem;
+                     display: flex; align-items: center; gap: 0.4rem; }
+        .sl-chunk { border: 1px solid #d8dcee; border-radius: 6px; padding: 0.9rem 1.1rem;
+                    margin-bottom: 0.75rem; display: flex; align-items: center;
+                    justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+        .sl-chunk__info { font-size: 0.9rem; color: #444; }
+        .sl-chunk__name { font-weight: 600; }
+        .sl-chunk__meta { color: #888; font-size: 0.82rem; }
+        .sl-btn { display: inline-flex; align-items: center; gap: 0.4rem;
+                  padding: 0.5rem 1.1rem; background: #3f51b5; color: #fff;
+                  border-radius: 5px; text-decoration: none; font-size: 0.9rem;
+                  font-weight: 600; border: none; cursor: pointer; }
+        .sl-btn:hover { background: #303f9f; }
+        .sl-note { font-size: 0.82rem; color: #888; margin-top: 1.5rem;
+                   border-top: 1px solid #eee; padding-top: 1rem; }
+        .sl-no-login { font-size: 0.8rem; color: #4caf50; font-weight: 600;
+                       margin-bottom: 1rem; display: flex; align-items: center; gap: 0.35rem; }
+    </style>
+</head>
+<body>
+    <div class="sl-card">
+        <div class="sl-header">
+            <i class="fa-solid fa-basket-shopping"></i>
+            Shared APERO RI Download
+        </div>
+        <div class="sl-no-login">
+            <i class="fa-solid fa-unlock"></i> No login required
+        </div>
+        {% if expires_at %}
+        <div class="sl-expiry">
+            <i class="fa-solid fa-clock"></i>
+            This link expires at {{ expires_at }}
+        </div>
+        {% endif %}
+
+        {% if chunks %}
+            {% for chunk in chunks %}
+            <div class="sl-chunk">
+                <div class="sl-chunk__info">
+                    <div class="sl-chunk__name">{{ chunk.filename }}</div>
+                    <div class="sl-chunk__meta">
+                        {{ (chunk.size_bytes / 1048576) | round(1) }} MB
+                        &middot; {{ chunk.file_count }} file{{ 's' if chunk.file_count != 1 else '' }}
+                    </div>
+                </div>
+                <a class="sl-btn" href="{{ chunk.download_url }}"
+                   download="{{ chunk.filename }}">
+                    <i class="fa-solid fa-download"></i> Download
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:#888;">No download files found for this job.</p>
+        {% endif %}
+
+        <div class="sl-note">
+            <i class="fa-solid fa-circle-info"></i>
+            Files compiled by the APERO Reduction Interface.
+            This shared link does not require an account.
+            Downloads are automatically deleted after 24 hours.
+        </div>
+    </div>
+</body>
+</html>

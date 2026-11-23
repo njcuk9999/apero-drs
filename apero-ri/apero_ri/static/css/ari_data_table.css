@@ -1,0 +1,260 @@
+/* ari_data_table.css - shared styles for AriDataTable component
+ * Visual scheme matches the data-portal object/observation tables:
+ * indigo headers, cream zebra striping, sticky filter row, tabular
+ * numerics. Dark themes are handled via the same CSS custom
+ * properties consumed by the object table.
+ */
+
+.ari-dt-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 62vh;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 4px;
+}
+
+.ari-dt {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 0.85rem;
+}
+
+.ari-dt thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--ari-primary-light, #e8eaf6);
+}
+
+.ari-dt__header-row th,
+.ari-dt__filter-row th {
+    position: sticky;
+}
+.ari-dt__header-row th { top: 0; z-index: 3; }
+.ari-dt__filter-row th { top: 37px; z-index: 2; }
+
+.ari-dt__th {
+    background: var(--ari-primary-light, #e8eaf6);
+    color: var(--ari-text, #222);
+    padding: 0.45rem 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    user-select: none;
+    border-right: 1px solid var(--ari-border, #c5c9e0);
+    border-bottom: 2px solid var(--ari-border, #c5c9e0);
+    transition: background 0.15s;
+}
+.ari-dt__th:last-child { border-right: none; }
+.ari-dt__th:hover { background: var(--ari-primary-hover, #c5cae9); }
+
+.ari-dt__th-label { margin-right: 0.35rem; }
+
+.ari-dt__filter-cell {
+    background: var(--ari-bg, #f9f9f9);
+    padding: 0.25rem 0.4rem;
+    border-right: 1px solid var(--ari-border, #ddd);
+    border-bottom: 1px solid var(--ari-border, #bbb);
+}
+.ari-dt__filter-cell:last-child { border-right: none; }
+
+.ari-dt__filter-input,
+.ari-dt__filter-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 3px;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text, #333);
+}
+.ari-dt__filter-select {
+    color: var(--ari-text-muted, #7a7a7a);
+    cursor: pointer;
+}
+.ari-dt__filter-input:focus,
+.ari-dt__filter-select:focus {
+    outline: none;
+    border-color: var(--ari-primary, #3f51b5);
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.15);
+}
+
+.ari-dt__row td {
+    padding: 0.38rem 0.75rem;
+    border-right: 1px solid var(--ari-border, #eee);
+    border-bottom: 1px solid var(--ari-border, #eee);
+    vertical-align: top;
+    color: var(--ari-text, #333);
+    font-variant-numeric: tabular-nums;
+}
+.ari-dt__row td:last-child { border-right: none; }
+
+.ari-dt__row:nth-child(odd) td  { background: #fffde7; }
+.ari-dt__row:nth-child(even) td { background: #ffeed8; }
+.ari-dt__row:hover td           { background: rgba(255, 152, 0, 0.16); }
+
+/* status badges in rows (e.g. STATUS column) */
+.ari-dt__status {
+    display: inline-block;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: lowercase;
+}
+.ari-dt__status--verified  { background: #d6f5d6; color: #1d6f1d; }
+.ari-dt__status--pending   { background: #fff3cd; color: #856404; }
+.ari-dt__status--rejected  { background: #fadbd8; color: #922b21; }
+
+.ari-dt__empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--ari-text-muted, #57606a);
+    font-style: italic;
+    background: var(--ari-card-bg, #fff);
+}
+
+.ari-dt__count {
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Dark theme — matches the object table (.at-file-table /
+ * .ot-row) palette so the astrometric DB table reads cleanly on
+ * dark themes instead of inheriting the cream/orange light
+ * scheme. The site uses [data-theme="dark"] (set on <html>);
+ * the legacy `body.ari-theme-dark` selector that used to live
+ * here never matched anything. */
+[data-theme="dark"] .ari-dt-wrap {
+    border-color: #30363d;
+}
+[data-theme="dark"] .ari-dt thead,
+[data-theme="dark"] .ari-dt__th {
+    background: #1c2128;
+    color: #c9d1d9;
+    border-right-color: #30363d;
+    border-bottom-color: #30363d;
+}
+[data-theme="dark"] .ari-dt__th:hover {
+    background: #21262d;
+}
+[data-theme="dark"] .ari-dt__filter-cell {
+    background: #161b22;
+    border-right-color: #30363d;
+    border-bottom-color: #30363d;
+}
+[data-theme="dark"] .ari-dt__filter-input,
+[data-theme="dark"] .ari-dt__filter-select {
+    background: #0d1117;
+    color: #c9d1d9;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ari-dt__row td {
+    color: var(--ari-text, #c9d1d9);
+    border-right-color: #21262d;
+    border-bottom-color: #21262d;
+}
+[data-theme="dark"] .ari-dt__row:nth-child(odd) td  {
+    background: #161b22;
+}
+[data-theme="dark"] .ari-dt__row:nth-child(even) td {
+    background: #1c2128;
+}
+[data-theme="dark"] .ari-dt__row:hover td {
+    background: rgba(255, 152, 0, 0.10);
+}
+[data-theme="dark"] .ari-dt__empty {
+    background: #161b22;
+    color: #8b949e;
+}
+[data-theme="dark"] .ari-dt__count {
+    color: #8b949e;
+}
+/* Status badges keep readable contrast on dark. */
+[data-theme="dark"] .ari-dt__status--verified {
+    background: #1d3a1d; color: #7ee787;
+}
+[data-theme="dark"] .ari-dt__status--pending  {
+    background: #3a3119; color: #f2cc60;
+}
+[data-theme="dark"] .ari-dt__status--rejected {
+    background: #3a1d1d; color: #ff7b72;
+}
+/* ari_data_table.css - shared styles for AriDataTable component */
+
+.ari-dt {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.ari-dt thead {
+    position: sticky;
+    top: 0;
+    background: var(--ari-surface, #fff);
+    z-index: 2;
+}
+
+.ari-dt__th {
+    cursor: pointer;
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    border-bottom: 2px solid var(--ari-border, #d0d7de);
+    user-select: none;
+    white-space: nowrap;
+    background: var(--ari-surface-muted, #f6f8fa);
+}
+
+.ari-dt__th:hover {
+    background: var(--ari-surface-hover, #eef2f6);
+}
+
+.ari-dt__th-label {
+    font-weight: 600;
+}
+
+.ari-dt__filter-cell {
+    padding: 0.25rem 0.4rem;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+    background: var(--ari-surface, #fff);
+}
+
+.ari-dt__filter-input,
+.ari-dt__filter-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.85rem;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 3px;
+    background: var(--ari-surface, #fff);
+    color: var(--ari-text, #1f2328);
+}
+
+.ari-dt__row td {
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid var(--ari-border-light, #eef0f3);
+    vertical-align: top;
+}
+
+.ari-dt__row:hover td {
+    background: var(--ari-surface-hover, #f6f8fa);
+}
+
+.ari-dt__empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--ari-text-muted, #57606a);
+    font-style: italic;
+}
+
+.ari-dt__count {
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+}

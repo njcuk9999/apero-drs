@@ -1,0 +1,807 @@
+# General instrument configuration.
+general:
+
+  # APERO science configuration version used for profile compatibility.
+  version: 0.7
+
+  # Instrument code used by APERO/ARI.
+  instrument: NIRPS_HA
+
+  # Science fiber identifier.
+  science_fiber: A
+
+  # Science DPR/TYPES included in tools.
+  science_types:
+  - OBJ_FP
+  - OBJ_DARK
+  - OBJ_SKY
+  - TELLU_SKY
+  - FLUXSTD_SKY
+
+  # Spectral bands shown in the interface.
+  bands:
+  - Y
+  - H
+
+  # Whether this instrument has polarimetry.
+  has_polarimetry: false
+
+  # Default DB-query preset filename.
+  db-query-preset-file: nirps_ha_v7.txt
+
+search-examples:
+  name: 'Proxima or Proxima Centauri'
+  coords: 'RA 217.429 deg, Dec -62.680 deg, radius 60 arcsec'
+  date: '2026-01-01 to 2026-01-31'
+  run_id: '112. matches accessible RUN IDs starting with 112.'
+  header: 'OBJECT contains Proxima'
+  target_info: 'OBJNAME contains Proxima'
+  spectrum_info: 'KW_RUN_ID contains 112.'
+
+# Observatory site metadata.
+observatory:
+
+  # Observatory latitude in degrees.
+  lat: -29.2562
+
+  # Observatory longitude in degrees.
+  lon: -70.7342
+
+  # Observatory altitude in meters.
+  alt: 2400
+
+# Plot defaults and wavelength windows.
+plot:
+
+  # Main spectrum wavelength windows (nm).
+  SpecWave:
+    limit0:
+    - 985
+    - 1810
+    limit1:
+    - 1082
+    - 1085
+    limit2:
+    - 1575
+    - 1580
+    limit3:
+    - 1666
+    - 1668
+
+  # Telluric map wavelength range (nm).
+  TcorrMapWave:
+  - 1716
+  - 1726
+
+# Legacy checks Google Sheets configuration.
+legacy_checks_gsheet:
+
+  # Monitoring sheet URL for this profile/instrument.
+  monitoring_sheet_url: https://docs.google.com/spreadsheets/d/1zvU_XFA1ZOJE111qZKiav7v6ptYveWpDkMHjdhiN06M/edit?gid=346030560#gid=346030560
+
+  # Override sheet URL for this profile/instrument.
+  override_sheet_url: https://docs.google.com/spreadsheets/d/1zvU_XFA1ZOJE111qZKiav7v6ptYveWpDkMHjdhiN06M/edit?gid=1325511295#gid=1325511295
+
+# Header-key mappings shown in science views.
+sci-headers:
+
+  # Mappings for pp-level files.
+  pp:
+    PP_MJDMID:
+      key: MJDMID
+      label: MJD
+      dtype: float
+      timefmt: mjd
+    PP_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    PP_VERSION:
+      key: PVERSION
+      label: Version [pp]
+      dtype: str
+    PP_OBNAME:
+      key: HIERARCH ESO OBS NAME
+      label: OB Name(s) in headers
+      dtype: str
+    PP_PI_NAME:
+      key: HIERARCH ESO OBS PI-COI NAME
+      label: PI name(s) in header
+      dtype: str
+    PP_PROG_ID:
+      key: HIERARCH ESO OBS PROG ID
+      label: Program ID
+      dtype: str
+
+  # Mappings for ext-level files.
+  ext:
+    EXT_MJDMID:
+      key: MJDMID
+      label: MJD
+      dtype: float
+      timefmt: mjd
+    EXT_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    EXT_Y:
+      key: EXTSN015
+      label: "SNR[Order 15 (#134 1.08\u03BCm)]"
+      dtype: float
+    EXT_H:
+      key: EXTSN060
+      label: "SNR[Order 60 (#89 1.63\u03BCm)]"
+      dtype: float
+    EXT_DPRTYPE:
+      key: DPRTYPE
+      label: DPR TYPE
+      dtype: str
+    EXT_BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
+    EXT_BJD:
+      key: BJD
+      label: BJD
+      dtype: float
+    EXT_QCC_ALL:
+      key: QCC_ALL
+      label: QCC ALL
+      dtype: int
+    EXT_SEEING:
+      key: HIERARCH ESO TEL AMBI FWHM START
+      label: Seeing at start
+      dtype: float
+      fallback: null
+    EXT_AIRMASS:
+      key: HIERARCH ESO TEL AIRM START
+      label: Airmass at start
+      dtype: float
+      fallback: null
+    EXT_EXPTIME:
+      key: EXPTIME
+      label: Exposure Time
+      dtype: float
+    EXT_VERSION:
+      key: VERSION
+      label: Version [ext]
+      dtype: str
+    EXT_PDATE:
+      key: DRSPDATE
+      label: APERO Processed date
+      dtype: str
+    EXT_SHAPE_DX:
+      key: SHAPE_DX
+      label: Shape DX
+      dtype: float
+    EXT_SHAPE_DY:
+      key: SHAPE_DY
+      label: Shape DY
+      dtype: float
+    EXT_SHAPE_A:
+      key: SHAPE_A
+      label: Shape A
+      dtype: float
+    EXT_SHAPE_B:
+      key: SHAPE_B
+      label: Shape B
+      dtype: float
+    EXT_SHAPE_C:
+      key: SHAPE_C
+      label: Shape C
+      dtype: float
+    EXT_SHAPE_D:
+      key: SHAPE_D
+      label: Shape D
+      dtype: float
+    EXT_WFPDRIFT:
+      key: WFPDRIFT
+      label: Wavesol abs CCF FP drift [km/s]
+      dtype: float
+    EXT_WCAV000:
+      key: WCAV000
+      label: Wave cavity c0
+      dtype: float
+    EXT_EXTSMAX:
+      key: EXTSMAX
+      label: Max saturation level
+      dtype: float
+    EXT_EFFRON:
+      key: EFFRON
+      label: Measured eff readout noise before extraction
+      dtype: float
+    EXT_CDTDARK:
+      key: CDTDARK
+      label: DARK file
+      dtype: float
+      ref: true
+    EXT_CDTBAD:
+      key: CDTBAD
+      label: BADPIX file
+      dtype: float
+    EXT_CDTBACK:
+      key: CDTBACK
+      label: BACKGROUND file
+      dtype: float
+    EXT_CDTORDP:
+      key: CDTORDP
+      label: ORDER_PROFILE file
+      dtype: float
+    EXT_CDTLOCO:
+      key: CDTLOCO
+      label: LOCO file
+      dtype: float
+    EXT_CDTSHAPL:
+      key: CDTSHAPL
+      label: Local shape file
+      dtype: float
+    EXT_CDTSHAPX:
+      key: CDTSHAPX
+      label: Shape X file
+      dtype: float
+      ref: true
+    EXT_CDTSHAPY:
+      key: CDTSHAPY
+      label: Shape Y file
+      dtype: float
+      ref: true
+    EXT_CDTFLAT:
+      key: CDTFLAT
+      label: FLAT file
+      dtype: float
+    EXT_CDTBLAZE:
+      key: CDTBLAZE
+      label: BLAZE file
+      dtype: float
+    EXT_CDTWAVE:
+      key: CDTWAVE
+      label: Wave file
+      dtype: float
+    EXT_WAVETIME:
+      key: WAVETIME
+      label: Wave sol
+      dtype: float
+
+  # Mappings for tcorr-level files.
+  tcorr:
+    TCORR_MJDMID:
+      key: MJDMID
+      label: MJD
+      dtype: float
+      timefmt: mjd
+    TCORR_BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
+    TCORR_BJD:
+      key: BJD
+      label: BJD
+      dtype: float
+    TCORR_QCC_ALL:
+      key: QCC_ALL
+      label: QCC ALL
+      dtype: int
+    TCORR_H:
+      key: EXTSN060
+      label: "SNR[Order 60 (#89 1.63\u03BCm)]"
+      dtype: float
+    TCORR_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    TCORR_VERSION:
+      key: VERSION
+      label: APERO Version
+      dtype: str
+
+  # Mappings for ccf-level files.
+  ccf:
+    CCF_MASK:
+      key: CCFMASK
+      label: CCF Mask
+      dtype: str
+    CCF_MJDMID:
+      key: MJDMID
+      label: CCF MJD
+      dtype: float
+      timefmt: mjd
+    CCF_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    CCF_DV:
+      key: RV_CORR
+      label: CCF RV
+      unit: km/s
+      dtype: float
+    CCF_SDV:
+      key: DVRMS_CC
+      label: CCF RV Error
+      unit: m/s
+      dtype: float
+    CCF_FWHM:
+      key: CCFMFWHM
+      label: CCF FWHM
+      unit: km/s
+      dtype: float
+    CCF_VERSION:
+      key: VERSION
+      label: Version [ccf]
+      dtype: str
+
+  # Mappings for lbl-level files.
+  lbl:
+    EXT_H:
+      key: EXTSN060
+      label: "SNR[Order 60 (#89 1.63\u03BCm)]"
+      dtype: float
+    LBL_VERSION:
+      key: LBL_VERS
+      label: LBL Version
+      dtype: str
+
+# Calib headers setting.
+calib-headers:
+
+  # SHAPEL setting.
+  SHAPEL:
+    KW_MID_OBS_TIME:
+      key: MJDMID
+      label: mid exposure time [MJD]
+      dtype: float
+      timefmt: mjd
+    KW_SHAPE_DX:
+      key: SHAPE_DX
+      label: Shape dx
+      dtype: float
+    KW_SHAPE_DY:
+      key: SHAPE_DY
+      label: Shape dy
+      dtype: float
+    KW_SHAPE_A:
+      key: SHAPE_A
+      label: Shape A
+      dtype: float
+    KW_SHAPE_B:
+      key: SHAPE_B
+      label: Shape B
+      dtype: float
+    KW_SHAPE_C:
+      key: SHAPE_C
+      label: Shape C
+      dtype: float
+    KW_SHAPE_D:
+      key: SHAPE_D
+      label: Shape D
+      dtype: float
+
+  # WAVE NIGHT setting.
+  WAVE_NIGHT:
+    KW_MID_OBS_TIME:
+      key: MJDMID
+      label: mid exposure time [MJD]
+      dtype: float
+      timefmt: mjd
+    KW_EXT_NBO:
+      key: EXT_NBO
+      label: Number of extracted orders
+      dtype: int
+    KW_WFP_DRIFT:
+      key: WFPDRIFT
+      label: Wavesol abs CCF FP drift [km/s]
+      dtype: float
+    KW_CAVITY_WIDTH:
+      key: WCAV000
+      label: Wave cavity [intercept]
+      dtype: float
+
+# APERO checks and monitor defaults.
+apero-checks:
+
+  # Common APERO-check settings.
+  common:
+
+    # Header key aliases used by this check group.
+    header_keys:
+      dpr_type: HIERARCH ESO DPR TYPE
+      obs_name: HIERARCH ESO OBS NAME
+      mjd_obs: MJD-OBS
+      obj_name: ''
+
+  # Calibration-presence check settings.
+  calib_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # Required DPRTYPE entries for this check. A nested list is an OR
+    #   group: any one of its DPRTYPEs satisfies the requirement (e.g.
+    #   either the UN1 or the UN2 wave DPRTYPE is accepted).
+    required_dprtypes:
+    - DARK
+    - WAVE,FP,FP
+    - - WAVE,UN1,FP
+      - WAVE,UN2,FP
+    - - WAVE,FP,UN1
+      - WAVE,FP,UN2
+    - FLAT,DARK,LAMP
+    - FLAT,LAMP,DARK
+    - - WAVE,UN1,UN1
+      - WAVE,UN2,UN2
+
+  # Calibration OB-name check settings.
+  calib_ob_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # Required OB name windows for this check.
+    required_obnames:
+      Afternoon-Calibrations:
+        mjd_start: 60096
+        mjd_end: 99999
+      Daily-Calibrations-Full-Set:
+        mjd_start: 59895
+        mjd_end: 99999
+
+  # No-science-night check settings.
+  no_sci:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # DPRTYPE entries used by this check.
+    dprtypes:
+    - OBJECT,SKY
+    - OBJECT,FP
+
+  # Quality-threshold check settings.
+  qual_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # DPRTYPE groups used by this check.
+    dpr_groups:
+      FP:
+      - WAVE,FP,FP
+      - WAVE,UN1,UN1
+      - WAVE,UN2,UN2
+      - WAVE,FP,UN1
+      - WAVE,FP,UN2
+      - WAVE,UN1,FP
+      - WAVE,UN2,FP
+      - CONTAM,DARK,FP
+      FLAT:
+      - FLAT,LAMP,DARK
+      - FLAT,DARK,LAMP
+      - FLAT,LAMP,LAMP
+      - ORDERDEF,DARK,LAMP
+      - ORDERDEF,LAMP,DARK
+      TELLURIC:
+      - TELLURIC,SKY
+      SCIENCE:
+      - OBJECT,SKY
+      - OBJECT,FP
+
+    # Constraints setting.
+    constraints:
+      OBJECT,SKY:
+        p99_min: 0
+        p99_max: 10000
+        sat_frac_max: 0.0004
+      OBJECT,FP:
+        p99_min: 0
+        p99_max: 10000
+        sat_frac_max: 0.0004
+      ORDERDEF,DARK,LAMP:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      ORDERDEF,LAMP,DARK:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      TELLURIC,SKY:
+        p99_min: 0
+        p99_max: 10000
+        sat_frac_max: 0.0004
+      FLAT,LAMP,DARK:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      FLAT,DARK,LAMP:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      FLAT,LAMP,LAMP:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      CONTAM,DARK,FP:
+        p99_min: 10
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      WAVE,FP,FP:
+        p99_min: 10
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      WAVE,UN1,UN1:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0025
+      # TODO: check UN2 limits (currently copied from UN1)
+      WAVE,UN2,UN2:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0025
+      WAVE,FP,UN1:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0012
+      # TODO: check UN2 limits (currently copied from UN1)
+      WAVE,FP,UN2:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0012
+      WAVE,UN1,FP:
+        p99_min: 4
+        p99_max: 100
+        sat_frac_max: 0.0023
+      # TODO: check UN2 limits (currently copied from UN1)
+      WAVE,UN2,FP:
+        p99_min: 4
+        p99_max: 100
+        sat_frac_max: 0.0023
+
+  # Engineering-night exclusion settings.
+  eng_test:
+
+    # Tests setting.
+    tests:
+      enclosure_temperature_rms:
+        enabled: true
+        sensor_key: HIERARCH ESO INS TEMP185 VAL
+        reference_key: HIERARCH ESO INS TEMP187 VAL
+        limit: 0.1
+      enclosure_setpoint_offset:
+        enabled: true
+        sensor_key: HIERARCH ESO INS TEMP185 VAL
+        setpoint_key: HIERARCH ESO INS TEMP187 VAL
+        limit: 0.1
+      vacuum_gauge_upper:
+        enabled: true
+        metric_key: HIERARCH ESO INS PRES104 VAL
+        limit: 0.0001
+      isolation_valve_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS100 STAT
+        target: false
+      cryo1_status_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS126
+        target: false
+      cryo2_status_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS127
+        target: false
+      turbopump_status_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS102 STAT
+        target: false
+      warning_cryo1_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS144 STAT
+        target: ''
+      warning_cryo2_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS146 STAT
+        target: ''
+      fp_interior_rms:
+        enabled: true
+        metric_key: HIERARCH ESO INS TEMP14 VAL
+        limit: 0.01
+      fp_exterior_range:
+        enabled: true
+        metric_key: HIERARCH ESO INS TEMP13 VAL
+        lower_limit: 23.496
+        upper_limit: 24.504
+      fp_setpoint_rms:
+        enabled: true
+        sensor_key: HIERARCH ESO INS TEMP14 VAL
+        setpoint_key: HIERARCH ESO INS TEMP188 VAL
+        limit: 0.005
+      enclosure_heater_power_max:
+        enabled: true
+        metric_key: HIERARCH ESO INS SENS121 VAL
+        limit: 90.0
+      scrambling_status_science:
+        enabled: true
+        status_key: HIERARCH ESO INS2 AOS SCRAMB ST
+        status_value: true
+      stretcher_status_state:
+        enabled: true
+        status_key: HIERARCH ESO INS OPTI10 STAT
+        status_value: 'ON'
+      backend_device_error_state:
+        enabled: true
+        status_key: HIERARCH ESO INS SENS129 STAT
+        blocked_value: NOK
+
+  # Astrometrics object-name check settings.
+  astrom_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # FITS header keys to try (in order) for the object name.
+    obj_name_keys:
+      - OBJECT
+      - HIERARCH ESO OBS TARG NAME
+
+    # Only files whose DPRTYPE appears in this list are checked.
+    # An empty list means all files are checked regardless of DPRTYPE.
+    dprtypes:
+      - OBJECT,SKY
+      - OBJECT,FP
+
+    # When set, use filename suffix as the science filter instead of DPRTYPE.
+    # Leave empty to use the dprtypes list above.
+    sci_suffix: ''
+
+  # ---------------------------------------------------------------------------
+  # Reduced (red) check settings.
+  # ---------------------------------------------------------------------------
+
+  # Manual-trigger log checks (MANUAL_START, MANUAL_END, APERO_START,
+  # APERO_END, ARI_START, ARI_END).
+  # These checks read a manual-trigger CSV log from PATH.TRIGGER_LOG.
+  # No extra configuration is required beyond setting PATH.TRIGGER_LOG in the
+  # admin portal profile editor.
+
+  # Preprocessed pixel-shift check settings (PIXEL_SHIFTS).
+  pixel_shifts:
+    enabled: true
+    dx_key: DETOFFDX
+    dy_key: DETOFFDY
+    file_pattern: '*pp.fits'
+
+  # Low-SNR check settings (LOW_SNR).
+  low_snr:
+    enabled: true
+    dpr_key: HIERARCH ESO DPR TYPE
+    obj_key: DRSOBJN
+    sci_dprtypes:
+      - OBJ_DARK
+      - OBJ_FP
+      - OBJ_SKY
+      - TELLU_SKY
+      - FLUXSTD_SKY
+    snr_keys:
+      - EXTSN015
+      - EXTSN060
+    snr_limit: 10.0
+    file_pattern: '*pp_e2dsff_A.fits'
+
+  # Excess modal noise check settings (EXCESS_MODAL).
+  excess_modal:
+    enabled: true
+    obj_key: DRSOBJN
+    mode_key: DRSMODE
+    sample_order: 58
+    threshold_ha: 0.015
+    threshold_he: 0.010
+    file_pattern: '*e2ds*tcorr_A.fits'
+    # Optional override list of vetted telluric stars.
+    # Leave empty to use the hard-coded default list.
+    vetted_stars: []
+
+  # Previous-reduction completeness check settings (PREV_REDUC).
+  prev_reduc:
+    enabled: true
+    lookback_days: 7
+    raw_suffix: '.fits'
+    pp_suffix: '_pp.fits'
+
+  # Outlier-CCF check settings (BAD_CCF).
+  bad_ccf:
+    enabled: true
+    sci_dprtypes:
+      - OBJ_DARK
+      - OBJ_FP
+      - OBJ_SKY
+    ccf_output: CCF_RV
+    sci_fiber: A
+    bad_nsig: 10.0
+    rv_key: RV_OBJ
+    fwhm_key: CCFMFWHM
+
+  # Critical instrument and science checks (CRITICAL_TEST, CRITICAL_SCI_TEST).
+  # PATH.CRITICAL_CHECK must be set in the admin portal profile editor.
+  critical_check:
+
+    # CSV file with per-night pass/fail columns (relative to PATH.CRITICAL_CHECK).
+    critical csv file: check_status.csv
+
+    # CSV file listing check names, descriptions, and types.
+    critical desc file: critical_checks_description.csv
+
+# Finder setting.
+finder:
+
+  # DTMIN setting.
+  DTMIN: -6
+
+  # DTMAX setting.
+  DTMAX: 6
+
+  # DTVAL setting.
+  DTVAL: 3
+
+  # BANDS setting.
+  BANDS:
+  - G
+  - J
+
+  # FIELD OF VIEW setting.
+  FIELD_OF_VIEW:
+    G:
+    - 77.6
+    - 77.6
+    J:
+    - 18.2
+    - 18.2
+
+  # SCALE FACTOR setting.
+  SCALE_FACTOR:
+    G: 1.5
+
+  # PIXEL SCALE setting.
+  PIXEL_SCALE:
+    G: 0.1514
+    J: 0.1514
+
+  # TRANSFORM ROTATE setting.
+  TRANSFORM_ROTATE:
+    G: 232.6
+    J: 322.6
+
+  # FWHM setting.
+  FWHM:
+    G: 2.0
+    J: 2.0
+
+  # SIGMA LIMIT setting.
+  SIGMA_LIMIT:
+    G: 18
+    J: 15
+    H: 15
+    K: 15
+
+  # MAG LIMIT setting.
+  MAG_LIMIT: -1
+
+  # MAX PM setting.
+  MAX_PM: 11
+
+  # SCALE SIZE setting.
+  SCALE_SIZE: 10
+
+  # COMPASS FRAC setting.
+  COMPASS_FRAC: 0.075
+
+  # FLIP X setting.
+  FLIP_X:
+    G: true
+    J: true
+
+  # FLIP Y setting.
+  FLIP_Y:
+    G: false
+    J: false
