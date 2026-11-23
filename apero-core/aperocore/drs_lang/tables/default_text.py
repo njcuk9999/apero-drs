@@ -13102,6 +13102,20 @@ item.comment = 'Used in: tools/module/processing/drs_queue.py'
 langlist.add(item)
 
 # =============================================================================
+# 10-513-00012
+# =============================================================================
+item = langlist.create('10-513-00012', kind='warning-code')
+item.value['ENG'] = ('Queue: this queue only runs tasks through Slurm - '
+                     'use batch or chain (or run inside a Slurm job)')
+item.value['FR'] = ('File : cette file execute les taches uniquement via '
+                    'Slurm - utilisez batch ou chain (ou un job Slurm)')
+item.value['ES'] = ('Cola: esta cola solo ejecuta tareas mediante Slurm - '
+                    'use batch o chain (o ejecute dentro de un job Slurm)')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
 # 10-514-00001
 # =============================================================================
 item = langlist.create('10-514-00001', kind='warning-code')

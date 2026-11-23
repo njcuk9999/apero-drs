@@ -158,6 +158,69 @@ def test_process_jobs_summarise_chain_logs(
     assert gui.get_process_jobs(params, 'missing')['error']
 
 
+def test_slurm_only_settings_block_local_runs(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Slurm-only queues refuse local runs outside a Slurm job.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path / 'queue'))
+    monkeypatch.setattr(drs_queue, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.delenv('SLURM_JOB_ID', raising=False)
+    assert drs_queue.load_queue_settings(params)['slurm_only'] is False
+    state = gui.GuiState()
+    saved = gui.action_settings(params, state, dict(
+        slurm_only=True, slurm_template='../alliance'))
+    assert saved['slurm_template'] == '___alliance'
+    assert drs_queue.local_runs_blocked(params)
+    assert not gui.action_run(params, state, qid='g/r.yaml')['started']
+    assert drs_queue.queue_run(params)['n_run'] == 0
+    assert gui.get_settings_data(params)['slurm_only'] is True
+    monkeypatch.setenv('SLURM_JOB_ID', '42')
+    assert not drs_queue.local_runs_blocked(params)
+
+
+def test_slurm_only_job_submits_and_waits(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Generate/reset jobs go through sbatch and report the exit code.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path / 'queue'))
+    drs_queue.save_queue_settings(params, True, 'default')
+    # fake sbatch: run the script now (no squeue) and print a job id
+    bindir = tmp_path / 'bin'
+    bindir.mkdir()
+    sbatch = bindir / 'sbatch'
+    sbatch.write_text('#!/bin/bash\nbash "$2" > /dev/null 2>&1\necho 777\n')
+    sbatch.chmod(0o755)
+    monkeypatch.setenv('PATH', str(bindir) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(procs, 'slurm_states', lambda jobs: None)
+    monkeypatch.setattr(gui, 'GUI_SLURM_POLL', 0.01)
+    state = gui.GuiState()
+    cmd = ['/bin/sh', '-c', 'read answer; exit 3']
+    result = gui._start_job(params, state, 'Reset', cmd, stdin_text='Y\n')
+    assert result['started']
+    state.worker.join(timeout=10)
+    assert state.jobs['actions']['returncode'] == 3
+    records = procs.load_all(drs_queue.get_proc_dir(params))
+    assert records[0]['slurm_jobs'] == ['777']
+    assert records[0]['returncode'] == 3
+    script = Path(records[0]['artifact_paths'][0]).read_text()
+    assert '#SBATCH --output=' in script and 'cd "$HOME"' in script
+
+
 def test_process_gui_preserves_retained_tasks(
     tmp_path: Path, monkeypatch: Any,
 ) -> None:

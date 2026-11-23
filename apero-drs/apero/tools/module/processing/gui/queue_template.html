@@ -560,6 +560,11 @@ html[data-theme="dark"] .slurm-summary { color:#8b949e; }
 #proc-table td { vertical-align: middle; }
 #proc-table th { cursor: default; }
 #pbody tr { cursor: pointer; }
+.settings-card { display: flex; gap: 10px; align-items: center;
+                 flex-wrap: wrap; }
+.slurm-only-note { margin: 6px 0; padding: 6px 10px; border-radius: 6px;
+                   border-left: 4px solid #2a7de1; background: #e8f1fc; }
+html[data-theme="dark"] .slurm-only-note { background: #13233a; }
 #pbody td { white-space: nowrap; }
 #pbody .proc-label { max-width: 34vw; overflow: hidden;
                      text-overflow: ellipsis; }
@@ -782,6 +787,17 @@ Queue execution and batch templates.
 <div class="section-card summary-card">
 <div class="summary" id="summary-control"></div>
 </div>
+<div id="settings-card" class="section-card settings-card">
+<label class="inline"><input id="set-slurm-only" type="checkbox">
+    Run all APERO jobs through Slurm</label>
+<label class="inline" for="set-slurm-template">Template for generate /
+    reset jobs</label>
+<select id="set-slurm-template"></select>
+<button id="btn-save-settings" onclick="saveSettings()">Save</button>
+<span id="set-note" class="muted">Use on login nodes (e.g. Alliance):
+Single Process is disabled and generate / reset all data are submitted
+with sbatch.</span>
+</div>
 <div id="control-content" class="content-block">
 
 <div class="controltabbar">
@@ -857,6 +873,9 @@ with apero_processing in queue mode).
     &#9654; Generate queue</button>
 </div>
 </div>
+<div class="slurm-only-note" hidden>Submitted as a Slurm job (template
+<span class="slurm-only-template"></span>) - the console follows its
+output.</div>
 <details id="gen-options-box" class="fold" open>
 <summary>apero_processing options
 <span class="muted">(blank = use the run file / default)</span></summary>
@@ -883,6 +902,8 @@ Run queued recipes directly from this machine using APERO multiprocessing.
 </div>
 <div class="panelrow"><div class="panel">
 <h2>Run next task(s)</h2>
+<div class="slurm-only-note" hidden>This queue runs everything through
+Slurm - use Batch Script or Chain Batch Script.</div>
 <div class="cli-title">CLI equivalent</div>
 <div class="cli-wrap">
 <textarea id="cli-run" class="cli-box" readonly></textarea>
@@ -1067,7 +1088,9 @@ state(s).</div></td>
 <td><div class="act-name">Reset all data</div>
 <div class="act-desc">Run <code>apero_reset.py</code>: removes reduced
 data, calibrations, databases, logs and the queue (batch templates are
-kept). The GUI reloads itself when it finishes.</div></td>
+kept). The GUI reloads itself when it finishes.
+<span class="slurm-only-note" hidden>Submitted as a Slurm job (template
+<span class="slurm-only-template"></span>).</span></div></td>
 <td>
 <select id="resetdata-part">
 <option value="all">everything</option>
@@ -1840,7 +1863,7 @@ function renderEntries(start, end) {
                     row.state + '</span>';
         var qid = row.group + '/' + row.run;
         var actions = '<td></td>';
-        if (row.state === 'pending') {
+        if (row.state === 'pending' && !slurmOnly) {
             actions = '<td class="row-actions">' +
                 '<select onchange="handleRowAction(this, \'' +
                 qid + '\')">' +
@@ -2233,6 +2256,9 @@ function refreshState() {
         var busy = document.getElementById('busy');
         busy.style.display = data.busy ? 'inline' : 'none';
         setResetBlocked(data.active_action === 'Reset');
+        if (!!data.slurm_only !== slurmOnly) {
+            applySlurmOnly(!!data.slurm_only);
+        }
         // a generate/reset changed files on disk: reload everything
         if (lastDataVersion !== null &&
                 data.data_version !== lastDataVersion) {
@@ -2267,6 +2293,68 @@ function refreshAll() {
     }
     refreshRunfiles();
     refreshTemplateNames();
+    refreshSettings();
+}
+
+// ---------------------------------------------------------------------
+// Queue execution settings (slurm-only mode for login nodes)
+// ---------------------------------------------------------------------
+var slurmOnly = false;
+
+function applySlurmOnly(flag, template) {
+    slurmOnly = flag;
+    document.querySelectorAll('.slurm-only-note').forEach(function (el) {
+        el.hidden = !flag;
+    });
+    if (template) {
+        document.querySelectorAll('.slurm-only-template').forEach(
+            function (el) { el.textContent = template; });
+    }
+    var runButton = document.getElementById('btn-run');
+    runButton.disabled = flag;
+    runButton.title = flag ? 'Disabled: this queue runs through Slurm' : '';
+    document.getElementById('set-slurm-only').checked = flag;
+    // the pending-row "Run single process" action depends on the mode
+    if (typeof render === 'function') { render(); }
+}
+
+function refreshSettings() {
+    apiFetch('/api/settings').then(function (data) {
+        var select = document.getElementById('set-slurm-template');
+        var names = data.templates || [];
+        if (names.indexOf(data.slurm_template) < 0) {
+            names = names.concat([data.slurm_template]);
+        }
+        select.innerHTML = names.map(function (name) {
+            return '<option>' + escapeHtml(name) + '</option>';
+        }).join('');
+        select.value = data.slurm_template;
+        if (!data.sbatch) {
+            document.getElementById('set-note').textContent =
+                'sbatch is not available on this machine - Slurm-only ' +
+                'jobs cannot be submitted from here.';
+        }
+        applySlurmOnly(!!data.slurm_only, data.slurm_template);
+    }).catch(function (err) { console.log(err); });
+}
+
+function saveSettings() {
+    var flag = document.getElementById('set-slurm-only').checked;
+    var template = document.getElementById('set-slurm-template').value;
+    var msg = flag ?
+        'Run every APERO job of this queue through Slurm (template "' +
+        template + '")?' :
+        'Allow APERO jobs of this queue to run on this machine?';
+    if (!confirm(msg)) {
+        document.getElementById('set-slurm-only').checked = slurmOnly;
+        return;
+    }
+    apiPost('/api/settings', {slurm_only: flag, slurm_template: template},
+            function (data) {
+                if (data.error) { alert(data.error); return; }
+                applySlurmOnly(!!data.slurm_only, data.slurm_template);
+                refreshState();
+            });
 }
 
 // ---------------------------------------------------------------------

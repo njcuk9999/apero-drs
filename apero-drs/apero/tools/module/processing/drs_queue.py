@@ -103,6 +103,10 @@ QUEUE_BATCH_TEMPLATE = 'batch_template.yaml'
 QUEUE_BATCH_TEMPLATE_DIR = 'batch_templates'
 # define the template name used when none is given
 QUEUE_DEFAULT_TEMPLATE = 'default'
+# per-queue execution settings (kept by resets, like the batch templates)
+QUEUE_SETTINGS_FILE = 'queue_settings.yaml'
+QUEUE_SETTINGS_DEFAULTS = dict(slurm_only=False,
+                               slurm_template=QUEUE_DEFAULT_TEMPLATE)
 # define the queue group directory name format
 #    {0} = unix time (zero padded so groups sort alphabetically by time)
 #    {1} = group name (zero padded group number + recipe shortname)
@@ -1008,6 +1012,110 @@ def save_template(params: ParamDict, template: Dict[str, Any],
     return template_path
 
 
+def load_queue_settings(params: ParamDict) -> Dict[str, Any]:
+    """
+    Load the queue execution settings (defaults if never saved)
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dict(slurm_only=bool, slurm_template=str)
+    """
+    path = os.path.join(get_queue_path(params), QUEUE_SETTINGS_FILE)
+    settings = dict(QUEUE_SETTINGS_DEFAULTS)
+    if os.path.exists(path):
+        stored = base.load_yaml(path, default=dict())
+        if isinstance(stored, dict):
+            settings.update(stored)
+    settings['slurm_only'] = drs_text.true_text(settings['slurm_only'])
+    settings['slurm_template'] = sanitize_template_name(
+        settings['slurm_template'])
+    return settings
+
+
+def save_queue_settings(params: ParamDict, slurm_only: bool,
+                        slurm_template: Optional[str]) -> Dict[str, Any]:
+    """
+    Save the queue execution settings
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param slurm_only: bool, run every APERO job through Slurm
+    :param slurm_template: str or None, batch template for Slurm jobs
+
+    :return: dict, the saved settings
+    """
+    settings = dict(slurm_only=bool(slurm_only),
+                    slurm_template=sanitize_template_name(slurm_template))
+    os.makedirs(get_queue_path(params), exist_ok=True)
+    path = os.path.join(get_queue_path(params), QUEUE_SETTINGS_FILE)
+    base.write_yaml(settings, path)
+    return settings
+
+
+def local_runs_blocked(params: ParamDict) -> bool:
+    """
+    Whether queue tasks may not run on this machine (slurm-only queue and
+    we are not inside a Slurm job, e.g. on a login node)
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: bool, True if local runs are refused
+    """
+    if 'SLURM_JOB_ID' in os.environ:
+        return False
+    return load_queue_settings(params)['slurm_only']
+
+
+def write_single_job_script(script_path: str, template: Dict[str, Any],
+                            job_name: str, command: str, log_path: str,
+                            rc_path: str) -> None:
+    """
+    Write an sbatch script running one shell command (e.g. apero_reset or
+    apero_processing for a slurm-only queue)
+
+    :param script_path: str, the script path to write
+    :param template: dict, the batch template (header + activation)
+    :param job_name: str, the Slurm job name
+    :param command: str, the shell command to run
+    :param log_path: str, the job output file (stdout and stderr)
+    :param rc_path: str, file the command exit code is written to
+
+    :return: None
+    """
+    template = dict(QUEUE_BATCH_DEFAULTS, **template)
+    lines = ['#!/bin/bash']
+    lines.append('#SBATCH --time={0}'.format(template['time']))
+    lines.append('#SBATCH --nodes={0}'.format(template['nodes']))
+    lines.append('#SBATCH --cpus-per-task={0}'
+                 ''.format(template['cpus_per_task']))
+    lines.append('#SBATCH --mem={0}'.format(template['mem']))
+    if len(str(template['account'])) > 0:
+        lines.append('#SBATCH --account={0}'.format(template['account']))
+    lines.append('#SBATCH --job-name={0}'.format(job_name))
+    lines.append('#SBATCH --output={0}'.format(log_path))
+    if len(str(template['mail_user'])) > 0:
+        lines.append('#SBATCH --mail-user={0}'
+                     ''.format(template['mail_user']))
+        lines.append('#SBATCH --mail-type={0}'
+                     ''.format(template['mail_type']))
+    lines.append('')
+    lines.append('echo "RUNNING: activation scripts"')
+    for act_line in template['activation']:
+        lines.append('echo "{0}"'.format(act_line.replace('"', '\\"')))
+        lines.append(act_line)
+    lines.append('')
+    lines.append('export PYTHONUNBUFFERED=1')
+    # apero_reset refuses to run inside a directory it would reset
+    lines.append('cd "$HOME"')
+    lines.append(command)
+    lines.append('status=$?')
+    # the job vanishes from squeue when done - this keeps its exit code
+    lines.append('echo "$status" > {0}'.format(shlex.quote(rc_path)))
+    lines.append('exit $status')
+    with open(script_path, 'w') as sfile:
+        sfile.write('\n'.join(lines) + '\n')
+    os.chmod(script_path, 0o755)
+
+
 def _listdir(path: str) -> List[str]:
     """
     List a directory, returning nothing if it has just been removed
@@ -1560,6 +1668,13 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
 
     :return: dictionary, combined summary of the queue run
     """
+    if local_runs_blocked(params):
+        # warning: Queue: this queue only runs tasks through Slurm ...
+        message = textentry('10-513-00012')
+        WLOG(params, 'warning', message, sublevel=2)
+        _progress(progress, message)
+        return dict(group=None, n_run=0, n_complete=0, n_failed=0,
+                    n_stopped=0, message=message)
     if cores is None:
         cores = get_queue_cores(params)
     if mpmode is None:

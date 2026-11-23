@@ -55,6 +55,10 @@ QUEUE_ACTIONS: Dict[str, tuple] = dict(
 )
 # actions monitors cannot use unless an admin allows them
 DEFAULT_BLOCKED_ACTIONS = ['reset_data', 'shutdown']
+# queue gui POST routes only admins may ever use (not configurable)
+ADMIN_ONLY_ACTIONS: Dict[str, tuple] = dict(
+    settings=('Queue execution settings (Slurm only)', '#settings-card'),
+)
 # the default queue gui port (drs_queue_gui.GUI_DEFAULT_PORT)
 DEFAULT_REMOTE_PORT = '8090'
 
@@ -221,8 +225,8 @@ def hidden_selectors(blocked: List[str]) -> List[str]:
 
     :return: list of str, css selectors
     """
-    return [QUEUE_ACTIONS[action][1] for action in blocked
-            if action in QUEUE_ACTIONS]
+    actions = dict(QUEUE_ACTIONS, **ADMIN_ONLY_ACTIONS)
+    return [actions[action][1] for action in blocked if action in actions]
 
 
 # =============================================================================

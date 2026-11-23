@@ -600,7 +600,8 @@ def proxy_view(app: Any, name: str, subpath: str = '') -> Any:
     if qdef is None or not PROXY_PATH.match(subpath or ''):
         return _fail('Not found', 404)
     is_admin = PERMISSION in perms
-    blocked = [] if is_admin else qdef['blocked_actions']
+    blocked = [] if is_admin else (list(qdef['blocked_actions'])
+                                   + list(apero_queues.ADMIN_ONLY_ACTIONS))
     data = None
     headers = dict()
     if request.method == 'POST':

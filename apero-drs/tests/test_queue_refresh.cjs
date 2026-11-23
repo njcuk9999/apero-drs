@@ -148,7 +148,8 @@ test('manual refresh updates the active Processes and Stats views', () => {
             })},
         };
         for (const name of ['refreshStatus', 'refreshState', 'refreshProcesses',
-            'refreshStats', 'refreshRunfiles', 'refreshTemplateNames']) {
+            'refreshStats', 'refreshRunfiles', 'refreshTemplateNames',
+            'refreshSettings']) {
             context[name] = () => calls.push(name);
         }
         vm.createContext(context);
