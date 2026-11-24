@@ -47,6 +47,8 @@ PROXY_PATH = re.compile(r'^(|index\.html|api/[a-z_]+)$')
 PROXY_TIMEOUT = 60
 # quick probe timeout (seconds) for the setup page health column
 PROBE_TIMEOUT = 2
+# worker restart request timeout (seconds)
+RESTART_TIMEOUT = 10
 # never route localhost requests through http(s)_proxy environment settings
 _OPENER = urllib.request.build_opener(urllib.request.ProxyHandler(dict()))
 # one reconnect at a time per queue across startup and monitor requests
@@ -129,14 +131,32 @@ def _tunnel_params(app: Any, qdef: dict) -> dict:
     return apero_queues.tunnel_params(qdef, app._resolve_local_data_dir())
 
 
-def _probe_gui(local_port: str) -> bool:
-    """Return True when the queue dashboard answers on the local port."""
+def _probe_gui_detail(local_port: str) -> Tuple[bool, str]:
+    """Probe the queue dashboard and retain the useful failure reason.
+
+    :param local_port: Local SSH-forward port.
+    :return: Whether ``/api/state`` returned 200 plus an error detail.
+    """
     url = 'http://127.0.0.1:{0}/api/state'.format(local_port)
     try:
         with _OPENER.open(url, timeout=PROBE_TIMEOUT) as resp:
-            return resp.status == 200
-    except (urllib.error.URLError, OSError, ValueError):
-        return False
+            if resp.status == 200:
+                return True, ''
+            message = textentry(
+                'APERO_QUEUE_GUI_HTTP_ERROR', args=[resp.status]
+            )
+            return False, str(message)
+    except urllib.error.HTTPError as exc:
+        message = textentry('APERO_QUEUE_GUI_HTTP_ERROR', args=[exc.code])
+        return False, str(message)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        message = textentry('APERO_QUEUE_GUI_PROBE_ERROR', args=[str(exc)])
+        return False, str(message)
+
+
+def _probe_gui(local_port: str) -> bool:
+    """Return True when the queue dashboard answers on the local port."""
+    return _probe_gui_detail(local_port)[0]
 
 
 def queue_status(app: Any, qdef: dict) -> Dict[str, Any]:
@@ -152,8 +172,13 @@ def queue_status(app: Any, qdef: dict) -> Dict[str, Any]:
         status = apero_async.get_db_tunnel_status(_tunnel_params(app, qdef))
     except Exception as exc:
         return dict(active=False, gui_alive=False, error=str(exc))
-    status['gui_alive'] = bool(status.get('local_port_open')) and _probe_gui(
-        qdef['local_port'])
+    if status.get('local_port_open'):
+        gui_alive, gui_error = _probe_gui_detail(qdef['local_port'])
+    else:
+        gui_alive = False
+        gui_error = ''
+    status['gui_alive'] = gui_alive
+    status['gui_error'] = gui_error
     return status
 
 
@@ -223,17 +248,33 @@ def list_queues(app: Any, user: dict) -> Any:
 
 def save_queue(app: Any, user: dict) -> Any:
     """Create or update one definition."""
-    _ = app, user
+    _ = user
     body = _body()
-    name = str(body.get('name', '') or '').strip()
     queues = apero_queues.load_queues()
     qdef = apero_queues.normalize_queue(body)
-    error = apero_queues.validate_queue(name, qdef, queues)
+    previous_name = str(body.get('previous_name', '') or '').strip()
+    profile_named = bool(body.get('profile_name'))
+    if profile_named:
+        name = apero_queues.profile_queue_name(
+            qdef['instrument'], qdef['profile_id'])
+        qdef['label'] = qdef['profile_id']
+    else:
+        name = str(body.get('name', '') or '').strip()
+    if previous_name and previous_name not in queues:
+        return _fail('Queue being edited no longer exists', 404)
+    if name in queues and name != previous_name:
+        return _fail('A queue with this APERO profile name already exists')
+    checked_queues = dict(queues)
+    checked_queues.pop(previous_name, None)
+    error = apero_queues.validate_queue(name, qdef, checked_queues)
     if error:
         return _fail(error)
+    if previous_name and previous_name != name:
+        old_qdef = queues.pop(previous_name)
+        apero_async.close_db_tunnel(_tunnel_params(app, old_qdef))
     queues[name] = qdef
     apero_queues.save_queues(queues)
-    return jsonify(success=True)
+    return jsonify(success=True, name=name)
 
 
 def _named_queue(body: Dict[str, Any]) -> Tuple[str, Optional[dict]]:
@@ -287,6 +328,65 @@ def close_tunnel(app: Any, user: dict) -> Any:
     return jsonify(success=True, message='Queue tunnel closed.')
 
 
+def retry_dashboard(app: Any, user: dict) -> Any:
+    """Ask the queue supervisor to replace an unresponsive GUI worker.
+
+    The public queue server remains reachable on the remote loopback port
+    when its worker dies. Its ``/api/shutdown`` endpoint restarts only that
+    worker, leaving the SSH tunnel and active queue task process unchanged.
+
+    :param app: ARI application.
+    :param user: Authenticated admin user.
+    :return: Flask JSON response.
+    """
+    _ = user
+    _, qdef = _named_queue(_body())
+    if qdef is None:
+        return _fail('Queue not found', 404)
+    status = queue_status(app, qdef)
+    if not status.get('local_port_open'):
+        return _fail(str(textentry('APERO_QUEUE_TUNNEL_REQUIRED')))
+    if status.get('gui_alive'):
+        message = str(textentry('APERO_QUEUE_GUI_ALREADY_ALIVE'))
+        return jsonify(
+            success=True,
+            message=message,
+            status=status,
+        )
+
+    url = 'http://127.0.0.1:{0}/api/shutdown'.format(qdef['local_port'])
+    payload = b'{"restart":true}'
+    proxied = urllib.request.Request(
+        url,
+        data=payload,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+    try:
+        with _OPENER.open(proxied, timeout=RESTART_TIMEOUT) as resp:
+            body = resp.read()
+            response_status = resp.status
+    except urllib.error.HTTPError as exc:
+        body = exc.read()
+        response_status = exc.code
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        message = textentry(
+            'APERO_QUEUE_GUI_SUPERVISOR_ERROR', args=[str(exc)]
+        )
+        return _fail(str(message), 502)
+    if not 200 <= response_status < 300:
+        detail = body.decode('utf-8', errors='replace').strip()
+        message = textentry(
+            'APERO_QUEUE_GUI_RESTART_REJECTED',
+            args=[response_status, detail or 'no response body'],
+        )
+        return _fail(str(message), 502)
+    return jsonify(
+        success=True,
+        message=str(textentry('APERO_QUEUE_GUI_RESTART_REQUESTED')),
+    )
+
+
 def auth_start(app: Any, user: dict) -> Any:
     """Start an interactive (PTY) SSH tunnel for password/2FA prompts."""
     _ = user
@@ -337,6 +437,7 @@ ADMIN_ACTIONS = dict(
     delete=(delete_queue, 'POST'),
     ensure=(ensure_tunnel, 'POST'),
     close=(close_tunnel, 'POST'),
+    retry_dashboard=(retry_dashboard, 'POST'),
     auth_start=(auth_start, 'POST'),
     auth_poll=(auth_poll, 'POST'),
     auth_send=(auth_send, 'POST'),
@@ -384,7 +485,7 @@ def build_monitor_context(app: Any, user_info: Optional[dict],
     for name, qdef in sorted(queues.items()):
         tabs.append(dict(
             name=name,
-            label=qdef['label'] or name,
+            label=qdef['profile_id'] or name,
             instrument=qdef['instrument'],
             profile_id=qdef['profile_id'],
             proxy_url='/monitor_portal/apero_queue/{0}/proxy/'.format(name),
@@ -515,7 +616,8 @@ def proxy_view(app: Any, name: str, subpath: str = '') -> Any:
     if qdef is None or not PROXY_PATH.match(subpath or ''):
         return _fail('Not found', 404)
     is_admin = PERMISSION in perms
-    blocked = [] if is_admin else qdef['blocked_actions']
+    blocked = [] if is_admin else (list(qdef['blocked_actions'])
+                                   + list(apero_queues.ADMIN_ONLY_ACTIONS))
     data = None
     headers = dict()
     if request.method == 'POST':

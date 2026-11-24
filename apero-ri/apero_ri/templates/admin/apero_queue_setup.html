@@ -6,6 +6,7 @@
 <style>
 .aqs-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr;
             margin-bottom: 10px; }
+.aqs-profile-help { grid-column: 1 / -1; }
 .aqs-card { border: 1px solid var(--ari-border); border-radius: 8px;
             padding: 10px; display: grid; gap: 8px;
             background: var(--ari-card-bg); }
@@ -48,8 +49,6 @@
     .aqs-actions .ari-btn { min-height: 44px; }
 }
 </style>
-
-<div class="ari-up-shell sm-shell">
     <div class="ari-page-header">
         <h1><i class="fa-solid fa-list-check"></i> APERO Queue Setup</h1>
     </div>
@@ -72,12 +71,12 @@
             <div style="font-size:0.88em; line-height:1.5; display:grid; gap:6px;">
                 <div>
                     <strong>Quick setup checklist:</strong>
-                    1) On the cluster start the dashboard, e.g.
-                    <code>apero_queue.py gui --port 8090</code> (it listens
-                    on localhost only).
-                    2) Fill in the SSH config host of the <em>same login
-                    node</em> (use a node-specific alias, not a round-robin
-                    one), the remote port and a free local port.
+                    1) Establish the SSH master and open its interactive
+                    shell, then start the dashboard <em>inside that same
+                    shell</em>. This pins the queue to the login node used
+                    by the master.
+                    2) Fill in that SSH config host, the remote port and a
+                    free local port.
                     3) Link the queue to an APERO profile - monitors who can
                     access that profile will see the queue.
                     4) Save, then click <strong>Start / Verify Tunnel</strong>
@@ -85,8 +84,17 @@
                     prompts).
                 </div>
                 <div>
+                    {{ _('The Slurm-only setting is in the queue dashboard Run tab, not a startup argument. Enable it there to submit Generate and Reset jobs through Slurm and disable local Run.') }}
+                </div>
+                <div>
                     <strong>Equivalent command:</strong>
                     <code>ssh -L LOCAL_PORT:localhost:REMOTE_PORT SSH_HOST</code>
+                </div>
+                <div>
+                    {{ _('Alliance / Duo aliases: choose Simple / docs-style so SSH can reuse the authenticated ControlMaster. APERO-managed mode creates a separate control socket and its batch-mode SSH cannot answer a new Duo prompt. Authenticate interactively once, then use Start / Verify Tunnel.') }}
+                </div>
+                <div>
+                    {{ _('If the tunnel is active but the dashboard is not answering, Retry Dashboard restarts the queue GUI worker without restarting SSH or active queue tasks. It works while the remote queue supervisor is still listening.') }}
                 </div>
                 <div>
                     <strong>Monitor restrictions:</strong> users with this
@@ -98,22 +106,42 @@
 
         <div class="aqs-grid">
             <div class="ari-ae-field">
-                <label class="ari-ae-label" for="aqsName">Queue name (id)</label>
-                <input id="aqsName" class="ari-ap-input" placeholder="e.g. spirou_narval">
-            </div>
-            <div class="ari-ae-field">
-                <label class="ari-ae-label" for="aqsLabel">Tab label</label>
-                <input id="aqsLabel" class="ari-ap-input" placeholder="e.g. SPIROU (narval)">
-            </div>
-            <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsProfile">Linked APERO profile</label>
                 <select id="aqsProfile" class="ari-ap-input"></select>
+            </div>
+            <div class="aqs-help aqs-profile-help">
+                The linked instrument/profile supplies the queue name and
+                monitor-card label.
             </div>
             <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsSshHost">SSH config host</label>
                 <input id="aqsSshHost" class="ari-ap-input" list="aqsSshHostList"
                        placeholder="Select or type SSH config host alias">
                 <datalist id="aqsSshHostList"></datalist>
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label">
+                    {{ _('SSH network mode') }}
+                </label>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <label style="display:flex; gap:6px;
+                                  align-items:center;">
+                        <input type="radio" name="aqsNetworkMode"
+                               value="standard" checked
+                               onchange="aqsUpdateNetworkMode()">
+                        {{ _('Standard SSH') }}
+                    </label>
+                    <label style="display:flex; gap:6px;
+                                  align-items:center;">
+                        <input type="radio" name="aqsNetworkMode"
+                               value="alliance"
+                               onchange="aqsUpdateNetworkMode()">
+                        {{ _('Alliance network [Duo]') }}
+                    </label>
+                </div>
+                <div class="aqs-help">
+                    {{ _('Alliance mode reuses an authenticated ControlMaster and forces simple SSH tunneling.') }}
+                </div>
             </div>
             <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsRemoteHost">Queue dashboard host (as seen by the SSH machine)</label>
@@ -147,6 +175,20 @@
             <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsNotes">Notes</label>
                 <input id="aqsNotes" class="ari-ap-input" placeholder="Optional notes">
+            </div>
+            <div class="ari-ae-field" id="aqsPreGuiCommandsField"
+                 style="display:none; grid-column:1 / -1;">
+                <label class="ari-ae-label" for="aqsPreGuiCommands">
+                    {{ _('Commands before apero_queue GUI') }}
+                </label>
+                <textarea id="aqsPreGuiCommands"
+                          class="ari-ap-input"
+                          rows="6"
+                          placeholder="source ~/path/to/setup.sh&#10;module load ..."
+                          aria-describedby="aqsPreGuiCommandsHelp"></textarea>
+                <div id="aqsPreGuiCommandsHelp" class="aqs-help">
+                    {{ _('One shell command per line. These commands are copied into the setup shell after hostname and before apero_queue.py gui.') }}
+                </div>
             </div>
             <div class="ari-ae-field" style="display:flex; align-items:end;">
                 <label class="ari-ae-label" style="display:flex; gap:8px; align-items:center; margin:0;">
@@ -211,13 +253,47 @@
 </div>
 
 <script>
+window.ARI_DOC_STEP_HELP = {
+    url: {{ url_for(
+        'doc_dynamic_view',
+        page_ref='ari_guide/admin_portal/queue_setup'
+    )|tojson }},
+    groups: [
+        {
+            selector: '#aqsPreGuiCommandsField label, ' +
+                      '.aqs-grid label.ari-ae-label, ' +
+                      '.ari-ae-field > label.ari-ae-label',
+            anchor: 'what-it-does'
+        },
+        {
+            selector: '.ari-page-header h1, ' +
+                      '.ari-ae-section-title',
+            anchor: 'what-it-does'
+        }
+    ],
+    fieldAnchors: {
+        aqsProfile: 'what-it-does',
+        aqsSshHost: 'why-the-queue-needs-a-special-connection',
+        aqsRemoteHost: 'why-the-queue-needs-a-special-connection',
+        aqsRemotePort: 'standard-ssh-mode',
+        aqsLocalPort: 'standard-ssh-mode',
+        aqsSshMode: 'tunnel-modes',
+        aqsNotes: 'what-it-does',
+        aqsPreGuiCommands: 'pre-gui-commands'
+    }
+};
 const AQS_API = {{ url_for('api_apero_queue_admin', action='ACTION')|tojson }};
+const AQS_RETRY_LABEL = {{ _('Retry Dashboard')|tojson }};
+const AQS_RETRY_BUSY = {{
+    _('Requesting queue dashboard worker restart...')|tojson
+}};
 let aqsRows = [];
 let aqsActions = [];
 let aqsDefaultBlocked = [];
 let aqsToken = null;
 let aqsPoll = null;
 let aqsAuthName = '';
+let aqsEditingName = '';
 
 function aqsUrl(action) { return AQS_API.replace('ACTION', action); }
 
@@ -280,6 +356,20 @@ function aqsRenderHosts(hosts) {
     });
 }
 
+function aqsUpdateNetworkMode() {
+    const selected = document.querySelector(
+        'input[name="aqsNetworkMode"]:checked'
+    );
+    const alliance = selected && selected.value === 'alliance';
+    const preCommands = document.getElementById('aqsPreGuiCommandsField');
+    const sshMode = document.getElementById('aqsSshMode');
+    if (preCommands) preCommands.style.display = alliance ? '' : 'none';
+    if (sshMode) {
+        sshMode.disabled = !!alliance;
+        if (alliance) sshMode.value = 'simple';
+    }
+}
+
 function aqsStatusHtml(row) {
     const def = row.definition || {};
     const st = row.status || {};
@@ -311,16 +401,17 @@ function aqsRenderRows() {
         card.className = 'aqs-card';
         card.innerHTML = `
             <div class="aqs-card-title">
-                <span>${aqsEsc(def.label || row.name)}</span>
-                <span class="aqs-detail">(${aqsEsc(row.name)})</span>
+                <span>${aqsEsc(def.instrument)} / ${aqsEsc(def.profile_id)}</span>
                 ${aqsStatusHtml(row)}
             </div>
             <div class="aqs-detail">
                 <div><strong>Profile:</strong> ${aqsEsc(def.instrument)} / ${aqsEsc(def.profile_id)}</div>
-                <div><strong>Tunnel:</strong> ${aqsEsc(def.local_port)} &rarr; ${aqsEsc(def.remote_host)}:${aqsEsc(def.remote_port)} via ${aqsEsc(def.ssh_config_host)} (${def.ssh_mode === 'simple' ? 'Simple / docs-style' : 'APERO-managed'})</div>
+                <div><strong>Network:</strong> ${def.network_mode === 'alliance' ? 'Alliance [Duo]' : 'Standard SSH'}</div>
+                <div><strong>Tunnel:</strong> ${aqsEsc(def.local_port)} &rarr; ${aqsEsc(def.remote_host)}:${aqsEsc(def.remote_port)} via ${aqsEsc(def.ssh_config_host)} (${def.ssh_mode === 'simple' || def.network_mode === 'alliance' ? 'Simple / docs-style' : 'APERO-managed'})</div>
                 <div><strong>Blocked for monitors:</strong> ${blocked.length ? aqsEsc(blocked.join(', ')) : 'none'}</div>
                 ${def.notes ? `<div><strong>Notes:</strong> ${aqsEsc(def.notes)}</div>` : ''}
                 ${(row.status || {}).error ? `<div class="aqs-bad">${aqsEsc(row.status.error)}</div>` : ''}
+                ${(row.status || {}).gui_error ? `<div class="aqs-warn">${aqsEsc(row.status.gui_error)}</div>` : ''}
             </div>
             <div class="aqs-actions">
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -328,6 +419,9 @@ function aqsRenderRows() {
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsInteractive(${index})"><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsShowCommand(${index})"><i class="fa-solid fa-copy"></i> Copy Command</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsClose(${index})"><i class="fa-solid fa-power-off"></i> Close</button>
+                ${(row.status || {}).local_port_open && !(row.status || {}).gui_alive
+                    ? `<button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsRetryDashboard(${index})"><i class="fa-solid fa-rotate"></i> ${aqsEsc(AQS_RETRY_LABEL)}</button>`
+                    : ''}
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" type="button" onclick="aqsDelete(${index})"><i class="fa-solid fa-trash"></i> Delete</button>
             </div>
         `;
@@ -355,19 +449,36 @@ async function aqsRefresh() {
 
 function aqsPayload() {
     const prof = String(document.getElementById('aqsProfile').value || '').split('|');
+    const instrument = prof[0] || '';
+    const profileId = prof[1] || '';
+    const profileName = (instrument + '_' + profileId)
+        .replace(/[^A-Za-z0-9_-]/g, '_').replace(/^_+|_+$/g, '');
     const blocked = Array.from(
         document.querySelectorAll('#aqsBlocked input:checked')).map((el) => el.value);
     const val = (id) => String(document.getElementById(id).value || '').trim();
+    const selectedNetwork = document.querySelector(
+        'input[name="aqsNetworkMode"]:checked'
+    );
+    const preGuiCommands = val('aqsPreGuiCommands')
+        .split(/\r?\n/)
+        .map((command) => command.trim())
+        .filter(Boolean);
     return {
-        name: val('aqsName'),
-        label: val('aqsLabel'),
-        instrument: prof[0] || '',
-        profile_id: prof[1] || '',
+        name: profileName,
+        label: profileId,
+        profile_name: true,
+        previous_name: aqsEditingName,
+        instrument: instrument,
+        profile_id: profileId,
         ssh_config_host: val('aqsSshHost'),
         remote_host: val('aqsRemoteHost'),
         remote_port: val('aqsRemotePort'),
         local_port: val('aqsLocalPort'),
         ssh_mode: val('aqsSshMode') || 'apero',
+        network_mode: selectedNetwork
+            ? selectedNetwork.value
+            : 'standard',
+        pre_gui_commands: preGuiCommands,
         enabled: !!document.getElementById('aqsEnabled').checked,
         blocked_actions: blocked,
         notes: val('aqsNotes'),
@@ -375,13 +486,20 @@ function aqsPayload() {
 }
 
 function aqsResetForm() {
-    ['aqsName', 'aqsLabel', 'aqsSshHost', 'aqsLocalPort', 'aqsNotes']
+    aqsEditingName = '';
+    ['aqsSshHost', 'aqsLocalPort', 'aqsNotes']
         .forEach((id) => { document.getElementById(id).value = ''; });
     document.getElementById('aqsProfile').value = '';
     document.getElementById('aqsRemoteHost').value = 'localhost';
     document.getElementById('aqsRemotePort').value = '8090';
     document.getElementById('aqsSshMode').value = 'apero';
+    document.getElementById('aqsPreGuiCommands').value = '';
+    const standard = document.querySelector(
+        'input[name="aqsNetworkMode"][value="standard"]'
+    );
+    if (standard) standard.checked = true;
     document.getElementById('aqsEnabled').checked = true;
+    aqsUpdateNetworkMode();
     aqsRenderBlocked(aqsDefaultBlocked);
 }
 
@@ -389,25 +507,34 @@ function aqsEdit(index) {
     const row = aqsRows[index];
     if (!row) return;
     const def = row.definition || {};
-    document.getElementById('aqsName').value = row.name || '';
-    document.getElementById('aqsLabel').value = def.label || '';
+    aqsEditingName = row.name || '';
     document.getElementById('aqsProfile').value = (def.instrument || '') + '|' + (def.profile_id || '');
     document.getElementById('aqsSshHost').value = def.ssh_config_host || '';
     document.getElementById('aqsRemoteHost').value = def.remote_host || 'localhost';
     document.getElementById('aqsRemotePort').value = def.remote_port || '8090';
     document.getElementById('aqsLocalPort').value = def.local_port || '';
     document.getElementById('aqsSshMode').value = def.ssh_mode || 'apero';
+    document.getElementById('aqsPreGuiCommands').value = (
+        def.pre_gui_commands || []
+    ).join('\n');
+    const networkMode = def.network_mode || 'standard';
+    const network = document.querySelector(
+        `input[name="aqsNetworkMode"][value="${networkMode}"]`
+    );
+    if (network) network.checked = true;
     document.getElementById('aqsEnabled').checked = def.enabled !== false;
     document.getElementById('aqsNotes').value = def.notes || '';
     aqsRenderBlocked(def.blocked_actions || []);
-    document.getElementById('aqsName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    aqsUpdateNetworkMode();
+    document.getElementById('aqsProfile').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function aqsSave() {
     try {
         const data = await aqsPost('save', aqsPayload());
         if (!data.success) { aqsMsg(data.error || 'Failed to save queue.', false); return; }
-        aqsMsg('APERO queue saved.', true);
+        aqsEditingName = data.name || '';
+        aqsMsg('APERO queue saved as ' + aqsEditingName + '.', true);
         await aqsRefresh();
     } catch (err) {
         aqsMsg('Failed to save queue: ' + err.message, false);
@@ -429,6 +556,13 @@ async function aqsSimple(action, index, busyText, confirmText) {
 }
 
 function aqsEnsure(index) { aqsSimple('ensure', index, 'Starting or verifying queue tunnel...'); }
+function aqsRetryDashboard(index) {
+    aqsSimple(
+        'retry_dashboard',
+        index,
+        AQS_RETRY_BUSY
+    );
+}
 function aqsClose(index) { aqsSimple('close', index, 'Closing queue tunnel...'); }
 function aqsDelete(index) {
     aqsSimple('delete', index, 'Deleting queue...', 'Delete APERO queue "NAME"?');
@@ -437,19 +571,66 @@ function aqsDelete(index) {
 function aqsShowCommand(index) {
     const def = (aqsRows[index] || {}).definition || {};
     const fwd = def.local_port + ':' + def.remote_host + ':' + def.remote_port;
-    const lines = [
-        '# On the cluster (same login node as the SSH host):',
-        'apero_queue.py gui --port ' + def.remote_port,
+    const alliance = def.network_mode === 'alliance';
+    const lines = alliance ? [
+        '############################################################################',
+        '# TERMINAL 1 - LOCAL ARI HOST',
+        '# Establish or verify the Duo-authenticated ControlMaster.',
+        '############################################################################',
+        'ssh -O check ' + def.ssh_config_host
+            + ' || ssh -fN ' + def.ssh_config_host,
         '',
-        '# Tunnel (foreground):',
+        '############################################################################',
+        '# TERMINAL 2 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# This terminal becomes the remote shell and must stay open while',
+        '# apero_queue.py is running.',
+        '############################################################################',
+        'ssh ' + def.ssh_config_host,
+        '',
+        '# Now run these commands in Terminal 2, on the remote login node:',
+        'hostname',
+    ] : [
+        '############################################################################',
+        '# TERMINAL 1 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# This terminal becomes the remote shell and must stay open.',
+        '############################################################################',
+        'ssh ' + def.ssh_config_host,
+        '',
+        '# Now run these commands in Terminal 1, on the remote host:',
+        'hostname',
+    ];
+    (alliance ? (def.pre_gui_commands || []) : []).forEach((command) => {
+        lines.push(command);
+    });
+    lines.push(
+        '',
+        'apero_queue.py gui --headless --port ' + def.remote_port,
+        '',
+        '############################################################################',
+        '# TERMINAL 3 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# Do not enter these commands in the terminal running the GUI.',
+        '############################################################################',
+        '# Confirm the SSH connection uses the queue login node:',
+        'ssh ' + def.ssh_config_host + ' hostname',
+        '',
+        '# Verify the dashboard on that exact remote login node:',
+        'ssh ' + def.ssh_config_host
+            + " 'curl -s http://127.0.0.1:"
+            + def.remote_port + "/api/state'",
+        '',
+        '############################################################################',
+        '# TERMINAL 4 - NEW LOCAL TERMINAL ON THE ARI HOST',
+        '# Choose ONE tunnel command. It runs locally, not on the cluster.',
+        '############################################################################',
+        '# Foreground tunnel (keep this terminal open):',
         'ssh -N -L ' + fwd + ' ' + def.ssh_config_host,
         '',
-        '# Tunnel (background):',
+        '# OR background tunnel (returns to this local terminal):',
         'ssh -f -N -o ExitOnForwardFailure=yes -L ' + fwd + ' ' + def.ssh_config_host,
         '',
-        '# Verify the dashboard answers locally:',
-        'curl -s http://127.0.0.1:' + def.local_port + '/api/state',
-    ];
+        '# Verify from any local terminal on the ARI host:',
+        'curl -s http://127.0.0.1:' + def.local_port + '/api/state'
+    );
     document.getElementById('aqsCmdText').value = lines.join('\n');
     document.getElementById('aqsCmdOverlay').style.display = 'flex';
 }
@@ -525,6 +706,7 @@ async function aqsInteractive(index) {
     cmdOverlay.addEventListener('click', (e) => {
         if (e.target === cmdOverlay) cmdOverlay.style.display = 'none';
     });
+    aqsUpdateNetworkMode();
     aqsRefresh();
     setInterval(aqsRefresh, 15000);
 })();

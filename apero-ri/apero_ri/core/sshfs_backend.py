@@ -112,6 +112,16 @@ def _normalize_connection_mode(value: str) -> str:
     return mode if mode in {"direct", "ssh_config_host"} else "direct"
 
 
+def _normalize_network_mode(value: Any) -> str:
+    """Normalize the SSH network mode to a supported value.
+
+    :param value: Requested network mode.
+    :return: ``standard`` or ``alliance``.
+    """
+    mode = str(value or "standard").strip().lower()
+    return mode if mode in {"standard", "alliance"} else "standard"
+
+
 def _normalize_bool(value: Any) -> bool:
     """Normalize bool-like values from JSON/YAML payloads."""
     if isinstance(value, bool):
@@ -126,6 +136,8 @@ def _resolve_connection_target(mount_config: Dict[str, Any]) -> Dict[str, str]:
     mode = _normalize_connection_mode(
         mount_config.get("connection_mode", "direct")
     )
+    if _normalize_network_mode(mount_config.get("network_mode")) == "alliance":
+        mode = "ssh_config_host"
     remote_path = str(mount_config.get("remote_path") or "").strip()
 
     if mode == "ssh_config_host":
@@ -163,6 +175,22 @@ def _build_sshfs_mount_command(
     if not remote_target:
         raise ValueError("Mount target is incomplete.")
 
+    network_mode = _normalize_network_mode(mount.get("network_mode"))
+    if network_mode == "alliance":
+        return [
+            "sshfs",
+            "-o",
+            "reconnect",
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "ServerAliveInterval=30",
+            "-o",
+            "ServerAliveCountMax=6",
+            remote_target,
+            str(local_mount),
+        ]
+
     return [
         "sshfs",
         "-o",
@@ -176,6 +204,92 @@ def _build_sshfs_mount_command(
         remote_target,
         str(local_mount),
     ]
+
+
+def _build_alliance_master_commands(
+    mount: Dict[str, Any],
+) -> Dict[str, str]:
+    """Build ControlMaster commands for an Alliance mount.
+
+    :param mount: Stored SSHFS mount configuration.
+    :return: Shell-escaped check and initialize commands.
+    """
+    alias = str(mount.get("ssh_config_host") or "").strip()
+    if not alias:
+        raise ValueError("Alliance mounts require an SSH config host.")
+    check_cmd = ["ssh", "-O", "check", alias]
+    start_cmd = ["ssh", "-fN", alias]
+    return {
+        "check": shlex.join(check_cmd),
+        "start": shlex.join(start_cmd),
+    }
+
+
+def _build_alliance_ssh_config(
+    mount: Dict[str, Any], key_path: Path
+) -> str:
+    """Build the recommended SSH config block for an Alliance mount.
+
+    :param mount: Stored SSHFS mount configuration.
+    :param key_path: Absolute path to the selected private key.
+    :return: An OpenSSH host configuration block.
+    """
+    alias = str(mount.get("ssh_config_host") or "").strip()
+    host = str(mount.get("remote_host") or "").strip()
+    user = str(mount.get("remote_user") or "").strip()
+    if not alias or not host or not user:
+        raise ValueError("Alliance SSH config is incomplete.")
+    lines = [
+        f"Host {alias}",
+        f"    HostName {host}",
+        f"    User {user}",
+        f"    IdentityFile {key_path}",
+        "    IdentitiesOnly yes",
+        "    ControlMaster auto",
+        "    ControlPath ~/.ssh/cm-%r@%h:%p",
+        "    ControlPersist 12h",
+        "    ServerAliveInterval 30",
+        "    ServerAliveCountMax 6",
+        "    StrictHostKeyChecking accept-new",
+    ]
+    return "\n".join(lines)
+
+
+def _build_mount_command_text(
+    mount: Dict[str, Any], key_path: Path, local_mount: Path
+) -> str:
+    """Build copy-ready mount commands for the selected network mode.
+
+    :param mount: Stored SSHFS mount configuration.
+    :param key_path: Absolute path to the selected private key.
+    :param local_mount: Local mountpoint.
+    :return: Shell commands ready to paste into a terminal.
+    """
+    sshfs_cmd = _build_sshfs_mount_command(mount, key_path, local_mount)
+    mount_text = shlex.join(sshfs_cmd)
+    if _normalize_network_mode(mount.get("network_mode")) != "alliance":
+        return mount_text
+
+    master = _build_alliance_master_commands(mount)
+    mount_path = shlex.quote(str(local_mount))
+    remote_user = str(mount.get("remote_user") or "").strip()
+    remote_host = str(mount.get("remote_host") or "").strip()
+    socket_path = Path.home() / ".ssh"
+    socket_path = socket_path / f"cm-{remote_user}@{remote_host}:22"
+    socket_text = shlex.quote(str(socket_path))
+    lines = [
+        f"mkdir -p {mount_path}",
+        f'if ! {master["check"]} 2>/dev/null; then',
+        f"    ssh -O exit {shlex.quote(str(mount.get('ssh_config_host')))} "
+        "2>/dev/null || true",
+        f"    rm -f {socket_text}",
+        f"    {master['start']}",
+        "fi",
+        f"if ! mountpoint -q {mount_path}; then",
+        f"    {mount_text}",
+        "fi",
+    ]
+    return "\n".join(lines)
 
 
 def _throttle_ssh_target(
@@ -384,9 +498,13 @@ def delete_ssh_key(key_name: str) -> Dict[str, Any]:
 # -------------------------------------------------------------------------
 def add_mount(mount_config: Dict[str, Any]) -> Dict[str, Any]:
     """Add a new SSHFS mount configuration."""
+    network_mode = _normalize_network_mode(mount_config.get("network_mode"))
+    mount_config["network_mode"] = network_mode
     connection_mode = _normalize_connection_mode(
         mount_config.get("connection_mode", "direct")
     )
+    if network_mode == "alliance":
+        connection_mode = "ssh_config_host"
     mount_config["connection_mode"] = connection_mode
     # UI policy: mounting is command-only (never executed inside the UI).
     mount_config["manual_mode"] = True
@@ -402,8 +520,20 @@ def add_mount(mount_config: Dict[str, Any]) -> Dict[str, Any]:
                 "ok": False,
                 "error": "Missing required field: ssh_config_host",
             }
-        mount_config["remote_user"] = ""
-        mount_config["remote_host"] = ""
+        if network_mode == "alliance":
+            if not mount_config.get("remote_host"):
+                return {
+                    "ok": False,
+                    "error": "Missing required field: remote_host",
+                }
+            if not mount_config.get("remote_user"):
+                return {
+                    "ok": False,
+                    "error": "Missing required field: remote_user",
+                }
+        else:
+            mount_config["remote_user"] = ""
+            mount_config["remote_host"] = ""
     else:
         if not mount_config.get("remote_host"):
             return {"ok": False, "error": "Missing required field: remote_host"}
@@ -489,9 +619,13 @@ def update_mount(
     if not original_name:
         return {"ok": False, "error": "Original mount name is required."}
 
+    network_mode = _normalize_network_mode(mount_config.get("network_mode"))
+    mount_config["network_mode"] = network_mode
     connection_mode = _normalize_connection_mode(
         mount_config.get("connection_mode", "direct")
     )
+    if network_mode == "alliance":
+        connection_mode = "ssh_config_host"
     mount_config["connection_mode"] = connection_mode
     # UI policy: mounting is command-only (never executed inside the UI).
     mount_config["manual_mode"] = True
@@ -507,8 +641,20 @@ def update_mount(
                 "ok": False,
                 "error": "Missing required field: ssh_config_host",
             }
-        mount_config["remote_user"] = ""
-        mount_config["remote_host"] = ""
+        if network_mode == "alliance":
+            if not mount_config.get("remote_host"):
+                return {
+                    "ok": False,
+                    "error": "Missing required field: remote_host",
+                }
+            if not mount_config.get("remote_user"):
+                return {
+                    "ok": False,
+                    "error": "Missing required field: remote_user",
+                }
+        else:
+            mount_config["remote_user"] = ""
+            mount_config["remote_host"] = ""
     else:
         if not mount_config.get("remote_host"):
             return {"ok": False, "error": "Missing required field: remote_host"}
@@ -659,8 +805,7 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
         local_mount = Path(mount.get("local_mount", ""))
         _prepare_mount_dir(local_mount, log)
 
-        manual_cmd = _build_sshfs_mount_command(mount, key_path, local_mount)
-        cmd_text = shlex.join(manual_cmd)
+        cmd_text = _build_mount_command_text(mount, key_path, local_mount)
         log.append("Command-only mode enabled; mount command was not executed.")
         log.append(f"Run manually: {cmd_text}")
         save_mount_log(mount_name, log, source="mount")
@@ -1009,17 +1154,34 @@ def get_mounts_status() -> Dict[str, Any]:
             mount_cmd = ""
             if key_name and key_path.exists():
                 try:
-                    cmd = _build_sshfs_mount_command(
+                    mount_cmd = _build_mount_command_text(
                         mount,
                         key_path,
                         Path(str(mount.get("local_mount") or "")),
                     )
-                    mount_cmd = shlex.join(cmd)
+                    master_commands = dict()
+                    ssh_config = ""
+                    if (
+                        _normalize_network_mode(mount.get("network_mode"))
+                        == "alliance"
+                    ):
+                        master_commands = _build_alliance_master_commands(mount)
+                        ssh_config = _build_alliance_ssh_config(
+                            mount, key_path
+                        )
                 except Exception:
                     mount_cmd = ""
+                    master_commands = dict()
+                    ssh_config = ""
+            else:
+                master_commands = dict()
+                ssh_config = ""
             mounts.append(
                 {
                     "name": mount.get("name"),
+                    "network_mode": _normalize_network_mode(
+                        mount.get("network_mode", "standard")
+                    ),
                     "connection_mode": _normalize_connection_mode(
                         mount.get("connection_mode", "direct")
                     ),
@@ -1032,6 +1194,8 @@ def get_mounts_status() -> Dict[str, Any]:
                     "remote_user": mount.get("remote_user", "root"),
                     "display_target": target_info.get("display_target", ""),
                     "mount_command": mount_cmd,
+                    "master_commands": master_commands,
+                    "ssh_config": ssh_config,
                     "status": status,
                 }
             )
@@ -1048,9 +1212,23 @@ def test_ssh_connection(
     ssh_config_host: str,
     remote_path: str,
     ssh_key_name: str,
+    network_mode: str = "standard",
 ) -> Dict[str, Any]:
-    """Validate SSH auth and optional remote-path accessibility."""
+    """Validate SSH auth and optional remote-path accessibility.
+
+    :param connection_mode: Direct or SSH-config host connection mode.
+    :param remote_host: Remote hostname for a direct connection.
+    :param remote_user: Remote account name.
+    :param ssh_config_host: Host alias read from ``~/.ssh/config``.
+    :param remote_path: Remote directory to validate.
+    :param ssh_key_name: Name of a stored private key.
+    :param network_mode: Standard SSH or Alliance Duo mode.
+    :return: Status mapping describing the connection test.
+    """
+    network_mode = _normalize_network_mode(network_mode)
     connection_mode = _normalize_connection_mode(connection_mode)
+    if network_mode == "alliance":
+        connection_mode = "ssh_config_host"
     remote_host = str(remote_host or "").strip()
     remote_user = str(remote_user or "").strip() or "root"
     ssh_config_host = str(ssh_config_host or "").strip()
@@ -1087,6 +1265,22 @@ def test_ssh_connection(
     throttle_error = _throttle_ssh_target(target, action="test connection")
     if throttle_error:
         return {"ok": False, "error": throttle_error}
+
+    if network_mode == "alliance":
+        master_check = subprocess.run(
+            ["ssh", "-O", "check", target],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+        if master_check.returncode != 0:
+            return {
+                "ok": False,
+                "error": (
+                    "Alliance ControlMaster is not active. Use Test SSH "
+                    "(interactive) to complete Duo authentication first."
+                ),
+            }
 
     base_ssh_cmd = [
         "ssh",

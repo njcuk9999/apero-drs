@@ -471,6 +471,17 @@ Backup Settings:
 Bad Request:
   ES: Solicitud incorrecta
   FR: Requête invalide
+'Alliance / Duo aliases: choose Simple / docs-style so SSH can reuse the authenticated ControlMaster. APERO-managed mode creates a separate control socket and its batch-mode SSH cannot answer a new Duo prompt. Authenticate interactively once, then use Start / Verify Tunnel.':
+  ES: Alias Alliance / Duo; elija Simple / docs-style para que SSH reutilice
+    el ControlMaster autenticado. El modo administrado por APERO crea un
+    socket de control distinto y su SSH por lotes no puede responder una
+    nueva solicitud Duo. Autentíquese una vez de forma interactiva y luego
+    use Iniciar / Verificar túnel.
+  FR: Alias Alliance / Duo ; choisissez Simple / docs-style afin que SSH
+    réutilise le ControlMaster authentifié. Le mode géré par APERO crée un
+    socket de contrôle séparé et son SSH par lots ne peut pas répondre à
+    une nouvelle demande Duo. Authentifiez-vous une fois de manière
+    interactive, puis utilisez Démarrer / Vérifier le tunnel.
 Become a Monitor:
   ES: Hacerse monitor
   FR: Devenir moniteur
@@ -510,6 +521,63 @@ Configure outbound email service for alerts and notifications. Test your setting
 Confirm New Password:
   ES: Confirmar la nueva contraseña
   FR: Confirmer le nouveau mot de passe
+Dashboard worker restart requested. The page will refresh health status automatically.:
+  ES: Se solicitó reiniciar el proceso del panel. La página actualizará
+    automáticamente su estado.
+  FR: Redémarrage du processus du tableau de bord demandé. La page
+    actualisera automatiquement son état.
+If the tunnel is active but the dashboard is not answering, Retry Dashboard restarts the queue GUI worker without restarting SSH or active queue tasks. It works while the remote queue supervisor is still listening.:
+  ES: Si el túnel está activo pero el panel no responde, Reintentar panel
+    reinicia el proceso de la interfaz de cola sin reiniciar SSH ni las
+    tareas activas. Funciona mientras el supervisor remoto siga escuchando.
+  FR: Si le tunnel est actif mais que le tableau de bord ne répond pas,
+    Réessayer le tableau de bord redémarre le processus de l'interface de
+    file sans redémarrer SSH ni les tâches actives. Cela fonctionne tant que
+    le superviseur distant écoute.
+Requesting queue dashboard worker restart...:
+  ES: Solicitando el reinicio del proceso del panel...
+  FR: Demande de redémarrage du processus du tableau de bord...
+Retry Dashboard:
+  ES: Reintentar panel
+  FR: Réessayer le tableau de bord
+SSHFS guide:
+  ES: Guía de SSHFS
+  FR: Guide SSHFS
+Database setup guide:
+  ES: Guía de configuración de base de datos
+  FR: Guide de configuration de la base de données
+APERO Queue setup guide:
+  ES: Guía de configuración de la cola APERO
+  FR: Guide de configuration de la file APERO
+Admin Portal guide:
+  ES: Guía del portal de administración
+  FR: Guide du portail d'administration
+Close overlay:
+  ES: Cerrar ventana
+  FR: Fermer la fenêtre
+SSH network mode:
+  ES: Modo de red SSH
+  FR: Mode réseau SSH
+Standard SSH:
+  ES: SSH estándar
+  FR: SSH standard
+Alliance network [Duo]:
+  ES: Red Alliance [Duo]
+  FR: Réseau Alliance [Duo]
+'Alliance mode reuses an authenticated ControlMaster and forces simple SSH tunneling.':
+  ES: El modo Alliance reutiliza un ControlMaster autenticado y fuerza un
+    túnel SSH simple.
+  FR: Le mode Alliance réutilise un ControlMaster authentifié et impose le
+    mode de tunnel SSH simple.
+Commands before apero_queue GUI:
+  ES: Comandos antes de la interfaz apero_queue
+  FR: Commandes avant l'interface apero_queue
+'One shell command per line. These commands are copied into the setup shell after hostname and before apero_queue.py gui.':
+  ES: Un comando de shell por línea. Estos comandos se copian en la
+    terminal de configuración después de hostname y antes de
+    apero_queue.py gui.
+  FR: Une commande shell par ligne. Ces commandes sont copiées dans le
+    shell de configuration après hostname et avant apero_queue.py gui.
 ? Connect ARI to running {c0} dashboards through SSH tunnels. Each queue is linked
   to an APERO profile; monitors who can access that profile see it on the Monitor
   Portal APERO Queue page, apart from the actions you block for monitors.

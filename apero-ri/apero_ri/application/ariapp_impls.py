@@ -3367,6 +3367,7 @@ def ariapp_api_admin_sshfs_mounts_add(self: Any) -> Any:
 
     data = request.get_json() or {}
     mount_config = {
+        "network_mode": data.get("network_mode", "standard").strip(),
         "connection_mode": data.get("connection_mode", "direct").strip(),
         "ssh_config_host": data.get("ssh_config_host", "").strip(),
         "name": data.get("name", "").strip(),
@@ -3399,6 +3400,7 @@ def ariapp_api_admin_sshfs_mounts_update(
 
     data = request.get_json() or {}
     mount_config = {
+        "network_mode": data.get("network_mode", "standard").strip(),
         "connection_mode": data.get("connection_mode", "direct").strip(),
         "ssh_config_host": data.get("ssh_config_host", "").strip(),
         "name": data.get("name", "").strip(),
@@ -4015,6 +4017,7 @@ def ariapp_api_admin_sshfs_interactive_start_test(self: Any) -> Any:
     body = request.get_json(silent=True) or {}
     result = start_interactive_test(
         connection_mode=body.get("connection_mode", "direct"),
+        network_mode=body.get("network_mode", "standard"),
         remote_host=body.get("remote_host", ""),
         remote_user=body.get("remote_user", ""),
         ssh_config_host=body.get("ssh_config_host", ""),
@@ -4497,6 +4500,7 @@ def ariapp_api_admin_sshfs_mounts_test_connection(self: Any) -> Any:
     data = request.get_json() or {}
     result = sb.test_ssh_connection(
         connection_mode=data.get("connection_mode", "direct"),
+        network_mode=data.get("network_mode", "standard"),
         remote_host=data.get("remote_host", ""),
         remote_user=data.get("remote_user", ""),
         ssh_config_host=data.get("ssh_config_host", ""),

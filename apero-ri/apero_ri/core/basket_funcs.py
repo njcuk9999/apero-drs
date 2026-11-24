@@ -1066,38 +1066,56 @@ def backfill_lbl_run_ids(
 
 
 def apply_preset_filter(
-    rows: List[Dict[str, Any]], preset: str) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]], preset: str,
+    legacy_pp: bool = False) -> List[Dict[str, Any]]:
     """
     Filter table rows by product type and, where applicable, QC status.
 
     preset values:
-      'ext2d'   – DRS_POST_E  block=out  QC=1
-      'tcorr2d' – DRS_POST_T  block=out  QC=1
-      'tcorr1d' – DRS_POST_S  block=out  QC=1
+      'ext2d'   – DRS_POST_E  block=out  QC=1 or NULL
+      'tcorr2d' – DRS_POST_T  block=out  QC=1 or NULL
+      'tcorr1d' – DRS_POST_S  block=out  QC=1 or NULL
       'template' – TELLU_TEMP, TELLU_TEMP_S1DW, TELLU_TEMP_S1DV
-      'polar'   – DRS_POST_P  block=out  QC=1
-      'ccfrv'   – DRS_POST_V  block=out  QC=1
+      'polar'   – DRS_POST_P  block=out  QC=1 or NULL
+      'ccfrv'   – DRS_POST_V  block=out  QC=1 or NULL
       'rdb'     – LBL_RDB%    block=lbl  (no QC filter)
       'lbl'     – any block=lbl product (no QC filter)
       'none'    – no preset filter (return all accessible rows)
-      'default' – block=out  QC=1
+      'default' – block=out  QC=1 or NULL
 
     :param rows: Accessible file-table rows.
     :param preset: Preset identifier listed above.
+    :param legacy_pp: Match v0.7 out-block DRS_PP products by suffix.
     :return: Rows matching the selected preset.
     """
 
     def _qc(r: Dict[str, Any]) -> bool:
-        """Check whether a table row passed the all-QC flag.
+        """Check whether a table row passed or has no recorded QC.
 
         :param r: Table row mapping with an optional ``PASSED_ALL_QC`` value.
-        :return: True when the row's QC value represents a pass.
+        :return: True when QC represents a pass or is not recorded.
         """
         v = r.get("PASSED_ALL_QC", 1)
+        if v is None:
+            return True
         try:
             return int(v) == 1
         except (TypeError, ValueError):
             return bool(v)
+
+    def _output(r: Dict[str, Any], output: str, suffix: str) -> bool:
+        """Match a product type or its legacy postprocessed filename.
+
+        :param r: File-table row.
+        :param output: Expected output type.
+        :param suffix: Expected filename suffix.
+        :return: Whether the output matches.
+        """
+        if r.get('KW_OUTPUT') == output:
+            return True
+        filename = str(r.get('FILENAME') or '')
+        return (legacy_pp and r.get('KW_OUTPUT') == 'DRS_PP'
+                and filename.endswith(suffix))
 
     if preset == "none":
         return rows
@@ -1107,7 +1125,7 @@ def apply_preset_filter(
             r
             for r in rows
             if r.get("BLOCK_KIND") == "out"
-            and r.get("KW_OUTPUT") == "DRS_POST_E"
+            and _output(r, 'DRS_POST_E', 'e.fits')
             and _qc(r)
         ]
     elif preset == "tcorr2d":
@@ -1115,7 +1133,7 @@ def apply_preset_filter(
             r
             for r in rows
             if r.get("BLOCK_KIND") == "out"
-            and r.get("KW_OUTPUT") == "DRS_POST_T"
+            and _output(r, 'DRS_POST_T', 't.fits')
             and _qc(r)
         ]
     elif preset == "tcorr1d":
@@ -1123,7 +1141,7 @@ def apply_preset_filter(
             r
             for r in rows
             if r.get("BLOCK_KIND") == "out"
-            and r.get("KW_OUTPUT") == "DRS_POST_S"
+            and _output(r, 'DRS_POST_S', 's.fits')
             and _qc(r)
         ]
     elif preset == 'template':
@@ -1137,7 +1155,7 @@ def apply_preset_filter(
             r
             for r in rows
             if r.get("BLOCK_KIND") == "out"
-            and r.get("KW_OUTPUT") == "DRS_POST_P"
+            and _output(r, 'DRS_POST_P', 'p.fits')
             and _qc(r)
         ]
     elif preset == "ccfrv":
@@ -1145,7 +1163,7 @@ def apply_preset_filter(
             r
             for r in rows
             if r.get("BLOCK_KIND") == "out"
-            and r.get("KW_OUTPUT") == "DRS_POST_V"
+            and _output(r, 'DRS_POST_V', 'v.fits')
             and _qc(r)
         ]
     elif preset == "rdb":

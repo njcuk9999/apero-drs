@@ -325,6 +325,40 @@
 </div>
 
 <script>
+window.ARI_DOC_STEP_HELP = {
+    url: {{ url_for(
+        'doc_dynamic_view',
+        page_ref='ari_guide/admin_portal/database_setup'
+    )|tojson }},
+    groups: [
+        {
+            selector: 'label.ari-ae-label',
+            anchor: 'what-the-database-connection-is-for'
+        },
+        {
+            selector: '.ari-page-header h1, .ari-ae-section-title',
+            anchor: 'what-the-database-connection-is-for'
+        }
+    ],
+    fieldAnchors: {
+        dbLocalName: 'what-the-database-connection-is-for',
+        dbLocalMode: 'what-the-database-connection-is-for',
+        dbLocalHost: 'why-the-database-host-is-relative-to-the-cluster',
+        dbLocalPort: 'what-the-database-connection-is-for',
+        dbLocalTestUser: 'validation-sequence',
+        dbLocalTestPass: 'validation-sequence',
+        dbLocalTestDbName: 'validation-sequence',
+        dbTunnelName: 'standard-ssh-mode',
+        dbTunnelSshHost: 'why-an-ssh-config-alias-is-required',
+        dbTunnelRemoteHost: 'why-the-database-host-is-relative-to-the-cluster',
+        dbTunnelRemotePort: 'standard-ssh-mode',
+        dbTunnelLocalPort: 'standard-ssh-mode',
+        dbTunnelSshMode: 'standard-ssh-mode',
+        dbTunnelTestUser: 'validation-sequence',
+        dbTunnelTestPass: 'validation-sequence',
+        dbTunnelTestDbName: 'validation-sequence'
+    }
+};
 const DB_SETUP_CFG = {
     localListUrl: {{ url_for('api_database_setup_local_db_list')|tojson }},
     localSaveUrl: {{ url_for('api_database_setup_local_db_save')|tojson }},

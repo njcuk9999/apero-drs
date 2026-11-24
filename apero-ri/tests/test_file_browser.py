@@ -3,6 +3,7 @@
 """Profile-free regression tests for object file-browser presets and UI."""
 
 from pathlib import Path
+from types import SimpleNamespace
 import shutil
 import subprocess
 
@@ -12,6 +13,8 @@ from jinja2 import ChoiceLoader, DictLoader
 
 from apero.dev import get_base_params
 from apero_ri.application import data_portal_view_helpers as views
+from apero_ri.application import query_db_api_helpers as query_api
+from apero_ri.core import auth
 from apero_ri.core import basket_funcs as basket
 
 
@@ -42,6 +45,105 @@ def test_spectrum_presets(preset: str, outputs: list[str]) -> None:
                 for output in outputs]
 
     assert basket.apply_preset_filter(rows, preset) == expected
+
+
+@pytest.mark.parametrize('preset, output', [
+    ('default', 'DRS_POST_T'),
+    ('ext2d', 'DRS_POST_E'),
+    ('tcorr2d', 'DRS_POST_T'),
+    ('tcorr1d', 'DRS_POST_S'),
+    ('polar', 'DRS_POST_P'),
+    ('ccfrv', 'DRS_POST_V'),
+])
+def test_processed_presets_accept_missing_qc(preset: str, output: str) -> None:
+    """Include unknown QC but exclude failures and non-output blocks.
+
+    :param preset: File-browser preset identifier.
+    :param output: Output type selected by the preset.
+    :return: None.
+    """
+    rows = [dict(KW_OUTPUT=output, BLOCK_KIND=block, PASSED_ALL_QC=qc)
+            for block in ['out', 'red']
+            for qc in [None, 0, 1]]
+    expected = [rows[0], rows[2]]
+
+    assert basket.apply_preset_filter(rows, preset) == expected
+
+
+@pytest.mark.parametrize('preset, suffix', [
+    ('ext2d', 'e.fits'),
+    ('tcorr2d', 't.fits'),
+    ('tcorr1d', 's.fits'),
+    ('polar', 'p.fits'),
+    ('ccfrv', 'v.fits'),
+])
+@pytest.mark.parametrize('version, expected', [('v7', 1), ('v8', 0)])
+def test_file_browser_legacy_pp_by_profile_version(
+    monkeypatch: pytest.MonkeyPatch, preset: str, suffix: str,
+    version: str, expected: int,
+) -> None:
+    """Only v7 profiles match out-block DRS_PP using the product suffix.
+
+    :param monkeypatch: Pytest fixture replacing external dependencies.
+    :param preset: Preset selected in the request.
+    :param suffix: Expected filename suffix.
+    :param version: Instrument settings version.
+    :param expected: Number of expected matching files.
+    :return: None.
+    """
+    profile_data = dict(APERO_INSTRUMENT_PROFILE=f'nirps_ha_{version}.yaml')
+    profile_data = auth._hydrate_profile_data(profile_data, 'NIRPS_HA')
+    profile = dict(profile_id='test', instrument='NIRPS_HA', data=profile_data)
+    rows = [
+        dict(FILENAME='file' + suffix, BLOCK_KIND='out', KW_OUTPUT='DRS_PP',
+             KW_RUN_ID='R1', PASSED_ALL_QC=None),
+        dict(FILENAME='file' + suffix, BLOCK_KIND='red', KW_OUTPUT='DRS_PP',
+             KW_RUN_ID='R1', PASSED_ALL_QC=1),
+        dict(FILENAME='file' + suffix + '.bak', BLOCK_KIND='out',
+             KW_OUTPUT='DRS_PP', KW_RUN_ID='R1', PASSED_ALL_QC=1),
+        dict(FILENAME='file' + suffix, BLOCK_KIND='out', KW_OUTPUT='DRS_PP',
+             KW_RUN_ID='R1', PASSED_ALL_QC=0),
+        dict(FILENAME='file' + suffix, BLOCK_KIND='out', KW_OUTPUT='OTHER',
+             KW_RUN_ID='R1', PASSED_ALL_QC=1),
+        dict(FILENAME='file' + suffix, BLOCK_KIND='out', KW_OUTPUT='DRS_PP',
+             KW_RUN_ID='R2', PASSED_ALL_QC=1),
+    ]
+    monkeypatch.setattr(query_api, 'get_accessible_profiles',
+                        lambda *args: [profile])
+    monkeypatch.setattr(query_api, 'get_public_permissions',
+                        lambda: {'view.data_portal'})
+    monkeypatch.setattr(
+        basket, 'load_ftable_rows',
+        lambda base, instr, pid, obj, kind:
+            (rows if kind == 'all' else [], None, None))
+    ari = SimpleNamespace(
+        args=SimpleNamespace(data_dir=None), ari_groups={},
+        _get_api_user=lambda: None,
+        _get_user_accessible_run_ids=lambda user, instr: {'R1'})
+    app = Flask(__name__)
+    url = f'/?profile_id=test&objname=Proxima&preset={preset}'
+    with app.test_request_context(url):
+        response = query_api.api_file_browser(ari)
+
+    assert response.get_json()['rows'] == [
+        dict(rows[0], ACCESS_RUN_ID='R1')
+    ][:expected]
+
+
+def test_v07_telluric_preset_includes_both_indexed_output_types() -> None:
+    """Include all 148 t.fits products in the reported Proxima case.
+
+    :return: None.
+    """
+    rows = [dict(FILENAME=f'file{index}t.fits', BLOCK_KIND='out',
+                 KW_OUTPUT='DRS_POST_T', PASSED_ALL_QC=None)
+            for index in range(6)]
+    rows += [dict(FILENAME=f'legacy{index}t.fits', BLOCK_KIND='out',
+                  KW_OUTPUT='DRS_PP', PASSED_ALL_QC=None)
+             for index in range(142)]
+
+    assert len(basket.apply_preset_filter(rows, 'tcorr2d', True)) == 148
+    assert len(basket.apply_preset_filter(rows, 'tcorr2d', False)) == 6
 
 
 def test_template_preset() -> None:

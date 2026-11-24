@@ -14076,3 +14076,56 @@ button.ari-rp-section-card:hover {
 .ari-bm-banner__dismiss:hover {
     opacity: 1;
 }
+/* Consistent explicit close control for ARI overlays. */
+.ari-overlay-auto-close {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 3;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ari-border);
+    border-radius: 999px;
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    box-shadow: 0 2px 8px color-mix(in srgb, #000 18%, transparent);
+    cursor: pointer;
+}
+
+.ari-overlay-auto-close:hover {
+    background: var(--ari-surface-alt);
+    border-color: var(--ari-primary);
+}
+
+.ari-overlay-auto-close:focus-visible {
+    outline: 2px solid var(--ari-primary);
+    outline-offset: 2px;
+}
+
+.ari-doc-step-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-left: 0.3rem;
+    color: var(--ari-info);
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+.ari-doc-step-help:hover,
+.ari-doc-step-help:focus-visible {
+    color: var(--ari-primary-dark);
+}
+
+.ari-doc-step-help:focus-visible {
+    outline: 2px solid var(--ari-primary);
+    outline-offset: 2px;
+    border-radius: 50%;
+}

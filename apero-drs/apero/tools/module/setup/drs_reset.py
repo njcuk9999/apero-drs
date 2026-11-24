@@ -807,7 +807,8 @@ def reset_queue(params: ParamDict, log: bool = True) -> None:
     queue_path = drs_queue.get_queue_path(params)
     os.makedirs(queue_path, exist_ok=True)
     keep = [drs_queue.QUEUE_BATCH_TEMPLATE_DIR,
-            drs_queue.QUEUE_BATCH_TEMPLATE, drs_queue.QUEUE_LOCK_FILE]
+            drs_queue.QUEUE_BATCH_TEMPLATE, drs_queue.QUEUE_LOCK_FILE,
+            drs_queue.QUEUE_SETTINGS_FILE]
     with drs_queue.QueueLock(params):
         running = drs_queue.list_queue_entries(
             params, states=[drs_queue.QUEUE_RUNNING_DIR])

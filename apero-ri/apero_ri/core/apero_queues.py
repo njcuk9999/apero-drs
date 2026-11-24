@@ -35,6 +35,8 @@ TUNNEL_STATE_SUBDIR = 'queue_tunnels'
 NAME_PATTERN = re.compile(r'^[A-Za-z0-9_\-]+$')
 # valid ssh modes (see database setup)
 SSH_MODES = ('apero', 'simple')
+# valid SSH network modes
+NETWORK_MODES = ('standard', 'alliance')
 # queue gui POST routes (api/<action>) that can be restricted for monitors
 #   value = (label, css selectors hidden in the embedded dashboard)
 QUEUE_ACTIONS: Dict[str, tuple] = dict(
@@ -53,6 +55,10 @@ QUEUE_ACTIONS: Dict[str, tuple] = dict(
 )
 # actions monitors cannot use unless an admin allows them
 DEFAULT_BLOCKED_ACTIONS = ['reset_data', 'shutdown']
+# queue gui POST routes only admins may ever use (not configurable)
+ADMIN_ONLY_ACTIONS: Dict[str, tuple] = dict(
+    settings=('Queue execution settings (Slurm only)', '#settings-card'),
+)
 # the default queue gui port (drs_queue_gui.GUI_DEFAULT_PORT)
 DEFAULT_REMOTE_PORT = '8090'
 
@@ -124,6 +130,21 @@ def normalize_queue(raw: Dict[str, Any]) -> Dict[str, Any]:
     blocked = sorted({str(item) for item in blocked
                       if str(item) in QUEUE_ACTIONS})
     ssh_mode = _str('ssh_mode', 'apero')
+    network_mode = _str('network_mode', 'standard')
+    pre_commands = raw.get('pre_gui_commands', [])
+    if isinstance(pre_commands, str):
+        pre_commands = pre_commands.splitlines()
+    if not isinstance(pre_commands, list):
+        pre_commands = []
+    pre_gui_commands = [
+        str(command).strip()
+        for command in pre_commands
+        if str(command).strip()
+    ]
+    if network_mode not in NETWORK_MODES:
+        network_mode = 'standard'
+    if network_mode == 'alliance':
+        ssh_mode = 'simple'
     return dict(
         label=_str('label'),
         ssh_config_host=_str('ssh_config_host'),
@@ -131,12 +152,25 @@ def normalize_queue(raw: Dict[str, Any]) -> Dict[str, Any]:
         remote_port=_str('remote_port', DEFAULT_REMOTE_PORT),
         local_port=_str('local_port'),
         ssh_mode=ssh_mode if ssh_mode in SSH_MODES else 'apero',
+        network_mode=network_mode,
+        pre_gui_commands=pre_gui_commands,
         instrument=_str('instrument').upper(),
         profile_id=_str('profile_id'),
         enabled=bool(raw.get('enabled', True)),
         blocked_actions=blocked,
         notes=_str('notes'),
     )
+
+
+def profile_queue_name(instrument: str, profile_id: str) -> str:
+    """Build the stable queue key from its linked APERO profile.
+
+    :param instrument: Instrument name.
+    :param profile_id: APERO profile identifier.
+    :return: Safe queue name based on both profile fields.
+    """
+    raw_name = '{0}_{1}'.format(instrument, profile_id)
+    return re.sub(r'[^A-Za-z0-9_-]', '_', raw_name).strip('_')
 
 
 def validate_queue(name: str, qdef: Dict[str, Any],
@@ -184,7 +218,10 @@ def tunnel_params(qdef: Dict[str, Any], local_data_dir: str) -> dict:
         'DATABASE_SSH_CONFIG_HOST': qdef['ssh_config_host'],
         'DATABASE_SSH_LOCAL_PORT': qdef['local_port'],
         'DATABASE_SSH_REMOTE_PORT': qdef['remote_port'],
-        'DATABASE_SSH_SIMPLE_MODE': qdef['ssh_mode'] == 'simple',
+        'DATABASE_SSH_SIMPLE_MODE': (
+            qdef['ssh_mode'] == 'simple'
+            or qdef['network_mode'] == 'alliance'
+        ),
         'DATABASE_SSH_ALLOW_MULTIPLE': True,
         'TUNNEL_STATE_SUBDIR': TUNNEL_STATE_SUBDIR,
         'LOCAL_DATA_DIR': str(local_data_dir),
@@ -199,8 +236,8 @@ def hidden_selectors(blocked: List[str]) -> List[str]:
 
     :return: list of str, css selectors
     """
-    return [QUEUE_ACTIONS[action][1] for action in blocked
-            if action in QUEUE_ACTIONS]
+    actions = dict(QUEUE_ACTIONS, **ADMIN_ONLY_ACTIONS)
+    return [actions[action][1] for action in blocked if action in actions]
 
 
 # =============================================================================

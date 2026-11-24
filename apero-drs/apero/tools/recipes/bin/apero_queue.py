@@ -54,6 +54,7 @@ __release__ = apero_pkg.__release__
 # define the queue state directory names for the fast "system" path
 #    (duplicated from drs_queue deliberately - importing drs_queue loads
 #     the full apero runtime which is far too slow for system mode)
+QUEUE_PENDING_DIR = 'pending'
 QUEUE_RUNNING_DIR = 'running'
 QUEUE_COMPLETE_DIR = 'complete'
 QUEUE_FAILED_DIR = 'failed'
@@ -88,7 +89,8 @@ def _system_move(qpath: str, qid: str, qresult: str) -> bool:
 
     :param qpath: str, the absolute path to the queue directory
     :param qid: str, the queue id of the task ("{group}/{run_file}")
-    :param qresult: str, 'success', 'failed', or 'pending' for unstarted work
+    :param qresult: str, 'running' to claim pending work, otherwise the
+                    destination result state for work already running
 
     :return: bool, True if the move was successful
     """
@@ -96,15 +98,21 @@ def _system_move(qpath: str, qid: str, qresult: str) -> bool:
     if '/' not in qid:
         return False
     group, run_file = qid.split('/', 1)
-    # work out the destination state from the result
-    if qresult.lower() in ['success', 'complete', 'true', '1']:
+    # claim queue entries immediately before their task starts
+    if qresult.lower() == 'running':
+        from_state = QUEUE_PENDING_DIR
+        to_state = QUEUE_RUNNING_DIR
+    elif qresult.lower() in ['success', 'complete', 'true', '1']:
+        from_state = QUEUE_RUNNING_DIR
         to_state = QUEUE_COMPLETE_DIR
     elif qresult.lower() == 'pending':
+        from_state = QUEUE_RUNNING_DIR
         to_state = 'pending'
     else:
+        from_state = QUEUE_RUNNING_DIR
         to_state = QUEUE_FAILED_DIR
     # construct source and destination paths
-    src_dir = os.path.join(qpath, QUEUE_RUNNING_DIR, group)
+    src_dir = os.path.join(qpath, from_state, group)
     dst_dir = os.path.join(qpath, to_state, group)
     src_path = os.path.join(src_dir, run_file)
     dst_path = os.path.join(dst_dir, run_file)
@@ -166,6 +174,7 @@ def _system_main(quick_args: Dict[str, Optional[str]]) -> Dict[str, Any]:
         print('QUEUE: {0} --> {1}'.format(qid, qresult))
     else:
         print('QUEUE WARNING: could not move {0}'.format(qid))
+        sys.exit(1)
     # return the local variables
     return locals()
 

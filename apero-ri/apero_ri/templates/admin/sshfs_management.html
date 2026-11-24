@@ -115,6 +115,28 @@ body.ari-sshfs-page .ari-doc-main {
     </button>
 </div>
 
+<div class="ari-ae-section">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid fa-shield-halved"></i> SSH Network
+    </h2>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <label style="display:inline-flex; align-items:center; gap:6px;">
+            <input type="radio" name="smNetworkMode" value="standard" checked
+                   onchange="smUpdateNetworkMode()">
+            Standard SSH
+        </label>
+        <label style="display:inline-flex; align-items:center; gap:6px;">
+            <input type="radio" name="smNetworkMode" value="alliance"
+                   onchange="smUpdateNetworkMode()">
+            Alliance network [Duo]
+        </label>
+    </div>
+    <span class="ari-ae-hint">
+        Standard SSH keeps the existing direct or SSH-config behavior.
+        Alliance mode uses an SSH ControlMaster for the one-time Duo login.
+    </span>
+</div>
+
 <div id="smPanelPreSetup" class="ari-ab-panel">
     <div class="ari-ae-section">
         <h2 class="ari-ae-section-title">
@@ -129,7 +151,7 @@ body.ari-sshfs-page .ari-doc-main {
         </div>
     </div>
 
-    <div class="ari-ae-section">
+    <div class="ari-ae-section sm-standard-pre-setup">
         <h2 class="ari-ae-section-title">
             <i class="fa-solid fa-list-ol"></i> Step-by-step Guide
         </h2>
@@ -177,7 +199,45 @@ chmod 600 ~/.ssh/authorized_keys</pre>
         </ol>
     </div>
 
-    <div class="ari-ae-section">
+    <div class="ari-ae-section sm-alliance-pre-setup"
+         style="display:none;">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-list-ol"></i>
+            Alliance [Duo] Step-by-step Guide
+        </h2>
+        <ol style="margin:0; padding-left:1.25rem; line-height:1.65;
+                   color:var(--ari-text);">
+            <li>
+                Generate a client key as in standard SSH, but register its
+                public key in Alliance CCDB. Do not add it to the login
+                server's <code>authorized_keys</code> file.
+            </li>
+            <li>
+                Store the private key in the <a href="#"
+                onclick="smSelectTab('keys'); return false;">SSH Keys</a>
+                tab. The key path is used in the SSH config block below.
+            </li>
+            <li>
+                In <a href="#" onclick="smSelectTab('setup');
+                return false;">Setup</a>, enter the Alliance host, account,
+                SSH alias, remote path, and mount point. Add the generated
+                block to <code>~/.ssh/config</code>.
+            </li>
+            <li>
+                Use <strong>Test SSH (interactive)</strong> once. Approve
+                Duo in the terminal. This establishes
+                <code>ssh -fN</code> as a background ControlMaster with a
+                12-hour persist time.
+            </li>
+            <li>
+                Run <strong>Test SSH</strong> again if desired, then Add
+                Mount. Mount Status will copy commands that verify the
+                master and start it when needed before running SSHFS.
+            </li>
+        </ol>
+    </div>
+
+    <div class="ari-ae-section sm-standard-pre-setup">
         <h2 class="ari-ae-section-title">
             <i class="fa-solid fa-server"></i> Server-side Checklist
         </h2>
@@ -186,6 +246,31 @@ chmod 600 ~/.ssh/authorized_keys</pre>
             <li>The target directory exists and is readable by the SSH user.</li>
             <li>The server allows SSH access from this client.</li>
             <li>Permissions are correct on ~/.ssh and ~/.ssh/authorized_keys.</li>
+        </ul>
+    </div>
+
+    <div class="ari-ae-section sm-alliance-pre-setup"
+         style="display:none;">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-server"></i>
+            Alliance Checklist
+        </h2>
+        <ul style="margin:0; padding-left:1.25rem; line-height:1.6;
+                   color:var(--ari-text);">
+            <li>The CCDB key registration is active for this client IP.</li>
+            <li>
+                Any CCDB <code>command=</code> restriction permits the
+                required SFTP/SSHFS subsystem.
+            </li>
+            <li>
+                The SSH alias in <code>~/.ssh/config</code> contains
+                ControlMaster, ControlPath, and ControlPersist settings.
+            </li>
+            <li>
+                Initial login requires a human Duo approval; unattended
+                reboots cannot recreate the master without Duo-exempt
+                access or intervention.
+            </li>
         </ul>
     </div>
 </div>
@@ -208,7 +293,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
             <span class="ari-ae-hint">Friendly label shown in Mount Status.</span>
         </div>
 
-        <div class="ari-ae-field">
+        <div class="ari-ae-field sm-standard-connection-method">
             <label class="ari-ae-label">Connection method</label>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <label style="display:inline-flex; align-items:center; gap:6px;">
@@ -221,6 +306,16 @@ chmod 600 ~/.ssh/authorized_keys</pre>
                 </label>
             </div>
             <span class="ari-ae-hint">Choose direct connection by default, or use an SSH config host alias if the server requires a tunnel/jump host.</span>
+        </div>
+
+        <div id="smAllianceSetupNote" class="ari-ae-callout"
+             style="display:none; background:var(--ari-card-bg);
+                   color:var(--ari-text);
+                   border-left:4px solid var(--ari-info);">
+            Alliance mode always uses an SSH config alias. Enter the real
+            remote host and Alliance account here; these values are used
+            to generate the ControlMaster configuration, while SSHFS uses
+            the alias.
         </div>
 
         <div id="smDirectConnectionFields" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
@@ -264,6 +359,22 @@ chmod 600 ~/.ssh/authorized_keys</pre>
             <span class="ari-ae-hint">Choose a key from the SSH Keys tab.</span>
         </div>
 
+        <div id="smAllianceConfigFields" class="ari-ae-field"
+             style="display:none;">
+            <label class="ari-ae-label">
+                SSH config block for this Alliance mount
+            </label>
+            <div style="margin-bottom:6px;">
+                <button type="button"
+                        class="ari-btn ari-btn--secondary ari-btn--sm"
+                        onclick="smCopyCommand('smAllianceSshConfig')">
+                    <i class="fa-solid fa-copy"></i> Copy config
+                </button>
+            </div>
+            <pre id="smAllianceSshConfig">Complete the fields above to
+generate the ~/.ssh/config block.</pre>
+        </div>
+
         <div class="ari-ae-field">
             <label class="ari-ae-label">Mount execution mode</label>
             <div style="font-size:0.92em; color:#2b2b2b;">
@@ -277,8 +388,12 @@ chmod 600 ~/.ssh/authorized_keys</pre>
             <button type="button" class="ari-btn ari-btn--secondary" onclick="smTestConnection()">
                 <i class="fa-solid fa-network-wired"></i> Test SSH
             </button>
-            <button type="button" class="ari-btn ari-btn--secondary" onclick="smInteractiveTest()" title="Opens an interactive terminal for password/2FA authentication">
-                <i class="fa-solid fa-terminal"></i> Test SSH (interactive)
+            <button type="button" class="ari-btn ari-btn--secondary"
+                    id="smInteractiveTestBtn"
+                    onclick="smInteractiveTest()"
+                    title="Opens an interactive terminal for password/2FA authentication">
+                <i class="fa-solid fa-terminal"></i>
+                Test SSH (interactive)
             </button>
             <button type="button" class="ari-btn ari-btn--primary" id="smSaveMountBtn" onclick="smAddMount()">
                 <i class="fa-solid fa-plus"></i> Add Mount
@@ -320,6 +435,15 @@ chmod 600 ~/.ssh/authorized_keys</pre>
         <h2 class="ari-ae-section-title">
             <i class="fa-solid fa-plus-circle"></i> Add SSH Key
         </h2>
+
+        <div id="smAllianceKeyNote" class="ari-ae-callout"
+             style="display:none; background:var(--ari-card-bg);
+                   color:var(--ari-text);
+                   border-left:4px solid var(--ari-info);">
+            For Alliance, register the public half of this key in CCDB.
+            Store only the private key here; the Alliance host alias must
+            reference this stored key's absolute path.
+        </div>
 
         <div class="ari-ae-field">
             <label class="ari-ae-label">Key name</label>
@@ -419,12 +543,54 @@ chmod 600 ~/.ssh/authorized_keys</pre>
 </div>
 
 <script>
+window.ARI_DOC_STEP_HELP = {
+    url: {{ url_for(
+        'doc_dynamic_view',
+        page_ref='ari_guide/admin_portal/sshfs'
+    )|tojson }},
+    groups: [
+        {
+            selector: '#smPanelPreSetup .sm-standard-pre-setup li',
+            anchor: 'why-the-pre-setup-steps-matter'
+        },
+        {
+            selector: '#smPanelPreSetup .sm-alliance-pre-setup li',
+            anchor: 'alliance-duo-mode'
+        },
+        {
+            selector: '#smPanelSetup label.ari-ae-label',
+            anchor: 'what-ari-manages'
+        },
+        {
+            selector: '#smPanelKeys label.ari-ae-label',
+            anchor: 'why-the-pre-setup-steps-matter'
+        },
+        {
+            selector: '#smPanelStatus .ari-ae-section-title',
+            anchor: 'mount-status-interpretation'
+        },
+        {
+            selector: '#smPanelSetup .ari-ae-section-title, ' +
+                      '#smPanelKeys .ari-ae-section-title',
+            anchor: 'what-ari-manages'
+        }
+    ],
+    fieldAnchors: {
+        smSshConfigHost: 'ssh-config-host-mode',
+        smRemoteHost: 'direct-host-mode',
+        smRemoteUser: 'direct-host-mode',
+        smRemotePath: 'what-ari-manages',
+        smLocalMount: 'why-the-pre-setup-steps-matter',
+        smSshKey: 'why-the-pre-setup-steps-matter'
+    }
+};
 const SM_CAN_MANAGE = {{ can_manage | tojson }};
 let smLastTestKey = '';
 let smLastTestOk = false;
 let smEditingMountName = '';
 let smMountsCache = [];
 let smSshConfigHosts = [];
+let smSshKeys = [];
 
 function smSetMsg(text, ok = true) {
     const el = document.getElementById('smMsg');
@@ -555,8 +721,13 @@ async function smCopyCommand(elementId) {
 
 function smCandidate() {
     const connectionModeEl = document.querySelector('input[name="smConnectionMode"]:checked');
+    const networkModeEl = document.querySelector('input[name="smNetworkMode"]:checked');
+    const networkMode = networkModeEl ? networkModeEl.value : 'standard';
     return {
-        connection_mode: connectionModeEl ? connectionModeEl.value : 'direct',
+        network_mode: networkMode,
+        connection_mode: networkMode === 'alliance'
+            ? 'ssh_config_host'
+            : (connectionModeEl ? connectionModeEl.value : 'direct'),
         name: (document.getElementById('smMountName').value || '').trim(),
         remote_user: (document.getElementById('smRemoteUser').value || '').trim() || 'root',
         remote_host: (document.getElementById('smRemoteHost').value || '').trim(),
@@ -570,6 +741,7 @@ function smCandidate() {
 
 function smCandidateKey(obj) {
     return JSON.stringify({
+        network_mode: obj.network_mode,
         connection_mode: obj.connection_mode,
         remote_user: obj.remote_user,
         remote_host: obj.remote_host,
@@ -581,12 +753,92 @@ function smCandidateKey(obj) {
 }
 
 function smUpdateConnectionMode() {
-    const mode = (document.querySelector('input[name="smConnectionMode"]:checked') || {}).value || 'direct';
+    const networkMode = (document.querySelector(
+        'input[name="smNetworkMode"]:checked'
+    ) || {}).value || 'standard';
+    const mode = (document.querySelector(
+        'input[name="smConnectionMode"]:checked'
+    ) || {}).value || 'direct';
     const directFields = document.getElementById('smDirectConnectionFields');
     const configField = document.getElementById('smConfigHostField');
-    if (directFields) directFields.style.display = mode === 'direct' ? 'grid' : 'none';
-    if (configField) configField.style.display = mode === 'ssh_config_host' ? '' : 'none';
+    const showDirect = networkMode === 'alliance' || mode === 'direct';
+    const showConfig = networkMode === 'alliance'
+        || mode === 'ssh_config_host';
+    if (directFields) {
+        directFields.style.display = showDirect ? 'grid' : 'none';
+    }
+    if (configField) {
+        configField.style.display = showConfig ? '' : 'none';
+    }
+    smUpdateAllianceSshConfig();
     smResetConnectionValidation();
+}
+
+function smUpdateNetworkMode() {
+    const networkMode = (document.querySelector(
+        'input[name="smNetworkMode"]:checked'
+    ) || {}).value || 'standard';
+    const alliance = networkMode === 'alliance';
+    document.querySelectorAll('.sm-standard-pre-setup').forEach((el) => {
+        el.style.display = alliance ? 'none' : '';
+    });
+    document.querySelectorAll('.sm-alliance-pre-setup').forEach((el) => {
+        el.style.display = alliance ? '' : 'none';
+    });
+    document.querySelectorAll(
+        '.sm-standard-connection-method'
+    ).forEach((el) => {
+        el.style.display = alliance ? 'none' : '';
+    });
+    [
+        'smAllianceSetupNote',
+        'smAllianceConfigFields',
+        'smAllianceKeyNote',
+    ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = alliance ? '' : 'none';
+    });
+    const interactiveBtn = document.getElementById('smInteractiveTestBtn');
+    if (interactiveBtn) {
+        interactiveBtn.innerHTML = alliance
+            ? '<i class="fa-solid fa-terminal"></i> Initialize Duo master'
+            : '<i class="fa-solid fa-terminal"></i> Test SSH (interactive)';
+    }
+    smUpdateConnectionMode();
+}
+
+function smUpdateAllianceSshConfig() {
+    const output = document.getElementById('smAllianceSshConfig');
+    if (!output) return;
+    const candidate = smCandidate();
+    if (candidate.network_mode !== 'alliance') return;
+    const key = smSshKeys.find(
+        (item) => item.name === candidate.ssh_key
+    );
+    const valuesReady = candidate.ssh_config_host
+        && candidate.remote_host
+        && candidate.remote_user
+        && key;
+    if (!valuesReady) {
+        output.textContent = (
+            'Complete the Alliance host, account, alias, and SSH key '
+            + 'fields to generate the ~/.ssh/config block.'
+        );
+        return;
+    }
+    output.textContent = [
+        `Host ${candidate.ssh_config_host}`,
+        `    HostName ${candidate.remote_host}`,
+        `    User ${candidate.remote_user}`,
+        `    IdentityFile ${key.path}`,
+        '    IdentitiesOnly yes',
+        '    ControlMaster auto',
+        '    ControlPath ~/.ssh/cm-%r@%h:%p',
+        '    ControlPersist 12h',
+        '    ServerAliveInterval 30',
+        '    ServerAliveCountMax 6',
+        '    StrictHostKeyChecking accept-new',
+    ].join('\n');
 }
 
 function smResetConnectionValidation() {
@@ -657,7 +909,11 @@ function smClearForm() {
     if (configHost) configHost.value = '';
     const directRadio = document.querySelector('input[name="smConnectionMode"][value="direct"]');
     if (directRadio) directRadio.checked = true;
-    smUpdateConnectionMode();
+    const standardRadio = document.querySelector(
+        'input[name="smNetworkMode"][value="standard"]'
+    );
+    if (standardRadio) standardRadio.checked = true;
+    smUpdateNetworkMode();
     smResetConnectionValidation();
     smSetEditMode('');
 }
@@ -673,10 +929,15 @@ function smApplyMountToForm(mount) {
     document.getElementById('smRemoteUser').value = mount.remote_user || 'root';
     const configHost = document.getElementById('smSshConfigHost');
     if (configHost) configHost.value = mount.ssh_config_host || '';
+    const network = mount.network_mode || 'standard';
+    const networkRadio = document.querySelector(
+        `input[name="smNetworkMode"][value="${network}"]`
+    );
+    if (networkRadio) networkRadio.checked = true;
     const mode = mount.connection_mode || 'direct';
     const radio = document.querySelector(`input[name="smConnectionMode"][value="${mode}"]`);
     if (radio) radio.checked = true;
-    smUpdateConnectionMode();
+    smUpdateNetworkMode();
     smSetEditMode(mount.name || '');
 }
 
@@ -748,6 +1009,7 @@ async function smLoadKeys() {
         }
 
         const keys = data.keys || [];
+        smSshKeys = keys;
         const tbody = document.getElementById('smKeysTableBody');
         tbody.innerHTML = '';
 
@@ -769,6 +1031,7 @@ async function smLoadKeys() {
         }
 
         smPopulateKeySelect(keys);
+        smUpdateAllianceSshConfig();
     } catch (err) {
         smSetMsg('Error loading keys: ' + err.message, false);
     }
@@ -788,13 +1051,17 @@ function smPopulateKeySelect(keys) {
     }
 
     if (current) select.value = current;
+    smUpdateAllianceSshConfig();
 }
 
 async function smLoadMountDropdown() {
     try {
         const res = await fetch('/api/admin/sshfs/keys/list');
         const data = await res.json();
-        if (data.ok) smPopulateKeySelect(data.keys || []);
+        if (data.ok) {
+            smSshKeys = data.keys || [];
+            smPopulateKeySelect(smSshKeys);
+        }
     } catch (_) {
         // no-op
     }
@@ -859,13 +1126,17 @@ async function smDeleteKey(keyName) {
 async function smTestConnection() {
     if (!SM_CAN_MANAGE) return;
     const c = smCandidate();
-    const hasConnectionTarget = c.connection_mode === 'ssh_config_host'
-        ? !!c.ssh_config_host
-        : !!c.remote_host;
+    const hasConnectionTarget = c.network_mode === 'alliance'
+        ? !!(c.ssh_config_host && c.remote_host && c.remote_user)
+        : (c.connection_mode === 'ssh_config_host'
+            ? !!c.ssh_config_host
+            : !!c.remote_host);
 
     if (!hasConnectionTarget || !c.remote_path || !c.ssh_key) {
         smSetMsg(
-            c.connection_mode === 'ssh_config_host'
+            c.network_mode === 'alliance'
+                ? 'Alliance host, account, SSH alias, remote path, and SSH key are required.'
+                : c.connection_mode === 'ssh_config_host'
                 ? 'SSH config host, remote path, and SSH key are required to test the connection.'
                 : 'Remote host, remote path, and SSH key are required to test the connection.',
             false
@@ -908,13 +1179,17 @@ async function smTestConnection() {
 async function smAddMount() {
     if (!SM_CAN_MANAGE) return;
     const c = smCandidate();
-    const hasConnectionTarget = c.connection_mode === 'ssh_config_host'
-        ? !!c.ssh_config_host
-        : !!c.remote_host;
+    const hasConnectionTarget = c.network_mode === 'alliance'
+        ? !!(c.ssh_config_host && c.remote_host && c.remote_user)
+        : (c.connection_mode === 'ssh_config_host'
+            ? !!c.ssh_config_host
+            : !!c.remote_host);
 
     if (!c.name || !hasConnectionTarget || !c.remote_path || !c.local_mount || !c.ssh_key) {
         smSetMsg(
-            c.connection_mode === 'ssh_config_host'
+            c.network_mode === 'alliance'
+                ? 'Mount name, Alliance host, account, SSH alias, remote path, local mount point, and SSH key are required.'
+                : c.connection_mode === 'ssh_config_host'
                 ? 'Mount name, SSH config host, remote path, local mount point, and SSH key are required.'
                 : 'Mount name, remote host, remote path, local mount point, and SSH key are required.',
             false
@@ -984,6 +1259,7 @@ async function smLoadMountsStatus() {
                 : '<i class="fa-solid fa-circle-xmark" style="color:#999;"></i>';
             const statusLabel = isStale ? 'Mounted (stale)' : isMounted ? 'Mounted' : 'Not mounted';
             const manualMode = !!mount.manual_mode;
+            const allianceMode = mount.network_mode === 'alliance';
 
             const card = document.createElement('div');
             card.style.cssText = 'border:1px solid #ddd; border-radius:0.6rem; padding:12px; display:grid; gap:8px;';
@@ -994,13 +1270,16 @@ async function smLoadMountsStatus() {
                     <span style="font-weight:500; color:#666;">(${statusLabel})</span>
                 </div>
                 <div style="font-size:0.9em; color:#555; line-height:1.45;">
+                    <div><strong>Network:</strong> ${allianceMode ? 'Alliance [Duo]' : 'Standard SSH'}</div>
                     <div><strong>Connection:</strong> ${mount.connection_mode === 'ssh_config_host' ? 'SSH config host' : 'Remote user + remote host'}</div>
                     <div><strong>Target:</strong> ${mount.display_target}:${mount.remote_path}</div>
                     <div><strong>Local:</strong> ${mount.local_mount}</div>
                     <div><strong>Manual mode:</strong> ${manualMode ? 'enabled' : 'disabled'}</div>
-                    ${manualMode && mount.mount_command ? `<div><strong>Manual mount command:</strong><br><code style="font-size:0.84em; word-break:break-all;">${mount.mount_command}</code></div>` : ''}
+                    ${manualMode && mount.mount_command ? `<div><strong>${allianceMode ? 'Alliance mount commands' : 'Manual mount command'}:</strong><br><pre style="font-size:0.84em; white-space:pre-wrap; word-break:break-all; background:var(--ari-surface-muted); color:var(--ari-text);">${mount.mount_command}</pre></div>` : ''}
+                    ${allianceMode && mount.master_commands && mount.master_commands.check ? `<div><strong>ControlMaster check:</strong><br><code style="font-size:0.84em; word-break:break-all;">${mount.master_commands.check}</code></div>` : ''}
+                    ${allianceMode && mount.ssh_config ? `<details><summary>View SSH config block</summary><pre style="font-size:0.84em; white-space:pre-wrap; word-break:break-all; background:var(--ari-surface-muted); color:var(--ari-text);">${mount.ssh_config}</pre></details>` : ''}
                     ${status.check_mode ? `<div><strong>Check mode:</strong> ${status.check_mode}</div>` : ''}
-                    ${isStale ? `<div style="color:#c67a00; font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Mount appears stale &mdash; authentication may have expired. Unmount and use interactive mount to re-authenticate.</div>` : ''}
+                    ${isStale ? `<div style="color:#c67a00; font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Mount appears stale &mdash; authentication may have expired. ${allianceMode ? 'Copy the Alliance mount commands to repair the stale socket, approve Duo, and reconnect.' : 'Unmount and use the interactive SSH flow to re-authenticate.'}</div>` : ''}
                     ${(!isStale && status.warning) ? `<div style="color:#c67a00;"><i class="fa-solid fa-triangle-exclamation"></i> ${status.warning}</div>` : ''}
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1385,14 +1664,25 @@ async function smUnmountAndReauth(mountName) {
 async function smInteractiveTest() {
     if (!SM_CAN_MANAGE) return;
     const c = smCandidate();
-    const hasTarget = c.connection_mode === 'ssh_config_host' ? !!c.ssh_config_host : !!c.remote_host;
+    const hasTarget = c.network_mode === 'alliance'
+        ? !!(c.ssh_config_host && c.remote_host && c.remote_user)
+        : (c.connection_mode === 'ssh_config_host'
+            ? !!c.ssh_config_host
+            : !!c.remote_host);
     if (!hasTarget || !c.ssh_key) {
-        smSetMsg('Connection target and SSH key are required for the interactive test.', false);
+        smSetMsg(
+            c.network_mode === 'alliance'
+                ? 'Alliance host, account, SSH alias, and SSH key are required to initialize the Duo master.'
+                : 'Connection target and SSH key are required for the interactive test.',
+            false
+        );
         return;
     }
 
     smResetConnectionValidation();
-    smTermOpen('Interactive SSH Test');
+    smTermOpen(c.network_mode === 'alliance'
+        ? 'Initialize Alliance Duo ControlMaster'
+        : 'Interactive SSH Test');
 
     try {
         const res = await fetch('/api/admin/sshfs/interactive/start-test', {
@@ -1407,7 +1697,9 @@ async function smInteractiveTest() {
             return;
         }
         smTermToken = data.token;
-        smStatusBusy('Session active — respond to any prompts below');
+        smStatusBusy(c.network_mode === 'alliance'
+            ? 'Approve the Duo prompt to establish the master'
+            : 'Session active — respond to any prompts below');
         if (data.cmd) smTermInfo('Command: ' + data.cmd + '\n\n');
         smTermStartPolling();
     } catch (err) {
@@ -1449,12 +1741,22 @@ document.addEventListener('DOMContentLoaded', function () {
     smLoadMountDropdown();
     smLoadSshConfigHosts();
     smRefreshStatus();
-    smUpdateConnectionMode();
+    smUpdateNetworkMode();
 
     ['smMountName', 'smRemoteUser', 'smRemoteHost', 'smSshConfigHost', 'smRemotePath', 'smLocalMount', 'smSshKey'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener('input', smResetConnectionValidation);
-        if (el && el.tagName === 'SELECT') el.addEventListener('change', smResetConnectionValidation);
+        if (el) {
+            el.addEventListener('input', function () {
+                smResetConnectionValidation();
+                smUpdateAllianceSshConfig();
+            });
+        }
+        if (el && el.tagName === 'SELECT') {
+            el.addEventListener('change', function () {
+                smResetConnectionValidation();
+                smUpdateAllianceSshConfig();
+            });
+        }
     });
 
     const sshHostInput = document.getElementById('smSshConfigHost');

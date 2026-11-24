@@ -267,7 +267,6 @@
                 fbLoaded    = true;
                 fbCheckedRows.clear();
                 updateSelectionState();
-                updateCounterBanner();
                 fbApplyFilterSort();
             })
             .catch(function (err) {
@@ -285,7 +284,11 @@
         var filesSubEl = el('fb-stat-files-sub');
         var queryEl = el('fb-stat-query');
         if (!filesEl || !filesSubEl || !queryEl) return;
-        var n = fbAllRows.length;
+        var n = fbGroupByCol
+            ? fbFilteredRows.reduce(function (sum, group) {
+                return sum + group.file_count;
+            }, 0)
+            : fbFilteredRows.length;
         var m = fbTotalRows;
         filesEl.textContent = String(n);
         filesSubEl.textContent = 'before access: ' + m;
@@ -313,6 +316,13 @@
             Object.keys(fbColFilters).forEach(function (col) {
                 var q = String(fbColFilters[col] || '').toLowerCase();
                 if (!q) return;
+                var filenamePattern = null;
+                if (col === 'FILENAME' && q.indexOf('*') !== -1) {
+                    var parts = q.split('*').map(function (part) {
+                        return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    });
+                    filenamePattern = new RegExp('^' + parts.join('.*') + '$');
+                }
                 rows = rows.filter(function (r) {
                     var cellRaw = String(r[col] == null ? '' : r[col]);
                     var cell = cellRaw.toLowerCase();
@@ -325,6 +335,7 @@
                     if (q === '__blank__') {
                         return cell.trim() === '';
                     }
+                    if (filenamePattern) return filenamePattern.test(cell);
                     return cell.indexOf(q) !== -1;
                 });
             });
@@ -368,6 +379,7 @@
         }
 
         fbCurrentPage = 1;
+        updateCounterBanner();
         fbUpdatePagination();
         fbRenderHeaders();
         fbRenderPage();

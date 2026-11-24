@@ -191,6 +191,84 @@ item.arguments = '0: queue name; 1: tunnel error'
 item.comment = 'Logged when ARI cannot restore an enabled queue tunnel'
 langlist.add(item)
 
+item = langlist.create('APERO_QUEUE_GUI_HTTP_ERROR', kind='text')
+item.value['ENG'] = 'Dashboard returned HTTP {0}.'
+item.value['FR'] = 'Le tableau de bord a renvoyé HTTP {0}.'
+item.value['ES'] = 'El panel devolvió HTTP {0}.'
+item.arguments = '0: HTTP status code'
+item.comment = 'ARI APERO queue dashboard health probe error'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_PROBE_ERROR', kind='text')
+item.value['ENG'] = 'Dashboard probe failed: {0}'
+item.value['FR'] = 'La vérification du tableau de bord a échoué : {0}'
+item.value['ES'] = 'La comprobación del panel falló: {0}'
+item.arguments = '0: probe error'
+item.comment = 'ARI APERO queue dashboard health probe failure'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_TUNNEL_REQUIRED', kind='text')
+item.value['ENG'] = (
+    'The SSH tunnel is not active. Use Start / Verify Tunnel first.'
+)
+item.value['FR'] = (
+    "Le tunnel SSH n'est pas actif. Utilisez Démarrer / Vérifier le tunnel "
+    "d'abord."
+)
+item.value['ES'] = (
+    'El túnel SSH no está activo. Primero use Iniciar / Verificar túnel.'
+)
+item.arguments = 'None'
+item.comment = 'ARI error before retrying an unreachable queue dashboard'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_ALREADY_ALIVE', kind='text')
+item.value['ENG'] = 'Queue dashboard is already answering.'
+item.value['FR'] = 'Le tableau de bord de la file répond déjà.'
+item.value['ES'] = 'El panel de la cola ya responde.'
+item.arguments = 'None'
+item.comment = 'ARI result when a queue dashboard retry is unnecessary'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_SUPERVISOR_ERROR', kind='text')
+item.value['ENG'] = 'Could not reach queue supervisor: {0}'
+item.value['FR'] = 'Impossible de joindre le superviseur de la file : {0}'
+item.value['ES'] = 'No se pudo contactar con el supervisor de la cola: {0}'
+item.arguments = '0: supervisor connection error'
+item.comment = 'ARI error when the queue supervisor retry request fails'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_RESTART_REJECTED', kind='text')
+item.value['ENG'] = (
+    'Queue supervisor rejected the restart (HTTP {0}): {1}'
+)
+item.value['FR'] = (
+    'Le superviseur de la file a refusé le redémarrage (HTTP {0}) : {1}'
+)
+item.value['ES'] = (
+    'El supervisor de la cola rechazó el reinicio (HTTP {0}): {1}'
+)
+item.arguments = '0: HTTP status; 1: response detail'
+item.comment = 'ARI error when the queue supervisor refuses a restart'
+langlist.add(item)
+
+item = langlist.create('APERO_QUEUE_GUI_RESTART_REQUESTED', kind='text')
+item.value['ENG'] = (
+    'Dashboard worker restart requested. The page will refresh health '
+    'status automatically.'
+)
+item.value['FR'] = (
+    'Redémarrage du processus du tableau de bord demandé. La page '
+    'actualisera automatiquement son état.'
+)
+item.value['ES'] = (
+    'Se solicitó reiniciar el proceso del panel. La página actualizará '
+    'automáticamente su estado.'
+)
+item.arguments = 'None'
+item.comment = 'ARI success after requesting a queue dashboard restart'
+langlist.add(item)
+
 item = langlist.create('USER_STATISTICS_RESET', kind='text')
 item.value['ENG'] = 'Reset statistics'
 item.value['FR'] = 'Réinitialiser les statistiques'
@@ -245,16 +323,16 @@ langlist.add(item)
 # 00-000-00001
 # =============================================================================
 item = langlist.create('00-000-00001', kind='error-code')
-item.value['ENG'] = 'Cannot find module \'{0}\' \n\t Problem with recipe defintion \n\tRecipe name must match recipe python file name and be in PYTHONPATH'
+item.value['ENG'] = 'Cannot find module \'{0}\' \n\t Problem with recipe defintion \n\tRecipe name must match recipe python file name and be in PYTHONPATH\n\tImport error: {1}'
 item.value['FR'] = ("Impossible de trouver le module '{0}' \n\t Problème de "
                     'définition de recette \n\tLe nom de la recette doit '
                     'correspondre au nom du fichier python et être dans '
-                    'PYTHONPATH')
+                    'PYTHONPATH\n\tErreur d\'import : {1}')
 item.value['ES'] = ("No se encuentra el módulo '{0}' \n\t Problema con la "
                     'definición de la receta \n\tEl nombre de la receta debe '
                     'coincidir con el nombre del archivo python y estar en '
-                    'PYTHONPATH')
-item.arguments = 'None'
+                    'PYTHONPATH\n\tError de importación: {1}')
+item.arguments = '{0}=recipe name, {1}=underlying import error'
 item.comment = 'Means that recipe was not found in PYTHONPATH (either PYTHONPATH is wrong or recipe is not in PYTHONPATH)'
 langlist.add(item)
 
@@ -13020,6 +13098,48 @@ item.value['ENG'] = 'Queue: \t Failed to submit {0}: {1}'
 item.value['FR'] = 'File : \t Échec de la soumission de {0} : {1}'
 item.value['ES'] = 'Cola: \t Fallo al enviar {0}: {1}'
 item.arguments = '{0}=os.path.basename(script_path), {1}=output.stderr.strip()'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
+# 10-513-00012
+# =============================================================================
+item = langlist.create('10-513-00012', kind='warning-code')
+item.value['ENG'] = ('Queue: this queue only runs tasks through Slurm - '
+                     'use batch or chain (or run inside a Slurm job)')
+item.value['FR'] = ('File : cette file execute les taches uniquement via '
+                    'Slurm - utilisez batch ou chain (ou un job Slurm)')
+item.value['ES'] = ('Cola: esta cola solo ejecuta tareas mediante Slurm - '
+                    'use batch o chain (o ejecute dentro de un job Slurm)')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
+# 10-513-00013
+# =============================================================================
+item = langlist.create('10-513-00013', kind='warning-code')
+item.value['ENG'] = ('Queue: a chain is submitting or active; wait for it '
+                     'to finish before starting another run or batch')
+item.value['FR'] = ('File : une chaine est en cours de soumission ou active ; '
+                    'attendez avant de lancer une autre execution')
+item.value['ES'] = ('Cola: hay una cadena activa o enviandose; espere antes '
+                    'de iniciar otra ejecucion o lote')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
+# 10-513-00013
+# =============================================================================
+item = langlist.create('10-513-00013', kind='warning-code')
+item.value['ENG'] = ('Queue: a chain is submitting or active; wait for it '
+                     'to finish before starting another run or batch')
+item.value['FR'] = ('File : une chaine est en cours de soumission ou active ; '
+                    'attendez avant de lancer une autre execution')
+item.value['ES'] = ('Cola: hay una cadena activa o enviandose; espere antes '
+                    'de iniciar otra ejecucion o lote')
+item.arguments = 'None'
 item.comment = 'Used in: tools/module/processing/drs_queue.py'
 langlist.add(item)
 
@@ -26006,6 +26126,78 @@ item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
 langlist.add(item)
 
 # =============================================================================
+# 40-513-00051
+# =============================================================================
+item = langlist.create('40-513-00051', kind='all-code')
+item.value['ENG'] = 'Could not load queue runtime information'
+item.value['FR'] = 'Impossible de charger les informations de la file'
+item.value['ES'] = 'No se pudo cargar la informacion de la cola'
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00052
+# =============================================================================
+item = langlist.create('40-513-00052', kind='all-code')
+item.value['ENG'] = 'Queue runs per Slurm array task (blank = automatic)'
+item.value['FR'] = ('Executions de file par tache Slurm '
+                    '(vide = automatique)')
+item.value['ES'] = ('Ejecuciones de cola por tarea Slurm '
+                    '(vacio = automatico)')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00053
+# =============================================================================
+item = langlist.create('40-513-00053', kind='all-code')
+item.value['ENG'] = (
+    'Each array task runs up to this many queue runs one after another. '
+    'Different array tasks can run at the same time, up to the batch '
+    'template CPUs per task value; Slurm may start fewer. Leave blank '
+    'to choose the size separately for each group: divide its pending '
+    'runs by that limit and round up.')
+item.value['FR'] = (
+    'Chaque tache Slurm execute au plus ce nombre de traitements de file '
+    'les uns apres les autres. Plusieurs taches peuvent tourner en '
+    'parallele, jusqu a la valeur CPU par tache du modele ; Slurm peut '
+    'en demarrer moins. Laissez vide pour calculer la taille pour chaque '
+    'groupe : divisez ses traitements en attente par cette limite et '
+    'arrondissez au nombre entier superieur.')
+item.value['ES'] = (
+    'Cada tarea Slurm ejecuta como maximo esta cantidad de procesos '
+    'de la cola, uno despues de otro. Varias tareas pueden ejecutarse '
+    'a la vez, hasta el valor de CPU por tarea de la plantilla; Slurm '
+    'puede iniciar menos. Deje el campo vacio para calcular el tamano '
+    'por grupo: divida los procesos pendientes entre ese limite y '
+    'redondee al entero superior.')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
+# 40-513-00054
+# =============================================================================
+item = langlist.create('40-513-00054', kind='all-code')
+item.value['ENG'] = (
+    'Example: 24 runs and a limit of 8 give 8 array tasks of 3 runs '
+    'each automatically. Entering 1 instead creates 24 array tasks, '
+    'with at most 8 running at once.')
+item.value['FR'] = (
+    'Exemple : 24 traitements et une limite de 8 donnent '
+    'automatiquement 8 taches de 3 traitements. En saisissant 1, '
+    '24 taches sont creees, dont 8 au maximum en parallele.')
+item.value['ES'] = (
+    'Ejemplo: 24 procesos y un limite de 8 producen automaticamente '
+    '8 tareas de 3 procesos. Si introduce 1, se crean 24 tareas, '
+    'con un maximo de 8 ejecutandose a la vez.')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue_gui.py'
+langlist.add(item)
+
+# =============================================================================
 # 40-514-00001
 # =============================================================================
 item = langlist.create('40-514-00001', kind='all-code')
@@ -29535,6 +29727,9 @@ for geo_key, geo_eng, geo_fr, geo_es in GEOLOCATE_UI:
 # FILE_BROWSER_* - ARI object file-browser preset labels
 # =============================================================================
 FILE_BROWSER_UI_TEXT = [
+    ('DEFAULT', 'All processed (out, QC passed or not recorded)',
+     'Tous les produits traités (out, QC réussi ou non enregistré)',
+     'Todos los productos procesados (out, QC aprobado o no registrado)'),
     ('EXT2D', 'Extracted 2D spectra [e.fits]',
      'Spectres 2D extraits [e.fits]', 'Espectros 2D extraídos [e.fits]'),
     ('TCORR2D', 'Telluric corrected 2D spectra [t.fits]',

@@ -1044,7 +1044,8 @@ class DrsRecipe(object):
             # text: Cannot find module '{0}' \n Problem with recipe defintion \n
             #     Recipe name must match recipe python file name and be in
             #     PYTHONPATH
-            emsg = textentry('00-000-00001', args=[self.name])
+            eargs = [self.name, getattr(self, '_import_error', 'Unknown')]
+            emsg = textentry('00-000-00001', args=eargs)
             WLOG(self.params, 'error', emsg)
         # ------------------------------------------------------------------
         # run main via import module get method (gets import module)
@@ -1402,7 +1403,9 @@ class DrsRecipe(object):
         try:
             return constant_functions.import_module(func_name, name, full=full,
                                                     quiet=quiet)
-        except Exception:
+        except Exception as import_error:
+            # kept so a missing module reports the real cause
+            self._import_error = str(import_error)
             return None
 
     def _parse_args(self, dictionary: Union[Dict[str, Any], None] = None

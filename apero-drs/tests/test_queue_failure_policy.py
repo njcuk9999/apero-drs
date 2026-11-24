@@ -99,6 +99,33 @@ def test_linear_failure_releases_unstarted_tasks(
     assert released == ['group/second']
 
 
+@pytest.mark.parametrize('output,code,expected', [
+    ('done', 0, 0),
+    ('W: Recipe x has NOT been successfully completed', 0, 1),
+    ('crash', 3, 3),
+])
+def test_script_task_status_uses_fail_signature(
+    tmp_path: Any, output: str, code: int, expected: int,
+) -> None:
+    """Batch/chain scripts fail tasks whose wrapped recipe failed.
+
+    :param tmp_path: Temporary log directory.
+    :param output: Task console output.
+    :param code: Task exit code.
+    :param expected: Expected task status.
+    :return: None.
+    """
+    log_path = tmp_path / 'logs' / 'task.log'
+    command = 'echo {0}; exit {1}'.format(queue.shlex.quote(output), code)
+    lines = queue._shell_logged_command(
+        'bash -c {0}'.format(queue.shlex.quote(command)), str(log_path))
+    lines.append('exit $task_status')
+    result = subprocess.run(['bash', '-c', '\n'.join(lines)],
+                            capture_output=True)
+    assert result.returncode == expected
+    assert output in log_path.read_text()
+
+
 def test_ari_task_runs_after_regular_processing(monkeypatch: Any) -> None:
     """The ARI task runs after the complete regular run list."""
     runs = [
@@ -167,4 +194,5 @@ def test_chain_chunk_stops_after_reference_failure(
     assert result.returncode == 1
     assert not marker.exists()
     assert '--qresult=failed' in trace.read_text()
-    assert '--qresult=pending' in trace.read_text()
+    assert '--qresult=running' in trace.read_text()
+    assert '--qresult=pending' not in trace.read_text()

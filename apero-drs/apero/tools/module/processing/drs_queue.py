@@ -103,6 +103,10 @@ QUEUE_BATCH_TEMPLATE = 'batch_template.yaml'
 QUEUE_BATCH_TEMPLATE_DIR = 'batch_templates'
 # define the template name used when none is given
 QUEUE_DEFAULT_TEMPLATE = 'default'
+# per-queue execution settings (kept by resets, like the batch templates)
+QUEUE_SETTINGS_FILE = 'queue_settings.yaml'
+QUEUE_SETTINGS_DEFAULTS = dict(slurm_only=False,
+                               slurm_template=QUEUE_DEFAULT_TEMPLATE)
 # define the queue group directory name format
 #    {0} = unix time (zero padded so groups sort alphabetically by time)
 #    {1} = group name (zero padded group number + recipe shortname)
@@ -617,6 +621,11 @@ def _shell_logged_command(command: str, log_path: str) -> List[str]:
     lines.append('{{ {0} ; }} 2>&1 | tee "{1}"'.format(command, log_path))
     # PIPESTATUS keeps the command exit code (not the tee exit code)
     lines.append('task_status=${PIPESTATUS[0]}')
+    # same failure rule as local runs (see _run_task)
+    fail_check = ('if [ $task_status -eq 0 ] && grep -qF {0} "{1}"; then '
+                  'task_status=1; fi')
+    lines.append(fail_check.format(shlex.quote(QUEUE_FAIL_SIGNATURE),
+                                   log_path))
     return lines
 
 
@@ -805,6 +814,13 @@ def stop_process(params: ParamDict, record: Dict[str, Any],
         if shutil.which('scancel') is None:
             return dict(success=False,
                         message='"scancel" not found on this machine')
+        pid = record.get('pid')
+        if (record.get('kind') == 'chain' and pid is not None
+                and record.get('host') == socket.gethostname()):
+            if not _kill_pid(int(pid)):
+                return dict(success=False,
+                            message='could not stop chain submission '
+                                    'process {0}'.format(pid))
         output = subprocess.run(['scancel'] + jobs, capture_output=True,
                                 text=True)
         if output.returncode != 0:
@@ -816,6 +832,14 @@ def stop_process(params: ParamDict, record: Dict[str, Any],
         msg = 'Cancelled Slurm job(s) {0}; {1} task(s) back to pending'
         return dict(success=True, message=msg.format(', '.join(jobs),
                                                      moved))
+    if record.get('kind') == 'chain' and record.get('submitting'):
+        if record.get('pid') is not None:
+            return dict(success=False,
+                        message='chain submission is starting; retry Stop '
+                                'after its sbatch job appears')
+        drs_queue_procs.finish(proc_dir, record['id'], -15, stopped=True)
+        return dict(success=True,
+                    message='Chain submission cancelled before sbatch')
     # ------------------------------------------------------------------
     # local processes
     pid = record.get('pid')
@@ -1001,6 +1025,110 @@ def save_template(params: ParamDict, template: Dict[str, Any],
     template_path = get_template_path(params, name)
     base.write_yaml(template, template_path, width=float('inf'))
     return template_path
+
+
+def load_queue_settings(params: ParamDict) -> Dict[str, Any]:
+    """
+    Load the queue execution settings (defaults if never saved)
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dict(slurm_only=bool, slurm_template=str)
+    """
+    path = os.path.join(get_queue_path(params), QUEUE_SETTINGS_FILE)
+    settings = dict(QUEUE_SETTINGS_DEFAULTS)
+    if os.path.exists(path):
+        stored = base.load_yaml(path, default=dict())
+        if isinstance(stored, dict):
+            settings.update(stored)
+    settings['slurm_only'] = drs_text.true_text(settings['slurm_only'])
+    settings['slurm_template'] = sanitize_template_name(
+        settings['slurm_template'])
+    return settings
+
+
+def save_queue_settings(params: ParamDict, slurm_only: bool,
+                        slurm_template: Optional[str]) -> Dict[str, Any]:
+    """
+    Save the queue execution settings
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param slurm_only: bool, run every APERO job through Slurm
+    :param slurm_template: str or None, batch template for Slurm jobs
+
+    :return: dict, the saved settings
+    """
+    settings = dict(slurm_only=bool(slurm_only),
+                    slurm_template=sanitize_template_name(slurm_template))
+    os.makedirs(get_queue_path(params), exist_ok=True)
+    path = os.path.join(get_queue_path(params), QUEUE_SETTINGS_FILE)
+    base.write_yaml(settings, path)
+    return settings
+
+
+def local_runs_blocked(params: ParamDict) -> bool:
+    """
+    Whether queue tasks may not run on this machine (slurm-only queue and
+    we are not inside a Slurm job, e.g. on a login node)
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: bool, True if local runs are refused
+    """
+    if 'SLURM_JOB_ID' in os.environ:
+        return False
+    return load_queue_settings(params)['slurm_only']
+
+
+def write_single_job_script(script_path: str, template: Dict[str, Any],
+                            job_name: str, command: str, log_path: str,
+                            rc_path: str) -> None:
+    """
+    Write an sbatch script running one shell command (e.g. apero_reset or
+    apero_processing for a slurm-only queue)
+
+    :param script_path: str, the script path to write
+    :param template: dict, the batch template (header + activation)
+    :param job_name: str, the Slurm job name
+    :param command: str, the shell command to run
+    :param log_path: str, the job output file (stdout and stderr)
+    :param rc_path: str, file the command exit code is written to
+
+    :return: None
+    """
+    template = dict(QUEUE_BATCH_DEFAULTS, **template)
+    lines = ['#!/bin/bash']
+    lines.append('#SBATCH --time={0}'.format(template['time']))
+    lines.append('#SBATCH --nodes={0}'.format(template['nodes']))
+    lines.append('#SBATCH --cpus-per-task={0}'
+                 ''.format(template['cpus_per_task']))
+    lines.append('#SBATCH --mem={0}'.format(template['mem']))
+    if len(str(template['account'])) > 0:
+        lines.append('#SBATCH --account={0}'.format(template['account']))
+    lines.append('#SBATCH --job-name={0}'.format(job_name))
+    lines.append('#SBATCH --output={0}'.format(log_path))
+    if len(str(template['mail_user'])) > 0:
+        lines.append('#SBATCH --mail-user={0}'
+                     ''.format(template['mail_user']))
+        lines.append('#SBATCH --mail-type={0}'
+                     ''.format(template['mail_type']))
+    lines.append('')
+    lines.append('echo "RUNNING: activation scripts"')
+    for act_line in template['activation']:
+        lines.append('echo "{0}"'.format(act_line.replace('"', '\\"')))
+        lines.append(act_line)
+    lines.append('')
+    lines.append('export PYTHONUNBUFFERED=1')
+    # apero_reset refuses to run inside a directory it would reset
+    lines.append('cd "$HOME"')
+    lines.append(command)
+    lines.append('status=$?')
+    # the job vanishes from squeue when done - this keeps its exit code
+    lines.append('echo "$status" > {0}'.format(shlex.quote(rc_path)))
+    lines.append('exit $status')
+    with open(script_path, 'w') as sfile:
+        sfile.write('\n'.join(lines) + '\n')
+    os.chmod(script_path, 0o755)
 
 
 def _listdir(path: str) -> List[str]:
@@ -1386,6 +1514,10 @@ def _queue_run_once(params: ParamDict, queue_path: str, cores: int,
     # claim tasks inside the queue lock (so parallel apero_queues do not
     #   claim the same tasks)
     with QueueLock(params):
+        if _chain_is_active(params):
+            summary['message'] = textentry('10-513-00013')
+            _progress(progress, summary['message'])
+            return summary
         failure = _blocking_failure(params)
         if failure is not None:
             summary['group'] = failure['group']
@@ -1555,6 +1687,13 @@ def queue_run(params: ParamDict, cores: Optional[int] = None,
 
     :return: dictionary, combined summary of the queue run
     """
+    if local_runs_blocked(params):
+        # warning: Queue: this queue only runs tasks through Slurm ...
+        message = textentry('10-513-00012')
+        WLOG(params, 'warning', message, sublevel=2)
+        _progress(progress, message)
+        return dict(group=None, n_run=0, n_complete=0, n_failed=0,
+                    n_stopped=0, message=message)
     if cores is None:
         cores = get_queue_cores(params)
     if mpmode is None:
@@ -2116,6 +2255,9 @@ def batch_queue(params: ParamDict, per_batch: int,
     fail_stale_running(params)
     # claim tasks inside the queue lock
     with QueueLock(params):
+        if _chain_is_active(params):
+            summary['message'] = textentry('10-513-00013')
+            return summary
         failure = _blocking_failure(params)
         if failure is not None:
             summary['group'] = failure['group']
@@ -2371,6 +2513,16 @@ def _group_queue_entries(params: ParamDict) -> Dict[str, Dict[str, List[str]]]:
     return grouped
 
 
+def _chain_is_active(params: ParamDict) -> bool:
+    """Whether a registered chain is submitting or has live Slurm jobs.
+
+    :param params: Queue profile parameters.
+    :return: True while a chain owns the queue's pending work.
+    """
+    return any(record.get('kind') == 'chain'
+               for record in active_processes(params))
+
+
 def _sanitize_chain_name(name: str) -> str:
     """
     Sanitize a group name for use in generated file names
@@ -2478,9 +2630,14 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
             lines.append('echo "Would have run: {0}"'.format(ecmd))
         lines.append('exit 0')
     else:
-        for task_index, task in enumerate(tasks):
+        for task in tasks:
             lines.append('echo "Running: {0}"'.format(task['shortname']))
             group, run_file = str(task['qid']).split('/', 1)
+            claim = ['apero_queue.py', 'system',
+                     '--qpath=' + str(task['qpath']),
+                     '--qid=' + str(task['qid']), '--qresult=running']
+            lines.append('if ! {0}; then exit 1; fi'.format(
+                shlex.join(claim)))
             log_path = get_task_log_path(str(task['qpath']), group,
                                          run_file)
             command = _monitored_command(str(task['command']),
@@ -2499,9 +2656,8 @@ def _write_chain_chunk_script(task_path: str, tasks: List[Dict[str, str]],
             lines.append('    fail_count=$((fail_count + 1))')
             lines.append('fi')
             if _stops_on_failure(task):
-                # Stop this chunk and return its not-yet-started tasks.
-                remaining = [item['qid'] for item in tasks[task_index + 1:]]
-                lines.extend(_failure_script_lines(task['qpath'], remaining))
+                lines.extend(['if [ $task_status -ne 0 ]; then',
+                              '    exit 1', 'fi'])
         lines.append('if [ $fail_count -eq 0 ]; then')
         lines.append('    exit 0')
         lines.append('fi')
@@ -2604,10 +2760,93 @@ def _write_chain_submit_script(submit_path: str,
     os.chmod(submit_path, 0o755)
 
 
+def _submit_chain_workers(
+    params: ParamDict, proc_id: str,
+    worker_meta: List[Dict[str, Any]], submit_log: str,
+    n_tasks: int,
+) -> Dict[str, Any]:
+    """Submit each registered chain group with afterok dependency.
+
+    :param params: Queue profile parameters.
+    :param proc_id: Process record registered before script generation.
+    :param worker_meta: Ordered group-to-worker script information.
+    :param submit_log: Submission output log path.
+    :param n_tasks: Number of queue task entries in the chain.
+    :return: Submission result summary.
+    """
+    proc_dir = get_proc_dir(params)
+    job_ids: List[str] = []
+    previous_job_id = None
+    error = ''
+    try:
+        with open(submit_log, 'a') as logfile:
+            for meta in worker_meta:
+                record = drs_queue_procs.load(proc_dir, proc_id)
+                if record is not None and record.get('stopped'):
+                    error = 'Chain submission stopped by user.'
+                    break
+                command = ['sbatch', '--parsable']
+                if previous_job_id is not None:
+                    command.append('--dependency=afterok:{0}'.format(
+                        previous_job_id))
+                command.append(str(meta['worker']))
+                logfile.write('$ {0}\n'.format(shlex.join(command)))
+                process = subprocess.Popen(
+                    command, stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, text=True)
+                drs_queue_procs.update(
+                    proc_dir, proc_id, pid=process.pid,
+                    host=socket.gethostname(), submitting=True)
+                try:
+                    output, _ = process.communicate(timeout=120)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    output, _ = process.communicate()
+                    error = 'sbatch timed out after 120 seconds'
+                output = output or ''
+                logfile.write(output)
+                if output and not output.endswith('\n'):
+                    logfile.write('\n')
+                found_ids = drs_queue_procs.parse_sbatch_ids(output)
+                if process.returncode != 0 or len(found_ids) != 1:
+                    if not error:
+                        error = output.strip() or (
+                            'sbatch did not return exactly one job ID')
+                    break
+                job_id = found_ids[0]
+                job_ids.append(job_id)
+                previous_job_id = job_id
+                drs_queue_procs.update(
+                    proc_dir, proc_id, pid=None, slurm_jobs=list(job_ids),
+                    submitting=True)
+    except OSError as submit_error:
+        error = str(submit_error)
+
+    record = drs_queue_procs.load(proc_dir, proc_id)
+    if record is not None and record.get('stopped'):
+        return dict(submitted=bool(job_ids), job_ids=job_ids,
+                    message='Chain submission stopped by user.')
+    drs_queue_procs.update(proc_dir, proc_id, pid=None,
+                           slurm_jobs=list(job_ids), submitting=False)
+    if error and not job_ids:
+        drs_queue_procs.finish(proc_dir, proc_id, 1)
+        message = 'Chain submission failed: {0}'.format(error)
+    elif error:
+        message = ('Chain partially submitted ({0}/{1} groups); {2}. '
+                   'Unsubmitted tasks remain pending.').format(
+                       len(job_ids), len(worker_meta), error)
+    else:
+        message = 'Chain created and submitted: {0} group(s), {1} task(s)'
+        message = message.format(len(worker_meta), n_tasks)
+    return dict(submitted=bool(job_ids), job_ids=job_ids, proc_id=proc_id,
+                message=message)
+
+
 def chain_queue(params: ParamDict, template_name: Optional[str] = None,
                 submit: bool = False,
                 per_batch: Optional[int] = None,
-                dry_run: bool = False) -> Dict[str, Any]:
+                dry_run: bool = False,
+                owner: str = 'cli') -> Dict[str, Any]:
     """
     Build a Slurm chain of array jobs across queue groups
 
@@ -2620,6 +2859,7 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
     :param submit: bool, whether to run the generated submit script
     :param per_batch: int or None, queue runs per array task
     :param dry_run: bool, whether worker tasks only print commands
+    :param owner: Process owner, 'gui' for a dashboard-submitted chain.
 
     :return: dict, summary of generated scripts and optional submission
     """
@@ -2644,6 +2884,10 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         return summary
     template = load_template(params, safe_name)
     queue_path = get_queue_path(params)
+    if submit and shutil.which('sbatch') is None:
+        summary['message'] = ('"sbatch" not found on this machine - '
+                              'scripts will be written but not submitted')
+        return summary
     # stale running tasks would block the chain forever
     fail_stale_running(params)
     failure = _blocking_failure(params)
@@ -2651,8 +2895,11 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         summary['message'] = textentry(
             '10-513-00007', args=[failure['run'], failure['group']])
         return summary
-    # Claim all pending groups together only when no queue task is running.
+    # Snapshot all groups without changing task states.
     with QueueLock(params):
+        if _chain_is_active(params):
+            summary['message'] = textentry('10-513-00013')
+            return summary
         grouped = _group_queue_entries(params)
         if len(grouped) == 0:
             summary['message'] = 'Nothing to chain (queue is empty)'
@@ -2672,29 +2919,50 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
                 continue
             grouped_runs[group] = list(pending_runs)
             summary['n_tasks'] += len(pending_runs)
-            if not dry_run:
-                for run_file in pending_runs:
-                    move_run_file(queue_path, group, run_file,
-                                  QUEUE_PENDING_DIR, QUEUE_RUNNING_DIR)
         if len(grouped_runs) == 0:
             summary['message'] = 'Nothing to chain (no pending tasks)'
             return summary
-    # Create a unique output tree for task chunks, Slurm scripts, and logs.
-    chain_root = get_chain_root(params)
-    os.makedirs(chain_root, exist_ok=True)
-    chain_name = '{0}-{1}'.format(QUEUE_CHAIN_PREFIX, os.getpid())
-    chain_dir = os.path.join(chain_root, chain_name)
-    if os.path.exists(chain_dir):
-        chain_name = '{0}-{1}-{2:011.0f}'.format(QUEUE_CHAIN_PREFIX,
-                                                 os.getpid(), time.time())
+        chain_root = get_chain_root(params)
+        os.makedirs(chain_root, exist_ok=True)
+        chain_name = '{0}-{1}'.format(QUEUE_CHAIN_PREFIX, os.getpid())
         chain_dir = os.path.join(chain_root, chain_name)
-    scripts_dir = os.path.join(chain_dir, 'scripts')
-    tasks_dir = os.path.join(chain_dir, 'tasks')
-    logs_dir = os.path.join(chain_dir, 'logs')
-    errors_dir = os.path.join(chain_dir, 'errors')
-    for path in [chain_dir, scripts_dir, tasks_dir, logs_dir, errors_dir]:
-        os.makedirs(path, exist_ok=True)
-    summary['chain_dir'] = chain_dir
+        if os.path.exists(chain_dir):
+            chain_name = '{0}-{1}-{2:011.0f}'.format(
+                QUEUE_CHAIN_PREFIX, os.getpid(), time.time())
+            chain_dir = os.path.join(chain_root, chain_name)
+        scripts_dir = os.path.join(chain_dir, 'scripts')
+        tasks_dir = os.path.join(chain_dir, 'tasks')
+        logs_dir = os.path.join(chain_dir, 'logs')
+        errors_dir = os.path.join(chain_dir, 'errors')
+        for path in [chain_dir, scripts_dir, tasks_dir, logs_dir,
+                     errors_dir]:
+            os.makedirs(path, exist_ok=True)
+        summary['chain_dir'] = chain_dir
+        submit_path = os.path.join(chain_dir, 'submit_chain.sh')
+        submit_log = os.path.join(chain_dir, 'submission.log')
+        proc_id = None
+        if submit:
+            qids = ['{0}/{1}'.format(group, run_file)
+                    for group, run_files in grouped_runs.items()
+                    for run_file in run_files]
+            log_globs = [os.path.join(logs_dir, '*.out'),
+                         os.path.join(errors_dir, '*.err')]
+            label = '{0} ({1} group(s))'.format(chain_name,
+                                                len(grouped_runs))
+            rkwargs: Dict[str, Any] = dict(
+                cmd='bash ' + submit_path, qids=qids,
+                log_paths=[submit_log], log_globs=log_globs,
+                artifact_paths=[submit_path], owner=owner)
+            proc_id = drs_queue_procs.register(get_proc_dir(params),
+                                               'chain', label, **rkwargs)
+            if proc_id is None:
+                summary['message'] = 'Could not register the chain process.'
+                return summary
+            drs_queue_procs.update(get_proc_dir(params), proc_id,
+                                   submitting=True)
+            summary['proc_id'] = proc_id
+            with open(submit_log, 'w') as submit_file:
+                submit_file.write('Preparing chain Slurm scripts...\n')
     # Generate ordered task chunks and one Slurm array worker per group.
     max_parallel = _template_parallel_limit(template)
     worker_meta = []
@@ -2705,7 +2973,7 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         os.makedirs(group_task_dir, exist_ok=True)
         task_index_path = os.path.join(group_task_dir, 'task_index.txt')
         task_paths = []
-        source_state = QUEUE_PENDING_DIR if dry_run else QUEUE_RUNNING_DIR
+        source_state = QUEUE_PENDING_DIR
         # default chunk size targets one array wave per template core cap
         if per_batch is None:
             g_per_batch = (len(group_runs) + max_parallel - 1) // max_parallel
@@ -2747,48 +3015,23 @@ def chain_queue(params: ParamDict, template_name: Optional[str] = None,
         summary['workers'].append(worker_path)
     summary['n_groups'] = len(worker_meta)
     # Chain workers in group order so afterok preserves queue dependencies.
-    submit_path = os.path.join(chain_dir, 'submit_chain.sh')
     _write_chain_submit_script(submit_path, worker_meta, chain_name)
     summary['submit_script'] = submit_path
-    # Optionally submit now and register the resulting Slurm jobs for control.
+    # Submit workers only after scripts are ready and the queue is rechecked.
     if submit:
-        if shutil.which('sbatch') is None:
-            summary['message'] = ('"sbatch" not found on this machine - '
-                                  'scripts written but not submitted')
-            return summary
-        cmd = ['bash', submit_path]
-        output = subprocess.run(cmd, capture_output=True, text=True)
-        if output.returncode == 0:
-            summary['submitted'] = True
-            job_ids = drs_queue_procs.parse_sbatch_ids(output.stdout)
-            log_globs = []
-            for job_id in job_ids:
-                log_globs.append(os.path.join(logs_dir, job_id + '_*.out'))
-                log_globs.append(os.path.join(errors_dir,
-                                              job_id + '_*.err'))
-            qids = ['{0}/{1}'.format(group, run_file)
-                    for group in grouped_runs
-                    for run_file in grouped_runs[group]]
-            label = '{0} ({1} group(s))'.format(chain_name, len(worker_meta))
-            artifact_paths = [submit_path] + list(summary['workers'])
-            for directory, _, filenames in os.walk(tasks_dir):
-                artifact_paths.extend(os.path.join(directory, name)
-                                      for name in filenames)
-            rkwargs: Dict[str, Any] = dict(cmd='bash ' + submit_path,
-                                           log_globs=log_globs,
-                                           slurm_jobs=job_ids, qids=qids,
-                                           artifact_paths=artifact_paths)
-            drs_queue_procs.register(get_proc_dir(params), 'chain', label,
-                                     **rkwargs)
-            summary['message'] = ('Chain created and submitted: {0} '
-                                  'group(s), {1} task(s)')
-            summary['message'] = summary['message'].format(
-                summary['n_groups'], summary['n_tasks'])
-        else:
-            summary['message'] = ('Chain scripts written, but submit failed: '
-                                  '{0}')
-            summary['message'] = summary['message'].format(
-                output.stderr.strip())
+        artifacts = [submit_path] + list(summary['workers'])
+        for directory, _, filenames in os.walk(tasks_dir):
+            artifacts.extend(os.path.join(directory, name)
+                             for name in filenames)
+        drs_queue_procs.update(get_proc_dir(params), proc_id,
+                               artifact_paths=artifacts)
+        submit_args = [params, proc_id, worker_meta, submit_log,
+                       summary['n_tasks']]
+        submitted = _submit_chain_workers(*submit_args)
+        summary['submitted'] = submitted['submitted']
+        summary['job_ids'] = submitted.get('job_ids', [])
+        summary['message'] = submitted['message']
+        if not summary['submitted']:
             WLOG(params, 'warning', summary['message'], sublevel=2)
     else:
         summary['message'] = ('Chain scripts written: {0} group(s), {1} '
@@ -2893,16 +3136,22 @@ def queue_system(params: ParamDict) -> None:
         return
     # split the qid into group and run file
     group, run_file = qid.split('/', 1)
-    # work out the destination state from the result
-    if qresult in ['success', 'complete', 'true', '1']:
+    # chain workers claim a task only when its array chunk starts
+    if qresult == 'running':
+        from_state = QUEUE_PENDING_DIR
+        to_state = QUEUE_RUNNING_DIR
+    elif qresult in ['success', 'complete', 'true', '1']:
+        from_state = QUEUE_RUNNING_DIR
         to_state = QUEUE_COMPLETE_DIR
     elif qresult == 'pending':
+        from_state = QUEUE_RUNNING_DIR
         to_state = QUEUE_PENDING_DIR
     else:
+        from_state = QUEUE_RUNNING_DIR
         to_state = QUEUE_FAILED_DIR
-    # move the run file from running to the destination state
+    # move the run file from its current state to the destination state
     moved = move_run_file(queue_path, group, run_file,
-                          QUEUE_RUNNING_DIR, to_state)
+                          from_state, to_state)
     # log the result
     if moved:
         wargs = [qid, to_state]
@@ -3817,7 +4066,8 @@ def _write_batch_script(params: ParamDict, template: Dict[str, Any],
         else:
             # add the runstring itself (output also teed to the task log)
             log_path = get_task_log_path(queue_path, group, run_file)
-            command = _with_drs_group(str(run_dict['runstring']),
+            task_command = _build_task_command(run_dict)
+            command = _with_drs_group(task_command,
                                       run_dict.get('drs_group'))
             command = _monitored_command(command, queue_path, qid,
                                          str(run_dict['shortname']),

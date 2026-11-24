@@ -222,12 +222,13 @@ def list_recipes(aparams: ParamDict, rparams: ParamDict) -> None:
         WLOG(aparams, 'info', msg)
 
 
-def run_recipe(aparams: ParamDict, rparams: ParamDict) -> None:
+def run_recipe(aparams: ParamDict,
+               rparams: ParamDict) -> Optional[Dict[str, Any]]:
     """Resolve and run the selected recipe or display its help.
 
     :param aparams: APERO parameters for the selected instrument.
     :param rparams: Parsed executable options and recipe arguments.
-    :return: None.
+    :return: The recipe main output (with 'success'), or None in debug.
     """
 
     name_list = get_recipe_list(aparams, 'name')
@@ -264,7 +265,8 @@ def run_recipe(aparams: ParamDict, rparams: ParamDict) -> None:
         # get position
         pos = name_list.index(rparams['RECIPE'])
         # run the recipe
-        recipe_list[pos]()
+        return recipe_list[pos]()
+    return None
 
 # =============================================================================
 # Start of code

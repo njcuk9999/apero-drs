@@ -47,10 +47,13 @@ PROC_ID_RE = re.compile(r'^[a-z]+-\d{8}-\d{6}-[0-9a-f]{6}$')
 SBATCH_ID_RE = re.compile(r'(?:Submitted batch job |: |^)(\d+)(?:;\S*)?\s*$')
 # the most queue ids kept per process (runs with ntasks=all keep cycling)
 MAX_QIDS = 5000
+# keep newly accepted Slurm jobs visible while squeue catches up
+SLURM_START_GRACE = 90
 # seconds a squeue answer is reused (many browsers poll the registry)
 SQUEUE_CACHE_SECONDS = 5.0
 _SQUEUE_CACHE: Dict[str, Any] = dict(time=0.0, key=None, value=None)
 _USER_JOBS_CACHE: Dict[str, Any] = dict(time=0.0, value=set())
+_SLURM_DETAILS_CACHE: Dict[str, Any] = dict(time=0.0, value=None)
 
 
 # =============================================================================
@@ -162,6 +165,7 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
                   log_globs=list(log_globs or []),
                   artifact_paths=list(artifact_paths or []),
                   slurm_jobs=[str(job) for job in (slurm_jobs or [])],
+                  slurm_submitted_at=(time.time() if slurm_jobs else None),
                   qids=list(qids or [])[-MAX_QIDS:])
     try:
         _write(proc_dir, record)
@@ -186,6 +190,8 @@ def update(proc_dir: str, proc_id: Optional[str], **fields: Any) -> None:
     if record is None:
         return
     record.update(fields)
+    if fields.get('slurm_jobs'):
+        record['slurm_submitted_at'] = time.time()
     if 'qids' in fields:
         record['qids'] = list(record['qids'])[-MAX_QIDS:]
     try:
@@ -374,6 +380,75 @@ def user_slurm_jobs() -> Optional[set]:
     return jobs
 
 
+def slurm_job_details() -> Dict[str, Any]:
+    """Return useful live Slurm details for the current user's jobs.
+
+    :return: Mapping with availability, user, jobs, and optional error.
+    """
+    if shutil.which('squeue') is None:
+        return dict(available=False, user=getpass.getuser(), jobs=[],
+                    error='squeue is not available')
+    now = time.time()
+    if now - _SLURM_DETAILS_CACHE['time'] < SQUEUE_CACHE_SECONDS:
+        cached = _SLURM_DETAILS_CACHE.get('value')
+        if isinstance(cached, dict):
+            return cached
+    fields = [
+        ('job_id', '%i'),
+        ('name', '%j'),
+        ('state', '%T'),
+        ('partition', '%P'),
+        ('reason', '%r'),
+        ('elapsed', '%M'),
+        ('time_limit', '%l'),
+        ('time_left', '%L'),
+        ('nodes', '%D'),
+        ('cpus', '%C'),
+        ('memory', '%m'),
+        ('submit_time', '%V'),
+        ('start_time', '%S'),
+        ('node_list', '%R'),
+        ('dependency', '%E'),
+    ]
+    command = [
+        'squeue',
+        '-h',
+        '-u',
+        getpass.getuser(),
+        '-o',
+        '|'.join(field[1] for field in fields),
+    ]
+    try:
+        output = subprocess.run(command, capture_output=True, text=True,
+                                timeout=15)
+    except (OSError, subprocess.SubprocessError) as error:
+        result = dict(available=False, user=getpass.getuser(), jobs=[],
+                      error=str(error))
+        return result
+    if output.returncode != 0:
+        result = dict(
+            available=False,
+            user=getpass.getuser(),
+            jobs=[],
+            error=(output.stderr or 'squeue failed').strip(),
+        )
+        return result
+    jobs = []
+    keys = [field[0] for field in fields]
+    for line in output.stdout.splitlines():
+        values = line.strip().split('|', len(keys) - 1)
+        if len(values) != len(keys):
+            continue
+        job = dict(zip(keys, values))
+        job['base_job_id'] = job['job_id'].split('_')[0]
+        jobs.append(job)
+    jobs.sort(key=lambda item: item['job_id'])
+    result = dict(available=True, user=getpass.getuser(), jobs=jobs,
+                  error='')
+    _SLURM_DETAILS_CACHE.update(time=now, value=result)
+    return result
+
+
 def pid_alive(pid: Any) -> bool:
     """
     Check whether a local process id is still alive
@@ -407,12 +482,23 @@ def proc_status(record: Dict[str, Any],
         if record.get('stopped'):
             return 'stopped'
         return 'complete' if record.get('returncode') == 0 else 'failed'
+    if record.get('submitting'):
+        return 'running'
     jobs = record.get('slurm_jobs') or []
     if len(jobs) > 0:
         if slurm is None:
             return 'unknown'
         states = [slurm[job] for job in jobs if job in slurm]
         if len(states) == 0:
+            submitted_at = record.get('slurm_submitted_at')
+            try:
+                recent = (submitted_at is not None and
+                          time.time() - float(submitted_at) <
+                          SLURM_START_GRACE)
+            except (TypeError, ValueError):
+                recent = False
+            if recent:
+                return 'pending'
             return 'finished'
         if any(state != 'PENDING' for state in states):
             return 'running'

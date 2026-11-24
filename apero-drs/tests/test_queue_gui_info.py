@@ -1,6 +1,10 @@
 """Tests for the queue GUI Info tab and its shared ARI docs include."""
-import webbrowser
+import http.client
+import json
+import subprocess
 import threading
+import webbrowser
+from http.server import ThreadingHTTPServer
 from typing import Any
 
 import pytest
@@ -8,6 +12,112 @@ import pytest
 from apero import dev
 from apero.tools.module.documentation import ari_docs
 from apero.tools.module.processing import drs_queue_gui
+
+
+def test_runtime_info_reports_git_snapshot(monkeypatch: Any) -> None:
+    """Report the checkout and whether its queue sources were modified.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    dev.get_base_params('SPIROU')
+    calls = []
+
+    def run(command: list[str], **kwargs: Any) -> Any:
+        """Return deterministic Git results for the startup snapshot."""
+        calls.append(command)
+        if 'show' in command:
+            output = 'abc123\n2026-11-20T10:00:00+00:00\n'
+        elif 'rev-parse' in command:
+            output = 'main\n'
+        elif 'status' in command:
+            output = ' M drs_queue.py\n'
+        else:
+            output = ''
+        return subprocess.CompletedProcess(command, 0, stdout=output)
+
+    monkeypatch.setattr(drs_queue_gui.subprocess, 'run', run)
+    monkeypatch.setenv('DRS_UCONFIG', '/config/profile')
+    info = drs_queue_gui.get_runtime_info()
+    assert info['version'] == drs_queue_gui.__version__
+    assert info['queue_source'].endswith('drs_queue.py')
+    assert info['config'] == '/config/profile'
+    assert info['git'] == dict(commit='abc123',
+                               commit_date='2026-11-20T10:00:00+00:00',
+                               branch='main', queue_sources_modified=True)
+    assert 'ls-files' in calls[0]
+
+
+def test_runtime_info_exposes_git_failure(monkeypatch: Any) -> None:
+    """A missing Git executable is reported rather than silently hidden.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    dev.get_base_params('SPIROU')
+
+    def fail(*args: Any, **kwargs: Any) -> None:
+        """Simulate an unavailable Git executable."""
+        raise FileNotFoundError('git unavailable')
+
+    monkeypatch.setattr(drs_queue_gui.subprocess, 'run', fail)
+    info = drs_queue_gui.get_runtime_info()
+    assert 'git unavailable' in info['git']['error']
+
+
+def test_runtime_info_handles_git_timeout_output(monkeypatch: Any) -> None:
+    """Keep timeout output JSON serializable even if it is bytes.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    dev.get_base_params('SPIROU')
+
+    def fail(*args: Any, **kwargs: Any) -> None:
+        """Simulate Git timing out after producing stderr."""
+        raise subprocess.TimeoutExpired('git', 5, stderr=b'git timed out')
+
+    monkeypatch.setattr(drs_queue_gui.subprocess, 'run', fail)
+    info = drs_queue_gui.get_runtime_info()
+    assert json.loads(json.dumps(info))['git']['error'] == 'git timed out'
+
+
+def test_runtime_info_api_is_a_startup_snapshot(monkeypatch: Any) -> None:
+    """Serve the worker snapshot unchanged through the dashboard API.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    dev.get_base_params('SPIROU')
+    calls = []
+
+    def snapshot() -> dict[str, Any]:
+        """Record snapshot creation."""
+        calls.append(True)
+        return dict(version='worker-version', git=dict(commit='abc123'))
+
+    monkeypatch.setattr(drs_queue_gui, 'get_runtime_info', snapshot)
+    handler = drs_queue_gui._make_handler(
+        drs_queue_gui.ParamDict(), drs_queue_gui.GuiState(), 100)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    try:
+        for _ in range(2):
+            connection = http.client.HTTPConnection(
+                *server.server_address, timeout=5)
+            try:
+                connection.request('GET', '/api/runtime_info')
+                response = connection.getresponse()
+                assert response.status == 200
+                assert json.loads(response.read())['git']['commit'] == 'abc123'
+            finally:
+                connection.close()
+        assert calls == [True]
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
 
 
 def test_reset_action_blocks_queue_actions() -> None:
@@ -124,7 +234,6 @@ def test_queue_gui_headless_suppresses_browser(
         monkeypatch.setenv(
             drs_queue_gui.drs_queue_server.WORKER_PORT_ENV, worker_port)
     monkeypatch.setattr(drs_queue_gui, 'ThreadingHTTPServer', FakeServer)
-    monkeypatch.setattr(drs_queue_gui, '_stale_watcher', lambda *args: None)
     monkeypatch.setattr(
         drs_queue_gui.drs_queue,
         'setup_queue_directories',
@@ -155,6 +264,67 @@ def test_queue_gui_headless_suppresses_browser(
     assert messages[0] == drs_queue_gui.textentry(message_key, args=[url])
 
 
+def test_gui_start_does_not_change_stale_queue_entries(
+    tmp_path: Any, monkeypatch: Any,
+) -> None:
+    """Opening the dashboard does not automatically fail stale entries.
+
+    :param tmp_path: Temporary queue directory.
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['INPUTS'] = dict(HOST='None', PORT='None', ROWS='None',
+                            HEADLESS=True)
+    entry = tmp_path / 'running' / 'group' / 'run.yaml'
+    entry.parent.mkdir(parents=True)
+    entry.write_text('state: running\n')
+    calls = []
+
+    class FakeThread:
+        """Run any background target immediately for this test."""
+
+        def __init__(self, target: Any, args: Any, daemon: bool) -> None:
+            self.target = target
+            self.args = args
+
+        def start(self) -> None:
+            try:
+                self.target(*self.args)
+            except KeyboardInterrupt:
+                pass
+
+    class FakeServer:
+        """Stop the private dashboard immediately after startup."""
+
+        def __init__(self, address: Any, handler: Any) -> None:
+            self.server_address = address
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            pass
+
+    def fail_stale(*args: Any) -> None:
+        """Detect a stale-task mutation attempt without moving files."""
+        calls.append(True)
+        raise KeyboardInterrupt
+
+    monkeypatch.setenv(drs_queue_gui.drs_queue_server.WORKER_PORT_ENV, '12345')
+    monkeypatch.setattr(drs_queue_gui.threading, 'Thread', FakeThread)
+    monkeypatch.setattr(drs_queue_gui, 'ThreadingHTTPServer', FakeServer)
+    monkeypatch.setattr(drs_queue_gui, '_make_handler', lambda *args: object)
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'setup_queue_directories',
+                        lambda params: None)
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'fail_stale_running',
+                        fail_stale)
+    monkeypatch.setattr(drs_queue_gui, 'WLOG', lambda *args: None)
+    drs_queue_gui.queue_gui(params)
+    assert not calls
+    assert entry.exists()
+
+
 def test_render_info_html_lists_every_control_tab():
     html = drs_queue_gui.render_info_html()
     for tab in ['Info', 'Generate', 'Run', 'Batch', 'Chain', 'Actions',
@@ -162,6 +332,25 @@ def test_render_info_html_lists_every_control_tab():
         assert '<li><strong>{0}</strong>:'.format(tab) in html
     assert html.count('<ul>') == html.count('</ul>') == 1
     assert '<code>apero_queue.py run</code>' in html
+
+
+def test_chain_array_help_is_rendered_and_associated(
+    monkeypatch: Any,
+) -> None:
+    """Render the localized explanation alongside its chain input.
+
+    :param monkeypatch: Pytest monkeypatch fixture.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'get_queue_path',
+                        lambda params: '/queue')
+    monkeypatch.setattr(drs_queue_gui.drs_queue, 'get_queue_mpmode',
+                        lambda params: 'linear')
+    html = drs_queue_gui.render_dashboard(params)
+    assert 'aria-describedby="chain-per-help"' in html
+    for key in ['40-513-00052', '40-513-00053', '40-513-00054']:
+        assert drs_queue_gui.textentry(key) in html
 
 
 def test_render_info_html_escapes_html(tmp_path):

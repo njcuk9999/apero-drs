@@ -136,6 +136,108 @@ def test_restart_after_crash(server: queue_server.QueueServer,
     assert os.getsid(server.worker.pid) == server.worker.pid
 
 
+def test_shutdown_bounds_acknowledged_but_ignored_request(
+    server: queue_server.QueueServer, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An HTTP shutdown acknowledgement does not justify an unbounded wait.
+
+    :param server: Supervisor with a real worker process.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    monkeypatch.setattr(queue_server, 'WORKER_STOP_TIMEOUT', 0.1)
+    monkeypatch.setattr(server, 'worker_request', lambda *args: dict())
+    worker = server.worker
+    server.finish_worker()
+    assert worker.poll() is not None
+    server.restart_worker()
+    assert server.worker is worker
+    assert server.closing.is_set()
+
+
+def test_shutdown_does_not_wait_forever_for_restart_lock(
+    server: queue_server.QueueServer, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Shutdown can terminate the worker while a restart holds its lock.
+
+    :param server: Supervisor with a real worker process.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    monkeypatch.setattr(queue_server, 'WORKER_STOP_TIMEOUT', 0.1)
+    with server.worker_lock:
+        server.finish_worker()
+    assert server.worker.poll() is not None
+
+
+def test_stop_tolerates_kill_timeout(
+    server: queue_server.QueueServer, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Even a worker stuck after SIGKILL cannot trap supervisor cleanup.
+
+    :param server: Running supervisor.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    class StuckWorker:
+        """Simulate a process stuck in uninterruptible filesystem I/O."""
+
+        def poll(self) -> None:
+            return None
+
+        def terminate(self) -> None:
+            pass
+
+        def kill(self) -> None:
+            pass
+
+        def wait(self, timeout: float) -> None:
+            raise subprocess.TimeoutExpired('worker', timeout)
+
+    with monkeypatch.context() as context:
+        context.setattr(server, 'worker', StuckWorker())
+        server.stop_worker()
+
+
+def test_interrupt_during_shutdown_stops_worker(
+    server: queue_server.QueueServer, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Another Ctrl+C during cleanup escalates instead of abandoning it.
+
+    :param server: Supervisor with a real worker process.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    def interrupt(*args: object) -> dict:
+        """Simulate Ctrl+C while contacting the private worker."""
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(server, 'worker_request', interrupt)
+    server.finish_worker()
+    assert server.worker.poll() is not None
+    assert server.worker_lock.acquire(blocking=False)
+    server.worker_lock.release()
+
+
+def test_shutdown_preserves_independent_task(
+    server: queue_server.QueueServer,
+) -> None:
+    """Closing the dashboard does not stop independent recipe processes.
+
+    :param server: Supervisor with a real worker process.
+    :return: None.
+    """
+    task_code = 'import threading; threading.Event().wait()'
+    task = subprocess.Popen([sys.executable, '-c', task_code])
+    try:
+        server.finish_worker()
+        assert server.worker.poll() is not None
+        assert task.poll() is None
+    finally:
+        task.terminate()
+        task.wait(timeout=2)
+
+
 def test_restart_with_blocked_request(server: queue_server.QueueServer) -> None:
     """A blocked data request cannot block the independent restart route.
 

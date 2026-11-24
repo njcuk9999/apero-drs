@@ -1,5 +1,6 @@
 """Tests for the APERO queue process registry (Processes tab)."""
 import os
+import runpy
 import socket
 import subprocess
 import sys
@@ -15,6 +16,228 @@ from apero.tools.module.processing import drs_queue_stats as stats
 from apero.tools.module.processing import drs_queue_gui as gui
 from apero.tools.module.setup import drs_reset
 from apero import dev
+
+
+def test_chain_submission_registers_before_scheduler_and_keeps_pending(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Show a submitting chain before sbatch and reserve pending tasks.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    queue_path = tmp_path / 'queue'
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(queue_path))
+    monkeypatch.setattr(drs_queue, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.setattr(drs_queue, 'fail_stale_running',
+                        lambda params: dict(moved=0, stale=[]))
+    real_which = drs_queue.shutil.which
+    monkeypatch.setattr(
+        drs_queue.shutil, 'which',
+        lambda name: '/usr/bin/sbatch' if name == 'sbatch'
+        else real_which(name))
+    drs_queue.setup_queue_directories(params)
+    drs_queue.save_template(params, dict(drs_queue.QUEUE_BATCH_DEFAULTS),
+                             'alliance')
+    group_names = ['APERO-QUEUE-GROUP-00000000001-0001-EXT',
+                   'APERO-QUEUE-GROUP-00000000002-0002-DBPUSH']
+    qids = []
+    for index, group in enumerate(group_names):
+        run = drs_queue.QUEUE_RUN_FORMAT.format(index)
+        qid = group + '/' + run
+        qids.append(qid)
+        path = queue_path / 'pending' / group / run
+        path.parent.mkdir(parents=True)
+        drs_queue.base.write_yaml(
+            dict(state='pending', runstring='recipe.py', shortname='EXT',
+                 recipe='recipe'), str(path))
+    submissions = []
+    write_chunk = drs_queue._write_chain_chunk_script
+
+    def observe_chunk(*args: Any) -> None:
+        """The process is visible before potentially slow script builds."""
+        chain = next(record for record in procs.load_all(
+            drs_queue.get_proc_dir(params)) if record['kind'] == 'chain')
+        assert chain['submitting'] is True
+        assert all((queue_path / 'pending' / qid).exists() for qid in qids)
+        assert not drs_queue.list_queue_entries(
+            params, states=['running'])
+        write_chunk(*args)
+
+    monkeypatch.setattr(drs_queue, '_write_chain_chunk_script', observe_chunk)
+
+    class FakeSubmit:
+        """Return a job id while inspecting the early registry record."""
+
+        def __init__(self, command: list, **kwargs: Any) -> None:
+            index = len(submissions)
+            records = procs.load_all(drs_queue.get_proc_dir(params))
+            chain = next(record for record in records
+                         if record['kind'] == 'chain')
+            assert chain['submitting'] is True
+            assert chain['owner'] == 'gui'
+            assert chain['qids'] == qids
+            assert Path(chain['log_paths'][0]).read_text().startswith(
+                'Preparing chain Slurm scripts')
+            process_row = next(row for row in gui.get_process_data(
+                params)['processes'] if row['id'] == chain['id'])
+            assert process_row['status'] == 'running'
+            assert process_row['logs'] == ['submission.log']
+            assert not drs_queue.list_queue_entries(
+                params, states=['running'])
+            assert {item['group'] + '/' + item['run'] for item in
+                    drs_queue.list_queue_entries(params, states=['pending'])}
+            assert all((queue_path / 'pending' / qid).exists()
+                       for qid in qids)
+            self.pid = 7000 + index
+            self.returncode = 0
+            self.output = '{0}\n'.format(900 + index)
+            submissions.append(command)
+
+        def communicate(self, timeout: int) -> tuple:
+            assert timeout == 120
+            return self.output, None
+
+    monkeypatch.setattr(drs_queue.subprocess, 'Popen', FakeSubmit)
+    monkeypatch.setattr(procs, 'slurm_states', lambda jobs: {
+        job: 'PENDING' for job in jobs})
+    result = drs_queue.chain_queue(params, 'alliance', submit=True,
+                                   owner='gui')
+    assert result['submitted']
+    assert len(submissions) == 2
+    assert '--dependency=afterok:900' in submissions[1]
+    assert not drs_queue.list_queue_entries(params, states=['running'])
+    assert all((queue_path / 'pending' / qid).exists() for qid in qids)
+    records = procs.load_all(drs_queue.get_proc_dir(params))
+    chain = next(record for record in records if record['kind'] == 'chain')
+    assert chain['slurm_jobs'] == ['900', '901']
+    assert chain['submitting'] is False
+    assert procs.proc_status(chain, dict()) == 'pending'
+    chain['slurm_submitted_at'] -= procs.SLURM_START_GRACE + 1
+    assert procs.proc_status(chain, dict()) == 'finished'
+    blocked = drs_queue.queue_run(params, cores=1, mpmode='linear', ntasks=1)
+    assert blocked['n_run'] == 0
+    assert not drs_queue.list_queue_entries(params, states=['running'])
+
+
+def test_fast_system_claim_moves_only_started_task(
+    tmp_path: Path,
+) -> None:
+    """System mode transitions pending -> running -> complete per task."""
+    script = (Path(drs_queue.__file__).parents[2] / 'recipes' / 'bin' /
+              'apero_queue.py')
+    functions = runpy.run_path(str(script))
+    qpath = tmp_path / 'queue'
+    group = 'APERO-QUEUE-GROUP-00000000001-0001-EXT'
+    run = drs_queue.QUEUE_RUN_FORMAT.format(0)
+    qid = group + '/' + run
+    pending = qpath / 'pending' / group / run
+    pending.parent.mkdir(parents=True)
+    pending.write_text('state: pending\nrunstring: recipe\n')
+    move = functions['_system_move']
+    assert move(str(qpath), qid, 'running')
+    assert (qpath / 'running' / group / run).exists()
+    assert not (qpath / 'pending' / group / run).exists()
+    assert not move(str(qpath), qid, 'running')
+    assert move(str(qpath), qid, 'success')
+    assert (qpath / 'complete' / group / run).exists()
+
+
+def test_stop_chain_during_preparation_keeps_tasks_pending(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Stop a registered chain before sbatch without moving queue tasks.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    queue_path = tmp_path / 'queue'
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(queue_path))
+    drs_queue.setup_queue_directories(params)
+    group = 'APERO-QUEUE-GROUP-00000000001-0001-EXT'
+    run = drs_queue.QUEUE_RUN_FORMAT.format(0)
+    pending = queue_path / 'pending' / group / run
+    pending.parent.mkdir()
+    pending.write_text('state: pending\nrunstring: recipe.py\n')
+    proc_dir = drs_queue.get_proc_dir(params)
+    proc_id = procs.register(proc_dir, 'chain', 'chain', qids=[group + '/'
+                                                               + run])
+    procs.update(proc_dir, proc_id, submitting=True)
+    record = procs.load(proc_dir, proc_id)
+    result = drs_queue.stop_process(params, record)
+    assert result['success']
+    assert procs.load(proc_dir, proc_id)['stopped'] is True
+    assert pending.exists()
+    assert not list(drs_queue.list_queue_entries(
+        params, states=['running']))
+
+
+def test_failed_chain_submission_leaves_tasks_pending(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """A rejected sbatch request is visible and does not strand tasks.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    queue_path = tmp_path / 'queue'
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(queue_path))
+    monkeypatch.setattr(drs_queue, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.setattr(drs_queue, 'fail_stale_running',
+                        lambda params: dict(moved=0, stale=[]))
+    real_which = drs_queue.shutil.which
+    monkeypatch.setattr(
+        drs_queue.shutil, 'which',
+        lambda name: '/usr/bin/sbatch' if name == 'sbatch'
+        else real_which(name))
+    drs_queue.setup_queue_directories(params)
+    drs_queue.save_template(params, dict(drs_queue.QUEUE_BATCH_DEFAULTS),
+                             'alliance')
+    group = 'APERO-QUEUE-GROUP-00000000001-0001-EXT'
+    run = drs_queue.QUEUE_RUN_FORMAT.format(0)
+    pending = queue_path / 'pending' / group / run
+    pending.parent.mkdir(parents=True)
+    drs_queue.base.write_yaml(
+        dict(state='pending', runstring='recipe.py', shortname='EXT'),
+        str(pending))
+
+    class RejectedSubmit:
+        """Simulate a scheduler rejecting a worker script."""
+
+        pid = 8123
+        returncode = 1
+
+        def __init__(self, command: list, **kwargs: Any) -> None:
+            _ = command, kwargs
+
+        def communicate(self, timeout: int) -> tuple:
+            assert timeout == 120
+            return 'Invalid account\n', None
+
+    monkeypatch.setattr(drs_queue.subprocess, 'Popen', RejectedSubmit)
+    result = drs_queue.chain_queue(params, 'alliance', submit=True,
+                                   owner='gui')
+    assert not result['submitted']
+    assert 'Invalid account' in result['message']
+    assert pending.exists()
+    assert not list(drs_queue.list_queue_entries(
+        params, states=['running']))
+    record = procs.load_all(drs_queue.get_proc_dir(params))[0]
+    assert record['finished']
+    assert record['returncode'] == 1
+    assert 'Invalid account' in Path(record['log_paths'][0]).read_text()
 
 
 @pytest.mark.parametrize('blocked', [False, True])
@@ -108,6 +331,117 @@ def test_gui_selected_run_forces_single_process(monkeypatch: Any) -> None:
     assert calls[0]['mpmode'] == 'linear'
     assert calls[0]['qid'] == 'group/task.yaml'
     assert calls[0]['owner'] == 'gui'
+
+
+def test_process_jobs_summarise_chain_logs(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Chain job logs pair out/err files and expose per-task results.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path / 'queue'))
+    monkeypatch.setattr(procs, 'slurm_states', lambda jobs: dict())
+    logs, errors = tmp_path / 'logs', tmp_path / 'errors'
+    logs.mkdir()
+    errors.mkdir()
+    ok_lines = ['Running: DARK', '2026-11-20 13:00:00.1|  |x| start',
+                '2026-11-20 13:02:30.5|**|| done',
+                'QUEUE: G1/R1.yaml --> success']
+    bad_lines = ['Running: FTFIT1', '2026-11-20 14:00:00.0|  |x| start',
+                 'W: Recipe x has NOT been successfully completed',
+                 '2026-11-20 14:00:10.0|**|| wrapper ok',
+                 'QUEUE: G2/R2.yaml --> success', 'Running: FTFIT1']
+    (logs / '100_2_chain.out').write_text('\n'.join(bad_lines) + '\n')
+    (logs / '100_1_chain.out').write_text('\n'.join(ok_lines) + '\n')
+    (errors / '100_1_chain.err').write_text('')
+    (errors / '100_2_chain.err').write_text(
+        'slurmstepd: error: *** JOB 100 CANCELLED DUE TO TIME LIMIT\n')
+    proc_dir = drs_queue.get_proc_dir(params)
+    globs = [str(logs / '100_*.out'), str(errors / '100_*.err')]
+    proc_id = procs.register(proc_dir, 'chain', 'chain', log_globs=globs,
+                             slurm_jobs=['100'])
+    procs.finish(proc_dir, proc_id, 0)
+    data = gui.get_process_jobs(params, proc_id)
+    first, second = data['jobs']
+    assert (first['job'], first['array']) == ('100', '1')
+    assert first['status'] == 'complete'
+    assert first['duration'] == 150
+    assert first['out'] is not None and first['err'] is not None
+    assert second['status'] == 'failed'
+    assert second['n_misreported'] == 1
+    assert [task['result'] for task in second['tasks']] == [
+        'failed', 'unfinished']
+    assert 'TIME LIMIT' in second['err_problem']
+    assert gui.get_process_jobs(params, 'missing')['error']
+
+
+def test_slurm_only_settings_block_local_runs(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Slurm-only queues refuse local runs outside a Slurm job.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path / 'queue'))
+    monkeypatch.setattr(drs_queue, 'WLOG', lambda *args, **kwargs: None)
+    monkeypatch.delenv('SLURM_JOB_ID', raising=False)
+    assert drs_queue.load_queue_settings(params)['slurm_only'] is False
+    state = gui.GuiState()
+    saved = gui.action_settings(params, state, dict(
+        slurm_only=True, slurm_template='../alliance'))
+    assert saved['slurm_template'] == '___alliance'
+    assert drs_queue.local_runs_blocked(params)
+    assert not gui.action_run(params, state, qid='g/r.yaml')['started']
+    assert drs_queue.queue_run(params)['n_run'] == 0
+    assert gui.get_settings_data(params)['slurm_only'] is True
+    monkeypatch.setenv('SLURM_JOB_ID', '42')
+    assert not drs_queue.local_runs_blocked(params)
+
+
+def test_slurm_only_job_submits_and_waits(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Generate/reset jobs go through sbatch and report the exit code.
+
+    :param tmp_path: Temporary profile.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    params = dev.get_base_params('SPIROU')
+    params['PATH.OTHER'] = str(tmp_path / 'other')
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(tmp_path / 'queue'))
+    drs_queue.save_queue_settings(params, True, 'default')
+    # fake sbatch: run the script now (no squeue) and print a job id
+    bindir = tmp_path / 'bin'
+    bindir.mkdir()
+    sbatch = bindir / 'sbatch'
+    sbatch.write_text('#!/bin/bash\nbash "$2" > /dev/null 2>&1\necho 777\n')
+    sbatch.chmod(0o755)
+    monkeypatch.setenv('PATH', str(bindir) + os.pathsep + os.environ['PATH'])
+    monkeypatch.setattr(procs, 'slurm_states', lambda jobs: None)
+    monkeypatch.setattr(gui, 'GUI_SLURM_POLL', 0.01)
+    state = gui.GuiState()
+    cmd = ['/bin/sh', '-c', 'read answer; exit 3']
+    result = gui._start_job(params, state, 'Reset', cmd, stdin_text='Y\n')
+    assert result['started']
+    state.worker.join(timeout=10)
+    assert state.jobs['actions']['returncode'] == 3
+    records = procs.load_all(drs_queue.get_proc_dir(params))
+    assert records[0]['slurm_jobs'] == ['777']
+    assert records[0]['returncode'] == 3
+    script = Path(records[0]['artifact_paths'][0]).read_text()
+    assert '#SBATCH --output=' in script and 'cd "$HOME"' in script
 
 
 def test_process_gui_preserves_retained_tasks(
@@ -445,6 +779,93 @@ def test_slurm_parsing_and_status(tmp_path):
     (tmp_path / '101_job.out').write_text('x')
     record['log_globs'] = [str(tmp_path / '101_*.out')]
     assert procs.log_files(record) == [str(tmp_path / '101_job.out')]
+
+
+def test_slurm_job_details(monkeypatch: Any) -> None:
+    """Live scheduler details should be parsed for the Processes view."""
+    procs._SLURM_DETAILS_CACHE.update(time=0.0, value=None)
+    output = (
+        '123_4|apero_pp|RUNNING|def|None|00:02:03|02:00:00|01:57:57|'
+        '1|8|16G|2026-11-19T10:00:00|2026-11-19T10:01:00|node1|'
+        'afterok:122\n'
+    )
+
+    class Result:
+        """Stand-in for one successful squeue call."""
+
+        returncode = 0
+        stdout = output
+        stderr = ''
+
+    monkeypatch.setattr(procs.shutil, 'which', lambda name: '/usr/bin/squeue')
+    monkeypatch.setattr(procs.subprocess, 'run',
+                        lambda *args, **kwargs: Result())
+    monkeypatch.setattr(procs.getpass, 'getuser', lambda: 'apero')
+    result = procs.slurm_job_details()
+    assert result['available']
+    assert result['user'] == 'apero'
+    assert result['jobs'][0]['job_id'] == '123_4'
+    assert result['jobs'][0]['base_job_id'] == '123'
+    assert result['jobs'][0]['state'] == 'RUNNING'
+    assert result['jobs'][0]['node_list'] == 'node1'
+
+
+def test_slurm_job_details_unavailable(monkeypatch: Any) -> None:
+    """Non-Slurm hosts should return an explicit unavailable result."""
+    procs._SLURM_DETAILS_CACHE.update(time=0.0, value=None)
+    monkeypatch.setattr(procs.shutil, 'which', lambda name: None)
+    result = procs.slurm_job_details()
+    assert not result['available']
+    assert result['jobs'] == []
+    assert 'not available' in result['error']
+
+
+def test_batch_script_wraps_recipe_with_executor(
+    tmp_path: Path, monkeypatch: Any,
+) -> None:
+    """Batch jobs should run recipe runstrings through apero_execute.py."""
+    queue_path = tmp_path / 'queue'
+    group = 'APERO-QUEUE-GROUP-00000000001-0000-PP'
+    run_file = 'APERO-QUEUE-RUN-00000004.yaml'
+    group_path = queue_path / drs_queue.QUEUE_RUNNING_DIR / group
+    group_path.mkdir(parents=True)
+    (group_path / run_file).write_text(
+        'shortname: PP\n'
+        'recipe: apero_preprocess_spirou.py\n'
+        'runstring: apero_preprocess_spirou.py NIGHT\n'
+    )
+    scripts = tmp_path / 'scripts'
+    scripts.mkdir()
+    out_dirs = dict(
+        scripts=str(scripts),
+        logs=str(tmp_path / 'logs'),
+        errors=str(tmp_path / 'errors'),
+    )
+    template = dict(
+        time='01:00:00',
+        nodes=1,
+        cpus_per_task=2,
+        mem='1G',
+        account='',
+        job_name='apero',
+        mail_user='',
+        mail_type='',
+        activation=[],
+    )
+    monkeypatch.setattr(drs_queue, 'get_queue_path',
+                        lambda params: str(queue_path))
+    script_path = drs_queue._write_batch_script(
+        drs_queue.ParamDict(),
+        template,
+        group,
+        [run_file],
+        1,
+        out_dirs,
+    )
+    script = Path(script_path).read_text()
+    assert 'apero_execute.py apero_preprocess_spirou.py NIGHT' in script
+    unwrapped = '\napero_preprocess_spirou.py NIGHT'
+    assert unwrapped not in script
 
 
 def _running_entry(queue_path, run, lines, age):

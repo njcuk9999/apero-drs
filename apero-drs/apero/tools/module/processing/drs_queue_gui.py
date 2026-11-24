@@ -25,12 +25,15 @@ Created on 2026-08-31
 
 @author: cook
 """
+import datetime
+import getpass
 import html as html_mod
 import importlib.util
 import json
 import os
 import re
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
@@ -38,7 +41,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler
 from http.server import ThreadingHTTPServer
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from urllib.parse import parse_qs, urlparse
 
 from aperocore.base import base
@@ -84,6 +87,21 @@ GUI_JOB_TAIL = 400
 ANSI_ESCAPE = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
 # define the default port for the gui server
 GUI_DEFAULT_PORT = 8090
+# seconds between squeue checks while a slurm-only generate/reset job runs
+GUI_SLURM_POLL = 10
+# seconds a finished Slurm job may lack its exit code file (shared fs lag)
+GUI_SLURM_GONE_GRACE = 60
+# Slurm job log names: %A_%a_%x (chain arrays) or %j_%x (batch)
+JOB_LOG_NAME = re.compile(r'^(\d+)(?:_(\d+))?_(.*)$')
+# leading apero log time stamp (first/last give a job's start/end)
+JOB_LOG_TIME = re.compile(r'^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)')
+# result line printed by "apero_queue.py system" in batch/chain scripts
+JOB_LOG_RESULT = re.compile(r'^QUEUE: (\S+/\S+) --> (\w+)')
+# lines in a Slurm .err file worth flagging (time limit, oom, crashes)
+JOB_ERR_PROBLEM = re.compile(r'error|traceback|killed|cancelled|denied',
+                             re.IGNORECASE)
+# parsed job log summaries keyed by (path, parser) -> ((size, mtime), value)
+JOB_LOG_CACHE: Dict[Any, Any] = dict()
 # define the number of ports to try if the default port is taken
 GUI_PORT_ATTEMPTS = 50
 # define the default number of rows per page in the status table
@@ -94,8 +112,6 @@ GUI_DEFAULT_ROWS = 100
 GUI_DETAIL_LIMIT = 10000
 # define the maximum number of activity log messages kept in memory
 GUI_MAX_MESSAGES = 200
-# seconds between checks for stale running entries
-GUI_STALE_INTERVAL = 30
 # define the maximum number of task log bytes sent in one response (the
 #    first request for a large log only gets the tail)
 GUI_LOG_MAX_BYTES = 5 * 1024 * 1024
@@ -301,7 +317,7 @@ class GuiState:
                 channel = 'run'
                 if name == 'Generate':
                     channel = 'generate'
-                elif name == 'Reset':
+                elif name in ['Reset', 'Batch', 'Chain']:
                     channel = 'actions'
                 self.add_message(emsg.format(name, gui_error), channel)
             finally:
@@ -722,6 +738,167 @@ def get_process_log(params: ParamDict, proc_id: str, index: int = 0,
     return _read_log(out, paths[index], offset, growing)
 
 
+def _parse_job_out(path: str) -> Dict[str, Any]:
+    """
+    Summarise one Slurm batch/chain .out file: first/last log time and
+    the queue tasks it ran (from the "Running:" and "QUEUE: qid --> x"
+    lines written by the generated scripts)
+
+    :param path: str, the .out file path
+
+    :return: dict(start, end, tasks=list of dicts, open=bool)
+    """
+    start, end = None, None
+    tasks: List[Dict[str, Any]] = []
+    current: Optional[Dict[str, Any]] = None
+    with open(path, 'r', errors='replace') as logfile:
+        for line in logfile:
+            stamp = JOB_LOG_TIME.match(line)
+            if stamp is not None:
+                start = start or stamp.group(1)
+                end = stamp.group(1)
+            if line.startswith('Running: '):
+                shortname = line[len('Running: '):].split(' [')[0].strip()
+                current = dict(qid='', shortname=shortname,
+                               signature=False)
+                continue
+            if current is not None and drs_queue.QUEUE_FAIL_SIGNATURE in line:
+                current['signature'] = True
+            result = JOB_LOG_RESULT.match(line)
+            if result is None:
+                continue
+            qid, reported = result.group(1), result.group(2)
+            if reported == 'running':
+                continue
+            # pending = released unstarted task after a protected failure
+            if current is None:
+                tasks.append(dict(qid=qid, shortname='', result=reported,
+                                  reported=reported))
+                continue
+            # the recipe may fail while its wrapper still exits with 0
+            failed = reported != 'success' or current['signature']
+            tasks.append(dict(qid=qid, shortname=current['shortname'],
+                              result='failed' if failed else 'success',
+                              reported=reported))
+            current = None
+    if current is not None:
+        tasks.append(dict(qid='', shortname=current['shortname'],
+                          result='unfinished', reported=''))
+    return dict(start=start, end=end, tasks=tasks,
+                open=current is not None)
+
+
+def _parse_job_err(path: str) -> Optional[str]:
+    """
+    Find the first line of a Slurm .err file that looks like a problem
+
+    :param path: str, the .err file path
+
+    :return: str or None, the first problem line (truncated)
+    """
+    with open(path, 'r', errors='replace') as logfile:
+        for line in logfile:
+            if JOB_ERR_PROBLEM.search(line):
+                return line.strip()[:200]
+    return None
+
+
+def _cached_job_file(path: str, parser: Callable[[str], Any]) -> Any:
+    """Parse a job log file once per (size, mtime) - logs can be large."""
+    try:
+        stat = os.stat(path)
+    except OSError:
+        return None
+    key = (path, parser.__name__)
+    stamp = (stat.st_size, stat.st_mtime)
+    cached = JOB_LOG_CACHE.get(key)
+    if cached is not None and cached[0] == stamp:
+        return cached[1]
+    value = parser(path)
+    JOB_LOG_CACHE[key] = (stamp, value)
+    return value
+
+
+def _job_seconds(start: Optional[str], end: Optional[str]) -> Optional[float]:
+    """Seconds between two job log time stamps (None if unknown)."""
+    if start is None or end is None:
+        return None
+    fmt = '%Y-%m-%d %H:%M:%S'
+    delta = (datetime.datetime.strptime(end, fmt)
+             - datetime.datetime.strptime(start, fmt))
+    return delta.total_seconds()
+
+
+def get_process_jobs(params: ParamDict, proc_id: str) -> Dict[str, Any]:
+    """
+    Get one row per Slurm job (array task) of a batch/chain process with
+    its .out/.err files, start/end time, status and the queue tasks it ran
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param proc_id: str, the process id
+
+    :return: dict(jobs=list of dicts, kind, label, error)
+    """
+    record = drs_queue_procs.load(drs_queue.get_proc_dir(params), proc_id)
+    if record is None:
+        return dict(jobs=[], error='unknown process')
+    slurm = drs_queue_procs.slurm_states(record.get('slurm_jobs') or [])
+    active = drs_queue_procs.proc_status(record, slurm) in ['running',
+                                                            'pending',
+                                                            'unknown']
+    # the out/err of one job share the file stem (%A_%a_%x or %j_%x)
+    jobs: Dict[str, Dict[str, Any]] = dict()
+    for index, path in enumerate(drs_queue_procs.log_files(record)):
+        stem, ext = os.path.splitext(os.path.basename(path))
+        if ext not in ['.out', '.err']:
+            continue
+        parts = JOB_LOG_NAME.match(stem)
+        job_id, array, name = parts.groups('') if parts else ('', '', stem)
+        job = jobs.setdefault(stem, dict(
+            key=stem, job=job_id, array=array, name=name, out=None,
+            err=None, out_size=0, err_size=0, start=None, end=None,
+            duration=None, tasks=[], err_problem=None))
+        job[ext[1:]] = index
+        job[ext[1:] + '_size'] = os.path.getsize(path)
+        if ext == '.err':
+            job['err_problem'] = _cached_job_file(path, _parse_job_err)
+            continue
+        summary = _cached_job_file(path, _parse_job_out)
+        if summary is None:
+            continue
+        job['start'], job['end'] = summary['start'], summary['end']
+        job['tasks'] = summary['tasks']
+        job['open'] = summary['open']
+    rows = []
+    for job in jobs.values():
+        results = [task['result'] for task in job['tasks']]
+        job['n_ok'] = results.count('success')
+        job['n_failed'] = results.count('failed')
+        job['n_pending'] = results.count('pending')
+        # failed in the log but moved to complete by an old wrapper
+        job['n_misreported'] = sum(
+            1 for task in job['tasks']
+            if task['result'] == 'failed' and task['reported'] == 'success')
+        job['duration'] = _job_seconds(job['start'], job['end'])
+        if job.get('open') and active:
+            job['status'] = 'running'
+        elif job['n_failed'] > 0 or 'unfinished' in results:
+            job['status'] = 'failed'
+        elif job['err_problem'] is not None:
+            job['status'] = 'failed'
+        elif job['n_ok'] > 0:
+            job['status'] = 'complete'
+        else:
+            job['status'] = 'pending' if active else 'unknown'
+        job.pop('open', None)
+        rows.append(job)
+    # job id then array index (numeric) = submission/run order
+    rows.sort(key=lambda row: (int(row['job'] or 0),
+                               int(row['array'] or 0), row['key']))
+    return dict(jobs=rows, kind=record.get('kind'),
+                label=record.get('label'), error=None)
+
+
 def action_process(params: ParamDict, state: GuiState, op: str,
                    ids: Optional[List[str]] = None) -> Dict[str, Any]:
     """
@@ -882,6 +1059,14 @@ def render_dashboard(params: ParamDict,
                         json.dumps(textentry('40-513-00049')))
     html = html.replace('XX_SINGLE_RUN_PROMPT_XX',
                         json.dumps(textentry('40-513-00050')))
+    html = html.replace('XX_RUNTIME_ERROR_XX',
+                        json.dumps(textentry('40-513-00051')))
+    html = html.replace('XX_CHAIN_PER_LABEL_XX',
+                        html_mod.escape(textentry('40-513-00052')))
+    html = html.replace('XX_CHAIN_PER_HELP_XX',
+                        html_mod.escape(textentry('40-513-00053')))
+    html = html.replace('XX_CHAIN_PER_EXAMPLE_XX',
+                        html_mod.escape(textentry('40-513-00054')))
     # return the rendered html
     return html
 
@@ -908,6 +1093,8 @@ def action_run(params: ParamDict, state: GuiState,
 
     :return: dictionary with keys 'started' (bool) and 'message' (str)
     """
+    if drs_queue.local_runs_blocked(params):
+        return dict(started=False, message=textentry('10-513-00012'))
     # sanitize the cores value
     try:
         cores = max(1, int(cores))
@@ -1042,19 +1229,33 @@ def action_chain(params: ParamDict, state: GuiState,
         """Generate and optionally submit chained queue jobs."""
         state.add_message('Chain started (template={0}, per_batch={1}, '
                           'submit={2}, dry_run={3})'.format(
-                              template_name, per_batch, submit, dry_run))
-        summary = drs_queue.chain_queue(params, template_name,
-                                        submit=submit,
-                                        per_batch=per_batch,
-                                        dry_run=dry_run)
-        state.add_message('Chain: {0}'.format(summary['message']))
+                              template_name, per_batch, submit, dry_run),
+                          'actions')
+        try:
+            summary = drs_queue.chain_queue(
+                params, template_name, submit=submit,
+                per_batch=per_batch, dry_run=dry_run, owner='gui')
+        except Exception:
+            proc_dir = drs_queue.get_proc_dir(params)
+            for record in drs_queue_procs.load_all(proc_dir):
+                if (record.get('kind') != 'chain'
+                        or record.get('owner') != 'gui'
+                        or not record.get('submitting')):
+                    continue
+                drs_queue_procs.update(
+                    proc_dir, record['id'], submitting=False, pid=None)
+                if not record.get('slurm_jobs'):
+                    drs_queue_procs.finish(proc_dir, record['id'], 1)
+            raise
+        state.add_message('Chain: {0}'.format(summary['message']), 'actions')
         chain_dir = summary.get('chain_dir')
         if chain_dir is not None:
-            state.add_message('Chain output path:\n{0}'.format(chain_dir))
+            state.add_message('Chain output path:\n{0}'.format(chain_dir),
+                              'actions')
         submit_script = summary.get('submit_script')
         if submit_script is not None:
             state.add_message('Chain submit script:\n{0}'
-                              ''.format(submit_script))
+                              ''.format(submit_script), 'actions')
 
     started = state.start_action('Chain', _do_chain, tuple())
     if started:
@@ -1368,6 +1569,150 @@ def _display_command(cmd: List[str]) -> str:
     return shlex.join([os.path.basename(cmd[1])] + cmd[2:])
 
 
+def _job_pythonpath() -> str:
+    """
+    PYTHONPATH making the apero packages this gui imported findable
+    whatever the (possibly relative) PYTHONPATH and working directory
+
+    :return: str, the PYTHONPATH value
+    """
+    pkg_roots = []
+    for pkg in ['apero', 'aperocore']:
+        spec = importlib.util.find_spec(pkg)
+        if spec is not None and spec.origin is not None:
+            pkg_roots.append(os.path.dirname(
+                os.path.dirname(os.path.abspath(spec.origin))))
+    if os.environ.get('PYTHONPATH'):
+        pkg_roots.append(os.environ['PYTHONPATH'])
+    return os.pathsep.join(pkg_roots)
+
+
+def get_settings_data(params: ParamDict) -> Dict[str, Any]:
+    """
+    Get the queue execution settings plus the batch templates to pick from
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: dict(slurm_only, slurm_template, templates, sbatch)
+    """
+    data = drs_queue.load_queue_settings(params)
+    data['templates'] = list_template_names(params)
+    data['sbatch'] = shutil.which('sbatch') is not None
+    return data
+
+
+def action_settings(params: ParamDict, state: GuiState,
+                    form: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Save the queue execution settings
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param state: GuiState, the shared gui state
+    :param form: dict, slurm_only (bool) and slurm_template (str)
+
+    :return: dict, the saved settings and a message
+    """
+    slurm_only = drs_text.true_text(form.get('slurm_only', False))
+    settings = drs_queue.save_queue_settings(params, slurm_only,
+                                             form.get('slurm_template'))
+    if settings['slurm_only']:
+        message = ('Settings: all APERO jobs run through Slurm (template '
+                   '"{0}")'.format(settings['slurm_template']))
+    else:
+        message = 'Settings: APERO jobs may run on this machine'
+    state.add_message(message, 'actions')
+    state.data_version += 1
+    return dict(settings, message=message)
+
+
+def _wait_slurm_job(params: ParamDict, proc_id: Optional[str], job_id: str,
+                    rc_path: str) -> int:
+    """
+    Wait for a submitted single-command Slurm job to finish
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param proc_id: str or None, the registered process id
+    :param job_id: str, the Slurm job id
+    :param rc_path: str, the exit code file written by the job
+
+    :return: int, the exit code (-1 if the job died without one, e.g.
+             time limit, out of memory or scancel)
+    """
+    proc_dir = drs_queue.get_proc_dir(params)
+    gone_since = None
+    while True:
+        if os.path.exists(rc_path):
+            with open(rc_path) as rc_file:
+                text = rc_file.read().strip()
+            return int(text) if text.lstrip('-').isdigit() else 1
+        record = drs_queue_procs.load(proc_dir, proc_id) if proc_id else None
+        # stopped from the Processes tab (scancel)
+        if record is not None and record.get('finished'):
+            return int(record.get('returncode') or -15)
+        states = drs_queue_procs.slurm_states([job_id])
+        if states is not None and job_id not in states:
+            gone_since = gone_since or time.time()
+            if time.time() - gone_since > GUI_SLURM_GONE_GRACE:
+                return -1
+        time.sleep(GUI_SLURM_POLL)
+
+
+def _run_slurm_job(params: ParamDict, state: GuiState, kind: str,
+                   cmd: List[str], display: str, log_path: str,
+                   stdin_text: Optional[str], channel: str
+                   ) -> Tuple[int, Optional[str]]:
+    """
+    Run a generate/reset command as a Slurm job (slurm-only queues) and
+    wait for it - the job output goes to the same log the console shows
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param state: GuiState, the shared gui state
+    :param kind: str, the job name (e.g. 'Generate')
+    :param cmd: list of strings, the command (no shell)
+    :param display: str, the display command
+    :param log_path: str, the job output file
+    :param stdin_text: str or None, text sent to the command's stdin
+    :param channel: str, the gui page owning the job
+
+    :return: tuple, 1. exit code, 2. registered process id (or None)
+    """
+    settings = drs_queue.load_queue_settings(params)
+    template = drs_queue.load_template(params, settings['slurm_template'])
+    command = 'PYTHONPATH={0} {1}'.format(shlex.quote(_job_pythonpath()),
+                                          shlex.join(cmd))
+    if stdin_text:
+        command = 'printf %s {0} | {1}'.format(shlex.quote(stdin_text),
+                                               command)
+    stem = os.path.splitext(log_path)[0]
+    script_path, rc_path = stem + '.sbatch', stem + '.rc'
+    job_name = '{0}_{1}'.format(template.get('job_name', 'apero_queue'),
+                                kind.lower())
+    sargs = [script_path, template, job_name, command, log_path, rc_path]
+    drs_queue.write_single_job_script(*sargs)
+    if shutil.which('sbatch') is None:
+        output_text, returncode = '"sbatch" not found on this machine', 1
+    else:
+        output = subprocess.run(['sbatch', '--parsable', script_path],
+                                capture_output=True, text=True, timeout=120)
+        output_text = (output.stderr or output.stdout).strip()
+        returncode = output.returncode
+    if returncode != 0:
+        with open(log_path, 'w') as logfile:
+            logfile.write('sbatch failed: {0}\n'.format(output_text))
+        return returncode, None
+    job_id = output.stdout.strip().split(';')[0]
+    rkwargs: Dict[str, Any] = dict(cmd=display, owner='gui',
+                                   log_paths=[log_path],
+                                   slurm_jobs=[job_id],
+                                   artifact_paths=[script_path, rc_path])
+    label = '{0} [slurm {1}]'.format(display, job_id)
+    proc_id = drs_queue_procs.register(drs_queue.get_proc_dir(params),
+                                       kind.lower(), label, **rkwargs)
+    state.add_message('{0} submitted as Slurm job {1} - waiting for it to '
+                      'finish'.format(kind, job_id), channel)
+    return _wait_slurm_job(params, proc_id, job_id, rc_path), proc_id
+
+
 def _start_job(params: ParamDict, state: GuiState, kind: str,
                cmd: List[str], stdin_text: Optional[str] = None,
                on_done: Optional[Callable[[int], None]] = None
@@ -1392,6 +1737,7 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
                                                           stamp))
     display = _display_command(cmd)
     channel = 'generate' if kind == 'Generate' else 'actions'
+    slurm_only = drs_queue.load_queue_settings(params)['slurm_only']
 
     def _run() -> None:
         """Execute the command, update job state, and record its result."""
@@ -1402,45 +1748,44 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
         state.add_message('{0} started: {1}'.format(kind, display), channel)
         env = dict(os.environ)
         env['PYTHONUNBUFFERED'] = '1'
-        # the command runs from home, so make the apero packages this gui
-        #   imported findable whatever the (possibly relative) PYTHONPATH
-        pkg_roots = []
-        for pkg in ['apero', 'aperocore']:
-            spec = importlib.util.find_spec(pkg)
-            if spec is not None and spec.origin is not None:
-                pkg_roots.append(os.path.dirname(
-                    os.path.dirname(os.path.abspath(spec.origin))))
-        if env.get('PYTHONPATH'):
-            pkg_roots.append(env['PYTHONPATH'])
-        env['PYTHONPATH'] = os.pathsep.join(pkg_roots)
+        env['PYTHONPATH'] = _job_pythonpath()
         stdin = subprocess.PIPE if stdin_text else subprocess.DEVNULL
         returncode = -1
         proc_id = None
         try:
-            with open(log_path, 'w') as logfile:
+            if slurm_only:
+                jargs = [params, state, kind, cmd, display, log_path,
+                         stdin_text, channel]
+                returncode, proc_id = _run_slurm_job(*jargs)
+            else:
                 # run from home: apero_reset refuses to run inside a
                 #   directory it would reset; own session so a stop also
                 #   reaches the children (e.g. multiprocessing workers)
-                process = subprocess.Popen(cmd, stdout=logfile,
-                                           stderr=subprocess.STDOUT,
-                                           stdin=stdin, env=env,
-                                           cwd=os.path.expanduser('~'),
-                                           start_new_session=True)
-                rkwargs: Dict[str, Any] = dict(cmd=display, pid=process.pid,
-                                               owner='gui',
-                                               log_paths=[log_path])
-                proc_id = drs_queue_procs.register(
-                    drs_queue.get_proc_dir(params), kind.lower(), display,
-                    **rkwargs)
-                if stdin_text:
-                    process.stdin.write(stdin_text.encode())
-                    process.stdin.close()
-                returncode = process.wait()
+                popen_kwargs = dict(stderr=subprocess.STDOUT, stdin=stdin,
+                                    env=env, cwd=os.path.expanduser('~'),
+                                    start_new_session=True)
+                with open(log_path, 'w') as logfile:
+                    process = subprocess.Popen(cmd, stdout=logfile,
+                                               **popen_kwargs)
+                    rkwargs: Dict[str, Any] = dict(cmd=display,
+                                                   pid=process.pid,
+                                                   owner='gui',
+                                                   log_paths=[log_path])
+                    proc_id = drs_queue_procs.register(
+                        drs_queue.get_proc_dir(params), kind.lower(),
+                        display, **rkwargs)
+                    if stdin_text:
+                        process.stdin.write(stdin_text.encode())
+                        process.stdin.close()
+                    returncode = process.wait()
         finally:
             state.job['running'] = False
             state.job['returncode'] = returncode
-        drs_queue_procs.finish(drs_queue.get_proc_dir(params), proc_id,
-                               returncode)
+        proc_dir = drs_queue.get_proc_dir(params)
+        record = drs_queue_procs.load(proc_dir, proc_id) if proc_id else None
+        # a stop from the Processes tab already finished the record
+        if record is None or not record.get('finished'):
+            drs_queue_procs.finish(proc_dir, proc_id, returncode)
         if returncode == 0:
             state.add_message('{0} finished'.format(kind), channel)
         else:
@@ -1554,29 +1899,56 @@ def action_reset_data(params: ParamDict, state: GuiState,
 # =============================================================================
 # Define server functions
 # =============================================================================
-def _stale_watcher(params: ParamDict, state: GuiState) -> None:
-    """
-    Background loop: fail running entries nothing is running any more
-    (see drs_queue.find_stale_running)
+def get_runtime_info() -> Dict[str, Any]:
+    """Capture dashboard worker and checkout information at startup.
 
-    :param params: ParamDict, the parameter dictionary of constants
-    :param state: GuiState, the shared gui state (activity log)
+    The Git details describe the files on disk at capture time, not
+    necessarily code loaded by previously started processes.
 
-    :return: None (runs until the gui exits)
+    :return: JSON-serializable worker and checkout information.
     """
-    while True:
-        try:
-            result = drs_queue.fail_stale_running(params)
-            if result['moved'] > 0:
-                lines = ['{0}: {1}'.format(item['qid'], item['reason'])
-                         for item in result['stale']]
-                state.add_message('{0}\n{1}'.format(result['message'],
-                                                    '\n'.join(lines)))
-                state.data_version += 1
-        except Exception as stale_error:
-            state.add_message('Stale running check failed: {0}'.format(
-                stale_error))
-        time.sleep(GUI_STALE_INTERVAL)
+    queue_source = os.path.realpath(drs_queue.__file__)
+    gui_source = os.path.realpath(__file__)
+    info: Dict[str, Any] = dict()
+    info['version'] = __version__
+    info['user'] = getpass.getuser()
+    info['hostname'] = socket.gethostname()
+    info['pid'] = os.getpid()
+    info['started'] = datetime.datetime.now(
+        datetime.timezone.utc).isoformat()
+    info['python'] = sys.version.split()[0]
+    info['python_executable'] = sys.executable
+    info['queue_source'] = queue_source
+    info['config'] = os.environ.get('DRS_UCONFIG')
+    info['git'] = dict()
+
+    # Refuse to identify a surrounding checkout unless it tracks this module.
+    git_dir = os.path.dirname(queue_source)
+    prefix = ['git', '-C', git_dir]
+    try:
+        subprocess.run(prefix + ['ls-files', '--error-unmatch', '--',
+                                 queue_source],
+                       check=True, capture_output=True, text=True, timeout=5)
+        commit = subprocess.run(
+            prefix + ['show', '-s', '--format=%H%n%cI', 'HEAD'],
+            check=True, capture_output=True, text=True, timeout=5)
+        branch = subprocess.run(
+            prefix + ['rev-parse', '--abbrev-ref', 'HEAD'],
+            check=True, capture_output=True, text=True, timeout=5)
+        status = subprocess.run(
+            prefix + ['status', '--porcelain', '--untracked-files=no',
+                      '--', queue_source, gui_source],
+            check=True, capture_output=True, text=True, timeout=5)
+        commit_hash, commit_date = commit.stdout.strip().split('\n', 1)
+        info['git'] = dict(commit=commit_hash, commit_date=commit_date,
+                           branch=branch.stdout.strip(),
+                           queue_sources_modified=bool(status.stdout.strip()))
+    except (OSError, subprocess.SubprocessError, ValueError) as error:
+        detail = getattr(error, 'stderr', None)
+        if isinstance(detail, bytes):
+            detail = detail.decode('utf-8', errors='replace')
+        info['git'] = dict(error=(detail or str(error)).strip())
+    return info
 
 
 def _make_handler(
@@ -1594,6 +1966,8 @@ def _make_handler(
 
     :return: Generated request handler class for the queue GUI server.
     """
+    runtime_info = get_runtime_info()
+
     class QueueGuiHandler(BaseHTTPRequestHandler):
         """Request handler for the queue gui server"""
 
@@ -1696,6 +2070,12 @@ def _make_handler(
             elif route == '/api/processes':
                 self._send(json.dumps(get_process_data(params),
                                       default=str))
+            # current user's live Slurm jobs (only available on Slurm hosts)
+            elif route == '/api/slurm':
+                self._send(json.dumps(
+                    drs_queue_procs.slurm_job_details(),
+                    default=str,
+                ))
             # the (incremental) log of one registered process
             elif route == '/api/process_log':
                 query = parse_qs(parsed.query)
@@ -1707,6 +2087,11 @@ def _make_handler(
                     index, offset = 0, -1
                 data = get_process_log(params, proc_id, index, offset)
                 self._send(json.dumps(data))
+            # one row per Slurm job of a batch/chain process
+            elif route == '/api/process_jobs':
+                query = parse_qs(parsed.query)
+                proc_id = query.get('id', [''])[0]
+                self._send(json.dumps(get_process_jobs(params, proc_id)))
             # the gui state (busy flag + activity log)
             elif route == '/api/state':
                 job = state.job or dict()
@@ -1714,9 +2099,13 @@ def _make_handler(
                             activity_messages=state.activity_messages,
                             data_version=state.data_version,
                             active_action=state.active_action,
+                            slurm_only=drs_queue.load_queue_settings(
+                                params)['slurm_only'],
                             job_running=bool(job.get('running')),
                             job_kind=job.get('kind'))
                 self._send(json.dumps(data))
+            elif route == '/api/runtime_info':
+                self._send(json.dumps(runtime_info))
             # the current/last generate or reset command output
             elif route == '/api/job':
                 query = parse_qs(parsed.query)
@@ -1740,6 +2129,9 @@ def _make_handler(
             elif route == '/api/templates':
                 data = dict(names=list_template_names(params))
                 self._send(json.dumps(data))
+            # the queue execution settings (slurm-only mode)
+            elif route == '/api/settings':
+                self._send(json.dumps(get_settings_data(params)))
             # the batch template values (optional ?name= query param)
             elif route == '/api/template':
                 query = parse_qs(parsed.query)
@@ -1825,6 +2217,9 @@ def _make_handler(
                 response = action_reset_data(params, state,
                                              part=form.get('part'))
                 self._send(json.dumps(response))
+            # save the queue execution settings (slurm-only mode)
+            elif route == '/api/settings':
+                self._send(json.dumps(action_settings(params, state, form)))
             # shut down the gui server
             elif route == '/api/shutdown':
                 self._send(json.dumps(dict(message='shutting down')))
@@ -1894,10 +2289,6 @@ def queue_gui(params: ParamDict) -> None:
     # create the shared gui state
     state = GuiState()
     state.add_message('Queue GUI started')
-    # periodically fail running entries nothing is running any more
-    if not supervised:
-        threading.Thread(target=_stale_watcher, args=(params, state),
-                         daemon=True).start()
     # create the request handler class
     handler = _make_handler(params, state, rows)
     # -------------------------------------------------------------------------

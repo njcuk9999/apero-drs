@@ -115,6 +115,8 @@ def test_normalize_and_validate() -> None:
     assert qdef['blocked_actions'] == ['run']
     default = apero_queues.normalize_queue(dict())
     assert default['blocked_actions'] == ['reset_data', 'shutdown']
+    assert default['network_mode'] == 'standard'
+    assert default['pre_gui_commands'] == []
     good = apero_queues.normalize_queue(dict(
         ssh_config_host='h', local_port='18090', instrument='spirou',
         profile_id='p'))
@@ -125,6 +127,60 @@ def test_normalize_and_validate() -> None:
     assert 'already used' in clash
     params = apero_queues.tunnel_params(good, '/tmp/ari')
     assert params['TUNNEL_STATE_SUBDIR'] == 'queue_tunnels'
+
+
+def test_normalize_alliance_queue_commands() -> None:
+    """Alliance queues should force simple SSH and preserve setup commands."""
+    qdef = apero_queues.normalize_queue(dict(
+        network_mode='alliance',
+        ssh_mode='apero',
+        pre_gui_commands=[
+            'module load python/3.12',
+            'source ~/apero/setup.sh',
+        ],
+    ))
+    assert qdef['network_mode'] == 'alliance'
+    assert qdef['ssh_mode'] == 'simple'
+    assert qdef['pre_gui_commands'] == [
+        'module load python/3.12',
+        'source ~/apero/setup.sh',
+    ]
+    assert apero_queues.tunnel_params(qdef, '/tmp/ari')[
+        'DATABASE_SSH_SIMPLE_MODE'
+    ] is True
+
+
+def test_profile_named_save_renames_queue(app: Any,
+                                          monkeypatch: pytest.MonkeyPatch
+                                          ) -> None:
+    """Use the linked APERO profile as the queue name and card label."""
+    legacy = apero_queues.normalize_queue(dict(
+        ssh_config_host='narval1', local_port='18090',
+        instrument='SPIROU', profile_id='spirou_main', label='old label'))
+    apero_queues.save_queues(dict(old_queue=legacy))
+    closed = []
+    monkeypatch.setattr(aq.apero_async, 'close_db_tunnel',
+                        lambda params: closed.append(params))
+    _as_user(monkeypatch, {aq.PERMISSION}, set())
+    body = dict(profile_name=True, previous_name='old_queue',
+                instrument='SPIROU', profile_id='spirou_main',
+                ssh_config_host='narval1', local_port='18090')
+    response = app.test_client().post(
+        '/api/admin/apero-queue/save', json=body)
+    payload = response.get_json()
+    expected_name = 'SPIROU_spirou_main'
+    assert payload['success']
+    assert payload['name'] == expected_name
+    saved = apero_queues.load_queues()
+    assert list(saved) == [expected_name]
+    assert saved[expected_name]['label'] == 'spirou_main'
+    assert len(closed) == 1
+
+    duplicate = dict(body, previous_name='')
+    response = app.test_client().post(
+        '/api/admin/apero-queue/save', json=duplicate)
+    assert response.status_code == 400
+    assert 'already exists' in response.get_json()['error']
 
 
 def test_monitor_access_follows_profile(app: Any,
@@ -246,6 +302,92 @@ def test_monitor_status_and_reconnect(app: Any, fake_gui: int,
     status = client.get('/api/monitor/apero-queue/status').get_json()
     assert status['queues'] == dict()
     assert client.post(url, json=dict()).status_code == 404
+
+
+def test_retry_dashboard_restarts_unresponsive_worker(
+    app: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retry should restart the supervisor worker through the active tunnel.
+
+    :param app: Isolated ARI app.
+    :param monkeypatch: Fixture for replacing the opener and permissions.
+    :return: None.
+    """
+    _save_queue(18090)
+    _as_user(monkeypatch, {aq.PERMISSION}, set())
+    requests = []
+
+    class Response:
+        """Return a successful supervisor restart response."""
+
+        status = 202
+
+        def __enter__(self) -> 'Response':
+            """Enter the response context."""
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            """Exit the response context."""
+            _ = args
+
+        def read(self) -> bytes:
+            """Return the supervisor restart marker."""
+            return b'{"restarting":true}'
+
+    class Opener:
+        """Capture the retry request."""
+
+        def open(self, req: Any, timeout: int) -> Response:
+            """Capture one urllib request."""
+            requests.append((req, timeout))
+            return Response()
+
+    monkeypatch.setattr(
+        aq,
+        'queue_status',
+        lambda app, qdef: dict(local_port_open=True, gui_alive=False),
+    )
+    monkeypatch.setattr(aq, '_OPENER', Opener())
+    client = app.test_client()
+    response = client.post(
+        '/api/admin/apero-queue/retry_dashboard',
+        json=dict(name='q1'),
+    )
+    payload = response.get_json()
+    assert response.status_code == 200
+    assert payload['success']
+    request, timeout = requests[0]
+    assert request.full_url.endswith(':18090/api/shutdown')
+    assert request.data == b'{"restart":true}'
+    assert request.get_method() == 'POST'
+    assert timeout == aq.RESTART_TIMEOUT
+
+
+def test_retry_dashboard_requires_an_active_tunnel(
+    app: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retry should not call the supervisor when the tunnel is down.
+
+    :param app: Isolated ARI app.
+    :param monkeypatch: Fixture for replacing permissions and status.
+    :return: None.
+    """
+    _save_queue(18090)
+    _as_user(monkeypatch, {aq.PERMISSION}, set())
+    monkeypatch.setattr(
+        aq,
+        'queue_status',
+        lambda app, qdef: dict(local_port_open=False, gui_alive=False),
+    )
+    client = app.test_client()
+    response = client.post(
+        '/api/admin/apero-queue/retry_dashboard',
+        json=dict(name='q1'),
+    )
+    assert response.status_code == 400
+    assert 'SSH tunnel is not active' in response.get_json()['error']
 
 
 def test_admin_api_requires_permission(app: Any,

@@ -13,7 +13,7 @@
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- ARI stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260524a') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20261119b') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_overrides.css', v='20260424a') }}">
     {% if logged_in %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
@@ -282,7 +282,10 @@
             pageIcon: {% if page_icon is defined %}{{ page_icon | tojson }}{% else %}null{% endif %}
         };
     </script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        window.ARI_CLOSE_OVERLAY_LABEL = {{ _('Close overlay')|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js', v='20261119b') }}"></script>
     <script src="{{ url_for('static', filename='js/page_pins.js', v='20260424a') }}"></script>
     <script>
     /* ── How-to banner: persist open/closed state in localStorage ── */

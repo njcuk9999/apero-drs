@@ -362,6 +362,7 @@ def start_interactive_test(
     ssh_config_host: str,
     remote_path: str,
     ssh_key_name: str,
+    network_mode: str = "standard",
 ) -> Dict[str, Any]:
     """
     Start an interactive SSH test session (PTY-backed).
@@ -370,6 +371,7 @@ def start_interactive_test(
     the user to respond to password/2FA prompts in the browser.
 
     :param connection_mode: SSH connection mode to use.
+    :param network_mode: Standard SSH or Alliance Duo network mode.
     :param remote_host: Remote hostname for direct connections.
     :param remote_user: Remote username for direct connections.
     :param ssh_config_host: Host alias from the SSH config file.
@@ -379,11 +381,15 @@ def start_interactive_test(
     """
     from apero_ri.core.sshfs_backend import (
         _get_ssh_keys_dir,
+        _normalize_network_mode,
         _normalize_connection_mode,
         _throttle_ssh_target,
     )
 
+    network_mode = _normalize_network_mode(network_mode)
     connection_mode = _normalize_connection_mode(connection_mode)
+    if network_mode == "alliance":
+        connection_mode = "ssh_config_host"
     remote_host = str(remote_host or "").strip()
     remote_user = str(remote_user or "").strip() or "root"
     ssh_config_host = str(ssh_config_host or "").strip()
@@ -409,6 +415,14 @@ def start_interactive_test(
     throttle_error = _throttle_ssh_target(target, action="interactive SSH test")
     if throttle_error:
         return {"ok": False, "error": throttle_error}
+
+    if network_mode == "alliance":
+        cmd = ["ssh", "-fN", target]
+        result = start_session(kind="ssh_test", cmd=cmd)
+        if result.get("ok"):
+            result["cmd"] = shlex.join(cmd)
+            result["network_mode"] = network_mode
+        return result
 
     # Build a multi-step test command:
     # 1) echo SSH_OK (proves login)

@@ -234,6 +234,31 @@
                 {% else %}
                 <p>{{ _('This page controls operational settings. Make one change at a time and test before saving.') }}</p>
                 {% endif %}
+                {% if page_id == 'home.admin_portal.sshfs_management' %}
+                <a class="ari-btn ari-btn--sm ari-btn--secondary"
+                   href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/sshfs') }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ _('SSHFS guide') }}
+                </a>
+                {% elif page_id == 'home.admin_portal.database_setup' %}
+                <a class="ari-btn ari-btn--sm ari-btn--secondary"
+                   href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/database_setup') }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ _('Database setup guide') }}
+                </a>
+                {% elif page_id == 'home.admin_portal.apero_queue_setup' %}
+                <a class="ari-btn ari-btn--sm ari-btn--secondary"
+                   href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/queue_setup') }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ _('APERO Queue setup guide') }}
+                </a>
+                {% else %}
+                <a class="ari-btn ari-btn--sm ari-btn--secondary"
+                   href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal') }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ _('Admin Portal guide') }}
+                </a>
+                {% endif %}
             </div>
         </details>
         {% endif %}
