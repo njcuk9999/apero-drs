@@ -47,6 +47,8 @@ PROC_ID_RE = re.compile(r'^[a-z]+-\d{8}-\d{6}-[0-9a-f]{6}$')
 SBATCH_ID_RE = re.compile(r'(?:Submitted batch job |: |^)(\d+)(?:;\S*)?\s*$')
 # the most queue ids kept per process (runs with ntasks=all keep cycling)
 MAX_QIDS = 5000
+# keep newly accepted Slurm jobs visible while squeue catches up
+SLURM_START_GRACE = 90
 # seconds a squeue answer is reused (many browsers poll the registry)
 SQUEUE_CACHE_SECONDS = 5.0
 _SQUEUE_CACHE: Dict[str, Any] = dict(time=0.0, key=None, value=None)
@@ -163,6 +165,7 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
                   log_globs=list(log_globs or []),
                   artifact_paths=list(artifact_paths or []),
                   slurm_jobs=[str(job) for job in (slurm_jobs or [])],
+                  slurm_submitted_at=(time.time() if slurm_jobs else None),
                   qids=list(qids or [])[-MAX_QIDS:])
     try:
         _write(proc_dir, record)
@@ -187,6 +190,8 @@ def update(proc_dir: str, proc_id: Optional[str], **fields: Any) -> None:
     if record is None:
         return
     record.update(fields)
+    if fields.get('slurm_jobs'):
+        record['slurm_submitted_at'] = time.time()
     if 'qids' in fields:
         record['qids'] = list(record['qids'])[-MAX_QIDS:]
     try:
@@ -477,12 +482,23 @@ def proc_status(record: Dict[str, Any],
         if record.get('stopped'):
             return 'stopped'
         return 'complete' if record.get('returncode') == 0 else 'failed'
+    if record.get('submitting'):
+        return 'running'
     jobs = record.get('slurm_jobs') or []
     if len(jobs) > 0:
         if slurm is None:
             return 'unknown'
         states = [slurm[job] for job in jobs if job in slurm]
         if len(states) == 0:
+            submitted_at = record.get('slurm_submitted_at')
+            try:
+                recent = (submitted_at is not None and
+                          time.time() - float(submitted_at) <
+                          SLURM_START_GRACE)
+            except (TypeError, ValueError):
+                recent = False
+            if recent:
+                return 'pending'
             return 'finished'
         if any(state != 'PENDING' for state in states):
             return 'running'

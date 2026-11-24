@@ -15,7 +15,10 @@ function element(tag) {
 
 const elements = {
     'fb-header-row': element('tr'),
-    'fb-filter-row': element('tr')
+    'fb-filter-row': element('tr'),
+    'fb-stat-files': element('div'),
+    'fb-stat-files-sub': element('div'),
+    'fb-stat-query': element('div')
 };
 const context = {
     window: {},
@@ -38,7 +41,11 @@ source = source.replace('    bindPresets();', `
             fbApplyFilterSort();
         },
         rows: function () { return fbFilteredRows; },
-        filters: function () { return fbColFilters; }
+        filters: function () { return fbColFilters; },
+        group: function (column) {
+            fbGroupByCol = column;
+            fbApplyFilterSort();
+        }
     };
     return;
     bindPresets();`);
@@ -63,6 +70,7 @@ const rows = Array.from({ length: 25 }, (_, index) => ({
 browser.load(rows);
 enter('FILENAME', 'TARGETABC_1');
 assert.equal(browser.rows().length, 11);
+assert.equal(elements['fb-stat-files'].textContent, '11');
 assert.equal(control('FILENAME').value, 'TARGETABC_1');
 assert.equal(browser.filters().FILENAME, 'TARGETABC_1');
 enter('FILENAME', 'targetabc_2');
@@ -82,3 +90,15 @@ output.handlers.change();
 assert.equal(browser.rows().length, 25);
 assert.ok(control('KW_OUTPUT').children
     .some(option => option.value === 'DRS_POST_S' && option.selected));
+
+browser.load(rows.concat([
+    { FILENAME: 'Proxima_t.fits', KW_OUTPUT: 'DRS_PP' },
+    { FILENAME: 'Proxima_tXfits', KW_OUTPUT: 'DRS_POST_T' },
+    { FILENAME: 'Proxima_t.fits.bak', KW_OUTPUT: 'DRS_POST_T' }
+]));
+enter('FILENAME', '*T.fits');
+assert.equal(browser.rows().length, 1);
+assert.equal(browser.rows()[0].FILENAME, 'Proxima_t.fits');
+assert.equal(elements['fb-stat-files'].textContent, '1');
+browser.group('KW_OUTPUT');
+assert.equal(elements['fb-stat-files'].textContent, '28');

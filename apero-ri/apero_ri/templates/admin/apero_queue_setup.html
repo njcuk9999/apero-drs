@@ -6,6 +6,7 @@
 <style>
 .aqs-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr;
             margin-bottom: 10px; }
+.aqs-profile-help { grid-column: 1 / -1; }
 .aqs-card { border: 1px solid var(--ari-border); border-radius: 8px;
             padding: 10px; display: grid; gap: 8px;
             background: var(--ari-card-bg); }
@@ -48,8 +49,6 @@
     .aqs-actions .ari-btn { min-height: 44px; }
 }
 </style>
-
-<div class="ari-up-shell sm-shell">
     <div class="ari-page-header">
         <h1><i class="fa-solid fa-list-check"></i> APERO Queue Setup</h1>
     </div>
@@ -85,6 +84,9 @@
                     prompts).
                 </div>
                 <div>
+                    {{ _('The Slurm-only setting is in the queue dashboard Run tab, not a startup argument. Enable it there to submit Generate and Reset jobs through Slurm and disable local Run.') }}
+                </div>
+                <div>
                     <strong>Equivalent command:</strong>
                     <code>ssh -L LOCAL_PORT:localhost:REMOTE_PORT SSH_HOST</code>
                 </div>
@@ -104,16 +106,12 @@
 
         <div class="aqs-grid">
             <div class="ari-ae-field">
-                <label class="ari-ae-label" for="aqsName">Queue name (id)</label>
-                <input id="aqsName" class="ari-ap-input" placeholder="e.g. spirou_narval">
-            </div>
-            <div class="ari-ae-field">
-                <label class="ari-ae-label" for="aqsLabel">Tab label</label>
-                <input id="aqsLabel" class="ari-ap-input" placeholder="e.g. SPIROU (narval)">
-            </div>
-            <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsProfile">Linked APERO profile</label>
                 <select id="aqsProfile" class="ari-ap-input"></select>
+            </div>
+            <div class="aqs-help aqs-profile-help">
+                The linked instrument/profile supplies the queue name and
+                monitor-card label.
             </div>
             <div class="ari-ae-field">
                 <label class="ari-ae-label" for="aqsSshHost">SSH config host</label>
@@ -274,8 +272,6 @@ window.ARI_DOC_STEP_HELP = {
         }
     ],
     fieldAnchors: {
-        aqsName: 'what-it-does',
-        aqsLabel: 'what-it-does',
         aqsProfile: 'what-it-does',
         aqsSshHost: 'why-the-queue-needs-a-special-connection',
         aqsRemoteHost: 'why-the-queue-needs-a-special-connection',
@@ -297,6 +293,7 @@ let aqsDefaultBlocked = [];
 let aqsToken = null;
 let aqsPoll = null;
 let aqsAuthName = '';
+let aqsEditingName = '';
 
 function aqsUrl(action) { return AQS_API.replace('ACTION', action); }
 
@@ -404,8 +401,7 @@ function aqsRenderRows() {
         card.className = 'aqs-card';
         card.innerHTML = `
             <div class="aqs-card-title">
-                <span>${aqsEsc(def.label || row.name)}</span>
-                <span class="aqs-detail">(${aqsEsc(row.name)})</span>
+                <span>${aqsEsc(def.instrument)} / ${aqsEsc(def.profile_id)}</span>
                 ${aqsStatusHtml(row)}
             </div>
             <div class="aqs-detail">
@@ -453,6 +449,10 @@ async function aqsRefresh() {
 
 function aqsPayload() {
     const prof = String(document.getElementById('aqsProfile').value || '').split('|');
+    const instrument = prof[0] || '';
+    const profileId = prof[1] || '';
+    const profileName = (instrument + '_' + profileId)
+        .replace(/[^A-Za-z0-9_-]/g, '_').replace(/^_+|_+$/g, '');
     const blocked = Array.from(
         document.querySelectorAll('#aqsBlocked input:checked')).map((el) => el.value);
     const val = (id) => String(document.getElementById(id).value || '').trim();
@@ -464,10 +464,12 @@ function aqsPayload() {
         .map((command) => command.trim())
         .filter(Boolean);
     return {
-        name: val('aqsName'),
-        label: val('aqsLabel'),
-        instrument: prof[0] || '',
-        profile_id: prof[1] || '',
+        name: profileName,
+        label: profileId,
+        profile_name: true,
+        previous_name: aqsEditingName,
+        instrument: instrument,
+        profile_id: profileId,
         ssh_config_host: val('aqsSshHost'),
         remote_host: val('aqsRemoteHost'),
         remote_port: val('aqsRemotePort'),
@@ -484,7 +486,8 @@ function aqsPayload() {
 }
 
 function aqsResetForm() {
-    ['aqsName', 'aqsLabel', 'aqsSshHost', 'aqsLocalPort', 'aqsNotes']
+    aqsEditingName = '';
+    ['aqsSshHost', 'aqsLocalPort', 'aqsNotes']
         .forEach((id) => { document.getElementById(id).value = ''; });
     document.getElementById('aqsProfile').value = '';
     document.getElementById('aqsRemoteHost').value = 'localhost';
@@ -504,8 +507,7 @@ function aqsEdit(index) {
     const row = aqsRows[index];
     if (!row) return;
     const def = row.definition || {};
-    document.getElementById('aqsName').value = row.name || '';
-    document.getElementById('aqsLabel').value = def.label || '';
+    aqsEditingName = row.name || '';
     document.getElementById('aqsProfile').value = (def.instrument || '') + '|' + (def.profile_id || '');
     document.getElementById('aqsSshHost').value = def.ssh_config_host || '';
     document.getElementById('aqsRemoteHost').value = def.remote_host || 'localhost';
@@ -524,14 +526,15 @@ function aqsEdit(index) {
     document.getElementById('aqsNotes').value = def.notes || '';
     aqsRenderBlocked(def.blocked_actions || []);
     aqsUpdateNetworkMode();
-    document.getElementById('aqsName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('aqsProfile').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function aqsSave() {
     try {
         const data = await aqsPost('save', aqsPayload());
         if (!data.success) { aqsMsg(data.error || 'Failed to save queue.', false); return; }
-        aqsMsg('APERO queue saved.', true);
+        aqsEditingName = data.name || '';
+        aqsMsg('APERO queue saved as ' + aqsEditingName + '.', true);
         await aqsRefresh();
     } catch (err) {
         aqsMsg('Failed to save queue: ' + err.message, false);

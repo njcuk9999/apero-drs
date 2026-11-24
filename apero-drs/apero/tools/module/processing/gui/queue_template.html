@@ -2601,7 +2601,8 @@ function renderProcesses() {
     rows.forEach(function (proc) {
         var active = !!PROC_ACTIVE[proc.status];
         var jobs = proc.slurm_jobs || [];
-        var where = jobs.length > 0 ?
+        var where = proc.kind === 'chain' && proc.submitting ?
+            'Slurm (submitting)' : jobs.length > 0 ?
             '<button data-slurm="1">slurm (' + jobs.length + ')</button>' :
             escapeHtml((proc.pid !== null ? 'PID ' + proc.pid + ' ' : '') +
                        '@' + proc.host +
@@ -2617,7 +2618,14 @@ function renderProcesses() {
         }
         var logs = '';
         if (procIsJobLogs(proc)) {
-            logs = '<button data-joblog="1">' +
+            proc.logs.forEach(function (name, it) {
+                if (!/\.(out|err)$/.test(name)) {
+                    logs += '<button data-log="' + it + '" title="' +
+                            escapeHtml(name) + '">' +
+                            escapeHtml(procLogLabel(name)) + '</button>';
+                }
+            });
+            logs += '<button data-joblog="1">' +
                    (proc.kind === 'chain' ? 'Chain' : 'Batch') +
                    ' logs (' + procJobCount(proc) + ')</button>';
         } else {
@@ -2689,7 +2697,9 @@ var jlExpanded = {};
 
 function procIsJobLogs(proc) {
     return (proc.kind === 'chain' || proc.kind === 'batch') &&
-           proc.logs.length > 0;
+           proc.logs.some(function (name) {
+               return /\.(out|err)$/.test(name);
+           });
 }
 
 function procJobCount(proc) {

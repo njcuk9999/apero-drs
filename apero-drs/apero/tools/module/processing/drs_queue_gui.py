@@ -317,7 +317,7 @@ class GuiState:
                 channel = 'run'
                 if name == 'Generate':
                     channel = 'generate'
-                elif name == 'Reset':
+                elif name in ['Reset', 'Batch', 'Chain']:
                     channel = 'actions'
                 self.add_message(emsg.format(name, gui_error), channel)
             finally:
@@ -768,6 +768,8 @@ def _parse_job_out(path: str) -> Dict[str, Any]:
             if result is None:
                 continue
             qid, reported = result.group(1), result.group(2)
+            if reported == 'running':
+                continue
             # pending = released unstarted task after a protected failure
             if current is None:
                 tasks.append(dict(qid=qid, shortname='', result=reported,
@@ -1227,19 +1229,33 @@ def action_chain(params: ParamDict, state: GuiState,
         """Generate and optionally submit chained queue jobs."""
         state.add_message('Chain started (template={0}, per_batch={1}, '
                           'submit={2}, dry_run={3})'.format(
-                              template_name, per_batch, submit, dry_run))
-        summary = drs_queue.chain_queue(params, template_name,
-                                        submit=submit,
-                                        per_batch=per_batch,
-                                        dry_run=dry_run)
-        state.add_message('Chain: {0}'.format(summary['message']))
+                              template_name, per_batch, submit, dry_run),
+                          'actions')
+        try:
+            summary = drs_queue.chain_queue(
+                params, template_name, submit=submit,
+                per_batch=per_batch, dry_run=dry_run, owner='gui')
+        except Exception:
+            proc_dir = drs_queue.get_proc_dir(params)
+            for record in drs_queue_procs.load_all(proc_dir):
+                if (record.get('kind') != 'chain'
+                        or record.get('owner') != 'gui'
+                        or not record.get('submitting')):
+                    continue
+                drs_queue_procs.update(
+                    proc_dir, record['id'], submitting=False, pid=None)
+                if not record.get('slurm_jobs'):
+                    drs_queue_procs.finish(proc_dir, record['id'], 1)
+            raise
+        state.add_message('Chain: {0}'.format(summary['message']), 'actions')
         chain_dir = summary.get('chain_dir')
         if chain_dir is not None:
-            state.add_message('Chain output path:\n{0}'.format(chain_dir))
+            state.add_message('Chain output path:\n{0}'.format(chain_dir),
+                              'actions')
         submit_script = summary.get('submit_script')
         if submit_script is not None:
             state.add_message('Chain submit script:\n{0}'
-                              ''.format(submit_script))
+                              ''.format(submit_script), 'actions')
 
     started = state.start_action('Chain', _do_chain, tuple())
     if started:

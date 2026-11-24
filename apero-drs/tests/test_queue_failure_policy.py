@@ -194,4 +194,5 @@ def test_chain_chunk_stops_after_reference_failure(
     assert result.returncode == 1
     assert not marker.exists()
     assert '--qresult=failed' in trace.read_text()
-    assert '--qresult=pending' in trace.read_text()
+    assert '--qresult=running' in trace.read_text()
+    assert '--qresult=pending' not in trace.read_text()

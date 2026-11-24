@@ -37,9 +37,13 @@ The web-server will only work while `apero_ri_run` is running.
 The Data Portal object page offers spectrum presets for extracted 2D
 `[e.fits]` (`DRS_POST_E`), telluric-corrected 2D `[t.fits]` (`DRS_POST_T`),
 and telluric-corrected 1D `[s.fits]` (`DRS_POST_S`) products. These presets
-select processed output files that pass QC. **Templates** selects
+select processed output files that pass QC or have no recorded QC; files with
+no recorded QC still display `--` in the QC column. **Templates** selects
 `TELLU_TEMP`, `TELLU_TEMP_S1DW`, and `TELLU_TEMP_S1DV` across file blocks.
-Column filters match without regard to case and preserve the entered text.
+For APERO 0.7 profiles, `out` files indexed as `DRS_PP` also match product
+presets by their `e.fits`, `t.fits`, `s.fits`, `p.fits`, or `v.fits` suffix.
+Column filters match without regard to case and preserve the entered text;
+the filename filter also supports `*` as a wildcard.
 Object-product refresh status belongs in the Admin Portal, not object pages.
 
 ## Portal collections

@@ -13116,6 +13116,34 @@ item.comment = 'Used in: tools/module/processing/drs_queue.py'
 langlist.add(item)
 
 # =============================================================================
+# 10-513-00013
+# =============================================================================
+item = langlist.create('10-513-00013', kind='warning-code')
+item.value['ENG'] = ('Queue: a chain is submitting or active; wait for it '
+                     'to finish before starting another run or batch')
+item.value['FR'] = ('File : une chaine est en cours de soumission ou active ; '
+                    'attendez avant de lancer une autre execution')
+item.value['ES'] = ('Cola: hay una cadena activa o enviandose; espere antes '
+                    'de iniciar otra ejecucion o lote')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
+# 10-513-00013
+# =============================================================================
+item = langlist.create('10-513-00013', kind='warning-code')
+item.value['ENG'] = ('Queue: a chain is submitting or active; wait for it '
+                     'to finish before starting another run or batch')
+item.value['FR'] = ('File : une chaine est en cours de soumission ou active ; '
+                    'attendez avant de lancer une autre execution')
+item.value['ES'] = ('Cola: hay una cadena activa o enviandose; espere antes '
+                    'de iniciar otra ejecucion o lote')
+item.arguments = 'None'
+item.comment = 'Used in: tools/module/processing/drs_queue.py'
+langlist.add(item)
+
+# =============================================================================
 # 10-514-00001
 # =============================================================================
 item = langlist.create('10-514-00001', kind='warning-code')
@@ -29699,6 +29727,9 @@ for geo_key, geo_eng, geo_fr, geo_es in GEOLOCATE_UI:
 # FILE_BROWSER_* - ARI object file-browser preset labels
 # =============================================================================
 FILE_BROWSER_UI_TEXT = [
+    ('DEFAULT', 'All processed (out, QC passed or not recorded)',
+     'Tous les produits traités (out, QC réussi ou non enregistré)',
+     'Todos los productos procesados (out, QC aprobado o no registrado)'),
     ('EXT2D', 'Extracted 2D spectra [e.fits]',
      'Spectres 2D extraits [e.fits]', 'Espectros 2D extraídos [e.fits]'),
     ('TCORR2D', 'Telluric corrected 2D spectra [t.fits]',

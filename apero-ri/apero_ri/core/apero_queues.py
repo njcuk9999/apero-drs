@@ -162,6 +162,17 @@ def normalize_queue(raw: Dict[str, Any]) -> Dict[str, Any]:
     )
 
 
+def profile_queue_name(instrument: str, profile_id: str) -> str:
+    """Build the stable queue key from its linked APERO profile.
+
+    :param instrument: Instrument name.
+    :param profile_id: APERO profile identifier.
+    :return: Safe queue name based on both profile fields.
+    """
+    raw_name = '{0}_{1}'.format(instrument, profile_id)
+    return re.sub(r'[^A-Za-z0-9_-]', '_', raw_name).strip('_')
+
+
 def validate_queue(name: str, qdef: Dict[str, Any],
                    queues: Dict[str, dict]) -> str:
     """

@@ -434,7 +434,10 @@ def api_file_browser(app: Any) -> Response | tuple[Response, int]:
         object_name=objname,
     )
 
-    filtered = bk.apply_preset_filter(accessible_rows, preset)
+    general = profile['data'].get('general', {})
+    version = general.get('version') if isinstance(general, dict) else None
+    legacy_pp = str(version).strip() == '0.7'
+    filtered = bk.apply_preset_filter(accessible_rows, preset, legacy_pp)
 
     query_time = _time.time() - t_start
     return jsonify(

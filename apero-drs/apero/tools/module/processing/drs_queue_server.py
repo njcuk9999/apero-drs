@@ -24,6 +24,7 @@ __date__ = base.__date__
 __authors__ = base.__authors__
 WORKER_PORT_ENV = 'APERO_QUEUE_GUI_WORKER_PORT'
 REQUEST_TIMEOUT = 30
+WORKER_STOP_TIMEOUT = 5
 textentry = drs_lang.textentry
 
 
@@ -46,12 +47,15 @@ class QueueServer(ThreadingHTTPServer):
         self.backend_port = 0
         self.worker_lock = threading.Lock()
         self.restarting = False
+        self.closing = threading.Event()
 
     def start_worker(self) -> None:
         """Start a fresh dashboard on a private loopback port.
 
         :return: None.
         """
+        if self.closing.is_set():
+            return
         with socket.socket() as probe:
             probe.bind(('127.0.0.1', 0))
             self.backend_port = probe.getsockname()[1]
@@ -59,6 +63,8 @@ class QueueServer(ThreadingHTTPServer):
         environment[WORKER_PORT_ENV] = str(self.backend_port)
         worker_kwargs = dict(env=environment, start_new_session=True)
         self.worker = subprocess.Popen(self.command, **worker_kwargs)
+        if self.closing.is_set():
+            self.stop_worker()
 
     def restart_worker(self) -> None:
         """Replace only the dashboard process, not its task process group.
@@ -67,8 +73,11 @@ class QueueServer(ThreadingHTTPServer):
         """
         try:
             with self.worker_lock:
+                if self.closing.is_set():
+                    return
                 self.stop_worker()
-                self.start_worker()
+                if self.worker is None or self.worker.poll() is not None:
+                    self.start_worker()
         finally:
             self.restarting = False
 
@@ -77,17 +86,24 @@ class QueueServer(ThreadingHTTPServer):
 
         :return: None.
         """
-        if self.worker is None:
+        worker = self.worker
+        if worker is None:
             return
-        if self.worker.poll() is None:
-            self.worker.terminate()
+        if worker.poll() is None:
             try:
-                self.worker.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.worker.kill()
-                self.worker.wait(timeout=5)
-        else:
-            self.worker.wait()
+                worker.terminate()
+                worker.wait(timeout=WORKER_STOP_TIMEOUT)
+                return
+            except ProcessLookupError:
+                return
+            except (subprocess.TimeoutExpired, KeyboardInterrupt):
+                pass
+            try:
+                worker.kill()
+                worker.wait(timeout=WORKER_STOP_TIMEOUT)
+            except (ProcessLookupError, subprocess.TimeoutExpired,
+                    KeyboardInterrupt):
+                pass
 
     def worker_request(self, path: str, body: Any = None) -> dict:
         """Send one short lifecycle request to the private worker.
@@ -108,17 +124,32 @@ class QueueServer(ThreadingHTTPServer):
             connection.close()
 
     def finish_worker(self) -> None:
-        """Allow a responsive worker to finish its action before exiting.
+        """Shut down the worker with bounded waits and no further restarts.
 
         :return: None.
         """
-        with self.worker_lock:
+        self.closing.set()
+        acquired = False
+        try:
+            acquired = self.worker_lock.acquire(timeout=WORKER_STOP_TIMEOUT)
+            if not acquired:
+                self.stop_worker()
+                return
             try:
                 self.worker_request('/api/shutdown', dict())
             except (OSError, ValueError, http.client.HTTPException):
                 self.stop_worker()
             else:
-                self.worker.wait()
+                if self.worker is not None:
+                    try:
+                        self.worker.wait(timeout=WORKER_STOP_TIMEOUT)
+                    except subprocess.TimeoutExpired:
+                        self.stop_worker()
+        except KeyboardInterrupt:
+            self.stop_worker()
+        finally:
+            if acquired:
+                self.worker_lock.release()
 
 
 class RecoveryHandler(BaseHTTPRequestHandler):

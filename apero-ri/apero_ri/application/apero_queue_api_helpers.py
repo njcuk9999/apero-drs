@@ -248,17 +248,33 @@ def list_queues(app: Any, user: dict) -> Any:
 
 def save_queue(app: Any, user: dict) -> Any:
     """Create or update one definition."""
-    _ = app, user
+    _ = user
     body = _body()
-    name = str(body.get('name', '') or '').strip()
     queues = apero_queues.load_queues()
     qdef = apero_queues.normalize_queue(body)
-    error = apero_queues.validate_queue(name, qdef, queues)
+    previous_name = str(body.get('previous_name', '') or '').strip()
+    profile_named = bool(body.get('profile_name'))
+    if profile_named:
+        name = apero_queues.profile_queue_name(
+            qdef['instrument'], qdef['profile_id'])
+        qdef['label'] = qdef['profile_id']
+    else:
+        name = str(body.get('name', '') or '').strip()
+    if previous_name and previous_name not in queues:
+        return _fail('Queue being edited no longer exists', 404)
+    if name in queues and name != previous_name:
+        return _fail('A queue with this APERO profile name already exists')
+    checked_queues = dict(queues)
+    checked_queues.pop(previous_name, None)
+    error = apero_queues.validate_queue(name, qdef, checked_queues)
     if error:
         return _fail(error)
+    if previous_name and previous_name != name:
+        old_qdef = queues.pop(previous_name)
+        apero_async.close_db_tunnel(_tunnel_params(app, old_qdef))
     queues[name] = qdef
     apero_queues.save_queues(queues)
-    return jsonify(success=True)
+    return jsonify(success=True, name=name)
 
 
 def _named_queue(body: Dict[str, Any]) -> Tuple[str, Optional[dict]]:
@@ -469,7 +485,7 @@ def build_monitor_context(app: Any, user_info: Optional[dict],
     for name, qdef in sorted(queues.items()):
         tabs.append(dict(
             name=name,
-            label=qdef['label'] or name,
+            label=qdef['profile_id'] or name,
             instrument=qdef['instrument'],
             profile_id=qdef['profile_id'],
             proxy_url='/monitor_portal/apero_queue/{0}/proxy/'.format(name),

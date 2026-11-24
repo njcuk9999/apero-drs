@@ -662,7 +662,7 @@
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn fb-preset-btn--active"
                             data-preset="none">All files</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
-                            data-preset="default">All processed (out, QC&ge;1)</button>
+                            data-preset="default">{{ file_browser_labels.default }}</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
                             data-preset="ext2d">{{ file_browser_labels.ext2d }}</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
@@ -1181,7 +1181,7 @@ window.ARI_BASKET_CFG = {
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};
 window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/file_browser.js', v='20261118a') }}" defer></script>
+<script src="{{ url_for('static', filename='js/file_browser.js', v='20261124a') }}" defer></script>
 <script src="{{ url_for('static', filename='js/object_comments.js', v='20260609a') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->

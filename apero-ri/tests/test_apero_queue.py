@@ -150,6 +150,39 @@ def test_normalize_alliance_queue_commands() -> None:
     ] is True
 
 
+def test_profile_named_save_renames_queue(app: Any,
+                                          monkeypatch: pytest.MonkeyPatch
+                                          ) -> None:
+    """Use the linked APERO profile as the queue name and card label."""
+    legacy = apero_queues.normalize_queue(dict(
+        ssh_config_host='narval1', local_port='18090',
+        instrument='SPIROU', profile_id='spirou_main', label='old label'))
+    apero_queues.save_queues(dict(old_queue=legacy))
+    closed = []
+    monkeypatch.setattr(aq.apero_async, 'close_db_tunnel',
+                        lambda params: closed.append(params))
+    _as_user(monkeypatch, {aq.PERMISSION}, set())
+    body = dict(profile_name=True, previous_name='old_queue',
+                instrument='SPIROU', profile_id='spirou_main',
+                ssh_config_host='narval1', local_port='18090')
+    response = app.test_client().post(
+        '/api/admin/apero-queue/save', json=body)
+    payload = response.get_json()
+    expected_name = 'SPIROU_spirou_main'
+    assert payload['success']
+    assert payload['name'] == expected_name
+    saved = apero_queues.load_queues()
+    assert list(saved) == [expected_name]
+    assert saved[expected_name]['label'] == 'spirou_main'
+    assert len(closed) == 1
+
+    duplicate = dict(body, previous_name='')
+    response = app.test_client().post(
+        '/api/admin/apero-queue/save', json=duplicate)
+    assert response.status_code == 400
+    assert 'already exists' in response.get_json()['error']
+
+
 def test_monitor_access_follows_profile(app: Any,
                                         monkeypatch: pytest.MonkeyPatch
                                         ) -> None:
