@@ -53,3 +53,20 @@ np.all(np.char.strip(status_key) == 'target')
 | ENABLED | True |
 | STATUS_KEY | status_key |
 | TARGET | target |
+
+### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml, aprofile_instrument/nirps_he_xxs_08_neil.yaml, aprofile_instrument/nirps_xxs_08_jupiter.yaml
+
+Performs the following test
+
+```python
+np.all(np.char.strip(HIERARCH ESO INS SENS144 STAT) == '')
+```
+
+#### Resolved values
+
+| Key | Value |
+| --- | --- |
+| TEST_KEY | warning_cryo1_state |
+| ENABLED | True |
+| STATUS_KEY | HIERARCH ESO INS SENS144 STAT |
+| TARGET | None |
