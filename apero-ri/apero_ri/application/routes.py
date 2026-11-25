@@ -2467,6 +2467,15 @@ def register_data_portal_routes(app: Any) -> None:
     )
 
     # Server sync - admin page API (super admin) and peer protocol
+    app.add_url_rule('/admin_portal/diagnostics',
+                     'admin_diagnostics_view', app._admin_diagnostics_view)
+    app.add_url_rule('/api/admin/diagnostics/<action>',
+                     'api_diagnostics_admin',
+                     app._limiter.limit('20 per minute')(
+                         app._api_diagnostics_admin), methods=['GET', 'POST'])
+    app.add_url_rule('/api/diagnostics/<action>', 'api_diagnostics',
+                     app._limiter.limit('10 per minute')(
+                         app._api_diagnostics), methods=['GET'])
     app.add_url_rule(
         '/api/admin/server-sync/<action>',
         'api_server_sync_admin',

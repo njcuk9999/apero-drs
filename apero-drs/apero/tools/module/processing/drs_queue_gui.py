@@ -51,6 +51,7 @@ from aperocore.core import drs_text
 from aperocore import drs_lang
 from apero.base import base as apero_base
 from apero.tools.module.processing import drs_queue
+from apero.tools.module.processing import drs_queue_diagnostics
 from apero.tools.module.processing import drs_queue_procs
 from apero.tools.module.processing import drs_queue_server
 from apero.tools.module.processing import drs_queue_stats
@@ -2106,6 +2107,15 @@ def _make_handler(
                 self._send(json.dumps(data))
             elif route == '/api/runtime_info':
                 self._send(json.dumps(runtime_info))
+            elif route == '/api/diagnostics':
+                if not drs_queue_diagnostics.loopback_allowed(
+                        self.client_address[0]):
+                    message = textentry('ARI_DIAGNOSTICS_ERROR',
+                                        args=['queue_loopback_required'])
+                    self._send(json.dumps(dict(error=str(message))), code=403)
+                else:
+                    data = drs_queue_diagnostics.collect(params)
+                    self._send(json.dumps(data, allow_nan=False))
             # the current/last generate or reset command output
             elif route == '/api/job':
                 query = parse_qs(parsed.query)

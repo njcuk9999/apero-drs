@@ -1,5 +1,7 @@
 # ARI (APERO Reduction Interface) — Claude Code Guide
 
+Follow [AGENTS.md](AGENTS.md), including its remote diagnostics workflow.
+
 This file gives Claude Code essential context about the `apero-ri` repository so every
 code-generation session starts with the right mental model.
 

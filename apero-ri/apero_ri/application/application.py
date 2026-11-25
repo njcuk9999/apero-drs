@@ -54,6 +54,7 @@ from apero_ri.application import (
     query_helpers,
 )
 from apero_ri.application import routes as app_routes
+from apero_ri.application import diagnostics_api_helpers
 from apero_ri.application import sci_groups_api_helpers
 from apero_ri.application import run_ids_api_helpers
 from apero_ri.application import search_helpers
@@ -484,6 +485,29 @@ class ARIApp(Flask):
     def _api_server_sync_peer(self, action: str) -> Any:
         """Handle a peer-to-peer server synchronization request."""
         return server_sync_api_helpers.peer_api_view(self, action)
+
+    def _admin_diagnostics_view(self) -> Any:
+        """Render the profile-scoped diagnostics administration page.
+
+        :return: Authorized page response.
+        """
+        return diagnostics_api_helpers.admin_view(self)
+
+    def _api_diagnostics_admin(self, action: str) -> Any:
+        """Manage diagnostic grants and collect administrator reports.
+
+        :param action: Fixed administrator diagnostic action.
+        :return: Authorized API response.
+        """
+        return diagnostics_api_helpers.admin_api(self, action)
+
+    def _api_diagnostics(self, action: str) -> Any:
+        """Serve expiring-grant, read-only diagnostic reports.
+
+        :param action: Fixed diagnostic read action.
+        :return: Scoped API response.
+        """
+        return diagnostics_api_helpers.api(self, action)
 
     # -----------------------------------------------------------------
     # APERO queue setup API (admin) and dashboard proxy (monitor)

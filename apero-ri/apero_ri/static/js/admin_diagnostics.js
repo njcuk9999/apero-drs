@@ -1,0 +1,92 @@
+(function () {
+    'use strict';
+    var profiles = [], host = '', busy = false;
+    function element(id) { return document.getElementById('diag-' + id); }
+    function status(message) { element('status').textContent = message || ''; }
+    function selected() {
+        return Array.from(element('profiles').querySelectorAll('input:checked')).map(function (input) {
+            return profiles[Number(input.value)];
+        });
+    }
+    async function api(action, body) {
+        var options = body ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)} : {};
+        var response = await fetch('/api/admin/diagnostics/' + action, options);
+        var data = await response.json();
+        if (!response.ok || !data.success) { throw new Error(data.error || String(response.status)); }
+        return data;
+    }
+    async function overview() {
+        var data = await api('overview');
+        profiles = data.profiles; host = data.host;
+        element('profiles').replaceChildren();
+        element('report-profile').replaceChildren();
+        profiles.forEach(function (profile, index) {
+            var label = document.createElement('label'), input = document.createElement('input');
+            input.type = 'checkbox'; input.value = index; label.className = 'diag-check';
+            label.append(input, document.createTextNode(profile.instrument + ' / ' + profile.profile_id));
+            element('profiles').append(label);
+            var option = document.createElement('option'); option.value = index;
+            option.textContent = profile.instrument + ' / ' + profile.profile_id;
+            element('report-profile').append(option);
+        });
+        element('grants').replaceChildren();
+        data.grants.forEach(function (grant) {
+            var row = document.createElement('tr'); row.className = 'ot-row';
+            [grant.label, grant.profiles.map(function (pair) { return pair.join(' / '); }).join(', '), grant.expires_at, grant.state].forEach(function (value) {
+                var cell = document.createElement('td'); cell.className = 'ot-cell'; cell.textContent = value; row.append(cell);
+            });
+            var actions = document.createElement('td'); actions.className = 'ot-cell';
+            var button = document.createElement('button'); button.className = 'ari-btn ari-btn--secondary';
+            button.title = 'Revoke'; button.setAttribute('aria-label', 'Revoke'); button.disabled = grant.state !== 'active';
+            var icon = document.createElement('i'); icon.className = 'fa-solid fa-ban'; button.append(icon);
+            button.onclick = async function () {
+                try { await api('revoke', {id: grant.id}); await overview(); } catch (error) { status(error.message); }
+            };
+            actions.append(button); row.append(actions); element('grants').append(row);
+        });
+    }
+    function query() {
+        var profile = profiles[Number(element('report-profile').value)];
+        if (!profile) { return null; }
+        return new URLSearchParams({instrument: profile.instrument, profile_id: profile.profile_id,
+            objname: element('object').value.trim(), pid: element('pid').value.trim(),
+            logs: element('logs').checked ? '1' : '0', database: element('database').checked ? '1' : '0'});
+    }
+    function shellQuote(value) { return "'" + value.replace(/'/g, "'\\''") + "'"; }
+    async function collect(download) {
+        if (busy) { return; }
+        var params = query(); if (!params) { return; }
+        busy = true; element('report-form').querySelectorAll('button').forEach(function (button) { button.disabled = true; });
+        try {
+            var response = await fetch('/api/admin/diagnostics/' + (download ? 'export' : 'report') + '?' + params);
+            if (!response.ok) { var failure = await response.json(); throw new Error(failure.error); }
+            if (download) {
+                var url = URL.createObjectURL(await response.blob()), link = document.createElement('a');
+                link.href = url; link.download = 'apero-diagnostics.json.gz'; link.click(); URL.revokeObjectURL(url);
+            } else { element('report').textContent = JSON.stringify(await response.json(), null, 2); }
+            status('');
+        } catch (error) { status(error.message); }
+        finally { busy = false; element('report-form').querySelectorAll('button').forEach(function (button) { button.disabled = false; }); }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        overview().catch(function (error) { status(error.message); });
+        element('grant-form').onsubmit = async function (event) {
+            event.preventDefault();
+            try {
+                var scope = selected();
+                var data = await api('issue', {profiles: scope.map(function (profile) { return [profile.instrument, profile.profile_id]; }),
+                    hours: Number(element('hours').value), label: element('label').value});
+                element('key').value = data.grant.token;
+                element('command').value = 'apero_ri_debug --host=' + shellQuote(host) + ' --key';
+                element('issued').hidden = false; await overview(); status('');
+            } catch (error) { status(error.message); }
+        };
+        ['key', 'command'].forEach(function (name) {
+            element('copy-' + name).onclick = function () {
+                navigator.clipboard.writeText(element(name).value).catch(function (error) { status(error.message); });
+            };
+        });
+        element('report-form').onsubmit = function (event) { event.preventDefault(); collect(false); };
+        element('export').onclick = function () { collect(true); };
+    });
+}());

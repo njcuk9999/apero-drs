@@ -1,0 +1,55 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - {{ 'Diagnostics' | tl }}{% endblock %}
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_diagnostics.css', v='20261125a') }}">
+{% endblock %}
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label | tl }}</h1>
+</div>
+<div id="diag-status" role="status" aria-live="polite"></div>
+<section class="diag-section">
+    <h2>{{ 'Profiles' | tl }}</h2>
+    <div id="diag-profiles" class="diag-profiles"></div>
+</section>
+<section class="diag-section">
+    <h2>{{ 'Access Grants' | tl }}</h2>
+    <form id="diag-grant-form" class="diag-controls">
+        <label>{{ 'Label' | tl }}<input id="diag-label" maxlength="120"></label>
+        <label>{{ 'Expires In (Hours)' | tl }}<input id="diag-hours" type="number" min="1" max="24" value="24" required></label>
+        <button class="ari-btn" type="submit"><i class="fa-solid fa-key" aria-hidden="true"></i> {{ 'Generate Key' | tl }}</button>
+    </form>
+    <div id="diag-issued" hidden>
+        <label>{{ 'One-Time Key' | tl }}<input id="diag-key" readonly autocomplete="off" spellcheck="false"></label>
+        <button id="diag-copy-key" class="ari-btn ari-btn--secondary" type="button" title="{{ 'Copy Key' | tl }}"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
+        <label>{{ 'Local Command' | tl }}<input id="diag-command" readonly spellcheck="false"></label>
+        <button id="diag-copy-command" class="ari-btn ari-btn--secondary" type="button" title="{{ 'Copy Command' | tl }}"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
+    </div>
+    <div class="ot-table-wrap">
+        <table class="ot-table">
+            <thead><tr class="ot-header-row">
+                {% for title in ['Label', 'Profiles', 'Expires', 'State', 'Actions'] %}<th class="ot-th ot-th--nonsortable">{{ title | tl }}</th>{% endfor %}
+            </tr></thead>
+            <tbody id="diag-grants"></tbody>
+        </table>
+    </div>
+</section>
+<section class="diag-section">
+    <h2>{{ 'Report' | tl }}</h2>
+    <form id="diag-report-form" class="diag-controls">
+        <label>{{ 'Profile' | tl }}<select id="diag-report-profile" required></select></label>
+        <label>{{ 'Object' | tl }}<input id="diag-object" maxlength="120"></label>
+        <label>{{ 'Recipe PID' | tl }}<input id="diag-pid" maxlength="160"></label>
+        <label class="diag-check"><input id="diag-logs" type="checkbox"> {{ 'Include Log Tails' | tl }}</label>
+        <label class="diag-check"><input id="diag-database" type="checkbox" checked> {{ 'Live Database' | tl }}</label>
+        <button class="ari-btn" type="submit"><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> {{ 'Collect' | tl }}</button>
+        <button id="diag-export" class="ari-btn ari-btn--secondary" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i> {{ 'Export' | tl }}</button>
+    </form>
+    <pre id="diag-report" tabindex="0"></pre>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261125a') }}"></script>
+{% endblock %}

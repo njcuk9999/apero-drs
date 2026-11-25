@@ -34,6 +34,7 @@ super_admin:
 admin:
   permissions:
     - view.admin.user_statistics
+    - manage.admin.diagnostics
     # can they manage apero profiles
     - manage.apero_profile
     # which groups can they manage

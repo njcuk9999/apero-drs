@@ -145,6 +145,81 @@ APERO checks. The first running task has the progress summary; additional
 running tasks appear above pending tasks with their runtime status and
 Stop/Log controls. Recent History combines completed runs across queues.
 
+## Remote Diagnostics
+
+**Admin Portal → Diagnostics** lets an administrator select accessible APERO
+profiles and issue a separate read-only diagnostic key. Keys expire after
+1–24 hours and can be revoked immediately. Each grant is independent of the
+normal user API token; only its SHA-256 digest is stored, and the credential
+is shown once. Reports recheck the issuer's current permissions and profile
+access. Grant creation, revocation, and report access are audited.
+
+The page displays a local command. Run it on the computer hosting your chat
+session; enter the key at its hidden prompt rather than pasting it into chat
+or shell history:
+
+```bash
+apero_ri_debug --host=https://ari.example --key \
+        --profile=spirou_mini2_08xxx_fir --object=GL699 --logs
+```
+
+Without `--profile`, the client downloads one report per authorized profile.
+Repeat `--profile` to select several. `--pid` narrows LogDatabase records;
+`--no-database` skips live database reads. `--output` changes the default
+`apero-diagnostics/` directory. The client saves owner-readable JSON files,
+never the key. A privately supplied `APERO_RI_DEBUG_KEY` environment variable
+is also accepted. `--key=VALUE` is supported but discouraged because shell
+history and process listings may expose it.
+
+Reports include package/runtime provenance, sanitized profile configuration,
+bounded path inventories, cache metadata and object tables, task schedules,
+manifest freshness and sampled checksums, live file-index product counts,
+recent LogDatabase records, product-path accessibility, and sampled FITS
+header/HDU metadata. Science arrays are not transferred. `--logs` adds up to
+three redacted recipe log tails. Limits, skipped checks, and failures appear
+explicitly in each report. Database queries are fixed read-only SELECTs with
+connection/read and statement timeouts, currently for MySQL/MariaDB using
+the `mysql+pymysql` driver. No API accepts arbitrary paths, SQL, or commands.
+
+Enabled **APERO Queue Setup** definitions linked to the selected profile are
+queried automatically through their existing SSH forwards. The queue host
+contributes its actual `DRS_UCONFIG`, package versions, queue task status,
+execution settings, process registry, generated-script monitor hooks,
+bounded Slurm/queue logs, monitor stores/statistics, and LogDatabase records.
+Remote profile/instrument identity must match the selected ARI profile;
+mismatches are reported without exporting the other profile's details.
+The diagnostic queue endpoint accepts only loopback socket peers. This is
+a read-only request to the connected queue, not a code deployment or job
+submission. Existing running reduction jobs are not modified.
+
+Deployment requires updating `apero-core`, `apero-drs`, and `apero-ri` on the
+relevant hosts, reinstalling the ARI package to register `apero_ri_debug`, and
+restarting the ARI server and queue GUI to load the new endpoints. Existing
+queue monitor functionality is unchanged. Before deploying to production,
+run the diagnostics tests and collect a report against your own profile.
+
+Direct client access requires HTTPS and network reachability. For a private
+service, use an approved SSH tunnel and a local URL such as
+`http://127.0.0.1:15000`. Plain HTTP to remote addresses, redirects, URL
+credentials, and disabled certificate verification are not supported. A
+key cannot bypass a firewall/VPN or a separate front-end password. Behind
+a trusted TLS-terminating proxy, configure ARI's existing proxy-count
+setting so Flask recognizes HTTPS. Do not expose the unauthenticated queue
+GUI publicly. Admin key issuance also requires HTTPS or a loopback tunnel.
+
+Read-only token endpoints:
+
+- `GET /api/diagnostics/profiles` lists the currently authorized profiles.
+- `GET /api/diagnostics/report` accepts `instrument`, `profile_id`, optional
+    `objname`, `pid`, `logs=1`, and `database=0`.
+- `GET /api/diagnostics/export` returns the same report as gzipped JSON.
+
+Supply the key only in `Authorization: Bearer ...`. These diagnostic keys do
+not authorize normal ARI endpoints, queue actions, file downloads, or shell
+access. Exports are credential-redacted but contain scientific metadata,
+hostnames, usernames, and paths: share only with trusted collaborators, do
+not commit them, and revoke the grant when investigation finishes.
+
 ## Search
 
 The top-level **Search** page at `/search` is available from the home page,

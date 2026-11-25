@@ -121,6 +121,34 @@ for label, translations in async_task_labels.items():
     item.comment = 'ARI async task dashboard and parallel management'
     langlist.add(item)
 
+item = langlist.create('ARI_DIAGNOSTICS_ERROR', kind='text')
+item.value['ENG'] = 'Diagnostics request could not be completed: {0}'
+item.value['FR'] = 'La demande de diagnostic a echoue : {0}'
+item.value['ES'] = 'No se pudo completar el diagnostico: {0}'
+item.arguments = ['code']
+item.comment = 'ARI diagnostics API validation and authorization failures'
+langlist.add(item)
+
+for diag_key, diag_eng, diag_fr, diag_es, diag_args in [
+    ('ARI_DIAGNOSTICS_CLI_DESCRIPTION',
+     'Download scoped ARI and queue diagnostics for local analysis.',
+     'Telecharger les diagnostics ARI et des files pour analyse locale.',
+     'Descargar diagnosticos ARI y de colas para analisis local.', 'None'),
+    ('ARI_DIAGNOSTICS_KEY_PROMPT', 'Expiring diagnostic key: ',
+     'Cle de diagnostic temporaire : ',
+     'Clave temporal de diagnostico: ', 'None'),
+    ('ARI_DIAGNOSTICS_DOWNLOADED', 'Diagnostic reports downloaded:\n{0}',
+     'Rapports de diagnostic telecharges :\n{0}',
+     'Informes de diagnostico descargados:\n{0}', ['paths']),
+]:
+    item = langlist.create(diag_key, kind='text')
+    item.value['ENG'] = diag_eng
+    item.value['FR'] = diag_fr
+    item.value['ES'] = diag_es
+    item.arguments = diag_args
+    item.comment = 'apero_ri_debug local diagnostic download CLI'
+    langlist.add(item)
+
 item = langlist.create('APERO_RI_TASK_DESCRIPTION', kind='text')
 item.value['ENG'] = (
     'Run local APERO RI tasks for this profile after DRS processing.'
