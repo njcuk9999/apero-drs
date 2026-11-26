@@ -2,7 +2,7 @@
 {% block title %}APERO RI - {{ 'Diagnostics' | tl }}{% endblock %}
 {% block extra_head %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_diagnostics.css', v='20261125a') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_diagnostics.css', v='20261126b') }}">
 {% endblock %}
 {% block doc_content %}
 <div class="ari-page-header">
@@ -57,10 +57,41 @@
         <button class="ari-btn" type="submit"><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> {{ 'Collect' | tl }}</button>
         <button id="diag-export" class="ari-btn ari-btn--secondary" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i> {{ 'Export' | tl }}</button>
     </form>
+    <div id="diag-progress" class="diag-progress" hidden>
+        <div class="diag-progress__heading">
+            <strong id="diag-progress-profile"></strong>
+            <span id="diag-progress-percent">0%</span>
+        </div>
+        <progress id="diag-progress-bar" max="100" value="0" aria-label="{{ _('Report collection progress') }}"></progress>
+        <div id="diag-progress-stage" role="status" aria-live="polite"></div>
+    </div>
+    <p id="diag-report-status" role="status" aria-live="polite">{{ _('Collect a report before exporting.') }}</p>
     <pre id="diag-report" tabindex="0"></pre>
 </section>
 {% endblock %}
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126a') }}"></script>
+<script>
+window.ARI_DIAGNOSTICS_TEXT = {{ {
+    'runtime': _('Inspecting runtime'),
+    'queues': _('Collecting linked queues'),
+    'paths': _('Checking profile paths'),
+    'cache': _('Inspecting cached tables'),
+    'manifests': _('Checking task manifests'),
+    'tasks': _('Inspecting task schedules'),
+    'database': _('Querying live database'),
+    'log_tails': _('Reading recipe log tails'),
+    'product_paths': _('Checking products and FITS headers'),
+    'finalize': _('Redacting and preparing report'),
+    'complete': _('Finishing report'),
+    'ready': _('Report ready to export.'),
+    'changed': _('Report options changed. Collect again before exporting.'),
+    'first': _('Collect a report before exporting.'),
+    'collecting': _('Collection in progress. Export is available when it finishes.'),
+    'failed': _('Report collection failed. Please try again.'),
+    'download': _('Preparing download...'),
+    'copy': _('Copy unavailable; select the text.'),
+} | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126b') }}"></script>
 {% endblock %}

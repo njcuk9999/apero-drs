@@ -13,11 +13,18 @@
 #diag-issued[hidden] { display: none; }
 #diag-status { min-height: 24px; color: var(--ari-text); overflow-wrap: anywhere; }
 #diag-report { max-height: 65vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ari-text); background: var(--ari-surface-muted); padding: 12px; }
+.diag-progress { margin: 20px 0 8px; max-width: 720px; }
+.diag-progress__heading { display: flex; justify-content: space-between; gap: 12px; overflow-wrap: anywhere; }
+.diag-progress progress { display: block; width: 100%; height: 14px; margin: 8px 0; accent-color: var(--ari-primary); }
+#diag-progress-stage, #diag-report-status { color: var(--ari-text-muted); overflow-wrap: anywhere; }
 [data-theme="dark"] .diag-section { border-color: var(--ari-border); }
 [data-theme="dark"] .diag-section input:not([type="checkbox"]),
 [data-theme="dark"] .diag-section select { color: var(--ari-text); background: var(--ari-card-bg); border-color: var(--ari-border); }
 [data-theme="dark"] #diag-status { color: var(--ari-text); }
 [data-theme="dark"] #diag-report { color: var(--ari-text); background: var(--ari-surface-muted); }
+[data-theme="dark"] .diag-progress progress { accent-color: var(--ari-primary); }
+[data-theme="dark"] #diag-progress-stage,
+[data-theme="dark"] #diag-report-status { color: var(--ari-text-muted); }
 @media (max-width: 768px) {
     .diag-controls { flex-direction: column; align-items: stretch; }
     .diag-section input:not([type="checkbox"]), .diag-section select, .diag-section button { min-height: 44px; }

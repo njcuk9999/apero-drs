@@ -4,6 +4,63 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+"Report collection progress":
+  FR: Progression de la collecte du rapport
+  ES: Progreso de la recopilación del informe
+"Inspecting runtime":
+  FR: Inspection de l'environnement d'exécution
+  ES: Inspeccionando el entorno de ejecución
+"Collecting linked queues":
+  FR: Collecte des files associées
+  ES: Recopilando colas vinculadas
+"Checking profile paths":
+  FR: Vérification des chemins du profil
+  ES: Comprobando rutas del perfil
+"Inspecting cached tables":
+  FR: Inspection des tableaux en cache
+  ES: Inspeccionando tablas en caché
+"Checking task manifests":
+  FR: Vérification des manifestes des tâches
+  ES: Comprobando manifiestos de tareas
+"Inspecting task schedules":
+  FR: Inspection des plannings des tâches
+  ES: Inspeccionando programación de tareas
+"Querying live database":
+  FR: Interrogation de la base de données
+  ES: Consultando la base de datos
+"Reading recipe log tails":
+  FR: Lecture des extraits de journaux de recettes
+  ES: Leyendo finales de registros de recetas
+"Checking products and FITS headers":
+  FR: Vérification des produits et des en-têtes FITS
+  ES: Comprobando productos y cabeceras FITS
+"Redacting and preparing report":
+  FR: Masquage et préparation du rapport
+  ES: Depurando y preparando el informe
+"Finishing report":
+  FR: Finalisation du rapport
+  ES: Finalizando el informe
+"Report ready to export.":
+  FR: Rapport prêt à être exporté.
+  ES: Informe listo para exportar.
+"Report options changed. Collect again before exporting.":
+  FR: Les options ont changé. Relancez la collecte avant d'exporter.
+  ES: Las opciones cambiaron. Vuelva a recopilar antes de exportar.
+"Collect a report before exporting.":
+  FR: Recueillez un rapport avant de l'exporter.
+  ES: Recopile un informe antes de exportarlo.
+"Collection in progress. Export is available when it finishes.":
+  FR: Collecte en cours. L'export sera disponible à la fin.
+  ES: Recopilación en curso. La exportación estará disponible al finalizar.
+"Report collection failed. Please try again.":
+  FR: La collecte du rapport a échoué. Veuillez réessayer.
+  ES: La recopilación del informe falló. Vuelva a intentarlo.
+"Preparing download...":
+  FR: Préparation du téléchargement...
+  ES: Preparando descarga...
+"Copy unavailable; select the text.":
+  FR: Copie indisponible ; sélectionnez le texte.
+  ES: Copia no disponible; seleccione el texto.
 "Diagnostics guide":
   FR: Guide des diagnostics
   ES: Guía de diagnósticos

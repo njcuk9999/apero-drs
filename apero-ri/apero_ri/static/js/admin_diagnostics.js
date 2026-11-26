@@ -1,6 +1,7 @@
 (function () {
     'use strict';
-    var profiles = [], host = '', busy = false;
+    var profiles = [], host = '', busy = false, report = null;
+    var text = window.ARI_DIAGNOSTICS_TEXT;
     function element(id) { return document.getElementById('diag-' + id); }
     function status(message) { element('status').textContent = message || ''; }
     function selected() {
@@ -17,6 +18,7 @@
     }
     async function overview() {
         var data = await api('overview');
+        var oldProfile = profiles[Number(element('report-profile').value)];
         profiles = data.profiles; host = data.host;
         element('profiles').replaceChildren();
         element('report-profile').replaceChildren();
@@ -28,7 +30,13 @@
             var option = document.createElement('option'); option.value = index;
             option.textContent = profile.instrument + ' / ' + profile.profile_id;
             element('report-profile').append(option);
+            if (oldProfile && oldProfile.instrument === profile.instrument && oldProfile.profile_id === profile.profile_id) {
+                option.selected = true;
+            }
         });
+        if (oldProfile && !profiles.some(function (profile) {
+            return profile.instrument === oldProfile.instrument && profile.profile_id === oldProfile.profile_id;
+        })) { invalidate(); }
         element('grants').replaceChildren();
         data.grants.forEach(function (grant) {
             var row = document.createElement('tr'); row.className = 'ot-row';
@@ -59,22 +67,84 @@
         }
         input.focus(); input.select();
         if (document.execCommand('copy')) { return Promise.resolve(); }
-        return Promise.reject(new Error('Copy unavailable; select the text.'));
+        return Promise.reject(new Error(text.copy));
     }
-    async function collect(download) {
+    function reportStatus(message) { element('report-status').textContent = message; }
+    function invalidate() {
+        if (report) {
+            report = null;
+            element('report').textContent = '';
+            element('progress').hidden = true;
+            reportStatus(text.changed);
+        }
+    }
+    function showProgress(event) {
+        var percentage = event.total > 0 ? Math.floor(event.completed * 100 / event.total) : 0;
+        element('progress-bar').value = percentage;
+        element('progress-percent').textContent = percentage + '%';
+        element('progress-stage').textContent = text[event.stage] || event.stage;
+    }
+    async function collect() {
         if (busy) { return; }
         var params = query(); if (!params) { return; }
-        busy = true; element('report-form').querySelectorAll('button').forEach(function (button) { button.disabled = true; });
+        busy = true; report = null;
+        element('report').textContent = '';
+        element('progress').hidden = false;
+        element('progress-profile').textContent = params.get('instrument') + ' / ' + params.get('profile_id');
+        showProgress({stage: 'runtime', completed: 0, total: 1});
+        reportStatus(text.collecting);
+        element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = true; });
         try {
-            var response = await fetch('/api/admin/diagnostics/' + (download ? 'export' : 'report') + '?' + params);
+            var response = await fetch('/api/admin/diagnostics/stream?' + params);
             if (!response.ok) { var failure = await response.json(); throw new Error(failure.error); }
-            if (download) {
-                var url = URL.createObjectURL(await response.blob()), link = document.createElement('a');
-                link.href = url; link.download = 'apero-diagnostics.json.gz'; link.click(); URL.revokeObjectURL(url);
-            } else { element('report').textContent = JSON.stringify(await response.json(), null, 2); }
-            status('');
-        } catch (error) { status(error.message); }
-        finally { busy = false; element('report-form').querySelectorAll('button').forEach(function (button) { button.disabled = false; }); }
+            if (!response.body) { throw new Error(text.failed); }
+            var reader = response.body.getReader(), decoder = new TextDecoder(), pending = '';
+            var complete = false;
+            while (true) {
+                var part = await reader.read();
+                pending += decoder.decode(part.value || new Uint8Array(), {stream: !part.done});
+                var lines = pending.split('\n'); pending = lines.pop();
+                for (var index = 0; index < lines.length; index += 1) {
+                    if (!lines[index]) { continue; }
+                    var event = JSON.parse(lines[index]);
+                    if (event.type === 'progress') { showProgress(event); }
+                    if (event.type === 'error') { throw new Error(text.failed); }
+                    if (event.type === 'report') {
+                        report = event.report; complete = true;
+                        element('report').textContent = JSON.stringify(report, null, 2);
+                    }
+                }
+                if (part.done) { break; }
+            }
+            if (!complete) { throw new Error(text.failed); }
+            element('progress-stage').textContent = text.ready;
+            reportStatus(text.ready);
+        } catch (error) {
+            report = null; element('progress-stage').textContent = text.failed;
+            reportStatus(error.message || text.failed);
+        } finally {
+            busy = false;
+            element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = false; });
+        }
+    }
+    async function downloadReport() {
+        if (busy) { reportStatus(text.collecting); return; }
+        if (!report) { reportStatus(text.first); return; }
+        reportStatus(text.download);
+        try {
+            var json = JSON.stringify(report, null, 2);
+            var blob = new Blob([json], {type: 'application/json'});
+            var name = 'apero-diagnostics.json';
+            if (typeof CompressionStream === 'function') {
+                var compressed = blob.stream().pipeThrough(new CompressionStream('gzip'));
+                blob = await new Response(compressed).blob();
+                name += '.gz';
+            }
+            var url = URL.createObjectURL(blob), link = document.createElement('a');
+            link.href = url; link.download = name; link.click();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+            reportStatus(text.ready);
+        } catch (error) { reportStatus(error.message || text.failed); }
     }
     document.addEventListener('DOMContentLoaded', function () {
         overview().catch(function (error) { status(error.message); });
@@ -94,7 +164,9 @@
                 copyInput(element(name)).catch(function (error) { status(error.message); });
             };
         });
-        element('report-form').onsubmit = function (event) { event.preventDefault(); collect(false); };
-        element('export').onclick = function () { collect(true); };
+        element('report-form').onsubmit = function (event) { event.preventDefault(); collect(); };
+        element('report-form').addEventListener('input', invalidate);
+        element('report-form').addEventListener('change', invalidate);
+        element('export').onclick = downloadReport;
     });
 }());

@@ -48,7 +48,11 @@ not bypass a firewall, VPN, or an independent front-end password.
 ## Report Options
 
 - **Profile** selects the one profile to inspect on this page. **Collect**
-  displays JSON here; **Export** downloads the same report as gzipped JSON.
+  shows progress by completed collection stages and displays JSON here.
+  Each stage can take a different amount of time, so the percentage is not
+  an estimate of elapsed time. **Export** downloads the completed report
+  without collecting it again, as gzipped JSON when supported by the browser
+  or plain JSON otherwise. Collect again after changing the report options.
 - **Object** is an optional exact APERO object name, for example `GL699`.
   When supplied, the report inspects that object's cached tables and, when
   live database queries succeed, indexed product examples, product paths,

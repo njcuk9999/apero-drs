@@ -4,6 +4,8 @@
 
 import gzip
 import json
+import queue
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -93,14 +95,20 @@ def _report(app: Any, profiles: dict, user: dict, grant_id: str = '') -> Any:
     if not all(diagnostics.IDENTIFIER.fullmatch(value.replace('-', '_'))
                for value in pair):
         return _fail('invalid_profile_identifier')
-    options = dict(objname=request.args.get('objname', '').strip(),
-                   pid=request.args.get('pid', '').strip(),
-                   include_logs=request.args.get('logs') == '1',
-                   include_database=request.args.get('database', '1') != '0')
+    objname = request.args.get('objname', '').strip()
+    pid = request.args.get('pid', '').strip()
+    include_logs = request.args.get('logs') == '1'
+    include_database = request.args.get('database', '1') != '0'
+    options = dict(objname=objname, pid=pid, include_logs=include_logs,
+                   include_database=include_database)
+    if request.path.endswith('/stream'):
+        return _stream_report(app, profiles[pair], pair, options, user)
     try:
         report = diagnostics.collect(
             profiles[pair], instrument, profile_id,
-            Path(app._resolve_local_data_dir()), **options)
+            Path(app._resolve_local_data_dir()),
+            objname=objname, pid=pid, include_logs=include_logs,
+            include_database=include_database, progress=None)
     except ValueError:
         return _fail('invalid_report_filter')
     audit_log.record(user['username'], 'diagnostics.report', profile_id,
@@ -115,6 +123,76 @@ def _report(app: Any, profiles: dict, user: dict, grant_id: str = '') -> Any:
     else:
         response = jsonify(report)
     response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+def _stream_report(app: Any, profile: dict, pair: tuple[str, str],
+                   options: dict, user: dict) -> Any:
+    """Stream actual collector stages and the completed report to an admin.
+
+    :param app: ARI application.
+    :param profile: Authorized profile configuration.
+    :param pair: Instrument and profile ID selected by the administrator.
+    :param options: Validated collection options.
+    :param user: Authenticated administrator.
+    :return: No-store newline-delimited JSON response.
+    """
+    objname = options['objname']
+    if objname and not diagnostics.OBJECT.fullmatch(objname):
+        return _fail('invalid_report_filter')
+    if len(options['pid']) > 160:
+        return _fail('invalid_report_filter')
+    root = Path(app._resolve_local_data_dir())
+    events: queue.Queue = queue.Queue()
+
+    def progress(stage: str, completed: int, total: int) -> None:
+        """Forward one collector update to the response stream.
+
+        :param stage: Current collector stage.
+        :param completed: Number of finished stages.
+        :param total: Number of stages in this report.
+        :return: None.
+        """
+        events.put(dict(type='progress', stage=stage,
+                        completed=completed, total=total))
+
+    def worker() -> None:
+        """Collect once without depending on Flask's request context.
+
+        :return: None. Posts a report or error to the stream queue.
+        """
+        try:
+            collect_kwargs = dict(options, progress=progress)
+            collect_args = [profile, pair[0], pair[1], root]
+            report = diagnostics.collect(*collect_args, **collect_kwargs)
+            audit_log.record(user['username'], 'diagnostics.report', pair[1],
+                             dict(instrument=pair[0], grant_id='',
+                                  filters=report['filters']))
+            report['success'] = True
+            events.put(dict(type='report', report=report))
+        except Exception as error:
+            app.logger.error('Diagnostic collection failed (%s)',
+                             type(error).__name__)
+            events.put(dict(type='error', code='collection_failed'))
+
+    def generate() -> Any:
+        """Yield stage events and periodic keepalives until completion.
+
+        :return: Newline-delimited JSON event iterator.
+        """
+        threading.Thread(target=worker, daemon=True).start()
+        while True:
+            try:
+                event = events.get(timeout=10)
+            except queue.Empty:
+                event = dict(type='heartbeat')
+            yield json.dumps(event, allow_nan=False) + '\n'
+            if event['type'] in ('report', 'error'):
+                break
+
+    response = Response(generate(), mimetype='application/x-ndjson')
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['X-Accel-Buffering'] = 'no'
     return response
 
 
@@ -137,7 +215,7 @@ def admin_api(app: Any, action: str) -> Any:
                             host=request.host_url.rstrip('/'))
         response.headers['Cache-Control'] = 'no-store'
         return response
-    if action in ('report', 'export') and request.method == 'GET':
+    if action in ('report', 'export', 'stream') and request.method == 'GET':
         return _report(app, profiles, user)
     body = request.get_json(silent=True)
     if request.method != 'POST' or not isinstance(body, dict):

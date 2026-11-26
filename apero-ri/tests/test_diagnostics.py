@@ -98,6 +98,42 @@ def test_collector_redaction_and_containment(
     assert 'saved-secret' not in json.dumps(report)
 
 
+def test_collector_reports_actual_progress(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Progress follows completed stages, including optional checks.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.core import diagnostics
+
+    monkeypatch.setattr(diagnostics.auth, 'load_async_tasks', lambda: dict())
+    monkeypatch.setattr(diagnostics, '_queues', lambda *args: dict())
+    monkeypatch.setattr(diagnostics, '_database', lambda *args: dict())
+    monkeypatch.setattr(diagnostics.apero_async, 'get_db_params',
+                        lambda profile: dict())
+    events = []
+    profile = dict(paths=dict())
+    diagnostics.collect(profile, 'SPIROU', 'mini', tmp_path,
+                        include_logs=True, progress=lambda *event: (
+                            events.append(event)))
+    assert events[0] == ('runtime', 0, 10)
+    assert [event[0] for event in events] == [
+        'runtime', 'queues', 'paths', 'cache', 'manifests', 'tasks',
+        'database', 'log_tails', 'product_paths', 'finalize', 'complete']
+    assert [event[1] for event in events] == list(range(11))
+    assert all(event[2] == 10 for event in events)
+    events.clear()
+    diagnostics.collect(profile, 'SPIROU', 'mini', tmp_path,
+                        include_database=False, progress=lambda *event: (
+                            events.append(event)))
+    assert events[-1] == ('complete', 8, 8)
+    assert 'database' not in [event[0] for event in events]
+    assert 'log_tails' not in [event[0] for event in events]
+
+
 def test_diagnostic_api_scope_and_permission_changes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -291,6 +327,133 @@ def test_diagnostics_guide_anchors() -> None:
     assert meta['card_label'] == 'Diagnostics'
     for anchor in ('profiles', 'access-grants', 'report-options'):
         assert f'id="{anchor}"' in html
+
+
+def test_admin_stream_reports_progress_and_enforces_scope(
+    app: object, client: object, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stream real stage updates only for authorized profile reports.
+
+    :param app: Isolated ARI application fixture.
+    :param client: Flask test client.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.application import diagnostics_api_helpers as api
+
+    user = dict(username='diagnostic-test', groups=['super_admin'])
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    monkeypatch.setattr(api.audit_log, 'record', lambda *args, **kwargs: None)
+
+    def collect(*args: object, **kwargs: object) -> dict:
+        """Produce staged test output for the streaming endpoint.
+
+        :param args: Collector positional arguments.
+        :param kwargs: Collector options and callback.
+        :return: Synthetic redacted report.
+        """
+        callback = kwargs['progress']
+        callback('runtime', 0, 1)
+        callback('complete', 1, 1)
+        return dict(filters=dict(), profile_id='mini')
+
+    monkeypatch.setattr(api.diagnostics, 'collect', collect)
+    path = '/api/admin/diagnostics/stream?instrument=SPIROU&profile_id='
+    response = client.get(path + 'mini')
+    assert response.status_code == 200
+    assert response.mimetype == 'application/x-ndjson'
+    assert response.headers['Cache-Control'] == 'no-store'
+    events = [json.loads(line) for line in response.data.splitlines()]
+    assert [event['type'] for event in events] == [
+        'progress', 'progress', 'report']
+    assert events[-1]['report']['success']
+    assert client.get(path + 'private').status_code == 403
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: None)
+    assert client.get(path + 'mini').status_code == 403
+
+
+def test_admin_stream_sends_progress_before_collection_finishes(
+    app: object, client: object, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The HTTP response emits progress while the collector is still busy.
+
+    :param app: Isolated ARI application fixture.
+    :param client: Flask test client.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import threading
+    from apero_ri.application import diagnostics_api_helpers as api
+
+    user = dict(username='diagnostic-test', groups=['super_admin'])
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    monkeypatch.setattr(api.audit_log, 'record', lambda *args, **kwargs: None)
+    release = threading.Event()
+
+    def collect(*args: object, **kwargs: object) -> dict:
+        """Wait after sending progress to prove it is streamed immediately.
+
+        :param args: Collector positional arguments.
+        :param kwargs: Collector options and callback.
+        :return: Synthetic redacted report.
+        """
+        kwargs['progress']('queues', 1, 2)
+        if not release.wait(5):
+            raise RuntimeError('test_timeout')
+        return dict(filters=dict(), profile_id='mini')
+
+    monkeypatch.setattr(api.diagnostics, 'collect', collect)
+    path = '/api/admin/diagnostics/stream?instrument=SPIROU&profile_id=mini'
+    response = client.get(path, buffered=False)
+    try:
+        iterator = iter(response.response)
+        event = json.loads(next(iterator))
+        assert event['stage'] == 'queues'
+        assert event['completed'] == 1 and event['total'] == 2
+        release.set()
+        assert json.loads(next(iterator))['type'] == 'report'
+    finally:
+        release.set()
+        response.close()
+
+
+def test_admin_stream_handles_collection_failure(
+    app: object, client: object, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Collection failures end the stream without returning a report.
+
+    :param app: Isolated ARI application fixture.
+    :param client: Flask test client.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.application import diagnostics_api_helpers as api
+
+    user = dict(username='diagnostic-test', groups=['super_admin'])
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+
+    def collect(*args: object, **kwargs: object) -> dict:
+        """Fail after reporting the current stage.
+
+        :param args: Collector positional arguments.
+        :param kwargs: Collector options and callback.
+        :return: This function always raises.
+        """
+        kwargs['progress']('queues', 1, 8)
+        raise RuntimeError('private-test-error')
+
+    monkeypatch.setattr(api.diagnostics, 'collect', collect)
+    path = '/api/admin/diagnostics/stream?instrument=SPIROU&profile_id=mini'
+    response = client.get(path)
+    events = [json.loads(line) for line in response.data.splitlines()]
+    assert [event['type'] for event in events] == ['progress', 'error']
+    assert b'private-test-error' not in response.data
 
 
 def test_product_fits_metadata_and_finite_json(tmp_path: Path) -> None:

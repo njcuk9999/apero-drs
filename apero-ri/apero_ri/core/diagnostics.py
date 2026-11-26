@@ -5,7 +5,7 @@
 import hashlib
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from aperocore.core import diagnostics as common
 from apero_ri.base import base
@@ -209,7 +209,8 @@ def _manifests(profile: dict, instrument: str, name: str) -> dict:
 
 def collect(profile: dict, instrument: str, profile_id: str,
             data_root: Path, objname: str = '', pid: str = '',
-            include_logs: bool = False, include_database: bool = True
+            include_logs: bool = False, include_database: bool = True,
+            progress: Callable[[str, int, int], None] | None = None
             ) -> dict[str, Any]:
     """Collect one profile's read-only report without refreshing its caches.
 
@@ -221,17 +222,32 @@ def collect(profile: dict, instrument: str, profile_id: str,
     :param pid: Optional exact LogDatabase PID filter.
     :param include_logs: Include bounded log tails selected from DB metadata.
     :param include_database: Enable live bounded read-only database queries.
+    :param progress: Optional callback receiving stage, completed and total.
     :return: Redacted report with independently collected evidence sections.
     """
     if objname and not OBJECT.fullmatch(objname):
         raise ValueError('invalid_object_name')
     if len(pid) > 160:
         raise ValueError('invalid_pid')
+    total = 8 + int(include_database) + int(include_logs)
+    completed = 0
+
+    def notify(stage: str) -> None:
+        """Publish the current stage and completed check count.
+
+        :param stage: Stable collector stage identifier.
+        :return: None.
+        """
+        if progress is not None:
+            progress(stage, completed, total)
+
+    notify('runtime')
     cache = data_root / 'tasks' / instrument / profile_id
     report = dict(schema_version=1, runtime=common.runtime(),
                   instrument=instrument, profile_id=profile_id,
                   filters=dict(objname=objname, pid=pid),
                   configuration=profile, sections=dict())
+    completed += 1
     sections = report['sections']
     checks = dict(queues=lambda: _queues(instrument, profile_id),
         paths=lambda: {
@@ -246,11 +262,14 @@ def collect(profile: dict, instrument: str, profile_id: str,
     if include_database:
         checks['database'] = lambda: _database(profile, objname, pid)
     for name, check in checks.items():
+        notify(name)
         try:
             sections[name] = check()
         except Exception as error:
             sections[name] = dict(error=str(error))
+        completed += 1
     if include_logs:
+        notify('log_tails')
         path = profile.get('paths', {}).get('PATH_LOG')
         rows = sections.get('database', {}).get('recipe_logs', [])
         if path:
@@ -259,8 +278,12 @@ def collect(profile: dict, instrument: str, profile_id: str,
                                          for row in rows if row.get('LOGFILE')))
             sections['log_tails'] = [common.log_tail(Path(name), logroot)
                                      for name in selected[:3]]
+        completed = completed + 1
+    notify('product_paths')
     products = sections.get('database', {}).get('product_examples', [])
     sections['product_paths'] = _products(profile, products)
+    completed = completed + 1
+    notify('finalize')
     report['limits'] = dict(file_bytes=common.FILE_LIMIT, rows=100,
                             log_files=3, log_tail_bytes=65536,
                             manifest_checks=5, recursive_scan=False)
@@ -271,7 +294,10 @@ def collect(profile: dict, instrument: str, profile_id: str,
             secrets.extend(common.secret_values(resolved))
         except Exception:
             pass
-    return common.redact(report, secrets)
+    result = common.redact(report, secrets)
+    completed += 1
+    notify('complete')
+    return result
 
 
 def _products(profile: dict, rows: list[dict]) -> dict:
