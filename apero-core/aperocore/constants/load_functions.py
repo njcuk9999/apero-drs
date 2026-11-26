@@ -339,7 +339,8 @@ def load_from_yaml(files: List[str], params: ParamDict = None,
         if yaml_dict is None:
             continue
         # flatten the dictionary
-        flat_dict = _to_flat_dict(yaml_dict)
+        leaf_keys = _dictionary_const_paths(params.instances)
+        flat_dict = _to_flat_dict(yaml_dict, leaf_keys=leaf_keys)
         # load all parameter instances into params
         instances = params.instances
         # for sources we copy the structure of yaml_dict but update to
@@ -537,7 +538,8 @@ def validate_yaml_config(config_list: List[Union[ConstDict, KeywordDict]],
             aborted = True
 
     yaml_dict = base.load_yaml(yaml_file)
-    flat_dict = _to_flat_dict(yaml_dict)
+    leaf_keys = _dictionary_const_paths(base_params.instances)
+    flat_dict = _to_flat_dict(yaml_dict, leaf_keys=leaf_keys)
     issues = _validate_flat_yaml_values(flat_dict, base_params.instances,
                                         source=os.path.basename(yaml_file))
 
@@ -1747,12 +1749,27 @@ def _get_file_names(params: ParamDict,
     return config_files
 
 
+def _dictionary_const_paths(instances: Dict[str, Any],
+                            parent_key: str = '') -> set[str]:
+    """Return paths for constants whose dictionary values are leaves."""
+    leaf_keys = set()
+    for key, instance in instances.items():
+        full_key = f"{parent_key}.{key}" if parent_key else key
+        if isinstance(instance, Const) and instance.dtype is dict:
+            leaf_keys.add(full_key)
+        elif isinstance(instance, dict):
+            leaf_keys.update(_dictionary_const_paths(instance, full_key))
+    return leaf_keys
+
+
 def _to_flat_dict(nested_dict: Dict[str, Any],
-                  parent_key: str = '') -> Dict[str, Any]:
+                  parent_key: str = '',
+                  leaf_keys: Optional[set[str]] = None) -> Dict[str, Any]:
     """Flatten nested mappings into dot-separated keys.
 
     :param nested_dict: mapping to flatten recursively
     :param parent_key: prefix accumulated from parent mappings
+    :param leaf_keys: constant paths whose mappings should stay intact
     :return: flat mapping from dotted key paths to leaf values
     """
 
@@ -1761,9 +1778,10 @@ def _to_flat_dict(nested_dict: Dict[str, Any],
         # get the full key
         full_key = f"{parent_key}.{key}" if parent_key else key
         # Check if the value is a dictionary
-        if isinstance(value, dict):
+        if isinstance(value, dict) and (
+            leaf_keys is None or full_key not in leaf_keys):
             # Recurse into sub-dictionary
-            flat_dict.update(_to_flat_dict(value, full_key))
+            flat_dict.update(_to_flat_dict(value, full_key, leaf_keys))
         else:
             # Add the key-value pair to the flat dictionary
             flat_dict[full_key] = value
