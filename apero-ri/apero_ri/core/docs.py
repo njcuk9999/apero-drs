@@ -16,15 +16,18 @@ Version applies globally to all doc pages (like ReadTheDocs).
 # =============================================================================
 # Imports
 # =============================================================================
+import hashlib
+import json
+import logging
 import os
 import posixpath
 import re
 import threading
 import time
 from html import unescape
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlsplit, urlunsplit
 
 import markdown
@@ -87,6 +90,22 @@ _DOC_SEARCH_CACHE: dict = dict()
 # markdown -> HTML conversion (codehilite/toc/mermaid regex pass) only
 # re-runs when the page content actually changes, not on every request.
 _DOC_RENDER_CACHE: dict = dict()
+
+# Prebuilt per-version snapshots (rendered pages, children, search index)
+# persisted under <data_dir>/docs_cache so requests never build docs.
+_SNAPSHOT_SCHEMA = 1
+_SNAPSHOT_DIR_NAME = 'docs_cache'
+_SNAPSHOT_RELOAD_CHECK_S = 5.0
+_SNAPSHOT_LOCK = threading.Lock()
+_SNAPSHOT_REFRESH_LOCK = threading.Lock()
+_SNAPSHOT_STATE: Dict[str, Any] = dict(dir=None, thread=None)
+_SNAPSHOTS: Dict[str, dict] = dict()
+_SNAPSHOT_CHECKED: Dict[str, float] = dict()
+_SNAPSHOT_FILE_MTIME: Dict[str, int] = dict()
+_SNAPSHOT_PENDING = threading.Event()
+# Builder thread sets ``bypass`` so it renders from source, not itself.
+_SNAPSHOT_LOCAL = threading.local()
+LOGGER = logging.getLogger(__NAME__)
 
 
 def _cache_get(cache: Dict[Any, Any], key: Any) -> Any:
@@ -234,6 +253,9 @@ def _get_doc_children(
         return []
 
     rel_dir = normalize_doc_ref(rel_doc_dir)
+    snapshot = _active_snapshot(version)
+    if snapshot is not None and rel_dir in snapshot['children']:
+        return _clone_list_of_dict(snapshot['children'][rel_dir])
     version_key = str(version or '')
     cache_key = (version_key, rel_dir)
     scan_dirs = [
@@ -347,7 +369,11 @@ def get_doc_sidebar_tree(
 
     current_ref = normalize_doc_ref(doc_ref)
     version_key = str(version or '')
-    cache_key = (version_key, current_ref)
+    # A swapped-in snapshot changes the children without bumping the
+    # generation counter, so key the tree on its fingerprint too.
+    snapshot = _active_snapshot(version)
+    snap_fp = snapshot['fingerprint'] if snapshot is not None else ''
+    cache_key = (version_key, current_ref, snap_fp)
     # Reuse the cached tree as long as no directory it was built from
     # has changed (tracked via _DOC_CHILDREN_GENERATION), rather than a
     # blind TTL that still re-walks all 190+ files every 30s.
@@ -443,6 +469,10 @@ def get_search_index(version: Optional[str] = None) -> List[dict]:
         version = get_default_version()
     if not version:
         return []
+
+    snapshot = _active_snapshot(version)
+    if snapshot is not None:
+        return _clone_list_of_dict(snapshot['search_index'])
 
     tree = get_doc_sidebar_tree('home/docs', version)
     version_key = str(version)
@@ -543,6 +573,8 @@ def _resolve_markdown_path(
 
 def doc_exists(doc_ref: str, version: Optional[str] = None) -> bool:
     """Return True when documentation markdown exists for this ref."""
+    if _snapshot_page(doc_ref, version) is not None:
+        return True
     md_file, _ = _resolve_markdown_path(doc_ref, version)
     return md_file is not None
 
@@ -924,6 +956,10 @@ def get_doc_content(
         return "", "<p>No documentation versions configured.</p>", None, {}
 
     rel_doc_path = normalize_doc_ref(doc_ref)
+    page = _snapshot_page(rel_doc_path, version)
+    if page is not None:
+        return page['raw'], page['html'], page['version'], dict(page['meta'])
+
     md_file, version = _resolve_markdown_path(rel_doc_path, version)
     if md_file is None:
         return (
@@ -937,14 +973,8 @@ def get_doc_content(
     # expensive part of serving a page; skip it whenever the file's
     # mtime matches the last render, instead of redoing it on every
     # click as before.
-    mtime_ns = md_file.stat().st_mtime_ns
+    mtime_ns = _content_mtime(md_file, version)
     is_glossary = rel_doc_path == GLOSSARY_DOC_REF
-    # Every page's cached HTML may include glossary tooltip spans, so
-    # editing glossary.yaml must bust every page's cache, not just the
-    # glossary page's own.
-    glossary_path = _resolve_glossary_path(version)
-    if glossary_path is not None:
-        mtime_ns = max(mtime_ns, glossary_path.stat().st_mtime_ns)
 
     cache_key = (str(version or ''), rel_doc_path)
     with _DOC_CACHE_LOCK:
@@ -1034,10 +1064,14 @@ def build_related_topics(meta: dict, version: Optional[str]) -> List[dict]:
             if normalized != 'home/docs' else ''
         )
         if not label:
-            md_file, _ = _resolve_markdown_path(ref, version)
-            target_meta = (
-                _card_meta_from_markdown(md_file) if md_file else {}
-            )
+            target_page = _snapshot_page(ref, version)
+            if target_page is not None:
+                target_meta = target_page['meta']
+            else:
+                md_file, _ = _resolve_markdown_path(ref, version)
+                target_meta = (
+                    _card_meta_from_markdown(md_file) if md_file else {}
+                )
             fallback_name = short_ref.split('/')[-1] if short_ref else 'home'
             label = str(
                 target_meta.get('card_label')
@@ -1146,6 +1180,9 @@ def save_doc_content(doc_ref: str, version: str, content: str) -> None:
         md_file = ver_dir / f'{rel_doc_path}.md'
     md_file.parent.mkdir(parents=True, exist_ok=True)
     md_file.write_text(content, encoding='utf-8')
+    # The edited page is served live (mtime mismatch) until the
+    # background rebuild also refreshes sidebars and the search index.
+    request_snapshot_refresh()
 
 
 def save_uploaded_image(page_ref: str, filename: str, data: bytes) -> str:
@@ -1180,6 +1217,357 @@ def ensure_doc_dir(page_ref: str) -> None:
     """
     page_dir = DOC_ROOT / page_ref
     page_dir.mkdir(parents=True, exist_ok=True)
+
+
+# =============================================================================
+# Prebuilt documentation snapshots
+# =============================================================================
+def _content_mtime(md_file: Path, version: Optional[str]) -> int:
+    """Return the render-relevant mtime of a page.
+
+    Every page's HTML may include glossary tooltip spans, so editing
+    ``glossary.yaml`` must invalidate every page, not just the glossary.
+
+    :param md_file: Path, markdown source of the page
+    :param version: str or None, documentation version
+
+    :return: int, the newest mtime (ns) of the page and the glossary
+    """
+    mtime_ns = md_file.stat().st_mtime_ns
+    glossary_path = _resolve_glossary_path(version)
+    if glossary_path is not None:
+        mtime_ns = max(mtime_ns, glossary_path.stat().st_mtime_ns)
+    return mtime_ns
+
+
+def set_snapshot_dir(data_dir: Union[str, Path]) -> Path:
+    """Set where prebuilt snapshots are persisted.
+
+    :param data_dir: str or Path, the ARI data directory (e.g. ``~/.ari``)
+
+    :return: Path, the snapshot directory (``<data_dir>/docs_cache``)
+    """
+    path = Path(data_dir).expanduser() / _SNAPSHOT_DIR_NAME
+    with _SNAPSHOT_LOCK:
+        _SNAPSHOT_STATE['dir'] = path
+    return path
+
+
+def _snapshot_path(version: str) -> Optional[Path]:
+    """Return the on-disk snapshot file for a version, if configured."""
+    base_dir = _SNAPSHOT_STATE.get('dir')
+    if base_dir is None:
+        return None
+    safe = re.sub(r'[^\w.\-]', '_', str(version))
+    return Path(base_dir) / '{0}.json'.format(safe)
+
+
+def _install_snapshot(snapshot: dict, file_mtime: Optional[int]) -> None:
+    """Make a snapshot the one served to requests for its version."""
+    version = str(snapshot['version'])
+    with _SNAPSHOT_LOCK:
+        _SNAPSHOTS[version] = snapshot
+        if file_mtime is not None:
+            _SNAPSHOT_FILE_MTIME[version] = file_mtime
+
+
+def load_snapshot(version: str) -> Optional[dict]:
+    """Load (and install) a persisted snapshot for one version.
+
+    :param version: str, documentation version id
+
+    :return: dict snapshot, or None if missing, unreadable, or written
+        by an incompatible schema
+    """
+    path = _snapshot_path(version)
+    if path is None or not path.is_file():
+        return None
+    try:
+        file_mtime = path.stat().st_mtime_ns
+        with open(path, 'r', encoding='utf-8') as fio:
+            snapshot = json.load(fio)
+    except (OSError, ValueError) as exc:
+        LOGGER.warning('Ignoring unreadable docs snapshot %s: %s',
+                       path, exc)
+        return None
+    if not isinstance(snapshot, dict):
+        return None
+    if snapshot.get('schema') != _SNAPSHOT_SCHEMA:
+        return None
+    if str(snapshot.get('version')) != str(version):
+        return None
+    _install_snapshot(snapshot, file_mtime)
+    return snapshot
+
+
+def _active_snapshot(version: Optional[str]) -> Optional[dict]:
+    """Return the in-memory snapshot to serve for a version.
+
+    At most every few seconds the persisted file is stat'ed so a
+    snapshot rebuilt by another process (or a standalone task run) is
+    picked up without restarting the server.
+
+    :param version: str or None, documentation version id
+
+    :return: dict snapshot, or None when none is available (callers
+        then fall back to building from source)
+    """
+    if not version or getattr(_SNAPSHOT_LOCAL, 'bypass', False):
+        return None
+    key = str(version)
+    now = time.monotonic()
+    with _SNAPSHOT_LOCK:
+        snapshot = _SNAPSHOTS.get(key)
+        last_check = _SNAPSHOT_CHECKED.get(key, 0.0)
+        due = now - last_check >= _SNAPSHOT_RELOAD_CHECK_S
+        if due:
+            _SNAPSHOT_CHECKED[key] = now
+    if not due:
+        return snapshot
+    path = _snapshot_path(key)
+    try:
+        file_mtime = path.stat().st_mtime_ns if path is not None else None
+    except OSError:
+        file_mtime = None
+    known_mtime = _SNAPSHOT_FILE_MTIME.get(key)
+    if file_mtime is not None and file_mtime != known_mtime:
+        loaded = load_snapshot(key)
+        if loaded is not None:
+            snapshot = loaded
+    return snapshot
+
+
+def _snapshot_page(doc_ref: str, version: Optional[str]) -> Optional[dict]:
+    """Return a prebuilt page if its source has not changed since.
+
+    The single stat keeps edits (in the ARI editor or on disk) visible
+    immediately; a stale page falls back to the live render.
+
+    :param doc_ref: str, doc ref (any accepted form)
+    :param version: str or None, documentation version id
+
+    :return: dict page entry, or None when not prebuilt or stale
+    """
+    if not version:
+        version = get_default_version()
+    snapshot = _active_snapshot(version)
+    if snapshot is None:
+        return None
+    page = snapshot['pages'].get(normalize_doc_ref(doc_ref))
+    if page is None:
+        return None
+    try:
+        mtime_ns = _content_mtime(Path(page['path']), page['version'])
+    except OSError:
+        return None
+    if mtime_ns != page['mtime']:
+        return None
+    return page
+
+
+def compute_fingerprint(version: str) -> str:
+    """Fingerprint every source a version's snapshot is built from.
+
+    Covers all files under ``all/`` and ``{version}/``, ``versions.yaml``
+    and this renderer module, using (path, mtime, size) only, so it is
+    cheap enough to run on a schedule.
+
+    :param version: str, documentation version id
+
+    :return: str, hex digest
+    """
+    digest = hashlib.sha1()
+    digest.update('schema={0}\n'.format(_SNAPSHOT_SCHEMA).encode())
+    sources = [VERSIONS_FILE, Path(__file__)]
+    for root in (DOC_ROOT / 'all', DOC_ROOT / version):
+        for dirpath, dirnames, filenames in os.walk(root):
+            # Sort in place so os.walk visits directories deterministically.
+            dirnames[:] = sorted(
+                name for name in dirnames if not name.startswith('.'))
+            for name in sorted(filenames):
+                if not name.startswith('.'):
+                    sources.append(Path(dirpath) / name)
+    for path in sources:
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        line = '{0}|{1}|{2}\n'.format(path, stat.st_mtime_ns, stat.st_size)
+        digest.update(line.encode('utf-8'))
+    return digest.hexdigest()
+
+
+def build_snapshot(version: str) -> dict:
+    """Render every page, child listing and the search index for a version.
+
+    Runs entirely from source (the active snapshot is bypassed for the
+    calling thread), so it is safe to call while requests are being
+    served from the previous snapshot.
+
+    :param version: str, documentation version id
+
+    :return: dict snapshot ready for ``_install_snapshot``
+    """
+    _SNAPSHOT_LOCAL.bypass = True
+    try:
+        fingerprint = compute_fingerprint(version)
+        tree = get_doc_sidebar_tree('home/docs', version)
+        root_children = _get_doc_children('home/docs', version)
+        children = {'home/docs': root_children}
+        refs = ['home/docs']
+        for item in tree:
+            ref = normalize_doc_ref(item.get('rel_path') or '')
+            refs.append(ref)
+            if item.get('kind') == 'dir':
+                children[ref] = _get_doc_children(ref, version)
+        pages = dict()
+        for ref in refs:
+            md_file, page_version = _resolve_markdown_path(ref, version)
+            if md_file is None or ref in pages:
+                continue
+            raw, html, _, meta = get_doc_content(ref, version)
+            pages[ref] = dict(
+                path=str(md_file),
+                version=page_version,
+                mtime=_content_mtime(md_file, page_version),
+                raw=raw,
+                html=html,
+                meta=meta,
+            )
+        search_index = get_search_index(version)
+    finally:
+        _SNAPSHOT_LOCAL.bypass = False
+    snapshot = dict(
+        schema=_SNAPSHOT_SCHEMA,
+        version=version,
+        fingerprint=fingerprint,
+        built_at=datetime.now(timezone.utc).isoformat(),
+        pages=pages,
+        children=children,
+        search_index=search_index,
+    )
+    # Round-trip through JSON so served and persisted copies match
+    # (e.g. YAML dates in front matter become strings either way).
+    return json.loads(json.dumps(snapshot, default=str))
+
+
+def _write_snapshot(snapshot: dict) -> Optional[int]:
+    """Persist a snapshot atomically.
+
+    :param snapshot: dict, snapshot from ``build_snapshot``
+
+    :return: int or None, mtime of the snapshot file now on disk (the
+        old one if writing failed, so it is not re-loaded over the new
+        in-memory snapshot), or None when there is no file
+    """
+    path = _snapshot_path(snapshot['version'])
+    if path is None:
+        return None
+    tmp_path = path.with_name(path.name + '.tmp')
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(tmp_path, 'w', encoding='utf-8') as fio:
+            json.dump(snapshot, fio)
+        os.replace(tmp_path, path)
+    except OSError as exc:
+        LOGGER.warning('Could not persist docs snapshot %s: %s', path, exc)
+    try:
+        return path.stat().st_mtime_ns
+    except OSError:
+        return None
+
+
+def refresh_snapshots(force: bool = False,
+                      logger: Any = None) -> Dict[str, str]:
+    """Rebuild any version snapshot whose sources changed.
+
+    :param force: bool, rebuild even when the fingerprint matches
+    :param logger: callable or None, receives one progress line per
+        version
+
+    :return: dict mapping version id to a short status string
+    """
+    statuses = dict()
+    # Serialise builds: the startup thread, the async task and editor
+    # saves may all ask for a refresh at once.
+    with _SNAPSHOT_REFRESH_LOCK:
+        for item in get_versions():
+            version = str(item.get('id') or '')
+            if not version:
+                continue
+            current = _SNAPSHOTS.get(version) or load_snapshot(version)
+            fingerprint = compute_fingerprint(version)
+            if (not force and current is not None
+                    and current.get('fingerprint') == fingerprint):
+                statuses[version] = 'up to date'
+            else:
+                start = time.monotonic()
+                snapshot = build_snapshot(version)
+                file_mtime = _write_snapshot(snapshot)
+                _install_snapshot(snapshot, file_mtime)
+                statuses[version] = 'rebuilt {0} pages in {1:.1f}s'.format(
+                    len(snapshot['pages']), time.monotonic() - start)
+            if callable(logger):
+                logger('docs {0}: {1}'.format(version, statuses[version]))
+    return statuses
+
+
+def _snapshot_worker() -> None:
+    """Run refreshes until no further refresh has been requested."""
+    while _SNAPSHOT_PENDING.is_set():
+        _SNAPSHOT_PENDING.clear()
+        try:
+            refresh_snapshots()
+        except Exception:  # noqa: BLE001
+            LOGGER.exception('Documentation snapshot refresh failed')
+
+
+def request_snapshot_refresh() -> None:
+    """Refresh snapshots in a daemon thread without blocking the caller."""
+    _SNAPSHOT_PENDING.set()
+    with _SNAPSHOT_LOCK:
+        worker = _SNAPSHOT_STATE.get('thread')
+        if worker is not None and worker.is_alive():
+            return
+        worker = threading.Thread(target=_snapshot_worker,
+                                  name='ari-docs-snapshot', daemon=True)
+        _SNAPSHOT_STATE['thread'] = worker
+    worker.start()
+
+
+def start_snapshot_service(data_dir: Union[str, Path]) -> None:
+    """Load persisted snapshots and rebuild stale ones in the background.
+
+    :param data_dir: str or Path, the ARI data directory
+
+    :return: None
+    """
+    set_snapshot_dir(data_dir)
+    request_snapshot_refresh()
+
+
+def get_search_index_json(version: Optional[str] = None) -> Tuple[str, str]:
+    """Return the search index as serialised JSON plus an ETag.
+
+    With a snapshot the serialisation is done once per snapshot, so the
+    (large) index is served without re-encoding on every request.
+
+    :param version: str or None, documentation version id
+
+    :return: tuple, 1. JSON text ``{"items": [...]}``, 2. ETag string
+    """
+    if not version:
+        version = get_default_version()
+    snapshot = _active_snapshot(version)
+    if snapshot is not None:
+        cached = snapshot.get('_search_json')
+        if cached is None:
+            text = json.dumps(dict(items=snapshot['search_index']))
+            cached = (text, snapshot['fingerprint'][:20])
+            snapshot['_search_json'] = cached
+        return cached
+    text = json.dumps(dict(items=get_search_index(version)))
+    return text, hashlib.sha1(text.encode('utf-8')).hexdigest()[:20]
 
 
 # =============================================================================

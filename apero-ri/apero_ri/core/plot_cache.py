@@ -88,7 +88,9 @@ def load_cache_config(data_dir: Optional[Path] = None) -> Dict[str, Any]:
     # Cache miss — read from disk outside the lock.
     path = _config_path(data_dir)
     defaults: Dict[str, Any] = {
-        "enabled": False,
+        # On by default: first object views are slow (FITS reads), so
+        # every later view should come from cache.
+        "enabled": True,
         "cache_dir": "",  # empty → use default (<data_dir>/cache)
     }
     if path.exists():
@@ -484,6 +486,88 @@ def check_and_serve(
     out["_cache_cached_at"] = entry.get("cached_at", "")
     out["_served_from_cache"] = True
     return out
+
+
+# Plot groups the object page builds on first view; an object is "warm"
+# once each has been cached under the current database fingerprint.
+OBJECT_WARM_GROUPS = (
+    "target_info",
+    "spectrum",
+    "ccf_rv",
+    "ccf_profile",
+    "time_series",
+)
+
+
+def _warm_marker(
+    cache_root: Path, instrument: str, profile_id: str, objname: str,
+    group: str,
+) -> Path:
+    """Return the marker file recording one cached object plot group.
+
+    Markers live in the ``object_plots`` section so invalidating that
+    section also makes the object cold again.
+    """
+    sdir = _section_dir(cache_root, instrument, profile_id, "object_plots")
+    safe = _safe_filename(str(objname).lower())
+    return sdir / f"_warm__{safe}__{group}.flag"
+
+
+def mark_object_group_warm(
+    cache_root: Path, instrument: str, profile_id: str, objname: str,
+    group: str,
+) -> None:
+    """Record that an object's plot group is now cached.
+
+    :param cache_root: Path, resolved cache root
+    :param instrument: str, instrument name
+    :param profile_id: str, APERO profile id
+    :param objname: str, object name
+    :param group: str, object plot group (see ``OBJECT_WARM_GROUPS``)
+
+    :return: None
+    """
+    path = _warm_marker(cache_root, instrument, profile_id, objname, group)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch()
+
+
+def is_object_warm(
+    data_dir: Path,
+    instrument: str,
+    profile_id: str,
+    objname: str,
+    aparams: Optional[Dict[str, Any]],
+) -> bool:
+    """Return True when every first-view plot group of an object is cached.
+
+    Uses the same enabled/fingerprint rules as ``check_and_serve`` so a
+    warm object is one whose plots will actually be served from cache.
+
+    :param data_dir: Path, ARI data directory
+    :param instrument: str, instrument name
+    :param profile_id: str, APERO profile id
+    :param objname: str, object name
+    :param aparams: dict or None, profile data (``database-update``)
+
+    :return: bool, True if the object page will load from cache
+    """
+    cfg = load_cache_config(data_dir)
+    if not cfg.get("enabled"):
+        return False
+    current = (aparams or {}).get("database-update", {})
+    if not isinstance(current, dict) or not current:
+        return False
+    cache_root = resolve_cache_root(data_dir, cfg)
+    meta = _load_meta(_profile_dir(cache_root, instrument, profile_id))
+    if not _db_fingerprint_matches(meta, current):
+        return False
+    for group in OBJECT_WARM_GROUPS:
+        marker = _warm_marker(cache_root, instrument, profile_id, objname,
+                              group)
+        if not marker.exists():
+            return False
+    return True
 
 
 def generate_and_cache(

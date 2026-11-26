@@ -34,6 +34,9 @@ Created on 2026-04-23
 from __future__ import annotations
 
 import math
+import os
+import threading
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -464,11 +467,55 @@ def build_hr_plot_json(
 # ---------------------------------------------------------------
 NEIGHBOR_CACHE_TTL_DAYS = 90
 NEIGHBOR_PARALLAX_LIMIT_MAS = 50.0  # 1/0.020 arcsec  -> 20 pc
+# After a failed Vizier query, wait this long before trying again.
+NEIGHBOR_RETRY_S = 3600.0
+_NEIGHBOR_LOCK = threading.Lock()
+_NEIGHBOR_STATE: Dict[str, Any] = dict(thread=None, failed_at=0.0)
+
+
+def neighborhood_cache_path(data_dir: Any) -> str:
+    """Return the shared on-disk path of the 20-pc Gaia backdrop.
+
+    :param data_dir: str or Path, the ARI data directory
+
+    :return: str, path of ``neighborhood.json``
+    """
+    return os.path.join(str(data_dir), 'cache', '_shared', 'gaia_20pc',
+                        'neighborhood.json')
+
+
+def _prefetch_worker(cache_path: str) -> None:
+    """Query Vizier once and record a failure to throttle retries."""
+    items = load_or_query_20pc_neighborhood(cache_path=cache_path)
+    if not items:
+        with _NEIGHBOR_LOCK:
+            _NEIGHBOR_STATE['failed_at'] = time.time()
+
+
+def prefetch_20pc_neighborhood(cache_path: str) -> None:
+    """Fill the 20-pc cache in a daemon thread (deduplicated, throttled).
+
+    :param cache_path: str, path from ``neighborhood_cache_path``
+
+    :return: None
+    """
+    with _NEIGHBOR_LOCK:
+        worker = _NEIGHBOR_STATE['thread']
+        if worker is not None and worker.is_alive():
+            return
+        if time.time() - _NEIGHBOR_STATE['failed_at'] < NEIGHBOR_RETRY_S:
+            return
+        worker = threading.Thread(target=_prefetch_worker,
+                                  args=(cache_path,),
+                                  name='ari-gaia-20pc', daemon=True)
+        _NEIGHBOR_STATE['thread'] = worker
+    worker.start()
 
 
 def load_or_query_20pc_neighborhood(
     cache_path: Optional[str] = None,
     timeout: int = 60,
+    allow_query: bool = True,
 ) -> List[Dict[str, float]]:
     """Return a list of dicts ``[{bp_rp, m_g}, ...]`` for Gaia
     stars within 20 pc, matching starometer's HR backdrop.
@@ -476,6 +523,10 @@ def load_or_query_20pc_neighborhood(
     Uses a JSON on-disk cache when ``cache_path`` is given;
     queries Vizier ("I/355/gaiadr3") if the cache is stale,
     missing, or in the legacy ``{teff, mg}`` schema.
+
+    With ``allow_query=False`` (request paths) a cache miss never
+    blocks on the network: the query is started in the background
+    and an empty list is returned for now.
 
     Returns an empty list (and never raises) on any failure.
     """
@@ -501,6 +552,11 @@ def load_or_query_20pc_neighborhood(
                                 if isinstance(d, dict)]
         except Exception:
             pass
+
+    if not allow_query:
+        if cache_path:
+            prefetch_20pc_neighborhood(cache_path)
+        return []
 
     # --- query Vizier (Gaia DR3 mirror, starometer-style) ---
     try:

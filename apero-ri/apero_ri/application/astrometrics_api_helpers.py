@@ -2545,18 +2545,14 @@ def api_astrometrics_hr(app: Any) -> _ApiResponse:
     from apero_ri.plots.plot_obj_targetinfo import (
         build_hr_plot_json,
         load_or_query_20pc_neighborhood,
+        neighborhood_cache_path,
     )
     # Use the same shared 20-pc Gaia backdrop cache the
-    # object-page uses, so both pages render identical HR.
-    try:
-        base_dir = Path(
-            app.args.data_dir or str(Path.home() / '.ari'))
-        nb_cache = (base_dir / 'cache' / '_shared'
-                    / 'gaia_20pc' / 'neighborhood.json')
-        neighborhood = load_or_query_20pc_neighborhood(
-            cache_path=str(nb_cache))
-    except Exception:  # noqa: BLE001
-        neighborhood = []
+    # object-page uses, so both pages render identical HR; a cache
+    # miss is filled in the background rather than blocking here.
+    base_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    neighborhood = load_or_query_20pc_neighborhood(
+        cache_path=neighborhood_cache_path(base_dir), allow_query=False)
     payload = build_hr_plot_json(entry, neighborhood=neighborhood)
     if payload.get('has_plot'):
         result = {
@@ -2574,7 +2570,8 @@ def api_astrometrics_hr(app: Any) -> _ApiResponse:
             'error': payload.get('message', ''),
         }
     result['apero_name'] = apero_name
-    if result.get('success'):
+    # Do not persist an HR diagram still missing its backdrop.
+    if result.get('success') and neighborhood:
         try:
             with cpath.open('w', encoding='utf-8') as fh:
                 _json.dump(result, fh)

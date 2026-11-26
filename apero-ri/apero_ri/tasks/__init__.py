@@ -157,6 +157,20 @@ MULTI_PROCESS['SEARCH_INDEXING'] = _entry['multi_process']
 LOCAL_TASK['SEARCH_INDEXING'] = _entry['local_task']
 FILTERS['SEARCH_INDEXING'] = _entry['filters']
 
+# DOCS_SNAPSHOT
+_entry = _register_task('DOCS_SNAPSHOT', 'docs_snapshot',
+                        'DocsSnapshotTask', 'GLOBAL')
+TASK_LIST['DOCS_SNAPSHOT'] = _entry['task_cls']
+P_LIST['DOCS_SNAPSHOT'] = _entry['param_list']
+AP_LIST['DOCS_SNAPSHOT'] = _entry['ap_list']
+FREQ['DOCS_SNAPSHOT'] = _entry['frequency']
+ENABLED['DOCS_SNAPSHOT'] = _entry['enabled']
+TYPE['DOCS_SNAPSHOT'] = _entry['task_type']
+USE_SUBPROCESS['DOCS_SNAPSHOT'] = _entry['use_subprocess']
+MULTI_PROCESS['DOCS_SNAPSHOT'] = _entry['multi_process']
+LOCAL_TASK['DOCS_SNAPSHOT'] = _entry['local_task']
+FILTERS['DOCS_SNAPSHOT'] = _entry['filters']
+
 # APERO_SYNC_ASSETS
 _entry = _register_task(
     "APERO_SYNC_ASSETS",

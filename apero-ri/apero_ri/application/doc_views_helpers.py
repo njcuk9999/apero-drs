@@ -8,6 +8,7 @@ from apero_ri.core.permissions import (
     resolve_user_permissions,
 )
 from flask import (
+    Response,
     flash,
     jsonify,
     redirect,
@@ -291,9 +292,9 @@ def doc_edit_view(app: Any, page_ref: str) -> Any:
 def doc_search_index_view(app: Any) -> Any:
     """Serve the client-side search index as JSON for one doc version.
 
-    Backed by the same cached sidebar-tree walk used for navigation
-    (see ``docs.get_search_index``), so repeated requests are cheap
-    and the autocomplete box never re-reads the doc tree from disk.
+    Served pre-serialised from the prebuilt docs snapshot (see
+    ``docs.get_search_index_json``) with an ETag, so browsers revalidate
+    the large index cheaply instead of re-downloading it.
     """
     user_info = auth.get_effective_user(session)
     if user_info:
@@ -305,5 +306,8 @@ def doc_search_index_view(app: Any) -> Any:
         return jsonify(items=[]), 403
 
     version = request.args.get('v') or docs.get_default_version()
-    items = docs.get_search_index(version)
-    return jsonify(items=items)
+    text, etag = docs.get_search_index_json(version)
+    response = Response(text, mimetype='application/json')
+    response.set_etag(etag)
+    response.headers['Cache-Control'] = 'private, max-age=300'
+    return response.make_conditional(request)

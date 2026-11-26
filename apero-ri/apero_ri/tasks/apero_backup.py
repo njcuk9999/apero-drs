@@ -35,6 +35,8 @@ DEFAULT_EXCLUDE_DIRS = (
     "downloads",
     "secret",
     "apero-assets",
+    # Prebuilt documentation, regenerated from the repository
+    "docs_cache",
 )
 # Specific secret-bearing config files that should not be archived.
 DEFAULT_EXCLUDE_PATHS = (

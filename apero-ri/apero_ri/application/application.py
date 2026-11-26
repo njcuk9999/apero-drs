@@ -713,6 +713,10 @@ class ARIApp(Flask):
         """Start the background worker that refreshes admin-health data."""
         return _impls.ariapp_start_admin_health_refresher(self)
 
+    def _start_cache_warmers(self) -> None:
+        """Prebuild docs and warm object-page dependencies in background."""
+        return _impls.ariapp_start_cache_warmers(self)
+
     def _admin_health_refresher_loop(self) -> None:
         """Run the recurring admin-health refresh worker."""
         return _impls.ariapp_admin_health_refresher_loop(self)

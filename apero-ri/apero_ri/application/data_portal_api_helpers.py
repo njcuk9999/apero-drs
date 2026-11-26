@@ -1518,6 +1518,11 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 objname,
                 plot_group,
             )
+            # Plots cached before warm markers existed count as warm too.
+            from apero_ri.core import plot_cache as _pc
+            _pc.mark_object_group_warm(_pc.resolve_cache_root(base_dir),
+                                       instrument, profile_id, objname,
+                                       plot_group)
             return jsonify(**cached)
 
     htable_rows = load_object_htable_rows(objects_dir, objname)
@@ -1618,6 +1623,8 @@ def api_object_plots(app: Any) -> _ApiResponse:
         return payload
 
     result = dict(success=True, plot_group=plot_group)
+    # False when a payload is incomplete and must be rebuilt next time
+    cacheable = True
 
     if plot_group in {"all", "spectrum"}:
         result["snr"] = _timed_build(
@@ -1686,15 +1693,15 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 str(astrom_dir), objname)
         except Exception:
             yaml_entry = None
-        # 20-pc Gaia neighborhood (cached)
-        try:
-            nb_cache = (
-                base_dir / "cache" / "_shared"
-                / "gaia_20pc" / "neighborhood.json")
+        # 20-pc Gaia backdrop: never wait on Vizier inside a request
+        neighborhood = []
+        if yaml_entry:
+            from apero_ri.plots import plot_obj_targetinfo as _pti
             neighborhood = load_or_query_20pc_neighborhood(
-                cache_path=str(nb_cache))
-        except Exception:
-            neighborhood = []
+                cache_path=_pti.neighborhood_cache_path(base_dir),
+                allow_query=False)
+            # Do not persist an HR diagram still missing its backdrop.
+            cacheable = bool(neighborhood)
         result["sed"] = _timed_build(
             "sed",
             lambda: build_sed_plot_json(yaml_entry),
@@ -1714,12 +1721,13 @@ def api_object_plots(app: Any) -> _ApiResponse:
             _save_meta,
             is_cache_enabled,
             load_cache_config,
+            mark_object_group_warm,
             put_cached,
             resolve_cache_root,
         )
 
         cfg = load_cache_config(base_dir)
-        if cfg.get("enabled"):
+        if cfg.get("enabled") and cacheable:
             cache_root = resolve_cache_root(base_dir, cfg)
             put_cached(
                 cache_root,
@@ -1729,6 +1737,9 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 cache_key,
                 result,
             )
+            # Lets the page view skip the first-view loading screen.
+            mark_object_group_warm(cache_root, instrument, profile_id,
+                                   objname, plot_group)
             pdir = _profile_dir(cache_root, instrument, profile_id)
             meta = _load_meta(pdir)
             db_upd = profile_data.get("database-update", {})

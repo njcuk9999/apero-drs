@@ -3,6 +3,9 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
+{% if object_first_view %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/object_first_load.css', v='20261126a') }}">
+{% endif %}
 <style>
 .op-cg-comment-card {
     border: 1px solid var(--ari-border, #ddd);
@@ -137,6 +140,34 @@
 </div>
 
 <div id="op-content">
+    {% if object_first_view %}
+    <div id="op-first-load" class="opfl-overlay" role="status"
+         aria-live="polite">
+        <div class="opfl-card">
+            <div class="opfl-orbit" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </div>
+            <h2 class="opfl-title">
+                {{ 'Loading previously unviewed object' | tl }}&hellip;
+            </h2>
+            <p class="opfl-object">{{ objname }}</p>
+            <div class="opfl-bar">
+                <div id="opfl-bar-fill" class="opfl-bar__fill"></div>
+            </div>
+            <div class="opfl-status">
+                <span id="opfl-step" class="opfl-step"></span>
+                <span id="opfl-count" class="opfl-count"></span>
+            </div>
+            <p class="opfl-hint">
+                {{ 'This only happens the first time an object is opened; afterwards it loads instantly.' | tl }}
+            </p>
+            <button id="opfl-skip" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary opfl-skip">
+                {{ 'Show the page now' | tl }}
+            </button>
+        </div>
+    </div>
+    {% endif %}
     <div id="op-loading" class="ot-loading-block">
         <i class="fa-solid fa-spinner fa-spin"></i> Loading object data&hellip;
     </div>
@@ -1125,6 +1156,7 @@ window.ARI_OBJECT_PAGE = {
     tessRotationDataApiUrl: '/api/data-portal/tess-rotation-data',
     tessRotationStreamUrl: '/api/data-portal/tess-rotation-stream',
     tessRotationCached: {{ (tess_rotation_cached | default(false)) | tojson }},
+    objectFirstView: {{ (object_first_view | default(false)) | tojson }},
     debugPlotsApiUrl: '/api/data-portal/debug-plots',
     tcorrMapGenerateApiUrl: '/api/data-portal/tcorr-map-generate',
     finderMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='finder') | tojson }},
@@ -1175,7 +1207,43 @@ window.ARI_BASKET_CFG = {
     window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20261007search') }}" defer></script>
+{% if object_first_view %}
+<script>
+/* Status phrases per real loading step (keys match object_page.js). */
+window.ARI_OBJECT_FIRST_LOAD = {
+    steps: {
+        data: [
+            {{ 'Reading the object table' | tl | tojson }},
+            {{ 'Counting observations' | tl | tojson }},
+            {{ 'Checking rejected files' | tl | tojson }}
+        ],
+        target_info: [
+            {{ 'Resolving astrometry' | tl | tojson }},
+            {{ 'Building the spectral energy distribution' | tl | tojson }},
+            {{ 'Placing the target on the HR diagram' | tl | tojson }}
+        ],
+        spectrum: [
+            {{ 'Reading extracted spectra' | tl | tojson }},
+            {{ 'Measuring SNR per night' | tl | tojson }},
+            {{ 'Computing barycentric corrections' | tl | tojson }}
+        ],
+        ccf_rv: [
+            {{ 'Collecting CCF radial velocities' | tl | tojson }},
+            {{ 'Plotting the RV time series' | tl | tojson }}
+        ],
+        ccf_profile: [
+            {{ 'Stacking CCF profiles' | tl | tojson }}
+        ],
+        time_series: [
+            {{ 'Assembling the nightly time series' | tl | tojson }},
+            {{ 'Tracking airmass' | tl | tojson }}
+        ]
+    }
+};
+</script>
+<script src="{{ url_for('static', filename='js/object_first_load.js', v='20261126a') }}" defer></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/object_page.js', v='20261126firstload') }}" defer></script>
 <script>
 /* Plot-type constants – generated from Python; consumed by file_browser.js */
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};

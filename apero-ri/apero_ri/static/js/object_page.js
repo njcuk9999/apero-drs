@@ -743,9 +743,22 @@
         });
     }
 
+    /** Tell the first-view loading screen (if shown) a step finished. */
+    function firstLoadStep(key) {
+        var loader = window.ARI_OBJECT_FIRST_LOADER;
+        if (loader) loader.done(key);
+    }
+
     function startBackgroundPlotPrefetch() {
         if (backgroundPrefetchStarted) return;
         backgroundPrefetchStarted = true;
+
+        // First view: build everything now, the loading screen is waiting.
+        if (cfg.objectFirstView) {
+            ['spectrum', 'ccf_rv', 'ccf_profile', 'time_series']
+                .forEach(function (group) { loadObjectPlots(group); });
+            return;
+        }
 
         var idleCb = window.requestIdleCallback || function (cb) {
             return window.setTimeout(cb, 1200);
@@ -870,6 +883,7 @@
     }
 
     function showError(msg) {
+        firstLoadStep('__abort__');
         loadingEl.style.display = 'none';
         errorEl.style.display = '';
         errorEl.textContent = msg || 'Failed to load object page data.';
@@ -3356,6 +3370,7 @@
         fetch(url + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                firstLoadStep(group);
                 if (!data || !data.success) {
                     if (activePlotKey) setPlotReloading(activePlotKey, false);
                     objectPlotsState[group] = 'idle';
@@ -3395,6 +3410,7 @@
                 objectPlotsState[group] = 'loaded';
             })
             .catch(function () {
+                firstLoadStep(group);
                 if (activePlotKey) setPlotReloading(activePlotKey, false);
                 objectPlotsState[group] = 'idle';
                 function markUnavailable(id) {
@@ -3435,6 +3451,7 @@
                 dynamicLabels = data.labels || {};
                 loadingEl.style.display = 'none';
                 errorEl.style.display = 'none';
+                firstLoadStep('data');
 
                 // Refresh basket counter badge
                 if (typeof window.ARI_BASKET_CFG !== 'undefined' && window.ARI_BASKET_CFG.summaryApiUrl) {

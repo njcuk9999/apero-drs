@@ -740,6 +740,7 @@ def ariapp_init(self: Any, **kwargs: Any) -> None:
     task_runner.start_background_services(
         self.args.data_dir or str(Path.home() / ".ari")
     )
+    self._start_cache_warmers()
     atexit.register(self.shutdown)
 
 
@@ -5217,6 +5218,52 @@ def ariapp_start_admin_health_refresher(self: Any) -> None:
         name="admin-health-digest",
     )
     digest_thread.start()
+
+
+def ariapp_start_cache_warmers(self: Any) -> None:
+    """Warm slow first-use caches off the request path at startup.
+
+    Loads/rebuilds the documentation snapshots and, in a second daemon
+    thread, pre-imports the heavy object-page modules and fetches the
+    shared 20-pc Gaia HR backdrop, so neither the first docs page nor
+    the first object page pays for them.
+
+    :param self: ARIApp instance
+
+    :return: None
+    """
+    data_dir = Path(self.args.data_dir or str(Path.home() / ".ari"))
+    docs.start_snapshot_service(data_dir)
+    thread = threading.Thread(
+        target=_warm_object_page_dependencies,
+        args=(self, data_dir),
+        daemon=True,
+        name="ari-object-warmup",
+    )
+    thread.start()
+
+
+def _warm_object_page_dependencies(app: Any, data_dir: Path) -> None:
+    """Import object-page modules and prefetch the 20-pc backdrop."""
+    import importlib
+
+    # Each costs up to a few seconds on first import.
+    modules = (
+        "apero.core.drs_rejection",
+        "apero.core.drs_astrometrics",
+        "apero_ri.components.target_info_sections",
+        "apero_ri.plots.plot_objects",
+    )
+    for module_name in modules:
+        try:
+            importlib.import_module(module_name)
+        except Exception as exc:  # noqa: BLE001
+            app.logger.warning("Object-page warmup could not import "
+                               "%s: %s", module_name, exc)
+    from apero_ri.plots import plot_obj_targetinfo
+
+    cache_path = plot_obj_targetinfo.neighborhood_cache_path(data_dir)
+    plot_obj_targetinfo.prefetch_20pc_neighborhood(cache_path)
 
 
 def ariapp_editable_groups_for_editor(

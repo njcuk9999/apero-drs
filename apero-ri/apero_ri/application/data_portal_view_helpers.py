@@ -266,6 +266,12 @@ def ri_object_page_view(
     except Exception:
         pass
 
+    # Cold objects get the first-view loading screen while plots build.
+    from apero_ri.core.plot_cache import is_object_warm
+    warm_args = [base_dir, profile['instrument'], profile_id, objname,
+                 profile.get('data') or {}]
+    object_first_view = not is_object_warm(*warm_args)
+
     # Build plot_yaxis_zoom: {div_id: [options]} for divs in static HTML,
     # plus {'lbl': [options]} for the dynamically created LBL vel-plot divs.
     plot_yaxis_zoom = dict()
@@ -289,6 +295,7 @@ def ri_object_page_view(
         'api_url': '/api/data-portal/object-page',
         'finder_chart_cached': finder_cached,
         'tess_rotation_cached': tess_cached,
+        'object_first_view': object_first_view,
         'sidebar_root': 'home.data_portal',
         'sidebar_label': 'Data Portal',
         'sidebar_icon': 'fa-solid fa-database',
@@ -1200,7 +1207,7 @@ def ri_object_plot_max_view(
     elif safe_key in {'sed', 'hr'}:
         from apero_ri.plots.plot_obj_targetinfo import (
             build_sed_plot_json, build_hr_plot_json,
-            load_or_query_20pc_neighborhood,
+            load_or_query_20pc_neighborhood, neighborhood_cache_path,
         )
         from apero.core import drs_astrometrics as _dra
         from pathlib import Path as _Path
@@ -1219,14 +1226,9 @@ def ri_object_plot_max_view(
             plot_payload = build_sed_plot_json(yaml_entry)
             display_name = 'Spectral Energy Distribution'
         else:
-            try:
-                nb_cache = (
-                    base_dir / 'cache' / '_shared'
-                    / 'gaia_20pc' / 'neighborhood.json')
-                neighborhood = load_or_query_20pc_neighborhood(
-                    cache_path=str(nb_cache))
-            except Exception:
-                neighborhood = []
+            neighborhood = load_or_query_20pc_neighborhood(
+                cache_path=neighborhood_cache_path(base_dir),
+                allow_query=False)
             plot_payload = build_hr_plot_json(
                 yaml_entry, neighborhood=neighborhood)
             display_name = 'HR Diagram'
