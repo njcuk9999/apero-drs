@@ -154,6 +154,14 @@ normal user API token; only its SHA-256 digest is stored, and the credential
 is shown once. Reports recheck the issuer's current permissions and profile
 access. Grant creation, revocation, and report access are audited.
 
+Completed reports are saved privately for 24 hours from completion. The
+Diagnostics page lets the owner reopen, copy, download, or delete a report.
+The owner may create a revocable public link to one saved report; anyone with
+that link can copy or download its contents until the report expires. A new
+link replaces the old one. Reports may contain sensitive data or unavailable
+checks, so review them before sharing. Access expires at 24 hours; the
+scheduled **Diagnostics Cleanup** task removes expired files when it runs.
+
 The page displays a local command. Run it on the computer hosting your chat
 session; enter the key at its hidden prompt rather than pasting it into chat
 or shell history:

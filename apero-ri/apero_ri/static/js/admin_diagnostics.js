@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     var profiles = [], host = '', busy = false, report = null;
-    var activeJob = null, pollTimer = null;
+    var activeJob = null, pollTimer = null, savedJobs = [];
     var text = window.ARI_DIAGNOSTICS_TEXT;
     function element(id) { return document.getElementById('diag-' + id); }
     function status(message) { element('status').textContent = message || ''; }
@@ -13,8 +13,10 @@
     async function api(action, body) {
         var options = body ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)} : {};
         var response = await fetch('/api/admin/diagnostics/' + action, options);
-        var data = await response.json();
-        if (!response.ok || !data.success) { throw new Error(data.error || String(response.status)); }
+        var data = await response.json().catch(function () { return {}; });
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || (response.status === 429 ? text.rateLimit : text.failed));
+        }
         return data;
     }
     async function overview() {
@@ -74,8 +76,10 @@
     function invalidate() {
         if (report) {
             report = null;
-            element('report').textContent = '';
             element('progress').hidden = true;
+            element('report-actions').hidden = true;
+            element('share-result').hidden = true;
+            element('share-url').value = '';
             reportStatus(text.changed);
         }
     }
@@ -93,6 +97,33 @@
     function setBusy(value) {
         busy = value;
         element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = value; });
+        element('report-actions').querySelectorAll('button').forEach(function (control) { control.disabled = value; });
+        element('saved-reports').disabled = value || !savedJobs.length;
+        element('open-report').disabled = value || !savedJobs.length;
+    }
+    async function refreshSaved() {
+        var data = await api('saved');
+        savedJobs = data.jobs || [];
+        var select = element('saved-reports');
+        var previous = select.value;
+        select.replaceChildren();
+        if (!savedJobs.length) {
+            var empty = document.createElement('option');
+            empty.value = ''; empty.textContent = text.noSaved;
+            select.append(empty);
+        }
+        savedJobs.forEach(function (job) {
+            var option = document.createElement('option');
+            option.value = job.id;
+            var stamp = new Date((job.completed_at || job.created) * 1000).toLocaleString();
+            option.textContent = job.instrument + ' / ' + job.profile_id
+                + (job.options.objname ? ' / ' + job.options.objname : '') + ' - ' + stamp;
+            select.append(option);
+        });
+        if (savedJobs.some(function (job) { return job.id === previous; })) select.value = previous;
+        else if (activeJob && savedJobs.some(function (job) { return job.id === activeJob; })) select.value = activeJob;
+        select.disabled = busy || !savedJobs.length;
+        element('open-report').disabled = busy || !savedJobs.length;
     }
     function restoreJob(job) {
         var index = profiles.findIndex(function (profile) {
@@ -124,9 +155,11 @@
             setBusy(false);
             if (data.job.status === 'completed' && data.report) {
                 report = data.report;
-                element('report').textContent = JSON.stringify(report, null, 2);
+                element('report-actions').hidden = false;
+                element('revoke-share').hidden = !data.job.share_active;
                 element('progress-stage').textContent = text.ready;
                 reportStatus(text.ready);
+                refreshSaved().catch(function (error) { status(error.message); });
                 return;
             }
             report = null;
@@ -152,7 +185,9 @@
         if (pollTimer) { window.clearTimeout(pollTimer); pollTimer = null; }
         activeJob = null; report = null;
         setBusy(true);
-        element('report').textContent = '';
+        element('report-actions').hidden = true;
+        element('share-result').hidden = true;
+        element('share-url').value = '';
         element('progress').hidden = false;
         element('progress-profile').textContent = params.get('instrument') + ' / ' + params.get('profile_id');
         showProgress({stage: 'runtime', completed: 0, total: 1});
@@ -189,8 +224,62 @@
             reportStatus(text.ready);
         } catch (error) { reportStatus(error.message || text.failed); }
     }
+    async function copyReport() {
+        if (!report || busy) { reportStatus(text.first); return; }
+        var buffer = document.createElement('textarea');
+        buffer.className = 'diag-copy-buffer';
+        buffer.setAttribute('aria-hidden', 'true');
+        buffer.value = JSON.stringify(report, null, 2);
+        document.body.appendChild(buffer);
+        try {
+            await copyInput(buffer);
+            reportStatus(text.copiedReport);
+        } catch (error) { reportStatus(text.copyReportFailed); }
+        finally { buffer.value = ''; buffer.remove(); }
+    }
+    async function shareReport() {
+        if (!report || !activeJob || busy) { reportStatus(text.first); return; }
+        setBusy(true);
+        try {
+            var result = await api('share', {id: activeJob});
+            var url = new URL(element('report-actions').dataset.shareView, window.location.href);
+            url.hash = result.token;
+            element('share-url').value = url.href;
+            element('share-result').hidden = false;
+            element('revoke-share').hidden = false;
+            reportStatus(text.shareCreated);
+        } catch (error) { reportStatus(error.message); }
+        finally { setBusy(false); }
+    }
+    async function revokeShare() {
+        if (!report || !activeJob || busy) { return; }
+        setBusy(true);
+        try {
+            await api('revoke-share', {id: activeJob});
+            element('share-url').value = '';
+            element('share-result').hidden = true;
+            element('revoke-share').hidden = true;
+            reportStatus(text.shareRevoked);
+        } catch (error) { reportStatus(error.message); }
+        finally { setBusy(false); }
+    }
+    async function deleteReport() {
+        if (!report || !activeJob || busy || !window.confirm(text.deleteConfirm)) { return; }
+        setBusy(true);
+        try {
+            await api('delete', {id: activeJob});
+            activeJob = null; report = null;
+            element('progress').hidden = true;
+            element('report-actions').hidden = true;
+            element('share-result').hidden = true;
+            element('share-url').value = '';
+            reportStatus(text.deleted);
+            await refreshSaved();
+        } catch (error) { reportStatus(error.message); }
+        finally { setBusy(false); }
+    }
     document.addEventListener('DOMContentLoaded', function () {
-        overview().then(resume).catch(function (error) { status(error.message); });
+        overview().then(refreshSaved).then(resume).catch(function (error) { status(error.message); });
         element('grant-form').onsubmit = async function (event) {
             event.preventDefault();
             try {
@@ -211,5 +300,23 @@
         element('report-form').addEventListener('input', invalidate);
         element('report-form').addEventListener('change', invalidate);
         element('export').onclick = downloadReport;
+        element('copy-report').onclick = copyReport;
+        element('share').onclick = shareReport;
+        element('revoke-share').onclick = revokeShare;
+        element('delete-report').onclick = deleteReport;
+        element('copy-share').onclick = function () {
+            copyInput(element('share-url')).catch(function (error) { reportStatus(error.message); });
+        };
+        element('open-report').onclick = async function () {
+            if (busy) return;
+            var job = savedJobs.find(function (item) { return item.id === element('saved-reports').value; });
+            if (!job || !restoreJob(job)) return;
+            report = null;
+            element('report-actions').hidden = true;
+            element('share-result').hidden = true;
+            element('share-url').value = '';
+            setBusy(true);
+            await pollJob(job.id);
+        };
     });
 }());

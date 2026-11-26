@@ -1,0 +1,14 @@
+:root { color-scheme: light dark; --ari-bg: #ffffff; --ari-text: #1d2730; --ari-text-muted: #52616b; --ari-border: #cbd4d8; --ari-accent: #126a65; }
+@media (prefers-color-scheme: dark) {
+    :root { --ari-bg: #161b22; --ari-text: #e6edf3; --ari-text-muted: #a8b7c0; --ari-border: #46545d; --ari-accent: #6fcfc0; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ari-bg); color: var(--ari-text); font-family: "Source Sans 3", "Trebuchet MS", sans-serif; }
+.shared-report { max-width: 1100px; margin: auto; padding: 32px 24px; }
+header { border-bottom: 1px solid var(--ari-border); padding-bottom: 16px; }
+header span { color: var(--ari-accent); font-weight: 700; }
+h1 { margin: 8px 0 0; font-size: 1.65rem; }
+#shared-status, #shared-expiry { color: var(--ari-text-muted); }
+button { min-height: 44px; padding: 8px 14px; color: var(--ari-text); background: var(--ari-bg); border: 1px solid var(--ari-border); border-radius: 4px; cursor: pointer; }
+.shared-copy-buffer { position: fixed; left: -10000px; top: 0; opacity: 0; }
+@media (max-width: 600px) { .shared-report { padding: 20px 16px; } }

@@ -34,6 +34,11 @@ apero_ri_debug --host=https://ari.example --key \
 - Reports are saved under `apero-diagnostics/` by default, one JSON file per
   authorized profile, with mode `0600`. Inspect these local files using
   normal file tools. `--output` chooses another local directory.
+- A completed report can also be shared through a 24-hour public report link
+  from the Diagnostics page. Treat the full URL as a bearer secret; anyone
+  holding it can read the snapshot. Its fragment is not sent in the initial
+  request, so use a browser that runs the viewer's JavaScript. The owner can
+  revoke the link or delete the report, and should do so after investigation.
 - Use `--object`, `--pid`, and repeated `--profile` filters to narrow a new
   collection. Use `--logs` for bounded redacted recipe log tails;
   `--no-database` avoids live database queries. Keys are never saved by the

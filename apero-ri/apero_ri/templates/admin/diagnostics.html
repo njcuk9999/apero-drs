@@ -2,7 +2,7 @@
 {% block title %}APERO RI - {{ 'Diagnostics' | tl }}{% endblock %}
 {% block extra_head %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_diagnostics.css', v='20261126b') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_diagnostics.css', v='20261126h') }}">
 {% endblock %}
 {% block doc_content %}
 <div class="ari-page-header">
@@ -48,6 +48,10 @@
     <p>{{ _('Include Log Tails adds up to three bounded, redacted recipe log excerpts selected from database records. It needs Live Database and accessible log files. Linked queue diagnostics may include their own bounded log excerpts regardless of this setting.') }}</p>
     <p>{{ _('Live Database performs read-only queries for indexed products, database schemas, and recipe logs. Turn it off to avoid those queries; object product examples, FITS samples, and recipe log tails will then be unavailable.') }}</p>
     <p><a href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/diagnostics') }}#report-options">{{ _('Report options and contents') }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></p>
+    <div class="diag-controls diag-saved-reports">
+        <label>{{ _('Saved Reports') }}<select id="diag-saved-reports" aria-label="{{ _('Saved Reports') }}"></select></label>
+        <button id="diag-open-report" class="ari-btn ari-btn--secondary" type="button" disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i> {{ _('Open Report') }}</button>
+    </div>
     <form id="diag-report-form" class="diag-controls">
         <label>{{ 'Profile' | tl }}<select id="diag-report-profile" required></select></label>
         <label>{{ 'Object' | tl }}<input id="diag-object" maxlength="120"></label>
@@ -66,7 +70,21 @@
         <div id="diag-progress-stage" role="status" aria-live="polite"></div>
     </div>
     <p id="diag-report-status" role="status" aria-live="polite">{{ _('Collect a report before exporting.') }}</p>
-    <pre id="diag-report" tabindex="0"></pre>
+    <div id="diag-report-actions" class="diag-report-actions" data-share-view="{{ url_for('diagnostics_shared_view') }}" hidden>
+        <p>{{ _('This report is saved privately for 24 hours after collection.') }}</p>
+        <p>{{ _('A saved report may contain unavailable or failed checks. Copy or download it to review the details before sharing.') }}</p>
+        <p>{{ _('Anyone with a share link can read the entire report until it expires or is revoked. A new link replaces the previous link.') }}</p>
+        <div class="diag-controls">
+            <button id="diag-copy-report" class="ari-btn ari-btn--secondary" type="button"><i class="fa-solid fa-copy" aria-hidden="true"></i> {{ _('Copy Report') }}</button>
+            <button id="diag-share" class="ari-btn ari-btn--secondary" type="button"><i class="fa-solid fa-link" aria-hidden="true"></i> {{ _('Create Share Link') }}</button>
+            <button id="diag-revoke-share" class="ari-btn ari-btn--secondary" type="button" hidden><i class="fa-solid fa-ban" aria-hidden="true"></i> {{ _('Revoke Share Link') }}</button>
+            <button id="diag-delete-report" class="ari-btn ari-btn--secondary" type="button"><i class="fa-solid fa-trash" aria-hidden="true"></i> {{ _('Delete Report') }}</button>
+        </div>
+        <div id="diag-share-result" class="diag-share-result" hidden>
+            <label>{{ _('Share URL') }}<input id="diag-share-url" readonly autocomplete="off" spellcheck="false"></label>
+            <button id="diag-copy-share" class="ari-btn ari-btn--secondary" type="button" title="{{ _('Copy Share URL') }}" aria-label="{{ _('Copy Share URL') }}"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
+        </div>
+    </div>
 </section>
 {% endblock %}
 {% block extra_scripts %}
@@ -93,7 +111,15 @@ window.ARI_DIAGNOSTICS_TEXT = {{ {
     'disconnected': _('Could not check the collection. Refresh to reconnect.'),
     'download': _('Preparing download...'),
     'copy': _('Copy unavailable; select the text.'),
+    'deleteConfirm': _('Delete this saved report and revoke its share link?'),
+    'deleted': _('Saved report deleted.'),
+    'shareCreated': _('Share link created. Share it only with trusted people.'),
+    'shareRevoked': _('Share link revoked.'),
+    'noSaved': _('No saved reports'),
+    'copiedReport': _('Report copied to clipboard.'),
+    'copyReportFailed': _('Could not copy the report. Download it instead.'),
+    'rateLimit': _('Too many requests. Wait a moment and try again.'),
 } | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126e') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126h') }}"></script>
 {% endblock %}

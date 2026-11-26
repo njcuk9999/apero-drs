@@ -225,6 +225,212 @@ def test_background_job_detects_server_interruption(tmp_path: Path) -> None:
     assert diagnostic_jobs.result(tmp_path, 'alice', job_id) is None
 
 
+def test_completed_job_retention_starts_at_completion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A slow collection still retains its report for 24 completed hours.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.core import diagnostic_jobs
+
+    directory = diagnostic_jobs._directory(tmp_path, 'alice')
+    job_id = 'c' * 32
+    state = dict(id=job_id, instrument='SPIROU', profile_id='mini',
+                 options=dict(), created=1.0, completed_at=100000.0,
+                 status='completed')
+    diagnostic_jobs._write(directory / (job_id + '.json'), state)
+    monkeypatch.setattr(diagnostic_jobs.time, 'time', lambda: 100001.0)
+    assert diagnostic_jobs.get(tmp_path, 'alice', job_id) is not None
+    monkeypatch.setattr(diagnostic_jobs.time, 'time',
+                        lambda: 100000.0 + diagnostic_jobs.LIFETIME)
+    assert diagnostic_jobs.get(tmp_path, 'alice', job_id) is None
+
+
+def test_saved_report_share_rotation_expiry_and_delete(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Sharing is private by default, scoped, revocable and time-limited.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.core import diagnostic_jobs
+
+    monkeypatch.setattr(diagnostic_jobs.time, 'time', lambda: 100000.0)
+    directory = diagnostic_jobs._directory(tmp_path, 'alice')
+    job_id = 'd' * 32
+    state = dict(id=job_id, instrument='SPIROU', profile_id='mini',
+                 options=dict(), created=1.0, completed_at=100000.0,
+                 status='completed')
+    report = dict(success=True, profile_id='mini')
+    diagnostic_jobs._write(directory / (job_id + '.json'), state)
+    diagnostic_jobs._write(directory / (job_id + '.report'), report)
+    assert diagnostic_jobs.share(tmp_path, 'bob', job_id) is None
+    token = diagnostic_jobs.share(tmp_path, 'alice', job_id)
+    assert token not in (directory / (job_id + '.share')).read_text()
+    assert diagnostic_jobs.shared(tmp_path, token)[2] == report
+    assert diagnostic_jobs.shared(tmp_path, token + 'x') is None
+    rotated = diagnostic_jobs.share(tmp_path, 'alice', job_id)
+    assert diagnostic_jobs.shared(tmp_path, token) is None
+    assert diagnostic_jobs.shared(tmp_path, rotated) is not None
+    assert diagnostic_jobs.revoke_share(tmp_path, 'alice', job_id)
+    assert diagnostic_jobs.shared(tmp_path, rotated) is None
+    token = diagnostic_jobs.share(tmp_path, 'alice', job_id)
+    monkeypatch.setattr(diagnostic_jobs.time, 'time',
+                        lambda: 100000.0 + diagnostic_jobs.LIFETIME)
+    assert diagnostic_jobs.shared(tmp_path, token) is None
+    monkeypatch.setattr(diagnostic_jobs.time, 'time', lambda: 100001.0)
+    assert not diagnostic_jobs.delete(tmp_path, 'bob', job_id)
+    assert diagnostic_jobs.delete(tmp_path, 'alice', job_id)
+    assert diagnostic_jobs.shared(tmp_path, token) is None
+    assert not (directory / (job_id + '.report')).exists()
+
+
+def test_scheduled_cleanup_removes_only_expired_jobs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Scheduled cleanup removes old reports, not live or fresh jobs.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import fcntl
+    from apero_ri import tasks
+    from apero_ri.core import diagnostic_jobs
+
+    monkeypatch.setattr(diagnostic_jobs.time, 'time', lambda: 200000.0)
+    directory = diagnostic_jobs._directory(tmp_path, 'alice')
+    expired, fresh = 'a' * 32, 'b' * 32
+    for job_id, completed_at in ((expired, 100000.0), (fresh, 199999.0)):
+        state = dict(id=job_id, created=completed_at,
+                     completed_at=completed_at, status='completed')
+        diagnostic_jobs._write(directory / (job_id + '.json'), state)
+        diagnostic_jobs._write(directory / (job_id + '.report'), dict(ok=True))
+        diagnostic_jobs._write(directory / (job_id + '.share'), dict(ok=True))
+    active = 'c' * 32
+    state = dict(id=active, created=1.0, status='running')
+    diagnostic_jobs._write(directory / (active + '.json'), state)
+    with (directory / (active + '.lock')).open('w') as active_lock:
+        fcntl.flock(active_lock, fcntl.LOCK_EX)
+        task = tasks.TASK_LIST['DIAGNOSTICS_CLEANUP']()
+        task.run_job(dict(LOCAL_DATA_DIR=str(tmp_path)))
+        assert (directory / (active + '.json')).exists()
+    assert tasks.TYPE['DIAGNOSTICS_CLEANUP'] == 'GLOBAL'
+    assert tasks.ENABLED['DIAGNOSTICS_CLEANUP']
+    assert not (directory / (expired + '.report')).exists()
+    assert not (directory / (expired + '.share')).exists()
+    assert (directory / (fresh + '.report')).exists()
+
+
+def test_shared_report_api_checks_owner_and_permissions(
+    app: object, client: object, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Anonymous report access requires a valid link and current scope.
+
+    :param app: Isolated ARI application fixture.
+    :param client: Flask test client.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.application import diagnostics_api_helpers as api
+
+    user = dict(username='share-owner', groups=['super_admin'])
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    monkeypatch.setattr(api.auth, 'get_user_info', lambda actor: user)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    monkeypatch.setattr(api.audit_log, 'record', lambda *args, **kwargs: None)
+    root = Path(app._resolve_local_data_dir())
+    directory = api.diagnostic_jobs._directory(root, user['username'])
+    job_id = 'e' * 32
+    import time
+
+    state = dict(id=job_id, instrument='SPIROU', profile_id='mini',
+                 options=dict(), created=time.time(), status='completed')
+    api.diagnostic_jobs._write(directory / (job_id + '.json'), state)
+    api.diagnostic_jobs._write(directory / (job_id + '.report'),
+                               dict(success=True, profile_id='mini'))
+    listing = client.get('/api/admin/diagnostics/saved')
+    assert [row['id'] for row in listing.json['jobs']] == [job_id]
+    shell = client.get('/diagnostics/shared')
+    assert shell.status_code == 200
+    assert b'id="shared-report"' not in shell.data
+    assert b'id="shared-copy"' in shell.data
+    assert shell.headers['Referrer-Policy'] == 'no-referrer'
+    assert shell.headers['Cache-Control'] == 'no-store'
+    assert "default-src 'self'" in shell.headers['Content-Security-Policy']
+    assert client.get('/api/diagnostics/shared-report').status_code == 404
+    issued = client.post('/api/admin/diagnostics/share', json=dict(id=job_id))
+    assert issued.status_code == 200
+    token = issued.json['token']
+    headers = dict(Authorization='Bearer ' + token)
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: None)
+    response = client.get('/api/diagnostics/shared-report', headers=headers)
+    assert response.status_code == 200
+    assert response.json['report']['profile_id'] == 'mini'
+    assert response.headers['Cache-Control'] == 'no-store'
+    monkeypatch.setattr(api, '_profiles', lambda app, user: dict())
+    assert client.get('/api/diagnostics/shared-report',
+                      headers=headers).status_code == 404
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    assert client.get('/api/admin/diagnostics/saved').json['jobs'] == []
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    assert client.post('/api/admin/diagnostics/revoke-share',
+                       json=dict(id=job_id)).status_code == 200
+    assert client.get('/api/diagnostics/shared-report',
+                      headers=headers).status_code == 404
+    assert client.post('/api/admin/diagnostics/delete',
+                       json=dict(id=job_id)).status_code == 200
+
+
+def test_diagnostics_polling_does_not_exhaust_write_limit(
+    app: object, client: object, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Frequent status reads must not block a later share action.
+
+    :param app: Isolated ARI application fixture.
+    :param client: Flask test client.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import time
+    from apero_ri.application import diagnostics_api_helpers as api
+
+    user = dict(username='rate-test', groups=['super_admin'])
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    monkeypatch.setattr(api.audit_log, 'record', lambda *args, **kwargs: None)
+    root = Path(app._resolve_local_data_dir())
+    directory = api.diagnostic_jobs._directory(root, user['username'])
+    job_id = 'f' * 32
+    state = dict(id=job_id, instrument='SPIROU', profile_id='mini',
+                 options=dict(), created=time.time(), status='completed')
+    api.diagnostic_jobs._write(directory / (job_id + '.json'), state)
+    api.diagnostic_jobs._write(directory / (job_id + '.report'), dict(ok=True))
+    remote = dict(REMOTE_ADDR='192.0.2.101')
+    for index in range(30):
+        response = client.get('/api/admin/diagnostics/latest',
+                              environ_overrides=remote)
+        assert response.status_code == 200, index
+    response = client.post('/api/admin/diagnostics/share',
+                           json=dict(id=job_id), environ_overrides=remote)
+    assert response.status_code == 200
+    for index in range(19):
+        response = client.post('/api/admin/diagnostics/share',
+                               json=dict(id=job_id), environ_overrides=remote)
+        assert response.status_code == 200, index
+    response = client.post('/api/admin/diagnostics/share',
+                           json=dict(id=job_id), environ_overrides=remote)
+    assert response.status_code == 429
+
+
 def test_job_completion_wins_lock_release_race(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

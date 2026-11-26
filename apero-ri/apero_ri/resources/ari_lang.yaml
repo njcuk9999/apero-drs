@@ -4,6 +4,78 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+"A saved report may contain unavailable or failed checks. Copy or download it to review the details before sharing.":
+  FR: Un rapport enregistré peut contenir des vérifications indisponibles ou échouées. Copiez-le ou téléchargez-le pour examiner les détails avant de le partager.
+  ES: Un informe guardado puede contener comprobaciones no disponibles o fallidas. Cópielo o descárguelo para revisar los detalles antes de compartirlo.
+"Too many requests. Wait a moment and try again.":
+  FR: Trop de requêtes. Attendez un instant et réessayez.
+  ES: Demasiadas solicitudes. Espere un momento y vuelva a intentarlo.
+"Copy Report":
+  FR: Copier le rapport
+  ES: Copiar informe
+"Report copied to clipboard.":
+  FR: Rapport copié dans le presse-papiers.
+  ES: Informe copiado al portapapeles.
+"Could not copy the report. Download it instead.":
+  FR: Impossible de copier le rapport. Téléchargez-le à la place.
+  ES: No se pudo copiar el informe. Descárguelo en su lugar.
+"Saved Reports":
+  FR: Rapports enregistrés
+  ES: Informes guardados
+"Open Report":
+  FR: Ouvrir le rapport
+  ES: Abrir informe
+"No saved reports":
+  FR: Aucun rapport enregistré
+  ES: No hay informes guardados
+"This report is saved privately for 24 hours after collection.":
+  FR: Ce rapport est conservé en privé pendant 24 heures après sa collecte.
+  ES: Este informe se guarda de forma privada durante 24 horas después de su recopilación.
+"Anyone with a share link can read the entire report until it expires or is revoked. A new link replaces the previous link.":
+  FR: Toute personne disposant du lien peut lire le rapport entier jusqu'à son expiration ou sa révocation. Un nouveau lien remplace le précédent.
+  ES: Quien tenga el enlace puede leer el informe completo hasta que caduque o se revoque. Un nuevo enlace reemplaza al anterior.
+"Create Share Link":
+  FR: Créer un lien de partage
+  ES: Crear enlace para compartir
+"Revoke Share Link":
+  FR: Révoquer le lien de partage
+  ES: Revocar enlace compartido
+"Delete Report":
+  FR: Supprimer le rapport
+  ES: Eliminar informe
+"Share URL":
+  FR: URL de partage
+  ES: URL para compartir
+"Copy Share URL":
+  FR: Copier l'URL de partage
+  ES: Copiar URL para compartir
+"Delete this saved report and revoke its share link?":
+  FR: Supprimer ce rapport enregistré et révoquer son lien de partage ?
+  ES: ¿Eliminar este informe guardado y revocar su enlace compartido?
+"Saved report deleted.":
+  FR: Rapport enregistré supprimé.
+  ES: Informe guardado eliminado.
+"Share link created. Share it only with trusted people.":
+  FR: Lien de partage créé. Transmettez-le uniquement à des personnes de confiance.
+  ES: Enlace creado. Compártalo solo con personas de confianza.
+"Share link revoked.":
+  FR: Lien de partage révoqué.
+  ES: Enlace compartido revocado.
+"Shared Diagnostic Report":
+  FR: Rapport de diagnostic partagé
+  ES: Informe de diagnóstico compartido
+"Loading shared report...":
+  FR: Chargement du rapport partagé...
+  ES: Cargando informe compartido...
+"This report is unavailable, expired, or its link was revoked.":
+  FR: Ce rapport est indisponible, expiré ou son lien a été révoqué.
+  ES: El informe no está disponible, ha caducado o su enlace fue revocado.
+"Shared report loaded.":
+  FR: Rapport partagé chargé.
+  ES: Informe compartido cargado.
+"Download Report":
+  FR: Télécharger le rapport
+  ES: Descargar informe
 "Loading shared Gaia reference stars...":
   FR: Chargement des étoiles de référence Gaia partagées...
   ES: Cargando estrellas de referencia Gaia compartidas...

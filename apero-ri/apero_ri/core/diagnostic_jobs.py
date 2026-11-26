@@ -4,9 +4,11 @@
 
 import fcntl
 import hashlib
+import hmac
 import json
 import os
 import re
+import secrets
 import tempfile
 import threading
 import time
@@ -25,6 +27,7 @@ __date__ = base.__date__
 __authors__ = base.__authors__
 LIFETIME = 24 * 3600
 JOB_ID = re.compile(r'^[0-9a-f]{32}$')
+SHARE_TOKEN = re.compile(r'^([0-9a-f]{64})\.([0-9a-f]{32})\.([\w-]{43})$')
 
 # =============================================================================
 # Define functions
@@ -111,12 +114,14 @@ def get(root: Path, actor: str, job_id: str) -> dict | None:
         state = _read(directory / (job_id + '.json')) or state
         if state.get('status') == 'running':
             state['status'] = 'interrupted'
-    if (state.get('status') != 'running'
-            and time.time() - state.get('created', 0) > LIFETIME):
+    completed_at = state.get('completed_at', state.get('created', 0))
+    expired = time.time() - completed_at >= LIFETIME
+    if state.get('status') != 'running' and expired:
         return None
     if state.get('status') == 'running':
         state['stage_elapsed_s'] = max(
             0, int(time.time() - state.get('stage_started', state['created'])))
+    state['share_active'] = (directory / (job_id + '.share')).is_file()
     return state
 
 
@@ -129,8 +134,19 @@ def latest(root: Path, actor: str, allowed: set) -> dict | None:
     :return: Latest authorized job metadata, or None.
     """
     directory = _directory(root, actor)
+    def modified(path: Path) -> float:
+        """Return a stable sort key if a job disappears during listing.
+
+        :param path: Actor-owned job record.
+        :return: Modification time, or zero when absent.
+        """
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            return 0.0
+
     paths = sorted(directory.glob('*.json'),
-                   key=lambda path: path.stat().st_mtime, reverse=True)
+                   key=modified, reverse=True)
     for path in paths:
         if not JOB_ID.fullmatch(path.stem):
             continue
@@ -138,6 +154,32 @@ def latest(root: Path, actor: str, allowed: set) -> dict | None:
         if state and (state['instrument'], state['profile_id']) in allowed:
             return state
     return None
+
+
+def saved(root: Path, actor: str, allowed: set) -> list[dict]:
+    """List the owner's completed, unexpired and accessible reports.
+
+    :param root: Active ARI data root.
+    :param actor: Authenticated administrator.
+    :param allowed: Currently accessible instrument/profile tuples.
+    :return: Up to 100 newest report metadata entries without report contents.
+    """
+    directory = _directory(root, actor)
+    reports = []
+    for path in directory.glob('*.json'):
+        if not JOB_ID.fullmatch(path.stem):
+            continue
+        state = get(root, actor, path.stem)
+        if not state or state.get('status') != 'completed':
+            continue
+        if (state['instrument'], state['profile_id']) not in allowed:
+            continue
+        if not (directory / (path.stem + '.report')).is_file():
+            continue
+        reports.append(state)
+    reports.sort(key=lambda state: state.get('completed_at', state['created']),
+                 reverse=True)
+    return reports[:100]
 
 
 def result(root: Path, actor: str, job_id: str) -> dict | None:
@@ -152,6 +194,145 @@ def result(root: Path, actor: str, job_id: str) -> dict | None:
     if not state or state['status'] != 'completed':
         return None
     return _read(_directory(root, actor) / (job_id + '.report'))
+
+
+def share(root: Path, actor: str, job_id: str) -> str | None:
+    """Issue or rotate a public capability for one completed private report.
+
+    :param root: Active ARI data root.
+    :param actor: Authenticated report owner.
+    :param job_id: Server-issued job identifier.
+    :return: One-time bearer capability, or None when not shareable.
+    """
+    if not JOB_ID.fullmatch(job_id):
+        return None
+    directory = _directory(root, actor)
+    descriptor = os.open(directory / '.jobs.lock', os.O_CREAT | os.O_RDWR,
+                         0o600)
+    with os.fdopen(descriptor, 'r+') as mutex:
+        fcntl.flock(mutex, fcntl.LOCK_EX)
+        if result(root, actor, job_id) is None:
+            return None
+        if _is_running(directory, job_id):
+            return None
+        actor_id = hashlib.sha256(actor.encode('utf-8')).hexdigest()
+        token = actor_id + '.' + job_id + '.' + secrets.token_urlsafe(32)
+        digest = hashlib.sha256(token.encode('utf-8')).hexdigest()
+        _write(directory / (job_id + '.share'), dict(actor=actor,
+                                                      digest=digest))
+        return token
+
+
+def revoke_share(root: Path, actor: str, job_id: str) -> bool:
+    """Revoke a report owner's public link without deleting the report.
+
+    :param root: Active ARI data root.
+    :param actor: Authenticated report owner.
+    :param job_id: Server-issued job identifier.
+    :return: Whether an active share existed.
+    """
+    if not JOB_ID.fullmatch(job_id):
+        return False
+    directory = _directory(root, actor)
+    descriptor = os.open(directory / '.jobs.lock', os.O_CREAT | os.O_RDWR,
+                         0o600)
+    with os.fdopen(descriptor, 'r+') as mutex:
+        fcntl.flock(mutex, fcntl.LOCK_EX)
+        path = directory / (job_id + '.share')
+        existed = path.is_file()
+        path.unlink(missing_ok=True)
+        return existed
+
+
+def shared(root: Path, token: str) -> tuple[str, dict, dict] | None:
+    """Validate a public capability and read its unexpired saved report.
+
+    :param root: Active ARI data root.
+    :param token: Bearer capability, never included in the return value.
+    :return: Owner, job metadata and report, or None for an invalid link.
+    """
+    match = SHARE_TOKEN.fullmatch(token)
+    if match is None:
+        return None
+    actor_id, job_id, _secret = match.groups()
+    directory = root / 'secret' / 'diagnostic_jobs' / actor_id
+    record = _read(directory / (job_id + '.share'))
+    if not record or not isinstance(record.get('actor'), str):
+        return None
+    actor = record['actor']
+    expected_actor = hashlib.sha256(actor.encode('utf-8')).hexdigest()
+    digest = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    if not hmac.compare_digest(actor_id, expected_actor):
+        return None
+    if not hmac.compare_digest(digest, str(record.get('digest', ''))):
+        return None
+    state = get(root, actor, job_id)
+    report = result(root, actor, job_id)
+    if not state or state['status'] != 'completed' or report is None:
+        return None
+    return actor, state, report
+
+
+def delete(root: Path, actor: str, job_id: str) -> bool:
+    """Delete one finished report and revoke its public link.
+
+    :param root: Active ARI data root.
+    :param actor: Authenticated report owner.
+    :param job_id: Server-issued job identifier.
+    :return: Whether the report was deleted.
+    :raises ValueError: If a collection is still running.
+    """
+    if not JOB_ID.fullmatch(job_id):
+        return False
+    directory = _directory(root, actor)
+    descriptor = os.open(directory / '.jobs.lock', os.O_CREAT | os.O_RDWR,
+                         0o600)
+    with os.fdopen(descriptor, 'r+') as mutex:
+        fcntl.flock(mutex, fcntl.LOCK_EX)
+        path = directory / (job_id + '.json')
+        state = _read(path)
+        if state is None:
+            return False
+        if _is_running(directory, job_id):
+            raise ValueError('diagnostic_job_running')
+        for suffix in ('.json', '.report', '.share', '.lock'):
+            (directory / (job_id + suffix)).unlink(missing_ok=True)
+        return True
+
+
+def cleanup_expired(root: Path) -> int:
+    """Remove expired job records and reports without touching active jobs.
+
+    :param root: Active ARI data root.
+    :return: Number of expired jobs removed.
+    """
+    jobs_root = root / 'secret' / 'diagnostic_jobs'
+    if not jobs_root.is_dir() or jobs_root.is_symlink():
+        return 0
+    removed = 0
+    for directory in jobs_root.iterdir():
+        valid = re.fullmatch(r'[0-9a-f]{64}', directory.name)
+        if not valid or not directory.is_dir() or directory.is_symlink():
+            continue
+        descriptor = os.open(directory / '.jobs.lock', os.O_CREAT | os.O_RDWR,
+                             0o600)
+        with os.fdopen(descriptor, 'r+') as mutex:
+            fcntl.flock(mutex, fcntl.LOCK_EX)
+            for path in directory.glob('*.json'):
+                if not JOB_ID.fullmatch(path.stem) or path.is_symlink():
+                    continue
+                state = _read(path)
+                if not state:
+                    continue
+                retained = state.get('completed_at', state.get('created', 0))
+                if time.time() - retained < LIFETIME:
+                    continue
+                if _is_running(directory, path.stem):
+                    continue
+                for suffix in ('.json', '.report', '.share', '.lock'):
+                    (directory / (path.stem + suffix)).unlink(missing_ok=True)
+                removed += 1
+    return removed
 
 
 def start(root: Path, actor: str, instrument: str, profile_id: str,
@@ -179,7 +360,7 @@ def start(root: Path, actor: str, instrument: str, profile_id: str,
                 continue
             previous = get(root, actor, path.stem)
             if previous is None:
-                for suffix in ('.json', '.report', '.lock'):
+                for suffix in ('.json', '.report', '.share', '.lock'):
                     (directory / (path.stem + suffix)).unlink(missing_ok=True)
                 continue
             if not previous or previous['status'] != 'running':
@@ -226,7 +407,7 @@ def start(root: Path, actor: str, instrument: str, profile_id: str,
                 report['success'] = True
                 _write(directory / (job_id + '.report'), report)
                 state.update(status='completed', stage='complete',
-                             completed=state['total'])
+                             completed=state['total'], completed_at=time.time())
             except Exception:
                 state.update(status='failed', error='collection_failed')
             finally:

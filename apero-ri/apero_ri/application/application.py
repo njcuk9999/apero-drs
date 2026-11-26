@@ -509,6 +509,20 @@ class ARIApp(Flask):
         """
         return diagnostics_api_helpers.api(self, action)
 
+    def _diagnostics_shared_view(self) -> Any:
+        """Render the public capability-based diagnostics viewer.
+
+        :return: Report viewer shell without report data.
+        """
+        return diagnostics_api_helpers.shared_view(self)
+
+    def _api_diagnostics_shared(self) -> Any:
+        """Return an authorized saved report for a public capability.
+
+        :return: Shared report or unavailable response.
+        """
+        return diagnostics_api_helpers.shared_api(self)
+
     # -----------------------------------------------------------------
     # APERO queue setup API (admin) and dashboard proxy (monitor)
     # -----------------------------------------------------------------

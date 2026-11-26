@@ -1,6 +1,7 @@
 .diag-section { padding: 20px 0; border-bottom: 1px solid var(--ari-border); }
 .diag-section h2 { font-size: 1.15rem; margin: 0 0 16px; }
 .diag-controls, .diag-profiles { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.diag-saved-reports { margin: 16px 0; }
 .diag-section label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .diag-section input:not([type="checkbox"]), .diag-section select {
     max-width: 100%; min-height: 40px; box-sizing: border-box;
@@ -11,8 +12,12 @@
 .diag-section .ot-table-wrap { margin-top: 16px; }
 #diag-issued { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 12px; }
 #diag-issued[hidden] { display: none; }
+.diag-report-actions { margin: 16px 0; }
+.diag-share-result { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 12px; align-items: end; }
+.diag-share-result[hidden] { display: none; }
+.diag-share-result label, .diag-share-result input { width: 100%; }
 #diag-status { min-height: 24px; color: var(--ari-text); overflow-wrap: anywhere; }
-#diag-report { max-height: 65vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ari-text); background: var(--ari-surface-muted); padding: 12px; }
+.diag-copy-buffer { position: fixed; left: -10000px; top: 0; opacity: 0; }
 .diag-progress { margin: 20px 0 8px; max-width: 720px; }
 .diag-progress__heading { display: flex; justify-content: space-between; gap: 12px; overflow-wrap: anywhere; }
 .diag-progress progress { display: block; width: 100%; height: 14px; margin: 8px 0; accent-color: var(--ari-primary); }
@@ -21,7 +26,6 @@
 [data-theme="dark"] .diag-section input:not([type="checkbox"]),
 [data-theme="dark"] .diag-section select { color: var(--ari-text); background: var(--ari-card-bg); border-color: var(--ari-border); }
 [data-theme="dark"] #diag-status { color: var(--ari-text); }
-[data-theme="dark"] #diag-report { color: var(--ari-text); background: var(--ari-surface-muted); }
 [data-theme="dark"] .diag-progress progress { accent-color: var(--ari-primary); }
 [data-theme="dark"] #diag-progress-stage,
 [data-theme="dark"] #diag-report-status { color: var(--ari-text-muted); }

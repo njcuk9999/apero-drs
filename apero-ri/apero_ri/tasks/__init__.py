@@ -171,6 +171,20 @@ MULTI_PROCESS['DOCS_SNAPSHOT'] = _entry['multi_process']
 LOCAL_TASK['DOCS_SNAPSHOT'] = _entry['local_task']
 FILTERS['DOCS_SNAPSHOT'] = _entry['filters']
 
+# DIAGNOSTICS_CLEANUP
+_entry = _register_task('DIAGNOSTICS_CLEANUP', 'diagnostics_cleanup',
+                        'DiagnosticsCleanupTask', 'GLOBAL')
+TASK_LIST['DIAGNOSTICS_CLEANUP'] = _entry['task_cls']
+P_LIST['DIAGNOSTICS_CLEANUP'] = _entry['param_list']
+AP_LIST['DIAGNOSTICS_CLEANUP'] = _entry['ap_list']
+FREQ['DIAGNOSTICS_CLEANUP'] = _entry['frequency']
+ENABLED['DIAGNOSTICS_CLEANUP'] = _entry['enabled']
+TYPE['DIAGNOSTICS_CLEANUP'] = _entry['task_type']
+USE_SUBPROCESS['DIAGNOSTICS_CLEANUP'] = _entry['use_subprocess']
+MULTI_PROCESS['DIAGNOSTICS_CLEANUP'] = _entry['multi_process']
+LOCAL_TASK['DIAGNOSTICS_CLEANUP'] = _entry['local_task']
+FILTERS['DIAGNOSTICS_CLEANUP'] = _entry['filters']
+
 # APERO_SYNC_ASSETS
 _entry = _register_task(
     "APERO_SYNC_ASSETS",

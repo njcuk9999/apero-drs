@@ -2469,10 +2469,37 @@ def register_data_portal_routes(app: Any) -> None:
     # Server sync - admin page API (super admin) and peer protocol
     app.add_url_rule('/admin_portal/diagnostics',
                      'admin_diagnostics_view', app._admin_diagnostics_view)
+
+    def diagnostic_read(action: str) -> Any:
+        """Handle read-only diagnostics under the polling rate limit.
+
+        :param action: Diagnostic action name.
+        :return: Authorized diagnostic response.
+        """
+        return app._api_diagnostics_admin(action)
+
+    def diagnostic_write(action: str) -> Any:
+        """Handle mutations under a separate, stricter rate limit.
+
+        :param action: Diagnostic action name.
+        :return: Authorized diagnostic response.
+        """
+        return app._api_diagnostics_admin(action)
+
+    app.add_url_rule('/api/admin/diagnostics/<action>',
+                     'api_diagnostics_admin_read',
+                     app._limiter.limit('120 per minute')(
+                         diagnostic_read), methods=['GET'])
     app.add_url_rule('/api/admin/diagnostics/<action>',
                      'api_diagnostics_admin',
                      app._limiter.limit('20 per minute')(
-                         app._api_diagnostics_admin), methods=['GET', 'POST'])
+                         diagnostic_write), methods=['POST'])
+    app.add_url_rule('/diagnostics/shared', 'diagnostics_shared_view',
+                     app._diagnostics_shared_view)
+    app.add_url_rule('/api/diagnostics/shared-report',
+                     'api_diagnostics_shared',
+                     app._limiter.limit('10 per minute')(
+                         app._api_diagnostics_shared), methods=['GET'])
     app.add_url_rule('/api/diagnostics/<action>', 'api_diagnostics',
                      app._limiter.limit('10 per minute')(
                          app._api_diagnostics), methods=['GET'])
