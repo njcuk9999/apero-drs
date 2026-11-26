@@ -744,9 +744,9 @@
     }
 
     /** Tell the first-view loading screen (if shown) a step finished. */
-    function firstLoadStep(key) {
+    function firstLoadStep(key, ok) {
         var loader = window.ARI_OBJECT_FIRST_LOADER;
-        if (loader) loader.done(key);
+        if (loader) loader.done(key, ok);
     }
 
     function startBackgroundPlotPrefetch() {
@@ -3370,7 +3370,7 @@
         fetch(url + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                firstLoadStep(group);
+                firstLoadStep(group, !!(data && data.success));
                 if (!data || !data.success) {
                     if (activePlotKey) setPlotReloading(activePlotKey, false);
                     objectPlotsState[group] = 'idle';
@@ -3410,7 +3410,7 @@
                 objectPlotsState[group] = 'loaded';
             })
             .catch(function () {
-                firstLoadStep(group);
+                firstLoadStep(group, false);
                 if (activePlotKey) setPlotReloading(activePlotKey, false);
                 objectPlotsState[group] = 'idle';
                 function markUnavailable(id) {

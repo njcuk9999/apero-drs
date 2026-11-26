@@ -105,6 +105,7 @@
 }
 
 .opfl-bar {
+    flex: 1;
     height: 6px;
     overflow: hidden;
     border-radius: 999px;
@@ -122,20 +123,43 @@
 
 .opfl-status {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
     gap: 0.75rem;
-    margin-top: 0.6rem;
     font-size: 0.85rem;
 }
 
-/* Shimmering "thinking" text, like a live status line */
-.opfl-step {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
+.opfl-count {
+    min-width: 2.6rem;
+    text-align: right;
+    color: var(--ari-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.opfl-sections {
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
     text-align: left;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    font-size: 0.84rem;
+}
+
+.opfl-section {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.18rem 0;
+    color: var(--ari-text-muted);
+    transition: color 0.3s ease;
+}
+
+.opfl-section__icon {
+    width: 1rem;
+    text-align: center;
+    flex: none;
+}
+
+/* Shimmering label while the section is still being built */
+.opfl-section--active .opfl-section__label {
     background: linear-gradient(90deg, var(--ari-text-muted) 0%,
                                 var(--ari-text) 50%,
                                 var(--ari-text-muted) 100%);
@@ -146,14 +170,21 @@
     animation: opfl-shimmer 1.8s linear infinite;
 }
 
-.opfl-step--swap {
-    animation: opfl-shimmer 1.8s linear infinite,
-               opfl-fade-in 0.35s ease;
+.opfl-section--active .opfl-section__icon {
+    color: var(--ari-primary);
 }
 
-.opfl-count {
-    color: var(--ari-text-muted);
-    font-variant-numeric: tabular-nums;
+.opfl-section--done {
+    color: var(--ari-text);
+}
+
+.opfl-section--done .opfl-section__icon {
+    color: var(--ari-success);
+    animation: opfl-fade-in 0.35s ease;
+}
+
+.opfl-section--failed .opfl-section__icon {
+    color: var(--ari-warning);
 }
 
 .opfl-hint {
@@ -188,12 +219,12 @@
 
 @media (prefers-reduced-motion: reduce) {
     .opfl-orbit span,
-    .opfl-step,
-    .opfl-step--swap {
+    .opfl-section--active .opfl-section__label,
+    .opfl-section__icon {
         animation: none;
     }
 
-    .opfl-step {
+    .opfl-section--active .opfl-section__label {
         color: var(--ari-text-muted);
     }
 }

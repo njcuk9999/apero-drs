@@ -1,8 +1,8 @@
 /* ==========================================================================
    Object page: first-view loading screen.
-   Progress advances only when real requests finish (object_page.js calls
-   ARI_OBJECT_FIRST_LOADER.done(step)); the bar creeps within the current
-   slice and the status line cycles through what is being built.
+   Each section row is ticked off only when its real request finishes
+   (object_page.js calls ARI_OBJECT_FIRST_LOADER.done(step, ok)); the bar
+   creeps within the current slice so it never looks frozen.
    ========================================================================== */
 (function () {
     'use strict';
@@ -14,57 +14,57 @@
     if (!cfg || !overlay) return;
 
     var fill = document.getElementById('opfl-bar-fill');
-    var stepEl = document.getElementById('opfl-step');
     var countEl = document.getElementById('opfl-count');
+    var listEl = document.getElementById('opfl-sections');
+    var hintEl = document.getElementById('opfl-hint');
     var skipBtn = document.getElementById('opfl-skip');
 
     var keys = Object.keys(cfg.steps);
     var pending = {};
-    keys.forEach(function (key) { pending[key] = true; });
+    var rows = {};
+    keys.forEach(function (key) {
+        pending[key] = true;
+        rows[key] = cfg.steps[key].map(function (label) {
+            var li = document.createElement('li');
+            li.className = 'opfl-section opfl-section--active';
+            var icon = document.createElement('i');
+            icon.className = 'opfl-section__icon fa-solid fa-circle-notch fa-spin';
+            var text = document.createElement('span');
+            text.className = 'opfl-section__label';
+            text.textContent = label;
+            li.appendChild(icon);
+            li.appendChild(text);
+            listEl.appendChild(li);
+            return li;
+        });
+    });
     var finished = 0;
-    // Fraction of the current step's slice shown as "in progress".
+    // Fraction of the next slice shown as "in progress".
     var creep = 0;
-    var phraseIndex = 0;
     var timers = [];
     var closed = false;
 
-    function pendingPhrases() {
-        var phrases = [];
-        keys.forEach(function (key) {
-            if (pending[key]) phrases = phrases.concat(cfg.steps[key]);
-        });
-        return phrases;
-    }
-
     function renderBar() {
         var slice = 1 / keys.length;
-        var pct = (finished + creep) * slice * 100;
-        fill.style.width = Math.min(100, pct).toFixed(1) + '%';
-        countEl.textContent = finished + ' / ' + keys.length;
-    }
-
-    function nextPhrase() {
-        var phrases = pendingPhrases();
-        if (!phrases.length) return;
-        phraseIndex = (phraseIndex + 1) % phrases.length;
-        stepEl.textContent = phrases[phraseIndex] + '\u2026';
-        // Restart the fade so each new phrase eases in.
-        stepEl.classList.remove('opfl-step--swap');
-        void stepEl.offsetWidth;
-        stepEl.classList.add('opfl-step--swap');
+        var pct = Math.min(100, (finished + creep) * slice * 100);
+        fill.style.width = pct.toFixed(1) + '%';
+        countEl.textContent = Math.floor(pct) + '%';
     }
 
     function close() {
         if (closed) return;
         closed = true;
-        timers.forEach(function (id) { window.clearInterval(id); });
+        timers.forEach(function (id) {
+            window.clearInterval(id);
+            window.clearTimeout(id);
+        });
         overlay.classList.add('opfl-overlay--done');
         window.setTimeout(function () {
             if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
         }, 400);
     }
 
-    loader.done = function (key) {
+    loader.done = function (key, ok) {
         if (key === '__abort__') {
             close();
             return;
@@ -73,12 +73,17 @@
         delete pending[key];
         finished += 1;
         creep = 0;
+        rows[key].forEach(function (li) {
+            var failed = (ok === false);
+            li.className = 'opfl-section '
+                + (failed ? 'opfl-section--failed' : 'opfl-section--done');
+            li.firstChild.className = 'opfl-section__icon fa-solid '
+                + (failed ? 'fa-triangle-exclamation' : 'fa-check');
+        });
         renderBar();
         if (finished >= keys.length) {
             // Let the full bar register before fading out.
-            window.setTimeout(close, 350);
-        } else {
-            nextPhrase();
+            window.setTimeout(close, 450);
         }
     };
 
@@ -89,9 +94,11 @@
         creep += (0.9 - creep) * 0.03;
         renderBar();
     }, 150));
-    timers.push(window.setInterval(nextPhrase, 1900));
+    // Never trap the user: slow sections keep their own plot spinners.
+    timers.push(window.setTimeout(function () {
+        hintEl.textContent = cfg.slowHint;
+    }, cfg.slowAfterMs));
+    timers.push(window.setTimeout(close, cfg.closeAfterMs));
 
-    phraseIndex = -1;
-    nextPhrase();
     renderBar();
 }());
