@@ -165,12 +165,14 @@ def _cache(root: Path, objname: str) -> dict[str, Any]:
     return result
 
 
-def _manifests(profile: dict, instrument: str, name: str) -> dict:
+def _manifests(profile: dict, instrument: str, name: str,
+               on_task: Callable[[str], None] | None = None) -> dict:
     """Check published task manifests and bounded file checksum samples.
 
     :param profile: Authorized profile configuration.
     :param instrument: Instrument associated with this profile.
     :param name: Profile ID used for published directories.
+    :param on_task: Optional callback identifying the manifest being checked.
     :return: Manifest validity, freshness, and checksum evidence.
     """
     shared = apero_sync.precomputed_directory(profile, instrument, name)
@@ -179,6 +181,8 @@ def _manifests(profile: dict, instrument: str, name: str) -> dict:
     result = dict(root=common.file_info(shared), tasks=dict())
     tasks = auth.load_async_tasks().get(instrument, [])
     for key in apero_sync.local_task_keys():
+        if on_task is not None:
+            on_task(key)
         payload = common.read_json(shared / ('.' + key + '.json'), shared)
         data = payload.pop('data', None)
         if isinstance(data, dict):
@@ -255,7 +259,9 @@ def collect(profile: dict, instrument: str, profile_id: str,
         for key, value in profile.get('paths', {}).items()
         if key.startswith('PATH_') and value},
         cache=lambda: _cache(cache, objname),
-        manifests=lambda: _manifests(profile, instrument, profile_id),
+        manifests=lambda: _manifests(
+            profile, instrument, profile_id,
+            on_task=lambda key: notify('manifests:' + key)),
         tasks=lambda: [row for row in
                        auth.load_async_tasks().get(instrument, [])
                        if row.get('apero_profile') == profile_id])

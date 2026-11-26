@@ -2,7 +2,6 @@
 {% block title %}APERO RI – {{ page_label | tl }}{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
 {% if object_first_view %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/object_first_load.css', v='20261126c') }}">
 {% endif %}
@@ -258,6 +257,7 @@
                 </a>
             </div>
             <div class="at-section-card__body">
+                <p id="op-hr-background-status" class="at-muted-hint" role="status" aria-live="polite" hidden></p>
                 <div id="op-hr-plot-div" data-op-nozoom="1"
                      class="op-plot-host"
                      style="min-height:480px;"></div>
@@ -1157,6 +1157,8 @@ window.ARI_OBJECT_PAGE = {
     tessRotationStreamUrl: '/api/data-portal/tess-rotation-stream',
     tessRotationCached: {{ (tess_rotation_cached | default(false)) | tojson }},
     objectFirstView: {{ (object_first_view | default(false)) | tojson }},
+    hrBackdropLoading: {{ _('Loading shared Gaia reference stars...') | tojson }},
+    hrBackdropUnavailable: {{ _('Gaia reference stars are unavailable. The target is shown alone; try reloading the plot later.') | tojson }},
     debugPlotsApiUrl: '/api/data-portal/debug-plots',
     tcorrMapGenerateApiUrl: '/api/data-portal/tcorr-map-generate',
     finderMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='finder') | tojson }},
@@ -1241,7 +1243,7 @@ window.ARI_OBJECT_FIRST_LOAD = {
 </script>
 <script src="{{ url_for('static', filename='js/object_first_load.js', v='20261126c') }}" defer></script>
 {% endif %}
-<script src="{{ url_for('static', filename='js/object_page.js', v='20261126firstload2') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20261126hr1') }}" defer></script>
 <script>
 /* Plot-type constants – generated from Python; consumed by file_browser.js */
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};

@@ -512,6 +512,20 @@ def prefetch_20pc_neighborhood(cache_path: str) -> None:
     worker.start()
 
 
+def neighborhood_status(cache_path: str) -> Dict[str, bool]:
+    """Check shared backdrop readiness without waiting for the catalogue.
+
+    :param cache_path: Shared Gaia backdrop JSON path.
+    :return: Whether stars are available and a refresh is running.
+    """
+    items = load_or_query_20pc_neighborhood(cache_path=cache_path,
+                                              allow_query=False)
+    with _NEIGHBOR_LOCK:
+        worker = _NEIGHBOR_STATE['thread']
+        fetching = worker is not None and worker.is_alive()
+    return dict(ready=bool(items), fetching=fetching)
+
+
 def load_or_query_20pc_neighborhood(
     cache_path: Optional[str] = None,
     timeout: int = 60,
@@ -535,28 +549,30 @@ def load_or_query_20pc_neighborhood(
     import time as _time
 
     # --- read cache (only accept the v2 schema with bp_rp) ---
+    stale_items: List[Dict[str, float]] = []
     if cache_path and os.path.exists(cache_path):
         try:
             mtime = os.path.getmtime(cache_path)
             age_days = (_time.time() - mtime) / 86400.0
-            if age_days < NEIGHBOR_CACHE_TTL_DAYS:
-                with open(cache_path, 'r', encoding='utf-8') as fh:
-                    data = json.load(fh)
-                if isinstance(data, dict):
-                    items = data.get('items') or []
-                    if (isinstance(items, list) and items
-                            and isinstance(items[0], dict)
-                            and 'bp_rp' in items[0]
-                            and 'm_g' in items[0]):
-                        return [d for d in items
-                                if isinstance(d, dict)]
+            with open(cache_path, 'r', encoding='utf-8') as fh:
+                data = json.load(fh)
+            if isinstance(data, dict):
+                cached = data.get('items') or []
+                if (isinstance(cached, list) and cached
+                        and isinstance(cached[0], dict)
+                        and 'bp_rp' in cached[0]
+                        and 'm_g' in cached[0]):
+                    stale_items = [item for item in cached
+                                   if isinstance(item, dict)]
+                    if age_days < NEIGHBOR_CACHE_TTL_DAYS:
+                        return stale_items
         except Exception:
             pass
 
     if not allow_query:
         if cache_path:
             prefetch_20pc_neighborhood(cache_path)
-        return []
+        return stale_items
 
     # --- query Vizier (Gaia DR3 mirror, starometer-style) ---
     try:

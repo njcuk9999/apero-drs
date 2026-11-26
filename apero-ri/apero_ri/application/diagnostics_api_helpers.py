@@ -13,7 +13,8 @@ from flask import Response, jsonify, render_template, request, session
 
 from aperocore import drs_lang
 from apero_ri.base import base
-from apero_ri.core import audit_log, auth, diagnostic_tokens, diagnostics
+from apero_ri.core import audit_log, auth, diagnostic_jobs, diagnostic_tokens
+from apero_ri.core import diagnostics
 from apero_ri.core import permissions
 
 # =============================================================================
@@ -207,6 +208,8 @@ def admin_api(app: Any, action: str) -> Any:
     if not user or PERMISSION not in _perms(app, user):
         return _fail('forbidden', 403)
     profiles = _profiles(app, user)
+    root = Path(app._resolve_local_data_dir())
+    actor = user['username']
     if action == 'overview' and request.method == 'GET':
         rows = [dict(instrument=pair[0], profile_id=pair[1])
                 for pair in sorted(profiles)]
@@ -215,11 +218,79 @@ def admin_api(app: Any, action: str) -> Any:
                             host=request.host_url.rstrip('/'))
         response.headers['Cache-Control'] = 'no-store'
         return response
+    if action == 'latest' and request.method == 'GET':
+        job = diagnostic_jobs.latest(root, actor, set(profiles))
+        response = jsonify(success=True, job=job)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+    if action == 'job' and request.method == 'GET':
+        job_id = request.args.get('id', '')
+        job = diagnostic_jobs.get(root, actor, job_id)
+        if not job or (job['instrument'], job['profile_id']) not in profiles:
+            return _fail('job_not_found', 404)
+        report = diagnostic_jobs.result(root, actor, job_id)
+        response = jsonify(success=True, job=job, report=report)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
     if action in ('report', 'export', 'stream') and request.method == 'GET':
         return _report(app, profiles, user)
     body = request.get_json(silent=True)
     if request.method != 'POST' or not isinstance(body, dict):
         return _fail('invalid_request', 405)
+    if action == 'start':
+        instrument = body.get('instrument', '')
+        profile_id = body.get('profile_id', '')
+        if not isinstance(instrument, str) or not isinstance(profile_id, str):
+            return _fail('invalid_profile_identifier')
+        pair = (instrument, profile_id)
+        if pair not in profiles:
+            return _fail('profile_not_authorized', 403)
+        if not all(diagnostics.IDENTIFIER.fullmatch(value.replace('-', '_'))
+                   for value in pair):
+            return _fail('invalid_profile_identifier')
+        objname = body.get('objname', '')
+        pid = body.get('pid', '')
+        logs = body.get('include_logs', False)
+        database = body.get('include_database', True)
+        if not isinstance(objname, str) or not isinstance(pid, str):
+            return _fail('invalid_report_filter')
+        objname, pid = objname.strip(), pid.strip()
+        if ((objname and not diagnostics.OBJECT.fullmatch(objname))
+                or len(pid) > 160 or type(logs) is not bool
+                or type(database) is not bool):
+            return _fail('invalid_report_filter')
+        options = dict(objname=objname, pid=pid, include_logs=logs,
+                       include_database=database)
+
+        def collect(progress: Any) -> dict:
+            """Collect for the explicitly authorized profile.
+
+            :param progress: Callback storing completed stages.
+            :return: Redacted diagnostic report.
+            """
+            collect_args = [profiles[pair], instrument, profile_id, root]
+            collect_kwargs = dict(options, progress=progress)
+            return diagnostics.collect(*collect_args, **collect_kwargs)
+
+        def audit(report: dict) -> None:
+            """Record the completed profile report without its contents.
+
+            :param report: Completed report metadata.
+            :return: None.
+            """
+            detail = dict(instrument=instrument, grant_id='',
+                          filters=report['filters'])
+            audit_log.record(actor, 'diagnostics.report', profile_id, detail)
+
+        try:
+            job_args = [root, actor, instrument, profile_id, options,
+                        collect, audit]
+            job, reused = diagnostic_jobs.start(*job_args)
+        except ValueError:
+            return _fail('diagnostic_job_already_running', 409)
+        response = jsonify(success=True, job=job, reused=reused)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
     if action == 'issue':
         selected = body.get('profiles')
         if not isinstance(selected, list):

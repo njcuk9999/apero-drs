@@ -211,7 +211,10 @@ def test_app_records_only_successful_page_navigations(
                      'Sec-Fetch-Dest': 'empty'}
     assert client.get('/two', headers=fetch_headers).status_code == 200
     assert client.get('/fail', headers=headers).status_code == 500
-    assert client.get('/api/poll').status_code == 200
+    response = client.get('/api/poll')
+    assert response.status_code == 200
+    assert response.headers['Server-Timing'].startswith('ari;dur=')
+    assert float(response.headers['Server-Timing'].split('=')[1]) >= 0
     assert stats.summary(tmp_path)['total_user_days'] == 0
     assert client.get('/two', headers=headers).status_code == 200
     result = stats.summary(tmp_path)

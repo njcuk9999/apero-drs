@@ -1,6 +1,7 @@
 (function () {
     'use strict';
     var profiles = [], host = '', busy = false, report = null;
+    var activeJob = null, pollTimer = null;
     var text = window.ARI_DIAGNOSTICS_TEXT;
     function element(id) { return document.getElementById('diag-' + id); }
     function status(message) { element('status').textContent = message || ''; }
@@ -80,51 +81,93 @@
     }
     function showProgress(event) {
         var percentage = event.total > 0 ? Math.floor(event.completed * 100 / event.total) : 0;
+        var stage = String(event.stage || ''), colon = stage.indexOf(':');
+        var name = colon < 0 ? stage : stage.slice(0, colon);
         element('progress-bar').value = percentage;
         element('progress-percent').textContent = percentage + '%';
-        element('progress-stage').textContent = text[event.stage] || event.stage;
+        var elapsed = Number.isFinite(event.stage_elapsed_s)
+            ? ' (' + event.stage_elapsed_s + ' s)' : '';
+        element('progress-stage').textContent = (text[name] || name)
+            + (colon < 0 ? '' : ' - ' + stage.slice(colon + 1)) + elapsed;
+    }
+    function setBusy(value) {
+        busy = value;
+        element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = value; });
+    }
+    function restoreJob(job) {
+        var index = profiles.findIndex(function (profile) {
+            return profile.instrument === job.instrument && profile.profile_id === job.profile_id;
+        });
+        if (index < 0) { return false; }
+        element('report-profile').value = String(index);
+        element('object').value = job.options.objname;
+        element('pid').value = job.options.pid;
+        element('logs').checked = job.options.include_logs;
+        element('database').checked = job.options.include_database;
+        element('progress').hidden = false;
+        element('progress-profile').textContent = job.instrument + ' / ' + job.profile_id;
+        showProgress(job);
+        activeJob = job.id;
+        return true;
+    }
+    async function pollJob(jobId) {
+        if (activeJob !== jobId) { return; }
+        try {
+            var data = await api('job?id=' + encodeURIComponent(jobId));
+            if (activeJob !== jobId) { return; }
+            showProgress(data.job);
+            if (data.job.status === 'running') {
+                setBusy(true); reportStatus(text.collecting);
+                pollTimer = window.setTimeout(function () { pollJob(jobId); }, 2000);
+                return;
+            }
+            setBusy(false);
+            if (data.job.status === 'completed' && data.report) {
+                report = data.report;
+                element('report').textContent = JSON.stringify(report, null, 2);
+                element('progress-stage').textContent = text.ready;
+                reportStatus(text.ready);
+                return;
+            }
+            report = null;
+            var message = data.job.status === 'interrupted' ? text.interrupted : text.failed;
+            element('progress-stage').textContent = message;
+            reportStatus(message);
+        } catch (error) {
+            setBusy(false);
+            element('progress-stage').textContent = text.disconnected;
+            reportStatus(text.disconnected);
+        }
+    }
+    async function resume() {
+        var data = await api('latest');
+        if (!data.job || !restoreJob(data.job)) { return; }
+        setBusy(true);
+        reportStatus(text.collecting);
+        await pollJob(data.job.id);
     }
     async function collect() {
         if (busy) { return; }
         var params = query(); if (!params) { return; }
-        busy = true; report = null;
+        if (pollTimer) { window.clearTimeout(pollTimer); pollTimer = null; }
+        activeJob = null; report = null;
+        setBusy(true);
         element('report').textContent = '';
         element('progress').hidden = false;
         element('progress-profile').textContent = params.get('instrument') + ' / ' + params.get('profile_id');
         showProgress({stage: 'runtime', completed: 0, total: 1});
         reportStatus(text.collecting);
-        element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = true; });
         try {
-            var response = await fetch('/api/admin/diagnostics/stream?' + params);
-            if (!response.ok) { var failure = await response.json(); throw new Error(failure.error); }
-            if (!response.body) { throw new Error(text.failed); }
-            var reader = response.body.getReader(), decoder = new TextDecoder(), pending = '';
-            var complete = false;
-            while (true) {
-                var part = await reader.read();
-                pending += decoder.decode(part.value || new Uint8Array(), {stream: !part.done});
-                var lines = pending.split('\n'); pending = lines.pop();
-                for (var index = 0; index < lines.length; index += 1) {
-                    if (!lines[index]) { continue; }
-                    var event = JSON.parse(lines[index]);
-                    if (event.type === 'progress') { showProgress(event); }
-                    if (event.type === 'error') { throw new Error(text.failed); }
-                    if (event.type === 'report') {
-                        report = event.report; complete = true;
-                        element('report').textContent = JSON.stringify(report, null, 2);
-                    }
-                }
-                if (part.done) { break; }
-            }
-            if (!complete) { throw new Error(text.failed); }
-            element('progress-stage').textContent = text.ready;
-            reportStatus(text.ready);
+            var body = {instrument: params.get('instrument'), profile_id: params.get('profile_id'),
+                objname: params.get('objname'), pid: params.get('pid'),
+                include_logs: params.get('logs') === '1', include_database: params.get('database') === '1'};
+            var data = await api('start', body);
+            if (!restoreJob(data.job)) { throw new Error(text.failed); }
+            await pollJob(data.job.id);
         } catch (error) {
             report = null; element('progress-stage').textContent = text.failed;
             reportStatus(error.message || text.failed);
-        } finally {
-            busy = false;
-            element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = false; });
+            setBusy(false);
         }
     }
     async function downloadReport() {
@@ -147,7 +190,7 @@
         } catch (error) { reportStatus(error.message || text.failed); }
     }
     document.addEventListener('DOMContentLoaded', function () {
-        overview().catch(function (error) { status(error.message); });
+        overview().then(resume).catch(function (error) { status(error.message); });
         element('grant-form').onsubmit = async function (event) {
             event.preventDefault();
             try {

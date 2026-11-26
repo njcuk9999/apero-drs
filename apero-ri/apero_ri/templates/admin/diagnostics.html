@@ -89,9 +89,11 @@ window.ARI_DIAGNOSTICS_TEXT = {{ {
     'first': _('Collect a report before exporting.'),
     'collecting': _('Collection in progress. Export is available when it finishes.'),
     'failed': _('Report collection failed. Please try again.'),
+    'interrupted': _('The server stopped during collection. Please collect again.'),
+    'disconnected': _('Could not check the collection. Refresh to reconnect.'),
     'download': _('Preparing download...'),
     'copy': _('Copy unavailable; select the text.'),
 } | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126b') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126e') }}"></script>
 {% endblock %}

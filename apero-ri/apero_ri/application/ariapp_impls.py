@@ -80,6 +80,7 @@ log = get_logger(__name__)
 from flask import (
     Flask,
     flash,
+    g,
     jsonify,
     redirect,
     render_template,
@@ -1324,6 +1325,14 @@ def ariapp_configure_production_hardening(self: Any) -> None:
         static_cache_s = 604800
     static_cache_s = max(0, static_cache_s)
 
+    @self.before_request
+    def _start_request_timing() -> None:
+        """Record the time ARI begins handling this request.
+
+        :return: None.
+        """
+        g.ari_request_start = time.perf_counter()
+
     # --- Security headers on every response --------------------------------
     @self.after_request
     def _security_headers(response: Any) -> Any:
@@ -1378,6 +1387,10 @@ def ariapp_configure_production_hardening(self: Any) -> None:
                         country=country, region=region)
             except Exception as exc:  # noqa: BLE001
                 log.debug('Could not record user activity: %s', exc)
+        started = getattr(g, 'ari_request_start', None)
+        if started is not None:
+            duration_ms = max(0.0, (time.perf_counter() - started) * 1000)
+            hdrs.add('Server-Timing', f'ari;dur={duration_ms:.2f}')
         return response
 
 

@@ -1484,6 +1484,8 @@ def api_object_plots(app: Any) -> _ApiResponse:
         if vsys_ms is None
         else f"{plot_group}__{objname}__vsys{vsys_ms}__{rid_tag}"
     )
+    if plot_group in {'all', 'target_info'}:
+        cache_key += '__hrbackdrop_v2'
     if plot_group in {"all", "ccf", "ccf_profile"} and (
         ccf_mjd_start is not None or ccf_mjd_end is not None
     ):
@@ -1495,6 +1497,12 @@ def api_object_plots(app: Any) -> _ApiResponse:
         cache_key += f"__ccfnobs_{int(ccf_nobs)}"
     if plot_group in {"all", "time_series"}:
         cache_key += "__tsaxis_v2"
+    if (plot_group == 'target_info'
+            and request.args.get('neighborhood_status') == '1'):
+        from apero_ri.plots import plot_obj_targetinfo as _pti
+
+        cache_path = _pti.neighborhood_cache_path(base_dir)
+        return jsonify(success=True, **_pti.neighborhood_status(cache_path))
     # Fold the active theme into the cache key so dark/light don't
     # serve each other's cached light-bg payloads.
     try:
@@ -1702,6 +1710,8 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 allow_query=False)
             # Do not persist an HR diagram still missing its backdrop.
             cacheable = bool(neighborhood)
+        result['hr_backdrop_ready'] = bool(neighborhood)
+        result['hr_backdrop_expected'] = bool(yaml_entry)
         result["sed"] = _timed_build(
             "sed",
             lambda: build_sed_plot_json(yaml_entry),

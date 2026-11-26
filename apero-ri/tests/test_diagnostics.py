@@ -134,6 +134,133 @@ def test_collector_reports_actual_progress(
     assert 'log_tails' not in [event[0] for event in events]
 
 
+def test_manifest_progress_reports_task_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Manifest checking identifies each task without changing the count.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.core import diagnostics
+
+    monkeypatch.setattr(diagnostics.auth, 'load_async_tasks', lambda: dict())
+    monkeypatch.setattr(diagnostics, '_queues', lambda *args: dict())
+    monkeypatch.setattr(diagnostics.apero_sync, 'local_task_keys',
+                        lambda: ['APERO_OBJECT_QUERY'])
+    events = []
+    profile = dict(paths=dict(PATH_OTHER=str(tmp_path)))
+    diagnostics.collect(profile, 'SPIROU', 'mini', tmp_path,
+                        include_database=False, progress=lambda *event: (
+                            events.append(event)))
+    assert ('manifests:APERO_OBJECT_QUERY', 4, 8) in events
+
+
+def test_background_job_reconnect_and_isolation(tmp_path: Path) -> None:
+    """A disconnected browser can recover one private in-progress job.
+
+    :param tmp_path: Isolated ARI data root.
+    :return: None.
+    """
+    import threading
+    from apero_ri.core import diagnostic_jobs
+
+    running = threading.Event()
+    release = threading.Event()
+
+    def collect(progress: object) -> dict:
+        """Pause at a visible stage until the test releases the worker.
+
+        :param progress: Stage callback.
+        :return: Synthetic report.
+        """
+        progress('manifests', 4, 10)
+        running.set()
+        assert release.wait(5)
+        return dict(filters=dict(), profile_id='mini')
+
+    options = dict(objname='GL699', pid='', include_logs=True,
+                   include_database=True)
+    start_args = [tmp_path, 'alice', 'SPIROU', 'mini', options, collect,
+                  lambda report: None]
+    state, reused = diagnostic_jobs.start(*start_args)
+    try:
+        assert not reused and running.wait(5)
+        allowed = {('SPIROU', 'mini')}
+        resumed = diagnostic_jobs.latest(tmp_path, 'alice', allowed)
+        assert resumed['id'] == state['id']
+        assert resumed['stage'] == 'manifests'
+        assert resumed['completed'] == 4
+        assert resumed['stage_elapsed_s'] >= 0
+        assert diagnostic_jobs.get(tmp_path, 'bob', state['id']) is None
+        assert diagnostic_jobs.latest(tmp_path, 'alice', set()) is None
+        duplicate, reused = diagnostic_jobs.start(*start_args)
+        assert reused and duplicate['id'] == state['id']
+        with pytest.raises(ValueError):
+            different = dict(options, objname='other')
+            diagnostic_jobs.start(tmp_path, 'alice', 'SPIROU', 'mini',
+                                  different, collect, lambda report: None)
+    finally:
+        release.set()
+
+
+def test_background_job_detects_server_interruption(tmp_path: Path) -> None:
+    """An abandoned worker lock is reported as interrupted, not running.
+
+    :param tmp_path: Isolated ARI data root.
+    :return: None.
+    """
+    import time
+    from apero_ri.core import diagnostic_jobs
+
+    directory = diagnostic_jobs._directory(tmp_path, 'alice')
+    job_id = 'a' * 32
+    state = dict(id=job_id, instrument='SPIROU', profile_id='mini',
+                 options=dict(), created=time.time(),
+                 status='running', stage='paths', completed=2, total=8)
+    diagnostic_jobs._write(directory / (job_id + '.json'), state)
+    restored = diagnostic_jobs.get(tmp_path, 'alice', job_id)
+    assert restored['status'] == 'interrupted'
+    assert diagnostic_jobs.result(tmp_path, 'alice', job_id) is None
+
+
+def test_job_completion_wins_lock_release_race(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Re-read state when a worker finishes between status and lock checks.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import time
+    from apero_ri.core import diagnostic_jobs
+
+    directory = diagnostic_jobs._directory(tmp_path, 'alice')
+    job_id = 'b' * 32
+    path = directory / (job_id + '.json')
+    state = dict(id=job_id, instrument='SPIROU', profile_id='mini',
+                 options=dict(), created=time.time(), status='running',
+                 stage='finalize', completed=7, total=8)
+    diagnostic_jobs._write(path, state)
+
+    def finished(directory: Path, identifier: str) -> bool:
+        """Publish completion just before the lock check returns.
+
+        :param directory: Actor's job directory.
+        :param identifier: Job identifier.
+        :return: False because the worker has released its lock.
+        """
+        state['status'] = 'completed'
+        diagnostic_jobs._write(directory / (identifier + '.json'), state)
+        return False
+
+    monkeypatch.setattr(diagnostic_jobs, '_is_running', finished)
+    assert diagnostic_jobs.get(tmp_path, 'alice', job_id)['status'] == (
+        'completed')
+
+
 def test_diagnostic_api_scope_and_permission_changes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -372,6 +499,83 @@ def test_admin_stream_reports_progress_and_enforces_scope(
     assert client.get(path + 'private').status_code == 403
     monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: None)
     assert client.get(path + 'mini').status_code == 403
+
+
+def test_admin_background_job_survives_refresh(
+    app: object, client: object, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A fresh page can recover the same job and its finished report.
+
+    :param app: Isolated ARI application fixture.
+    :param client: Flask test client.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import threading
+    from apero_ri.application import diagnostics_api_helpers as api
+
+    user = dict(username='diagnostics-resume', groups=['super_admin'])
+    monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: user)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    monkeypatch.setattr(api.audit_log, 'record', lambda *args, **kwargs: None)
+    started = threading.Event()
+    release = threading.Event()
+    finished = threading.Event()
+    original_write = api.diagnostic_jobs._write
+
+    def write(path: Path, payload: dict) -> None:
+        """Signal after the terminal job record is published.
+
+        :param path: Job record path.
+        :param payload: Job metadata or report.
+        :return: None.
+        """
+        original_write(path, payload)
+        if payload.get('status') == 'completed':
+            finished.set()
+
+    monkeypatch.setattr(api.diagnostic_jobs, '_write', write)
+
+    def collect(*args: object, **kwargs: object) -> dict:
+        """Hold the collection open across a new status request.
+
+        :param args: Collector positional arguments.
+        :param kwargs: Collector options and callback.
+        :return: Synthetic report.
+        """
+        kwargs['progress']('manifests', 4, 10)
+        started.set()
+        assert release.wait(5)
+        return dict(filters=dict(), profile_id='mini')
+
+    monkeypatch.setattr(api.diagnostics, 'collect', collect)
+    body = dict(instrument='SPIROU', profile_id='mini', objname='GL699',
+                include_logs=True, include_database=True)
+    response = client.post('/api/admin/diagnostics/start', json=body)
+    job_id = response.json['job']['id']
+    try:
+        assert response.status_code == 200 and started.wait(5)
+        response = client.get('/api/admin/diagnostics/latest')
+        assert response.json['job']['id'] == job_id
+        assert response.json['job']['stage'] == 'manifests'
+        response = client.post('/api/admin/diagnostics/start', json=body)
+        assert response.json['reused'] and response.json['job']['id'] == job_id
+        monkeypatch.setattr(api, '_profiles', lambda app, user: dict())
+        response = client.get('/api/admin/diagnostics/job?id=' + job_id)
+        assert response.status_code == 404
+    finally:
+        release.set()
+        assert finished.wait(5)
+    monkeypatch.setattr(api, '_profiles', lambda app, user: {
+        ('SPIROU', 'mini'): dict(paths=dict())})
+    response = client.get('/api/admin/diagnostics/job?id=' + job_id)
+    assert response.json['job']['status'] == 'completed'
+    assert response.json['job']['completed'] == response.json['job']['total']
+    assert response.json['report']['profile_id'] == 'mini'
+    directory = api.diagnostic_jobs._directory(
+        Path(app._resolve_local_data_dir()), user['username'])
+    assert (directory / (job_id + '.report')).stat().st_mode & 0o777 == 0o600
 
 
 def test_admin_stream_sends_progress_before_collection_finishes(

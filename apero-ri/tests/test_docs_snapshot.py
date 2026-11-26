@@ -122,3 +122,92 @@ def test_neighborhood_never_blocks_request(
         cache_path=cache_path, allow_query=False)
     assert items == []
     assert started == [cache_path]
+
+
+def test_stale_neighborhood_remains_available(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Use a valid stale shared backdrop while refresh runs or fails.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import json
+    import os
+    import time
+
+    assert dev is not None
+    path = Path(plot_obj_targetinfo.neighborhood_cache_path(tmp_path))
+    path.parent.mkdir(parents=True)
+    stars = [dict(bp_rp=1.2, m_g=5.0)]
+    path.write_text(json.dumps(dict(items=stars)), encoding='utf-8')
+    age_days = plot_obj_targetinfo.NEIGHBOR_CACHE_TTL_DAYS + 1
+    old = time.time() - age_days * 86400
+    os.utime(path, (old, old))
+    started = []
+    monkeypatch.setattr(plot_obj_targetinfo, 'prefetch_20pc_neighborhood',
+                        started.append)
+    result = plot_obj_targetinfo.load_or_query_20pc_neighborhood(
+        cache_path=str(path), allow_query=False)
+    assert result == stars
+    assert started == [str(path)]
+
+
+def test_neighborhood_status_uses_shared_cache(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Status is nonblocking and reflects a successful background refresh.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import json
+
+    assert dev is not None
+    path = Path(plot_obj_targetinfo.neighborhood_cache_path(tmp_path))
+    started = []
+    monkeypatch.setattr(plot_obj_targetinfo, 'prefetch_20pc_neighborhood',
+                        started.append)
+    monkeypatch.setitem(plot_obj_targetinfo._NEIGHBOR_STATE, 'thread', None)
+    status = plot_obj_targetinfo.neighborhood_status(str(path))
+    assert not status['ready'] and not status['fetching']
+    assert started == [str(path)]
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(dict(items=[dict(bp_rp=1.0, m_g=5.0)])))
+    status = plot_obj_targetinfo.neighborhood_status(str(path))
+    assert status['ready'] and not status['fetching']
+    assert started == [str(path)]
+
+
+def test_hr_status_endpoint_requires_profile_access(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The lightweight HR status query honors profile authorization.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from flask import Flask
+    from types import SimpleNamespace
+    from apero_ri.application import data_portal_api_helpers as api
+
+    app = Flask(__name__)
+    app.args = SimpleNamespace(data_dir=str(tmp_path))
+    app.ari_groups = dict()
+    app._get_api_user = lambda: dict(groups=['admin'])
+    app._get_user_accessible_run_ids = lambda user, instrument: set()
+    app._rid_cache_tag = lambda run_ids: 'test'
+    monkeypatch.setattr(api, 'resolve_user_permissions',
+                        lambda groups, definitions: {'view.data_portal'})
+    monkeypatch.setattr(api, 'get_accessible_profiles', lambda user, groups: [
+        dict(profile_id='mini', instrument='SPIROU', data=dict())])
+    monkeypatch.setattr(plot_obj_targetinfo, 'neighborhood_status',
+                        lambda path: dict(ready=True, fetching=False))
+    app.add_url_rule('/plots', view_func=lambda: api.api_object_plots(app))
+    client = app.test_client()
+    url = '/plots?profile_id=mini&objname=GL699&plot_group=target_info'
+    response = client.get(url + '&neighborhood_status=1')
+    assert response.status_code == 200 and response.json['ready']
+    response = client.get(url.replace('mini', 'private')
+                          + '&neighborhood_status=1')
+    assert response.status_code == 404

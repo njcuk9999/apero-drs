@@ -101,6 +101,7 @@
     var lblPlotsState     = 'idle';   // idle | loading | loaded
     var debugPlotsState   = 'idle';   // idle | loading | loaded
     var backgroundPrefetchStarted = false;
+    var hrBackdropTimer = null;
     var plotLastUpdatedByKey = {};
     var plotReloadingByKey = {};
     var yAxisZoomByDiv = {};
@@ -3000,6 +3001,41 @@
             'HR diagram unavailable for this target.');
     }
 
+    function updateHrBackdrop(data) {
+        var status = document.getElementById('op-hr-background-status');
+        if (hrBackdropTimer) window.clearTimeout(hrBackdropTimer);
+        hrBackdropTimer = null;
+        if (!status) return;
+        if (!data.hr_backdrop_expected || data.hr_backdrop_ready) {
+            status.hidden = true;
+            return;
+        }
+        status.hidden = false;
+        status.textContent = cfg.hrBackdropLoading;
+        function check() {
+            var url = cfg.objectPlotsApiUrl + '?profile_id='
+                + encodeURIComponent(cfg.profileId)
+                + '&objname=' + encodeURIComponent(cfg.objname)
+                + '&plot_group=target_info&neighborhood_status=1';
+            fetch(url).then(function (response) {
+                if (!response.ok) throw new Error('status');
+                return response.json();
+            }).then(function (result) {
+                if (result.ready) {
+                    status.hidden = true;
+                    loadObjectPlots('target_info', true);
+                } else if (result.fetching) {
+                    hrBackdropTimer = window.setTimeout(check, 5000);
+                } else {
+                    status.textContent = cfg.hrBackdropUnavailable;
+                }
+            }).catch(function () {
+                status.textContent = cfg.hrBackdropUnavailable;
+            });
+        }
+        hrBackdropTimer = window.setTimeout(check, 5000);
+    }
+
     function renderBervPlot(payload) {
         embedOrDefer('op-berv-plot-div', payload, 'No BERV data available.');
     }
@@ -3325,11 +3361,14 @@
         if (!(group in objectPlotsState)) {
             return;
         }
+        if (objectPlotsState[group] === 'loading') {
+            if (activePlotKey) setPlotReloading(activePlotKey, false);
+            return;
+        }
         if (forceReload) {
             objectPlotsState[group] = 'idle';
         }
-        if (objectPlotsState[group] === 'loading'
-                || objectPlotsState[group] === 'loaded') {
+        if (objectPlotsState[group] === 'loaded') {
             return;
         }
         objectPlotsState[group] = 'loading';
@@ -3390,6 +3429,7 @@
                 } else if (group === 'target_info') {
                     renderSedPlot(data.sed || null);
                     renderHrPlot(data.hr || null);
+                    updateHrBackdrop(data);
                 }
                 var updated = payloadUpdatedDateLabel(data) || currentUtcDateLabel();
                 if (group === 'spectrum') {

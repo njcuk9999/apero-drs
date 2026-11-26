@@ -53,6 +53,14 @@ not bypass a firewall, VPN, or an independent front-end password.
   an estimate of elapsed time. **Export** downloads the completed report
   without collecting it again, as gzipped JSON when supported by the browser
   or plain JSON otherwise. Collect again after changing the report options.
+  Collection continues on the ARI server if you refresh or leave this page;
+  returning to the page restores your most recent accessible job and result.
+  A server restart interrupts an active collection, which must be started
+  again. Completed reports are accessible for 24 hours to their owner while
+  that owner retains access to the profile.
+  The current stage shows elapsed seconds and, for manifests, the task name;
+  a slow filesystem or queue connection can leave one stage active for a
+  long time without changing the percentage.
 - **Object** is an optional exact APERO object name, for example `GL699`.
   When supplied, the report inspects that object's cached tables and, when
   live database queries succeed, indexed product examples, product paths,
@@ -98,6 +106,18 @@ stores and statistics, recent LogDatabase records, and bounded queue log
 excerpts. A profile/instrument mismatch is reported instead of exporting the
 other profile's queue details. The queue diagnostic endpoint remains local to
 the queue host and its SSH forward; do not expose the queue GUI publicly.
+
+## Slow Requests
+
+In browser developer tools, open **Network**, reload the affected page, and
+select a slow document or API request. Compare its total duration with the
+`Server-Timing: ari;dur=...` response header, measured in milliseconds. ARI
+measures from the start of its request handler until response headers are
+prepared; it does not include time waiting for a worker, network/proxy delays,
+or the full body of a streamed response. A large ARI duration points to work
+inside ARI, while a much larger browser duration can indicate queuing, network,
+proxy or body-transfer time. Compare multiple requests rather than assuming a
+single delay identifies the cause.
 
 Reports are credential-redacted but may contain scientific metadata, file
 paths, hostnames, usernames, FITS headers, and log excerpts. Review and share

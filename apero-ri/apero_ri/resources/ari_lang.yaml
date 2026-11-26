@@ -4,6 +4,12 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+"Loading shared Gaia reference stars...":
+  FR: Chargement des étoiles de référence Gaia partagées...
+  ES: Cargando estrellas de referencia Gaia compartidas...
+"Gaia reference stars are unavailable. The target is shown alone; try reloading the plot later.":
+  FR: Les étoiles de référence Gaia sont indisponibles. La cible est affichée seule ; réessayez de recharger le graphique plus tard.
+  ES: Las estrellas de referencia Gaia no están disponibles. Se muestra solo el objeto; intente recargar el gráfico más tarde.
 "Report collection progress":
   FR: Progression de la collecte du rapport
   ES: Progreso de la recopilación del informe
@@ -55,6 +61,12 @@
 "Report collection failed. Please try again.":
   FR: La collecte du rapport a échoué. Veuillez réessayer.
   ES: La recopilación del informe falló. Vuelva a intentarlo.
+"The server stopped during collection. Please collect again.":
+  FR: Le serveur s'est arrêté pendant la collecte. Veuillez la relancer.
+  ES: El servidor se detuvo durante la recopilación. Vuelva a iniciarla.
+"Could not check the collection. Refresh to reconnect.":
+  FR: Impossible de vérifier la collecte. Actualisez pour vous reconnecter.
+  ES: No se pudo comprobar la recopilación. Actualice para reconectar.
 "Preparing download...":
   FR: Préparation du téléchargement...
   ES: Preparando descarga...
