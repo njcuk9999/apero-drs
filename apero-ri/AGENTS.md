@@ -23,9 +23,10 @@ apero_ri_debug --host=https://ari.example --key \
   supplied privately by the user. Never print that environment variable.
 - Keys last at most 24 hours, can be revoked immediately, and permit only
   read-only diagnostic reports for the profiles explicitly selected.
-- HTTPS is required except for a loopback SSH tunnel. A token does not
-  bypass network reachability, VPN rules, or front-end authentication. Do
-  not disable TLS verification or recommend exposing the queue GUI.
+- HTTP and HTTPS are supported. HTTP exposes the token and report to network
+  observers; recommend HTTPS or an SSH tunnel on untrusted networks. A token
+  does not bypass network reachability, VPN rules, or front-end authentication.
+  Do not disable TLS verification or recommend exposing the queue GUI.
 - If the user has privately configured `APERO_RI_DEBUG_KEY` in the terminal
   available to this session and authorized collection, run the CLI directly
   using the non-secret URL and filters. Otherwise let the user enter the key

@@ -198,14 +198,14 @@ restarting the ARI server and queue GUI to load the new endpoints. Existing
 queue monitor functionality is unchanged. Before deploying to production,
 run the diagnostics tests and collect a report against your own profile.
 
-Direct client access requires HTTPS and network reachability. For a private
-service, use an approved SSH tunnel and a local URL such as
-`http://127.0.0.1:15000`. Plain HTTP to remote addresses, redirects, URL
-credentials, and disabled certificate verification are not supported. A
-key cannot bypass a firewall/VPN or a separate front-end password. Behind
-a trusted TLS-terminating proxy, configure ARI's existing proxy-count
-setting so Flask recognizes HTTPS. Do not expose the unauthenticated queue
-GUI publicly. Admin key issuance also requires HTTPS or a loopback tunnel.
+Direct client access supports HTTP or HTTPS and requires network reachability.
+HTTP transmits diagnostic keys and reports unencrypted; anyone able to observe
+the connection can reuse a key until it expires or is revoked. HTTPS or an
+approved SSH tunnel is recommended, particularly on untrusted networks. An
+SSH tunnel can be accessed using a local URL such as `http://127.0.0.1:15000`.
+Redirects, URL credentials, and disabled certificate verification are not
+supported. A key cannot bypass a firewall/VPN or a separate front-end
+password. Do not expose the unauthenticated queue GUI publicly.
 
 Read-only token endpoints:
 

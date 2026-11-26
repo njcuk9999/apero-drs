@@ -38,22 +38,6 @@ def _fail(code: str, status: int = 400) -> tuple[Any, int]:
     return jsonify(success=False, error=str(message), code=code), status
 
 
-def _secure_transport() -> bool:
-    """Accept HTTPS or an actual loopback connection with a loopback host.
-
-    :return: Whether bearer credentials can be handled by this request.
-    """
-    import ipaddress
-
-    if request.is_secure:
-        return True
-    try:
-        local = ipaddress.ip_address(request.remote_addr or '').is_loopback
-    except ValueError:
-        local = False
-    return local and request.host.split(':')[0] in ('localhost', '127.0.0.1')
-
-
 def _perms(app: Any, user: dict) -> set:
     """Resolve current permissions for an administrator or grant issuer.
 
@@ -159,8 +143,6 @@ def admin_api(app: Any, action: str) -> Any:
     if request.method != 'POST' or not isinstance(body, dict):
         return _fail('invalid_request', 405)
     if action == 'issue':
-        if not _secure_transport():
-            return _fail('https_required', 403)
         selected = body.get('profiles')
         if not isinstance(selected, list):
             return _fail('invalid_profile_scope')
@@ -195,8 +177,6 @@ def api(app: Any, action: str) -> Any:
     :param action: Fixed profiles, report, or export action.
     :return: Scoped diagnostic response; never a proxy to management APIs.
     """
-    if not _secure_transport():
-        return _fail('https_required', 403)
     header = request.headers.get('Authorization', '')
     grant = diagnostic_tokens.validate(header[7:]) if header.startswith(
         'Bearer ') else None

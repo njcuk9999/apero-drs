@@ -4,6 +4,45 @@
 # ({{ _('...') }} or the |tl filter, e.g. page labels from pages.yaml).
 # Values: FR / ES translations. Missing entries fall back to English.
 # Keep {name} placeholders unchanged in every translation.
+"Diagnostics guide":
+  FR: Guide des diagnostics
+  ES: Guía de diagnósticos
+"Profile scope":
+  FR: Portée des profils
+  ES: Alcance de los perfiles
+"Key and remote access guide":
+  FR: Guide des clés et de l'accès à distance
+  ES: Guía de claves y acceso remoto
+"Report options and contents":
+  FR: Options et contenu du rapport
+  ES: Opciones y contenido del informe
+"Collect read-only diagnostics for an APERO profile or grant temporary access to a trusted collaborator investigating a problem.":
+  FR: Recueillez des diagnostics en lecture seule pour un profil APERO ou accordez un accès temporaire à un collaborateur de confiance qui examine un problème.
+  ES: Recopile diagnósticos de solo lectura para un perfil APERO o conceda acceso temporal a un colaborador de confianza que investigue un problema.
+"Inspect a profile to investigate missing products, slow pages, processing failures, or queue statistics. Reports are read-only and do not rerun processing or refresh caches.":
+  FR: Examinez un profil pour comprendre les produits manquants, les pages lentes, les échecs de traitement ou les statistiques de file. Les rapports sont en lecture seule et ne relancent ni les traitements ni les caches.
+  ES: Examine un perfil para investigar productos ausentes, páginas lentas, fallos de procesamiento o estadísticas de cola. Los informes son de solo lectura y no ejecutan procesos ni actualizan cachés.
+"Select the profiles a diagnostic key may access. The report below uses its own profile selector; selecting a profile here does not collect a report.":
+  FR: Sélectionnez les profils accessibles à une clé de diagnostic. Le rapport ci-dessous possède son propre sélecteur ; cette sélection ne crée pas de rapport.
+  ES: Seleccione los perfiles accesibles con una clave de diagnóstico. El informe inferior tiene su propio selector; esta selección no genera ningún informe.
+"Generate a key only when a trusted collaborator needs to collect diagnostics from this ARI server. It grants read-only access to the selected profiles, expires after 1 to 24 hours, and can be revoked here. A key is not needed to collect a report on this page.":
+  FR: Générez une clé uniquement lorsqu'un collaborateur de confiance doit recueillir des diagnostics sur ce serveur ARI. Elle donne un accès en lecture seule aux profils sélectionnés, expire après 1 à 24 heures et peut être révoquée ici. Aucune clé n'est nécessaire pour créer un rapport sur cette page.
+  ES: Genere una clave solo cuando un colaborador de confianza necesite recopilar diagnósticos de este servidor ARI. Concede acceso de solo lectura a los perfiles seleccionados, caduca entre 1 y 24 horas y se puede revocar aquí. No se necesita una clave para generar un informe en esta página.
+"The key is shown once. Share it privately, never in chat or a URL; the local command prompts for it without displaying it. HTTP sends keys and reports unencrypted, so use HTTPS or an SSH tunnel on untrusted networks.":
+  FR: La clé ne s'affiche qu'une fois. Transmettez-la en privé, jamais dans une conversation ni une URL ; la commande locale la demande sans l'afficher. HTTP transmet les clés et rapports sans chiffrement ; utilisez HTTPS ou un tunnel SSH sur les réseaux non fiables.
+  ES: La clave se muestra una sola vez. Compártala de forma privada, nunca por chat ni en una URL; el comando local la solicita sin mostrarla. HTTP transmite claves e informes sin cifrar; use HTTPS o un túnel SSH en redes no fiables.
+"A report includes profile configuration and paths, cache and task state, manifests, and available linked queue diagnostics. With live database enabled it also includes indexed product counts and recent recipe records. Credentials are redacted; reports may still contain sensitive paths, logs, and science metadata.":
+  FR: Un rapport comprend la configuration et les chemins du profil, l'état des caches et des tâches, les manifestes et les diagnostics disponibles des files associées. Avec la base active, il comprend aussi les nombres de produits indexés et les recettes récentes. Les identifiants sont masqués, mais les chemins, journaux et métadonnées scientifiques peuvent être sensibles.
+  ES: Un informe incluye configuración y rutas del perfil, estado de cachés y tareas, manifiestos y diagnósticos disponibles de colas vinculadas. Con la base activa incluye también recuentos de productos indexados y recetas recientes. Se ocultan las credenciales, pero las rutas, registros y metadatos científicos pueden ser sensibles.
+"Object is an exact name. Leave it blank for profile-wide product counts without per-object tables or FITS samples. Recipe PID is an exact process identifier; leave it blank for the most recent recipe records.":
+  FR: Objet est un nom exact. Laissez-le vide pour les nombres de produits du profil sans tableaux par objet ni échantillons FITS. PID de recette est un identifiant exact ; laissez-le vide pour les recettes les plus récentes.
+  ES: Objeto es un nombre exacto. Déjelo vacío para obtener recuentos del perfil sin tablas por objeto ni muestras FITS. PID de receta es un identificador exacto; déjelo vacío para las recetas más recientes.
+"Include Log Tails adds up to three bounded, redacted recipe log excerpts selected from database records. It needs Live Database and accessible log files. Linked queue diagnostics may include their own bounded log excerpts regardless of this setting.":
+  FR: Inclure les extraits de journaux ajoute jusqu'à trois extraits limités et masqués sélectionnés dans la base. Cette option nécessite la base active et des fichiers accessibles. Les diagnostics des files associées peuvent inclure leurs propres extraits limités même si cette option est désactivée.
+  ES: Incluir finales de registros añade hasta tres fragmentos limitados y depurados seleccionados de la base. Requiere la base activa y archivos accesibles. Los diagnósticos de colas vinculadas pueden incluir sus propios fragmentos limitados independientemente de esta opción.
+"Live Database performs read-only queries for indexed products, database schemas, and recipe logs. Turn it off to avoid those queries; object product examples, FITS samples, and recipe log tails will then be unavailable.":
+  FR: La base active lance des requêtes en lecture seule sur les produits indexés, les schémas et les journaux de recettes. Désactivez-la pour éviter ces requêtes ; les exemples de produits, échantillons FITS et extraits des journaux de recettes seront alors indisponibles.
+  ES: La base activa realiza consultas de solo lectura para productos indexados, esquemas y registros de recetas. Desactívela para evitarlas; los ejemplos de productos, muestras FITS y finales de registros de recetas no estarán disponibles.
 "GeoLite Location Database":
   FR: Base de données de localisation GeoLite
   ES: Base de datos de ubicación GeoLite

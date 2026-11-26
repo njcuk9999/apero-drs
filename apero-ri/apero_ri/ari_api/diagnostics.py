@@ -49,7 +49,7 @@ def _get(url: str, headers: dict, params: dict) -> dict:
 
 def request_report(host: str, key: str, action: str = 'profiles',
                    params: dict | None = None) -> dict:
-    """Fetch a scoped ARI diagnostic report over HTTPS or local tunneling.
+    """Fetch a scoped ARI diagnostic report over HTTP or HTTPS.
 
     :param host: ARI base URL, not a page or arbitrary endpoint.
     :param key: Short-lived diagnostic credential.
@@ -62,9 +62,6 @@ def request_report(host: str, key: str, action: str = 'profiles',
         raise ValueError('invalid_diagnostic_host')
     if parsed.scheme not in ('http', 'https') or not parsed.hostname:
         raise ValueError('invalid_diagnostic_host')
-    if parsed.scheme == 'http' and parsed.hostname not in (
-            'localhost', '127.0.0.1', '::1'):
-        raise ValueError('diagnostics_require_https_or_local_tunnel')
     if action not in ('profiles', 'report'):
         raise ValueError('invalid_diagnostic_action')
     url = host.rstrip('/') + '/api/diagnostics/' + action

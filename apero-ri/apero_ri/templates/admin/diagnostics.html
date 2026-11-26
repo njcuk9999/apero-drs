@@ -8,13 +8,19 @@
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}" aria-hidden="true"></i> {{ page_label | tl }}</h1>
 </div>
+<p>{{ _('Inspect a profile to investigate missing products, slow pages, processing failures, or queue statistics. Reports are read-only and do not rerun processing or refresh caches.') }}</p>
 <div id="diag-status" role="status" aria-live="polite"></div>
 <section class="diag-section">
     <h2>{{ 'Profiles' | tl }}</h2>
+    <p>{{ _('Select the profiles a diagnostic key may access. The report below uses its own profile selector; selecting a profile here does not collect a report.') }}</p>
+    <p><a href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/diagnostics') }}#profiles">{{ _('Profile scope') }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></p>
     <div id="diag-profiles" class="diag-profiles"></div>
 </section>
 <section class="diag-section">
     <h2>{{ 'Access Grants' | tl }}</h2>
+    <p>{{ _('Generate a key only when a trusted collaborator needs to collect diagnostics from this ARI server. It grants read-only access to the selected profiles, expires after 1 to 24 hours, and can be revoked here. A key is not needed to collect a report on this page.') }}</p>
+    <p>{{ _('The key is shown once. Share it privately, never in chat or a URL; the local command prompts for it without displaying it. HTTP sends keys and reports unencrypted, so use HTTPS or an SSH tunnel on untrusted networks.') }}</p>
+    <p><a href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/diagnostics') }}#access-grants">{{ _('Key and remote access guide') }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></p>
     <form id="diag-grant-form" class="diag-controls">
         <label>{{ 'Label' | tl }}<input id="diag-label" maxlength="120"></label>
         <label>{{ 'Expires In (Hours)' | tl }}<input id="diag-hours" type="number" min="1" max="24" value="24" required></label>
@@ -37,6 +43,11 @@
 </section>
 <section class="diag-section">
     <h2>{{ 'Report' | tl }}</h2>
+    <p>{{ _('A report includes profile configuration and paths, cache and task state, manifests, and available linked queue diagnostics. With live database enabled it also includes indexed product counts and recent recipe records. Credentials are redacted; reports may still contain sensitive paths, logs, and science metadata.') }}</p>
+    <p>{{ _('Object is an exact name. Leave it blank for profile-wide product counts without per-object tables or FITS samples. Recipe PID is an exact process identifier; leave it blank for the most recent recipe records.') }}</p>
+    <p>{{ _('Include Log Tails adds up to three bounded, redacted recipe log excerpts selected from database records. It needs Live Database and accessible log files. Linked queue diagnostics may include their own bounded log excerpts regardless of this setting.') }}</p>
+    <p>{{ _('Live Database performs read-only queries for indexed products, database schemas, and recipe logs. Turn it off to avoid those queries; object product examples, FITS samples, and recipe log tails will then be unavailable.') }}</p>
+    <p><a href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/diagnostics') }}#report-options">{{ _('Report options and contents') }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></p>
     <form id="diag-report-form" class="diag-controls">
         <label>{{ 'Profile' | tl }}<select id="diag-report-profile" required></select></label>
         <label>{{ 'Object' | tl }}<input id="diag-object" maxlength="120"></label>
@@ -51,5 +62,5 @@
 {% endblock %}
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261125a') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126a') }}"></script>
 {% endblock %}

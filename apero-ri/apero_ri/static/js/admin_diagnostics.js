@@ -53,6 +53,14 @@
             logs: element('logs').checked ? '1' : '0', database: element('database').checked ? '1' : '0'});
     }
     function shellQuote(value) { return "'" + value.replace(/'/g, "'\\''") + "'"; }
+    function copyInput(input) {
+        if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(input.value);
+        }
+        input.focus(); input.select();
+        if (document.execCommand('copy')) { return Promise.resolve(); }
+        return Promise.reject(new Error('Copy unavailable; select the text.'));
+    }
     async function collect(download) {
         if (busy) { return; }
         var params = query(); if (!params) { return; }
@@ -83,7 +91,7 @@
         };
         ['key', 'command'].forEach(function (name) {
             element('copy-' + name).onclick = function () {
-                navigator.clipboard.writeText(element(name).value).catch(function (error) { status(error.message); });
+                copyInput(element(name)).catch(function (error) { status(error.message); });
             };
         });
         element('report-form').onsubmit = function (event) { event.preventDefault(); collect(false); };

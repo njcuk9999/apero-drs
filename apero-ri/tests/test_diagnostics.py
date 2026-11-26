@@ -134,7 +134,15 @@ def test_diagnostic_api_scope_and_permission_changes(
     response = client.get('/api/diagnostics/run', headers=headers)
     assert response.status_code == 404
     response = client.get('/api/diagnostics/profiles', headers=headers,
-                           base_url='http://external.example')
+                          base_url='http://external.example',
+                          environ_overrides=dict(REMOTE_ADDR='192.0.2.10'))
+    assert response.status_code == 200
+    assert response.json['profiles'] == [dict(instrument='SPIROU',
+                                             profile_id='mini')]
+    response = client.get('/api/diagnostics/report?instrument=SPIROU'
+                          '&profile_id=private', headers=headers,
+                          base_url='http://external.example',
+                          environ_overrides=dict(REMOTE_ADDR='192.0.2.10'))
     assert response.status_code == 403
     monkeypatch.setattr(api, '_perms', lambda app, user: set())
     assert client.get('/api/diagnostics/profiles',
@@ -221,6 +229,7 @@ def test_queue_loopback_boundary() -> None:
 
     :return: None.
     """
+    dev.get_base_params('SPIROU')
     from apero.tools.module.processing import drs_queue_diagnostics as queue
 
     assert queue.loopback_allowed('127.0.0.1')
@@ -250,10 +259,15 @@ def test_admin_page_and_export(
     page = client.get('/admin_portal/diagnostics')
     assert page.status_code == 200
     assert b'admin_diagnostics.js' in page.data
+    assert b'/docs/ari_guide/admin_portal/diagnostics' in page.data
+    assert b'#report-options' in page.data
+    assert b'Leave it blank' in page.data
     overview = client.get('/api/admin/diagnostics/overview')
     assert overview.json['profiles'][0]['profile_id'] == 'mini'
     issued = client.post('/api/admin/diagnostics/issue', json=dict(
-        profiles=[['SPIROU', 'mini']], hours=24))
+        profiles=[['SPIROU', 'mini']], hours=24),
+        base_url='http://external.example',
+        environ_overrides=dict(REMOTE_ADDR='192.0.2.10'))
     assert issued.status_code == 200
     assert issued.headers['Cache-Control'] == 'no-store'
     exported = client.get('/api/admin/diagnostics/export?instrument=SPIROU'
@@ -262,6 +276,21 @@ def test_admin_page_and_export(
     assert json.loads(gzip.decompress(exported.data))['success']
     monkeypatch.setattr(api.auth, 'get_effective_user', lambda session: None)
     assert client.get('/admin_portal/diagnostics').status_code == 403
+
+
+def test_diagnostics_guide_anchors() -> None:
+    """The published guide renders the anchors linked from the admin page.
+
+    :return: None.
+    """
+    from apero_ri.core import docs
+
+    raw, html, version, meta = docs.get_doc_content(
+        'ari_guide/admin_portal/diagnostics', '0.8.XXX')
+    assert raw and version == '0.8.XXX'
+    assert meta['card_label'] == 'Diagnostics'
+    for anchor in ('profiles', 'access-grants', 'report-options'):
+        assert f'id="{anchor}"' in html
 
 
 def test_product_fits_metadata_and_finite_json(tmp_path: Path) -> None:
@@ -287,15 +316,34 @@ def test_product_fits_metadata_and_finite_json(tmp_path: Path) -> None:
     assert common.redact(dict(PASS='hidden'))['PASS'] == '[REDACTED]'
 
 
-def test_transport_rejects_unsafe_hosts() -> None:
-    """Bearer keys cannot be sent to plaintext or URL-credential endpoints.
+def test_transport_hosts(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Allow HTTP while rejecting credentials embedded in URLs.
 
+    :param monkeypatch: Runtime overrides.
     :return: None.
     """
     from apero_ri.ari_api import diagnostics
 
-    for host in ('http://206.12.93.77:5000',
-                 'https://user:password@ari.example',
+    requests = []
+
+    def get(url: str, headers: dict, params: dict) -> dict:
+        """Record the validated diagnostic transport request.
+
+        :param url: Diagnostic endpoint URL.
+        :param headers: Authorization headers.
+        :param params: Request filters.
+        :return: Synthetic response.
+        """
+        requests.append((url, headers, params))
+        return dict(success=True)
+
+    monkeypatch.setattr(diagnostics, '_get', get)
+    response = diagnostics.request_report('http://206.12.93.77:5000', 'key')
+    assert response['success']
+    endpoint = 'http://206.12.93.77:5000/api/diagnostics/profiles'
+    assert requests[0][0] == endpoint
+    assert requests[0][1] == dict(Authorization='Bearer key')
+    for host in ('https://user:password@ari.example',
                  'https://ari.example?token=hidden'):
         with pytest.raises(ValueError):
             diagnostics.request_report(host, 'private-test-key')

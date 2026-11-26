@@ -32,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
     """
     description = drs_lang.textentry('ARI_DIAGNOSTICS_CLI_DESCRIPTION')
     parser = argparse.ArgumentParser(description=str(description))
-    parser.add_argument('--host', required=True, metavar='HTTPS_URL')
+    parser.add_argument('--host', required=True, metavar='URL')
     parser.add_argument('--key', nargs='?', const='', default='',
                         metavar='EXPIRING_KEY')
     parser.add_argument('--profile', action='append', default=[])

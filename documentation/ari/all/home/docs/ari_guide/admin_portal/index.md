@@ -35,5 +35,6 @@ The local representation is either:
 | [SSHFS management](sshfs) | Expose remote APERO directories as local paths. |
 | [Database setup](database_setup) | Reach a remote MySQL/MariaDB service through SSH. |
 | [APERO Queue setup](queue_setup) | Reach and monitor a remote APERO queue GUI. |
+| [Diagnostics](diagnostics) | Collect read-only reports and grant temporary profile-scoped access. |
 
 Additional Admin Portal page guides are placeholders for later expansion.

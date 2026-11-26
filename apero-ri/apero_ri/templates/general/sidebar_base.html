@@ -209,6 +209,8 @@
                 <p>{{ _('Configure and monitor SSHFS mounts used by data paths on this server. Use SSH config mode to reference host aliases from {c0}.', c0='<code>~/.ssh/config</code>'|safe) }}</p>
                 {% elif page_id == 'home.admin_portal.async_tasks' %}
                 <p>{{ _('Schedule and monitor automated background tasks. Set cadence, inspect logs, and pause/resume execution as needed.') }}</p>
+                {% elif page_id == 'home.admin_portal.diagnostics' %}
+                <p>{{ _('Collect read-only diagnostics for an APERO profile or grant temporary access to a trusted collaborator investigating a problem.') }}</p>
                 {% elif page_id == 'home.admin_portal.user_db_access' %}
                 <p>{{ _('Control group-level database table permissions across science groups and profiles. Grant minimum required access to balance security and usability.') }}</p>
                 {% elif page_id == 'home.admin_portal.science_groups' %}
@@ -251,6 +253,12 @@
                    href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/queue_setup') }}">
                     <i class="fa-solid fa-circle-info"></i>
                     {{ _('APERO Queue setup guide') }}
+                </a>
+                {% elif page_id == 'home.admin_portal.diagnostics' %}
+                <a class="ari-btn ari-btn--sm ari-btn--secondary"
+                   href="{{ url_for('doc_dynamic_view', page_ref='ari_guide/admin_portal/diagnostics') }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ _('Diagnostics guide') }}
                 </a>
                 {% else %}
                 <a class="ari-btn ari-btn--sm ari-btn--secondary"
