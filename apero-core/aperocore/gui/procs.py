@@ -144,7 +144,8 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
              log_globs: Optional[List[str]] = None,
              slurm_jobs: Optional[List[str]] = None,
              qids: Optional[List[str]] = None,
-             artifact_paths: Optional[List[str]] = None) -> Optional[str]:
+             artifact_paths: Optional[List[str]] = None,
+             queued_by: Optional[int] = None) -> Optional[str]:
     """
     Record a new process (never raises - registry problems must not stop
     the actual work)
@@ -162,6 +163,11 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
     :param qids: list of str or None, work-item ids handled by this
                  process
     :param artifact_paths: Explicitly owned generated scripts/index files.
+    :param queued_by: int or None, for a queued work item (pid None): the
+                      pid of the process that will start it - the item is
+                      "pending" while that process is alive, and stopping
+                      it marks it stopped (the queuing process must check
+                      the record before starting it)
 
     :return: str or None, the process id (None if recording failed)
     """
@@ -177,6 +183,8 @@ def register(proc_dir: str, kind: str, label: str, cmd: str = '',
                   slurm_jobs=[str(job) for job in (slurm_jobs or [])],
                   slurm_submitted_at=(time.time() if slurm_jobs else None),
                   qids=list(qids or [])[-MAX_QIDS:])
+    if queued_by is not None:
+        record['queued_by'] = int(queued_by)
     try:
         _write(proc_dir, record)
     except OSError:
@@ -516,6 +524,12 @@ def proc_status(record: Dict[str, Any],
         if any(state != 'PENDING' for state in states):
             return 'running'
         return 'pending'
+    # queued work items: no process yet, waiting on the process that will
+    #   start them ("queued_by" = its pid) - pending while it is alive
+    if record.get('pid') is None and record.get('queued_by') is not None:
+        if record.get('host') != socket.gethostname():
+            return 'unknown'
+        return 'pending' if pid_alive(record['queued_by']) else 'lost'
     if record.get('pid') is None:
         return 'unknown'
     if record.get('host') != socket.gethostname():
@@ -653,6 +667,12 @@ def stop_process(proc_dir: str, record: Dict[str, Any]) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # local processes (only from the machine they run on)
     pid = record.get('pid')
+    # queued work items (not started yet): mark them stopped - the process
+    #   that queued them checks the record before starting them
+    if (pid is None and record.get('queued_by') is not None and
+            record.get('host') == socket.gethostname()):
+        finish(proc_dir, record['id'], -15, stopped=True)
+        return dict(success=True, message='Cancelled {0}'.format(label))
     if pid is None or record.get('host') != socket.gethostname():
         msg = '{0} runs on {1} - it cannot be stopped from here'
         return dict(success=False,
