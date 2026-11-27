@@ -72,14 +72,26 @@
         if (document.execCommand('copy')) { return Promise.resolve(); }
         return Promise.reject(new Error(text.copy));
     }
+    function clearShare() {
+        element('share-url').value = '';
+        element('share-wget').value = '';
+        element('share-result').hidden = true;
+        element('share-wget-result').hidden = true;
+        element('share-wget-note').hidden = true;
+    }
+    function wgetCommand(token) {
+        // the token travels in a header so it stays out of server access logs
+        var url = new URL(element('share-wget-result').dataset.downloadApi, window.location.href);
+        return "wget --content-disposition --header='Authorization: Bearer "
+            + token + "' '" + url.href + "'";
+    }
     function reportStatus(message) { element('report-status').textContent = message; }
     function invalidate() {
         if (report) {
             report = null;
             element('progress').hidden = true;
             element('report-actions').hidden = true;
-            element('share-result').hidden = true;
-            element('share-url').value = '';
+            clearShare();
             reportStatus(text.changed);
         }
     }
@@ -186,8 +198,7 @@
         activeJob = null; report = null;
         setBusy(true);
         element('report-actions').hidden = true;
-        element('share-result').hidden = true;
-        element('share-url').value = '';
+        clearShare();
         element('progress').hidden = false;
         element('progress-profile').textContent = params.get('instrument') + ' / ' + params.get('profile_id');
         showProgress({stage: 'runtime', completed: 0, total: 1});
@@ -246,6 +257,9 @@
             url.hash = result.token;
             element('share-url').value = url.href;
             element('share-result').hidden = false;
+            element('share-wget').value = wgetCommand(result.token);
+            element('share-wget-result').hidden = false;
+            element('share-wget-note').hidden = false;
             element('revoke-share').hidden = false;
             reportStatus(text.shareCreated);
         } catch (error) { reportStatus(error.message); }
@@ -256,8 +270,7 @@
         setBusy(true);
         try {
             await api('revoke-share', {id: activeJob});
-            element('share-url').value = '';
-            element('share-result').hidden = true;
+            clearShare();
             element('revoke-share').hidden = true;
             reportStatus(text.shareRevoked);
         } catch (error) { reportStatus(error.message); }
@@ -271,8 +284,7 @@
             activeJob = null; report = null;
             element('progress').hidden = true;
             element('report-actions').hidden = true;
-            element('share-result').hidden = true;
-            element('share-url').value = '';
+            clearShare();
             reportStatus(text.deleted);
             await refreshSaved();
         } catch (error) { reportStatus(error.message); }
@@ -307,14 +319,16 @@
         element('copy-share').onclick = function () {
             copyInput(element('share-url')).catch(function (error) { reportStatus(error.message); });
         };
+        element('copy-wget').onclick = function () {
+            copyInput(element('share-wget')).catch(function (error) { reportStatus(error.message); });
+        };
         element('open-report').onclick = async function () {
             if (busy) return;
             var job = savedJobs.find(function (item) { return item.id === element('saved-reports').value; });
             if (!job || !restoreJob(job)) return;
             report = null;
             element('report-actions').hidden = true;
-            element('share-result').hidden = true;
-            element('share-url').value = '';
+            clearShare();
             setBusy(true);
             await pollJob(job.id);
         };

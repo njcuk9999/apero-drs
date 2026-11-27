@@ -73,6 +73,15 @@
 "Shared report loaded.":
   FR: Rapport partagé chargé.
   ES: Informe compartido cargado.
+"Download with wget":
+  FR: Télécharger avec wget
+  ES: Descargar con wget
+"Copy wget Command":
+  FR: Copier la commande wget
+  ES: Copiar comando wget
+"Run this command on the target machine to save the report as a JSON file. The command contains the share secret; treat it like the share URL.":
+  FR: Exécutez cette commande sur la machine cible pour enregistrer le rapport dans un fichier JSON. La commande contient le secret de partage ; traitez-la comme l'URL de partage.
+  ES: Ejecute este comando en la máquina de destino para guardar el informe como archivo JSON. El comando contiene el secreto compartido; trátelo como la URL para compartir.
 "Download Report":
   FR: Télécharger le rapport
   ES: Descargar informe

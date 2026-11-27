@@ -84,6 +84,11 @@
             <label>{{ _('Share URL') }}<input id="diag-share-url" readonly autocomplete="off" spellcheck="false"></label>
             <button id="diag-copy-share" class="ari-btn ari-btn--secondary" type="button" title="{{ _('Copy Share URL') }}" aria-label="{{ _('Copy Share URL') }}"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
         </div>
+        <div id="diag-share-wget-result" class="diag-share-result" data-download-api="{{ url_for('api_diagnostics_shared', download=1) }}" hidden>
+            <label>{{ _('Download with wget') }}<input id="diag-share-wget" readonly autocomplete="off" spellcheck="false"></label>
+            <button id="diag-copy-wget" class="ari-btn ari-btn--secondary" type="button" title="{{ _('Copy wget Command') }}" aria-label="{{ _('Copy wget Command') }}"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
+        </div>
+        <p id="diag-share-wget-note" hidden>{{ _('Run this command on the target machine to save the report as a JSON file. The command contains the share secret; treat it like the share URL.') }}</p>
     </div>
 </section>
 {% endblock %}
@@ -121,5 +126,5 @@ window.ARI_DIAGNOSTICS_TEXT = {{ {
     'rateLimit': _('Too many requests. Wait a moment and try again.'),
 } | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261126h') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_diagnostics.js', v='20261127a') }}"></script>
 {% endblock %}

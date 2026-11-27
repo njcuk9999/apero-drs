@@ -74,6 +74,15 @@ not bypass a firewall, VPN, or an independent front-end password.
   with the report, can be revoked independently, and creating a new link
   invalidates the previous one. It also stops working if the owner loses
   diagnostics permission or access to the profile.
+- Alongside the share URL, **Download with wget** gives a copyable command
+  that saves the report as a JSON file on another machine without a
+  browser, for example:
+  `wget --content-disposition --header='Authorization: Bearer <token>'
+  'https://<ari-host>/api/diagnostics/shared-report?download=1'`.
+  The command contains the same secret as the share URL and stops working
+  when the link is revoked or expires. The secret is sent as a header, so it
+  is not written to server access logs, but it may be kept in the target
+  machine's shell history.
 - The share capability is carried in the URL fragment and is not sent in the
   initial page request or normal server access logs. The viewer sends it in
   an authorization header. HTTP still exposes the capability and report to

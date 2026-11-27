@@ -374,6 +374,16 @@ def test_shared_report_api_checks_owner_and_permissions(
     assert response.status_code == 200
     assert response.json['report']['profile_id'] == 'mini'
     assert response.headers['Cache-Control'] == 'no-store'
+    # wget/curl download mode returns the bare report as an attachment
+    download = client.get('/api/diagnostics/shared-report?download=1',
+                          headers=headers)
+    assert download.status_code == 200
+    assert download.json == dict(success=True, profile_id='mini')
+    assert ('filename="apero-diagnostics-SPIROU-mini.json"'
+            in download.headers['Content-Disposition'])
+    assert download.headers['Cache-Control'] == 'no-store'
+    assert client.get('/api/diagnostics/shared-report?download=1'
+                      ).status_code == 404
     monkeypatch.setattr(api, '_profiles', lambda app, user: dict())
     assert client.get('/api/diagnostics/shared-report',
                       headers=headers).status_code == 404

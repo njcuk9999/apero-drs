@@ -39,6 +39,9 @@ apero_ri_debug --host=https://ari.example --key \
   holding it can read the snapshot. Its fragment is not sent in the initial
   request, so use a browser that runs the viewer's JavaScript. The owner can
   revoke the link or delete the report, and should do so after investigation.
+- The Diagnostics page also shows a `wget` command for the same link, calling
+  `GET /api/diagnostics/shared-report?download=1` with the share secret in
+  `Authorization: Bearer ...`; it saves the bare report JSON as a file.
 - Use `--object`, `--pid`, and repeated `--profile` filters to narrow a new
   collection. Use `--logs` for bounded redacted recipe log tails;
   `--no-database` avoids live database queries. Keys are never saved by the

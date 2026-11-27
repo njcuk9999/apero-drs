@@ -5,6 +5,7 @@
 import gzip
 import json
 import queue
+import re
 import threading
 from pathlib import Path
 from typing import Any
@@ -387,9 +388,19 @@ def shared_api(app: Any) -> Any:
     if pair not in _profiles(app, user):
         return _fail('shared_report_unavailable', 404)
     audit_log.record(actor, 'diagnostics.share.access', job['id'])
-    response = jsonify(success=True, report=report,
-                        expires_at=job.get('completed_at', job['created'])
-                        + diagnostic_jobs.LIFETIME)
+    # download=1 returns the bare report as a file (e.g. for wget/curl)
+    if request.args.get('download') == '1':
+        # restrict the profile-derived filename to safe characters
+        stem = re.sub(r'[^A-Za-z0-9_.-]+', '_', '-'.join(
+            [job['instrument'], job['profile_id']]))
+        body = json.dumps(report, indent=2) + '\n'
+        response = Response(body, mimetype='application/json')
+        response.headers['Content-Disposition'] = (
+            'attachment; filename="apero-diagnostics-{0}.json"'.format(stem))
+    else:
+        response = jsonify(success=True, report=report,
+                           expires_at=job.get('completed_at', job['created'])
+                           + diagnostic_jobs.LIFETIME)
     response.headers['Cache-Control'] = 'no-store'
     response.headers['Referrer-Policy'] = 'no-referrer'
     response.headers['X-Robots-Tag'] = 'noindex, nofollow'
