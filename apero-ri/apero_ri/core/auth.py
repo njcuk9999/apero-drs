@@ -9,7 +9,11 @@ password hashing via the cryptography package, and Flask session login.
 
 import base64
 import binascii
+import contextlib
+import fcntl
+import json
 import os
+import re
 import socket
 import threading
 import time
@@ -403,7 +407,52 @@ DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / "db_tunnels.yaml"
 # =============================================================================
 # Async tasks configuration
 # =============================================================================
+# Settings only (active, frequency, filters, ...); written on admin edits
 ASYNC_TASKS_FILE = ADMIN_DIR / "async_tasks" / "async_tasks.yaml"
+# Fields describing a task's most recent run. They live in one JSON file per
+#   task (see ``save_task_state``), never in ASYNC_TASKS_FILE, so a finished
+#   run cannot overwrite settings and the settings file stays small.
+ASYNC_TASK_RUNTIME_KEYS = (
+    "last_run", "run_count", "last_status", "output_files",
+    "last_run_params", "cooldown_until", "info", "error",
+)
+# Prefer libyaml's C loader (about 10x faster) when PyYAML was built with it
+_YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+def async_tasks_previous_file() -> Path:
+    """Return the single previous copy of the async task settings.
+
+    :return: Path replaced by the old settings on every changed save.
+    """
+    return ASYNC_TASKS_FILE.with_name(ASYNC_TASKS_FILE.name + ".prev")
+
+
+def async_task_state_dir() -> Path:
+    """Return the directory of per-task runtime state files.
+
+    :return: ``task_state`` directory next to the settings file.
+    """
+    return ASYNC_TASKS_FILE.parent / "task_state"
+
+
+@contextlib.contextmanager
+def _async_tasks_lock(name: str):
+    """Hold an exclusive cross-thread/process lock on async task storage.
+
+    ``flock`` locks belong to an open file description, so separate opens
+    exclude each other between threads as well as processes.
+
+    :param name: Lock file name inside the async tasks directory.
+    :return: Context manager holding the lock.
+    """
+    ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(ASYNC_TASKS_FILE.parent / name, "a+") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 # =============================================================================
 # Admin health status configuration
@@ -483,10 +532,10 @@ def _write_yaml_atomic(path: Path, data: Any) -> None:
             tmp_path.unlink()
 
 
-def load_async_tasks() -> dict:
-    """Load async task configurations from async_tasks.yaml.
+def _read_async_settings() -> dict:
+    """Parse the async task settings file without any runtime state.
 
-    Returns dict: {instrument: [task_cfg_dict, ...]}
+    :return: ``{scope: [task settings rows]}`` exactly as stored.
     """
     ensure_ari_directory()
     ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -500,19 +549,83 @@ def load_async_tasks() -> dict:
         ASYNC_TASKS_FILE.write_text("")
     try:
         with open(ASYNC_TASKS_FILE, "r") as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f, Loader=_YAML_LOADER)
     except Exception:
         # File may be corrupted (e.g. null bytes from truncated write).
         # Try stripping null bytes before giving up.
         try:
             raw = ASYNC_TASKS_FILE.read_bytes()
             cleaned = raw.replace(b"\x00", b"")
-            data = yaml.safe_load(cleaned)
+            data = yaml.load(cleaned, Loader=_YAML_LOADER)
         except Exception:
             data = None
-    if not data:
+    return data if isinstance(data, dict) else {}
+
+
+def _task_state_path(task_id: str) -> Path:
+    """Return the runtime state file for one task.
+
+    Task ids already include the instrument, so the id alone is unique.
+
+    :param task_id: Task identifier from the settings row.
+    :return: JSON state file path.
+    """
+    safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(task_id)) or "unknown"
+    return async_task_state_dir() / (safe + ".json")
+
+
+def load_task_state(task_id: str) -> dict:
+    """Read the most recent runtime state of one task.
+
+    :param task_id: Task identifier.
+    :return: Runtime fields, or an empty dict before the first run.
+    """
+    try:
+        data = json.loads(_task_state_path(task_id).read_text("utf-8"))
+    except (OSError, ValueError):
         return {}
-    if not isinstance(data, dict):
+    return data if isinstance(data, dict) else {}
+
+
+def save_task_state(task_id: str, **fields: Any) -> None:
+    """Update one task's runtime state, keeping only the most recent run.
+
+    Only ``ASYNC_TASK_RUNTIME_KEYS`` are stored; fields not given keep
+    their previous value.
+
+    :param task_id: Task identifier.
+    :param fields: Runtime fields to replace (e.g. ``last_status``).
+    :return: None.
+    :raises ValueError: If a field is not a runtime field.
+    """
+    unknown = set(fields) - set(ASYNC_TASK_RUNTIME_KEYS)
+    if unknown:
+        raise ValueError("not async task runtime fields: "
+                         + ", ".join(sorted(unknown)))
+    path = _task_state_path(task_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # serialize read-merge-write so concurrent updates are not lost
+    with _async_tasks_lock(".task_state.lock"):
+        state = load_task_state(task_id)
+        state.update(fields)
+        temporary = path.with_name(
+            f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+        try:
+            temporary.write_text(json.dumps(state, default=str), "utf-8")
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+def load_async_tasks() -> dict:
+    """Load async task settings merged with each task's runtime state.
+
+    Returns dict: {instrument: [task_cfg_dict, ...]}. Rows contain the
+    settings from ``async_tasks.yaml`` plus the latest runtime fields from
+    ``task_state/``; ``save_async_tasks`` drops the runtime fields again.
+    """
+    data = _read_async_settings()
+    if not data:
         return {}
 
     # Canonicalize global scope key so old variants do not split state
@@ -533,14 +646,102 @@ def load_async_tasks() -> dict:
         if not isinstance(existing, list):
             existing = []
         out['__GLOBAL__'] = existing + global_rows
+    # overlay each task's latest runtime state onto its settings row
+    for rows in out.values():
+        for row in rows if isinstance(rows, list) else []:
+            if isinstance(row, dict) and row.get("id"):
+                row.update(load_task_state(str(row["id"])))
+    return out
+
+
+def _settings_only(tasks: dict) -> dict:
+    """Return a copy of task rows without runtime fields.
+
+    :param tasks: ``{scope: [rows]}``, possibly merged with runtime state.
+    :return: Settings suitable for ``async_tasks.yaml``.
+    """
+    out: Dict[str, Any] = {}
+    for scope, rows in tasks.items():
+        if not isinstance(rows, list):
+            out[scope] = rows
+            continue
+        out[scope] = [
+            {k: v for k, v in row.items()
+             if k not in ASYNC_TASK_RUNTIME_KEYS}
+            if isinstance(row, dict) else row
+            for row in rows]
     return out
 
 
 def save_async_tasks(tasks: dict) -> None:
-    """Save async task configurations to async_tasks.yaml."""
+    """Save async task settings, keeping one previous copy.
+
+    Runtime fields are dropped (use ``save_task_state`` for those). When
+    the settings change, the current file is first copied to
+    ``async_tasks.yaml.prev`` so the most recent old settings can be
+    restored.
+
+    :param tasks: ``{scope: [rows]}`` as returned by ``load_async_tasks``.
+    :return: None.
+    """
     ensure_ari_directory()
     ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _write_yaml_atomic(ASYNC_TASKS_FILE, tasks)
+    settings = _settings_only(tasks)
+    with _async_tasks_lock(".async_tasks.lock"):
+        # only rotate the backup when the settings actually differ
+        if ASYNC_TASKS_FILE.exists() and _read_async_settings() != settings:
+            previous = async_tasks_previous_file()
+            temporary = previous.with_name(previous.name + ".tmp")
+            temporary.write_bytes(ASYNC_TASKS_FILE.read_bytes())
+            os.replace(temporary, previous)
+        _write_yaml_atomic(ASYNC_TASKS_FILE, settings)
+
+
+def migrate_async_task_state() -> int:
+    """Move runtime fields out of ``async_tasks.yaml`` (one-time cleanup).
+
+    Older versions stored each task's run state in the settings file, and
+    each run nested every previous run's params, so the file grew without
+    bound. For every row still holding runtime fields this keeps only the
+    latest state (with nested history removed) in its state file, saves
+    the original as ``async_tasks.yaml.pre_split`` and rewrites the
+    settings without runtime fields. Called once at ARI startup.
+
+    :return: Number of task rows migrated.
+    """
+    from apero_ri.core import task_runner
+
+    data = _read_async_settings()
+    migrated = 0
+    for rows in data.values():
+        for row in rows if isinstance(rows, list) else []:
+            if not isinstance(row, dict) or not row.get("id"):
+                continue
+            runtime = {k: row[k] for k in ASYNC_TASK_RUNTIME_KEYS
+                       if k in row}
+            if not runtime:
+                continue
+            # keep only this run's params, not the runs nested inside
+            if "last_run_params" in runtime:
+                runtime["last_run_params"] = task_runner._strip_run_history(
+                    runtime["last_run_params"])
+            # a state file already written by this version wins
+            current = load_task_state(str(row["id"]))
+            save_task_state(str(row["id"]), **dict(runtime, **current))
+            migrated += 1
+    if migrated:
+        backup = ASYNC_TASKS_FILE.with_name(ASYNC_TASKS_FILE.name
+                                            + ".pre_split")
+        if not backup.exists():
+            backup.write_bytes(ASYNC_TASKS_FILE.read_bytes())
+        with _async_tasks_lock(".async_tasks.lock"):
+            _write_yaml_atomic(ASYNC_TASKS_FILE, _settings_only(data))
+        from aperocore import drs_lang
+
+        log.info(str(drs_lang.textentry(
+            'ARI_ASYNC_TASKS_MIGRATED',
+            args=[migrated, str(ASYNC_TASKS_FILE), str(backup)])))
+    return migrated
 
 
 # =============================================================================

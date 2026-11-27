@@ -69,3 +69,22 @@ and connection prerequisites. Focused verification:
 PYTHONPATH=apero-core:apero-drs:apero-ri python -m pytest -q \
     apero-ri/tests/test_diagnostics.py apero-drs/tests/test_queue_stats.py
 ```
+## Async Task Storage
+
+- `~/.ari/admin/async_tasks/async_tasks.yaml` holds task **settings only**
+  (`active`, `frequency`, `order`, `apero_profile`, `filters`, parallel
+  options, `id`, `task_key`). It is written only by settings changes, and
+  each change first copies the old file to `async_tasks.yaml.prev`.
+- Runtime state (`auth.ASYNC_TASK_RUNTIME_KEYS`: `last_run`, `run_count`,
+  `last_status`, `output_files`, `last_run_params`, `cooldown_until`,
+  `info`, `error`) lives in `task_state/<task_id>.json`, holding only the
+  most recent run. Write it with `auth.save_task_state(task_id, ...)`; never
+  set these fields on a row and call `save_async_tasks`, which drops them.
+- `auth.load_async_tasks()` returns settings merged with that state, so
+  readers see one row per task.
+- A run's `TASK_CONFIG` must not include `last_run_params`
+  (`task_runner._task_config_input`); copying it made every run nest all
+  previous runs and grew the YAML without bound.
+- Tests that construct `ARIApp` must stub
+  `task_runner.start_background_services`; otherwise the real scheduler runs
+  tasks against `~/.ari`.

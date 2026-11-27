@@ -183,6 +183,36 @@ def _dedupe_strings(values: Any) -> List[str]:
     return out
 
 
+# Task-config fields describing earlier runs. They must never be copied into
+#   a run's TASK_CONFIG: the run's params are saved back as last_run_params,
+#   so each run would nest every previous run (unbounded YAML growth).
+_RUN_HISTORY_KEYS = ("last_run_params",)
+
+
+def _task_config_input(task_cfg: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return a task config copy without previous-run history.
+
+    :param task_cfg: Task configuration row, possibly with saved run state.
+    :returns: Shallow copy suitable for a run's ``TASK_CONFIG``.
+    """
+    return {key: value for key, value in dict(task_cfg or {}).items()
+            if key not in _RUN_HISTORY_KEYS}
+
+
+def _strip_run_history(run_params: Any) -> Any:
+    """Drop nested previous-run history from run params before saving.
+
+    :param run_params: Runtime params passed to a task's ``run_job``.
+    :returns: Params whose ``TASK_CONFIG`` carries no ``last_run_params``.
+    """
+    if not isinstance(run_params, dict):
+        return run_params
+    task_cfg = run_params.get("TASK_CONFIG")
+    if not isinstance(task_cfg, dict):
+        return run_params
+    return dict(run_params, TASK_CONFIG=_task_config_input(task_cfg))
+
+
 def _sanitize_run_params(value: Any) -> Any:
     """Return a JSON-safe copy of run params with secrets redacted."""
     sensitive_tokens = ["password", "passwd", "secret", "token", "api_key"]
@@ -907,34 +937,36 @@ _run_apero_check_worker = _make_worker("apero_checks")
 def _persist_runtime_state(
     instrument: str, task_id: str, instance: Any
 ) -> None:
-    """Write runtime fields back to async_tasks.yaml after each run."""
+    """Save a finished run's state to the task's own state file.
+
+    Only this task's small JSON state file is written; the shared settings
+    file is not touched, so a finished run cannot overwrite admin edits.
+    """
     try:
-        from apero_ri.core.auth import load_async_tasks, save_async_tasks
+        from apero_ri.core.auth import save_task_state
 
         with _lock:
             error = _errors.get(task_id, "")
-        all_tasks = load_async_tasks()
-        for tc in all_tasks.get(instrument, []):
-            if tc.get("id") == task_id:
-                tc["last_run"] = getattr(instance, "last_run", "Never")
-                tc["run_count"] = getattr(instance, "run_count", 0)
-                tc["output_files"] = _dedupe_strings(
-                    getattr(instance, "output_files", [])
-                )
-                tc["last_run_params"] = _sanitize_run_params(
-                    getattr(instance, "_run_params", {})
-                )
-                tc["last_status"] = getattr(instance, "status", "failed")
-                tc.pop("info", None)
-                tc.pop("error", None)
-                break
+        # strip history so the saved params do not nest old runs
+        run_params = _sanitize_run_params(
+            _strip_run_history(getattr(instance, "_run_params", {}))
+        )
+        save_task_state(
+            task_id,
+            last_run=getattr(instance, "last_run", "Never"),
+            run_count=getattr(instance, "run_count", 0),
+            output_files=_dedupe_strings(
+                getattr(instance, "output_files", [])
+            ),
+            last_run_params=run_params,
+            last_status=getattr(instance, "status", "failed"),
+        )
         _persist_task_info_error(
             instrument,
             task_id,
             getattr(instance, "info", ""),
             error,
         )
-        save_async_tasks(all_tasks)
     except Exception:
         pass  # Never let persistence failures crash the worker
 
@@ -1151,6 +1183,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
             load_apero_profiles,
             load_async_tasks,
             save_async_tasks,
+            save_task_state,
         )
 
         import_errors = getattr(task_module, "IMPORT_ERRORS", {}) or {}
@@ -1198,9 +1231,9 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     )
                     instance._task_key = task_key
                 except Exception:
-                    task_cfg["last_status"] = "failed"
-                    task_cfg["error"] = traceback.format_exc()
-                    changed = True
+                    # runtime state lives in the task's state file
+                    save_task_state(task_id, last_status="failed",
+                                    error=traceback.format_exc())
                     continue
                 run_params = build_run_params(
                     instrument, local_data_dir, all_profiles, task_cfg
@@ -1239,6 +1272,13 @@ def start_background_services(local_data_dir: Optional[str] = None) -> None:
         _scheduler_local_data_dir = str(local_data_dir)
 
     _shutdown_event.clear()
+    # one-time: move run state out of async_tasks.yaml before scheduling
+    try:
+        from apero_ri.core.auth import migrate_async_task_state
+
+        migrate_async_task_state()
+    except Exception:
+        traceback.print_exc()
     _ensure_worker()
     if _scheduler_thread is None or not _scheduler_thread.is_alive():
         _scheduler_thread = threading.Thread(
@@ -1494,7 +1534,8 @@ def build_run_params(
         "INSTRUMENT": instrument,
         "APERO_PROFILE_NAMES": list(mapped.keys()),
         "APERO_PROFILES": mapped,
-        "TASK_CONFIG": dict(task_cfg or {}),
+        # inputs only: previous run history would nest on every run
+        "TASK_CONFIG": _task_config_input(task_cfg),
     }
 
 
@@ -1631,7 +1672,7 @@ def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
     are not interrupted, but subsequent enqueue attempts are blocked until the
     cooldown expires.
     """
-    from apero_ri.core.auth import load_async_tasks, save_async_tasks
+    from apero_ri.core.auth import load_async_tasks, save_task_state
 
     now = datetime.now(timezone.utc)
     all_tasks = load_async_tasks()
@@ -1687,11 +1728,15 @@ def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
                 task_cfg.get("frequency", 24.0), 24.0
             )
             cooldown_until = now + timedelta(hours=freq)
-            task_cfg["cooldown_until"] = cooldown_until.isoformat()
-            task_cfg["last_status"] = "cancelled"
+            task_id = str(task_cfg.get("id", "") or "")
+            if not task_id:
+                continue
+            # cooldown and status are runtime state, not settings
+            save_task_state(task_id,
+                            cooldown_until=cooldown_until.isoformat(),
+                            last_status="cancelled")
             updated += 1
 
-    save_async_tasks(all_tasks)
     return {
         "instrument": instrument or "ALL",
         "updated_tasks": updated,

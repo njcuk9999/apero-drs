@@ -4,6 +4,7 @@
 
 import hashlib
 import re
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -273,12 +274,14 @@ def _cache_with_plots(root: Path, data_root: Path, instrument: str,
 
 
 def _manifests(profile: dict, instrument: str, name: str,
+               tasks: list[dict],
                on_task: Callable[[str], None] | None = None) -> dict:
     """Check published task manifests and bounded file checksum samples.
 
     :param profile: Authorized profile configuration.
     :param instrument: Instrument associated with this profile.
     :param name: Profile ID used for published directories.
+    :param tasks: This instrument's async task rows (loaded once by caller).
     :param on_task: Optional callback identifying the manifest being checked.
     :return: Manifest validity, freshness, and checksum evidence.
     """
@@ -286,7 +289,6 @@ def _manifests(profile: dict, instrument: str, name: str,
     if shared is None:
         return dict(available=False, reason='PATH_OTHER_unconfigured')
     result = dict(root=common.file_info(shared), tasks=dict())
-    tasks = auth.load_async_tasks().get(instrument, [])
     for key in apero_sync.local_task_keys():
         if on_task is not None:
             on_task(key)
@@ -360,6 +362,19 @@ def collect(profile: dict, instrument: str, profile_id: str,
                   configuration=profile, sections=dict())
     completed += 1
     sections = report['sections']
+    # async_tasks.yaml can be large; parse it once for manifests and tasks
+    loaded_tasks: list[list[dict]] = []
+
+    def instrument_tasks() -> list[dict]:
+        """Return this instrument's async task rows, loading them once.
+
+        :return: Task configuration rows for ``instrument``.
+        """
+        if not loaded_tasks:
+            loaded_tasks.append(
+                auth.load_async_tasks().get(instrument, []))
+        return loaded_tasks[0]
+
     checks = dict(queues=lambda: _queues(instrument, profile_id),
         paths=lambda: {
         key: common.inventory(Path(value).expanduser())
@@ -368,19 +383,22 @@ def collect(profile: dict, instrument: str, profile_id: str,
         cache=lambda: _cache_with_plots(cache, data_root, instrument,
                                         profile_id, objname),
         manifests=lambda: _manifests(
-            profile, instrument, profile_id,
+            profile, instrument, profile_id, instrument_tasks(),
             on_task=lambda key: notify('manifests:' + key)),
-        tasks=lambda: [row for row in
-                       auth.load_async_tasks().get(instrument, [])
+        tasks=lambda: [row for row in instrument_tasks()
                        if row.get('apero_profile') == profile_id])
     if include_database:
         checks['database'] = lambda: _database(profile, objname, pid)
+    # seconds spent per stage, so slow checks are visible in the report
+    timings = report['timings'] = dict()
     for name, check in checks.items():
         notify(name)
+        stage_start = time.monotonic()
         try:
             sections[name] = check()
         except Exception as error:
             sections[name] = dict(error=str(error))
+        timings[name] = round(time.monotonic() - stage_start, 3)
         completed += 1
     if include_logs:
         notify('log_tails')

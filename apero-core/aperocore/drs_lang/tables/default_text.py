@@ -195,6 +195,18 @@ for diag_key, diag_eng, diag_fr, diag_es, diag_args in [
     item.comment = 'apero_ri_debug local diagnostic download CLI'
     langlist.add(item)
 
+item = langlist.create('ARI_ASYNC_TASKS_MIGRATED', kind='text')
+item.value['ENG'] = ('Moved the run state of {0} async tasks out of {1} '
+                     '(original kept as {2})')
+item.value['FR'] = ("Etat d'execution de {0} taches asynchrones deplace "
+                    'hors de {1} (original conserve dans {2})')
+item.value['ES'] = ('Estado de ejecucion de {0} tareas asincronas movido '
+                    'fuera de {1} (original guardado en {2})')
+item.arguments = ['count', 'settings_file', 'backup_file']
+item.comment = ('ARI startup: one-time split of async task runtime state '
+                'from async_tasks.yaml into per-task state files')
+langlist.add(item)
+
 item = langlist.create('APERO_RI_TASK_DESCRIPTION', kind='text')
 item.value['ENG'] = (
     'Run local APERO RI tasks for this profile after DRS processing.'
