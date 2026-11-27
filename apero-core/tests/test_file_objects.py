@@ -276,6 +276,205 @@ def test_resolve_pogos_from_local_mirror(tmp_path):
     assert updates['GENERAL.FLATFILE']['source'] == 'pogos'
 
 
+# =============================================================================
+# Download cache
+# =============================================================================
+POGOS_FLAT = ('PATHS:\n'
+              '  CALIBPATH: {calib}\n'
+              'GENERAL:\n'
+              '  FLATFILE:\n'
+              '    filelist: flat.fits\n'
+              '    source: pogos\n'
+              '    url: http://example.org/demos/{subdir}/\n')
+
+
+def fake_download(calls):
+    """A download_url stand-in recording the urls it was asked for."""
+    def _download(url, localpath):
+        calls.append(url)
+        with open(localpath, 'w') as handle:
+            handle.write(url)
+    return _download
+
+
+def test_cache_directory_layout(tmp_path):
+    pogos = ccc.FileObject(filelist='a.fits', source='pogos',
+                           url='http://example.org/demos/soss/')
+    mast = ccc.FileObject(source='mast', pid=1366, obsnumber=3)
+    local = ccc.FileObject(filelist='a.fits')
+    root = str(tmp_path)
+    assert file_sources.cache_directory(root, pogos) == os.path.join(
+        root, 'pogos', 'example.org', 'demos', 'soss')
+    assert file_sources.cache_directory(root, mast) == os.path.join(
+        root, 'mast', 'jw01366', 'o003')
+    assert file_sources.cache_directory(root, local) is None
+    assert file_sources.cache_directory(None, pogos) is None
+
+
+def test_pogos_download_goes_to_cache_and_is_linked(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(file_sources, 'download_url', fake_download(calls))
+    calib = tmp_path / 'calib'
+    downloads = tmp_path / 'downloads'
+    text = POGOS_FLAT.format(calib=calib, subdir='soss')
+    _, params, _ = load_yaml_text(tmp_path, text)
+    file_sources.resolve_files(params, download_dir=str(downloads))
+    cached = downloads / 'pogos' / 'example.org' / 'demos' / 'soss'
+    assert len(calls) == 1
+    assert (cached / 'flat.fits').is_file()
+    assert os.path.islink(calib / 'flat.fits')
+    assert os.path.realpath(calib / 'flat.fits') == str(cached / 'flat.fits')
+    # the record knows where it came from and who links to it
+    meta = file_sources.read_cache_meta(str(downloads),
+                                        str(cached / 'flat.fits'))
+    assert meta['source'] == 'pogos'
+    assert meta['origin'] == 'http://example.org/demos/soss/flat.fits'
+    assert meta['links'] == {str(calib / 'flat.fits'): 'GENERAL.FLATFILE'}
+
+
+def test_cached_file_is_linked_without_downloading(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(file_sources, 'download_url', fake_download(calls))
+    downloads = tmp_path / 'downloads'
+    # a first project downloads the file
+    text1 = POGOS_FLAT.format(calib=tmp_path / 'p1', subdir='soss')
+    _, params1, _ = load_yaml_text(tmp_path, text1)
+    file_sources.resolve_files(params1, download_dir=str(downloads))
+    # a second project (or a deleted run directory) reuses the cache
+    text2 = POGOS_FLAT.format(calib=tmp_path / 'p2', subdir='soss')
+    _, params2, _ = load_yaml_text(tmp_path, text2)
+    assert file_sources.needs_download(params2['GENERAL.FLATFILE'].fileobj,
+                                       str(tmp_path / 'p2'),
+                                       str(downloads))
+    file_sources.resolve_files(params2, download_dir=str(downloads))
+    assert len(calls) == 1
+    assert os.path.islink(tmp_path / 'p2' / 'flat.fits')
+
+
+def test_link_only_never_downloads(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(file_sources, 'download_url', fake_download(calls))
+    text = POGOS_FLAT.format(calib=tmp_path / 'calib', subdir='soss')
+    _, params, _ = load_yaml_text(tmp_path, text)
+    rkwargs = dict(download_dir=str(tmp_path / 'downloads'), link_only=True)
+    assert file_sources.resolve_files(params, **rkwargs) == dict()
+    assert calls == []
+    assert not os.path.lexists(tmp_path / 'calib' / 'flat.fits')
+
+
+def test_same_name_different_url_never_clash(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(file_sources, 'download_url', fake_download(calls))
+    downloads = tmp_path / 'downloads'
+    calib = tmp_path / 'calib'
+    for subdir in ['soss', 'nirspec']:
+        text = POGOS_FLAT.format(calib=calib, subdir=subdir)
+        _, params, _ = load_yaml_text(tmp_path, text)
+        file_sources.resolve_files(params, download_dir=str(downloads))
+    # both are cached separately ...
+    base = downloads / 'pogos' / 'example.org' / 'demos'
+    assert (base / 'soss' / 'flat.fits').read_text().endswith(
+        'soss/flat.fits')
+    assert (base / 'nirspec' / 'flat.fits').read_text().endswith(
+        'nirspec/flat.fits')
+    # ... and the changed url relinked the stale link
+    assert os.path.realpath(calib / 'flat.fits') == str(
+        base / 'nirspec' / 'flat.fits')
+
+
+def test_name_clash_between_parameters_raises(tmp_path, monkeypatch):
+    monkeypatch.setattr(file_sources, 'download_url', fake_download([]))
+    calib = tmp_path / 'calib'
+    text = (POGOS_FLAT.format(calib=calib, subdir='soss')
+            + '  WAVE_FILE:\n'
+              '    filelist: flat.fits\n'
+              '    source: pogos\n'
+              '    url: http://example.org/demos/other/\n')
+    _, params, _ = load_yaml_text(tmp_path, text)
+    with pytest.raises(file_sources.FileSourceError, match='clash'):
+        file_sources.resolve_files(params,
+                                   download_dir=str(tmp_path / 'dl'))
+
+
+def test_local_mirror_copy_goes_to_cache(tmp_path):
+    mirror = tmp_path / 'mirror' / 'soss'
+    mirror.mkdir(parents=True)
+    (mirror / 'flat.fits').write_text('flat')
+    downloads = tmp_path / 'downloads'
+    calib = tmp_path / 'calib'
+    text = POGOS_FLAT.format(calib=calib, subdir='soss')
+    _, params, _ = load_yaml_text(tmp_path, text)
+    rkwargs = dict(demolocal=str(tmp_path / 'mirror'),
+                   download_dir=str(downloads))
+    file_sources.resolve_files(params, **rkwargs)
+    cached = downloads / 'pogos' / 'example.org' / 'demos' / 'soss'
+    assert (cached / 'flat.fits').read_text() == 'flat'
+    assert os.path.realpath(calib / 'flat.fits') == str(cached / 'flat.fits')
+    meta = file_sources.read_cache_meta(str(downloads),
+                                        str(cached / 'flat.fits'))
+    assert meta['source'] == 'local'
+
+
+def test_local_mirror_symlink_skips_cache(tmp_path):
+    mirror = tmp_path / 'mirror' / 'soss'
+    mirror.mkdir(parents=True)
+    (mirror / 'flat.fits').write_text('flat')
+    downloads = tmp_path / 'downloads'
+    calib = tmp_path / 'calib'
+    text = POGOS_FLAT.format(calib=calib, subdir='soss')
+    _, params, _ = load_yaml_text(tmp_path, text)
+    rkwargs = dict(demolocal=str(tmp_path / 'mirror'), demosymlink=True,
+                   download_dir=str(downloads))
+    file_sources.resolve_files(params, **rkwargs)
+    assert os.path.realpath(calib / 'flat.fits') == str(mirror / 'flat.fits')
+    assert not downloads.exists()
+
+
+def test_deleted_cache_file_is_downloaded_again(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(file_sources, 'download_url', fake_download(calls))
+    downloads = tmp_path / 'downloads'
+    calib = tmp_path / 'calib'
+    text = POGOS_FLAT.format(calib=calib, subdir='soss')
+    _, params, _ = load_yaml_text(tmp_path, text)
+    file_sources.resolve_files(params, download_dir=str(downloads))
+    os.remove(os.path.realpath(calib / 'flat.fits'))
+    file_sources.resolve_files(params, download_dir=str(downloads))
+    assert len(calls) == 2
+    assert (calib / 'flat.fits').is_file()
+
+
+def test_mast_uses_cache(tmp_path, monkeypatch):
+    raw1, raw2 = tmp_path / 'raw1', tmp_path / 'raw2'
+    downloads = tmp_path / 'downloads'
+    fake = FakeObservations(['a-seg001_rateints.fits',
+                             'a-seg002_rateints.fits'])
+    monkeypatch.setattr(file_sources, '_get_mast_observations', lambda: fake)
+    for raw in [raw1, raw2]:
+        text = ('PATHS:\n'
+                f'  RAWPATH: {raw}\n'
+                'GENERAL:\n'
+                '  FILES:\n'
+                '    filelist:\n'
+                '    source: mast\n'
+                '    pid: 1366\n'
+                '    obsnumber: 1\n')
+        _, params, _ = load_yaml_text(tmp_path, text)
+        file_sources.resolve_files(params, download_dir=str(downloads))
+    # downloaded once, linked into both directories
+    assert sorted(fake.downloaded) == ['a-seg001_rateints.fits',
+                                       'a-seg002_rateints.fits']
+    cached = downloads / 'mast' / 'jw01366' / 'o001'
+    for raw in [raw1, raw2]:
+        assert os.path.realpath(raw / 'a-seg001_rateints.fits') == str(
+            cached / 'a-seg001_rateints.fits')
+    meta = file_sources.read_cache_meta(
+        str(downloads), str(cached / 'a-seg001_rateints.fits'))
+    assert meta['source'] == 'mast'
+    assert set(meta['links'].values()) == {'GENERAL.FILES'}
+    assert len(meta['links']) == 2
+
+
 def test_single_file_constant_rejects_many_mast_files(tmp_path, monkeypatch):
     text = ('PATHS:\n'
             f'  CALIBPATH: {tmp_path}\n'

@@ -15,13 +15,34 @@ missing, or when always_download is True. After downloading, the parameter
 value (filelist) is updated and, if a yaml file is given, the yaml entry is
 updated in place (comments preserved) so the next run uses the local copy.
 
+Download cache (download_dir given): online files are stored once in a
+shared cache and symlinked into the directory of each constant:
+
+    {download_dir}/pogos/{host}/{url path}/{file}   (source: pogos)
+    {download_dir}/mast/jw{pid}/o{obsnumber}/{file} (source: mast)
+
+The cache path comes from where a file was obtained, so files with the same
+name from different server directories / programs never overwrite each
+other. A file missing from a constant's directory is looked for in the cache
+before going to the POGOS server / MAST (unless always_download is True). A
+local mirror (demolocal) is copied into the cache, or with demosymlink the
+directory links straight to the mirror. Without download_dir files are
+written straight into the constant's directory (old behaviour).
+
+Each cached file has a json record (see cache_meta_path) with where and when
+it was obtained and every symlink made to it (link path -> parameter key),
+so tools can show which projects use a cached file.
+
 Created on 2026-11-25
 
 @author: cook
 """
+import json
 import os
 import shutil
+import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import requests
 from ruamel.yaml import YAML
@@ -41,6 +62,11 @@ WLOG = drs_log.wlog
 MAST_TOKEN_ENV = 'MAST_API_TOKEN'
 # download chunk size in bytes
 CHUNK_SIZE = 1024 * 1024
+# sub-directories of the download cache (one per online source)
+CACHE_SOURCE_DIRS = dict(pogos='pogos', mast='mast')
+# hidden directory of the download cache holding one json record per
+#   cached file: {download_dir}/.meta/{path relative to download_dir}.json
+CACHE_META_DIR = '.meta'
 
 
 # =============================================================================
@@ -92,14 +118,52 @@ def module_prefix(key: str, instance: ccc.FileObjectConst) -> str:
     return ''
 
 
-def needs_download(fileobj: ccc.FileObject, directory: str) -> bool:
+def cache_directory(download_dir: Optional[str],
+                    fileobj: ccc.FileObject) -> Optional[str]:
     """
-    Decide whether the files of a file object need downloading
+    The download cache directory of a file object's files
+
+    pogos: {download_dir}/pogos/{host}/{url path} (the server layout, so
+    files of different server directories never clash); mast:
+    {download_dir}/mast/jw{pid}/o{obsnumber}
+
+    :param download_dir: str or None, the download cache root
+    :param fileobj: FileObject, the file source information
+
+    :return: str or None, None if there is no cache (or not online)
+    """
+    if download_dir is None or not fileobj.online:
+        return None
+    root = os.path.join(os.path.abspath(str(download_dir)),
+                        CACHE_SOURCE_DIRS[fileobj.source])
+    if fileobj.source == 'pogos':
+        if not fileobj.url:
+            return None
+        parsed = urlparse(str(fileobj.url))
+        parts = [parsed.netloc] + parsed.path.split('/')
+    else:
+        parts = ['jw' + str(fileobj.pid).zfill(5),
+                 'o' + str(fileobj.obsnumber).zfill(3)]
+    # only keep safe path components (no '', '.', '..')
+    parts = [_safe_part(part) for part in parts]
+    parts = [part for part in parts if part not in ('', '.', '..')]
+    return os.path.join(root, *parts)
+
+
+def needs_download(fileobj: ccc.FileObject, directory: str,
+                   download_dir: Optional[str] = None) -> bool:
+    """
+    Decide whether the files of a file object need obtaining
+
+    A file counts as present if it exists in directory - except a symlink
+    into the download cache that points at another cached file than this
+    source gives (e.g. the url was changed), which is relinked.
 
     :param fileobj: FileObject, the file source information
     :param directory: str, the directory the files live in
+    :param download_dir: str or None, the download cache root
 
-    :return: bool, True if files need to be obtained from the source
+    :return: bool, True if files need to be obtained (or linked)
     """
     # local files are never downloaded
     if not fileobj.online:
@@ -111,10 +175,66 @@ def needs_download(fileobj: ccc.FileObject, directory: str) -> bool:
     if len(fileobj.files) == 0:
         return True
     # any missing file triggers a download
+    cache_dir = cache_directory(download_dir, fileobj)
     for filename in fileobj.files:
-        if not os.path.exists(_local_path(directory, filename)):
+        localpath = _local_path(directory, filename)
+        expected = _cache_path(cache_dir, filename)
+        if not _present(localpath, expected, download_dir):
             return True
     return False
+
+
+def link_cached(params: Any, fileobj: ccc.FileObject, directory: str,
+                download_dir: Optional[str]) -> List[str]:
+    """
+    Symlink files that are in the download cache but missing from directory
+
+    :param params: ParamDict, used for logging
+    :param fileobj: FileObject, the file source information
+    :param directory: str, the directory the files belong in
+    :param download_dir: str or None, the download cache root
+
+    :return: list of str, the files that were linked
+    """
+    cache_dir = cache_directory(download_dir, fileobj)
+    if cache_dir is None or fileobj.always_download:
+        return []
+    linked = []
+    for filename in fileobj.files:
+        localpath = _local_path(directory, filename)
+        cachepath = _cache_path(cache_dir, filename)
+        if cachepath is None or _present(localpath, cachepath, download_dir):
+            continue
+        if os.path.isfile(cachepath):
+            link_file(params, cachepath, localpath)
+            linked.append(filename)
+    return linked
+
+
+def link_file(params: Any, src: str, dest: str) -> None:
+    """
+    Make dest a symlink to src (replacing whatever dest currently is)
+
+    :param params: ParamDict, used for logging
+    :param src: str, the file to link to
+    :param dest: str, the symlink to create
+
+    :return: None
+    """
+    src = os.path.abspath(src)
+    # nothing to do if it already links there
+    if os.path.islink(dest) and os.readlink(dest) == src:
+        return
+    # never remove the source itself (dest is src, e.g. via a symlinked
+    #   directory)
+    if (os.path.exists(dest) and not os.path.islink(dest)
+            and os.path.samefile(dest, src)):
+        return
+    os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
+    if os.path.lexists(dest):
+        os.remove(dest)
+    WLOG(params, '', '\t\tLinking: {0} -> {1}'.format(dest, src))
+    os.symlink(src, dest)
 
 
 def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
@@ -124,7 +244,9 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
                   demosymlink: bool = False,
                   dry_run: bool = False,
                   get_directory: Optional[Callable[[Any, str, str], str]]
-                  = None) -> Dict[str, Any]:
+                  = None,
+                  download_dir: Optional[str] = None,
+                  link_only: bool = False) -> Dict[str, Any]:
     """
     Make sure the files of all online FileObjectConst parameters exist
 
@@ -142,8 +264,15 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
     :param get_directory: function(params, key, path_key) -> directory, used
                           when directory parameters may still be relative
                           (default: the value of params[path_key])
+    :param download_dir: str or None, the download cache root: files are
+                         stored there and symlinked into each directory,
+                         and looked for there before going online
+    :param link_only: bool, if True only link files already in the download
+                      cache (never go online)
 
     :return: dict, key -> new yaml value for every key that was updated
+    :raises FileSourceError: if two parameters want different files under
+                             the same name in the same directory
     """
     # default to every file object parameter
     if keys is None:
@@ -152,6 +281,8 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
     skip = set(key.upper() for key in skip_keys)
     # storage for yaml updates
     updates = dict()
+    # file in a directory -> (key, source) of the parameter that wants it
+    claimed: Dict[str, Tuple[str, str]] = dict()
     # loop around file object parameters
     for key in keys:
         # get the instance and current value
@@ -163,15 +294,30 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
             continue
         # skip files produced by an earlier step of this run
         if key.upper() in skip:
-            msg = '\t{0}: produced by an earlier step - not downloading'
-            WLOG(params, '', msg.format(key))
+            if not link_only:
+                msg = '\t{0}: produced by an earlier step - not downloading'
+                WLOG(params, '', msg.format(key))
             continue
         # get the directory the files belong in
         directory = _get_directory(params, key, instance, get_directory)
+        # the same file name must not come from two different sources
+        _claim_files(claimed, key, fileobj, directory)
+        # use files already in the download cache
+        if not dry_run:
+            linked = link_cached(params, fileobj, directory, download_dir)
+            if len(linked) > 0:
+                msg = '\t{0}: linked {1} file(s) from {2}'
+                margs = [key, len(linked),
+                         cache_directory(download_dir, fileobj)]
+                WLOG(params, '', msg.format(*margs))
         # nothing to do if all files exist
-        if not needs_download(fileobj, directory):
-            msg = '\t{0}: all files present in {1}'
-            WLOG(params, '', msg.format(key, directory))
+        if not needs_download(fileobj, directory, download_dir):
+            record_links(download_dir, fileobj, directory, key)
+            if not link_only:
+                msg = '\t{0}: all files present in {1}'
+                WLOG(params, '', msg.format(key, directory))
+            continue
+        if link_only:
             continue
         # report what is being done
         msg = '\t{0}: obtaining files from {1}'
@@ -180,15 +326,21 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
             continue
         # make sure the directory exists
         os.makedirs(directory, exist_ok=True)
+        cache_dir = cache_directory(download_dir, fileobj)
         # obtain the files from the source
         if fileobj.source == 'pogos':
-            pkwargs = dict(demolocal=demolocal, demosymlink=demosymlink)
+            pkwargs = dict(demolocal=demolocal, demosymlink=demosymlink,
+                           cache_dir=cache_dir, download_dir=download_dir)
             filenames = fetch_pogos(params, fileobj, directory, **pkwargs)
         else:
-            filenames = fetch_mast(params, fileobj, directory)
-        # update the file object with the files we now have
+            mkwargs = dict(cache_dir=cache_dir, download_dir=download_dir)
+            filenames = fetch_mast(params, fileobj, directory, **mkwargs)
+        # files MAST gave (empty filelist) must not clash either
         new_fileobj = fileobj.copy()
         new_fileobj.filelist = _filelist_for(instance, filenames, key)
+        _claim_files(claimed, key, new_fileobj, directory)
+        # record which parameter uses each cached file
+        record_links(download_dir, new_fileobj, directory, key)
         # push the updated value into params
         new_value = instance.wrap(new_fileobj)
         params.set(key, new_value, source=__NAME__, instance=instance)
@@ -201,6 +353,118 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
         WLOG(params, 'info', msg.format(len(updates), yaml_file))
     # return the updates
     return updates
+
+
+def cache_meta_path(download_dir: str, cachepath: str) -> str:
+    """
+    The json record of a cached file
+
+    :param download_dir: str, the download cache root
+    :param cachepath: str, the cached file
+
+    :return: str, {download_dir}/.meta/{relative path}.json
+    """
+    root = os.path.abspath(str(download_dir))
+    rel = os.path.relpath(os.path.abspath(cachepath), root)
+    return os.path.join(root, CACHE_META_DIR, rel + '.json')
+
+
+def read_cache_meta(download_dir: str, cachepath: str) -> Dict[str, Any]:
+    """
+    Read the json record of a cached file (empty dict if there is none)
+
+    :param download_dir: str, the download cache root
+    :param cachepath: str, the cached file
+
+    :return: dict, the record (source, origin, product, downloaded, links)
+    """
+    meta_file = cache_meta_path(download_dir, cachepath)
+    try:
+        with open(meta_file, 'r') as mfile:
+            meta = json.load(mfile)
+    except (OSError, ValueError):
+        return dict()
+    return meta if isinstance(meta, dict) else dict()
+
+
+def write_cache_meta(download_dir: str, cachepath: str,
+                     meta: Dict[str, Any]) -> None:
+    """
+    Write the json record of a cached file (atomically)
+
+    :param download_dir: str, the download cache root
+    :param cachepath: str, the cached file
+    :param meta: dict, the record
+
+    :return: None
+    """
+    meta_file = cache_meta_path(download_dir, cachepath)
+    os.makedirs(os.path.dirname(meta_file), exist_ok=True)
+    # unique temporary name (several runs may write at once)
+    tmp_file = '{0}.{1}.tmp'.format(meta_file, os.getpid())
+    with open(tmp_file, 'w') as mfile:
+        json.dump(meta, mfile, indent=1, sort_keys=True)
+    os.replace(tmp_file, meta_file)
+
+
+def record_download(download_dir: Optional[str], cachepath: str,
+                    fileobj: ccc.FileObject, source: str,
+                    origin: str) -> None:
+    """
+    Record where and when a cached file was obtained (keeps its links)
+
+    :param download_dir: str or None, the download cache root
+    :param cachepath: str, the cached file
+    :param fileobj: FileObject, the file source information
+    :param source: str, pogos / mast / local (copied from a local mirror)
+    :param origin: str, the url, MAST observation or mirror file
+
+    :return: None
+    """
+    if download_dir is None:
+        return
+    meta = read_cache_meta(download_dir, cachepath)
+    meta.update(source=source, origin=origin, product=fileobj.product,
+                downloaded=time.time(), file=os.path.abspath(cachepath))
+    meta.setdefault('links', dict())
+    write_cache_meta(download_dir, cachepath, meta)
+
+
+def record_links(download_dir: Optional[str], fileobj: ccc.FileObject,
+                 directory: str, key: str) -> None:
+    """
+    Record the parameter key of every symlink to a cached file
+
+    Only writes records that change (cheap on every run).
+
+    :param download_dir: str or None, the download cache root
+    :param fileobj: FileObject, the file source information
+    :param directory: str, the directory the files belong in
+    :param key: str, the parameter key using the files
+
+    :return: None
+    """
+    cache_dir = cache_directory(download_dir, fileobj)
+    if cache_dir is None:
+        return
+    for filename in fileobj.files:
+        localpath = os.path.abspath(_local_path(directory, filename))
+        cachepath = _cache_path(cache_dir, filename)
+        # only links into the cache are recorded
+        if cachepath is None or not os.path.islink(localpath):
+            continue
+        if os.path.realpath(localpath) != os.path.realpath(cachepath):
+            continue
+        meta = read_cache_meta(download_dir, cachepath)
+        links = meta.setdefault('links', dict())
+        if links.get(localpath) == key:
+            continue
+        links[localpath] = key
+        # files cached before records existed
+        meta.setdefault('source', fileobj.source)
+        meta.setdefault('product', fileobj.product)
+        meta.setdefault('file', os.path.abspath(cachepath))
+        write_cache_meta(download_dir, cachepath, meta)
 
 
 def ask_download_now(params: Any, summary: Dict[str, str]
@@ -221,6 +485,8 @@ def ask_download_now(params: Any, summary: Dict[str, str]
     lines.append('  [D]ownload now')
     lines.append('  [L]ocal mirror of the POGOS data server (copy/symlink '
                  'source: pogos files from disk, download the rest)')
+    lines.append('Files already downloaded (e.g. by another project) are '
+                 'reused, not downloaded again.')
     lines.append('  [R]un - download when they are first needed (default)')
     prompt = '\n'.join(lines) + '\n'
     # loop until we get a valid answer
@@ -242,16 +508,23 @@ def ask_download_now(params: Any, summary: Dict[str, str]
 
 def fetch_pogos(params: Any, fileobj: ccc.FileObject, directory: str,
                 demolocal: Optional[str] = None,
-                demosymlink: bool = False) -> List[str]:
+                demosymlink: bool = False,
+                cache_dir: Optional[str] = None,
+                download_dir: Optional[str] = None) -> List[str]:
     """
     Get files from the POGOS data server (or a local mirror of it)
 
+    With a cache_dir files are stored there and symlinked into directory
+    (a demolocal mirror with demosymlink is linked to directly instead).
+
     :param params: ParamDict, used for logging
     :param fileobj: FileObject, with filelist and url set
-    :param directory: str, the directory to save files to
+    :param directory: str, the directory the files belong in
     :param demolocal: str or None, local mirror root (the last directory of
                       the url is looked for inside this)
     :param demosymlink: bool, symlink (True) or copy (False) from demolocal
+    :param cache_dir: str or None, this url's download cache directory
+    :param download_dir: str or None, the download cache root
 
     :return: list of str, the filenames now present in directory
     :raises FileSourceError: if any file cannot be obtained
@@ -263,31 +536,47 @@ def fetch_pogos(params: Any, fileobj: ccc.FileObject, directory: str,
         # where the file should end up
         localpath = _local_path(directory, filename)
         basename = os.path.basename(filename)
+        # absolute filenames are written where they are (no cache)
+        cachepath = _cache_path(cache_dir, filename)
         # skip existing files unless always_download is set
-        if os.path.exists(localpath) and not fileobj.always_download:
+        present = _present(localpath, cachepath, download_dir)
+        if present and not fileobj.always_download:
             filenames.append(basename)
             continue
-        # copy / symlink from a local mirror of the server
+        # the local mirror file (if a mirror is used)
+        src_path = None
         if demolocal is not None:
             last_dir = fileobj.url.rstrip('/').split('/')[-1]
             src_path = os.path.join(demolocal, last_dir, basename)
             if not os.path.exists(src_path):
                 emsg = 'Local mirror file not found: {0}'
                 raise FileSourceError(emsg.format(src_path))
-            # remove any existing file first (always_download)
-            if os.path.lexists(localpath):
-                os.remove(localpath)
-            if demosymlink:
-                WLOG(params, '', '\t\tSymlinking: {0}'.format(localpath))
-                os.symlink(src_path, localpath)
-            else:
-                WLOG(params, '', '\t\tCopying: {0}'.format(localpath))
-                shutil.copy2(src_path, localpath)
-        # otherwise download from the server
+        # symlink straight to the mirror (nothing stored in the cache)
+        if src_path is not None and demosymlink:
+            link_file(params, src_path, localpath)
+            filenames.append(basename)
+            continue
+        # the file is stored in the cache (or directly in directory)
+        target = localpath if cachepath is None else cachepath
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        # remove any existing file first (always_download / stale link)
+        if os.path.lexists(target):
+            os.remove(target)
+        if src_path is not None:
+            WLOG(params, '', '\t\tCopying: {0}'.format(target))
+            shutil.copy2(src_path, target)
+            origin = dict(source='local', origin=src_path)
         else:
             url = fileobj.url.rstrip('/') + '/' + basename
             WLOG(params, '', '\t\tDownloading: {0}'.format(url))
-            download_url(url, localpath)
+            download_url(url, target)
+            origin = dict(source='pogos', origin=url)
+        # record where / when the cached file came from
+        if cachepath is not None:
+            record_download(download_dir, cachepath, fileobj, **origin)
+        # link the cached file into directory
+        if cachepath is not None:
+            link_file(params, cachepath, localpath)
         filenames.append(basename)
     return filenames
 
@@ -401,14 +690,21 @@ def mast_product_table(fileobj: ccc.FileObject,
 
 
 def fetch_mast(params: Any, fileobj: ccc.FileObject, directory: str,
-               observations_module: Any = None) -> List[str]:
+               observations_module: Any = None,
+               cache_dir: Optional[str] = None,
+               download_dir: Optional[str] = None) -> List[str]:
     """
     Download MAST products for a file object
 
+    With a cache_dir products are downloaded there (only those not already
+    cached) and symlinked into directory.
+
     :param params: ParamDict, used for logging
     :param fileobj: FileObject, with pid, obsnumber and product set
-    :param directory: str, the directory to save files to
+    :param directory: str, the directory the files belong in
     :param observations_module: astroquery.mast.Observations (for testing)
+    :param cache_dir: str or None, this observation's download cache
+    :param download_dir: str or None, the download cache root
 
     :return: list of str, the sorted filenames now present in directory
     :raises FileSourceError: if the query or a download fails
@@ -426,19 +722,45 @@ def fetch_mast(params: Any, fileobj: ccc.FileObject, directory: str,
     WLOG(params, '', msg.format(*margs))
     products = mast_product_table(fileobj, observations_module)
     filenames = sorted(str(name) for name in products['productFilename'])
+    # products are stored in the cache (or directly in directory)
+    target_dir = directory if cache_dir is None else cache_dir
+    os.makedirs(target_dir, exist_ok=True)
     # only download files we do not have (unless always_download)
     if not fileobj.always_download:
-        mask = [not os.path.exists(os.path.join(directory, str(name)))
-                for name in products['productFilename']]
+        mask = []
+        for name in products['productFilename']:
+            localpath = os.path.join(directory, str(name))
+            cachepath = _cache_path(cache_dir, str(name))
+            # already in directory, or already in the cache
+            have = _present(localpath, cachepath, download_dir)
+            have |= cachepath is not None and os.path.isfile(cachepath)
+            mask.append(not have)
         products = products[mask]
     # download
     msg = '\t\tDownloading {0} file(s) from MAST to {1}'
-    WLOG(params, '', msg.format(len(products), directory))
+    WLOG(params, '', msg.format(len(products), target_dir))
     if len(products) > 0:
-        dkwargs = dict(download_dir=directory, flat=True)
+        dkwargs = dict(download_dir=target_dir, flat=True)
         manifest = observations_module.download_products(products, **dkwargs)
         # check the manifest for failures
         _check_manifest(fileobj, manifest)
+        # record where / when the cached files came from
+        if cache_dir is not None:
+            for name in products['productFilename']:
+                cachepath = os.path.join(cache_dir, str(name))
+                if os.path.isfile(cachepath):
+                    rkwargs = dict(source='mast', origin=_mast_label(fileobj))
+                    record_download(download_dir, cachepath, fileobj,
+                                    **rkwargs)
+    # link cached files into directory
+    for filename in filenames:
+        localpath = os.path.join(directory, filename)
+        cachepath = _cache_path(cache_dir, filename)
+        if cachepath is None or not os.path.isfile(cachepath):
+            continue
+        refresh = fileobj.always_download
+        if refresh or not _present(localpath, cachepath, download_dir):
+            link_file(params, cachepath, localpath)
     # check that every file now exists
     for filename in filenames:
         if not os.path.exists(os.path.join(directory, filename)):
@@ -482,6 +804,98 @@ def _local_path(directory: str, filename: str) -> str:
     if os.path.isabs(filename):
         return filename
     return os.path.join(directory, filename)
+
+
+def _safe_part(part: str) -> str:
+    """Make a url / id component safe to use as one directory name."""
+    keep = [char if (char.isalnum() or char in '-+._') else '_'
+            for char in str(part)]
+    return ''.join(keep)
+
+
+def _cache_path(cache_dir: Optional[str], filename: str) -> Optional[str]:
+    """
+    The download cache path of a filelist entry
+
+    :param cache_dir: str or None, the cache directory of this source
+    :param filename: str, the filelist entry
+
+    :return: str or None, None without a cache or for absolute filenames
+             (those are used where they are)
+    """
+    if cache_dir is None or os.path.isabs(filename):
+        return None
+    return os.path.join(cache_dir, os.path.basename(filename))
+
+
+def _present(localpath: str, expected: Optional[str],
+             download_dir: Optional[str]) -> bool:
+    """
+    Whether a file is present in its directory
+
+    A symlink into the download cache that points to another cached file
+    than expected (e.g. the url / program changed) does not count.
+
+    :param localpath: str, the file in the constant's directory
+    :param expected: str or None, the cache file it should link to
+    :param download_dir: str or None, the download cache root
+
+    :return: bool, True if present
+    """
+    if not os.path.exists(localpath):
+        return False
+    if expected is None or download_dir is None:
+        return True
+    if not os.path.islink(localpath):
+        return True
+    real = os.path.realpath(localpath)
+    root = os.path.realpath(str(download_dir)) + os.sep
+    if real.startswith(root):
+        return real == os.path.realpath(expected)
+    return True
+
+
+def _source_label(fileobj: ccc.FileObject) -> str:
+    """A short description of where a file object's files come from."""
+    if fileobj.source == 'pogos':
+        return 'pogos {0}'.format(str(fileobj.url).rstrip('/'))
+    if fileobj.source == 'mast':
+        return 'mast pid={0} obsnumber={1}'.format(fileobj.pid,
+                                                  fileobj.obsnumber)
+    return str(fileobj.source)
+
+
+def _mast_label(fileobj: ccc.FileObject) -> str:
+    """The MAST program / observation of a file object (for records)."""
+    return 'jw{0} o{1}'.format(str(fileobj.pid).zfill(5),
+                               str(fileobj.obsnumber).zfill(3))
+
+
+def _claim_files(claimed: Dict[str, Tuple[str, str]], key: str,
+                 fileobj: ccc.FileObject, directory: str) -> None:
+    """
+    Record which parameter / source each file of a directory comes from
+
+    :param claimed: dict, file path -> (key, source label) (updated)
+    :param key: str, the parameter key
+    :param fileobj: FileObject, the file source information
+    :param directory: str, the directory the files belong in
+
+    :return: None
+    :raises FileSourceError: if a file name is wanted from two different
+                             sources (they would overwrite each other)
+    """
+    label = _source_label(fileobj)
+    for filename in fileobj.files:
+        localpath = os.path.abspath(_local_path(directory, filename))
+        other = claimed.get(localpath, None)
+        if other is not None and other[1] != label:
+            emsg = ('File name clash: {0} is wanted by {1} ({2}) and by '
+                    '{3} ({4}). Give one of them a different directory '
+                    'parameter.')
+            eargs = [localpath, other[0], other[1], key, label]
+            raise FileSourceError(emsg.format(*eargs))
+        claimed[localpath] = (key, label)
 
 
 def _get_directory(params: Any, key: str,
