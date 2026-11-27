@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from apero.tools.module.processing import drs_queue
+from aperocore.gui import procs as gui_procs
 from apero.tools.module.processing import drs_queue_procs as procs
 from apero.tools.module.processing import drs_queue_stats as stats
 from apero.tools.module.processing import drs_queue_gui as gui
@@ -682,7 +683,8 @@ def test_remove_preserves_live_and_unknown(
     procs.update(proc_dir, remote, host='other-host')
     batch = procs.register(proc_dir, 'batch', 'batch', slurm_jobs=['123'])
     assert batch is not None
-    monkeypatch.setattr(procs, 'slurm_states', lambda jobs: None)
+    # the shared registry (aperocore.gui.procs) checks the Slurm states
+    monkeypatch.setattr(gui_procs, 'slurm_states', lambda jobs: None)
     assert procs.remove(proc_dir, [local, remote, batch]) == 0
     assert len(procs.load_all(proc_dir)) == 3
 
@@ -783,7 +785,7 @@ def test_slurm_parsing_and_status(tmp_path):
 
 def test_slurm_job_details(monkeypatch: Any) -> None:
     """Live scheduler details should be parsed for the Processes view."""
-    procs._SLURM_DETAILS_CACHE.update(time=0.0, value=None)
+    gui_procs._SLURM_DETAILS_CACHE.update(time=0.0, value=None)
     output = (
         '123_4|apero_pp|RUNNING|def|None|00:02:03|02:00:00|01:57:57|'
         '1|8|16G|2026-11-19T10:00:00|2026-11-19T10:01:00|node1|'
@@ -797,11 +799,11 @@ def test_slurm_job_details(monkeypatch: Any) -> None:
         stdout = output
         stderr = ''
 
-    monkeypatch.setattr(procs.shutil, 'which', lambda name: '/usr/bin/squeue')
-    monkeypatch.setattr(procs.subprocess, 'run',
+    monkeypatch.setattr(gui_procs.shutil, 'which', lambda name: '/usr/bin/squeue')
+    monkeypatch.setattr(gui_procs.subprocess, 'run',
                         lambda *args, **kwargs: Result())
-    monkeypatch.setattr(procs.getpass, 'getuser', lambda: 'apero')
-    result = procs.slurm_job_details()
+    monkeypatch.setattr(gui_procs.getpass, 'getuser', lambda: 'apero')
+    result = gui_procs.slurm_job_details()
     assert result['available']
     assert result['user'] == 'apero'
     assert result['jobs'][0]['job_id'] == '123_4'
@@ -812,9 +814,9 @@ def test_slurm_job_details(monkeypatch: Any) -> None:
 
 def test_slurm_job_details_unavailable(monkeypatch: Any) -> None:
     """Non-Slurm hosts should return an explicit unavailable result."""
-    procs._SLURM_DETAILS_CACHE.update(time=0.0, value=None)
-    monkeypatch.setattr(procs.shutil, 'which', lambda name: None)
-    result = procs.slurm_job_details()
+    gui_procs._SLURM_DETAILS_CACHE.update(time=0.0, value=None)
+    monkeypatch.setattr(gui_procs.shutil, 'which', lambda name: None)
+    result = gui_procs.slurm_job_details()
     assert not result['available']
     assert result['jobs'] == []
     assert 'not available' in result['error']

@@ -1,3 +1,4 @@
 include */README.md
 include */*/README.md
 include aperocore/info.yaml
+include aperocore/gui/static/*

@@ -49,6 +49,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 from aperocore import drs_lang
+from aperocore.gui import webapp as gui_webapp
 from apero.base import base as apero_base
 from apero.tools.module.processing import drs_queue
 from apero.tools.module.processing import drs_queue_diagnostics
@@ -125,6 +126,10 @@ GUI_DIR = os.path.join(os.path.dirname(__file__), 'gui')
 GUI_TEMPLATE_PATH = os.path.join(GUI_DIR, 'queue_template.html')
 # define the Info tab markdown (also included in the ARI apero_queue docs)
 GUI_INFO_PATH = os.path.join(GUI_DIR, 'queue_info.md')
+# define the icon shown in the top right corner (and the browser tab)
+GUI_ICON_PATH = os.path.join(GUI_DIR, 'static', 'apero_icon.ico')
+# define the route the icon is served at
+GUI_ICON_ROUTE = '/static/apero_icon.ico'
 # queue id -> detail columns (priority/recipe/runstring) read from yaml
 _DETAIL_CACHE: Dict[str, Dict[str, Any]] = dict()
 _DETAIL_LOCK = threading.Lock()
@@ -155,83 +160,16 @@ def _load_gui_html_template() -> str:
         return '\n'.join(lines)
 
 
-def _markdown_inline(text: str) -> str:
-    """
-    Convert inline markdown (`code` and **bold**) of escaped text to html
-
-    :param text: str, one line of markdown text
-
-    :return: str, the html for the line
-    """
-    # escape first so markdown content cannot inject html
-    text = html_mod.escape(text, quote=False)
-    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
-    text = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', text)
-    return text
-
-
 def render_info_html(path: str = GUI_INFO_PATH) -> str:
     """
     Render the Info tab markdown (headings, bullet lists, paragraphs,
-    inline code and bold only) to html
+    inline code and bold) to html - see aperocore.gui.webapp
 
     :param path: str, the markdown file to render
 
     :return: str, the html for the Info tab
     """
-    try:
-        with open(path, 'r', encoding='utf-8') as mfile:
-            lines = mfile.read().splitlines()
-    except OSError:
-        return '<p>Missing info file: {0}</p>'.format(
-            html_mod.escape(path))
-    # collect html blocks; a block is a paragraph or a list item
-    out: List[str] = []
-    block: List[str] = []
-    kind = None
-    in_list = False
-
-    def _flush() -> None:
-        """Append the buffered paragraph or list item to rendered output."""
-        if not block:
-            return
-        text = _markdown_inline(' '.join(block))
-        if kind == 'li':
-            out.append('<li>{0}</li>'.format(text))
-        else:
-            out.append('<p>{0}</p>'.format(text))
-        block.clear()
-
-    for line in lines:
-        stripped = line.strip()
-        heading = re.match(r'^(#{1,4})\s+(.*)$', stripped)
-        is_item = stripped.startswith('- ')
-        # blank lines, headings and new items end the current block
-        if not stripped or heading or is_item:
-            _flush()
-        # leaving a list (anything except an item or its continuation)
-        if in_list and (heading or (stripped and not is_item
-                                    and not line.startswith(' '))):
-            out.append('</ul>')
-            in_list = False
-        if heading:
-            level = len(heading.group(1)) + 1
-            out.append('<h{0}>{1}</h{0}>'.format(
-                level, _markdown_inline(heading.group(2))))
-        elif is_item:
-            if not in_list:
-                out.append('<ul>')
-                in_list = True
-            kind = 'li'
-            block.append(stripped[2:])
-        elif stripped:
-            if not block:
-                kind = 'li' if in_list else 'p'
-            block.append(stripped)
-    _flush()
-    if in_list:
-        out.append('</ul>')
-    return '\n'.join(out)
+    return gui_webapp.render_markdown_file(path)
 
 
 # =============================================================================
@@ -508,7 +446,8 @@ def get_task_log(params: ParamDict, qid: str,
 def _read_log(out: Dict[str, Any], log_path: str, offset: int,
               growing: bool) -> Dict[str, Any]:
     """
-    Read (part of) a log file into a get_task_log style dictionary
+    Read (part of) a log file into a get_task_log style dictionary (the
+    shared gui log reader - see aperocore.gui.webapp.read_log)
 
     :param out: dict, the response dictionary to fill
     :param log_path: str, the log file path
@@ -518,39 +457,8 @@ def _read_log(out: Dict[str, Any], log_path: str, offset: int,
 
     :return: dict, the filled response dictionary
     """
-    out['path'] = log_path
-    if not os.path.exists(log_path):
-        return out
-    out['exists'] = True
-    size = os.path.getsize(log_path)
-    out['size'] = size
-    # the log was rewritten (e.g. task re-run) - start again
-    if offset > size:
-        out['reset'] = True
-        offset = -1
-    if offset < 0:
-        start = max(0, size - GUI_LOG_MAX_BYTES)
-        out['truncated'] = start > 0
-    else:
-        start = offset
-    end = min(size, start + GUI_LOG_MAX_BYTES)
-    with open(log_path, 'rb') as logfile:
-        logfile.seek(start)
-        data = logfile.read(end - start)
-    # a truncated first read starts at the next full line
-    if out['truncated']:
-        cut = data.find(b'\n')
-        if cut >= 0:
-            data = data[cut + 1:]
-            start = start + cut + 1
-    # while running only send complete lines (rest comes next poll)
-    if growing:
-        cut = data.rfind(b'\n')
-        data = data[:cut + 1] if cut >= 0 else b''
-    out['start'] = start
-    out['offset'] = start + len(data)
-    out['text'] = data.decode('utf-8', errors='replace')
-    return out
+    rargs = [out, log_path, offset, growing, GUI_LOG_MAX_BYTES]
+    return gui_webapp.read_log(*rargs)
 
 
 # =============================================================================
@@ -1045,6 +953,13 @@ def render_dashboard(params: ParamDict,
     # fill the html template (tokens instead of format - css/js braces)
     #   re-read so a page reload picks up template edits
     html = _load_gui_html_template()
+    # the icon in the top right corner (shared aperocore gui markup)
+    icon = dict(head='', body='')
+    if os.path.isfile(GUI_ICON_PATH):
+        icon = gui_webapp.app_icon_html(GUI_ICON_ROUTE.lstrip('/'),
+                                        'APERO Queue')
+    html = html.replace('XX_APP_ICON_HEAD_XX', icon['head'])
+    html = html.replace('XX_APP_ICON_BODY_XX', icon['body'])
     html = html.replace('XX_QPATH_XX',
                         drs_queue.get_queue_path(params))
     html = html.replace('XX_ROWS_XX', str(rows))
@@ -1806,7 +1721,7 @@ def _start_job(params: ParamDict, state: GuiState, kind: str,
 
 def _job_tail(path: str, nlines: int, keep_ansi: bool = False) -> List[str]:
     """
-    Get the last lines of a job log
+    Get the last lines of a job log (see aperocore.gui.webapp.job_tail)
 
     :param path: str, the job log path
     :param nlines: int, the number of lines to return
@@ -1815,15 +1730,7 @@ def _job_tail(path: str, nlines: int, keep_ansi: bool = False) -> List[str]:
 
     :return: list of strings, the lines
     """
-    if not os.path.exists(path):
-        return []
-    with open(path, 'rb') as logfile:
-        logfile.seek(max(0, os.path.getsize(path) - 256 * 1024))
-        text = logfile.read().decode('utf-8', errors='replace')
-    if not keep_ansi:
-        text = ANSI_ESCAPE.sub('', text)
-    text = text.replace('\r', '\n')
-    return text.splitlines()[-nlines:]
+    return gui_webapp.job_tail(path, nlines, keep_ansi=keep_ansi)
 
 
 def get_job_data(state: GuiState,
@@ -2036,10 +1943,32 @@ def _make_handler(
                      sublevel=2)
                 self._send(json.dumps(dict(error=emsg)), code=500)
 
+        def _send_bytes(self, body: bytes, ctype: str) -> None:
+            """Send a binary response (e.g. the icon).
+
+            :param body: Response body.
+            :param ctype: MIME content type.
+            :return: None. Writes the response to the client socket.
+            """
+            try:
+                self.send_response(200)
+                self.send_header('Content-Type', ctype)
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
         def _get(self) -> None:
             """Route GET requests"""
             parsed = urlparse(self.path)
             route = parsed.path
+            # the icon (top right corner and browser tab)
+            if route == GUI_ICON_ROUTE and os.path.isfile(GUI_ICON_PATH):
+                with open(GUI_ICON_PATH, 'rb') as ifile:
+                    self._send_bytes(ifile.read(),
+                                     'image/vnd.microsoft.icon')
+                return
             # the dashboard page
             if route in ['/', '/index.html']:
                 self._send(render_dashboard(params, rows),

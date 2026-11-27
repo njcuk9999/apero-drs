@@ -15,13 +15,12 @@ import copy
 import difflib
 import os
 import time
-from typing import Any, Dict, List, Optional, Union
-from urllib.request import urlopen
-from urllib.error import URLError, HTTPError
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from aperocore import drs_lang
 from aperocore.base import base
 from aperocore.constants import constant_functions
+from aperocore.constants import custom_const_classes
 from aperocore.constants.param_functions import ParamDict
 from aperocore.constants.param_functions import SubParamDict
 from aperocore.core import drs_log
@@ -129,7 +128,7 @@ def load_into_params(values: Dict[str, Any], sources: Dict[str, str],
         if values[key] is None and key in instances:
             # only do this if the instance dtype is a dictionary
             if hasattr(instances[key], 'dtype'):
-                if instances[key].dtype is dict:
+                if custom_const_classes.is_mapping_const(instances[key]):
                     # start a new sub-dictionary
                     dict_values = dict()
                     # loop around all values
@@ -410,7 +409,7 @@ def _validate_flat_yaml_values(flat_dict: Dict[str, Any],
         instance = instances.get(known_key)
         if instance is None:
             continue
-        if getattr(instance, 'dtype', None) in [dict, 'dict']:
+        if custom_const_classes.is_mapping_const(instance):
             dict_prefixes.append(f'{known_key}.')
     results = dict(unknown=[], invalid=[])
     for key, value in flat_dict.items():
@@ -966,13 +965,21 @@ def common_prefix(values: List[str]) -> str:
 # =============================================================================
 def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
                    demo_dict: Dict[str, Dict[str, Any]],
-                   ask_for_missing_on_no_demo: bool = True) -> ParamDict:
+                   ask_for_missing_on_no_demo: bool = True,
+                   demo_select: Optional[str] = None) -> ParamDict:
     """
     Modify the parameters by a specific starting point (i.e. a demo)
 
     :param params: ParamDict, parameter dictionary of constants
     :param imode_key: str, the key of the instrument mode (in params)
-    :param demo_module: the module for demos (needs dict DEMOS)
+    :param demo_dict: dict, instrument mode -> demo key -> demo instance
+    :param ask_for_missing_on_no_demo: bool, if True ask for all missing
+                                       parameters when no demo exists
+    :param demo_select: str or None, pre-answer of the demo prompt (skips
+                        the filter and selection prompts): a demo key of
+                        demo_dict[imode] (e.g. "t1b.sossisse"), its number
+                        in the unfiltered list, or "none"/"0" for no demo.
+                        None asks the user.
 
     :return: ParamDict, the updated parameter dictionary of constants
     """
@@ -1010,6 +1017,18 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
         return params
     # get the demos for this instrument
     idemos = demo_dict[imode]
+    # a pre-answered demo skips the filter and selection prompts
+    if demo_select is not None:
+        demo_key = _preset_demo_key(params, idemos, str(demo_select))
+        if demo_key is not None:
+            demo_inst = idemos[demo_key]
+            params = _load_info(params, demo_inst)
+            demo_params['ACTIVE'] = True
+            demo_params['URL'] = demo_inst.url
+            demo_params['DOWNLOAD'] = demo_inst.download
+            demo_params['ID'] = demo_inst.get_prop('id')
+        params.set('DEMO_PARAMS', demo_params, source=func_name)
+        return params
     # allow filtering by object and keywords
     idemos = _filter_demo_choices(params, idemos)
     # display the possible starting points for this instrument mode
@@ -1057,6 +1076,36 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
     params.set('DEMO_PARAMS', demo_params, source=func_name)
     # return parameters
     return params
+
+
+def _preset_demo_key(params: ParamDict, idemos: Dict[str, Any],
+                     demo_select: str) -> Optional[str]:
+    """
+    Resolve a pre-answered demo choice (see starting_point)
+
+    :param params: ParamDict, parameter dictionary of constants (logging)
+    :param idemos: dict, demo key -> demo instance for the instrument mode
+    :param demo_select: str, a demo key, its 1-based number in idemos or
+                        "none"/"0"/"" for no demo
+
+    :raises: an error is logged (WLOG error) for an unknown choice
+
+    :return: str or None, the demo key (None = start without a demo)
+    """
+    choice = demo_select.strip()
+    # no demo
+    if choice.lower() in ['', 'none', '0', 'null']:
+        return None
+    # a demo key
+    if choice in idemos:
+        return choice
+    # a number in the (unfiltered) list
+    keys = list(idemos.keys())
+    if choice.isdigit() and 1 <= int(choice) <= len(keys):
+        return keys[int(choice) - 1]
+    emsg = 'Demo selection "{0}" is not valid (valid: {1} or "none")'
+    WLOG(params, 'error', emsg.format(choice, ', '.join(keys)))
+    return None
 
 
 def _print_info(params: ParamDict, it: int,
@@ -1212,30 +1261,128 @@ def _should_skip_filtering(filter_values: Dict[str, set]) -> bool:
     return True
 
 
-def _build_filter_prompt(filter_values: Dict[str, set]) -> str:
+def _collect_filter_choices(idemos: Dict[str, Any]
+                            ) -> List[Tuple[str, str, int]]:
     """
-    Build the filter prompt showing available values.
-    Only shows fields with multiple values.
+    Numbered filter choices: every value of every filter field that
+    would actually narrow the list (fields with more than one value)
 
-    :param filter_values: dict mapping filter field to set of values
+    :param idemos: dict of demos for the instrument mode
 
-    :return: formatted prompt string
+    :return: list of (field, display value, number of demos) tuples,
+             sorted by field order then value
     """
-    lines = ['\nFilter demos by:']
-    shown_count = 0
+    # field -> lower case value -> [display value, count]
+    found = {field: dict() for field in INFO_DICT_FILTERS}
+    for demo_mode in idemos:
+        info_dict = idemos[demo_mode].get_info()
+        for field in INFO_DICT_FILTERS:
+            if field not in info_dict:
+                continue
+            values = info_dict[field]
+            if not isinstance(values, (list, tuple)):
+                values = [values]
+            # count each value once per demo (keep the first spelling)
+            seen = set()
+            for value in values:
+                text = str(value).strip()
+                key = text.lower()
+                if not text or key in seen:
+                    continue
+                seen.add(key)
+                entry = found[field].setdefault(key, [text, 0])
+                entry[1] += 1
+    # only fields with more than one value can filter anything
+    choices = []
     for field in INFO_DICT_FILTERS:
-        if field in filter_values and len(filter_values[field]) > 1:
-            values = ', '.join(sorted(filter_values[field]))
-            lines.append(f'  {field}: {values}')
-            shown_count += 1
-    lines.append('(enter to skip): ')
-    return '\n'.join(lines)
+        if len(found[field]) < 2:
+            continue
+        for key in sorted(found[field]):
+            text, count = found[field][key]
+            choices.append((field, text, count))
+    return choices
+
+
+def _print_filter_menu(choices: List[Tuple[str, str, int]],
+                       ndemos: int) -> None:
+    """
+    Print the demo filter menu (same panel style as the demo list)
+
+    :param choices: list of (field, value, count) from
+                    _collect_filter_choices
+    :param ndemos: int, the number of demos available
+
+    :return: None, prints to screen
+    """
+    colours = drs_text.COLOURS
+    bar = '*' * 70
+    # header panel
+    drs_text.cprint('\n' + bar, 'b')
+    drs_text.cprint(f'* Filter demos ({ndemos} available)', 'b')
+    drs_text.cprint(bar, 'b')
+    # width of the value column
+    width = max(len(choice[1]) for choice in choices)
+    # one numbered line per value, grouped by field
+    current = None
+    for number, (field, value, count) in enumerate(choices, start=1):
+        if field != current:
+            current = field
+            print('\n\t' + colours.print(field.capitalize() + ':', 'g'))
+        number_str = colours.print(f'[{number:>2d}]', 'y')
+        plural = 'demo' if count == 1 else 'demos'
+        count_str = colours.print(f'{count} {plural}', 'k')
+        print(f'\t   {number_str} {value:<{width}}   {count_str}')
+    # how to use it
+    print()
+    help_lines = ['Enter number(s) and/or words to search for '
+                  '(e.g. "1 3" or "wasp transit")',
+                  'Numbers in the same group: either one, everything '
+                  'else must match',
+                  'Press enter to show all demos']
+    for line in help_lines:
+        print('\t' + colours.print(line, 'k'))
+
+
+def _demo_matches_choices(info_dict: Dict[str, Any], tokens: List[str],
+                          choices: List[Tuple[str, str, int]]) -> bool:
+    """
+    Check a demo against filter tokens
+
+    Numbers select menu values: numbers from the same field are
+    alternatives (e.g. two objects), different fields must all match.
+    Other words are searched for in all filter fields and must all match.
+
+    :param info_dict: Dict[str, Any], demo INFO dict
+    :param tokens: list of lower case tokens from the user
+    :param choices: list of (field, value, count) menu choices
+
+    :return: bool, True if the demo matches
+    """
+    # field -> the menu values selected for it
+    selected = dict()
+    for token in tokens:
+        # a menu number
+        if token.isdigit() and 1 <= int(token) <= len(choices):
+            field, value, _ = choices[int(token) - 1]
+            selected.setdefault(field, []).append(value.lower())
+        # a search word (substring of any filter field)
+        elif not _demo_matches_filter(info_dict, [token]):
+            return False
+    # at least one selected value per field
+    for field, values in selected.items():
+        terms = _normalize_demo_field(info_dict.get(field))
+        if not any(value in terms for value in values):
+            return False
+    return True
 
 
 def _filter_demo_choices(params: ParamDict,
                          idemos: Dict[str, Any]) -> Dict[str, Any]:
     """
     Filter demos by object/keywords without assuming fields exist.
+
+    Shows a numbered menu of the available values (with the number of
+    demos for each); the user can enter numbers, words or both.
 
     :param params: ParamDict, parameter dictionary of constants
     :param idemos: dict of demos for the instrument mode
@@ -1244,27 +1391,38 @@ def _filter_demo_choices(params: ParamDict,
     """
     if not isinstance(idemos, dict) or len(idemos) == 0:
         return idemos
-    # collect available filter values
+    # collect available filter values (skip if only one choice)
     filter_values = _collect_filter_values(idemos)
-    # skip filtering if only one choice
     if _should_skip_filtering(filter_values):
         return idemos
-    # build prompt with available values
-    prompt = _build_filter_prompt(filter_values)
+    choices = _collect_filter_choices(idemos)
+    if len(choices) == 0:
+        return idemos
+    # show the menu
+    _print_filter_menu(choices, len(idemos))
     while True:
-        userinput = str(input(prompt)).strip()
-        if userinput == '':
-            return idemos
-        tokens = _parse_demo_filter(userinput)
+        prompt = '\n' + drs_text.COLOURS.print('Filter: ', 'g')
+        tokens = _parse_demo_filter(str(input(prompt)))
+        # enter: no filter
         if not tokens:
             return idemos
+        # keep the demos that match every token
         filtered = dict()
         for demo_mode in idemos:
-            demo_inst = idemos[demo_mode]
-            info_dict = demo_inst.get_info()
-            if _demo_matches_filter(info_dict, tokens):
-                filtered[demo_mode] = demo_inst
+            info_dict = idemos[demo_mode].get_info()
+            if _demo_matches_choices(info_dict, tokens, choices):
+                filtered[demo_mode] = idemos[demo_mode]
         if len(filtered) > 0:
+            # describe what was matched (numbers -> their values)
+            described = []
+            for token in tokens:
+                if token.isdigit() and 1 <= int(token) <= len(choices):
+                    described.append(choices[int(token) - 1][1])
+                else:
+                    described.append(f'"{token}"')
+            msg = 'Showing {0} of {1} demos matching: {2}'
+            margs = [len(filtered), len(idemos), ', '.join(described)]
+            drs_text.cprint(msg.format(*margs), 'g')
             return filtered
         msg = ('No demos match that filter. Try again or press enter '
                'to skip.')
@@ -1315,6 +1473,11 @@ def _load_info(params: ParamDict, demo_inst: Any) -> ParamDict:
             # do not update values that are None
             if new_value is None:
                 continue
+            # file objects (mapping form) become FileName / FileList values
+            instance = params.instances[key]
+            if getattr(instance, 'yaml_mapping', False):
+                new_value = instance.validate(new_value,
+                                              source=demo_inst.classname)
             # only update keys that have changed
             if new_value != old_value:
                 # print the value we are starting with
@@ -1324,267 +1487,6 @@ def _load_info(params: ParamDict, demo_inst: Any) -> ParamDict:
                            instance=params.instances[key])
     # return parameters
     return params
-
-
-def _validate_url(url: str, params: ParamDict = None) -> bool:
-    """
-    Validate that a URL is accessible by attempting to open it
-
-    :param url: str, the URL to validate
-    :param params: ParamDict, the parameter dictionary for logging
-
-    :return: bool, True if URL is valid and accessible, False otherwise
-    """
-    try:
-        # attempt to open the URL with a timeout
-        response = urlopen(url, timeout=5)
-        response.close()
-        return True
-    except (HTTPError, URLError) as e:
-        # log warning if params provided
-        if params is not None:
-            msg = f'URL validation failed: {url}\nError: {str(e)}'
-            WLOG(params, 'warning', msg)
-        return False
-    except Exception as e:
-        # handle other exceptions
-        if params is not None:
-            msg = f'URL validation error: {url}\nError: {str(e)}'
-            WLOG(params, 'warning', msg)
-        return False
-
-def ask_about_download_data(params: Any, url: str) -> Any:
-    """Prompt for remote or local demo data, or let the user skip.
-
-    :param params: parameter dictionary used for user-facing log messages
-    :param url: default demo-data URL
-    :return: selected URL, local path, and symlink choice; cancellation may
-        return None
-    """
-    # set initial values
-    demolocal = None
-    demosymlink = False
-    # loop until we get valid input
-    while True:
-        # ask user what they want to do
-        prompt = ('\nHow would you like to handle demo data?\n'
-                  f'  [D]ownload from our URL ({url})\n'
-                  f'  [U]se a custom URL\n'
-                  f'  [L]ocal link (on disk)\n'
-                  f'  [S]kip downloading data\n')
-        userinput = str(input(prompt)).upper().strip()
-        # handle skip option
-        if userinput in ['S', 'SKIP']:
-            return None, None, None
-        if userinput in ['U', 'USE']:
-            # ask user for custom url
-            while True:
-                prompt_url = ('\nProvide the URL to demo data '
-                              '(or [Q]uit): ')
-                user_url = str(input(prompt_url)).strip()
-                # handle quit option
-                if user_url.upper() in ['Q', 'QUIT']:
-                    return  None, None, None
-                # validate url format and accessibility
-                if (user_url.startswith('http://') or
-                        user_url.startswith('https://')):
-                    # test if URL is accessible
-                    if _validate_url(user_url, params):
-                        url = user_url
-                        msg = f'URL validated successfully: {url}'
-                        WLOG(params, 'info', msg)
-                        break
-                    else:
-                        msg = (
-                            f'URL is not accessible: {user_url}. '
-                            'Please try again.'
-                        )
-                        WLOG(params, 'warning', msg)
-                else:
-                    msg = (
-                        f'Invalid URL format: {user_url}. '
-                        'URL must start with http:// or https://. '
-                        'Please try again.'
-                    )
-                    WLOG(params, 'warning', msg)
-        # handle download option (from provided link)
-        elif userinput in ['D', 'DOWNLOAD']:
-            demolocal = None
-            break
-        # handle local link option
-        elif userinput in ['L', 'LOCAL']:
-            # ask user for local path
-            while True:
-                prompt_local = ('\nProvide the local path to demo data '
-                                '(or [Q]uit): ' )
-                user_path = str(input(prompt_local)).strip()
-                # handle quit option
-                if user_path.upper() in ['Q', 'QUIT']:
-                    return
-                # validate path exists
-                if os.path.isdir(user_path):
-                    demolocal = user_path
-                    # ask user about symlinks
-                    symlink_prompt = ('\nUse symlinks? '
-                                      '[Y]es (symlinks) or [N]o '
-                                      '(hard copy): ')
-                    symlink_input = str(input(symlink_prompt)).upper().strip()
-                    if symlink_input in ['Y', 'YES']:
-                        demosymlink = True
-                    else:
-                        demosymlink = False
-                    break
-                else:
-                    msg = (f'Path does not exist: {user_path}. '
-                           'Please try again.')
-                    WLOG(params, 'warning', msg)
-            break
-        else:
-            msg = (
-                'Invalid choice. Please select [D]ownload, '
-                '[L]ocal, or [S]kip.'
-            )
-            WLOG(params, 'warning', msg)
-    # return updated values
-    return url, demolocal, demosymlink
-
-
-def download_data(params: ParamDict, demolocal: str = None,
-                  demosymlink: bool = False) -> None:
-    """
-    Download the data from a demo or copy from a local repository
-
-    Note you must have DEMO_PARAMS in params for this function to work
-
-    DEMO_PARAMS: dict, the demo parameters dictionary
-
-    DEMO_PARAMS['ACTIVE']: bool: if True try to download data, else return
-    DEMO_PARAMS['URL']: str: the url of the demo
-    DEMO_PARAMS['DOWNLOAD']: Dict[str, str]
-          - key = str: the parameters to look for files
-          - value = str: the parameter description the path to save locally
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param demolocal: str or None, if not None path to local demo data
-                      repository to copy/symlink from instead of downloading
-    :param demosymlink: bool, if True and demolocal is not None, create
-                        symlinks instead of copying files
-
-    :return: None, downloads data from URL to local file(S), copies from
-             local repository, or creates symlinks
-    """
-    # set function name
-    func_name = display_func('download_data', __NAME__)
-    # deal with params not set up properly
-    if 'DEMO_PARAMS' not in params:
-        # display error about using this function without DEMO_PARAMS
-        # TODO: Add to language database
-        emsg = 'params does not contain DEMO_PARAMS cannot use function {0}'
-        eargs = [func_name]
-        raise AperoCodedException(params, None, message=emsg.format(*eargs))
-    # get the parameters from demo parameters
-    active = params['DEMO_PARAMS']['ACTIVE']
-    url = params['DEMO_PARAMS']['URL']
-    download = params['DEMO_PARAMS']['DOWNLOAD']
-    # -------------------------------------------------------------------------
-    # deal with not being active
-    if not active:
-        return  None, None, None
-    # -------------------------------------------------------------------------
-    # ask the user how they want to handle demo data
-    if demolocal is None:
-        url, demolocal, demosymlink = ask_about_download_data(params, url)
-    # -------------------------------------------------------------------------
-    # print progress
-    if url is None and demolocal is None and demosymlink is None:
-        WLOG(params, 'info', f'Skipping downloading/copying demo data.')
-        return
-    if demolocal is None:
-        WLOG(params, 'info', f'Downloading data. Please wait...')
-    elif demosymlink:
-        msg = 'Creating symlinks to data from local repository...'
-        WLOG(params, 'info', msg)
-    else:
-        WLOG(params, 'info', f'Copying data from local repository...')
-    # -------------------------------------------------------------------------
-    # loop around downloadable parameters
-    for parameter in download:
-        # get download parameter
-        dparameter = download[parameter]
-        # deal with parameter not in params
-        if parameter not in params:
-            WLOG(params, 'warning', f'Parameter "{parameter}" not defined')
-            continue
-        # deal with value of DOWNLOAD[parameter] not in params
-        if dparameter not in params:
-            msg = f'Parameter "{dparameter}" not defined'
-            WLOG(params, 'warning', msg)
-            continue
-        # deal with parameter being None
-        if params[parameter] is None:
-            continue
-        # deal with dparameter being None
-        if params[dparameter] is None:
-            continue
-        # get the filename
-        value = params[parameter]
-        # force into a list (if string)
-        if isinstance(value, str):
-            value = [value]
-        # deal with bad parameter (should now be a list)
-        if not isinstance(value, list):
-            msg = f'Cannot get parameter: "{parameter}"'
-            WLOG(params, 'warning', msg)
-            continue
-        # create path if it doesn't exist
-        if not os.path.exists(params[dparameter]):
-            os.makedirs(params[dparameter])
-        # loop around values and try to download or copy
-        for value_it in value:
-            # construct the local file name
-            localpath = str(os.path.join(params[dparameter], value_it))
-            # deal with files already existing -- don't re-download/copy
-            if os.path.exists(localpath):
-                msg = '\t File exists: {0}'.format(localpath)
-                WLOG(params, '', msg)
-                continue
-            # handle local copy vs remote download
-            if demolocal is not None:
-                # get the last directory component from the url
-                url_parts = url.rstrip('/').split('/')
-                last_dir = url_parts[-1]
-                # construct source path from local repository
-                src_path = str(os.path.join(demolocal, last_dir, value_it))
-                # check if source exists
-                if not os.path.exists(src_path):
-                    msg = (f'Local data not found at: {src_path}')
-                    WLOG(params, 'warning', msg)
-                    continue
-                # handle symlink vs copy
-                if demosymlink:
-                    # print progress
-                    msg = '\tSymlinking: {0}'
-                    margs = [localpath]
-                    WLOG(params, '', msg.format(*margs))
-                    # create symlink (works cross-platform)
-                    os.symlink(src_path, localpath)
-                else:
-                    # print progress
-                    msg = '\tCopying: {0}'
-                    margs = [localpath]
-                    WLOG(params, '', msg.format(*margs))
-                    # copy the file
-                    import shutil
-                    shutil.copy2(src_path, localpath)
-            else:
-                # get the url
-                purl = f'{url}/{value_it}'
-                # print progress
-                msg = '\tDownloading: {0}'
-                margs = [localpath]
-                WLOG(params, '', msg.format(*margs))
-                # try to get the data
-                drs_misc.download_file(purl, localpath)
 
 
 def _print_parameters(key: str, value: Any) -> None:
@@ -1755,7 +1657,8 @@ def _dictionary_const_paths(instances: Dict[str, Any],
     leaf_keys = set()
     for key, instance in instances.items():
         full_key = f"{parent_key}.{key}" if parent_key else key
-        if isinstance(instance, Const) and instance.dtype is dict:
+        if (isinstance(instance, Const)
+                and custom_const_classes.is_mapping_const(instance)):
             leaf_keys.add(full_key)
         elif isinstance(instance, dict):
             leaf_keys.update(_dictionary_const_paths(instance, full_key))

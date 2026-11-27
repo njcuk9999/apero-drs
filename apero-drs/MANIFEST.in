@@ -5,3 +5,4 @@ include */*/README.md
 include apero/info.yaml
 include apero/tools/module/processing/gui/*.html
 include apero/tools/module/processing/gui/*.md
+include apero/tools/module/processing/gui/static/*

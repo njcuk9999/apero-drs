@@ -1040,7 +1040,10 @@ class ConstantsDict:
             for n_it, nested_key in enumerate(nested_levels):
                 # if we are at the last level then set the value
                 if nested_key == nested_levels[-1]:
-
+                    # custom constants may define their own yaml form
+                    #   (e.g. FileObjectConst writes a mapping)
+                    if hasattr(const, 'yaml_value'):
+                        value = const.yaml_value(value)
                     sub_data[nested_key] = _yaml_value(value)
                     # ---------------------------------------------------------
                     # add the comment (if present)
@@ -1833,7 +1836,10 @@ class KeywordDict:
             for n_it, nested_key in enumerate(nested_levels):
                 # if we are at the last level then set the value
                 if nested_key == nested_levels[-1]:
-
+                    # custom constants may define their own yaml form
+                    #   (e.g. FileObjectConst writes a mapping)
+                    if hasattr(const, 'yaml_value'):
+                        value = const.yaml_value(value)
                     sub_data[nested_key] = _yaml_value(value)
                     # ---------------------------------------------------------
                     # add the comment (if present)

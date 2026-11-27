@@ -49,7 +49,7 @@ if __name__ == "__main__":
           packages=['aperocore', 'aperocore.base',
                     'aperocore.constants', 'aperocore.core',
                     'aperocore.drs_lang', 'aperocore.drs_lang.tables',
-                    'aperocore.math'],
+                    'aperocore.math', 'aperocore.gui'],
           # version=get_version(),
           url='http://apero.exoplanets.ca',
           license='MIT',

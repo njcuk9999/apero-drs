@@ -1,0 +1,62 @@
+<!-- aperocore gui: shared dialogs (inserted by GuiApp.render_page) -->
+<div id="logviewer">
+<div class="lv-panel" role="dialog" aria-label="Logs">
+<div class="lv-tabs" id="lv-tabs"></div>
+<div class="lv-head">
+    <span id="lv-state" class="lv-state"></span>
+    <span id="lv-meta" class="lv-meta"></span>
+    <button onclick="GUI.lvCopyPath()">Copy path</button>
+    <button onclick="GUI.lvCloseAll()">Close all logs</button>
+    <button onclick="GUI.lvHide()" title="Close (Esc)">&#10005; Close</button>
+</div>
+<div class="lv-bar">
+    <input id="lv-search" type="text" autocomplete="off"
+           placeholder="Search (Ctrl+F, Enter / Shift+Enter)">
+    <button onclick="GUI.lvStep(-1)" title="Previous match">&#9650;</button>
+    <button onclick="GUI.lvStep(1)" title="Next match">&#9660;</button>
+    <span id="lv-count" class="lv-count"></span>
+    <label title="Case sensitive"><input id="lv-case" type="checkbox">
+        Aa</label>
+    <label title="Regular expression"><input id="lv-regex" type="checkbox">
+        .*</label>
+    <label><input id="lv-only" type="checkbox"> Only matching</label>
+    <select id="lv-level" title="Level filter">
+        <option value="all">All lines</option>
+        <option value="warn">Warnings + errors</option>
+        <option value="err">Errors only</option>
+    </select>
+    <span class="lv-sep"></span>
+    <button id="lv-pause" onclick="GUI.lvToggle('pause')">&#10074;&#10074;
+        Pause</button>
+    <button id="lv-follow" class="on"
+            onclick="GUI.lvToggle('follow')">Follow</button>
+    <button id="lv-wrap" onclick="GUI.lvToggle('wrap')">Wrap</button>
+    <button onclick="GUI.lvNextError()">Next error</button>
+    <button onclick="GUI.lvScrollEnd(false)">Top</button>
+    <button onclick="GUI.lvScrollEnd(true)">Bottom</button>
+    <button onclick="GUI.lvCopyVisible()">Copy</button>
+</div>
+<div id="lv-banner" class="lv-banner"></div>
+<div id="lv-bodies" class="lv-bodies"></div>
+<div id="lv-status" class="lv-status"></div>
+</div>
+</div>
+
+<div id="lightbox">
+<div class="lb-head">
+    <span class="lb-title" id="lb-title"></span>
+    <button onclick="GUI.lbZoom()">Zoom</button>
+    <a id="lb-download" href="#"><button>Download</button></a>
+    <button onclick="GUI.lbClose()">&#10005; Close</button>
+</div>
+<div class="lb-main">
+<div class="lb-body" id="lb-body">
+    <button class="lb-nav prev" onclick="GUI.lbStep(-1)">&#8249;</button>
+    <img id="lb-img" alt="" onclick="GUI.lbZoom()">
+    <button class="lb-nav next" onclick="GUI.lbStep(1)">&#8250;</button>
+</div>
+<div class="lb-desc" id="lb-desc"></div>
+</div>
+<div class="lb-foot" id="lb-foot"></div>
+</div>
+<div id="toast-wrap" class="toast-wrap"></div>
