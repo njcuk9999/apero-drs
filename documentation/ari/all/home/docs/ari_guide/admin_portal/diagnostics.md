@@ -50,43 +50,18 @@ not bypass a firewall, VPN, or an independent front-end password.
 - **Profile** selects the one profile to inspect on this page. **Collect**
   shows progress by completed collection stages and saves the report privately.
   Each stage can take a different amount of time, so the percentage is not
-  an estimate of elapsed time. **Export** downloads the completed report
-  without collecting it again, as gzipped JSON when supported by the browser
-  or plain JSON otherwise. Collect again after changing the report options.
-  **Copy Report** copies the complete JSON to the clipboard instead of
-  displaying it on the page.
+  an estimate of elapsed time. When collection finishes, the report appears
+  in the **Saved Reports** table below.
   Collection continues on the ARI server if you refresh or leave this page;
-  returning to the page restores your most recent accessible job and result.
+  returning to the page reattaches to a collection that is still running.
   A server restart interrupts an active collection, which must be started
   again. Completed reports are accessible for 24 hours to their owner while
   that owner retains access to the profile. The 24 hours start when collection
   completes; the hourly **Diagnostics Cleanup** task removes expired files.
-  Access stops at expiry even if cleanup is disabled or has not run yet. Use
-  **Saved Reports** to reopen an earlier completed report, even after a later
-  collection fails. Up to 100 of the newest accessible reports are listed.
+  Access stops at expiry even if cleanup is disabled or has not run yet.
   The current stage shows elapsed seconds and, for manifests, the task name;
   a slow filesystem or queue connection can leave one stage active for a
   long time without changing the percentage.
-- After collection completes, **Delete Report** removes the saved snapshot and
-  revokes any link. **Create Share Link** produces a copyable public URL for
-  this report only. Anyone with the URL can copy or download its contents
-  without an ARI login, so share it only with trusted people. The link expires
-  with the report, can be revoked independently, and creating a new link
-  invalidates the previous one. It also stops working if the owner loses
-  diagnostics permission or access to the profile.
-- Alongside the share URL, **Download with wget** gives a copyable command
-  that saves the report as a JSON file on another machine without a
-  browser, for example:
-  `wget --content-disposition --header='Authorization: Bearer <token>'
-  'https://<ari-host>/api/diagnostics/shared-report?download=1'`.
-  The command contains the same secret as the share URL and stops working
-  when the link is revoked or expires. The secret is sent as a header, so it
-  is not written to server access logs, but it may be kept in the target
-  machine's shell history.
-- The share capability is carried in the URL fragment and is not sent in the
-  initial page request or normal server access logs. The viewer sends it in
-  an authorization header. HTTP still exposes the capability and report to
-  network observers; use HTTPS or an SSH tunnel on untrusted networks.
 - **Object** is an optional exact APERO object name, for example `GL699`.
   When supplied, the report inspects that object's cached tables and, when
   live database queries succeed, indexed product examples, product paths,
@@ -108,6 +83,39 @@ not bypass a firewall, VPN, or an independent front-end password.
   queries; indexed product examples, FITS samples, and recipe log tails are
   then unavailable. Other cache, path, task, and linked queue checks still run.
   A linked queue may independently query its own LogDatabase.
+
+## Saved Reports
+
+- The **Saved Reports** table lists up to 100 of your newest accessible
+  completed reports, including earlier ones after a later collection fails.
+  Each row shows the profile, object, recipe PID, collection and expiry
+  times, and whether a share link is active.
+- A share link is created automatically as part of building each report, so
+  the share URL and `wget` command are available immediately without an extra
+  request. Each row has these actions:
+    - **Copy Report** copies the complete JSON to the clipboard.
+    - **Download Report** saves the JSON file in the browser.
+    - **Copy Share URL** copies the public viewer link for this report only.
+      Anyone with the URL can copy or download its contents without an ARI
+      login, so share it only with trusted people.
+    - **Copy wget Command** copies a command that saves the report as a JSON
+      file on another machine without a browser, for example:
+      `wget --content-disposition --header='Authorization: Bearer <token>'
+      'https://<ari-host>/api/diagnostics/shared-report?download=1'`.
+      It contains the same secret as the share URL.
+    - **Revoke Share Link** disables both the URL and the `wget` command;
+      **Create Share Link** then issues a new link, which replaces any
+      previous one.
+    - **Delete Report** removes the saved snapshot and revokes its link.
+- A link expires with its report and stops working if the owner loses
+  diagnostics permission or access to the profile. Revoke links you no
+  longer need.
+- The share capability is carried in the URL fragment and is not sent in the
+  initial page request or normal server access logs. The viewer and the `wget`
+  command send it in an authorization header, although the command may be
+  kept in the target machine's shell history. HTTP still exposes the
+  capability and report to network observers; use HTTPS or an SSH tunnel on
+  untrusted networks.
 
 ## Report Contents
 
@@ -166,5 +174,8 @@ Enter the key at the hidden prompt. Without `--profile`, one report is saved
 for each authorized profile; repeat it to select several. `--pid` selects a
 recipe PID, `--no-database` disables live ARI database queries, and `--output`
 changes the output directory. Reports are saved as owner-readable JSON in
-`apero-diagnostics/` by default. See the [ARI README](https://github.com/njcuk9999/apero-drs)
+`apero-diagnostics/` by default. While the server collects, the command
+logs each stage, a "still collecting" line every 30 seconds during slow
+stages, and each saved file, so a long collection is visible rather than
+silent. See the [ARI README](https://github.com/njcuk9999/apero-drs)
 for deployment and API details.

@@ -271,7 +271,12 @@ def test_saved_report_share_rotation_expiry_and_delete(
     diagnostic_jobs._write(directory / (job_id + '.report'), report)
     assert diagnostic_jobs.share(tmp_path, 'bob', job_id) is None
     token = diagnostic_jobs.share(tmp_path, 'alice', job_id)
-    assert token not in (directory / (job_id + '.share')).read_text()
+    # the owner's listing can show the active link again without rotating it
+    assert diagnostic_jobs.share_token(tmp_path, 'alice', job_id) == token
+    assert diagnostic_jobs.share_token(tmp_path, 'bob', job_id) is None
+    listed = diagnostic_jobs.saved(tmp_path, 'alice', {('SPIROU', 'mini')})
+    assert listed[0]['share_token'] == token
+    assert listed[0]['expires_at'] == 100000.0 + diagnostic_jobs.LIFETIME
     assert diagnostic_jobs.shared(tmp_path, token)[2] == report
     assert diagnostic_jobs.shared(tmp_path, token + 'x') is None
     rotated = diagnostic_jobs.share(tmp_path, 'alice', job_id)
@@ -279,6 +284,7 @@ def test_saved_report_share_rotation_expiry_and_delete(
     assert diagnostic_jobs.shared(tmp_path, rotated) is not None
     assert diagnostic_jobs.revoke_share(tmp_path, 'alice', job_id)
     assert diagnostic_jobs.shared(tmp_path, rotated) is None
+    assert diagnostic_jobs.share_token(tmp_path, 'alice', job_id) is None
     token = diagnostic_jobs.share(tmp_path, 'alice', job_id)
     monkeypatch.setattr(diagnostic_jobs.time, 'time',
                         lambda: 100000.0 + diagnostic_jobs.LIFETIME)
@@ -288,6 +294,53 @@ def test_saved_report_share_rotation_expiry_and_delete(
     assert diagnostic_jobs.delete(tmp_path, 'alice', job_id)
     assert diagnostic_jobs.shared(tmp_path, token) is None
     assert not (directory / (job_id + '.report')).exists()
+
+
+def test_completed_job_is_shared_automatically(tmp_path: Path) -> None:
+    """A finished collection already has its link when it is listed.
+
+    :param tmp_path: Isolated ARI data root.
+    :return: None.
+    """
+    import threading
+    from apero_ri.core import diagnostic_jobs
+
+    shared_events = []
+    finished = threading.Event()
+
+    def collect(progress: object) -> dict:
+        """Return a synthetic report immediately.
+
+        :param progress: Stage callback.
+        :return: Synthetic report.
+        """
+        return dict(filters=dict(), profile_id='mini')
+
+    def on_share() -> None:
+        """Record that the automatic link was created.
+
+        :return: None.
+        """
+        shared_events.append(True)
+        finished.set()
+
+    options = dict(objname='', pid='', include_logs=False,
+                   include_database=False)
+    start_args = [tmp_path, 'alice', 'SPIROU', 'mini', options, collect,
+                  lambda report: None]
+    state, _ = diagnostic_jobs.start(*start_args, on_share=on_share)
+    assert finished.wait(5)
+    allowed = {('SPIROU', 'mini')}
+    # wait for the worker to publish completion after creating the link
+    for _ in range(100):
+        job = diagnostic_jobs.get(tmp_path, 'alice', state['id'])
+        if job and job['status'] == 'completed':
+            break
+        threading.Event().wait(0.05)
+    listed = diagnostic_jobs.saved(tmp_path, 'alice', allowed)
+    assert shared_events == [True]
+    token = listed[0]['share_token']
+    assert diagnostic_jobs.shared(tmp_path, token)[2]['profile_id'] == 'mini'
 
 
 def test_scheduled_cleanup_removes_only_expired_jobs(
@@ -512,6 +565,31 @@ def test_diagnostic_api_scope_and_permission_changes(
     assert response.status_code == 403
     response = client.get('/api/diagnostics/run', headers=headers)
     assert response.status_code == 404
+    # apero_ri_debug follows the same progress stream as the admin page
+    app._resolve_local_data_dir = lambda: str(tmp_path)
+
+    def collect(*args: object, progress: object = None,
+                **kwargs: object) -> dict:
+        """Emit one stage, then return a synthetic report.
+
+        :param args: Collector arguments.
+        :param progress: Stage callback.
+        :param kwargs: Collector options.
+        :return: Synthetic report.
+        """
+        progress('paths', 1, 2)
+        return dict(filters=dict(), profile_id='mini')
+
+    monkeypatch.setattr(api.diagnostics, 'collect', collect)
+    response = client.get('/api/diagnostics/stream?instrument=SPIROU'
+                          '&profile_id=mini', headers=headers)
+    events = [json.loads(line) for line in response.data.splitlines()]
+    assert events[0] == dict(type='progress', stage='paths', completed=1,
+                             total=2)
+    assert events[-1]['report']['profile_id'] == 'mini'
+    response = client.get('/api/diagnostics/stream?instrument=SPIROU'
+                          '&profile_id=private', headers=headers)
+    assert response.status_code == 403
     response = client.get('/api/diagnostics/profiles', headers=headers,
                           base_url='http://external.example',
                           environ_overrides=dict(REMOTE_ADDR='192.0.2.10'))
@@ -530,28 +608,42 @@ def test_diagnostic_api_scope_and_permission_changes(
 
 def test_debug_cli_downloads_without_persisting_key(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    capfd: pytest.CaptureFixture,
 ) -> None:
     """The local chat workflow saves only private diagnostic JSON reports.
 
     :param tmp_path: Local download root.
     :param monkeypatch: Runtime overrides.
+    :param capfd: Captured CLI stdout/stderr.
     :return: None.
     """
+    import logging
     from apero_ri.recipes import apero_ri_debug as cli
 
+    # start from an unconfigured logger, as a fresh CLI process does;
+    # earlier tests may have bound a handler to a stale stderr
+    monkeypatch.setattr(logging.getLogger('apero_ri'), 'handlers', [])
+
     def request(host: str, key: str, action: str = 'profiles',
-                params: dict | None = None) -> dict:
+                params: dict | None = None, on_event: object = None) -> dict:
         """Return deterministic scoped server responses.
 
         :param host: Requested server.
         :param key: Diagnostic credential.
         :param action: Requested read operation.
         :param params: Report filters.
+        :param on_event: Stream progress callback.
         :return: Constructed response.
         """
         assert key == 'private-test-key'
         if action == 'profiles':
             return dict(profiles=[dict(instrument='SPIROU', profile_id='mini')])
+        # the CLI follows the progress stream rather than a blocking report
+        assert action == 'stream'
+        on_event(dict(type='progress', stage='manifests', completed=4,
+                      total=10))
+        for _ in range(cli.HEARTBEATS_PER_UPDATE):
+            on_event(dict(type='heartbeat'))
         return dict(success=True, profile_id=params['profile_id'])
 
     monkeypatch.setenv('APERO_RI_DEBUG_KEY', 'private-test-key')
@@ -563,7 +655,15 @@ def test_debug_cli_downloads_without_persisting_key(
     assert json.loads(path.read_text())['profile_id'] == 'mini'
     assert path.stat().st_mode & 0o777 == 0o600
     assert 'private-test-key' not in path.read_text()
+    # progress goes to the log on stderr; stdout keeps the saved paths
+    out, logged = capfd.readouterr()
+    assert str(path) in out
+    assert 'Key authorizes 1 profile(s): SPIROU/mini' in logged
+    assert 'SPIROU / mini: 40% - stage manifests' in logged
+    assert 'still collecting' in logged
+    assert 'saved' in logged
     assert cli.main(argv + ['--profile=forbidden']) == 1
+    assert 'profile_not_authorized' in capfd.readouterr().err
 
 
 def test_linked_queue_scope_and_identity(
@@ -641,6 +741,10 @@ def test_admin_page_and_export(
     assert b'/docs/ari_guide/admin_portal/diagnostics' in page.data
     assert b'#report-options' in page.data
     assert b'Leave it blank' in page.data
+    # saved reports render as their own table with share/download endpoints
+    assert b'id="diag-saved"' in page.data
+    assert b'data-download-api="/api/diagnostics/shared-report?download=1"' in (
+        page.data)
     overview = client.get('/api/admin/diagnostics/overview')
     assert overview.json['profiles'][0]['profile_id'] == 'mini'
     issued = client.post('/api/admin/diagnostics/issue', json=dict(
@@ -897,6 +1001,156 @@ def test_product_fits_metadata_and_finite_json(tmp_path: Path) -> None:
     assert 'data' not in report['fits_samples'][0]['hdus'][0]
     assert common.redact(float('nan')) is None
     assert common.redact(dict(PASS='hidden'))['PASS'] == '[REDACTED]'
+
+
+def test_object_plot_cache_and_relative_log_tails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Object reports summarise cached plot failures and read PATH_LOG tails.
+
+    :param tmp_path: Isolated ARI data root.
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    from apero_ri.core import diagnostics
+
+    monkeypatch.setattr(diagnostics.auth, 'load_async_tasks', lambda: dict())
+    monkeypatch.setattr(diagnostics, '_queues', lambda *args: dict())
+    monkeypatch.setattr(diagnostics.apero_async, 'get_db_params',
+                        lambda profile: dict())
+    # one failed cached spectrum response and one unrelated object
+    section = tmp_path / 'cache' / 'SPIROU' / 'mini' / 'object_plots'
+    section.mkdir(parents=True)
+    failed = dict(has_plot=False, message='Plot build failed: KeyError',
+                  error='KW_MJDMID', traceback='Traceback\nKeyError')
+    payload = dict(success=True, plot_group='spectrum', snr=failed,
+                   spec=dict(has_plot=True, script='<s>', div='<d>'))
+    entry = dict(cached_at='2026-11-26T00:00:00', payload=payload)
+    (section / 'spectrum__GL699__rid_th_default.json').write_text(
+        json.dumps(entry))
+    (section / 'spectrum__GL905__rid_th_default.json').write_text('{}')
+    # recipe LOGFILE values are stored relative to PATH_LOG
+    logroot = tmp_path / 'log'
+    (logroot / 'processing').mkdir(parents=True)
+    (logroot / 'processing' / 'run.log').write_text('log-tail-text')
+    rows = [dict(LOGFILE='processing/run.log')]
+    monkeypatch.setattr(diagnostics, '_database',
+                        lambda *args: dict(recipe_logs=rows))
+    profile = dict(paths=dict(PATH_LOG=str(logroot)))
+    report = diagnostics.collect(profile, 'SPIROU', 'mini', tmp_path,
+                                 'GL699', include_logs=True)
+    plots = report['sections']['cache']['object_plots']
+    assert len(plots['entries']) == 1
+    response = plots['entries'][0]['response']
+    assert response['plot_group'] == 'spectrum'
+    assert response['plots']['snr']['error'] == 'KW_MJDMID'
+    assert response['plots']['spec']['script_chars'] == 3
+    assert '<s>' not in json.dumps(report)
+    assert report['sections']['log_tails'][0]['text'] == 'log-tail-text'
+
+
+def test_transport_stream_parses_events(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stream events split across chunks still arrive in order.
+
+    :param monkeypatch: Runtime overrides.
+    :return: None.
+    """
+    import io
+    from apero_ri.ari_api import diagnostics
+
+    class FakeResponse:
+        """Minimal streamed ``requests`` response."""
+
+        def __init__(self, status: int, body: bytes) -> None:
+            """Store a status code and body.
+
+            :param status: HTTP status code.
+            :param body: Raw response body.
+            :return: None.
+            """
+            self.status_code = status
+            self.body = body
+            self.raw = io.BytesIO(body)
+            self.raw.read = (lambda size, decode_content=True,
+                             stream=self.raw: io.BytesIO.read(stream, size))
+
+        def __enter__(self) -> 'FakeResponse':
+            """Enter the response context.
+
+            :return: This response.
+            """
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            """Leave the response context.
+
+            :param args: Exception details.
+            :return: None.
+            """
+
+        def iter_content(self, size: int) -> object:
+            """Yield the body in small chunks to split lines.
+
+            :param size: Ignored chunk size.
+            :return: Chunk iterator.
+            """
+            return (self.body[i:i + 7] for i in range(0, len(self.body), 7))
+
+    responses = []
+
+    class FakeSession:
+        """``requests.Session`` returning the queued response."""
+
+        trust_env = True
+
+        def __enter__(self) -> 'FakeSession':
+            """Enter the session context.
+
+            :return: This session.
+            """
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            """Leave the session context.
+
+            :param args: Exception details.
+            :return: None.
+            """
+
+        def get(self, *args: object, **kwargs: object) -> FakeResponse:
+            """Return the next queued response.
+
+            :param args: Request arguments.
+            :param kwargs: Request options.
+            :return: Fake response.
+            """
+            return responses.pop(0)
+
+    monkeypatch.setattr(diagnostics.requests, 'Session', FakeSession)
+    body = (b'{"type": "progress", "stage": "paths", "completed": 1, '
+            b'"total": 2}\n{"type": "heartbeat"}\n'
+            b'{"type": "report", "report": {"profile_id": "mini"}}\n')
+    responses.append(FakeResponse(200, body))
+    seen = []
+    report = diagnostics.request_report('https://ari.example', 'key',
+                                        'stream', dict(), seen.append)
+    assert report == dict(profile_id='mini')
+    assert [event['type'] for event in seen] == ['progress', 'heartbeat']
+    responses.append(FakeResponse(
+        200, b'{"type": "error", "code": "collection_failed"}\n'))
+    with pytest.raises(ValueError, match='collection_failed'):
+        diagnostics.request_report('https://ari.example', 'key', 'stream')
+    responses.append(FakeResponse(200, b'{"type": "heartbeat"}\n'))
+    with pytest.raises(ValueError, match='diagnostic_stream_incomplete'):
+        diagnostics.request_report('https://ari.example', 'key', 'stream')
+    # HTTP failures name the server's error code, not just the status
+    responses.append(FakeResponse(
+        401, b'{"success": false, "code": "invalid_or_expired_grant"}'))
+    with pytest.raises(ValueError,
+                       match='diagnostic_http_401: invalid_or_expired_grant'):
+        diagnostics.request_report('https://ari.example', 'key', 'stream')
 
 
 def test_transport_hosts(monkeypatch: pytest.MonkeyPatch) -> None:

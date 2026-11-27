@@ -25,6 +25,12 @@ __date__ = base.__date__
 __authors__ = base.__authors__
 IDENTIFIER = re.compile(r'^[A-Za-z0-9_]+$')
 OBJECT = re.compile(r'^[A-Za-z0-9_+ .-]{1,120}$')
+# Cached Bokeh payloads embed full plot JSON, so allow larger files here
+PLOT_CACHE_LIMIT = 64 * 1024 * 1024
+# Maximum number of cached object-plot entries summarised per object
+PLOT_CACHE_ENTRIES = 40
+# Characters of each cached build traceback kept in the report
+TRACEBACK_CHARS = 4000
 
 # =============================================================================
 # Define functions
@@ -165,6 +171,107 @@ def _cache(root: Path, objname: str) -> dict[str, Any]:
     return result
 
 
+def _plot_payload_summary(payload: Any) -> dict[str, Any]:
+    """Summarise one cached object-plot response without its Bokeh blobs.
+
+    :param payload: Cached ``api_object_plots`` JSON response.
+    :return: Response status, timings, and per-plot build outcomes.
+    """
+    if not isinstance(payload, dict):
+        return dict(invalid_payload_type=type(payload).__name__)
+    # top-level response fields describing the whole request
+    keys = ('success', 'error', 'plot_group', 'updated_at',
+            'server_timings_ms', 'hr_backdrop_ready',
+            'hr_backdrop_expected')
+    summary = {key: payload[key] for key in keys if key in payload}
+    summary['plots'] = dict()
+    for name, value in payload.items():
+        # individual plots are dicts carrying a has_plot flag
+        if not isinstance(value, dict) or 'has_plot' not in value:
+            continue
+        plot = dict(has_plot=value.get('has_plot'),
+                    message=value.get('message'),
+                    error=value.get('error'),
+                    # sizes show whether Bokeh content was produced
+                    script_chars=len(str(value.get('script') or '')),
+                    div_chars=len(str(value.get('div') or '')),
+                    keys=sorted(value))
+        # keep only the end of a traceback, where the cause is
+        trace = value.get('traceback')
+        if trace:
+            plot['traceback'] = str(trace)[-TRACEBACK_CHARS:]
+        summary['plots'][name] = plot
+    return summary
+
+
+def _plot_cache(data_root: Path, instrument: str, profile_id: str,
+                objname: str) -> dict[str, Any]:
+    """Inspect server-side cached object-page plot responses for one object.
+
+    Cached failures are served until the cache is invalidated or the user
+    forces a reload, so this shows what the object page actually receives.
+
+    :param data_root: Active ARI data directory.
+    :param instrument: Explicitly authorized instrument.
+    :param profile_id: Explicitly authorized profile ID.
+    :param objname: Exact object name, validated by the caller.
+    :return: Cache configuration, profile metadata, and entry summaries.
+    """
+    from apero_ri.core import plot_cache
+
+    config = plot_cache.load_cache_config(data_root)
+    cache_root = plot_cache.resolve_cache_root(data_root, config)
+    pdir = plot_cache._profile_dir(cache_root, instrument, profile_id)
+    section = pdir / 'object_plots'
+    result = dict(enabled=bool(config.get('enabled')),
+                  cache_root=str(cache_root),
+                  meta=common.read_json(pdir / '_meta.json', pdir),
+                  section=common.file_info(section), entries=[],
+                  truncated=False)
+    # cache keys look like <plot_group>__<objname>__<run-id tag>...
+    token = '__' + plot_cache._safe_filename(objname) + '__'
+    try:
+        names = sorted(path.name for path in section.iterdir()
+                       if path.suffix == '.json' and token in path.name)
+    except OSError as error:
+        result['error_type'] = type(error).__name__
+        return result
+    result['truncated'] = len(names) > PLOT_CACHE_ENTRIES
+    for name in names[:PLOT_CACHE_ENTRIES]:
+        entry = common.read_json(section / name, section,
+                                 limit=PLOT_CACHE_LIMIT)
+        data = entry.pop('data', None)
+        if isinstance(data, dict):
+            entry.update(cached_at=data.get('cached_at'),
+                         generation_time_s=data.get('generation_time_s'),
+                         response=_plot_payload_summary(
+                             data.get('payload')))
+        result['entries'].append(entry)
+    return result
+
+
+def _cache_with_plots(root: Path, data_root: Path, instrument: str,
+                      profile_id: str, objname: str) -> dict[str, Any]:
+    """Combine task-cache evidence with cached object-plot responses.
+
+    :param root: Authorized profile task-cache directory.
+    :param data_root: Active ARI data directory.
+    :param instrument: Explicitly authorized instrument.
+    :param profile_id: Explicitly authorized profile ID.
+    :param objname: Optional exact object name, validated by the caller.
+    :return: Cache section, with ``object_plots`` when an object is given.
+    """
+    result = _cache(root, objname)
+    if objname:
+        # isolate failures so table evidence survives a plot-cache error
+        try:
+            result['object_plots'] = _plot_cache(data_root, instrument,
+                                                 profile_id, objname)
+        except Exception as error:
+            result['object_plots'] = dict(error=str(error))
+    return result
+
+
 def _manifests(profile: dict, instrument: str, name: str,
                on_task: Callable[[str], None] | None = None) -> dict:
     """Check published task manifests and bounded file checksum samples.
@@ -258,7 +365,8 @@ def collect(profile: dict, instrument: str, profile_id: str,
         key: common.inventory(Path(value).expanduser())
         for key, value in profile.get('paths', {}).items()
         if key.startswith('PATH_') and value},
-        cache=lambda: _cache(cache, objname),
+        cache=lambda: _cache_with_plots(cache, data_root, instrument,
+                                        profile_id, objname),
         manifests=lambda: _manifests(
             profile, instrument, profile_id,
             on_task=lambda key: notify('manifests:' + key)),
@@ -282,8 +390,11 @@ def collect(profile: dict, instrument: str, profile_id: str,
             logroot = Path(path).expanduser()
             selected = list(dict.fromkeys(str(row.get('LOGFILE', ''))
                                          for row in rows if row.get('LOGFILE')))
-            sections['log_tails'] = [common.log_tail(Path(name), logroot)
-                                     for name in selected[:3]]
+            # LOGFILE values are usually relative to PATH_LOG
+            logs = [Path(name) if Path(name).is_absolute()
+                    else logroot / name for name in selected[:3]]
+            sections['log_tails'] = [common.log_tail(log, logroot)
+                                     for log in logs]
         completed = completed + 1
     notify('product_paths')
     products = sections.get('database', {}).get('product_examples', [])

@@ -3406,6 +3406,30 @@
             params += '&_ts=' + encodeURIComponent(String(Date.now()));
         }
 
+        // Replace the loading spinners for this group with a message,
+        // optionally including the server-provided reason.
+        function markGroupUnavailable(reason) {
+            var msg = 'Plot unavailable.';
+            if (reason) msg += ' ' + String(reason);
+            function markUnavailable(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.style.display = '';
+                    el.innerHTML = '<span class="at-muted-hint">'
+                        + escHtml(msg) + '</span>';
+                }
+            }
+            var ids = {
+                spectrum: ['op-snr-plot-loading', 'op-berv-plot-loading',
+                           'op-spec-plot-loading'],
+                ccf_rv: ['op-ccf-rv-plot-loading'],
+                ccf_profile: ['op-ccf-plot-loading'],
+                time_series: ['op-ts-snr-plot-loading',
+                              'op-ts-airmass-plot-loading']
+            }[group] || [];
+            ids.forEach(markUnavailable);
+        }
+
         fetch(url + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -3413,6 +3437,11 @@
                 if (!data || !data.success) {
                     if (activePlotKey) setPlotReloading(activePlotKey, false);
                     objectPlotsState[group] = 'idle';
+                    // Previously the spinners were left running forever
+                    markGroupUnavailable(data && data.error);
+                    if (window.console) {
+                        console.warn('object plots failed', group, data);
+                    }
                     return;
                 }
                 if (group === 'spectrum') {
@@ -3449,28 +3478,15 @@
                 refreshSectionsUi();
                 objectPlotsState[group] = 'loaded';
             })
-            .catch(function () {
+            .catch(function (err) {
                 firstLoadStep(group, false);
                 if (activePlotKey) setPlotReloading(activePlotKey, false);
                 objectPlotsState[group] = 'idle';
-                function markUnavailable(id) {
-                    var el = document.getElementById(id);
-                    if (el) {
-                        el.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
-                    }
+                // Non-JSON (e.g. HTTP 500/502 page) or JS render errors
+                if (window.console) {
+                    console.error('object plots error', group, err);
                 }
-                if (group === 'spectrum') {
-                    markUnavailable('op-snr-plot-loading');
-                    markUnavailable('op-berv-plot-loading');
-                    markUnavailable('op-spec-plot-loading');
-                } else if (group === 'ccf_rv') {
-                    markUnavailable('op-ccf-rv-plot-loading');
-                } else if (group === 'ccf_profile') {
-                    markUnavailable('op-ccf-plot-loading');
-                } else if (group === 'time_series') {
-                    markUnavailable('op-ts-snr-plot-loading');
-                    markUnavailable('op-ts-airmass-plot-loading');
-                }
+                markGroupUnavailable(err && err.message);
             });
     }
 

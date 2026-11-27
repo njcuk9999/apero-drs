@@ -106,7 +106,8 @@ def _report(app: Any, profiles: dict, user: dict, grant_id: str = '') -> Any:
     options = dict(objname=objname, pid=pid, include_logs=include_logs,
                    include_database=include_database)
     if request.path.endswith('/stream'):
-        return _stream_report(app, profiles[pair], pair, options, user)
+        stream_args = [app, profiles[pair], pair, options, user]
+        return _stream_report(*stream_args, grant_id=grant_id)
     try:
         report = diagnostics.collect(
             profiles[pair], instrument, profile_id,
@@ -131,14 +132,18 @@ def _report(app: Any, profiles: dict, user: dict, grant_id: str = '') -> Any:
 
 
 def _stream_report(app: Any, profile: dict, pair: tuple[str, str],
-                   options: dict, user: dict) -> Any:
-    """Stream actual collector stages and the completed report to an admin.
+                   options: dict, user: dict, grant_id: str = '') -> Any:
+    """Stream actual collector stages and the completed report.
+
+    Used by the admin page (session) and by ``apero_ri_debug`` (grant key),
+    so a long collection shows progress and heartbeats keep it alive.
 
     :param app: ARI application.
     :param profile: Authorized profile configuration.
     :param pair: Instrument and profile ID selected by the administrator.
     :param options: Validated collection options.
-    :param user: Authenticated administrator.
+    :param user: Authenticated administrator or grant issuer.
+    :param grant_id: Diagnostic grant ID for auditing; empty for a session.
     :return: No-store newline-delimited JSON response.
     """
     objname = options['objname']
@@ -170,7 +175,7 @@ def _stream_report(app: Any, profile: dict, pair: tuple[str, str],
             collect_args = [profile, pair[0], pair[1], root]
             report = diagnostics.collect(*collect_args, **collect_kwargs)
             audit_log.record(user['username'], 'diagnostics.report', pair[1],
-                             dict(instrument=pair[0], grant_id='',
+                             dict(instrument=pair[0], grant_id=grant_id,
                                   filters=report['filters']))
             report['success'] = True
             events.put(dict(type='report', report=report))
@@ -316,10 +321,19 @@ def admin_api(app: Any, action: str) -> Any:
                           filters=report['filters'])
             audit_log.record(actor, 'diagnostics.report', profile_id, detail)
 
+        def audit_share() -> None:
+            """Record the link created automatically with the report.
+
+            :return: None.
+            """
+            audit_log.record(actor, 'diagnostics.share', profile_id,
+                             dict(instrument=instrument, automatic=True))
+
         try:
             job_args = [root, actor, instrument, profile_id, options,
                         collect, audit]
-            job, reused = diagnostic_jobs.start(*job_args)
+            job_kwargs = dict(on_share=audit_share)
+            job, reused = diagnostic_jobs.start(*job_args, **job_kwargs)
         except ValueError:
             return _fail('diagnostic_job_already_running', 409)
         response = jsonify(success=True, job=job, reused=reused)
@@ -411,7 +425,7 @@ def api(app: Any, action: str) -> Any:
     """Serve only read-only diagnostic requests with short-lived grants.
 
     :param app: ARI application.
-    :param action: Fixed profiles, report, or export action.
+    :param action: Fixed profiles, report, export, or stream action.
     :return: Scoped diagnostic response; never a proxy to management APIs.
     """
     header = request.headers.get('Authorization', '')
@@ -434,7 +448,7 @@ def api(app: Any, action: str) -> Any:
                             expires_at=grant['expires_at'], schema_version=1)
         response.headers['Cache-Control'] = 'no-store'
         return response
-    if action in ('report', 'export'):
+    if action in ('report', 'export', 'stream'):
         return _report(app, profiles, user, grant['id'])
     return _fail('unknown_action', 404)
 

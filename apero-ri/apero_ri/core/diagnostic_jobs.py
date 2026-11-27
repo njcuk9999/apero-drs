@@ -162,7 +162,9 @@ def saved(root: Path, actor: str, allowed: set) -> list[dict]:
     :param root: Active ARI data root.
     :param actor: Authenticated administrator.
     :param allowed: Currently accessible instrument/profile tuples.
-    :return: Up to 100 newest report metadata entries without report contents.
+    :return: Up to 100 newest report metadata entries without report
+             contents, each with ``expires_at`` and its active
+             ``share_token`` (or None).
     """
     directory = _directory(root, actor)
     reports = []
@@ -176,6 +178,10 @@ def saved(root: Path, actor: str, allowed: set) -> list[dict]:
             continue
         if not (directory / (path.stem + '.report')).is_file():
             continue
+        # owner-only listing: include the link so no extra request is needed
+        state['share_token'] = share_token(root, actor, path.stem)
+        state['expires_at'] = (state.get('completed_at', state['created'])
+                               + LIFETIME)
         reports.append(state)
     reports.sort(key=lambda state: state.get('completed_at', state['created']),
                  reverse=True)
@@ -194,6 +200,50 @@ def result(root: Path, actor: str, job_id: str) -> dict | None:
     if not state or state['status'] != 'completed':
         return None
     return _read(_directory(root, actor) / (job_id + '.report'))
+
+
+def _issue_share(directory: Path, actor: str, job_id: str) -> str:
+    """Write a fresh capability record, replacing any previous link.
+
+    The token is kept next to the report in the owner's private ``0700``
+    directory so saved-report listings can show the link again without
+    rotating it; the digest is what public requests are checked against.
+
+    :param directory: Owner's private job directory.
+    :param actor: Authenticated report owner.
+    :param job_id: Server-issued job identifier.
+    :return: Bearer capability for the report.
+    """
+    # the owner hash ties the link to its directory without exposing a name
+    actor_id = hashlib.sha256(actor.encode('utf-8')).hexdigest()
+    token = actor_id + '.' + job_id + '.' + secrets.token_urlsafe(32)
+    digest = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    _write(directory / (job_id + '.share'),
+           dict(actor=actor, digest=digest, token=token))
+    return token
+
+
+def share_token(root: Path, actor: str, job_id: str) -> str | None:
+    """Return the owner's active share capability for one report.
+
+    :param root: Active ARI data root.
+    :param actor: Authenticated report owner.
+    :param job_id: Server-issued job identifier.
+    :return: Active bearer capability, or None when not shared.
+    """
+    if not JOB_ID.fullmatch(job_id):
+        return None
+    record = _read(_directory(root, actor) / (job_id + '.share'))
+    if not record or record.get('actor') != actor:
+        return None
+    token = record.get('token')
+    # only return a token that still validates against its stored digest
+    if not isinstance(token, str) or not SHARE_TOKEN.fullmatch(token):
+        return None
+    digest = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    if not hmac.compare_digest(digest, str(record.get('digest', ''))):
+        return None
+    return token
 
 
 def share(root: Path, actor: str, job_id: str) -> str | None:
@@ -215,12 +265,7 @@ def share(root: Path, actor: str, job_id: str) -> str | None:
             return None
         if _is_running(directory, job_id):
             return None
-        actor_id = hashlib.sha256(actor.encode('utf-8')).hexdigest()
-        token = actor_id + '.' + job_id + '.' + secrets.token_urlsafe(32)
-        digest = hashlib.sha256(token.encode('utf-8')).hexdigest()
-        _write(directory / (job_id + '.share'), dict(actor=actor,
-                                                      digest=digest))
-        return token
+        return _issue_share(directory, actor, job_id)
 
 
 def revoke_share(root: Path, actor: str, job_id: str) -> bool:
@@ -337,7 +382,9 @@ def cleanup_expired(root: Path) -> int:
 
 def start(root: Path, actor: str, instrument: str, profile_id: str,
           options: dict, collect: Callable[..., dict],
-          on_complete: Callable[[dict], None]) -> tuple[dict, bool]:
+          on_complete: Callable[[dict], None],
+          on_share: Callable[[], None] | None = None
+          ) -> tuple[dict, bool]:
     """Start or reconnect to one actor/profile background collection.
 
     :param root: Active ARI data root.
@@ -347,6 +394,8 @@ def start(root: Path, actor: str, instrument: str, profile_id: str,
     :param options: Validated non-secret report filters.
     :param collect: Closure running the authorized collection.
     :param on_complete: Audit callback for a completed report.
+    :param on_share: Optional audit callback once the report's share link
+                     has been created; None disables automatic sharing.
     :return: Job metadata and whether an existing job was reused.
     :raises ValueError: A different collection is already running.
     """
@@ -406,6 +455,15 @@ def start(root: Path, actor: str, instrument: str, profile_id: str,
                 on_complete(report)
                 report['success'] = True
                 _write(directory / (job_id + '.report'), report)
+                # create the link before publishing completion so the
+                # saved-report listing never shows a finished, unshared row
+                if on_share is not None:
+                    try:
+                        _issue_share(directory, actor, job_id)
+                        on_share()
+                    except OSError:
+                        # the owner can still create the link manually
+                        pass
                 state.update(status='completed', stage='complete',
                              completed=state['total'], completed_at=time.time())
             except Exception:

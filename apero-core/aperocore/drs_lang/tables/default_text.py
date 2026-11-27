@@ -159,6 +159,33 @@ for diag_key, diag_eng, diag_fr, diag_es, diag_args in [
     ('ARI_DIAGNOSTICS_DOWNLOADED', 'Diagnostic reports downloaded:\n{0}',
      'Rapports de diagnostic telecharges :\n{0}',
      'Informes de diagnostico descargados:\n{0}', ['paths']),
+    ('ARI_DIAGNOSTICS_CLI_CONNECT',
+     'Asking {0} which profiles this key may access...',
+     'Demande a {0} des profils accessibles avec cette cle...',
+     'Consultando a {0} los perfiles accesibles con esta clave...',
+     ['host']),
+    ('ARI_DIAGNOSTICS_CLI_PROFILES', 'Key authorizes {0} profile(s): {1}',
+     'La cle autorise {0} profil(s) : {1}',
+     'La clave autoriza {0} perfil(es): {1}', ['count', 'profiles']),
+    ('ARI_DIAGNOSTICS_CLI_COLLECT',
+     'Collecting report {0}/{1} for {2} on the server '
+     '(this can take several minutes)',
+     'Collecte du rapport {0}/{1} pour {2} sur le serveur '
+     '(cela peut prendre plusieurs minutes)',
+     'Recopilando informe {0}/{1} de {2} en el servidor '
+     '(puede tardar varios minutos)', ['index', 'total', 'profile']),
+    ('ARI_DIAGNOSTICS_CLI_PROGRESS', '{0}: {1}% - stage {2}',
+     '{0} : {1} % - etape {2}', '{0}: {1} % - etapa {2}',
+     ['profile', 'percent', 'stage']),
+    ('ARI_DIAGNOSTICS_CLI_WAITING',
+     '{0}: still collecting ({1} s elapsed, stage {2})',
+     '{0} : collecte en cours ({1} s ecoulees, etape {2})',
+     '{0}: recopilacion en curso ({1} s transcurridos, etapa {2})',
+     ['profile', 'seconds', 'stage']),
+    ('ARI_DIAGNOSTICS_CLI_SAVED', '{0}: saved {1} ({2} MB) after {3} s',
+     '{0} : {1} enregistre ({2} Mo) apres {3} s',
+     '{0}: {1} guardado ({2} MB) tras {3} s',
+     ['profile', 'path', 'size', 'seconds']),
 ]:
     item = langlist.create(diag_key, kind='text')
     item.value['ENG'] = diag_eng

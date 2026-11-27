@@ -17,6 +17,10 @@ apero_ri_debug --host=https://ari.example --key \
     --profile=spirou_mini2_08xxx_fir --object=GL699 --logs
 ```
 
+- The CLI logs stage progress and periodic "still collecting" lines to
+  stderr while the server works; large profiles can take many minutes. If
+  it reports `diagnostic_http_404: unknown_action`, the remote ARI predates
+  key-based streaming and must be updated and restarted.
 - The bare `--key` option uses a hidden terminal prompt. Never ask the user
   to paste a key into chat, put it in a URL, or send it through a tool that
   exposes secrets to the model. `APERO_RI_DEBUG_KEY` is an alternative when
@@ -34,12 +38,13 @@ apero_ri_debug --host=https://ari.example --key \
 - Reports are saved under `apero-diagnostics/` by default, one JSON file per
   authorized profile, with mode `0600`. Inspect these local files using
   normal file tools. `--output` chooses another local directory.
-- A completed report can also be shared through a 24-hour public report link
-  from the Diagnostics page. Treat the full URL as a bearer secret; anyone
-  holding it can read the snapshot. Its fragment is not sent in the initial
-  request, so use a browser that runs the viewer's JavaScript. The owner can
-  revoke the link or delete the report, and should do so after investigation.
-- The Diagnostics page also shows a `wget` command for the same link, calling
+- Every completed report on the Diagnostics page is shared automatically
+  through a 24-hour public report link, listed in its **Saved Reports**
+  table. Treat the full URL as a bearer secret; anyone holding it can read
+  the snapshot. Its fragment is not sent in the initial request, so use a
+  browser that runs the viewer's JavaScript. The owner can revoke the link
+  or delete the report, and should do so after investigation.
+- The same row offers a `wget` command, calling
   `GET /api/diagnostics/shared-report?download=1` with the share secret in
   `Authorization: Bearer ...`; it saves the bare report JSON as a file.
 - Use `--object`, `--pid`, and repeated `--profile` filters to narrow a new
