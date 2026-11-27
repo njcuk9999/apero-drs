@@ -48,19 +48,36 @@ not bypass a firewall, VPN, or an independent front-end password.
 ## Report Options
 
 - **Profile** selects the one profile to inspect on this page. **Collect**
-  shows progress by completed collection stages and displays JSON here.
+  shows progress by completed collection stages and saves the report privately.
   Each stage can take a different amount of time, so the percentage is not
   an estimate of elapsed time. **Export** downloads the completed report
   without collecting it again, as gzipped JSON when supported by the browser
   or plain JSON otherwise. Collect again after changing the report options.
+  **Copy Report** copies the complete JSON to the clipboard instead of
+  displaying it on the page.
   Collection continues on the ARI server if you refresh or leave this page;
   returning to the page restores your most recent accessible job and result.
   A server restart interrupts an active collection, which must be started
   again. Completed reports are accessible for 24 hours to their owner while
-  that owner retains access to the profile.
+  that owner retains access to the profile. The 24 hours start when collection
+  completes; the hourly **Diagnostics Cleanup** task removes expired files.
+  Access stops at expiry even if cleanup is disabled or has not run yet. Use
+  **Saved Reports** to reopen an earlier completed report, even after a later
+  collection fails. Up to 100 of the newest accessible reports are listed.
   The current stage shows elapsed seconds and, for manifests, the task name;
   a slow filesystem or queue connection can leave one stage active for a
   long time without changing the percentage.
+- After collection completes, **Delete Report** removes the saved snapshot and
+  revokes any link. **Create Share Link** produces a copyable public URL for
+  this report only. Anyone with the URL can copy or download its contents
+  without an ARI login, so share it only with trusted people. The link expires
+  with the report, can be revoked independently, and creating a new link
+  invalidates the previous one. It also stops working if the owner loses
+  diagnostics permission or access to the profile.
+- The share capability is carried in the URL fragment and is not sent in the
+  initial page request or normal server access logs. The viewer sends it in
+  an authorization header. HTTP still exposes the capability and report to
+  network observers; use HTTPS or an SSH tunnel on untrusted networks.
 - **Object** is an optional exact APERO object name, for example `GL699`.
   When supplied, the report inspects that object's cached tables and, when
   live database queries succeed, indexed product examples, product paths,

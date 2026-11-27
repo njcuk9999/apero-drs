@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ _('Shared Diagnostic Report') }} - APERO RI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagnostics_shared.css', v='20261126b') }}">
+    <script src="{{ url_for('static', filename='js/diagnostics_shared.js', v='20261126b') }}" defer></script>
+</head>
+<body>
+<main class="shared-report" data-api="{{ url_for('api_diagnostics_shared') }}"
+      data-loading="{{ _('Loading shared report...') }}"
+      data-unavailable="{{ _('This report is unavailable, expired, or its link was revoked.') }}"
+    data-ready="{{ _('Shared report loaded.') }}"
+    data-copied="{{ _('Report copied to clipboard.') }}"
+    data-copy-failed="{{ _('Could not copy the report. Download it instead.') }}">
+    <header><span>APERO RI</span><h1>{{ _('Shared Diagnostic Report') }}</h1></header>
+    <p id="shared-status" role="status" aria-live="polite">{{ _('Loading shared report...') }}</p>
+    <p id="shared-profile"></p>
+    <p id="shared-expiry" hidden>{{ _('Expires') }}: <time id="shared-expiry-time"></time></p>
+    <button id="shared-copy" type="button" hidden>{{ _('Copy Report') }}</button>
+    <button id="shared-download" type="button" hidden>{{ _('Download Report') }}</button>
+</main>
+</body>
+</html>

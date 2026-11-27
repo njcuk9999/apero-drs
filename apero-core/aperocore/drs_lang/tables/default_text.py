@@ -130,6 +130,25 @@ item.comment = 'ARI diagnostics API validation and authorization failures'
 langlist.add(item)
 
 for diag_key, diag_eng, diag_fr, diag_es, diag_args in [
+    ('ARI_DIAGNOSTICS_CLEANUP_NAME', 'Diagnostics Cleanup',
+     'Nettoyage des diagnostics', 'Limpieza de diagnosticos', 'None'),
+    ('ARI_DIAGNOSTICS_CLEANUP_DESC',
+     'Remove expired diagnostic reports and share links.',
+     'Supprimer les rapports et liens de diagnostic expires.',
+     'Eliminar informes y enlaces de diagnostico caducados.', 'None'),
+    ('ARI_DIAGNOSTICS_CLEANUP_COUNT', 'Expired reports removed: {0}',
+     'Rapports expires supprimes : {0}',
+     'Informes caducados eliminados: {0}', ['count']),
+]:
+    item = langlist.create(diag_key, kind='text')
+    item.value['ENG'] = diag_eng
+    item.value['FR'] = diag_fr
+    item.value['ES'] = diag_es
+    item.arguments = diag_args
+    item.comment = 'ARI scheduled private diagnostics cleanup task'
+    langlist.add(item)
+
+for diag_key, diag_eng, diag_fr, diag_es, diag_args in [
     ('ARI_DIAGNOSTICS_CLI_DESCRIPTION',
      'Download scoped ARI and queue diagnostics for local analysis.',
      'Telecharger les diagnostics ARI et des files pour analyse locale.',

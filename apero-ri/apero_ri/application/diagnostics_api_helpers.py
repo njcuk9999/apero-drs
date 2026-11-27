@@ -38,7 +38,9 @@ def _fail(code: str, status: int = 400) -> tuple[Any, int]:
     :return: JSON error and HTTP status.
     """
     message = drs_lang.textentry('ARI_DIAGNOSTICS_ERROR', args=[code])
-    return jsonify(success=False, error=str(message), code=code), status
+    response = jsonify(success=False, error=str(message), code=code)
+    response.headers['Cache-Control'] = 'no-store'
+    return response, status
 
 
 def _perms(app: Any, user: dict) -> set:
@@ -223,6 +225,11 @@ def admin_api(app: Any, action: str) -> Any:
         response = jsonify(success=True, job=job)
         response.headers['Cache-Control'] = 'no-store'
         return response
+    if action == 'saved' and request.method == 'GET':
+        jobs = diagnostic_jobs.saved(root, actor, set(profiles))
+        response = jsonify(success=True, jobs=jobs)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
     if action == 'job' and request.method == 'GET':
         job_id = request.args.get('id', '')
         job = diagnostic_jobs.get(root, actor, job_id)
@@ -237,6 +244,32 @@ def admin_api(app: Any, action: str) -> Any:
     body = request.get_json(silent=True)
     if request.method != 'POST' or not isinstance(body, dict):
         return _fail('invalid_request', 405)
+    if action in ('share', 'revoke-share', 'delete'):
+        job_id = str(body.get('id', ''))
+        job = diagnostic_jobs.get(root, actor, job_id)
+        if not job or (job['instrument'], job['profile_id']) not in profiles:
+            return _fail('job_not_found', 404)
+        if action == 'share':
+            token = diagnostic_jobs.share(root, actor, job_id)
+            if token is None:
+                return _fail('report_not_ready', 409)
+            audit_log.record(actor, 'diagnostics.share', job_id)
+            response = jsonify(success=True, token=token)
+        elif action == 'revoke-share':
+            diagnostic_jobs.revoke_share(root, actor, job_id)
+            audit_log.record(actor, 'diagnostics.share.revoke', job_id)
+            response = jsonify(success=True)
+        else:
+            try:
+                deleted = diagnostic_jobs.delete(root, actor, job_id)
+            except ValueError:
+                return _fail('diagnostic_job_running', 409)
+            if not deleted:
+                return _fail('job_not_found', 404)
+            audit_log.record(actor, 'diagnostics.delete', job_id)
+            response = jsonify(success=True)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
     if action == 'start':
         instrument = body.get('instrument', '')
         profile_id = body.get('profile_id', '')
@@ -317,6 +350,50 @@ def admin_api(app: Any, action: str) -> Any:
         audit_log.record(user['username'], 'diagnostics.revoke', grant_id)
         return jsonify(success=found)
     return _fail('unknown_action', 404)
+
+
+def shared_view(app: Any) -> Any:
+    """Render the anonymous report shell without exposing the capability.
+
+    :param app: ARI application.
+    :return: Private, non-indexable report viewer page.
+    """
+    response = Response(render_template('diagnostics/shared.html'))
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Referrer-Policy'] = 'no-referrer'
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; base-uri 'none'; frame-ancestors 'none'")
+    return response
+
+
+def shared_api(app: Any) -> Any:
+    """Return one shared report only while its owner retains profile access.
+
+    :param app: ARI application.
+    :return: Redacted report or a generic unavailable response.
+    """
+    header = request.headers.get('Authorization', '')
+    token = header[7:] if header.startswith('Bearer ') else ''
+    root = Path(app._resolve_local_data_dir())
+    shared = diagnostic_jobs.shared(root, token)
+    if shared is None:
+        return _fail('shared_report_unavailable', 404)
+    actor, job, report = shared
+    user = auth.get_user_info(actor)
+    if not user or PERMISSION not in _perms(app, user):
+        return _fail('shared_report_unavailable', 404)
+    pair = (job['instrument'], job['profile_id'])
+    if pair not in _profiles(app, user):
+        return _fail('shared_report_unavailable', 404)
+    audit_log.record(actor, 'diagnostics.share.access', job['id'])
+    response = jsonify(success=True, report=report,
+                        expires_at=job.get('completed_at', job['created'])
+                        + diagnostic_jobs.LIFETIME)
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['Referrer-Policy'] = 'no-referrer'
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
 
 
 def api(app: Any, action: str) -> Any:
