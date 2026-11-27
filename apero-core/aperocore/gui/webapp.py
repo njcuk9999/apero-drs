@@ -390,6 +390,9 @@ def render_markdown(text: str) -> str:
     kind = 'p'
     in_list = False
     in_code = False
+    # whether the previous line was blank (a non-indented line right after
+    #   a list item continues it - as markdown "lazy" continuation lines)
+    prev_blank = True
 
     def _flush() -> None:
         """
@@ -417,14 +420,18 @@ def render_markdown(text: str) -> str:
             continue
         heading = re.match(r'^(#{1,4})\s+(.*)$', stripped)
         is_item = stripped.startswith('- ')
+        lazy = (in_list and kind == 'li' and bool(block) and not prev_blank)
         # blank lines, headings and new items end the current block
         if not stripped or heading or is_item:
             _flush()
         # leaving a list (anything except an item or its continuation)
-        if in_list and (heading or (stripped and not is_item
+        if in_list and (heading or (stripped and not is_item and not lazy
                                     and not line.startswith(' '))):
+            # the item being read ends with the list
+            _flush()
             out.append('</ul>')
             in_list = False
+        prev_blank = not stripped
         if heading:
             level = len(heading.group(1)) + 1
             out.append('<h{0}>{1}</h{0}>'.format(

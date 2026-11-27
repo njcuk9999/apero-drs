@@ -48,6 +48,7 @@ import requests
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
+from aperocore import progress as gprogress
 from aperocore.base import base
 from aperocore.constants import custom_const_classes as ccc
 from aperocore.core import drs_log
@@ -277,6 +278,7 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
     # default to every file object parameter
     if keys is None:
         keys = find_file_keys(params)
+    keys = list(keys)
     # upper case keys to compare case insensitively
     skip = set(key.upper() for key in skip_keys)
     # storage for yaml updates
@@ -284,7 +286,11 @@ def resolve_files(params: Any, keys: Optional[Iterable[str]] = None,
     # file in a directory -> (key, source) of the parameter that wants it
     claimed: Dict[str, Tuple[str, str]] = dict()
     # loop around file object parameters
-    for key in keys:
+    for it, key in enumerate(keys):
+        # report progress (e.g. the pogos_gui Status tab; no-op otherwise)
+        gprogress.advance(detail='{0} ({1}/{2})'.format(key, it + 1,
+                                                         len(keys)),
+                          force=True)
         # get the instance and current value
         instance = params.instances.get(key, None)
         value = params[key]
@@ -536,6 +542,8 @@ def fetch_pogos(params: Any, fileobj: ccc.FileObject, directory: str,
         # where the file should end up
         localpath = _local_path(directory, filename)
         basename = os.path.basename(filename)
+        # report what is being obtained (rate limited, no-op if no gui)
+        gprogress.advance(detail='{0}: {1}'.format(fileobj.name, basename))
         # absolute filenames are written where they are (no cache)
         cachepath = _cache_path(cache_dir, filename)
         # skip existing files unless always_download is set
@@ -739,6 +747,8 @@ def fetch_mast(params: Any, fileobj: ccc.FileObject, directory: str,
     # download
     msg = '\t\tDownloading {0} file(s) from MAST to {1}'
     WLOG(params, '', msg.format(len(products), target_dir))
+    gprogress.advance(detail='{0}: downloading {1} file(s) from MAST'.format(
+        fileobj.name, len(products)), force=True)
     if len(products) > 0:
         dkwargs = dict(download_dir=target_dir, flat=True)
         manifest = observations_module.download_products(products, **dkwargs)
