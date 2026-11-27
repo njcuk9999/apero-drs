@@ -759,6 +759,10 @@ validate.instrument = __INSTRUMENT__
 validate.description = textentry('VALIDATE_DESCRIPTION')
 validate.recipe_type = 'nolog-tool'
 validate.recipe_kind = 'user'
+validate.set_kwarg(name='--report', dtype='switch',
+                   helpstr=textentry('VALIDATE_REPORT_HELP'))
+validate.set_kwarg(name='--reportfile', dtype=str, default='None',
+                   helpstr=textentry('VALIDATE_REPORTFILE_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_visu.py

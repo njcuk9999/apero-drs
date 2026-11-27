@@ -98,6 +98,26 @@ def __main__(recipe: Any, params: Any) -> Dict[str, Any]:
         print('Validation complete')
     else:
         WLOG(params, '', 'Validation complete')
+    # ----------------------------------------------------------------------
+    # State report (--report / --reportfile)
+    # ----------------------------------------------------------------------
+    # a report file name implies --report
+    reportfile = params['INPUTS']['REPORTFILE']
+    if reportfile in [None, '', 'None']:
+        reportfile = None
+    if params['INPUTS']['REPORT'] or reportfile is not None:
+        # import here: only needed when a report is requested
+        from aperocore import drs_lang
+        from apero.tools.module.setup import drs_report
+        # collect the profile / paths / database / modules / machine state
+        report = drs_report.collect(params)
+        # write it as one text file
+        if reportfile is None:
+            reportfile = drs_report.default_report_path()
+        reportfile = drs_report.write_report(report, reportfile)
+        # log: APERO state report written to: {0}
+        WLOG(params, 'info', drs_lang.textentry('40-510-00061',
+                                                args=[reportfile]))
 
     # ----------------------------------------------------------------------
     # End of main code

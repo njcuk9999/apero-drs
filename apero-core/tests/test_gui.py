@@ -488,3 +488,79 @@ def test_mpl_stream_backend(tmp_path: Path) -> None:
     assert [entry['title'] for entry in entries] == ['one', '', 'T']
     assert entries[2]['description'] == 'D'
     assert all((tmp_path / entry['file']).exists() for entry in entries)
+
+
+def test_mpl_stream_interactive_and_step(tmp_path: Path) -> None:
+    """Streamed figures are pickled and tagged with the open step."""
+    import subprocess
+    code = ('import matplotlib.pyplot as plt\n'
+            'from aperocore import progress\n'
+            'progress.set_writer(lambda event, **kw: None)\n'
+            'progress.set_tags(level="L", flavour="F")\n'
+            'with progress.step("A"):\n'
+            '    with progress.step("B"):\n'
+            '        plt.plot([1, 2]); plt.show()\n')
+    env = dict(os.environ, MPLBACKEND='module://aperocore.gui.mpl_stream',
+               APEROCORE_PLOT_STREAM_DIR=str(tmp_path))
+    output = subprocess.run([sys.executable, '-c', code], env=env,
+                            capture_output=True, text=True, timeout=120)
+    assert output.returncode == 0, output.stderr
+    entry = json.loads((tmp_path / 'index.jsonl').read_text())
+    assert entry['step'] == dict(level='L', flavour='F', path=['A', 'B'])
+    assert entry['figure'].endswith('.mplfig')
+    # a zero size limit keeps figures png only
+    env['APEROCORE_PLOT_STREAM_MAX_MB'] = '0'
+    (tmp_path / 'index.jsonl').unlink()
+    output = subprocess.run([sys.executable, '-c', code], env=env,
+                            capture_output=True, text=True, timeout=120)
+    assert output.returncode == 0, output.stderr
+    entry = json.loads((tmp_path / 'index.jsonl').read_text())
+    assert 'figure' not in entry and entry['static_reason']
+
+
+def test_mpl_view_session_toolbar_and_roots(tmp_path: Path) -> None:
+    """A pickled figure runs matplotlib's toolbar (shared axes zoom)."""
+    import pickle
+    from matplotlib.figure import Figure
+    from aperocore.gui import mpl_view
+    figure = Figure(figsize=(4, 3))
+    top = figure.add_subplot(211)
+    bottom = figure.add_subplot(212, sharex=top)
+    top.plot([0, 10], [0, 5])
+    bottom.plot([0, 10], [5, 0])
+    path = tmp_path / 'fig.mplfig'
+    path.write_bytes(pickle.dumps(figure))
+    data = mpl_view.open_figure(str(path), [str(tmp_path)])
+    session = mpl_view.get_session(data['id'])
+    # matplotlib sends the size and asks for a refresh on connect
+    first = [json.loads(m)['type'] for m in session.poll(0)]
+    assert 'resize' in first and 'refresh' in first
+    session.handle(['{"type": "refresh"}', {'type': 'draw'},
+                    {'type': 'supports_binary', 'value': False}])
+    assert any(m.startswith('data:image/png;base64,')
+               for m in session.poll(0))
+    # a box zoom in the top axes also zooms the shared x of the bottom
+    event = dict(button=0, buttons=0, modifiers=[], guiEvent={})
+    session.handle([{'type': 'toolbar_button', 'name': 'zoom'},
+                    dict(event, type='button_press', x=150, y=60,
+                         buttons=1),
+                    dict(event, type='motion_notify', x=300, y=100,
+                         buttons=1),
+                    dict(event, type='button_release', x=300, y=100)])
+    top_lim, bottom_lim = [axis.get_xlim()
+                           for axis in session.manager.canvas.figure.axes]
+    assert top_lim == bottom_lim and top_lim[1] - top_lim[0] < 10
+    mpl_view.close_figure(data['id'])
+    with pytest.raises(mpl_view.FigureViewError):
+        mpl_view.get_session(data['id'])
+    # refused: no roots, outside the roots, not a figure
+    other = tmp_path / 'other.txt'
+    other.write_text('x')
+    for bad, roots in [(str(path), []), (str(path), [str(tmp_path / 'sub')]),
+                       (str(other), [str(tmp_path)])]:
+        with pytest.raises(mpl_view.FigureViewError):
+            mpl_view.open_figure(bad, roots)
+    # the matplotlib assets
+    assert 'mpl.figure' in mpl_view.javascript()
+    assert mpl_view.toolbar_image('home.png')
+    assert mpl_view.toolbar_image('../x.png') is None

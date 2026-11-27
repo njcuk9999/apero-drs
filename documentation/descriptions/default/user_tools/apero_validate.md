@@ -39,6 +39,18 @@ The configuration values printed are as follows:
 - :term:`DRS_LOG_LEVEL`: the log file level of logging
 - :term:`DRS_PLOT`: the plotting mode (0, 1 or 2)
 
+#### State report (--report)
+
+`apero_validate.py --report` also writes a state report of the profile to a
+single text file that is easy to read and to give to an AI assistant. It
+covers the config files, data paths and disk space, databases (tables and
+number of rows), python modules (installed against required versions) and
+the machine. The report is written to `apero_report_{profile}_{time}.txt` in
+the current directory, or to the file given with `--reportfile=PATH`. The
+database password is never written. The Validate tab of
+`apero_setup.py --gui` shows the same report graphically. See the APERO
+setup GUI reference guide for the report layout.
+
 The splash screen should look similar to this:
 
 

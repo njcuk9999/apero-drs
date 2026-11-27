@@ -1,0 +1,435 @@
+/* ==========================================================================
+   APERO setup gui - page styles (on top of the shared aperocore gui_base.css)
+
+   The yaml form, docs list, tool tip and segmented button rules are the
+   same as pogos_gui (so both guis look alike); the rest is specific to the
+   setup gui (directory grids, report cards, markdown tables).
+   ========================================================================== */
+.grow { flex: 1; }
+.help { font-size: 12px; color: var(--muted); margin-top: 4px; }
+label.inline { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; }
+.field-label { display: block; font-weight: 600; margin-bottom: 4px; }
+input.bad { border-color: var(--danger); }
+.dir-grid { display: grid; gap: 8px 14px; margin-top: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.dir-grid .field-label { font-size: 12px; }
+.dir-grid input { width: 100%; }
+.dir-preview { font-family: ui-monospace, monospace; font-size: 12px;
+               color: var(--muted); word-break: break-all; }
+.step-card.done .step-num { background: var(--ok, #3fb950); }
+.file-chip { cursor: pointer; }
+.file-chip.active { outline: 2px solid var(--accent); }
+.file-chip.missing { opacity: 0.5; }
+/* ---- validate: state report ---- */
+.rep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rep-status { font-size: 15px; font-weight: 700; padding: 4px 12px;
+              border-radius: 8px; }
+.rep-status.ok { background: rgba(63, 185, 80, 0.18); color: var(--ok); }
+.rep-status.warn { background: rgba(210, 153, 34, 0.2); color: var(--warn); }
+.rep-status.bad { background: rgba(248, 81, 73, 0.18);
+                  color: var(--danger); }
+.rep-checks { list-style: none; padding: 0; margin: 10px 0 0; }
+.rep-checks li { padding: 3px 0; }
+.rep-grid { display: grid; gap: 12px; margin-top: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.rep-card h3 { margin-top: 0; display: flex; gap: 8px; align-items: center; }
+.rep-card table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rep-card td, .rep-card th { padding: 3px 6px; text-align: left;
+                             vertical-align: top;
+                             border-bottom: 1px solid var(--border); }
+.rep-card td.mono, .mono { font-family: ui-monospace, monospace;
+                           word-break: break-all; }
+.rep-card .num { text-align: right; white-space: nowrap; }
+.rep-bar { height: 6px; background: var(--panel3); border-radius: 3px;
+           overflow: hidden; min-width: 80px; }
+.rep-bar span { display: block; height: 100%; background: var(--accent); }
+.rep-groups { font-size: 11px; color: var(--muted); }
+.rep-wide { grid-column: 1 / -1; }
+/* ---- docs / info markdown tables ---- */
+table.md-table { border-collapse: collapse; margin: 8px 0; }
+table.md-table td, table.md-table th { border: 1px solid var(--border);
+                                       padding: 4px 8px; text-align: left; }
+a.doc-link { cursor: pointer; }
+.doc-values td { padding: 2px 10px 2px 0; }
+
+/* ---- shared with pogos_gui ---- */
+/* ---- yaml summaries ---- */
+.yaml-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+                align-items: center; font-size: 12px;
+}
+
+.yaml-summary .pill { font-size: 12px;
+}
+
+.yaml-summary .path { font-family: ui-monospace, monospace; color: var(--muted);
+                      word-break: break-all;
+}
+
+/* ---- edit ---- */
+.editor-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+               margin-bottom: 10px;
+}
+
+.editor-head .grow { flex: 1;
+}
+
+.editor-head input[type=search] { min-width: 260px;
+}
+
+.segmented { display: inline-flex; background: var(--panel3);
+             border-radius: 8px; padding: 2px;
+}
+
+.segmented button { border: none; background: transparent; box-shadow: none;
+                    padding: 5px 12px; color: var(--muted);
+}
+
+.segmented button.active { background: var(--panel); color: var(--strong);
+                           box-shadow: 0 1px 3px var(--shadow);
+}
+
+.yaml-form { display: flex; flex-direction: column; gap: 10px;
+}
+
+.yf-section { border: 1px solid var(--border); border-radius: 9px;
+              overflow: hidden;
+}
+
+.yf-section > summary { cursor: pointer; padding: 8px 12px;
+                        background: var(--panel3); font-weight: 700;
+                        color: var(--strong); list-style: none;
+                        display: flex; align-items: center; gap: 8px;
+}
+
+.yf-section > summary::-webkit-details-marker { display: none;
+}
+
+.yf-section > summary::before { content: '\25B8'; color: var(--muted);
+}
+
+.yf-section[open] > summary::before { content: '\25BE';
+}
+
+.yf-section .yf-count { font-weight: 400; font-size: 12px;
+                        color: var(--muted);
+}
+
+.yf-group { padding: 6px 12px 2px 12px; font-size: 12px; font-weight: 700;
+            color: var(--accent); text-transform: uppercase;
+            letter-spacing: 0.3px; border-top: 1px solid var(--border2);
+}
+
+.yf-group .yf-group-desc { font-weight: 400; text-transform: none;
+                           color: var(--muted); letter-spacing: 0;
+}
+
+.yf-row { display: grid; grid-template-columns: minmax(180px, 28%) 1fr;
+          gap: 12px; padding: 6px 12px; border-top: 1px solid var(--border2);
+          align-items: start;
+}
+
+.yf-row.changed { background: var(--diff-mod);
+}
+
+.yf-key { font-family: ui-monospace, monospace; font-weight: 600;
+          color: var(--strong); word-break: break-all; font-size: 12.5px;
+}
+
+.yf-key .yf-path { display: block; font-weight: 400; font-size: 11px;
+                   color: var(--muted);
+}
+
+.yf-value input[type=text], .yf-value select, .yf-value textarea {
+    width: 100%; font-family: ui-monospace, monospace; font-size: 12.5px;
+}
+
+.yf-value textarea { min-height: 54px; resize: vertical;
+}
+
+.yf-help { font-size: 11.5px; color: var(--muted); margin-top: 3px;
+           white-space: pre-wrap;
+}
+
+.yf-readonly { font-family: ui-monospace, monospace; font-size: 12px;
+               color: var(--muted);
+}
+
+.raw-editor { display: flex; border: 1px solid var(--border);
+              border-radius: 8px; overflow: hidden; height: 68vh;
+              background: var(--panel2);
+}
+
+.raw-gutter { margin: 0; padding: 8px 6px; text-align: right;
+              color: var(--muted); background: var(--panel3);
+              font-family: ui-monospace, monospace; font-size: 12.5px;
+              line-height: 1.5; user-select: none; overflow: hidden;
+              min-width: 3.5em; border-right: 1px solid var(--border);
+}
+
+.raw-editor textarea { flex: 1; border: none; border-radius: 0; margin: 0;
+                       padding: 8px 10px; resize: none; outline: none;
+                       background: transparent; color: var(--text);
+                       font-family: ui-monospace, monospace; font-size: 12.5px;
+                       line-height: 1.5; white-space: pre; tab-size: 2;
+}
+
+.raw-editor textarea:focus { box-shadow: none;
+}
+
+/* ---- files ---- */
+.files-layout { display: grid; grid-template-columns: 300px 1fr; gap: 12px;
+                align-items: start;
+}
+
+.files-side { position: sticky; top: 120px; max-height: 80vh; overflow: auto;
+}
+
+
+
+
+.param-tip { position: fixed; z-index: 3000; max-width: 520px;
+             background: #1f2f46; color: #e6edf3; border-radius: 8px;
+             padding: 9px 12px; font-size: 12.5px; line-height: 1.45;
+             box-shadow: 0 8px 26px rgba(0,0,0,0.35); white-space: pre-wrap;
+             pointer-events: none;
+}
+
+.param-tip .pt-key { font-family: ui-monospace, monospace; font-weight: 700;
+                     color: #79c0ff; display: block; margin-bottom: 4px;
+}
+
+.param-tip .pt-meta { display: block; margin-top: 6px; color: #9fb0c8;
+                      font-size: 11.5px; font-family: ui-monospace, monospace;
+}
+
+.yf-meta { font-size: 11px; color: var(--muted); margin-top: 2px;
+           font-family: ui-monospace, monospace;
+}
+
+/* the Info tab stays readable while the page waits for a POGOS path */
+.main-wrap.locked #tab-info { opacity: 1; filter: none;
+                              pointer-events: auto; user-select: auto;
+}
+
+.setup-errors { margin: 6px 0 0 18px; padding: 0; line-height: 1.6;
+}
+
+/* ---- file constants (one card per FileObjectConst) ---- */
+.yf-file { margin: 8px 12px; border: 1px solid var(--border);
+           border-left: 4px solid #8a5cd1; border-radius: 8px;
+           background: var(--panel2);
+}
+
+.yf-file.changed { border-left-color: var(--accent);
+}
+
+.yf-file-head { display: flex; align-items: center; gap: 8px;
+                flex-wrap: wrap; padding: 7px 10px 2px 10px;
+}
+
+.yf-file-icon { font-size: 15px;
+}
+
+.yf-file-name { font-family: ui-monospace, monospace; font-weight: 700;
+                color: var(--strong); cursor: pointer;
+}
+
+.yf-file .yf-path { font-size: 11px; color: var(--muted);
+                    font-family: ui-monospace, monospace;
+}
+
+.yf-file > .yf-help { padding: 0 10px 4px 10px;
+}
+
+.yf-file-body .yf-row { border-top: 1px dashed var(--border2);
+                        padding-left: 22px;
+}
+
+.yf-file-body .yf-key { font-weight: 500;
+}
+
+.yf-key { cursor: pointer;
+}
+
+.yf-key:hover, .yf-file-name:hover { color: var(--accent);
+}
+
+.doc-link { cursor: pointer; white-space: nowrap;
+}
+
+/* ---- docs ---- */
+.docs-list { margin-top: 6px; font-size: 12.5px;
+}
+
+.doc-group { margin: 10px 0 3px 0; font-weight: 700; color: var(--accent);
+             font-size: 12px; text-transform: uppercase; cursor: pointer;
+             padding: 3px 8px; border-radius: 5px; display: flex;
+             justify-content: space-between; gap: 6px;
+}
+
+.doc-group:hover { background: var(--panel3);
+}
+
+.doc-group.active { background: var(--accent); color: #fff;
+}
+
+.doc-group-n { font-weight: 400; opacity: 0.75;
+}
+
+.doc-entry { margin-top: 18px; padding-top: 12px;
+             border-top: 1px solid var(--border);
+}
+
+.doc-entry h3.doc-key { margin: 0; cursor: pointer; font-size: 14px;
+}
+
+.doc-entry h3.doc-key:hover { color: var(--accent);
+}
+
+.doc-crumb { font-size: 12px; margin-bottom: 4px;
+}
+
+.doc-crumb a { cursor: pointer; color: var(--accent); font-family:
+               ui-monospace, monospace;
+}
+
+.doc-item { padding: 2px 8px; border-radius: 5px; cursor: pointer;
+            font-family: ui-monospace, monospace; word-break: break-all;
+}
+
+.doc-item:hover { background: var(--panel3);
+}
+
+.doc-item.active { background: var(--accent); color: #fff;
+}
+
+.doc-text { white-space: pre-wrap; font-family: inherit; font-size: 13.5px;
+            line-height: 1.55; background: var(--panel2); padding: 12px;
+            border-radius: 7px; border: 1px solid var(--border);
+}
+
+/* ---- edit: file constant source switch ---- */
+.yf-src-label { margin-left: 8px; font-size: 11px; font-weight: 700;
+                color: var(--muted); text-transform: uppercase;
+}
+
+.yf-src-switch { display: inline-flex; border: 1px solid var(--border);
+                 border-radius: 7px; overflow: hidden;
+}
+
+.yf-src-switch button { border: none; border-radius: 0; box-shadow: none;
+                        padding: 3px 12px; font-size: 12px;
+                        background: var(--panel2);
+}
+
+.yf-src-switch button + button { border-left: 1px solid var(--border);
+}
+
+.yf-src-switch button.active { background: var(--accent); color: #fff;
+                               font-weight: 600;
+}
+
+.yf-file-note { margin: 6px 0;
+}
+
+/* ---- edit: coloured, collapsible sub-sections + sticky section bar ---- */
+.yf-group-box { margin: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); border-left-width: 4px;
+}
+
+.yf-group-box > summary.yf-group { cursor: pointer; list-style: none;
+    padding: 6px 10px; border-radius: 6px 6px 0 0;
+}
+
+.yf-group-box > summary.yf-group::-webkit-details-marker { display: none;
+}
+
+.yf-group-box > summary.yf-group::before { content: '\25B8  ';
+    color: var(--muted);
+}
+
+.yf-group-box[open] > summary.yf-group::before { content: '\25BE  ';
+}
+
+.yf-group-box:not([open]) > summary.yf-group { border-radius: 6px;
+}
+
+.yf-group-box .yf-group-box { margin: 6px 8px;
+}
+
+.yf-group-body { padding-bottom: 4px;
+}
+
+.yf-group-box.g0 { background: rgba(47,125,225,0.07); border-left-color: #2f7de1;
+}
+
+.yf-group-box.g1 { background: rgba(46,160,67,0.07); border-left-color: #2ea043;
+}
+
+.yf-group-box.g2 { background: rgba(210,153,34,0.08); border-left-color: #d29922;
+}
+
+.yf-group-box.g3 { background: rgba(137,87,229,0.08); border-left-color: #8957e5;
+}
+
+.yf-group-box.g4 { background: rgba(57,197,207,0.08); border-left-color: #39c5cf;
+}
+
+.yf-group-box.g5 { background: rgba(219,97,162,0.08); border-left-color: #db61a2;
+}
+
+.yf-group-box > summary.yf-group { background: rgba(127,127,127,0.10);
+}
+
+.edit-nav { position: sticky; top: 108px; z-index: 20; margin: 0 0 8px 0;
+    padding: 6px 12px; border-radius: 7px; font-size: 12.5px;
+    background: var(--panel3); border: 1px solid var(--border);
+    box-shadow: var(--shadow); font-family: ui-monospace, monospace;
+}
+
+.edit-nav a { cursor: pointer; color: var(--accent);
+}
+
+.edit-nav a:hover { text-decoration: underline;
+}
+
+.edit-nav .nav-sep { color: var(--muted);
+}
+
+/* ---- docs: menu, stage / flavour cards, algorithms ---- */
+.docs-pick { display: flex; flex-direction: column; gap: 8px;
+}
+
+.docs-pick-row { display: flex; align-items: center; gap: 10px;
+                 flex-wrap: wrap;
+}
+
+.docs-pick-label { width: 110px; font-size: 11px; font-weight: 700;
+                   color: var(--muted); text-transform: uppercase;
+}
+
+.docs-menu button { font-size: 14px; padding: 5px 18px;
+}
+
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap;
+}
+
+.chip { border-radius: 16px; padding: 3px 12px; font-size: 12.5px;
+}
+
+.chip.active { background: var(--accent); border-color: var(--accent);
+               color: #fff;
+}
+
+.chip[disabled] { opacity: 0.45; cursor: not-allowed;
+}
+
+.chip-n { font-size: 10.5px; opacity: 0.75;
+}
+
+/* narrow windows: one column */
+@media (max-width: 1000px) {
+    .files-layout { grid-template-columns: 1fr; }
+    .files-side { position: static; max-height: none; }
+    .yf-row { grid-template-columns: 1fr; }
+}

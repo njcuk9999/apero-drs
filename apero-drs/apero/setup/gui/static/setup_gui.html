@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APERO setup GUI</title>
+<script>
+// apply the saved theme before first paint (dark is the default)
+(function () {
+    var theme = 'dark';
+    try { theme = JSON.parse(localStorage.getItem('apero-setup-gui-theme')) ||
+                  'dark'; }
+    catch (err) { theme = 'dark'; }
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
+XX_CORE_HEAD_XX
+<link rel="stylesheet" href="static/app/setup_gui.css?v=XX_STAMP_XX">
+</head>
+<body>
+<!-- ===================================================================
+     top bar: brand, tabs, global actions
+     =================================================================== -->
+<div class="navbar">
+<div id="topbar">
+<div class="nav-left">
+    <div class="brand">APERO setup <span class="ver">v XX_VERSION_XX</span>
+    </div>
+    <div id="tabbar">
+        <button id="tab-btn-info" onclick="GUI.setTab('info')">Info</button>
+        <button id="tab-btn-setup" onclick="GUI.setTab('setup')">Setup</button>
+        <button id="tab-btn-edit" onclick="GUI.setTab('edit')">Edit</button>
+        <button id="tab-btn-validate"
+                onclick="GUI.setTab('validate')">Validate</button>
+        <button id="tab-btn-processes"
+                onclick="GUI.setTab('processes')">Processes</button>
+        <button id="tab-btn-docs" onclick="GUI.setTab('docs')">Docs</button>
+    </div>
+</div>
+<div id="global-actions">
+    <button id="theme-toggle" onclick="GUI.toggleTheme()">Theme</button>
+    <button onclick="S.refreshAll()">&#8635; Refresh</button>
+    <button id="lv-reopen" onclick="GUI.lvShow()">Logs (0)</button>
+    <button onclick="GUI.showRuntimeInfo()">Info</button>
+    <button onclick="GUI.restartServer()">Restart server</button>
+    <button class="danger" onclick="GUI.shutdownServer()">Shutdown GUI</button>
+    <span id="status-error"></span>
+</div>
+</div>
+</div>
+
+<div class="main-wrap" id="main-wrap">
+
+<!-- ===================================================================
+     Info (the apero-ri docs page reference/setup_gui)
+     =================================================================== -->
+<div id="tab-info" class="tabpage">
+<div class="info-md">
+XX_INFO_XX
+</div>
+</div>
+
+<!-- ===================================================================
+     Setup (apero_setup.py)
+     =================================================================== -->
+<div id="tab-setup" class="tabpage">
+<div class="tabdesc">Create a new APERO profile with
+<code>apero_setup.py</code>. Work through the sections (hover over a field
+for its description), then press <b>Validate and save</b>. Setup then
+writes the profile files to <code>DRS_UCONFIG</code>, creates the
+directories, downloads the assets and (optionally) cleans the database;
+any remaining questions are answered in the console below.</div>
+
+<div class="section-card step-card" id="setup-sec-1">
+<div class="step-num">1</div>
+<h3>Profile</h3>
+<div class="field-row">
+<div class="field grow">
+<label class="field-label" for="setup-from">Start from an existing profile
+    (optional)</label>
+<div class="input-group">
+<select id="setup-from"></select>
+<button onclick="S.setup.loadFrom()">Fill in from profile</button>
+<button onclick="S.setup.reset()">Clear form</button>
+</div>
+<div class="help">Copies every setup choice of that profile into this form
+(the password stays on the server). Change the name to create a new
+profile.</div>
+</div>
+</div>
+<div class="field-row">
+<div class="field">
+<label class="field-label" for="setup-name" data-arg="name">Profile name
+    (--name)</label>
+<input id="setup-name" type="text" spellcheck="false" data-field="name"
+       placeholder="e.g. spirou_mini_08">
+<div class="help" id="setup-name-help">No spaces or punctuation (except
+    _).</div>
+</div>
+<div class="field grow">
+<label class="field-label" for="setup-config" data-arg="config_path">Config
+    directory (--config)</label>
+<div class="input-group">
+<input id="setup-config" type="text" spellcheck="false"
+       data-field="config_path" placeholder="/path/to/drs-settings">
+<button onclick="S.setup.browse('setup-config')">Browse...</button>
+</div>
+<div class="help" id="setup-config-help">The profile files are written to
+    <code>{config}/{name}</code> (this becomes <code>DRS_UCONFIG</code>).
+</div>
+</div>
+<div class="field">
+<label class="field-label" for="setup-language" data-arg="language">Language
+    (--language)</label>
+<select id="setup-language" data-field="language"></select>
+</div>
+</div>
+</div>
+
+<div class="section-card step-card" id="setup-sec-2">
+<div class="step-num">2</div>
+<h3>Instrument</h3>
+<div id="setup-instruments" class="choice-grid" data-arg="INSTRUMENT"></div>
+</div>
+
+<div class="section-card step-card" id="setup-sec-3">
+<div class="step-num">3</div>
+<h3>Data directories</h3>
+<span class="segmented">
+<button id="setup-dir-datadir" class="active"
+        onclick="S.setup.setDirMode('datadir')">One data directory</button>
+<button id="setup-dir-separate"
+        onclick="S.setup.setDirMode('separate')">Set each directory</button>
+</span>
+<div id="setup-datadir-row" class="field-row">
+<div class="field grow">
+<label class="field-label" for="setup-datadir" data-arg="DATADIR">Data
+    directory (--datadir)</label>
+<div class="input-group">
+<input id="setup-datadir" type="text" spellcheck="false"
+       data-field="DATADIR" placeholder="/path/to/drs-data/{name}">
+<button onclick="S.setup.browse('setup-datadir')">Browse...</button>
+</div>
+<div class="help">Every directory below is created inside it.</div>
+</div>
+</div>
+<div id="setup-dirs" class="dir-grid"></div>
+<label class="inline" data-arg="FORCE_DIR_CREATE"><input
+    id="setup-force-dirs" type="checkbox" data-field="FORCE_DIR_CREATE">
+    Always create missing directories (--always-create)</label>
+</div>
+
+<div class="section-card step-card" id="setup-sec-4">
+<div class="step-num">4</div>
+<h3>External raw data</h3>
+<div class="muted small">Use raw files kept elsewhere (e.g. a shared
+archive): setup links them into the raw directory and never writes to the
+external directory.</div>
+<label class="inline" data-arg="USE_EXTERNAL_RAW"><input id="setup-use-ext"
+    type="checkbox" data-field="USE_EXTERNAL_RAW"> Use an external raw
+    directory (--use-external-raw)</label>
+<div id="setup-ext-row" style="display:none">
+<div class="field-row">
+<div class="field grow">
+<label class="field-label" for="setup-ext" data-arg="EXTERNAL_RAW">External
+    raw directory (--external-raw, must exist)</label>
+<div class="input-group">
+<input id="setup-ext" type="text" spellcheck="false"
+       data-field="EXTERNAL_RAW">
+<button onclick="S.setup.browse('setup-ext')">Browse...</button>
+</div>
+</div>
+</div>
+<div class="choice-grid" id="setup-ext-type"
+     data-arg="EXTERNAL_RAW_TYPE"></div>
+</div>
+</div>
+
+<div class="section-card step-card" id="setup-sec-5">
+<div class="step-num">5</div>
+<h3>Database</h3>
+<div id="setup-db-modes" class="choice-grid" data-arg="DATABASE_MODE"></div>
+<div class="field-row">
+<div class="field">
+<label class="field-label" for="setup-db-host"
+       data-arg="DATABASE_HOST">Host (--database-host)</label>
+<input id="setup-db-host" type="text" spellcheck="false"
+       data-field="DATABASE_HOST">
+</div>
+<div class="field">
+<label class="field-label" for="setup-db-user"
+       data-arg="DATABASE_USER">User (--database-user)</label>
+<input id="setup-db-user" type="text" spellcheck="false"
+       data-field="DATABASE_USER">
+</div>
+<div class="field">
+<label class="field-label" for="setup-db-pass"
+       data-arg="DATABASE_PASS">Password (--database-pass)</label>
+<input id="setup-db-pass" type="password" autocomplete="new-password"
+       data-field="DATABASE_PASS">
+<div class="help" id="setup-db-pass-help">Never shown in the CLI
+    equivalent or the logs.</div>
+</div>
+<div class="field">
+<label class="field-label" for="setup-db-name"
+       data-arg="DATABASE_NAME">Database name (--database-name)</label>
+<input id="setup-db-name" type="text" spellcheck="false"
+       data-field="DATABASE_NAME">
+</div>
+</div>
+<label class="inline" data-arg="DATABASE_USE_SSL"><input id="setup-db-ssl"
+    type="checkbox" data-field="DATABASE_USE_SSL"> Use SSL
+    (--database_use_ssl)</label>
+<label class="inline" data-arg="EDIT_DBTABLES"><input id="setup-db-edit"
+    type="checkbox" data-field="EDIT_DBTABLES"> Choose the table names
+    (--edit-table-names)</label>
+<div class="help" id="setup-db-tables-help"></div>
+<div id="setup-db-tables" class="dir-grid" style="display:none"></div>
+</div>
+
+<div class="section-card step-card" id="setup-sec-6">
+<div class="step-num">6</div>
+<h3>Plots and clean start</h3>
+<div id="setup-plot-modes" class="choice-grid" data-arg="PLOT_MODE"></div>
+<label class="inline" data-arg="CLEAN_START"><input id="setup-clean"
+    type="checkbox" data-field="CLEAN_START"> Start from a clean state
+    (--clean: runs apero_reset)</label>
+<label class="inline" data-arg="CLEAN_PROMPT"><input id="setup-clean-prompt"
+    type="checkbox" data-field="CLEAN_PROMPT"> Ask before cleaning
+    (--clean-prompt: answer in the console)</label>
+<label class="inline" data-arg="DISABLE_DEMO_PROMPT"><input
+    id="setup-demo-prompt" type="checkbox"
+    data-field="DISABLE_DEMO_PROMPT"> Demo data prompt
+    (--no-demo-prompt)</label>
+<div id="setup-clean-note" class="notice warn" style="display:none">A clean
+start removes every reduced file and database entry of this profile
+(apero_reset).</div>
+</div>
+
+<div class="section-card step-card" id="setup-sec-7">
+<div class="step-num">7</div>
+<h3>Validate and save</h3>
+<div class="muted small">Checks every section, then runs
+<code>apero_setup.py</code> with every answer on the command line. The
+password is passed in the <code>APERO_SETUP_DATABASE_PASS</code>
+environment variable (never on the command line).</div>
+<div id="setup-exists" class="notice warn" style="display:none"></div>
+<div class="cli-title">CLI equivalent <span class="muted"
+     id="setup-cli-note"></span></div>
+<div class="cli-wrap">
+<textarea id="cli-setup" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="GUI.copyCli('cli-setup', this)">Copy
+</button>
+</div>
+<div class="field-actions" style="margin-top:10px">
+<button id="btn-setup" class="primary" onclick="S.setup.run()">&#10004;
+    Validate and save</button>
+</div>
+<div id="setup-after" class="notice ok" style="display:none"></div>
+</div>
+
+<div id="console-setup"></div>
+<h3>Activity</h3>
+<div class="activity-log" data-activity="setup"></div>
+</div>
+
+<!-- ===================================================================
+     Edit (DRS_UCONFIG files + re-run setup)
+     =================================================================== -->
+<div id="tab-edit" class="tabpage">
+<div class="tabdesc">Edit the files <code>apero_setup.py</code> wrote to a
+profile's <code>DRS_UCONFIG</code> directory as a form (each constant
+links to its Docs entry) or as raw text, review the changes side by side
+and save (a backup is kept). Then <b>re-run setup</b> to apply the new
+paths / database / plot settings.</div>
+
+<div class="section-card">
+<div class="field-row">
+<div class="field grow">
+<label class="field-label" for="edit-profile">Profile</label>
+<div class="input-group">
+<select id="edit-profile" onchange="S.edit.selectProfile()"></select>
+<button onclick="S.edit.browseProfile()">Browse disk...</button>
+<button onclick="S.edit.reload()">&#8635; Reload</button>
+</div>
+</div>
+</div>
+<div id="edit-summary" class="yaml-summary"></div>
+<div id="edit-files" class="chip-row" style="margin-top:10px"></div>
+</div>
+
+<div class="section-card" id="edit-card" style="display:none">
+<div class="editor-head">
+<span class="segmented">
+<button id="edit-view-form" class="active"
+        onclick="S.edit.setView('form')">Parameters</button>
+<button id="edit-view-raw" onclick="S.edit.setView('raw')">Raw text</button>
+</span>
+<input id="edit-filter" type="search"
+       placeholder="Filter parameters (key, value, description)">
+<label class="inline small"><input id="edit-changed-only" type="checkbox"
+       onchange="S.edit.renderForm()"> Changed only</label>
+<span class="grow"></span>
+<span id="edit-dirty" class="pill"></span>
+<button onclick="S.edit.revert()">Revert</button>
+<button onclick="S.edit.review()">Review changes</button>
+<button onclick="S.edit.compareBackup()">Compare with backup</button>
+<button class="primary" id="edit-save" onclick="S.edit.save()">&#128190;
+    Save</button>
+</div>
+<div id="edit-note" class="notice" style="display:none"></div>
+<div id="edit-error" class="notice bad" style="display:none"></div>
+<div id="edit-form" class="yaml-form"></div>
+<div id="edit-raw-wrap" class="raw-editor" style="display:none">
+<pre id="edit-gutter" class="raw-gutter"></pre>
+<textarea id="edit-raw" spellcheck="false" wrap="off"></textarea>
+</div>
+</div>
+
+<div class="section-card">
+<h3>Re-run setup with these files (apero_setup.py --update)</h3>
+<div class="muted small">Setup reads the profile name, instrument,
+language, data paths and plot mode from <code>install.yaml</code> /
+<code>user_config.yaml</code>, the database settings from
+<code>database.yaml</code> and the clean start choices from
+<code>install.yaml</code> <code>SETUP_ARGUMENTS</code>, then writes every
+file again, creates missing directories and (if <code>CLEAN_START</code>)
+cleans the profile.</div>
+<div class="notice warn" style="margin-top:8px"><b>Note:</b> the user
+yamls are written again from the APERO defaults plus the setup values -
+other values you changed in <code>user_config.yaml</code> /
+<code>user_constants.yaml</code> / <code>user_keywords.yaml</code> are
+reset. The files are kept before the re-run and <b>Show what changed</b>
+compares them afterwards (each saved file also has a backup).</div>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-update" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="GUI.copyCli('cli-update', this)">Copy
+</button>
+</div>
+<div class="field-actions" style="margin-top:10px">
+<button class="primary" onclick="S.edit.rerun(false)">&#9654; Re-run
+    setup</button>
+<button onclick="S.edit.rerun(true)">Only regenerate install_script.sh
+</button>
+<button id="edit-changes" onclick="S.edit.showChanges()"
+        disabled>Show what changed</button>
+</div>
+</div>
+
+<div id="console-edit"></div>
+<h3>Activity</h3>
+<div class="activity-log" data-activity="edit"></div>
+</div>
+
+<!-- ===================================================================
+     Validate (apero_validate.py + state report)
+     =================================================================== -->
+<div id="tab-validate" class="tabpage">
+<div class="tabdesc">Check a profile: its config files, data directories,
+databases, python modules and this machine. <b>Check profile</b> shows the
+state graphically; <b>Download report</b> exports it as one text file
+(readable by humans and AI tools - the same report as
+<code>apero_validate.py --report</code>). <b>Run apero_validate.py</b>
+runs the real validation recipe in the console.</div>
+
+<div class="section-card">
+<div class="field-row">
+<div class="field grow">
+<label class="field-label" for="val-profile">Profile</label>
+<div class="input-group">
+<select id="val-profile" onchange="S.val.selected()"></select>
+<button onclick="S.val.browseProfile()">Browse disk...</button>
+</div>
+</div>
+</div>
+<div class="field-actions" style="margin-top:10px">
+<button class="primary" id="val-check" onclick="S.val.check(true)">&#10004;
+    Check profile</button>
+<button id="val-download" onclick="S.val.download()" disabled>&#11015;
+    Download report (.txt)</button>
+<button id="val-copy" onclick="S.val.copy(this)" disabled>Copy
+    report</button>
+<button id="val-save" onclick="S.val.save()" disabled>Save report on the
+    server</button>
+<span class="grow"></span>
+<label class="inline small"><input id="val-with-report" type="checkbox"
+       onchange="S.val.updateCli()"> also write a report</label>
+<button onclick="S.val.runValidate()">&#9654; Run apero_validate.py
+</button>
+</div>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-validate" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="GUI.copyCli('cli-validate', this)">Copy
+</button>
+</div>
+</div>
+
+<div id="val-result"></div>
+
+<div id="console-validate"></div>
+<h3>Activity</h3>
+<div class="activity-log" data-activity="validate"></div>
+</div>
+
+<!-- ===================================================================
+     Processes
+     =================================================================== -->
+<div id="tab-processes" class="tabpage">
+<div class="tabdesc">Processes started from this gui (apero_setup.py,
+apero_validate.py). Click a row to open its log.</div>
+<div id="processes"></div>
+</div>
+
+<!-- ===================================================================
+     Docs (constants + guides)
+     =================================================================== -->
+<div id="tab-docs" class="tabpage">
+<div class="tabdesc"><b>Constants</b>: every APERO constant, config value
+and header keyword with its value for each instrument and the user file it
+can be set in (the Edit tab links here). <b>Guides</b>: the APERO
+documentation pages (the same pages apero-ri serves).</div>
+<div class="section-card docs-pick">
+<div class="docs-pick-row">
+<span class="segmented docs-menu">
+<button id="docs-menu-constants"
+        onclick="S.docs.setMenu('constants')">Constants</button>
+<button id="docs-menu-guides" onclick="S.docs.setMenu('guides')">Guides
+</button>
+</span>
+</div>
+<div class="docs-pick-row" id="docs-kind-row"><span
+     class="docs-pick-label">Kind</span>
+<div id="docs-kinds" class="chip-row"></div></div>
+<div class="docs-pick-row" id="docs-inst-row"><span
+     class="docs-pick-label">Instrument</span>
+<div id="docs-insts" class="chip-row"></div></div>
+</div>
+<div class="files-layout">
+<div class="files-side section-card">
+<input id="docs-filter" type="search" style="width:100%"
+       placeholder="Search names and descriptions">
+<label class="inline small" style="margin:6px 0" id="docs-user-label"><input
+    id="docs-user-only" type="checkbox"> User settings only (in the
+    user yamls)</label>
+<div class="muted small" id="docs-count"></div>
+<div id="docs-list" class="docs-list"></div>
+</div>
+<div class="files-main section-card" id="docs-detail">
+<p class="muted">Choose an entry on the left.</p>
+</div>
+</div>
+</div>
+
+</div>
+
+XX_CORE_BODY_XX
+<script>
+// setup values given on the command line (apero_setup.py --gui --name=...)
+var SETUP_INITIAL = XX_INITIAL_XX;
+</script>
+<script src="static/app/setup_gui.js?v=XX_STAMP_XX"></script>
+</body>
+</html>

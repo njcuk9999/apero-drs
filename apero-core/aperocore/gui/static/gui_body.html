@@ -45,7 +45,7 @@
 <div id="lightbox">
 <div class="lb-head">
     <span class="lb-title" id="lb-title"></span>
-    <button onclick="GUI.lbZoom()">Zoom</button>
+    <button id="lb-zoom-btn" onclick="GUI.lbZoom()">Zoom</button>
     <a id="lb-download" href="#"><button>Download</button></a>
     <button onclick="GUI.lbClose()">&#10005; Close</button>
 </div>
@@ -53,6 +53,7 @@
 <div class="lb-body" id="lb-body">
     <button class="lb-nav prev" onclick="GUI.lbStep(-1)">&#8249;</button>
     <img id="lb-img" alt="" onclick="GUI.lbZoom()">
+    <div class="lb-mpl" id="lb-mpl"></div>
     <button class="lb-nav next" onclick="GUI.lbStep(1)">&#8250;</button>
 </div>
 <div class="lb-desc" id="lb-desc"></div>

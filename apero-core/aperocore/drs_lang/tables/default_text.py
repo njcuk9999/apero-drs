@@ -29870,6 +29870,119 @@ for unres_key, unres_eng, unres_fr, unres_es in ASTROM_UNRESOLVED_TEXT:
 
 
 # =============================================================================
+# 40-510-00057 .. 40-510-00061 - apero_setup.py --gui and the state report
+# =============================================================================
+SETUP_GUI_CODES = [
+    ('40-510-00057', 'None',
+     'Open the APERO setup gui in a web browser (setup, edit, validate and '
+     'docs) instead of answering questions in the terminal',
+     "Ouvrir l'interface graphique d'installation d'APERO dans un "
+     'navigateur web (installation, édition, validation et documentation) '
+     'au lieu de répondre aux questions dans le terminal',
+     'Abrir la interfaz gráfica de instalación de APERO en un navegador web '
+     '(instalación, edición, validación y documentación) en lugar de '
+     'responder preguntas en la terminal'),
+    ('40-510-00058', 'None',
+     'The first port to try for the setup gui',
+     "Le premier port à essayer pour l'interface graphique d'installation",
+     'El primer puerto a probar para la interfaz gráfica de instalación'),
+    ('40-510-00059', 'None',
+     'The host the setup gui listens on (default 127.0.0.1 - use an ssh '
+     'tunnel from another machine)',
+     "L'hôte sur lequel l'interface graphique d'installation écoute (par "
+     'défaut 127.0.0.1 - utilisez un tunnel ssh depuis une autre machine)',
+     'El host en el que escucha la interfaz gráfica de instalación (por '
+     'defecto 127.0.0.1 - use un túnel ssh desde otra máquina)'),
+    ('40-510-00060', 'None',
+     'Do not open a web browser for the setup gui (only print its address)',
+     "Ne pas ouvrir de navigateur web pour l'interface graphique "
+     "d'installation (afficher seulement son adresse)",
+     'No abrir un navegador web para la interfaz gráfica de instalación '
+     '(solo mostrar su dirección)'),
+    ('40-510-00061', '{0}=report path',
+     'APERO state report written to: {0}',
+     "Rapport d'état d'APERO écrit dans : {0}",
+     'Informe de estado de APERO escrito en: {0}'),
+]
+for sg_code, sg_args, sg_eng, sg_fr, sg_es in SETUP_GUI_CODES:
+    item = langlist.create(sg_code, kind='all-code')
+    item.value['ENG'] = sg_eng
+    item.value['FR'] = sg_fr
+    item.value['ES'] = sg_es
+    item.arguments = sg_args
+    item.comment = ('Used in: setup/core/setup_constants.py, '
+                    'tools/recipes/bin/apero_validate.py')
+    langlist.add(item)
+
+
+# =============================================================================
+# SETUP_GUI_* - apero_setup.py --gui (form checks and server messages)
+# =============================================================================
+SETUP_GUI_TEXT = [
+    ('REQUIRED', '{0}=field',
+     '{0} is required',
+     '{0} est requis',
+     '{0} es obligatorio'),
+    ('BAD_CHAR', '{0}=field, {1}=characters',
+     '{0} contains characters that are not allowed: {1}',
+     '{0} contient des caractères non autorisés : {1}',
+     '{0} contiene caracteres no permitidos: {1}'),
+    ('BAD_OPTION', '{0}=field, {1}=value, {2}=options',
+     '{0}={1} is not valid (options: {2})',
+     "{0}={1} n'est pas valide (options : {2})",
+     '{0}={1} no es válido (opciones: {2})'),
+    ('NOT_ABSOLUTE', '{0}=field, {1}=path',
+     '{0} must be an absolute path: {1}',
+     '{0} doit être un chemin absolu : {1}',
+     '{0} debe ser una ruta absoluta: {1}'),
+    ('NOT_DIR', '{0}=field, {1}=path',
+     '{0} must be an existing directory: {1}',
+     '{0} doit être un répertoire existant : {1}',
+     '{0} debe ser un directorio existente: {1}'),
+    ('NOT_INT', '{0}=field, {1}=value',
+     '{0} must be an integer (got {1})',
+     '{0} doit être un entier (reçu {1})',
+     '{0} debe ser un entero (recibido {1})'),
+    ('NO_PROFILE', '{0}=path',
+     'not an APERO profile (no install.yaml): {0}',
+     "pas un profil APERO (pas d'install.yaml) : {0}",
+     'no es un perfil de APERO (sin install.yaml): {0}'),
+    ('NOT_CONFIG_FILE', '{0}=file',
+     'only the files apero_setup writes can be edited here: {0}',
+     "seuls les fichiers écrits par apero_setup peuvent être édités ici : "
+     '{0}',
+     'aquí solo se pueden editar los archivos que escribe apero_setup: {0}'),
+    ('CONFLICT', 'None',
+     'the file changed on disk since it was loaded - reload it (or save '
+     'anyway)',
+     'le fichier a changé sur le disque depuis son chargement - '
+     'rechargez-le (ou enregistrez quand même)',
+     'el archivo cambió en el disco desde que se cargó - vuelva a cargarlo '
+     '(o guarde de todos modos)'),
+    ('SAVED', '{0}=file, {1}=backup',
+     'Saved {0} (backup: {1})',
+     'Enregistré {0} (sauvegarde : {1})',
+     'Guardado {0} (copia de seguridad: {1})'),
+    ('PROBE_FAILED', '{0}=output',
+     'the gui helper process failed:\n{0}',
+     "le processus d'aide de l'interface a échoué :\n{0}",
+     'el proceso auxiliar de la interfaz falló:\n{0}'),
+    ('UNKNOWN', '{0}=what, {1}=value',
+     'unknown {0}: {1}',
+     '{0} inconnu : {1}',
+     '{0} desconocido: {1}'),
+]
+for sgt_key, sgt_args, sgt_eng, sgt_fr, sgt_es in SETUP_GUI_TEXT:
+    item = langlist.create('SETUP_GUI_' + sgt_key, kind='text')
+    item.value['ENG'] = sgt_eng
+    item.value['FR'] = sgt_fr
+    item.value['ES'] = sgt_es
+    item.arguments = sgt_args
+    item.comment = 'Used in: setup/gui/commands.py, setup/gui/app.py'
+    langlist.add(item)
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here

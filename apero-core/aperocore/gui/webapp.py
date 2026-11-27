@@ -47,6 +47,7 @@ from aperocore.gui import diff as gui_diff
 from aperocore.gui import files as gui_files
 from aperocore.gui import fits_view
 from aperocore.gui import jobs as gui_jobs
+from aperocore.gui import mpl_view
 from aperocore.gui import procs as gui_procs
 from aperocore.gui import server as gui_server
 from aperocore.gui import slurm as gui_slurm
@@ -511,6 +512,8 @@ class GuiApp:
           batch templates (None while the gui has no working directory)
         - file_roots(): directories the file browser may access
         - add_routes(): register application routes with add_get/add_post
+        - figure_roots(): directories pickled figures may be loaded from
+          for interactive views (default none)
         - page_tokens(): extra XX_NAME_XX tokens for the page template
     """
     # the application name (page title / brand)
@@ -564,6 +567,17 @@ class GuiApp:
         Get the directories the file browser / viewers may access
 
         :return: list of str, absolute directories
+        """
+        return []
+
+    def figure_roots(self) -> List[str]:
+        """
+        Get the directories pickled (interactive) figures may be loaded
+        from (see aperocore.gui.mpl_view) - loading a pickle runs code so
+        only folders the gui itself writes belong here
+
+        :return: list of str, the directories (empty = no interactive
+                 figures)
         """
         return []
 
@@ -671,6 +685,12 @@ class GuiApp:
         # static assets
         if request.method == 'GET' and request.route.startswith('/static/'):
             return self._static(request.route)
+        # matplotlib toolbar icons (mpl.js loads them from _images/)
+        if request.method == 'GET' and request.route.startswith('/_images/'):
+            image = mpl_view.toolbar_image(request.route[len('/_images/'):])
+            if image is None:
+                return Response.error('not found', 404)
+            return Response(image, 'image/png')
         # api routes
         table = self.get_routes if request.method == 'GET' else (
             self.post_routes)
@@ -788,6 +808,13 @@ class GuiApp:
         self.add_get('/api/fits/info', self.api_fits_info)
         self.add_get('/api/fits/image', self.api_fits_image)
         self.add_get('/api/fits/table', self.api_fits_table)
+        # interactive matplotlib figures (matplotlib's own toolbar)
+        self.add_post('/api/figure/open', self.api_figure_open)
+        self.add_post('/api/figure/send', self.api_figure_send)
+        self.add_get('/api/figure/poll', self.api_figure_poll)
+        self.add_post('/api/figure/close', self.api_figure_close)
+        self.add_get('/api/figure/mpl.js', self.api_figure_asset)
+        self.add_get('/api/figure/mpl.css', self.api_figure_asset)
         # python source code (read only)
         self.add_get('/api/code', self.api_code)
         # diffs and yaml outlines
@@ -1057,6 +1084,83 @@ class GuiApp:
         except fits_view.FitsViewError as error:
             return Response.error(str(error))
         return Response(png, 'image/png')
+
+    def api_figure_open(self, request: Request) -> Response:
+        """
+        POST /api/figure/open {path}: open a pickled figure in
+        matplotlib's browser backend (see mpl_view)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(id, title, warning)
+        """
+        try:
+            data = mpl_view.open_figure(str(request.arg('path', '')),
+                                        self.figure_roots())
+        except mpl_view.FigureViewError as error:
+            return Response.error(str(error))
+        return Response.json(data)
+
+    def api_figure_send(self, request: Request) -> Response:
+        """
+        POST /api/figure/send {id, messages}: browser events for an open
+        figure (mouse, keys, toolbar, draw requests from mpl.js)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(success)
+        """
+        messages = request.arg('messages', []) or []
+        if not isinstance(messages, list):
+            messages = [messages]
+        try:
+            session = mpl_view.get_session(str(request.arg('id', '')))
+        except mpl_view.FigureViewError as error:
+            return Response.error(str(error), 410)
+        session.handle(messages)
+        return Response.json(dict(success=True))
+
+    def api_figure_poll(self, request: Request) -> Response:
+        """
+        GET /api/figure/poll?id=&wait=: the messages / images matplotlib
+        sent for an open figure (waits up to wait seconds for one)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(messages)
+        """
+        try:
+            session = mpl_view.get_session(str(request.arg('id', '')))
+        except mpl_view.FigureViewError as error:
+            return Response.error(str(error), 410)
+        wait = float(max(0, request.int_arg('wait', 10)))
+        return Response.json(dict(messages=session.poll(wait)))
+
+    def api_figure_close(self, request: Request) -> Response:
+        """
+        POST /api/figure/close {id}: close an open figure
+
+        :param request: Request, the request
+
+        :return: Response, json dict(success)
+        """
+        mpl_view.close_figure(str(request.arg('id', '')))
+        return Response.json(dict(success=True))
+
+    def api_figure_asset(self, request: Request) -> Response:
+        """
+        GET /api/figure/mpl.js or /api/figure/mpl.css: matplotlib's
+        browser figure code / styles
+
+        :param request: Request, the request
+
+        :return: Response, the javascript or css
+        """
+        if request.route.endswith('.css'):
+            return Response(mpl_view.stylesheet().encode('utf-8'),
+                            'text/css; charset=utf-8')
+        return Response(mpl_view.javascript().encode('utf-8'),
+                        'application/javascript; charset=utf-8')
 
     def api_fits_table(self, request: Request) -> Response:
         """

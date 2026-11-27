@@ -17,6 +17,7 @@ database tools rather than direct SQL for routine production changes.
 
 | Guide | Scope |
 | --- | --- |
+| [APERO setup GUI](setup_gui) | `apero_setup.py --gui`: set up, edit and validate a profile in a browser; state reports. |
 | [Developer environments](developer_environments) | Conda, venv, Git, pip, editable source installs, and local profile setup. |
 | [Alliance installation](alliance_install) | HPC installation workflow and cluster-specific cautions. |
 | [MySQL commands](mysql) | Read-only schema inspection and safe SQL patterns for administrators. |

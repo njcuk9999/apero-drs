@@ -423,6 +423,17 @@ tr.act-critical td { background: rgba(211, 60, 60, 0.05); }
 .lb-nav.prev { left: 14px; } .lb-nav.next { right: 14px; }
 .lb-foot { color: #8b949e; font-size: 12px; padding: 6px 14px;
            text-align: center; }
+/* interactive figures (matplotlib's mpl.js) */
+.lb-mpl { display: none; }
+#lightbox.interactive .lb-mpl { display: block; background: #fff;
+    border-radius: 4px; padding: 4px; color: #333; max-width: 96%;
+    max-height: 100%; overflow: auto; }
+#lightbox.interactive #lb-img, #lightbox.interactive #lb-zoom-btn {
+    display: none; }
+/* the figure title is in the lightbox head already */
+.lb-mpl .ui-dialog-titlebar { display: none; }
+.lb-mpl .mpl-message { font-family: ui-monospace, monospace;
+    font-size: 12px; float: right; padding: 6px; }
 
 /* ---- diff viewer ---- */
 .diff-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;

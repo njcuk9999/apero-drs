@@ -73,6 +73,11 @@ EXTERNAL_RAW_TYPES = ['symlink', 'hardlink']
 # Choices not recoverable from the regular profile configuration.
 SETUP_STATE_KEYS = ('NAME', 'FORCE_DIR_CREATE', 'EDIT_DBTABLES', 'CLEAN_START',
                     'CLEAN_PROMPT', 'DISABLE_DEMO_PROMPT')
+# Gui launch options: never part of a replayed install_script.sh.
+GUI_KEYS = ('GUI', 'GUI_PORT', 'GUI_HOST', 'GUI_HEADLESS')
+# Environment variable a caller (the setup gui) can use to pass the
+#   database password without putting it on the command line.
+DATABASE_PASS_ENV = 'APERO_SETUP_DATABASE_PASS'
 
 
 # =============================================================================
@@ -301,6 +306,13 @@ def command_line_args(sargs: Dict[str, SetupArgument]) -> ParamDict:
                 params.set(key, value, source=f'set[{arg.name}]')
                 # keep track of processed argnames
                 used.append(key)
+    # -------------------------------------------------------------------------
+    # a password from the environment counts as given on the command line
+    #   (keeps it out of process listings and logs)
+    if raw_params.get('DATABASE_PASS') is None and DATABASE_PASS_ENV in (
+            os.environ):
+        params.set('DATABASE_PASS', os.environ[DATABASE_PASS_ENV],
+                   source='command_line')
     # -------------------------------------------------------------------------
     # specific arguments
     if not params['INSTALL_SH']:
@@ -1050,7 +1062,7 @@ def create_install_script(params: ParamDict,
     setup_script = __PATH__.joinpath('setup', 'bin', 'apero_setup.py')
     command = [shlex.quote(sys.executable), shlex.quote(str(setup_script))]
     # Mode switches must never turn a replay into an update or regeneration.
-    excluded = {'UPDATE', 'INSTALL_SH', 'DATADIR'}
+    excluded = {'UPDATE', 'INSTALL_SH', 'DATADIR'}.union(GUI_KEYS)
     for sname, sarg in sargs.items():
         if sname.upper() in excluded:
             continue

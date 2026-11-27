@@ -21,6 +21,19 @@ apero_setup.py --name={PROFILE}
 
 Where `{PROFILE}` is a custom name for the reduction you are going to do.
 
+### Setup in a browser
+
+To set up APERO from a browser form instead of answering questions in the
+terminal, run:
+
+```bash
+apero_setup.py --gui
+```
+
+The same GUI edits the files of an existing profile, re-runs setup and
+checks the state of a profile. See the [APERO setup GUI](reference/setup_gui)
+guide.
+
 ### Re-running setup
 
 Setup saves an executable `install_script.sh` inside the profile's config

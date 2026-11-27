@@ -53,6 +53,30 @@ SARGS['INSTALL_SH'] = SetupArgument(name='INSTALL_SH', argname='--install_sh',
                                     ask=False,
                                     helpstr=str(drs_setup.textentry('40-510-00056')))
 
+# open the setup gui in a browser instead of asking questions
+SARGS['GUI'] = SetupArgument(name='GUI', argname='--gui',
+                             default_value=False, dtype='bool', ask=False,
+                             helpstr=str(drs_setup.textentry('40-510-00057')))
+# the first port the setup gui tries
+SARGS['GUI_PORT'] = SetupArgument(name='GUI_PORT', argname='--gui_port',
+                                  default_value=8099, dtype='int',
+                                  ask=False,
+                                  helpstr=str(drs_setup.textentry(
+                                      '40-510-00058')))
+# the host the setup gui listens on
+SARGS['GUI_HOST'] = SetupArgument(name='GUI_HOST', argname='--gui_host',
+                                  default_value='127.0.0.1', dtype='str',
+                                  ask=False,
+                                  helpstr=str(drs_setup.textentry(
+                                      '40-510-00059')))
+# do not open a browser for the setup gui
+SARGS['GUI_HEADLESS'] = SetupArgument(name='GUI_HEADLESS',
+                                      argname='--gui_headless',
+                                      default_value=False, dtype='bool',
+                                      ask=False,
+                                      helpstr=str(drs_setup.textentry(
+                                          '40-510-00060')))
+
 # which language to install apero in
 SARGS['language'] = SetupArgument(name='language', argname='--language',
                                   options=base.LANGUAGES,

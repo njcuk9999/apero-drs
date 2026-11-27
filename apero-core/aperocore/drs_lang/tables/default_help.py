@@ -4727,6 +4727,42 @@ item.comment = ''
 langlist.add(item)
 
 # =============================================================================
+# VALIDATE_REPORT_HELP / VALIDATE_REPORTFILE_HELP
+# =============================================================================
+item = langlist.create('VALIDATE_REPORT_HELP', kind='HELP')
+item.value['ENG'] = ('Write a state report of this profile (config files, '
+                     'paths, databases, python modules and machine) to a '
+                     'single text file readable by humans and AI tools')
+item.value['FR'] = ("Écrire un rapport d'état de ce profil (fichiers de "
+                    'configuration, chemins, bases de données, modules '
+                    'python et machine) dans un seul fichier texte lisible '
+                    'par des humains et des outils IA')
+item.value['ES'] = ('Escribir un informe de estado de este perfil (archivos '
+                    'de configuración, rutas, bases de datos, módulos de '
+                    'python y máquina) en un único archivo de texto legible '
+                    'por humanos y herramientas de IA')
+item.arguments = 'None'
+item.comment = 'Used in: apero_validate.py (--report)'
+langlist.add(item)
+
+item = langlist.create('VALIDATE_REPORTFILE_HELP', kind='HELP')
+item.value['ENG'] = ('The file to write the state report to (implies '
+                     '--report). Default: apero_report_{profile}_{time}.txt '
+                     'in the current directory')
+item.value['FR'] = ("Le fichier dans lequel écrire le rapport d'état "
+                    '(implique --report). Par défaut : '
+                    'apero_report_{profile}_{time}.txt dans le répertoire '
+                    'courant')
+item.value['ES'] = ('El archivo en el que escribir el informe de estado '
+                    '(implica --report). Por defecto: '
+                    'apero_report_{profile}_{time}.txt en el directorio '
+                    'actual')
+item.arguments = 'None'
+item.comment = 'Used in: apero_validate.py (--reportfile)'
+langlist.add(item)
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here

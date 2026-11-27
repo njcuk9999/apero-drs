@@ -10,6 +10,7 @@
                              image -> lightbox
                              text  -> text viewer
    GUI.lightbox(items, i)  full screen image viewer with next / previous
+                           (items with a pickled figure: matplotlib's toolbar, GUI.mpl)
                            (arrow keys), zoom and download
    ========================================================================== */
 var GUI = window.GUI || {};
@@ -333,8 +334,10 @@ GUI.viewFits = function (path) {
 GUI.lb = {items: [], index: 0};
 
 GUI.lightbox = function (items, index) {
-    // items = [{path, name, info, title, description, details}] - title /
-    //   description / details (list of [label, text]) fill the side panel
+    // items = [{path, name, info, title, description, details, figure}] -
+    //   title / description / details (list of [label, text]) fill the
+    //   side panel; figure = a pickled matplotlib figure (.mplfig) makes
+    //   the image interactive (matplotlib's toolbar, see GUI.mpl)
     GUI.lb.items = items;
     GUI.lb.index = index || 0;
     document.getElementById('lightbox').classList.add('open');
@@ -372,6 +375,8 @@ GUI.lbShow = function () {
     document.querySelectorAll('.lb-nav').forEach(function (btn) {
         btn.style.display = lb.items.length > 1 ? '' : 'none';
     });
+    // the static png shows until matplotlib's figure is ready
+    GUI.mpl.open(item);
 };
 
 GUI.lbStep = function (dir) {
@@ -383,9 +388,12 @@ GUI.lbStep = function (dir) {
 
 GUI.lbClose = function () {
     document.getElementById('lightbox').classList.remove('open');
+    GUI.mpl.close();
 };
 
 GUI.lbZoom = function () {
+    // interactive figures zoom with matplotlib's toolbar instead
+    if (GUI.mpl.session) { return; }
     var img = document.getElementById('lb-img');
     img.classList.toggle('zoom');
     document.getElementById('lb-body').classList.toggle('zoomed',
@@ -396,6 +404,160 @@ document.addEventListener('keydown', function (ev) {
     var box = document.getElementById('lightbox');
     if (!box || !box.classList.contains('open')) { return; }
     if (ev.key === 'Escape') { GUI.lbClose(); }
+    // inside an interactive figure the keys are matplotlib's (e.g. the
+    //   arrow keys are back / forward, g grid, l / k log scales)
+    var holder = document.getElementById('lb-mpl');
+    if (holder && holder.contains(ev.target)) { return; }
     if (ev.key === 'ArrowRight') { GUI.lbStep(1); }
     if (ev.key === 'ArrowLeft') { GUI.lbStep(-1); }
 });
+
+/* ---- interactive figures (matplotlib's own toolbar) --------------------- */
+// a pickled figure runs in matplotlib's browser backend on the server and
+//   is shown with matplotlib's mpl.js (zoom / pan / home / back /
+//   forward, shared axes, coordinates, key shortcuts). mpl.js expects a
+//   websocket: GUI.mpl.socket posts its messages (api/figure/send) and
+//   long-polls matplotlib's replies (api/figure/poll)
+GUI.mpl = {session: null, fig: null, token: 0, loading: null};
+
+GUI.mpl.load = function () {
+    // load matplotlib's css / mpl.js once
+    if (window.mpl && window.mpl.figure) { return Promise.resolve(); }
+    if (GUI.mpl.loading) { return GUI.mpl.loading; }
+    var css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'api/figure/mpl.css';
+    document.head.appendChild(css);
+    GUI.mpl.loading = new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = 'api/figure/mpl.js';
+        script.onload = function () { resolve(); };
+        script.onerror = function () {
+            GUI.mpl.loading = null;
+            reject(new Error('cannot load matplotlib (mpl.js)'));
+        };
+        document.head.appendChild(script);
+    });
+    return GUI.mpl.loading;
+};
+
+GUI.mpl.socket = function (sid, token) {
+    // a websocket-like object for mpl.js over http
+    var ws = {readyState: 1, outbox: [], sending: false};
+    var alive = function () { return token === GUI.mpl.token; };
+    ws.flush = function () {
+        if (ws.sending || ws.outbox.length === 0 || !alive()) { return; }
+        ws.sending = true;
+        var messages = ws.outbox;
+        ws.outbox = [];
+        GUI.post('api/figure/send', {id: sid, messages: messages})
+            .catch(function () { return null; })
+            .then(function () { ws.sending = false; ws.flush(); });
+    };
+    ws.send = function (message) {
+        // only the latest of consecutive mouse moves matters
+        var last = ws.outbox[ws.outbox.length - 1];
+        var move = '"type":"motion_notify"';
+        if (last && last.indexOf(move) >= 0 && message.indexOf(move) >= 0) {
+            ws.outbox[ws.outbox.length - 1] = message;
+        } else {
+            ws.outbox.push(message);
+        }
+        ws.flush();
+    };
+    ws.close = function () { ws.readyState = 3; };
+    ws.poll = function () {
+        if (!alive()) { return; }
+        GUI.apiFetch('api/figure/poll?id=' + encodeURIComponent(sid) +
+                     '&wait=10', {timeout: 25000}).then(function (data) {
+            if (!alive()) { return; }
+            data.messages.forEach(function (message) {
+                ws.onmessage({data: message});
+            });
+            // after matplotlib's first messages (its initial size)
+            if (ws.onfirst && data.messages.length) {
+                var first = ws.onfirst;
+                ws.onfirst = null;
+                first();
+            }
+            ws.poll();
+        }).catch(function (err) {
+            if (!alive()) { return; }
+            if (String(err.message).indexOf('closed') >= 0) {
+                ws.readyState = 3;
+                GUI.toast('Figure closed - reopen it to interact', 'bad');
+                return;
+            }
+            setTimeout(ws.poll, 1000);
+        });
+    };
+    return ws;
+};
+
+GUI.mpl.open = function (item) {
+    // show a lightbox item with matplotlib's toolbar (item.figure)
+    var mplx = GUI.mpl;
+    mplx.close();
+    if (!item || !item.figure) { return; }
+    var token = mplx.token;
+    var box = document.getElementById('lightbox');
+    mplx.load().then(function () {
+        return GUI.post('api/figure/open', {path: item.figure}, 60000);
+    }).then(function (data) {
+        if (token !== mplx.token) {
+            GUI.post('api/figure/close', {id: data.id});
+            return;
+        }
+        mplx.session = data.id;
+        var holder = document.getElementById('lb-mpl');
+        holder.innerHTML = '';
+        var ws = mplx.socket(data.id, token);
+        var ondownload = function (figure) {
+            var link = document.createElement('a');
+            link.href = figure.canvas.toDataURL();
+            link.download = (item.name || 'figure').replace(/\.png$/, '') +
+                '-view.png';
+            link.click();
+        };
+        var fig = new window.mpl.figure(data.id, ws, ondownload, holder);
+        mplx.fig = fig;
+        box.classList.add('interactive');
+        ws.onopen();
+        // fill the space available (like maximising a plot window): mpl.js
+        //   asks matplotlib for the new size when its canvas div resizes
+        ws.onfirst = function () {
+            var body = document.getElementById('lb-body');
+            var width = Math.floor(body.clientWidth * 0.94);
+            var height = Math.floor(body.clientHeight * 0.94) - 60;
+            if (fig.canvas_div && width > 200 && height > 150) {
+                fig.canvas_div.style.width = width + 'px';
+                fig.canvas_div.style.height = height + 'px';
+            }
+        };
+        ws.poll();
+        setTimeout(function () {
+            if (fig.canvas_div) { fig.canvas_div.focus(); }
+        }, 50);
+    }).catch(function (err) {
+        if (token !== mplx.token) { return; }
+        // keep the static png
+        GUI.toast('Interactive figure not available: ' + err.message,
+                  'bad');
+    });
+};
+
+GUI.mpl.close = function () {
+    // stop the current interactive figure (back to the static png)
+    var mplx = GUI.mpl;
+    mplx.token += 1;
+    if (mplx.session) {
+        GUI.post('api/figure/close', {id: mplx.session})
+            .catch(function () { return null; });
+    }
+    mplx.session = null;
+    mplx.fig = null;
+    var holder = document.getElementById('lb-mpl');
+    if (holder) { holder.innerHTML = ''; }
+    var box = document.getElementById('lightbox');
+    if (box) { box.classList.remove('interactive'); }
+};

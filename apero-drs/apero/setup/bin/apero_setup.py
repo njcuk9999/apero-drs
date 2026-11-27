@@ -29,17 +29,25 @@ def main() -> ParamDict:
     """
     Run the APERO setup
     """
-    # catch Ctrl+C
-    signal.signal(signal.SIGINT, drs_setup.catch_sigint)
-    # -------------------------------------------------------------------------
-    # display title
-    drs_setup.display_title()
     # -------------------------------------------------------------------------
     # get setup constants
     sargs = setup_constants.SARGS
     # -------------------------------------------------------------------------
     # get command line args
     params = drs_setup.command_line_args(sargs)
+    # -------------------------------------------------------------------------
+    # gui mode: the browser gui runs this script again for every action
+    if params['GUI']:
+        # import here: only needed in gui mode
+        from apero.setup.gui import app as setup_gui
+        setup_gui.main(params)
+        return params
+    # -------------------------------------------------------------------------
+    # catch Ctrl+C
+    signal.signal(signal.SIGINT, drs_setup.catch_sigint)
+    # -------------------------------------------------------------------------
+    # display title
+    drs_setup.display_title()
     # -------------------------------------------------------------------------
     # Script-only mode must not install, reset, or offer demo data.
     if params['INSTALL_SH']:

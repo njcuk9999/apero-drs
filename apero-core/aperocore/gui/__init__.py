@@ -14,6 +14,7 @@ served with the standard library http server:
     - files: safe file access (allowed roots) and listings
     - diff: side by side diffs
     - fits_view: FITS headers, image previews and table rows
+    - mpl_stream / mpl_view: stream figures, interactive figure views
     - yaml_outline: comment preserving yaml outlines / edits
     - static/: the shared css / js / html assets
 

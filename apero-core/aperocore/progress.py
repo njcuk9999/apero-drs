@@ -75,6 +75,9 @@ _WRITER: Optional[Callable[..., None]] = None
 _STACK: List[Dict[str, Any]] = []
 # guards the writer and the stack
 _LOCK = threading.RLock()
+# tags describing where the program is outside the step tree (e.g. a
+#   pogos stage: level / flavour) - see set_tags / context
+_TAGS: Dict[str, Any] = dict()
 
 
 # =============================================================================
@@ -287,6 +290,32 @@ def current_path() -> List[str]:
     """
     with _LOCK:
         return [frame['name'] for frame in _STACK]
+
+
+def set_tags(**tags: Any) -> None:
+    """
+    Set the tags describing where the program is outside the step tree
+    (e.g. level / flavour of a pogos stage) - replaces previous tags,
+    call with no arguments to clear them
+
+    :param tags: the tag values
+
+    :return: None
+    """
+    with _LOCK:
+        _TAGS.clear()
+        _TAGS.update(tags)
+
+
+def context() -> Dict[str, Any]:
+    """
+    Get where the program is now: the tags (set_tags) and the path of the
+    innermost open step (e.g. to attach to a figure shown now)
+
+    :return: dict, the tags plus path (list of str)
+    """
+    with _LOCK:
+        return dict(_TAGS, path=[frame['name'] for frame in _STACK])
 
 
 def _write(event: str, **fields: Any) -> None:
