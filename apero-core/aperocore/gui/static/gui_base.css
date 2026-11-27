@@ -572,3 +572,31 @@ tr.act-critical td { background: rgba(211, 60, 60, 0.05); }
     #topbar { flex-direction: column; align-items: stretch; }
     .fv-layout { grid-template-columns: 1fr; }
 }
+
+/* ---- add parameters dialog (gui_params.js) ---- */
+.add-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.add-head input[type=search] { flex: 1; min-width: 260px; }
+.add-list { max-height: 60vh; overflow: auto; margin-top: 8px;
+            border: 1px solid var(--border); border-radius: 8px; }
+table.add-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.add-table th { position: sticky; top: 0; background: var(--panel);
+                     text-align: left; z-index: 1; }
+table.add-table td, table.add-table th { padding: 5px 8px; vertical-align: top;
+                                         border-bottom: 1px solid
+                                         var(--border); }
+table.add-table td:first-child { width: 1%; white-space: nowrap; }
+table.add-table .add-key { font-family: var(--mono, monospace);
+                           font-weight: 600; cursor: pointer; }
+table.add-table .add-val { max-width: 260px; word-break: break-word; }
+table.add-table tr.in-file { opacity: 0.6; }
+
+/* "remove this key" button of the yaml editors (GUI.confirmRemove) */
+button.yf-remove { margin-left: 6px; padding: 0 5px; font-size: 11px;
+                   line-height: 16px; min-height: 0; background: none;
+                   border: 1px solid transparent; color: var(--muted);
+                   border-radius: 3px; cursor: pointer; opacity: 0.45;
+                   vertical-align: middle; }
+.yf-row:hover > .yf-key button.yf-remove,
+.yf-file-head:hover button.yf-remove { opacity: 1; }
+button.yf-remove:hover { color: var(--danger);
+                         border-color: var(--danger); }

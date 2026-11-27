@@ -45,7 +45,8 @@ S.refreshAll = function () {
 };
 
 /* ---- profiles (Setup "start from", Edit, Validate) ---------------------- */
-S.PROFILE_SELECTS = ['setup-from', 'edit-profile', 'val-profile'];
+S.PROFILE_SELECTS = ['setup-from', 'edit-profile', 'val-profile',
+                     'data-profile'];
 
 S.loadProfiles = function () {
     return GUI.get('api/setup/profiles').then(function (data) {
@@ -589,6 +590,10 @@ S.edit.browseProfile = function () {
     });
 };
 
+S.edit.openSecs = {};
+// the parameters added since the file was loaded (highlighted)
+S.edit.added = {};
+
 S.edit.open = function (path) {
     // open a profile from another tab
     if (!S.profileOf(path)) {
@@ -653,6 +658,9 @@ S.edit.load = function (name) {
             S.edit.text = data.text;
             S.edit.mtime = data.mtime;
             S.edit.edits = {};
+            S.edit.added = {};
+            S.edit.inst = data.instrument ?
+                String(data.instrument).toUpperCase() : null;
             S.edit.editable = data.editable && data.exists;
             GUI.store('edit-file', name);
             S.$('edit-files').querySelectorAll('[data-file]').forEach(
@@ -660,6 +668,8 @@ S.edit.load = function (name) {
                     'active', b.getAttribute('data-file') === name); });
             S.$('edit-card').style.display = '';
             S.$('edit-save').disabled = !S.edit.editable;
+            S.$('edit-add').style.display = S.edit.addKind() ? '' : 'none';
+            S.$('edit-add').disabled = !S.edit.editable;
             var note = S.$('edit-note');
             note.style.display = S.edit.editable ? 'none' : '';
             note.textContent = !data.exists ? name + ' does not exist in ' +
@@ -809,11 +819,12 @@ S.edit.rowHtml = function (node) {
     var inst = S.edit.instrument();
     var defValue = info && info.values && inst ? info.values[inst] :
         undefined;
-    var changed = !!S.edit.edits[node.line];
+    var changed = !!S.edit.edits[node.line] || !!S.edit.added[key];
     return '<div class="yf-row' + (changed ? ' changed' : '') +
         '" data-row="' + node.line + '"><div class="yf-key" data-param="' +
         GUI.esc(key) + '"' + (info ? ' data-doc="' + GUI.esc(key) + '"' : '') +
-        '>' + GUI.esc(node.key) + '<span class="yf-path">' +
+        '>' + GUI.esc(node.key) + S.edit.removeHtml(key) +
+        '<span class="yf-path">' +
         GUI.esc(node.path.slice(0, -1).join('.')) + ' &middot; line ' +
         (node.line + 1) + '</span></div><div class="yf-value">' +
         S.edit.inputHtml(node, key) + (shown ? '<div class="yf-help">' +
@@ -825,7 +836,24 @@ S.edit.rowHtml = function (node) {
         '</div></div>';
 };
 
+S.edit.removeHtml = function (key) {
+    // the "remove" button of a known parameter of a user yaml
+    if (!S.edit.editable || !S.edit.addKind() || !S.params[key]) {
+        return '';
+    }
+    return '<button type="button" class="yf-remove" data-remove="' +
+        GUI.esc(key) + '" title="Remove ' + GUI.esc(key) + ' from the ' +
+        'file (use the default value)">&#10005;</button>';
+};
+
+S.edit.isChanged = function (node) {
+    // edited in the form, or added since the file was loaded
+    return !!S.edit.edits[node.line] || !!S.edit.added[node.path.join('.')];
+};
+
 S.edit.instrument = function () {
+    // from the open file (install.yaml) or the profile list
+    if (S.edit.inst) { return S.edit.inst; }
     var info = S.profileOf(S.edit.profile);
     return info && info.instrument ? String(info.instrument).toUpperCase() :
         null;
@@ -870,21 +898,22 @@ S.edit.renderForm = function () {
                 }
                 return;
             }
-            if (changedOnly && !S.edit.edits[node.line]) { return; }
+            if (changedOnly && !S.edit.isChanged(node)) { return; }
             if (!matches(node, key)) { return; }
             shown++;
             rows += S.edit.rowHtml(node);
         });
         var single = sec.node.kind !== 'map';
         if (single) {
-            if ((changedOnly && !S.edit.edits[sec.node.line]) ||
+            if ((changedOnly && !S.edit.isChanged(sec.node)) ||
                 !matches(sec.node, sec.node.path.join('.'))) { return; }
             rows = S.edit.rowHtml(sec.node);
             shown = 1;
         }
         if ((filter || changedOnly) && shown === 0) { return; }
         var name = sec.node.key;
-        var isOpen = S.edit.open[name] !== undefined ? S.edit.open[name] :
+        var saved = S.edit.openSecs[name];
+        var isOpen = saved !== undefined ? saved :
             (single || !!filter || changedOnly || sections.length <= 3);
         html += '<details class="yf-section" data-sec="' + GUI.esc(name) +
             '"' + (isOpen ? ' open' : '') + '><summary data-param="' +
@@ -897,8 +926,16 @@ S.edit.renderForm = function () {
         (filter || changedOnly ? ' match' : ' in this file') + '.</p>';
     holder.querySelectorAll('details').forEach(function (det) {
         det.addEventListener('toggle', function () {
-            S.edit.open[det.getAttribute('data-sec')] = det.open;
+            S.edit.openSecs[det.getAttribute('data-sec')] = det.open;
         });
+    });
+    holder.querySelectorAll('[data-remove]').forEach(function (btn) {
+        btn.onclick = function (ev) {
+            // (not the Docs link of the key around it)
+            ev.preventDefault();
+            ev.stopPropagation();
+            S.edit.removeParam(btn.getAttribute('data-remove'));
+        };
     });
     holder.querySelectorAll('[data-line]').forEach(function (input) {
         var handler = function () { S.edit.fieldChanged(input); };
@@ -940,6 +977,7 @@ S.edit.revert = function () {
         if (!ok) { return; }
         S.edit.text = S.edit.original;
         S.edit.edits = {};
+        S.edit.added = {};
         S.$('edit-raw').value = S.edit.text;
         S.edit.updateGutter();
         S.edit.refreshOutline();
@@ -984,6 +1022,143 @@ S.edit.compareBackup = function () {
                                                  title: 'Backup vs current'});
                                }}]});
     }).catch(GUI.fail);
+};
+
+// ---- add parameters (any config value / constant / keyword) ----
+// the user yaml each kind of parameter belongs to
+S.edit.KIND_FILES = {config: 'user_config.yaml',
+                     constants: 'user_constants.yaml',
+                     keywords: 'user_keywords.yaml'};
+
+S.edit.addKind = function () {
+    // the kind of parameter the open file holds (null: not a user yaml)
+    var kinds = Object.keys(S.edit.KIND_FILES).filter(function (kind) {
+        return S.edit.KIND_FILES[kind] === S.edit.name; });
+    return kinds.length ? kinds[0] : null;
+};
+
+S.edit.presentKeys = function () {
+    // every key already in the open file (sections included)
+    var keys = {};
+    ((S.edit.outline || {}).nodes || []).forEach(function (node) {
+        keys[node.path.join('.')] = true;
+    });
+    return keys;
+};
+
+S.edit.defaultOf = function (info) {
+    // the default of a parameter for the profile instrument
+    var inst = S.edit.instrument();
+    var values = info.values || {};
+    if (inst && values.hasOwnProperty(inst)) { return values[inst]; }
+    var insts = Object.keys(values);
+    return insts.length ? values[insts[0]] : null;
+};
+
+S.edit.addDialog = function () {
+    var kind = S.edit.addKind();
+    if (!kind || !S.edit.editable) {
+        GUI.toast('Parameters can only be added to user_config.yaml, ' +
+                  'user_constants.yaml and user_keywords.yaml');
+        return;
+    }
+    if (Object.keys(S.params).length === 0) {
+        GUI.toast('The parameter list is still loading (or failed - see ' +
+                  'the Docs tab)', 'bad');
+        S.docs.loadParams();
+        return;
+    }
+    var label = {config: 'config values', constants: 'constants',
+                 keywords: 'header keywords'}[kind];
+    var inst = S.edit.instrument();
+    GUI.addParams({
+        title: 'Add ' + label + ' to ' + S.edit.name,
+        intro: 'Click <b>+</b> to add a parameter with its ' +
+               GUI.esc(inst || '') + ' default value. It is added to the ' +
+               'file as an unsaved change: edit its value in the form, ' +
+               'then review and save. Click a name for its full ' +
+               'description.',
+        defaultLabel: 'Default (' + (inst || 'instrument') + ')',
+        section: '',
+        params: function () {
+            // the parameters of this file's kind
+            var out = {};
+            Object.keys(S.params).forEach(function (key) {
+                var info = S.params[key];
+                if (info.kind !== kind) { return; }
+                out[key] = {description: info.description, dtype: info.dtype,
+                            group: info.group, advanced: !info.user,
+                            value: S.edit.defaultOf(info)};
+            });
+            return out;
+        },
+        present: S.edit.presentKeys,
+        add: S.edit.addParams
+    });
+};
+
+S.edit.addParams = function (keys) {
+    // add parameters to the open file (as an unsaved change)
+    var entries = keys.map(function (key) {
+        var info = S.params[key] || {};
+        return {key: key, value: S.edit.defaultOf(info),
+                description: info.description || '',
+                dtype: info.dtype || null};
+    });
+    if (S.edit.view === 'raw') { S.edit.text = S.$('edit-raw').value; }
+    return S.edit.currentText().then(function (text) {
+        return GUI.yamlAdd(text, entries);
+    }).then(function (res) {
+        if (res.errors && res.errors.length) {
+            GUI.toast(res.errors.join('\n'), 'bad');
+        }
+        if (!res.added || !res.added.length) { return false; }
+        S.edit.text = res.text;
+        S.edit.edits = {};
+        S.$('edit-raw').value = res.text;
+        // highlight the added rows until the file is saved / reloaded
+        res.added.forEach(function (key) { S.edit.added[key] = true; });
+        S.edit.updateGutter();
+        // open the sections of the added parameters
+        res.added.forEach(function (key) {
+            S.edit.openSecs[key.split('.')[0]] = true;
+        });
+        GUI.toast('Added ' + res.added.join(', ') + ' (not saved yet)');
+        return S.edit.refreshOutline().then(function () { return true; });
+    }).catch(function (err) { GUI.fail(err); return false; });
+};
+
+S.edit.removeParam = function (key) {
+    // take a parameter out of the open file (as an unsaved change) so the
+    //   instrument default is used again
+    var info = S.params[key] || {};
+    var node = ((S.edit.outline || {}).nodes || []).filter(function (n) {
+        return n.path.join('.') === key; })[0];
+    var inst = S.edit.instrument();
+    GUI.confirmRemove({key: key, file: S.edit.name, known: !!S.params[key],
+                       current: node ? S.edit.nodeValue(node) : '',
+                       value: S.edit.defaultOf(info),
+                       defaultLabel: (inst || 'instrument') + ' default'})
+        .then(function (ok) {
+            if (!ok) { return; }
+            if (S.edit.view === 'raw') { S.edit.text = S.$('edit-raw').value; }
+            return S.edit.currentText().then(function (text) {
+                return GUI.yamlRemove(text, [key]);
+            }).then(function (res) {
+                if (res.errors && res.errors.length) {
+                    GUI.toast(res.errors.join('\n'), 'bad');
+                }
+                if (!res.removed || !res.removed.length) { return; }
+                S.edit.text = res.text;
+                S.edit.edits = {};
+                S.$('edit-raw').value = res.text;
+                res.removed.forEach(function (k) { delete S.edit.added[k]; });
+                S.edit.updateGutter();
+                GUI.toast('Removed ' + res.removed.join(', ') + ' (not ' +
+                          'saved yet)');
+                return S.edit.refreshOutline();
+            });
+        }).catch(GUI.fail);
 };
 
 S.edit.save = function () {
@@ -1342,6 +1517,405 @@ S.val.runValidate = function () {
 };
 
 /* ==========================================================================
+   Data manager (data directories of a profile, apero_reset.py)
+   ========================================================================== */
+S.data = {profile: null, dirs: [], parts: [], dir: null, root: null,
+          listing: null, checked: {}, stats: {}, part: 'all',
+          sort: {key: 'name', asc: true}};
+
+S.data.init = function () {
+    S.$('data-filter').oninput = S.debounce(S.data.render, 150);
+    document.querySelectorAll('#tab-data th[data-sort]').forEach(
+        function (th) {
+            th.onclick = function () {
+                var key = th.getAttribute('data-sort');
+                S.data.sort = {key: key, asc: S.data.sort.key === key ?
+                               !S.data.sort.asc : true};
+                S.data.render();
+            };
+        });
+    GUI.onTab('data', function () {
+        var path = S.$('data-profile').value;
+        if (path && path !== S.data.profile) { S.data.load(path); }
+    });
+};
+
+S.data.open = function (path) {
+    // open a profile in the Data tab (deep links, other tabs)
+    if (!S.profileOf(path)) {
+        S.extraProfiles.push({path: path, name: GUI.basename(path),
+                              valid: true});
+        S.PROFILE_SELECTS.forEach(S.fillProfileSelect);
+    }
+    S.$('data-profile').value = path;
+    GUI.setTab('data');
+    S.data.selected();
+};
+
+S.data.selected = function () {
+    var path = S.$('data-profile').value;
+    GUI.store('profile-data-profile', path);
+    S.data.load(path);
+};
+
+S.data.browseProfile = function () {
+    S.browseProfile('data-profile').then(function (path) {
+        if (path) { S.data.load(path); }
+    });
+};
+
+S.data.reload = function () {
+    S.data.stats = {};
+    if (S.data.profile) { S.data.load(S.data.profile, S.data.dir); }
+};
+
+S.data.load = function (path, dir) {
+    // the data directories of a profile (setup must have been run)
+    var err = S.$('data-error');
+    S.data.profile = path || null;
+    S.data.root = null;
+    S.$('data-dirs').innerHTML = '';
+    S.$('data-browser').style.display = 'none';
+    S.$('data-reset-card').style.display = 'none';
+    err.style.display = 'none';
+    if (!path) { return Promise.resolve(); }
+    return GUI.post('api/setup/data_dirs', {profile: path})
+        .then(function (res) {
+            S.data.dirs = res.dirs;
+            S.data.parts = res.reset_parts;
+            S.data.renderDirs();
+            S.data.renderParts();
+            S.$('data-reset-card').style.display = '';
+            S.data.updateCli();
+            S.data.loadStats();
+            // reopen the directory shown before (or the reduced data)
+            var open = null;
+            if (dir) {
+                open = S.data.dirs.filter(function (d) {
+                    return dir.indexOf(d.path) === 0; })[0];
+            }
+            open = open || S.data.dirs.filter(function (d) {
+                return d.label === GUI.recall('data-dir', 'red'); })[0] ||
+                S.data.dirs[0];
+            if (open) { S.data.openDir(open, dir); }
+        }).catch(function (error) {
+            err.style.display = '';
+            err.textContent = error.message;
+        });
+};
+
+S.data.statText = function (info) {
+    if (!info.exists) { return 'missing'; }
+    var st = S.data.stats[info.path];
+    if (!st) { return '...'; }
+    if (st.error) { return '?'; }
+    return (st.complete ? '' : '&ge; ') + st.nfiles +
+        (st.nfiles === 1 ? ' file' : ' files') + ' &middot; ' +
+        GUI.fmtBytes(st.size);
+};
+
+S.data.renderDirs = function () {
+    var holder = S.$('data-dirs');
+    holder.innerHTML = S.data.dirs.map(function (info, index) {
+        var active = S.data.root === info.path;
+        return '<button class="data-dir' + (active ? ' active' : '') +
+            (info.exists ? '' : ' missing') + '" data-index="' + index +
+            '" data-param="' + GUI.esc(info.key) + '" title="' +
+            GUI.esc(info.path) + '"><span class="data-dir-name">' +
+            GUI.esc(info.label) + (info.protected ? ' &#128274;' : '') +
+            '</span><span class="data-dir-stat">' + S.data.statText(info) +
+            '</span></button>';
+    }).join('');
+    holder.querySelectorAll('[data-index]').forEach(function (btn) {
+        btn.onclick = function () {
+            S.data.openDir(S.data.dirs[Number(btn.getAttribute(
+                'data-index'))]);
+        };
+    });
+};
+
+S.data.loadStats = function () {
+    // count the files of each directory, one after the other
+    var profile = S.data.profile;
+    var todo = S.data.dirs.filter(function (info) {
+        return info.exists && !S.data.stats[info.path]; });
+    var next = function () {
+        if (!todo.length || S.data.profile !== profile) { return; }
+        var info = todo.shift();
+        GUI.post('api/setup/dir_stats', {path: info.path})
+            .then(function (st) { S.data.stats[info.path] = st; })
+            .catch(function () {
+                S.data.stats[info.path] = {error: true}; })
+            .then(function () {
+                if (S.data.profile === profile) { S.data.renderDirs(); }
+                next();
+            });
+    };
+    next();
+};
+
+S.data.current = function () {
+    return S.data.dirs.filter(function (d) {
+        return d.path === S.data.root; })[0] || null;
+};
+
+S.data.openDir = function (info, sub) {
+    S.data.root = info.path;
+    GUI.store('data-dir', info.label);
+    S.data.renderDirs();
+    S.$('data-browser').style.display = '';
+    S.$('data-dir-title').textContent = info.label + ' (' + info.key + ')';
+    S.$('data-dir-desc').textContent = S.argHelp[info.key] ||
+        (info.key === 'DRS_UCONFIG' ? 'The profile directory: the files ' +
+         'apero_setup.py wrote (edit them in the Edit tab)' : '');
+    S.$('data-dir-ro').style.display = info.protected ? '' : 'none';
+    S.$('data-del-selected').disabled = info.protected;
+    if (!info.exists) {
+        S.data.listing = null;
+        S.$('data-crumbs').textContent = info.path;
+        S.$('data-note').textContent = '';
+        S.$('data-body').innerHTML = '<tr><td colspan="6" class="muted">' +
+            'This directory does not exist (re-run setup to create ' +
+            'it).</td></tr>';
+        return;
+    }
+    S.data.list(sub && sub.indexOf(info.path) === 0 ? sub : info.path);
+};
+
+S.data.list = function (dir) {
+    return GUI.get('api/fs/list', {path: dir}).then(function (data) {
+        S.data.dir = data.path;
+        S.data.listing = data;
+        S.data.checked = {};
+        S.$('data-all').checked = false;
+        var root = S.data.root;
+        S.$('data-up').disabled = data.path === root;
+        // bread crumbs below the data directory
+        var rel = data.path.indexOf(root) === 0 ?
+            data.path.substring(root.length) : data.path;
+        var html = '<a data-p="' + GUI.esc(root) + '">' + GUI.esc(root) +
+            '</a>';
+        var acc = root;
+        rel.split('/').filter(Boolean).forEach(function (part) {
+            acc += '/' + part;
+            html += ' / <a data-p="' + GUI.esc(acc) + '">' + GUI.esc(part) +
+                '</a>';
+        });
+        var crumbs = S.$('data-crumbs');
+        crumbs.innerHTML = html;
+        crumbs.querySelectorAll('a').forEach(function (a) {
+            a.onclick = function () { S.data.list(a.getAttribute('data-p')); };
+        });
+        S.data.render();
+    }).catch(GUI.fail);
+};
+
+S.data.up = function () {
+    var data = S.data.listing;
+    if (data && data.parent && S.data.dir !== S.data.root) {
+        S.data.list(data.parent);
+    }
+};
+
+S.data.render = function () {
+    var data = S.data.listing;
+    var body = S.$('data-body');
+    if (!data) { return; }
+    var info = S.data.current() || {};
+    var filter = S.$('data-filter').value.toLowerCase();
+    var sort = S.data.sort;
+    var entries = data.entries.filter(function (ent) {
+        return !filter || ent.name.toLowerCase().indexOf(filter) >= 0;
+    });
+    entries.sort(function (a, b) {
+        if ((a.kind === 'dir') !== (b.kind === 'dir')) {
+            return a.kind === 'dir' ? -1 : 1;
+        }
+        var va = a[sort.key] || 0;
+        var vb = b[sort.key] || 0;
+        if (sort.key === 'name') { va = a.name.toLowerCase();
+                                   vb = b.name.toLowerCase(); }
+        var cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+        return sort.asc ? cmp : -cmp;
+    });
+    S.$('data-note').textContent = entries.length + ' item(s)' +
+        (data.truncated ? ' (listing truncated)' : '') +
+        (data.error ? ' - ' + data.error : '');
+    if (entries.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" class="muted">Empty ' +
+            'directory.</td></tr>';
+        return;
+    }
+    body.innerHTML = entries.map(function (ent, index) {
+        var actions = '';
+        if (ent.kind === 'fits') {
+            actions += '<button data-act="view">Header / data</button>';
+        } else if (ent.kind !== 'dir') {
+            actions += '<button data-act="view">View</button>';
+        }
+        if (ent.kind !== 'dir') {
+            actions += '<a href="' + GUI.rawUrl(ent.path, '&download=1') +
+                '"><button>Download</button></a>';
+        }
+        if (!info.protected) {
+            actions += '<button class="danger" data-act="delete">Delete' +
+                '</button>';
+        }
+        return '<tr data-index="' + index + '"><td><input type="checkbox">' +
+            '</td><td class="fb-icon">' + (GUI.FILE_ICONS[ent.kind] || '') +
+            '</td><td class="fb-name">' + GUI.esc(ent.name) + '</td><td ' +
+            'class="num small">' + (ent.kind === 'dir' ? '' :
+            GUI.fmtBytes(ent.size)) + '</td><td class="small nowrap ' +
+            'muted">' + GUI.fmtTime(ent.mtime) + '</td><td ' +
+            'class="row-actions">' + actions + '</td></tr>';
+    }).join('');
+    body.querySelectorAll('tr').forEach(function (tr) {
+        var ent = entries[Number(tr.getAttribute('data-index'))];
+        tr.querySelector('input').onchange = function () {
+            S.data.checked[ent.path] = this.checked;
+        };
+        tr.querySelector('.fb-name').onclick = function () {
+            if (ent.kind === 'dir') { S.data.list(ent.path); }
+            else { GUI.viewFile(ent.path); }
+        };
+        tr.querySelectorAll('[data-act]').forEach(function (btn) {
+            btn.onclick = function () {
+                var act = btn.getAttribute('data-act');
+                if (act === 'view') { GUI.viewFile(ent.path); }
+                if (act === 'delete') { S.data.remove([ent.path]); }
+            };
+        });
+    });
+};
+
+S.data.selectAll = function (on) {
+    document.querySelectorAll('#data-body input[type=checkbox]')
+        .forEach(function (box) {
+            box.checked = on;
+            box.dispatchEvent(new Event('change'));
+        });
+};
+
+S.data.checkedPaths = function () {
+    return Object.keys(S.data.checked).filter(function (path) {
+        return S.data.checked[path]; });
+};
+
+S.data.remove = function (paths) {
+    if (paths.length === 0) { GUI.toast('Select files first'); return; }
+    var list = paths.slice(0, 12).map(function (p) {
+        return '<li><code>' + GUI.esc(p) + '</code></li>'; }).join('') +
+        (paths.length > 12 ? '<li>... and ' + (paths.length - 12) +
+         ' more</li>' : '');
+    GUI.confirm('Delete ' + paths.length + ' item(s)', '<p>Permanently ' +
+                'delete (directories with everything inside):</p><ul>' +
+                list + '</ul><p class="muted small">The APERO databases ' +
+                'are not updated: entries for deleted files stay in the ' +
+                'databases. Use <b>Reset</b> to clean a whole part of the ' +
+                'profile consistently.</p>', 'Delete').then(function (ok) {
+        if (!ok) { return; }
+        GUI.post('api/fs/delete', {paths: paths}).then(function (res) {
+            GUI.toast(res.message, res.success ? 'ok' : 'bad');
+            delete S.data.stats[S.data.root];
+            S.data.list(S.data.dir);
+            S.data.loadStats();
+        }).catch(GUI.fail);
+    });
+};
+
+S.data.deleteSelected = function () {
+    S.data.remove(S.data.checkedPaths());
+};
+
+S.data.diffSelected = function () {
+    var paths = S.data.checkedPaths();
+    if (paths.length !== 2) { GUI.toast('Select exactly 2 files', 'bad');
+                              return; }
+    GUI.showDiff({left: paths[0], right: paths[1], title: 'Compare files'});
+};
+
+/* ---- reset ---- */
+S.data.renderParts = function () {
+    var paths = {};
+    S.data.dirs.forEach(function (d) { paths[d.key] = d.path; });
+    var parts = [{name: 'all', key: null, help: 'Every part below: ' +
+                  'assets, all databases and every data directory ' +
+                  'except raw'}]
+        .concat(S.data.parts);
+    var holder = S.$('data-reset-parts');
+    holder.innerHTML = parts.map(function (part) {
+        var desc = part.help + (part.key && paths[part.key] ? ' - ' +
+                                paths[part.key] : '');
+        return S.setup.choiceHtml('data-reset-part', part.name,
+                                  part.name === 'all' ? 'Everything' :
+                                  part.name, desc, null);
+    }).join('');
+    S.setup.setRadio('data-reset-part', S.data.part);
+    holder.onchange = function () {
+        S.data.part = S.setup.radio('data-reset-part') || 'all';
+        S.data.markParts();
+        S.data.updateCli();
+    };
+    S.data.markParts();
+};
+
+S.data.markParts = function () {
+    S.$('data-reset-parts').querySelectorAll('.choice').forEach(
+        function (el) {
+            el.classList.toggle('selected', el.querySelector('input')
+                .checked);
+        });
+};
+
+S.data.resetArgs = function () {
+    return {profile: S.data.profile, part: S.data.part,
+            ask: S.$('data-reset-ask').checked,
+            nolog: S.$('data-reset-nolog').checked};
+};
+
+S.data.updateCli = function () {
+    if (!S.data.profile) { GUI.setCli('cli-reset', ''); return; }
+    var args = S.data.resetArgs();
+    args.action = 'reset';
+    GUI.post('api/setup/preview', args).then(function (res) {
+        GUI.setCli('cli-reset', res.display || res.errors.join('\n'));
+    }).catch(function () { return null; });
+};
+
+S.data.reset = function () {
+    if (!S.data.profile) { GUI.toast('Choose a profile first', 'bad');
+                           return; }
+    var args = S.data.resetArgs();
+    var what = args.part === 'all' ? 'everything (assets, all databases ' +
+        'and all data except raw)' : 'the ' + args.part + ' part';
+    var name = GUI.basename(S.data.profile);
+    var start = function () {
+        GUI.startJob('api/setup/reset', args, GUI.consoles.data);
+    };
+    var html = '<p>Reset ' + GUI.esc(what) + ' of profile <code>' +
+        GUI.esc(S.data.profile) + '</code> with <code>apero_reset.py' +
+        '</code>. This cannot be undone.</p>';
+    if (args.ask) {
+        GUI.confirm('Reset ' + name, html + '<p>apero_reset.py asks ' +
+                    'before each part: answer in the console below.</p>',
+                    'Start reset').then(function (ok) {
+            if (ok) { start(); }
+        });
+    } else {
+        GUI.confirmTyped({title: 'Reset ' + name, word: name,
+                          label: 'Reset', html: html + '<p><b>No ' +
+                          'questions will be asked</b> (--nowarn).</p>'})
+            .then(function (ok) { if (ok) { start(); } });
+    }
+};
+
+S.data.done = function () {
+    // a reset finished: count the files again
+    S.data.stats = {};
+    if (S.data.profile) { S.data.load(S.data.profile, S.data.dir); }
+};
+
+/* ==========================================================================
    Docs (constants + guides)
    ========================================================================== */
 S.docs = {menu: 'constants', kind: '', inst: '', key: null, section: null,
@@ -1640,8 +2214,11 @@ document.addEventListener('DOMContentLoaded', function () {
         title: 'Console (apero_setup.py --update)', onDone: S.edit.done});
     new GUI.Console('validate', 'console-validate', {
         title: 'Console (apero_validate.py)', onDone: S.loadProfiles});
+    new GUI.Console('data', 'console-data', {
+        title: 'Console (apero_reset.py)', onDone: S.data.done});
     new GUI.Processes('processes', {tab: 'processes'});
     S.edit.init();
+    S.data.init();
     S.docs.init();
     S.setup.init().then(function () {
         // reopen the remembered profiles
@@ -1650,14 +2227,15 @@ document.addEventListener('DOMContentLoaded', function () {
         S.val.updateCli();
     });
     S.docs.loadParams();
-    // deep links: #edit:/path/to/profile or #validate:/path/to/profile
-    var link = /^#(edit|validate):(.+)$/.exec(location.hash);
+    // deep links: #edit:/path, #validate:/path or #data:/path (profile)
+    var link = /^#(edit|validate|data):(.+)$/.exec(location.hash);
     if (link) { history.replaceState(null, '', '#' + link[1]); }
     GUI.init('info');
     if (link) {
         var target = decodeURIComponent(link[2]);
         S.loadProfiles().then(function () {
             if (link[1] === 'edit') { S.edit.open(target); }
+            else if (link[1] === 'data') { S.data.open(target); }
             else { S.val.open(target); }
         });
     }

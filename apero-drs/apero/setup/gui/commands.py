@@ -26,6 +26,7 @@ import importlib.metadata as importlib_metadata
 import os
 import shlex
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -51,6 +52,8 @@ APERO_DIR = Path(__file__).resolve().parents[2]
 SETUP_SCRIPT = APERO_DIR.joinpath('setup', 'bin', 'apero_setup.py')
 VALIDATE_SCRIPT = APERO_DIR.joinpath('tools', 'recipes', 'bin',
                                      'apero_validate.py')
+RESET_SCRIPT = APERO_DIR.joinpath('tools', 'recipes', 'bin',
+                                  'apero_reset.py')
 # the profile registry written by apero_setup
 PROFILE_FILE = drs_setup.PROFILE_FILE
 # arguments the setup form never sets (modes, gui options, automatic)
@@ -79,6 +82,32 @@ USER_YAMLS = ['user_config.yaml', 'user_constants.yaml',
               'user_keywords.yaml']
 # shown instead of the database password
 MASK = '********'
+# the files setup writes that must exist before a reset / data browsing
+SETUP_FILES = ['install.yaml', 'user_config.yaml', 'database.yaml']
+# the data directories of a profile (Data tab): (user_config key, label,
+#   setup argument with the description, protected = never deleted from)
+DATA_DIRS = [('PATH.RAW', 'raw', 'RAWDIR', True),
+             ('PATH.PP', 'tmp', 'TMPDIR', False),
+             ('PATH.RED', 'red', 'REDDIR', False),
+             ('PATH.CALIB', 'calib', 'CALDIR', False),
+             ('PATH.TELLU', 'tellu', 'TELDIR', False),
+             ('PATH.OUT', 'out', 'OUTDIR', False),
+             ('PATH.LBL', 'lbl', 'LBLDIR', False),
+             ('PATH.ASSETS', 'assets', 'ASSETSDIR', False),
+             ('PATH.LOG', 'log', 'LOGDIR', False),
+             ('PATH.PLOT', 'plot', 'PLOTDIR', False),
+             ('PATH.RUN', 'run', 'RUNDIR', False),
+             ('PATH.OTHER', 'other', 'OTHERDIR', False),
+             ('PATH.EXTERNAL_RAW', 'external raw', 'EXTERNAL_RAW', True)]
+# the parts apero_reset.py can reset (--only_{name}) and their directory
+RESET_PARTS = [('assets', 'PATH.ASSETS'), ('tmp', 'PATH.PP'),
+               ('red', 'PATH.RED'), ('calib', 'PATH.CALIB'),
+               ('tellu', 'PATH.TELLU'), ('log', 'PATH.LOG'),
+               ('plot', 'PATH.PLOT'), ('run', 'PATH.RUN'),
+               ('lbl', 'PATH.LBL'), ('out', 'PATH.OUT'),
+               ('other', 'PATH.OTHER'), ('queue', None)]
+# the longest a directory size count may take (seconds)
+STATS_SECONDS = 8.0
 
 
 # =============================================================================
@@ -645,6 +674,132 @@ def validate_command(path: Any, reportfile: Optional[str] = None
     env = {base.USER_ENV: path}
     cmd = [sys.executable, str(VALIDATE_SCRIPT)] + args
     return dict(cmd=cmd, display=_cli('apero_validate.py', args, env),
+                env=env, profile=path)
+
+
+# =============================================================================
+# Define data manager functions
+# =============================================================================
+def check_setup_done(path: Any) -> str:
+    """
+    Check that apero_setup has been run for a profile (the files reset and
+    the data manager need are there)
+
+    :param path: Any, the profile directory
+
+    :raises CommandError: if it is not a profile or setup has not been run
+
+    :return: str, the profile directory (real path)
+    """
+    path = check_profile(path)
+    missing = [name for name in SETUP_FILES
+               if not os.path.isfile(os.path.join(path, name))]
+    if missing:
+        raise CommandError(str(textentry('SETUP_GUI_NOT_SETUP',
+                                         args=[path, ', '.join(missing)])))
+    return path
+
+
+def data_dirs(path: Any) -> List[Dict[str, Any]]:
+    """
+    Get the data directories of a profile (from its user_config.yaml)
+
+    :param path: Any, the profile directory
+
+    :raises CommandError: if setup has not been run for the profile
+
+    :return: list of dict(key, label, arg, path, exists, protected) - the
+             profile directory itself comes last
+    """
+    path = check_setup_done(path)
+    config = _flatten(_load_yaml(os.path.join(path, 'user_config.yaml')))
+    out: List[Dict[str, Any]] = []
+    for key, label, arg, protected in DATA_DIRS:
+        value = config.get(key)
+        # unset (e.g. no external raw directory)
+        if value in [None, '', 'None']:
+            continue
+        dpath = os.path.realpath(os.path.expanduser(str(value)))
+        out.append(dict(key=key, label=label, arg=arg, path=dpath,
+                        exists=os.path.isdir(dpath), protected=protected))
+    # the profile itself (DRS_UCONFIG)
+    out.append(dict(key='DRS_UCONFIG', label='profile', arg=None,
+                    path=path, exists=True, protected=False))
+    return out
+
+
+def dir_stats(path: str, seconds: float = STATS_SECONDS
+              ) -> Dict[str, Any]:
+    """
+    Count the files and total size below a directory (stops after a time
+    limit - raw directories can be very large)
+
+    :param path: str, the directory
+    :param seconds: float, the time limit
+
+    :return: dict(nfiles, size, complete)
+    """
+    start = time.time()
+    nfiles, size = 0, 0
+    for root, _, names in os.walk(path):
+        for name in names:
+            try:
+                # links count as themselves (not the file they point to)
+                info = os.lstat(os.path.join(root, name))
+            except OSError:
+                continue
+            nfiles += 1
+            size += info.st_size
+        if time.time() - start > seconds:
+            return dict(nfiles=nfiles, size=size, complete=False)
+    return dict(nfiles=nfiles, size=size, complete=True)
+
+
+def reset_choices() -> List[Dict[str, Any]]:
+    """
+    Get the parts apero_reset.py can reset (with their help text)
+
+    :return: list of dict(name, key, help)
+    """
+    out = []
+    for name, key in RESET_PARTS:
+        help_text = str(textentry('RESET_ONLY_{0}_HELP'.format(
+            name.upper())))
+        out.append(dict(name=name, key=key, help=help_text))
+    return out
+
+
+def reset_command(path: Any, part: Any = 'all', ask: bool = True,
+                  nolog: bool = False) -> Dict[str, Any]:
+    """
+    Build the apero_reset.py command of a profile
+
+    :param path: Any, the profile directory
+    :param part: Any, 'all' or one of RESET_PARTS (--only_{part})
+    :param ask: bool, if True apero_reset asks before each part (in the
+                console), if False --nowarn
+    :param nolog: bool, do not reset the log database (--nolog)
+
+    :raises CommandError: if setup has not been run / unknown part
+
+    :return: dict(cmd, display, env, profile)
+    """
+    path = check_setup_done(path)
+    part = str(part or 'all')
+    names = [name for name, _ in RESET_PARTS]
+    if part != 'all' and part not in names:
+        raise CommandError(str(textentry('SETUP_GUI_UNKNOWN',
+                                         args=['reset part', part])))
+    args: List[str] = []
+    if part != 'all':
+        args.append('--only_{0}'.format(part))
+    if not ask:
+        args.append('--nowarn')
+    if nolog:
+        args.append('--nolog')
+    env = {base.USER_ENV: path}
+    cmd = [sys.executable, str(RESET_SCRIPT)] + args
+    return dict(cmd=cmd, display=_cli('apero_reset.py', args, env),
                 env=env, profile=path)
 
 

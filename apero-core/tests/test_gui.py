@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 import pytest
+import yaml
 
 from aperocore.gui import diff
 from aperocore.gui import files
@@ -101,6 +102,77 @@ def test_yaml_apply_edits_preserves_layout() -> None:
     stale = yaml_outline.apply_edits(YAML_TEXT, [dict(line=0, key='X',
                                                       value='1')])
     assert stale['errors'] and stale['applied'] == 0
+
+
+def test_yaml_add_entries_inserts_only() -> None:
+    """New keys go at the end of their section (missing sections are
+    created); every existing line is kept and existing keys are refused."""
+    entries = [dict(key='GLOBAL.NEW', value=3, description='a new key'),
+               dict(key='MOD.INPUTS.LIST', value=[1, 2]),
+               dict(key='OTHER.SUB.X', value='nan', dtype='float'),
+               dict(key='GLOBAL.FLAG', value=False),
+               dict(key='GLOBAL.DATA_PATH.SUB', value=1)]
+    result = yaml_outline.add_entries(YAML_TEXT, entries)
+    assert result['added'] == ['GLOBAL.NEW', 'MOD.INPUTS.LIST',
+                               'OTHER.SUB.X']
+    # an existing key and a key below a value are refused
+    assert len(result['errors']) == 2
+    new_lines = result['text'].splitlines()
+    # only insertions: the old lines are all there, in order
+    old_lines = YAML_TEXT.splitlines()
+    position = 0
+    for line in new_lines:
+        if position < len(old_lines) and line == old_lines[position]:
+            position += 1
+    assert position == len(old_lines)
+    data = yaml.safe_load(result['text'])
+    assert data['GLOBAL']['NEW'] == 3
+    assert data['GLOBAL']['DATA_PATH'] == '/data'
+    assert data['MOD']['INPUTS']['LIST'] == [1, 2]
+    assert data['MOD']['INPUTS']['FILES'] == ['a.fits', 'b.fits']
+    assert data['OTHER']['SUB']['X'] != data['OTHER']['SUB']['X']
+    # the comment above the new key (description and default)
+    index = new_lines.index('  NEW: 3')
+    assert new_lines[index - 2] == '  # a new key'
+    assert 'Default value=3' in new_lines[index - 1]
+    # the new key comes straight after the last key of its section
+    assert new_lines[index - 3] == '  FLAG: true'
+
+
+def test_yaml_remove_entries_deletes_only() -> None:
+    """A removed key goes with its comment block and child keys, emptied
+    sections (and their banner) go too; every other line is kept and
+    adding then removing a key gives back the original text."""
+    text = ('# file header\n'
+            '# ----------\n'
+            '# FIRST\n'
+            '# ----------\n'
+            'FIRST:\n'
+            '  ONLY: 1\n'
+            '\n'
+            'MOD:\n'
+            '  # about the list\n'
+            '  LIST: [1,  2]   # keep spacing\n'
+            '  SUB:\n'
+            '    # about X\n'
+            '    X: True\n'
+            '  KEEP: abc\n')
+    keys = ['MOD.SUB.X', 'FIRST.ONLY', 'MOD.MISSING']
+    result = yaml_outline.remove_entries(text, keys)
+    assert result['removed'] == ['MOD.SUB.X', 'MOD.SUB', 'FIRST.ONLY',
+                                 'FIRST']
+    assert result['errors'] == ['MOD.MISSING is not in the file']
+    assert result['text'] == ('# file header\n'
+                              '\n'
+                              'MOD:\n'
+                              '  # about the list\n'
+                              '  LIST: [1,  2]   # keep spacing\n'
+                              '  KEEP: abc\n')
+    # removing a key with its comment block (added by add_entries)
+    added = yaml_outline.add_entries(text, [dict(key='MOD.NEW', value=[3],
+                                                 description='new')])
+    back = yaml_outline.remove_entries(added['text'], ['MOD.NEW'])
+    assert back['text'] == text
 
 
 def test_yaml_apply_mapping_edit() -> None:

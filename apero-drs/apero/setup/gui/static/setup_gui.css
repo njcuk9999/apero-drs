@@ -433,3 +433,28 @@ a.doc-link { cursor: pointer; }
     .files-side { position: static; max-height: none; }
     .yf-row { grid-template-columns: 1fr; }
 }
+
+/* ---- header: version on its own line (room for the app icon) ---- */
+.brand .ver { display: block; margin: 2px 0 0 0; }
+
+/* ---- Data manager tab ---- */
+.data-dirs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.data-dir { display: flex; flex-direction: column; align-items: flex-start;
+            gap: 2px; padding: 7px 12px; min-width: 110px;
+            border-radius: 9px; text-align: left; }
+.data-dir .data-dir-name { font-weight: 700; }
+.data-dir .data-dir-stat { font-size: 11.5px; color: var(--muted); }
+.data-dir.active { border-color: var(--accent);
+                   box-shadow: 0 0 0 1px var(--accent) inset; }
+.data-dir.missing { opacity: 0.55; }
+.data-browser-head { display: flex; align-items: baseline; gap: 10px;
+                     margin-bottom: 8px; }
+.data-browser-head .grow { flex: 1; }
+.files-table td { padding: 4px 8px; }
+.files-table .fb-name { cursor: pointer; }
+.files-table .row-actions { white-space: nowrap; text-align: right; }
+.files-table .row-actions button { padding: 2px 8px; font-size: 11.5px; }
+.files-table td:first-child, .files-table th:first-child,
+.files-table td.fb-icon { width: 1%; white-space: nowrap; }
+.data-reset-parts { grid-template-columns: repeat(auto-fill,
+                                                  minmax(260px, 1fr)); }

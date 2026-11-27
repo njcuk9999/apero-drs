@@ -29971,6 +29971,20 @@ SETUP_GUI_TEXT = [
      'unknown {0}: {1}',
      '{0} inconnu : {1}',
      '{0} desconocido: {1}'),
+    ('NOT_SETUP', '{0}=profile, {1}=missing files',
+     'apero_setup.py has not been run for {0} (missing: {1}) - run setup '
+     'first',
+     "apero_setup.py n'a pas été exécuté pour {0} (manquant : {1}) - "
+     "exécutez d'abord l'installation",
+     'apero_setup.py no se ha ejecutado para {0} (faltan: {1}) - ejecute '
+     'primero la instalación'),
+    ('PROTECTED', '{0}=path',
+     '{0} is in a raw data directory - raw data is never deleted from '
+     'the gui',
+     "{0} est dans un répertoire de données brutes - les données brutes "
+     "ne sont jamais supprimées depuis l'interface",
+     '{0} está en un directorio de datos brutos - los datos brutos nunca '
+     'se borran desde la interfaz'),
 ]
 for sgt_key, sgt_args, sgt_eng, sgt_fr, sgt_es in SETUP_GUI_TEXT:
     item = langlist.create('SETUP_GUI_' + sgt_key, kind='text')

@@ -24,10 +24,13 @@ Created on 2026-11-26
 
 @author: cook
 """
+import io
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 # =============================================================================
 # Define variables
@@ -41,6 +44,8 @@ ITEM_RE = re.compile(r'^(\s*)-(?:\s+(.*))?$')
 SEPARATOR_RE = re.compile(r'^#\s*[-=]{5,}\s*$')
 # a decoration-only comment line (e.g. # ########)
 DECORATION_RE = re.compile(r'^#[\s#*~]*$')
+# the number of spaces of each level of new keys (add_entries)
+ADD_INDENT = 2
 
 
 # =============================================================================
@@ -370,6 +375,275 @@ def apply_edits(text: str, edits: List[Dict[str, Any]]) -> Dict[str, Any]:
             yaml_error))
     return dict(text=new_text, errors=errors,
                 applied=len(replacements))
+
+
+def _list_offset(nodes: List[Dict[str, Any]]) -> int:
+    """
+    Get how far block list items are indented below their key in a file
+    ("KEY:\n- a" is 0, "KEY:\n  - a" is 2) so added lists match it
+
+    :param nodes: list of dict, the outline nodes
+
+    :return: int, the most used item offset (0 if the file has no block
+             list)
+    """
+    counts: Dict[int, int] = dict()
+    for node in nodes:
+        if node['kind'] == 'list' and node['item_indent'] is not None:
+            offset = max(0, node['item_indent'] - node['indent'])
+            counts[offset] = counts.get(offset, 0) + 1
+    if not counts:
+        return 0
+    return max(counts, key=lambda offset: (counts[offset], -offset))
+
+
+def _entry_value(value: Any) -> Any:
+    """
+    Convert a json value to its yaml form (lists of lists are written as
+    "- [a, b]" items, like the APERO / POGOS yaml writers do)
+
+    :param value: Any, the value
+
+    :return: Any, the value to dump
+    """
+    if isinstance(value, list):
+        outer = CommentedSeq()
+        for item in value:
+            if isinstance(item, list):
+                inner = CommentedSeq(item)
+                inner.fa.set_flow_style()
+                outer.append(inner)
+            else:
+                outer.append(_entry_value(item))
+        return outer
+    if isinstance(value, dict):
+        mapping = CommentedMap()
+        for key, item in value.items():
+            mapping[str(key)] = _entry_value(item)
+        return mapping
+    return value
+
+
+def _entry_lines(parts: List[str], entry: Dict[str, Any], indent: int,
+                 offset: int) -> List[str]:
+    """
+    Write the lines of one new key (and any of its missing parent keys)
+
+    :param parts: list of str, the key path still missing in the file
+                  (parents first, the new key last)
+    :param entry: dict(value, description, dtype), the entry
+    :param indent: int, the indent of the first missing key
+    :param offset: int, the indent of list items below their key
+
+    :return: list of str, the lines
+    """
+    value = entry.get('value')
+    # NaN / inf come from json as text: write them as floats
+    if entry.get('dtype') == 'float' and isinstance(value, str):
+        try:
+            value = float(value)
+        except ValueError:
+            pass
+    # the comment written above the key (as the yaml writers do)
+    comment = str(entry.get('description') or '').strip('\n')
+    comment += '\n\tDefault value={0}'.format(entry.get('value'))
+    comment = comment.strip('\n').replace('\t', ' ' * 8)
+    # build the nested mapping and let ruamel format the value
+    data = CommentedMap()
+    sub_data = data
+    for part in parts[:-1]:
+        sub_data[part] = CommentedMap()
+        sub_data = sub_data[part]
+    sub_data[parts[-1]] = _entry_value(value)
+    ckwargs = dict(key=parts[-1], before=comment,
+                   indent=ADD_INDENT * (len(parts) - 1))
+    sub_data.yaml_set_comment_before_after_key(**ckwargs)
+    yaml_inst = YAML(typ='rt')
+    yaml_inst.width = 4096
+    yaml_inst.indent(mapping=ADD_INDENT, sequence=ADD_INDENT + offset,
+                     offset=offset)
+    stream = io.StringIO()
+    yaml_inst.dump(data, stream)
+    prefix = ' ' * indent
+    return [prefix + line if line.strip() else line
+            for line in stream.getvalue().rstrip('\n').split('\n')]
+
+
+def add_entries(text: str, entries: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Add new keys to yaml text: each key (e.g. OBJ.LBL.RESET) goes at the
+    end of its deepest existing section (missing sections are created)
+    with its description and default as a comment. Only new lines are
+    inserted - every existing line is kept exactly as it was.
+
+    :param text: str, the yaml text
+    :param entries: list of dict(key, value, description, dtype) - key is
+                    the dotted path, value the json value to write
+
+    :return: dict(text, added, errors) - added lists the keys written,
+             errors the refused entries / a parse error of the result
+    """
+    trailing = text.endswith('\n')
+    lines = text.splitlines()
+    added: List[str] = []
+    errors: List[str] = []
+    for entry in entries:
+        key = str(entry.get('key') or '')
+        parts = [part for part in key.split('.') if part]
+        if not parts:
+            continue
+        nodes = outline('\n'.join(lines))['nodes']
+        paths = {tuple(node['path']): node for node in nodes}
+        if tuple(parts) in paths:
+            errors.append('{0} is already in the file'.format(key))
+            continue
+        # the deepest section of the key that is already in the file
+        depth = 0
+        for level in range(len(parts) - 1, 0, -1):
+            if tuple(parts[:level]) in paths:
+                depth = level
+                break
+        if depth == 0:
+            # a new top level section: at the end of the file
+            new_lines = _entry_lines(parts, entry, 0, _list_offset(nodes))
+            while lines and lines[-1].strip() == '':
+                lines.pop()
+            lines += [''] + new_lines
+            added.append(key)
+            continue
+        parent = paths[tuple(parts[:depth])]
+        # a key with a value (not a section) cannot hold new keys
+        if parent['kind'] not in ['map'] and parent['value'] != '':
+            errors.append('{0} is not a section (it has a value) - cannot '
+                          'add {1}'.format('.'.join(parts[:depth]), key))
+            continue
+        # indent like the existing children (or one level below)
+        children = [node for node in nodes
+                    if node['line'] > parent['line']
+                    and node['path'][:depth] == parent['path']
+                    and len(node['path']) == depth + 1]
+        indent = (children[0]['indent'] if children
+                  else parent['indent'] + ADD_INDENT)
+        new_lines = _entry_lines(parts[depth:], entry, indent,
+                                 _list_offset(nodes))
+        end = _subtree_end(nodes, parent)
+        lines[end + 1:end + 1] = new_lines
+        added.append(key)
+    new_text = '\n'.join(lines) + ('\n' if trailing or not lines else '')
+    try:
+        yaml.safe_load(new_text)
+    except yaml.YAMLError as yaml_error:
+        errors.append('the new yaml does not parse: {0}'.format(yaml_error))
+    return dict(text=new_text, added=added, errors=errors)
+
+
+def _comment_start(lines: List[str], nodes: List[Dict[str, Any]],
+                   node: Dict[str, Any]) -> int:
+    """
+    Get the first line of the comment block that describes a key (the
+    comment lines straight above it at the same indent - section banners
+    and the header of the file are never included)
+
+    :param lines: list of str, the yaml lines
+    :param nodes: list of dict, the outline nodes
+    :param node: dict, the node
+
+    :return: int, the first line (0-based) to remove with the key
+    """
+    # the comments above the first key are the header of the file
+    if nodes and nodes[0]['line'] == node['line']:
+        return node['line']
+    start = node['line']
+    while start > 0:
+        line = lines[start - 1]
+        stripped = line.strip()
+        # only plain comment lines (not banners / decoration / blanks)
+        if not stripped.startswith('#'):
+            break
+        if SEPARATOR_RE.match(stripped) or DECORATION_RE.match(stripped):
+            break
+        if len(line) - len(line.lstrip()) != node['indent']:
+            break
+        start -= 1
+    return start
+
+
+def _remove_node(lines: List[str], nodes: List[Dict[str, Any]],
+                 node: Dict[str, Any]) -> None:
+    """
+    Remove a key (its comment block and all of its child keys) from the
+    yaml lines in place, without leaving a double blank line behind
+
+    :param lines: list of str, the yaml lines (changed in place)
+    :param nodes: list of dict, the outline nodes of the lines
+    :param node: dict, the node to remove
+
+    :return: None
+    """
+    start = _comment_start(lines, nodes, node)
+    # a top level section takes its banner (# ---- / title / # ----) along
+    if node['depth'] == 0 and start > 0 and SEPARATOR_RE.match(
+            lines[start - 1].strip()):
+        top = start - 2
+        while top >= 0 and lines[top].strip().startswith('#'):
+            if SEPARATOR_RE.match(lines[top].strip()):
+                start = top
+                break
+            top -= 1
+    end = _subtree_end(nodes, node)
+    del lines[start:end + 1]
+    # a blank line on both sides of the gap (or at the end): keep one
+    before_blank = start > 0 and lines[start - 1].strip() == ''
+    after_blank = start >= len(lines) or lines[start].strip() == ''
+    if before_blank and after_blank:
+        del lines[start - 1]
+
+
+def remove_entries(text: str, keys: List[str]) -> Dict[str, Any]:
+    """
+    Remove keys from yaml text (so the program uses their default value):
+    each key goes with its comment block and child keys, and a section
+    left empty is removed too. Every other line is kept exactly as it was.
+
+    :param text: str, the yaml text
+    :param keys: list of str, the dotted keys (e.g. OBJ.LBL.RESET)
+
+    :return: dict(text, removed, errors) - removed lists the keys (and
+             emptied sections) taken out, errors the keys that were not
+             found / a parse error of the result
+    """
+    trailing = text.endswith('\n')
+    lines = text.splitlines()
+    removed: List[str] = []
+    errors: List[str] = []
+    for key in keys:
+        parts = [part for part in str(key or '').split('.') if part]
+        if not parts:
+            continue
+        nodes = outline('\n'.join(lines))['nodes']
+        paths = {tuple(node['path']): node for node in nodes}
+        if tuple(parts) not in paths:
+            errors.append('{0} is not in the file'.format(key))
+            continue
+        _remove_node(lines, nodes, paths[tuple(parts)])
+        removed.append('.'.join(parts))
+        # sections left without any key are removed as well
+        for level in range(len(parts) - 1, 0, -1):
+            nodes = outline('\n'.join(lines))['nodes']
+            paths = {tuple(node['path']): node for node in nodes}
+            parent = paths.get(tuple(parts[:level]))
+            # (an empty section now reads as a key without a value)
+            if (parent is None or parent['kind'] != 'scalar'
+                    or parent['value'] != '' or parent['items']):
+                break
+            _remove_node(lines, nodes, parent)
+            removed.append('.'.join(parts[:level]))
+    new_text = '\n'.join(lines) + ('\n' if trailing and lines else '')
+    try:
+        yaml.safe_load(new_text)
+    except yaml.YAMLError as yaml_error:
+        errors.append('the new yaml does not parse: {0}'.format(yaml_error))
+    return dict(text=new_text, removed=removed, errors=errors)
 
 
 # =============================================================================

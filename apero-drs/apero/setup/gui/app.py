@@ -64,7 +64,7 @@ WORKER_ENV = 'APERO_SETUP_GUI_WORKER_PORT'
 # the gui state (process registry, job logs, backups, reports)
 STATE_DIR = os.path.expanduser('~/.apero/setup_gui')
 # the activity log / console channels (one per page)
-CHANNELS = ['setup', 'edit', 'validate', 'main']
+CHANNELS = ['setup', 'edit', 'validate', 'data', 'main']
 # seconds a probe may run
 PROBE_TIMEOUT = 600
 # the apero-ri documentation tree (repository checkout only)
@@ -118,6 +118,8 @@ class SetupGuiApp(webapp.GuiApp):
         self.report_lock = threading.Lock()
         # config files before re-running setup (profile -> name -> text)
         self.snapshots: Dict[str, Dict[str, Optional[str]]] = dict()
+        # profiles opened in the Data tab that are not in profiles.ini
+        self.data_profiles: List[str] = []
         os.makedirs(STATE_DIR, exist_ok=True)
         super().__init__()
 
@@ -132,18 +134,59 @@ class SetupGuiApp(webapp.GuiApp):
         """
         return STATE_DIR
 
+    def _profile_paths(self) -> List[str]:
+        """
+        Get every profile the gui knows: registered ones (profiles.ini) and
+        those opened in the Data tab
+
+        :return: list of str, the profile directories
+        """
+        paths = [info['path'] for info in commands.list_profiles()
+                 if info['exists']]
+        for path in self.data_profiles:
+            if path not in paths:
+                paths.append(path)
+        return paths
+
+    def _data_dirs(self) -> List[Dict[str, Any]]:
+        """
+        Get the data directories of every known profile (setup run)
+
+        :return: list of dict, see commands.data_dirs
+        """
+        out: List[Dict[str, Any]] = []
+        for path in self._profile_paths():
+            try:
+                out += commands.data_dirs(path)
+            except commands.CommandError:
+                continue
+        return out
+
     def file_roots(self) -> List[str]:
         """
-        Get the directories the gui may read in: the gui state and every
-        registered profile (DRS_UCONFIG)
+        Get the directories the gui may read in: the gui state, every
+        known profile (DRS_UCONFIG) and the data directories of the
+        profiles setup has been run for (Data tab)
 
         :return: list of str, the roots
         """
         roots = [STATE_DIR]
-        for info in commands.list_profiles():
+        for path in self._profile_paths():
+            if path not in roots:
+                roots.append(path)
+        for info in self._data_dirs():
             if info['exists'] and info['path'] not in roots:
                 roots.append(info['path'])
         return roots
+
+    def protected_roots(self) -> List[str]:
+        """
+        Get the directories nothing may be deleted from (raw data)
+
+        :return: list of str, the protected directories
+        """
+        return [info['path'] for info in self._data_dirs()
+                if info['protected']]
 
     def page_tokens(self) -> Dict[str, str]:
         """
@@ -190,6 +233,9 @@ class SetupGuiApp(webapp.GuiApp):
         get('/api/setup/file', self.api_file)
         post('/api/setup/file_save', self.api_file_save)
         get('/api/setup/backups', self.api_backups)
+        post('/api/setup/data_dirs', self.api_data_dirs)
+        post('/api/setup/dir_stats', self.api_dir_stats)
+        post('/api/setup/reset', self.api_reset)
         get('/api/setup/params', self.api_params)
         post('/api/setup/report', self.api_report)
         post('/api/setup/report_save', self.api_report_save)
@@ -316,6 +362,11 @@ class SetupGuiApp(webapp.GuiApp):
         if action in ['update', 'install_sh']:
             return commands.update_command(profile,
                                            install_sh=action == 'install_sh')
+        if action == 'reset':
+            return commands.reset_command(profile, request.arg('part', 'all'),
+                                          ask=bool(request.arg('ask', True)),
+                                          nolog=bool(request.arg('nolog',
+                                                                 False)))
         if action == 'validate':
             reportfile = None
             if request.arg('report', False):
@@ -410,7 +461,8 @@ class SetupGuiApp(webapp.GuiApp):
 
         :param request: Request, the request
 
-        :return: Response, json dict(path, text, mtime, editable, exists)
+        :return: Response, json dict(path, text, mtime, editable, exists,
+                 instrument)
         """
         try:
             outs = commands.config_file(request.arg('profile'),
@@ -418,13 +470,17 @@ class SetupGuiApp(webapp.GuiApp):
         except commands.CommandError as error:
             return self._error(error)
         path, editable = outs
+        # the profile instrument (defaults shown in the Edit tab)
+        info = commands.profile_info(os.path.dirname(path))
+        instrument = info.get('instrument')
         if not os.path.isfile(path):
             return webapp.Response.json(dict(path=path, text='', mtime=None,
                                              editable=editable,
-                                             exists=False))
+                                             exists=False,
+                                             instrument=instrument))
         data = gui_files.read_text(path, None)
         data.update(editable=editable, exists=True,
-                    mtime=os.path.getmtime(path))
+                    mtime=os.path.getmtime(path), instrument=instrument)
         return webapp.Response.json(data)
 
     def _backup_dir(self, path: str) -> str:
@@ -498,6 +554,86 @@ class SetupGuiApp(webapp.GuiApp):
                                         mtime=os.path.getmtime(full)))
         backups.sort(key=lambda item: -item['mtime'])
         return webapp.Response.json(dict(backups=backups))
+
+    # -------------------------------------------------------------------------
+    # data manager routes
+    # -------------------------------------------------------------------------
+    def api_data_dirs(self, request: webapp.Request) -> webapp.Response:
+        """
+        POST /api/setup/data_dirs {profile}: the data directories of a
+        profile (the profile may then be browsed)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(profile, dirs, reset_parts)
+        """
+        try:
+            path = commands.check_setup_done(request.arg('profile'))
+            dirs = commands.data_dirs(path)
+        except commands.CommandError as error:
+            return self._error(error)
+        # allow browsing a profile chosen on disk (not in profiles.ini)
+        if path not in self._profile_paths():
+            self.data_profiles.append(path)
+        return webapp.Response.json(dict(
+            profile=path, dirs=dirs, reset_parts=commands.reset_choices()))
+
+    def api_dir_stats(self, request: webapp.Request) -> webapp.Response:
+        """
+        POST /api/setup/dir_stats {path}: number of files and size below a
+        data directory (stops after a time limit)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(nfiles, size, complete)
+        """
+        try:
+            real = gui_files.check_path(str(request.arg('path', '')),
+                                        self.file_roots())
+        except gui_files.FileAccessError as error:
+            return webapp.Response.error(str(error), 403)
+        return webapp.Response.json(commands.dir_stats(real))
+
+    def api_fs_delete(self, request: webapp.Request) -> webapp.Response:
+        """
+        POST /api/fs/delete {paths}: delete files (as the framework) but
+        never anything in a raw data directory
+
+        :param request: Request, the request
+
+        :return: Response, json dict(success, message, deleted)
+        """
+        paths = request.arg('paths', []) or []
+        if not isinstance(paths, list):
+            paths = [paths]
+        protected = self.protected_roots()
+        for path in paths:
+            # the path itself (links) and what it points to
+            absolute = os.path.abspath(os.path.expanduser(str(path)))
+            real = os.path.realpath(absolute)
+            for root in protected:
+                if (gui_files.is_within(absolute, root)
+                        or gui_files.is_within(real, root)):
+                    return webapp.Response.error(str(textentry(
+                        'SETUP_GUI_PROTECTED', args=[absolute])), 403)
+        return super().api_fs_delete(request)
+
+    def api_reset(self, request: webapp.Request) -> webapp.Response:
+        """
+        POST /api/setup/reset {profile, part, ask, nolog}: run
+        apero_reset.py for a profile (console)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(started, message, display)
+        """
+        try:
+            built = self._build('reset', request)
+        except commands.CommandError as error:
+            return self._error(error)
+        # reports of this profile are out of date after a reset
+        self.reports.pop(built['profile'], None)
+        return self._start('data', 'apero_reset', built)
 
     # -------------------------------------------------------------------------
     # docs routes

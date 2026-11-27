@@ -17,8 +17,9 @@ their output in a console on each page. Any question a script still asks
 shows the **CLI equivalent** of what it runs, so you can repeat anything from
 a terminal.
 
-The GUI covers setup and the state of APERO after setup. It does not change
-database entries or run reductions.
+The GUI covers setup and the state of APERO after setup. It does not edit
+database entries or run reductions (the only way it changes the databases
+is a reset in the Data manager).
 
 ## Starting the GUI
 
@@ -61,8 +62,17 @@ reports) in `~/.apero/setup_gui/`.
   `user_constants.yaml`, `user_keywords.yaml`; `setup.sh`, `setup.bat` and
   `install_script.sh` are read only). Edit them as a form, where each
   constant links to its Docs entry and shows the instrument default, or as
-  raw text. **Review changes** before saving; a backup is kept every time
-  you save. **Re-run setup** runs `apero_setup.py --update` with the values
+  raw text. **+ Add parameters** (in `user_config.yaml`,
+  `user_constants.yaml` and `user_keywords.yaml`) lists every config
+  value, constant or header keyword that is not yet in the file, with its
+  default for the profile's instrument and its description. Filter the list
+  and click **+** to add one: it is added to the file with its default
+  value as an unsaved change (highlighted in the form), so you can change
+  its value and then save. **Usual settings only** limits the list to
+  the settings setup writes by default. The **✕** next to a parameter
+  removes it from the file (with its comment) after a confirmation that
+  shows the default it falls back to; this is also an unsaved change. **Review changes** before saving; a
+  backup is kept every time you save. **Re-run setup** runs `apero_setup.py --update` with the values
   in the files. **Only regenerate install_script.sh** runs
   `apero_setup.py --install_sh`.
 - **Validate**: **Check profile** shows the state of a profile: config
@@ -72,6 +82,19 @@ reports) in `~/.apero/setup_gui/`.
   **Download report** saves the same information as one text file.
   **Run apero_validate.py** runs the validation recipe in the console.
 - **Processes**: every process started from the GUI, with its log.
+- **Data manager**: browse the data directories of a profile once
+  `apero_setup.py` has been run for it. Choose the profile (its
+  `DRS_UCONFIG` directory), then a directory: raw, tmp, red, calib,
+  tellu, out, lbl, assets, log, plot, run, other, the external raw
+  directory (if set) or the profile directory itself. Each shows its number
+  of files and size. View files, FITS headers and images, download, compare
+  two files or delete files. The raw and external raw directories are read
+  only: raw data is never deleted from the GUI. Deleting files does not
+  update the APERO databases, so use **Reset** to clean a whole part
+  consistently. **Reset** runs `apero_reset.py` for everything or for one
+  part (`--only_red`, `--only_calib`, ...). By default it asks you to
+  confirm each part in the console; untick **Ask before each part** to add
+  `--nowarn` (you then type the profile name to confirm).
 - **Docs**: **Constants** lists every APERO constant, config value and header
   keyword. Each entry shows its description, its value for each instrument
   and the user file it can be set in, filtered by kind and instrument.

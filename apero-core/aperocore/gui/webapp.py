@@ -64,7 +64,8 @@ CORE_STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
 # the shared css/js assets every page loads (in this order)
 CORE_CSS = ['gui_base.css']
 CORE_JS = ['gui_core.js', 'gui_console.js', 'gui_logviewer.js',
-           'gui_processes.js', 'gui_files.js', 'gui_diff.js']
+           'gui_processes.js', 'gui_files.js', 'gui_diff.js',
+           'gui_params.js']
 # default host (localhost only for safety) and port of the gui server
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 8095
@@ -821,6 +822,8 @@ class GuiApp:
         self.add_post('/api/diff', self.api_diff)
         self.add_post('/api/yaml/outline', self.api_yaml_outline)
         self.add_post('/api/yaml/apply', self.api_yaml_apply)
+        self.add_post('/api/yaml/add', self.api_yaml_add)
+        self.add_post('/api/yaml/remove', self.api_yaml_remove)
         # batch templates
         self.add_get('/api/templates', self.api_templates)
         self.add_get('/api/template', self.api_template)
@@ -1264,6 +1267,36 @@ class GuiApp:
         if not isinstance(edits, list):
             edits = []
         return Response.json(yaml_outline.apply_edits(text, edits))
+
+    def api_yaml_add(self, request: Request) -> Response:
+        """
+        POST /api/yaml/add {text, entries}: add new keys to yaml text (only
+        new lines are inserted - nothing is written to disk)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(text, added, errors)
+        """
+        text = str(request.arg('text', ''))
+        entries = request.arg('entries', []) or []
+        if not isinstance(entries, list):
+            entries = []
+        return Response.json(yaml_outline.add_entries(text, entries))
+
+    def api_yaml_remove(self, request: Request) -> Response:
+        """
+        POST /api/yaml/remove {text, keys}: remove keys from yaml text (only
+        their lines are taken out - nothing is written to disk)
+
+        :param request: Request, the request
+
+        :return: Response, json dict(text, removed, errors)
+        """
+        text = str(request.arg('text', ''))
+        keys = request.arg('keys', []) or []
+        if not isinstance(keys, list):
+            keys = []
+        return Response.json(yaml_outline.remove_entries(text, keys))
 
     def api_templates(self, request: Request) -> Response:
         """

@@ -34,6 +34,8 @@ XX_CORE_HEAD_XX
                 onclick="GUI.setTab('validate')">Validate</button>
         <button id="tab-btn-processes"
                 onclick="GUI.setTab('processes')">Processes</button>
+        <button id="tab-btn-data" onclick="GUI.setTab('data')">Data
+            manager</button>
         <button id="tab-btn-docs" onclick="GUI.setTab('docs')">Docs</button>
     </div>
 </div>
@@ -271,7 +273,9 @@ environment variable (never on the command line).</div>
 <div class="tabdesc">Edit the files <code>apero_setup.py</code> wrote to a
 profile's <code>DRS_UCONFIG</code> directory as a form (each constant
 links to its Docs entry) or as raw text, review the changes side by side
-and save (a backup is kept). Then <b>re-run setup</b> to apply the new
+and save (a backup is kept). <b>+ Add parameters</b> adds any parameter
+not in the file yet and <b>&#10005;</b> removes one (back to its
+default). Then <b>re-run setup</b> to apply the new
 paths / database / plot settings.</div>
 
 <div class="section-card">
@@ -302,6 +306,9 @@ paths / database / plot settings.</div>
        onchange="S.edit.renderForm()"> Changed only</label>
 <span class="grow"></span>
 <span id="edit-dirty" class="pill"></span>
+<button id="edit-add" onclick="S.edit.addDialog()"
+        title="Add any config value, constant or keyword to this file">+ Add
+    parameters</button>
 <button onclick="S.edit.revert()">Revert</button>
 <button onclick="S.edit.review()">Review changes</button>
 <button onclick="S.edit.compareBackup()">Compare with backup</button>
@@ -411,6 +418,97 @@ runs the real validation recipe in the console.</div>
 <div class="tabdesc">Processes started from this gui (apero_setup.py,
 apero_validate.py). Click a row to open its log.</div>
 <div id="processes"></div>
+</div>
+
+<!-- ===================================================================
+     Data manager (browse the data directories, apero_reset.py)
+     =================================================================== -->
+<div id="tab-data" class="tabpage">
+<div class="tabdesc">Browse the data directories of a profile (after
+<code>apero_setup.py</code> has been run): view files, FITS headers and
+images, download or delete them. Raw data (the raw and external raw
+directories) is read only here. <b>Reset</b> cleans a profile with
+<code>apero_reset.py</code>, everything or one part; any question it asks
+is answered in the console.</div>
+
+<div class="section-card">
+<div class="field-row">
+<div class="field grow">
+<label class="field-label" for="data-profile">Profile
+    (DRS_UCONFIG)</label>
+<div class="input-group">
+<select id="data-profile" onchange="S.data.selected()"></select>
+<button onclick="S.data.browseProfile()">Browse disk...</button>
+<button onclick="S.data.reload()">&#8635; Reload</button>
+</div>
+</div>
+</div>
+<div id="data-error" class="notice bad" style="display:none"></div>
+<div id="data-dirs" class="data-dirs"></div>
+</div>
+
+<div id="data-browser" class="section-card" style="display:none">
+<div class="data-browser-head">
+<b id="data-dir-title"></b>
+<span id="data-dir-desc" class="muted small grow"></span>
+<span id="data-dir-ro" class="pill warn" style="display:none">read
+    only</span>
+</div>
+<div class="fb-path">
+<button id="data-up" onclick="S.data.up()">&#8593; Up</button>
+<div class="fb-crumbs" id="data-crumbs"></div>
+<span class="grow"></span>
+<input id="data-filter" type="search" placeholder="Filter names">
+</div>
+<div class="field-actions" style="margin-bottom:8px">
+<label class="inline small"><input type="checkbox" id="data-all"
+    onclick="S.data.selectAll(this.checked)"> Select all</label>
+<button class="small danger" id="data-del-selected"
+        onclick="S.data.deleteSelected()">Delete selected</button>
+<button class="small" onclick="S.data.diffSelected()">Compare 2
+    selected</button>
+<span id="data-note" class="muted small"></span>
+</div>
+<div class="table-wrap files-table">
+<table><thead><tr><th></th><th></th>
+<th class="sortable" data-sort="name">Name</th>
+<th class="sortable num" data-sort="size">Size</th>
+<th class="sortable" data-sort="mtime">Modified</th><th></th></tr></thead>
+<tbody id="data-body"></tbody></table>
+</div>
+</div>
+
+<div class="section-card" id="data-reset-card" style="display:none">
+<h3>Reset (apero_reset.py)</h3>
+<p class="muted small">Removes the files APERO made for this profile and
+resets the matching databases. <b>Everything</b> resets every part below:
+the assets directory is rebuilt from the APERO reset assets (downloading
+the assets first if they are missing or out of date) and every database
+is reset. Choose one part to reset only that part. Raw data is never
+reset.</p>
+<div id="data-reset-parts" class="choice-grid data-reset-parts"></div>
+<div class="field-actions" style="margin-top:10px">
+<label class="inline"><input id="data-reset-ask" type="checkbox" checked
+       onchange="S.data.updateCli()"> Ask before each part (answer in the
+    console)</label>
+<label class="inline"><input id="data-reset-nolog" type="checkbox"
+       onchange="S.data.updateCli()"> Quiet: do not list what is removed
+    (--nolog)</label>
+</div>
+<div class="cli-title">CLI equivalent</div>
+<div class="cli-wrap">
+<textarea id="cli-reset" class="cli-box" readonly></textarea>
+<button class="copy-btn" onclick="GUI.copyCli('cli-reset', this)">Copy
+</button>
+</div>
+<div class="field-actions" style="margin-top:10px">
+<button class="danger" onclick="S.data.reset()">&#9888; Reset...</button>
+</div>
+</div>
+
+<div id="console-data"></div>
+<h3>Activity</h3>
+<div class="activity-log" data-activity="data"></div>
 </div>
 
 <!-- ===================================================================
