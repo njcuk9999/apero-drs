@@ -287,12 +287,15 @@ def dir_stats(path: str) -> Dict[str, Any]:
     :param path: str, the directory
 
     :return: dict(nfiles, size, mtime) - mtime is the newest file time
+             (symlinks count with their own size, not their target's)
     """
     nfiles, size, newest = 0, 0, 0.0
     for root, _, names in os.walk(path):
         for name in names:
             try:
-                info = os.stat(os.path.join(root, name))
+                # lstat: a symlink (e.g. to a shared download cache) counts
+                #   as the link, not the file it points to
+                info = os.lstat(os.path.join(root, name))
             except OSError:
                 continue
             nfiles += 1
