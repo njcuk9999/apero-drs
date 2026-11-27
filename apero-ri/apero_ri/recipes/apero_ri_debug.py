@@ -7,11 +7,14 @@ import getpass
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
+from typing import Callable
 
 from aperocore import drs_lang
 from apero_ri.ari_api import diagnostics
 from apero_ri.base import base
+from apero_ri.core import log as ri_log
 
 # =============================================================================
 # Define variables
@@ -20,10 +23,50 @@ __NAME__ = 'apero_ri.recipes.apero_ri_debug'
 __version__ = base.__version__
 __date__ = base.__date__
 __authors__ = base.__authors__
+# progress goes to stderr so stdout stays the list of saved files
+LOG = ri_log.get_logger(__NAME__)
+# log a "still collecting" line every N server heartbeats (10 s each)
+HEARTBEATS_PER_UPDATE = 3
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def _progress_logger(label: str,
+                     started: float) -> Callable[[dict], None]:
+    """Build a stream callback that logs stages and periodic waits.
+
+    :param label: ``INSTRUMENT / profile`` shown on every line.
+    :param started: ``time.time()`` when this profile's request began.
+    :return: Callback accepting one server stream event.
+    """
+    state = dict(stage='runtime', beats=0)
+
+    def on_event(event: dict) -> None:
+        """Log one progress or heartbeat event from the server.
+
+        :param event: Decoded stream event.
+        :return: None.
+        """
+        if event.get('type') == 'progress':
+            total = event.get('total') or 1
+            percent = int(100 * event.get('completed', 0) / total)
+            state['stage'] = str(event.get('stage', ''))
+            state['beats'] = 0
+            LOG.info(str(drs_lang.textentry(
+                'ARI_DIAGNOSTICS_CLI_PROGRESS',
+                args=[label, percent, state['stage']])))
+        elif event.get('type') == 'heartbeat':
+            state['beats'] += 1
+            # a slow stage sends only heartbeats; report it periodically
+            if state['beats'] % HEARTBEATS_PER_UPDATE == 0:
+                elapsed = int(time.time() - started)
+                LOG.info(str(drs_lang.textentry(
+                    'ARI_DIAGNOSTICS_CLI_WAITING',
+                    args=[label, elapsed, state['stage']])))
+
+    return on_event
+
+
 def main(argv: list[str] | None = None) -> int:
     """Download reports for the profiles explicitly authorized by a grant.
 
@@ -50,7 +93,11 @@ def main(argv: list[str] | None = None) -> int:
     if not key:
         parser.error(str(drs_lang.textentry('ARI_DIAGNOSTICS_ERROR',
                                            args=['missing_key'])))
+    # timestamped progress lines on stderr
+    ri_log.configure_logging(fmt='[%(asctime)s] %(message)s')
     try:
+        LOG.info(str(drs_lang.textentry('ARI_DIAGNOSTICS_CLI_CONNECT',
+                                        args=[args.host])))
         listing = diagnostics.request_report(args.host, key)
         profiles = listing['profiles']
         available = {row['profile_id'] for row in profiles}
@@ -61,10 +108,14 @@ def main(argv: list[str] | None = None) -> int:
                         if row['profile_id'] in args.profile]
         if not profiles:
             raise ValueError('no_authorized_profiles')
+        names = ', '.join(row['instrument'] + '/' + row['profile_id']
+                          for row in profiles)
+        LOG.info(str(drs_lang.textentry('ARI_DIAGNOSTICS_CLI_PROFILES',
+                                        args=[len(profiles), names])))
         args.output.mkdir(parents=True, exist_ok=True, mode=0o700)
         output = args.output.resolve()
         downloaded = []
-        for profile in profiles:
+        for index, profile in enumerate(profiles, start=1):
             instrument, name = profile['instrument'], profile['profile_id']
             if not all(value and all(char.isalnum() or char in '_-'
                                       for char in value)
@@ -74,8 +125,15 @@ def main(argv: list[str] | None = None) -> int:
                            objname=args.object, pid=args.pid,
                            logs='1' if args.logs else '0',
                            database='0' if args.no_database else '1')
-            report = diagnostics.request_report(args.host, key, 'report',
-                                                 filters)
+            label = instrument + ' / ' + name
+            LOG.info(str(drs_lang.textentry(
+                'ARI_DIAGNOSTICS_CLI_COLLECT',
+                args=[index, len(profiles), label])))
+            started = time.time()
+            # stream so stages and heartbeats arrive while the server works
+            stream_kwargs = dict(on_event=_progress_logger(label, started))
+            report = diagnostics.request_report(args.host, key, 'stream',
+                                                 filters, **stream_kwargs)
             path = output / f'{instrument}-{name}.json'
             with tempfile.NamedTemporaryFile(mode='w', dir=output,
                                              delete=False) as temporary:
@@ -88,6 +146,10 @@ def main(argv: list[str] | None = None) -> int:
                 finally:
                     temporary_path.unlink(missing_ok=True)
             downloaded.append(str(path))
+            size = round(path.stat().st_size / 1024 ** 2, 1)
+            LOG.info(str(drs_lang.textentry(
+                'ARI_DIAGNOSTICS_CLI_SAVED',
+                args=[label, path, size, int(time.time() - started)])))
         message = drs_lang.textentry('ARI_DIAGNOSTICS_DOWNLOADED',
                                      args=['\n'.join(downloaded)])
         print(str(message))
@@ -97,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
 
         safe_error = redact(str(error), [key])
         message = drs_lang.textentry('ARI_DIAGNOSTICS_ERROR', args=[safe_error])
-        print(str(message))
+        LOG.error(str(message))
         return 1
 
 

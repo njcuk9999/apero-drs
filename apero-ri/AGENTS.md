@@ -17,6 +17,10 @@ apero_ri_debug --host=https://ari.example --key \
     --profile=spirou_mini2_08xxx_fir --object=GL699 --logs
 ```
 
+- The CLI logs stage progress and periodic "still collecting" lines to
+  stderr while the server works; large profiles can take many minutes. If
+  it reports `diagnostic_http_404: unknown_action`, the remote ARI predates
+  key-based streaming and must be updated and restarted.
 - The bare `--key` option uses a hidden terminal prompt. Never ask the user
   to paste a key into chat, put it in a URL, or send it through a tool that
   exposes secrets to the model. `APERO_RI_DEBUG_KEY` is an alternative when
@@ -34,11 +38,15 @@ apero_ri_debug --host=https://ari.example --key \
 - Reports are saved under `apero-diagnostics/` by default, one JSON file per
   authorized profile, with mode `0600`. Inspect these local files using
   normal file tools. `--output` chooses another local directory.
-- A completed report can also be shared through a 24-hour public report link
-  from the Diagnostics page. Treat the full URL as a bearer secret; anyone
-  holding it can read the snapshot. Its fragment is not sent in the initial
-  request, so use a browser that runs the viewer's JavaScript. The owner can
-  revoke the link or delete the report, and should do so after investigation.
+- Every completed report on the Diagnostics page is shared automatically
+  through a 24-hour public report link, listed in its **Saved Reports**
+  table. Treat the full URL as a bearer secret; anyone holding it can read
+  the snapshot. Its fragment is not sent in the initial request, so use a
+  browser that runs the viewer's JavaScript. The owner can revoke the link
+  or delete the report, and should do so after investigation.
+- The same row offers a `wget` command, calling
+  `GET /api/diagnostics/shared-report?download=1` with the share secret in
+  `Authorization: Bearer ...`; it saves the bare report JSON as a file.
 - Use `--object`, `--pid`, and repeated `--profile` filters to narrow a new
   collection. Use `--logs` for bounded redacted recipe log tails;
   `--no-database` avoids live database queries. Keys are never saved by the
@@ -61,3 +69,22 @@ and connection prerequisites. Focused verification:
 PYTHONPATH=apero-core:apero-drs:apero-ri python -m pytest -q \
     apero-ri/tests/test_diagnostics.py apero-drs/tests/test_queue_stats.py
 ```
+## Async Task Storage
+
+- `~/.ari/admin/async_tasks/async_tasks.yaml` holds task **settings only**
+  (`active`, `frequency`, `order`, `apero_profile`, `filters`, parallel
+  options, `id`, `task_key`). It is written only by settings changes, and
+  each change first copies the old file to `async_tasks.yaml.prev`.
+- Runtime state (`auth.ASYNC_TASK_RUNTIME_KEYS`: `last_run`, `run_count`,
+  `last_status`, `output_files`, `last_run_params`, `cooldown_until`,
+  `info`, `error`) lives in `task_state/<task_id>.json`, holding only the
+  most recent run. Write it with `auth.save_task_state(task_id, ...)`; never
+  set these fields on a row and call `save_async_tasks`, which drops them.
+- `auth.load_async_tasks()` returns settings merged with that state, so
+  readers see one row per task.
+- A run's `TASK_CONFIG` must not include `last_run_params`
+  (`task_runner._task_config_input`); copying it made every run nest all
+  previous runs and grew the YAML without bound.
+- Tests that construct `ARIApp` must stub
+  `task_runner.start_background_services`; otherwise the real scheduler runs
+  tasks against `~/.ari`.

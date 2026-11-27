@@ -22,18 +22,9 @@
 "Saved Reports":
   FR: Rapports enregistrés
   ES: Informes guardados
-"Open Report":
-  FR: Ouvrir le rapport
-  ES: Abrir informe
 "No saved reports":
   FR: Aucun rapport enregistré
   ES: No hay informes guardados
-"This report is saved privately for 24 hours after collection.":
-  FR: Ce rapport est conservé en privé pendant 24 heures après sa collecte.
-  ES: Este informe se guarda de forma privada durante 24 horas después de su recopilación.
-"Anyone with a share link can read the entire report until it expires or is revoked. A new link replaces the previous link.":
-  FR: Toute personne disposant du lien peut lire le rapport entier jusqu'à son expiration ou sa révocation. Un nouveau lien remplace le précédent.
-  ES: Quien tenga el enlace puede leer el informe completo hasta que caduque o se revoque. Un nuevo enlace reemplaza al anterior.
 "Create Share Link":
   FR: Créer un lien de partage
   ES: Crear enlace para compartir
@@ -43,9 +34,6 @@
 "Delete Report":
   FR: Supprimer le rapport
   ES: Eliminar informe
-"Share URL":
-  FR: URL de partage
-  ES: URL para compartir
 "Copy Share URL":
   FR: Copier l'URL de partage
   ES: Copiar URL para compartir
@@ -73,6 +61,45 @@
 "Shared report loaded.":
   FR: Rapport partagé chargé.
   ES: Informe compartido cargado.
+"Copy wget Command":
+  FR: Copier la commande wget
+  ES: Copiar comando wget
+"Reports are saved privately for 24 hours after collection.":
+  FR: Les rapports sont conservés en privé pendant 24 heures après leur collecte.
+  ES: Los informes se guardan de forma privada durante 24 horas después de su recopilación.
+"Each completed report gets a share link and wget command straight away. Anyone with either can read the entire report until it expires or the link is revoked. Creating a new link replaces the previous one.":
+  FR: Chaque rapport terminé reçoit immédiatement un lien de partage et une commande wget. Toute personne disposant de l'un ou de l'autre peut lire le rapport entier jusqu'à son expiration ou la révocation du lien. Créer un nouveau lien remplace le précédent.
+  ES: Cada informe completado recibe de inmediato un enlace para compartir y un comando wget. Quien tenga cualquiera de los dos puede leer el informe completo hasta que caduque o se revoque el enlace. Crear un nuevo enlace reemplaza al anterior.
+"Run the wget command on the target machine to save the report as a JSON file. The command contains the share secret; treat it like the share URL.":
+  FR: Exécutez la commande wget sur la machine cible pour enregistrer le rapport dans un fichier JSON. La commande contient le secret de partage ; traitez-la comme l'URL de partage.
+  ES: Ejecute el comando wget en la máquina de destino para guardar el informe como archivo JSON. El comando contiene el secreto compartido; trátelo como la URL para compartir.
+"Report ready. Copy, download, or share it from Saved Reports.":
+  FR: Rapport prêt. Copiez-le, téléchargez-le ou partagez-le depuis Rapports enregistrés.
+  ES: Informe listo. Cópielo, descárguelo o compártalo desde Informes guardados.
+"Collection in progress. The report appears in Saved Reports when it finishes.":
+  FR: Collecte en cours. Le rapport apparaîtra dans Rapports enregistrés une fois terminé.
+  ES: Recopilación en curso. El informe aparecerá en Informes guardados cuando termine.
+"Share URL copied to clipboard.":
+  FR: URL de partage copiée dans le presse-papiers.
+  ES: URL para compartir copiada al portapapeles.
+"wget command copied to clipboard.":
+  FR: Commande wget copiée dans le presse-papiers.
+  ES: Comando wget copiado al portapapeles.
+"Collected":
+  FR: Collecté
+  ES: Recopilado
+"Share Link":
+  FR: Lien de partage
+  ES: Enlace compartido
+"Active":
+  FR: Actif
+  ES: Activo
+"Not shared":
+  FR: Non partagé
+  ES: No compartido
+"Select at least one profile above before generating a key.":
+  FR: Sélectionnez au moins un profil ci-dessus avant de générer une clé.
+  ES: Seleccione al menos un perfil arriba antes de generar una clave.
 "Download Report":
   FR: Télécharger le rapport
   ES: Descargar informe
@@ -118,18 +145,6 @@
 "Finishing report":
   FR: Finalisation du rapport
   ES: Finalizando el informe
-"Report ready to export.":
-  FR: Rapport prêt à être exporté.
-  ES: Informe listo para exportar.
-"Report options changed. Collect again before exporting.":
-  FR: Les options ont changé. Relancez la collecte avant d'exporter.
-  ES: Las opciones cambiaron. Vuelva a recopilar antes de exportar.
-"Collect a report before exporting.":
-  FR: Recueillez un rapport avant de l'exporter.
-  ES: Recopile un informe antes de exportarlo.
-"Collection in progress. Export is available when it finishes.":
-  FR: Collecte en cours. L'export sera disponible à la fin.
-  ES: Recopilación en curso. La exportación estará disponible al finalizar.
 "Report collection failed. Please try again.":
   FR: La collecte du rapport a échoué. Veuillez réessayer.
   ES: La recopilación del informe falló. Vuelva a intentarlo.
@@ -139,9 +154,6 @@
 "Could not check the collection. Refresh to reconnect.":
   FR: Impossible de vérifier la collecte. Actualisez pour vous reconnecter.
   ES: No se pudo comprobar la recopilación. Actualice para reconectar.
-"Preparing download...":
-  FR: Préparation du téléchargement...
-  ES: Preparando descarga...
 "Copy unavailable; select the text.":
   FR: Copie indisponible ; sélectionnez le texte.
   ES: Copia no disponible; seleccione el texto.

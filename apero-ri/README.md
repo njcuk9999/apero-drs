@@ -179,6 +179,16 @@ never the key. A privately supplied `APERO_RI_DEBUG_KEY` environment variable
 is also accepted. `--key=VALUE` is supported but discouraged because shell
 history and process listings may expose it.
 
+The client follows `GET /api/diagnostics/stream`, logging each collection
+stage, a "still collecting" line every 30 seconds during slow stages, and
+each saved file with its size to stderr; stdout lists only the saved paths.
+Server heartbeats keep slow collections alive, so a large profile no longer
+hits a client read timeout, and reports up to 512 MB are accepted. HTTP
+failures include the server's error code, for example
+`diagnostic_http_401: invalid_or_expired_grant`. The ARI server must run a
+version with key-based streaming; an older server returns
+`diagnostic_http_404: unknown_action`.
+
 Reports include package/runtime provenance, sanitized profile configuration,
 bounded path inventories, cache metadata and object tables, task schedules,
 manifest freshness and sampled checksums, live file-index product counts,

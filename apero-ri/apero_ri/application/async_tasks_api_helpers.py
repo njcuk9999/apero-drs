@@ -13,6 +13,7 @@ from apero_ri.core.auth import (
     load_apero_profiles,
     load_async_tasks,
     save_async_tasks,
+    save_task_state,
 )
 from apero_ri.application import async_task_helpers
 from flask import jsonify, redirect, request, session, url_for
@@ -913,10 +914,9 @@ def api_async_tasks_run_now(app: Any) -> Any:
         )
         instance._task_key = task_key
     except Exception:
-        task_cfg["last_status"] = "failed"
-        task_cfg["error"] = traceback.format_exc()
-        all_tasks[instrument] = inst_tasks
-        save_async_tasks(all_tasks)
+        # record the failure in the task's runtime state file
+        save_task_state(str(task_cfg.get("id", "")), last_status="failed",
+                        error=traceback.format_exc())
         return (
             jsonify(
                 success=False,
@@ -1089,8 +1089,10 @@ def api_async_tasks_run_all(app: Any) -> Any:
             )
             instance._task_key = task_key
         except Exception:
-            task_cfg["last_status"] = "failed"
-            task_cfg["error"] = traceback.format_exc()
+            # record the failure in the task's runtime state file
+            save_task_state(str(task_cfg.get("id", "")),
+                            last_status="failed",
+                            error=traceback.format_exc())
             blocked.append(
                 {
                     "id": task_cfg.get("id", ""),

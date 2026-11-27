@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from apero_ri.base import base
 from apero_ri.core import secret_store
 
 # ---------------------------------------------------------------------------
@@ -515,21 +516,23 @@ def _warm_marker(
 
 def mark_object_group_warm(
     cache_root: Path, instrument: str, profile_id: str, objname: str,
-    group: str,
+    group: str, signature: str,
 ) -> None:
-    """Record that an object's plot group is now cached.
+    """Record that an object's plot group is cached for given inputs.
 
     :param cache_root: Path, resolved cache root
     :param instrument: str, instrument name
     :param profile_id: str, APERO profile id
     :param objname: str, object name
     :param group: str, object plot group (see ``OBJECT_WARM_GROUPS``)
+    :param signature: str, ``object_plot_signature`` of the cached inputs
 
     :return: None
     """
     path = _warm_marker(cache_root, instrument, profile_id, objname, group)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.touch()
+    # the marker only counts while the object inputs are unchanged
+    path.write_text(signature)
 
 
 def is_object_warm(
@@ -537,37 +540,115 @@ def is_object_warm(
     instrument: str,
     profile_id: str,
     objname: str,
-    aparams: Optional[Dict[str, Any]],
+    signature: str,
 ) -> bool:
     """Return True when every first-view plot group of an object is cached.
 
-    Uses the same enabled/fingerprint rules as ``check_and_serve`` so a
-    warm object is one whose plots will actually be served from cache.
+    A group is warm only if its marker was written for the current
+    ``object_plot_signature``, i.e. its cached plots will be served.
 
     :param data_dir: Path, ARI data directory
     :param instrument: str, instrument name
     :param profile_id: str, APERO profile id
     :param objname: str, object name
-    :param aparams: dict or None, profile data (``database-update``)
+    :param signature: str, current ``object_plot_signature`` of the object
 
     :return: bool, True if the object page will load from cache
     """
     cfg = load_cache_config(data_dir)
     if not cfg.get("enabled"):
         return False
-    current = (aparams or {}).get("database-update", {})
-    if not isinstance(current, dict) or not current:
-        return False
     cache_root = resolve_cache_root(data_dir, cfg)
-    meta = _load_meta(_profile_dir(cache_root, instrument, profile_id))
-    if not _db_fingerprint_matches(meta, current):
-        return False
     for group in OBJECT_WARM_GROUPS:
         marker = _warm_marker(cache_root, instrument, profile_id, objname,
                               group)
-        if not marker.exists():
+        try:
+            if marker.read_text() != signature:
+                return False
+        except OSError:
             return False
     return True
+
+
+def object_plot_signature(
+    objects_dir: Path, objname: str, preset: Dict[str, Any],
+) -> str:
+    """Return a short hash of every input the object-page plots read.
+
+    Covers the ARI version, the size and mtime of the object's JSON
+    tables and ``object_table.json``, and the loaded instrument preset.
+    A manifest restore keeps the publisher's mtime (``copy2``), so a
+    republished table changes the signature and identical ones do not.
+    FITS files read directly from ``PATH_RED`` are not covered.
+
+    :param objects_dir: Path, profile ``objects`` task directory
+    :param objname: str, object name
+    :param preset: dict, loaded instrument preset used by plot builders
+
+    :return: str, 12-character hex signature
+    """
+    hasher = hashlib.sha1(str(base.__version__).encode())
+    # tables written by the object query (and the object table task)
+    paths = [objects_dir / f"htable_{objname}.json"]
+    paths += [objects_dir / f"ftable_{kind}_{objname}.json"
+              for kind in ("ext", "tcorr", "ccf")]
+    paths.append(objects_dir.parent / "object_table.json")
+    for path in paths:
+        try:
+            info = path.stat()
+            token = f"{path.name}:{info.st_size}:{info.st_mtime_ns}"
+        except OSError:
+            token = f"{path.name}:missing"
+        hasher.update(token.encode())
+    # hash the preset as loaded (it is cached in-process, not re-read)
+    hasher.update(json.dumps(preset, sort_keys=True, default=str).encode())
+    return hasher.hexdigest()[:12]
+
+
+def value_signature(value: Any) -> str:
+    """Return a short stable hash of a JSON-serialisable value.
+
+    :param value: Any, value such as an astrometric entry dict or None
+
+    :return: str, 12-character hex signature
+    """
+    blob = json.dumps(value, sort_keys=True, default=str).encode()
+    return hashlib.sha1(blob).hexdigest()[:12]
+
+
+def prune_cached(
+    cache_root: Path, instrument: str, profile_id: str, section: str,
+    prefix: str, keep_prefix: str,
+) -> int:
+    """Delete entries starting with *prefix* but not with *keep_prefix*.
+
+    Used to drop an object's plot responses built from superseded inputs.
+
+    :param cache_root: Path, resolved cache root
+    :param instrument: str, instrument name
+    :param profile_id: str, APERO profile id
+    :param section: str, cache section such as ``object_plots``
+    :param prefix: str, key prefix shared by all versions of the entry
+    :param keep_prefix: str, key prefix of the current version
+
+    :return: int, number of files removed
+    """
+    sdir = _section_dir(cache_root, instrument, profile_id, section)
+    safe_prefix = _safe_filename(prefix)
+    safe_keep = _safe_filename(keep_prefix)
+    removed = 0
+    try:
+        names = [path.name for path in sdir.iterdir()]
+    except OSError:
+        return 0
+    for name in names:
+        if name.startswith(safe_prefix) and not name.startswith(safe_keep):
+            try:
+                (sdir / name).unlink()
+                removed += 1
+            except OSError:
+                pass
+    return removed
 
 
 def generate_and_cache(

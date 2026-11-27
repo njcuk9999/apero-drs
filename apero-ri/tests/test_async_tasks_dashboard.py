@@ -80,6 +80,40 @@ def test_profile_runtime_only_receives_assigned_profile() -> None:
     assert list(params['APERO_PROFILES']) == ['second']
 
 
+def test_saved_run_params_do_not_nest_previous_runs() -> None:
+    """Repeated runs keep last_run_params a constant size.
+
+    Each run's params used to embed the task row, including the previous
+    run's params, so async_tasks.yaml grew by one nesting level per run.
+
+    :return: None.
+    """
+    import json
+
+    profiles = dict(SPIROU=dict(first=dict(paths=dict(PATH_RED='/data'))))
+    row = dict(id='task-1', task_key='APERO_CHECK_TASK',
+               apero_profile='first',
+               filters=dict(APERO_PROFILE_INCLUDE='first'))
+    sizes = []
+    for _ in range(5):
+        # mimic one scheduler run followed by _persist_runtime_state
+        params = task_runner.build_run_params(
+            'SPIROU', '/tmp/ari-test', profiles, row)
+        assert 'last_run_params' not in params['TASK_CONFIG']
+        row['last_run_params'] = task_runner._sanitize_run_params(
+            task_runner._strip_run_history(params))
+        sizes.append(len(json.dumps(row)))
+    assert len(set(sizes)) == 1
+    # consumers still find the task identity and filters in TASK_CONFIG
+    saved_cfg = row['last_run_params']['TASK_CONFIG']
+    assert saved_cfg['task_key'] == 'APERO_CHECK_TASK'
+    assert saved_cfg['filters'] == dict(APERO_PROFILE_INCLUDE='first')
+    # params built elsewhere (CLI/API) are stripped before saving too
+    nested = dict(TASK_CONFIG=dict(task_key='X', last_run_params=dict(a=1)))
+    assert task_runner._strip_run_history(nested) == dict(
+        TASK_CONFIG=dict(task_key='X'))
+
+
 def test_precomputed_fallback_publishes_and_restores(tmp_path) -> None:
     """Server fallback and CLI publication share the standard output tree."""
     from apero_ri.tasks import apero_sync

@@ -1,7 +1,7 @@
 (function () {
     'use strict';
-    var profiles = [], host = '', busy = false, report = null;
-    var activeJob = null, pollTimer = null, savedJobs = [];
+    var profiles = [], host = '', busy = false;
+    var activeJob = null, pollTimer = null;
     var text = window.ARI_DIAGNOSTICS_TEXT;
     function element(id) { return document.getElementById('diag-' + id); }
     function status(message) { element('status').textContent = message || ''; }
@@ -39,7 +39,7 @@
         });
         if (oldProfile && !profiles.some(function (profile) {
             return profile.instrument === oldProfile.instrument && profile.profile_id === oldProfile.profile_id;
-        })) { invalidate(); }
+        })) { reportStatus(''); }
         element('grants').replaceChildren();
         data.grants.forEach(function (grant) {
             var row = document.createElement('tr'); row.className = 'ot-row';
@@ -72,16 +72,29 @@
         if (document.execCommand('copy')) { return Promise.resolve(); }
         return Promise.reject(new Error(text.copy));
     }
-    function reportStatus(message) { element('report-status').textContent = message; }
-    function invalidate() {
-        if (report) {
-            report = null;
-            element('progress').hidden = true;
-            element('report-actions').hidden = true;
-            element('share-result').hidden = true;
-            element('share-url').value = '';
-            reportStatus(text.changed);
-        }
+    function reportStatus(message) { element('report-status').textContent = message || ''; }
+    function savedStatus(message) { element('saved-status').textContent = message || ''; }
+    function table() { return document.querySelector('.diag-saved-table'); }
+    function shareUrl(token) {
+        // the viewer reads the capability from the fragment, never the query
+        var url = new URL(table().dataset.shareView, window.location.href);
+        url.hash = token;
+        return url.href;
+    }
+    function wgetCommand(token) {
+        // the token travels in a header so it stays out of server access logs
+        var url = new URL(table().dataset.downloadApi, window.location.href);
+        return 'wget --content-disposition --header='
+            + shellQuote('Authorization: Bearer ' + token) + ' ' + shellQuote(url.href);
+    }
+    function copyText(value) {
+        // copyInput expects an input-like element; use an off-screen buffer
+        var buffer = document.createElement('textarea');
+        buffer.className = 'diag-copy-buffer';
+        buffer.setAttribute('aria-hidden', 'true');
+        buffer.value = value;
+        document.body.appendChild(buffer);
+        return copyInput(buffer).finally(function () { buffer.value = ''; buffer.remove(); });
     }
     function showProgress(event) {
         var percentage = event.total > 0 ? Math.floor(event.completed * 100 / event.total) : 0;
@@ -97,33 +110,105 @@
     function setBusy(value) {
         busy = value;
         element('report-form').querySelectorAll('input, select, button').forEach(function (control) { control.disabled = value; });
-        element('report-actions').querySelectorAll('button').forEach(function (control) { control.disabled = value; });
-        element('saved-reports').disabled = value || !savedJobs.length;
-        element('open-report').disabled = value || !savedJobs.length;
+    }
+    function actionButton(icon, label, handler) {
+        var button = document.createElement('button');
+        button.type = 'button'; button.className = 'ari-btn ari-btn--sm ari-btn--secondary';
+        button.title = label; button.setAttribute('aria-label', label);
+        var glyph = document.createElement('i'); glyph.className = 'fa-solid ' + icon;
+        glyph.setAttribute('aria-hidden', 'true');
+        button.append(glyph);
+        button.onclick = async function () {
+            // block double clicks while one row action is in flight
+            button.disabled = true;
+            try { await handler(); } catch (error) { savedStatus(error.message || text.failed); }
+            finally { button.disabled = false; }
+        };
+        return button;
+    }
+    async function fetchReport(job) {
+        var data = await api('job?id=' + encodeURIComponent(job.id));
+        if (!data.report) { throw new Error(text.failed); }
+        return data.report;
+    }
+    function reportName(job) {
+        return ('apero-diagnostics-' + job.instrument + '-' + job.profile_id)
+            .replace(/[^A-Za-z0-9_.-]+/g, '_') + '.json';
+    }
+    function savedRow(job) {
+        var row = document.createElement('tr'); row.className = 'ot-row';
+        var collected = (job.completed_at || job.created) * 1000;
+        var cells = [job.instrument + ' / ' + job.profile_id, job.options.objname || '',
+            job.options.pid || '', new Date(collected).toLocaleString(),
+            new Date(job.expires_at * 1000).toLocaleString(),
+            job.share_token ? text.shareActive : text.shareNone];
+        cells.forEach(function (value, index) {
+            var cell = document.createElement('td'); cell.className = 'ot-cell';
+            if (index === 2) cell.classList.add('diag-col-pid');
+            if (index === 4) cell.classList.add('diag-col-expires');
+            cell.textContent = value; row.append(cell);
+        });
+        var actions = document.createElement('td'); actions.className = 'ot-cell';
+        var group = document.createElement('div'); group.className = 'diag-row-actions';
+        group.append(
+            actionButton('fa-copy', text.copyReport, async function () {
+                var report = await fetchReport(job);
+                await copyText(JSON.stringify(report, null, 2)).catch(function () {
+                    throw new Error(text.copyReportFailed);
+                });
+                savedStatus(text.copiedReport);
+            }),
+            actionButton('fa-download', text.downloadReport, async function () {
+                var report = await fetchReport(job);
+                var blob = new Blob([JSON.stringify(report, null, 2)], {type: 'application/json'});
+                var url = URL.createObjectURL(blob), link = document.createElement('a');
+                link.href = url; link.download = reportName(job); link.click();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+            }));
+        if (job.share_token) {
+            group.append(
+                actionButton('fa-link', text.copyShare, async function () {
+                    await copyText(shareUrl(job.share_token));
+                    savedStatus(text.copiedShare);
+                }),
+                actionButton('fa-terminal', text.copyWget, async function () {
+                    await copyText(wgetCommand(job.share_token));
+                    savedStatus(text.copiedWget);
+                }),
+                actionButton('fa-ban', text.revokeShare, async function () {
+                    await api('revoke-share', {id: job.id});
+                    savedStatus(text.shareRevoked);
+                    await refreshSaved();
+                }));
+        } else {
+            group.append(actionButton('fa-share-nodes', text.createShare, async function () {
+                await api('share', {id: job.id});
+                savedStatus(text.shareCreated);
+                await refreshSaved();
+            }));
+        }
+        group.append(actionButton('fa-trash', text.deleteReport, async function () {
+            if (!window.confirm(text.deleteConfirm)) return;
+            await api('delete', {id: job.id});
+            savedStatus(text.deleted);
+            await refreshSaved();
+        }));
+        actions.append(group); row.append(actions);
+        return row;
     }
     async function refreshSaved() {
+        // the listing already carries share tokens, so rows render instantly
         var data = await api('saved');
-        savedJobs = data.jobs || [];
-        var select = element('saved-reports');
-        var previous = select.value;
-        select.replaceChildren();
-        if (!savedJobs.length) {
-            var empty = document.createElement('option');
-            empty.value = ''; empty.textContent = text.noSaved;
-            select.append(empty);
+        var jobs = data.jobs || [];
+        var body = element('saved');
+        body.replaceChildren();
+        if (!jobs.length) {
+            var row = document.createElement('tr'), cell = document.createElement('td');
+            cell.className = 'ot-loading'; cell.colSpan = 7; cell.textContent = text.noSaved;
+            row.append(cell); body.append(row);
+            return;
         }
-        savedJobs.forEach(function (job) {
-            var option = document.createElement('option');
-            option.value = job.id;
-            var stamp = new Date((job.completed_at || job.created) * 1000).toLocaleString();
-            option.textContent = job.instrument + ' / ' + job.profile_id
-                + (job.options.objname ? ' / ' + job.options.objname : '') + ' - ' + stamp;
-            select.append(option);
-        });
-        if (savedJobs.some(function (job) { return job.id === previous; })) select.value = previous;
-        else if (activeJob && savedJobs.some(function (job) { return job.id === activeJob; })) select.value = activeJob;
-        select.disabled = busy || !savedJobs.length;
-        element('open-report').disabled = busy || !savedJobs.length;
+        jobs.forEach(function (job) { body.append(savedRow(job)); });
     }
     function restoreJob(job) {
         var index = profiles.findIndex(function (profile) {
@@ -153,16 +238,12 @@
                 return;
             }
             setBusy(false);
-            if (data.job.status === 'completed' && data.report) {
-                report = data.report;
-                element('report-actions').hidden = false;
-                element('revoke-share').hidden = !data.job.share_active;
+            if (data.job.status === 'completed') {
                 element('progress-stage').textContent = text.ready;
                 reportStatus(text.ready);
-                refreshSaved().catch(function (error) { status(error.message); });
+                refreshSaved().catch(function (error) { savedStatus(error.message); });
                 return;
             }
-            report = null;
             var message = data.job.status === 'interrupted' ? text.interrupted : text.failed;
             element('progress-stage').textContent = message;
             reportStatus(message);
@@ -173,8 +254,9 @@
         }
     }
     async function resume() {
+        // only reattach to a collection that is still running
         var data = await api('latest');
-        if (!data.job || !restoreJob(data.job)) { return; }
+        if (!data.job || data.job.status !== 'running' || !restoreJob(data.job)) { return; }
         setBusy(true);
         reportStatus(text.collecting);
         await pollJob(data.job.id);
@@ -183,11 +265,8 @@
         if (busy) { return; }
         var params = query(); if (!params) { return; }
         if (pollTimer) { window.clearTimeout(pollTimer); pollTimer = null; }
-        activeJob = null; report = null;
+        activeJob = null;
         setBusy(true);
-        element('report-actions').hidden = true;
-        element('share-result').hidden = true;
-        element('share-url').value = '';
         element('progress').hidden = false;
         element('progress-profile').textContent = params.get('instrument') + ' / ' + params.get('profile_id');
         showProgress({stage: 'runtime', completed: 0, total: 1});
@@ -200,123 +279,39 @@
             if (!restoreJob(data.job)) { throw new Error(text.failed); }
             await pollJob(data.job.id);
         } catch (error) {
-            report = null; element('progress-stage').textContent = text.failed;
+            element('progress-stage').textContent = text.failed;
             reportStatus(error.message || text.failed);
             setBusy(false);
         }
-    }
-    async function downloadReport() {
-        if (busy) { reportStatus(text.collecting); return; }
-        if (!report) { reportStatus(text.first); return; }
-        reportStatus(text.download);
-        try {
-            var json = JSON.stringify(report, null, 2);
-            var blob = new Blob([json], {type: 'application/json'});
-            var name = 'apero-diagnostics.json';
-            if (typeof CompressionStream === 'function') {
-                var compressed = blob.stream().pipeThrough(new CompressionStream('gzip'));
-                blob = await new Response(compressed).blob();
-                name += '.gz';
-            }
-            var url = URL.createObjectURL(blob), link = document.createElement('a');
-            link.href = url; link.download = name; link.click();
-            setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-            reportStatus(text.ready);
-        } catch (error) { reportStatus(error.message || text.failed); }
-    }
-    async function copyReport() {
-        if (!report || busy) { reportStatus(text.first); return; }
-        var buffer = document.createElement('textarea');
-        buffer.className = 'diag-copy-buffer';
-        buffer.setAttribute('aria-hidden', 'true');
-        buffer.value = JSON.stringify(report, null, 2);
-        document.body.appendChild(buffer);
-        try {
-            await copyInput(buffer);
-            reportStatus(text.copiedReport);
-        } catch (error) { reportStatus(text.copyReportFailed); }
-        finally { buffer.value = ''; buffer.remove(); }
-    }
-    async function shareReport() {
-        if (!report || !activeJob || busy) { reportStatus(text.first); return; }
-        setBusy(true);
-        try {
-            var result = await api('share', {id: activeJob});
-            var url = new URL(element('report-actions').dataset.shareView, window.location.href);
-            url.hash = result.token;
-            element('share-url').value = url.href;
-            element('share-result').hidden = false;
-            element('revoke-share').hidden = false;
-            reportStatus(text.shareCreated);
-        } catch (error) { reportStatus(error.message); }
-        finally { setBusy(false); }
-    }
-    async function revokeShare() {
-        if (!report || !activeJob || busy) { return; }
-        setBusy(true);
-        try {
-            await api('revoke-share', {id: activeJob});
-            element('share-url').value = '';
-            element('share-result').hidden = true;
-            element('revoke-share').hidden = true;
-            reportStatus(text.shareRevoked);
-        } catch (error) { reportStatus(error.message); }
-        finally { setBusy(false); }
-    }
-    async function deleteReport() {
-        if (!report || !activeJob || busy || !window.confirm(text.deleteConfirm)) { return; }
-        setBusy(true);
-        try {
-            await api('delete', {id: activeJob});
-            activeJob = null; report = null;
-            element('progress').hidden = true;
-            element('report-actions').hidden = true;
-            element('share-result').hidden = true;
-            element('share-url').value = '';
-            reportStatus(text.deleted);
-            await refreshSaved();
-        } catch (error) { reportStatus(error.message); }
-        finally { setBusy(false); }
     }
     document.addEventListener('DOMContentLoaded', function () {
         overview().then(refreshSaved).then(resume).catch(function (error) { status(error.message); });
         element('grant-form').onsubmit = async function (event) {
             event.preventDefault();
+            var grantStatus = element('grant-status');
+            var scope = selected();
+            // a key needs an explicit scope; say so next to the button
+            if (!scope.length) {
+                grantStatus.textContent = text.selectProfile;
+                var first = element('profiles').querySelector('input');
+                if (first) { first.focus(); }
+                return;
+            }
+            grantStatus.textContent = '';
             try {
-                var scope = selected();
                 var data = await api('issue', {profiles: scope.map(function (profile) { return [profile.instrument, profile.profile_id]; }),
                     hours: Number(element('hours').value), label: element('label').value});
                 element('key').value = data.grant.token;
                 element('command').value = 'apero_ri_debug --host=' + shellQuote(host) + ' --key';
                 element('issued').hidden = false; await overview(); status('');
-            } catch (error) { status(error.message); }
+            } catch (error) { grantStatus.textContent = error.message; }
         };
         ['key', 'command'].forEach(function (name) {
             element('copy-' + name).onclick = function () {
                 copyInput(element(name)).catch(function (error) { status(error.message); });
             };
         });
+        element('profiles').addEventListener('change', function () { element('grant-status').textContent = ''; });
         element('report-form').onsubmit = function (event) { event.preventDefault(); collect(); };
-        element('report-form').addEventListener('input', invalidate);
-        element('report-form').addEventListener('change', invalidate);
-        element('export').onclick = downloadReport;
-        element('copy-report').onclick = copyReport;
-        element('share').onclick = shareReport;
-        element('revoke-share').onclick = revokeShare;
-        element('delete-report').onclick = deleteReport;
-        element('copy-share').onclick = function () {
-            copyInput(element('share-url')).catch(function (error) { reportStatus(error.message); });
-        };
-        element('open-report').onclick = async function () {
-            if (busy) return;
-            var job = savedJobs.find(function (item) { return item.id === element('saved-reports').value; });
-            if (!job || !restoreJob(job)) return;
-            report = null;
-            element('report-actions').hidden = true;
-            element('share-result').hidden = true;
-            element('share-url').value = '';
-            setBusy(true);
-            await pollJob(job.id);
-        };
     });
 }());

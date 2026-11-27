@@ -164,11 +164,13 @@ def inventory(root: Path, limit: int = ROW_LIMIT) -> dict[str, Any]:
     return result
 
 
-def read_json(path: Path, root: Path) -> dict[str, Any]:
+def read_json(path: Path, root: Path,
+              limit: int = FILE_LIMIT) -> dict[str, Any]:
     """Read bounded JSON only within an approved root, never a symlink.
 
     :param path: Selected diagnostic artifact.
     :param root: Approved containing directory.
+    :param limit: Maximum number of bytes to parse before giving up.
     :return: Parsed payload or explicit unavailable/truncated metadata.
     """
     result = file_info(path)
@@ -176,10 +178,11 @@ def read_json(path: Path, root: Path) -> dict[str, Any]:
         if path.is_symlink() or not path.resolve().is_relative_to(
                 root.resolve()):
             return dict(result, skipped='outside_root_or_symlink')
+        # read one byte past the limit so oversized files are detectable
         with path.open('rb') as handle:
-            raw = handle.read(FILE_LIMIT + 1)
-        if len(raw) > FILE_LIMIT:
-            return dict(result, truncated=True, limit_bytes=FILE_LIMIT)
+            raw = handle.read(limit + 1)
+        if len(raw) > limit:
+            return dict(result, truncated=True, limit_bytes=limit)
         return dict(result, data=json.loads(raw))
     except (OSError, ValueError) as error:
         return dict(result, error_type=type(error).__name__)

@@ -107,17 +107,32 @@ def test_templates_compile(language_app: Flask) -> None:
 def test_application_language_integration(monkeypatch, tmp_path) -> None:
     """Render the real home page using browser and cookie selection."""
     from apero_ri.application.application import ARIApp
+    from apero_ri.application import ariapp_impls
+    from apero_ri.core import auth
 
-    monkeypatch.setattr(sys, 'argv', ['ari'])
+    original_root = auth.ARI_DIR
+    monkeypatch.setattr(sys, 'argv', ['ari', '--data-dir', str(tmp_path)])
     monkeypatch.setenv('ARI_DATA_DIR', str(tmp_path))
-    app = ARIApp()
-    app.config.update(TESTING=True, RATELIMIT_ENABLED=False)
-    client = app.test_client()
-    response = client.get('/', headers={'Accept-Language': 'fr'})
-    assert response.status_code == 200
-    assert '<html lang="fr"' in response.text
-    assert 'Interface de réduction' in response.text
-    response = client.get('/set_language/es?next=/', follow_redirects=True)
-    assert response.status_code == 200
-    assert '<html lang="es"' in response.text
-    assert 'Interfaz de reducción' in response.text
+    monkeypatch.setenv('ARI_DIR', str(tmp_path))
+    # never start the real scheduler: it runs tasks against ~/.ari
+    monkeypatch.setattr(ariapp_impls.task_runner, 'start_background_services',
+                        lambda *values: None)
+    monkeypatch.setattr(ARIApp, '_start_admin_health_refresher',
+                        lambda self: None)
+    monkeypatch.setattr(auth, '_ari_dir_ensured', False)
+    try:
+        app = ARIApp()
+        app.config.update(TESTING=True, RATELIMIT_ENABLED=False)
+        client = app.test_client()
+        response = client.get('/', headers={'Accept-Language': 'fr'})
+        assert response.status_code == 200
+        assert '<html lang="fr"' in response.text
+        assert 'Interface de réduction' in response.text
+        response = client.get('/set_language/es?next=/',
+                              follow_redirects=True)
+        assert response.status_code == 200
+        assert '<html lang="es"' in response.text
+        assert 'Interfaz de reducción' in response.text
+    finally:
+        # the app may have pointed auth storage at the test directory
+        auth.set_ari_dir(str(original_root))

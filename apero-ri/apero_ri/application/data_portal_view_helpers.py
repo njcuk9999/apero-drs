@@ -267,10 +267,18 @@ def ri_object_page_view(
         pass
 
     # Cold objects get the first-view loading screen while plots build.
-    from apero_ri.core.plot_cache import is_object_warm
+    from apero_ri.core import plot_cache as _pc
+    # same input signature api_object_plots uses for its cache keys
+    warm_data = profile.get('data') or {}
+    warm_preset = load_object_preset(str(
+        warm_data.get('APERO_INSTRUMENT_PROFILE', '')
+        or warm_data.get('apero_instrument_profile', '') or '').strip())
+    warm_objdir = (base_dir / 'tasks' / profile['instrument'] / profile_id
+                   / 'objects')
+    warm_sig = _pc.object_plot_signature(warm_objdir, objname, warm_preset)
     warm_args = [base_dir, profile['instrument'], profile_id, objname,
-                 profile.get('data') or {}]
-    object_first_view = not is_object_warm(*warm_args)
+                 warm_sig]
+    object_first_view = not _pc.is_object_warm(*warm_args)
 
     # Build plot_yaxis_zoom: {div_id: [options]} for divs in static HTML,
     # plus {'lbl': [options]} for the dynamically created LBL vel-plot divs.
