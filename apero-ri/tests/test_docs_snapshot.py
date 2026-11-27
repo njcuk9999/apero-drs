@@ -94,20 +94,60 @@ def test_docs_snapshot_task(doc_tree: Path, tmp_path: Path) -> None:
 
 
 def test_object_warm_markers(tmp_path: Path) -> None:
-    """An object is warm only once every first-view group is cached."""
+    """An object is warm only once every group is cached for its inputs."""
     assert dev is not None
-    aparams = {'database-update': dict(LOG_TABLENAME='t1')}
     root = plot_cache.resolve_cache_root(tmp_path)
-    pdir = plot_cache._profile_dir(root, 'SPIROU', 'prof')
-    plot_cache._save_meta(pdir, dict(db_updates=dict(LOG_TABLENAME='t1')))
-    warm_args = [tmp_path, 'SPIROU', 'prof', 'Star', aparams]
+    warm_args = [tmp_path, 'SPIROU', 'prof', 'Star', 'sig1']
     assert not plot_cache.is_object_warm(*warm_args)
     for group in plot_cache.OBJECT_WARM_GROUPS:
         plot_cache.mark_object_group_warm(root, 'SPIROU', 'prof', 'STAR',
-                                          group)
+                                          group, 'sig1')
     assert plot_cache.is_object_warm(*warm_args)
-    aparams['database-update'] = dict(LOG_TABLENAME='t2')
+    # changed object inputs make the object cold again
+    warm_args[-1] = 'sig2'
     assert not plot_cache.is_object_warm(*warm_args)
+
+
+def test_object_plot_signature_tracks_inputs(tmp_path: Path) -> None:
+    """Signatures change with table metadata and the preset, not reads."""
+    assert dev is not None
+    import os
+
+    objects = tmp_path / 'objects'
+    objects.mkdir()
+    htable = objects / 'htable_STAR.json'
+    htable.write_text('{"rows": []}')
+    sig = plot_cache.object_plot_signature(objects, 'STAR', dict(a=1))
+    assert sig == plot_cache.object_plot_signature(objects, 'STAR',
+                                                   dict(a=1))
+    assert sig != plot_cache.object_plot_signature(objects, 'STAR',
+                                                   dict(a=2))
+    # a restored table with a different publisher mtime is a new input
+    os.utime(htable, ns=(1, 1))
+    resig = plot_cache.object_plot_signature(objects, 'STAR', dict(a=1))
+    assert resig != sig
+    # a new object_table.json (BERV/target inputs) also changes it
+    (tmp_path / 'object_table.json').write_text('{"rows": []}')
+    assert resig != plot_cache.object_plot_signature(objects, 'STAR',
+                                                     dict(a=1))
+
+
+def test_prune_cached_keeps_current_inputs(tmp_path: Path) -> None:
+    """Pruning removes only the same object's superseded entries."""
+    assert dev is not None
+    root = plot_cache.resolve_cache_root(tmp_path)
+    for key in ('spectrum__STAR__inold__rid', 'spectrum__STAR__innew__rid',
+                'spectrum__STAR2__inold__rid', 'ccf_rv__STAR__inold__rid'):
+        plot_cache.put_cached(root, 'SPIROU', 'prof', 'object_plots', key,
+                              dict(success=True))
+    removed = plot_cache.prune_cached(root, 'SPIROU', 'prof', 'object_plots',
+                                      'spectrum__STAR__in',
+                                      'spectrum__STAR__innew__')
+    assert removed == 1
+    get_args = [root, 'SPIROU', 'prof', 'object_plots']
+    assert plot_cache.get_cached(*get_args, 'spectrum__STAR__innew__rid')
+    assert plot_cache.get_cached(*get_args, 'spectrum__STAR2__inold__rid')
+    assert plot_cache.get_cached(*get_args, 'ccf_rv__STAR__inold__rid')
 
 
 def test_neighborhood_never_blocks_request(
@@ -211,3 +251,77 @@ def test_hr_status_endpoint_requires_profile_access(
     response = client.get(url.replace('mini', 'private')
                           + '&neighborhood_status=1')
     assert response.status_code == 404
+
+
+def test_object_plot_cache_serves_until_inputs_change(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Object plots are served from cache until their tables change.
+
+    Covers profiles without a ``database-update`` fingerprint (the v0.8
+    manifest-restore case) and builds that raise, which are not cached.
+    """
+    assert dev is not None
+    import logging
+    import os
+    import types
+
+    import flask
+
+    from apero_ri.application import data_portal_api_helpers as helpers
+    from apero_ri.plots import plot_objects
+
+    # the plot cache is enabled by default in an isolated data directory
+    assert plot_cache.load_cache_config(tmp_path)['enabled']
+    objects = tmp_path / 'tasks' / 'SPIROU' / 'prof' / 'objects'
+    objects.mkdir(parents=True)
+    htable = objects / 'htable_STAR.json'
+    htable.write_text('{"rows": []}')
+    # profile with no database-update fingerprint at all
+    profile = dict(instrument='SPIROU', profile_id='prof', data=dict())
+    monkeypatch.setattr(helpers, 'get_public_permissions',
+                        lambda: {'view.data_portal'})
+    monkeypatch.setattr(helpers, 'get_accessible_profiles',
+                        lambda *args: [profile])
+    calls = []
+    fail = dict(now=False)
+
+    def build(*args: object, **kwargs: object) -> dict:
+        """Count builds and optionally raise like an sshfs failure."""
+        calls.append(1)
+        if fail['now']:
+            raise OSError('mount unavailable')
+        return dict(has_plot=True, script='s', div='d')
+
+    for name in ('build_snr_plot_json', 'build_berv_plot_json',
+                 'build_spec_plot_json'):
+        monkeypatch.setattr(plot_objects, name, build)
+    fake = types.SimpleNamespace(
+        args=types.SimpleNamespace(data_dir=str(tmp_path)),
+        ari_groups=dict(), logger=logging.getLogger('test'),
+        _get_api_user=lambda: None,
+        _get_user_accessible_run_ids=lambda *args: ['RID'],
+        _rid_cache_tag=lambda rids: 'rid',
+        _filter_plot_rows=lambda rows, ftables, rids: (rows, ftables),
+        _profile_get_path=lambda *args: '')
+    flask_app = flask.Flask(__name__)
+    url = '/?profile_id=prof&objname=STAR&plot_group=spectrum'
+
+    def request() -> dict:
+        """Call the endpoint once and return its JSON payload."""
+        with flask_app.test_request_context(url):
+            return helpers.api_object_plots(fake).get_json()
+
+    # first request builds 3 plots, second is a cache hit
+    assert request()['success'] and len(calls) == 3
+    assert request().get('_served_from_cache') and len(calls) == 3
+    # a restored table (new publisher mtime) is rebuilt, old entry pruned
+    os.utime(htable, ns=(1, 1))
+    assert not request().get('_served_from_cache') and len(calls) == 6
+    section = tmp_path / 'cache' / 'SPIROU' / 'prof' / 'object_plots'
+    assert len(list(section.glob('spectrum__STAR__*.json'))) == 1
+    # a build that raises is returned but not cached
+    os.utime(htable, ns=(2, 2))
+    fail['now'] = True
+    assert not request()['snr']['has_plot']
+    fail['now'] = False
+    assert not request().get('_served_from_cache') and len(calls) == 12

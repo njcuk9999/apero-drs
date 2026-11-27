@@ -1476,16 +1476,35 @@ def api_object_plots(app: Any) -> _ApiResponse:
     base_dir = Path(app.args.data_dir or str(Path.home() / ".ari"))
     objects_dir = base_dir / "tasks" / instrument / profile_id / "objects"
 
+    from apero_ri.core import plot_cache as _pc
     from apero_ri.core.plot_cache import check_and_serve
 
+    # Key cached responses on their inputs (tables, preset, version) so
+    #   a refreshed or restored object table yields a new cache entry.
+    preset = load_object_preset(instrument_profile_file)
+    input_sig = _pc.object_plot_signature(objects_dir, objname, preset)
+    # all versions of this group/object share key_prefix; the current
+    #   inputs share key_current (older ones are pruned on write)
+    key_prefix = f"{plot_group}__{objname}__in"
+    key_current = f"{key_prefix}{input_sig}__"
     rid_tag = app._rid_cache_tag(accessible_run_ids)
     cache_key = (
-        f"{plot_group}__{objname}__{rid_tag}"
+        f"{key_current}{rid_tag}"
         if vsys_ms is None
-        else f"{plot_group}__{objname}__vsys{vsys_ms}__{rid_tag}"
+        else f"{key_current}vsys{vsys_ms}__{rid_tag}"
     )
+    yaml_entry = None
     if plot_group in {'all', 'target_info'}:
+        # SED/HR plots read the astrometric entry, so key on it too
+        try:
+            from apero.core import drs_astrometrics as _dra
+            astrom_dir = base_dir / "apero-assets" / "astrometrics"
+            yaml_entry = _dra.find_by_name(
+                str(astrom_dir), objname)
+        except Exception:
+            yaml_entry = None
         cache_key += '__hrbackdrop_v2'
+        cache_key += f'__ast{_pc.value_signature(yaml_entry)}'
     if plot_group in {"all", "ccf", "ccf_profile"} and (
         ccf_mjd_start is not None or ccf_mjd_end is not None
     ):
@@ -1517,7 +1536,6 @@ def api_object_plots(app: Any) -> _ApiResponse:
             profile_id,
             "object_plots",
             cache_key,
-            aparams=profile_data,
         )
         if cached is not None:
             app.logger.info(
@@ -1527,14 +1545,12 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 plot_group,
             )
             # Plots cached before warm markers existed count as warm too.
-            from apero_ri.core import plot_cache as _pc
             _pc.mark_object_group_warm(_pc.resolve_cache_root(base_dir),
                                        instrument, profile_id, objname,
-                                       plot_group)
+                                       plot_group, input_sig)
             return jsonify(**cached)
 
     htable_rows = load_object_htable_rows(objects_dir, objname)
-    preset = load_object_preset(instrument_profile_file)
     obj_props = load_object_table_row(objects_dir, objname)
 
     need_ext = plot_group in {"all", "spectrum", "time_series"}
@@ -1584,6 +1600,8 @@ def api_object_plots(app: Any) -> _ApiResponse:
 
     _no_plot = {"has_plot": False, "message": "Plot build failed"}
     timings_ms = {}
+    # names of plots whose builder raised; such responses are not cached
+    build_failures = []
 
     def _timed_build(name: str, func: Any) -> Any:
         """Build one plot payload while recording its elapsed time."""
@@ -1614,6 +1632,7 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 "traceback": _tb_str,
             }
             ok = False
+            build_failures.append(name)
         dt_ms = (time.perf_counter() - t0) * 1000.0
         timings_ms[name] = round(dt_ms, 2)
         app.logger.info(
@@ -1691,16 +1710,8 @@ def api_object_plots(app: Any) -> _ApiResponse:
             ),
         )
     if plot_group in {"all", "target_info"}:
-        # Resolve the astrometric YAML entry for this target.
-        # SED + HR plots are interactive Bokeh figures driven by
-        # the photometry / Teff / parallax stored in the entry.
-        try:
-            from apero.core import drs_astrometrics as _dra
-            astrom_dir = base_dir / "apero-assets" / "astrometrics"
-            yaml_entry = _dra.find_by_name(
-                str(astrom_dir), objname)
-        except Exception:
-            yaml_entry = None
+        # SED + HR plots are interactive Bokeh figures driven by the
+        # photometry / Teff / parallax in yaml_entry (resolved above).
         # 20-pc Gaia backdrop: never wait on Vizier inside a request
         neighborhood = []
         if yaml_entry:
@@ -1725,21 +1736,14 @@ def api_object_plots(app: Any) -> _ApiResponse:
     result["server_timings_ms"] = timings_ms
 
     try:
-        from apero_ri.core.plot_cache import (
-            _load_meta,
-            _profile_dir,
-            _save_meta,
-            is_cache_enabled,
-            load_cache_config,
-            mark_object_group_warm,
-            put_cached,
-            resolve_cache_root,
-        )
-
-        cfg = load_cache_config(base_dir)
-        if cfg.get("enabled") and cacheable:
-            cache_root = resolve_cache_root(base_dir, cfg)
-            put_cached(
+        cfg = _pc.load_cache_config(base_dir)
+        # never persist a build that raised (e.g. sshfs briefly down)
+        if cfg.get("enabled") and cacheable and not build_failures:
+            cache_root = _pc.resolve_cache_root(base_dir, cfg)
+            # drop this object's responses built from superseded inputs
+            _pc.prune_cached(cache_root, instrument, profile_id,
+                             "object_plots", key_prefix, key_current)
+            _pc.put_cached(
                 cache_root,
                 instrument,
                 profile_id,
@@ -1748,18 +1752,15 @@ def api_object_plots(app: Any) -> _ApiResponse:
                 result,
             )
             # Lets the page view skip the first-view loading screen.
-            mark_object_group_warm(cache_root, instrument, profile_id,
-                                   objname, plot_group)
-            pdir = _profile_dir(cache_root, instrument, profile_id)
-            meta = _load_meta(pdir)
-            db_upd = profile_data.get("database-update", {})
-            if isinstance(db_upd, dict) and db_upd:
-                meta["db_updates"] = dict(db_upd)
+            _pc.mark_object_group_warm(cache_root, instrument, profile_id,
+                                       objname, plot_group, input_sig)
+            pdir = _pc._profile_dir(cache_root, instrument, profile_id)
+            meta = _pc._load_meta(pdir)
             from datetime import datetime as _dt
             from datetime import timezone as _tz
 
             meta["last_cached"] = _dt.now(_tz.utc).isoformat()
-            _save_meta(pdir, meta)
+            _pc._save_meta(pdir, meta)
     except Exception:
         pass
 
